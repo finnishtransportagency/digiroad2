@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.oracle
 
+import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}
@@ -43,5 +44,4 @@ object GenericQueries {
       where a.id = $typeID
       """.as[AssetTypeMetadataRow].list //need to be created a orderFieldInForm , valueByDefaulField
   }
-
 }

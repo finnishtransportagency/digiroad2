@@ -52,7 +52,7 @@ class WidthLimitService(val roadLinkService: RoadLinkService) extends PointAsset
 
   override def setAssetPosition(asset: IncomingWidthLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def update(id: Long, updatedAsset: IncomingWidthLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
+  override def update(id: Long, updatedAsset: IncomingWidthLimit, roadLink: RoadLink, username: String) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: WidthLimit, floating: Boolean) = {
     persistedAsset

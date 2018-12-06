@@ -2,15 +2,16 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -28,15 +29,16 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
-  val service = new PedestrianCrossingService(mockRoadLinkService) {
+  val service = new PedestrianCrossingService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
-
     override def withDynSession[T](f: => T): T = f
+    override lazy val dao: OraclePedestrianCrossingDao = new OraclePedestrianCrossingDao()
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
@@ -70,7 +72,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
-      OraclePedestrianCrossingDao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317), 31.550,  "Hannu", 235, None, linkSource = NormalLinkInterface)
+      service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317), 31.550,  "Hannu", 235, None, linkSource = NormalLinkInterface)
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
       result.id should equal(600029)
       result.linkId should equal(1611317)
@@ -106,7 +108,6 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
   test("Create new") {
     runWithRollback {
-      val now = DateTime.now()
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = service.create(IncomingPedestrianCrossing(2, 0.0, 388553075), "jakke", roadLink )
       val assets = service.getPersistedAssetsByIds(Set(id))
@@ -130,6 +131,8 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         createdAt = asset.createdAt,
         linkSource = NormalLinkInterface
       ))
+
+      verify(mockEventBus, times(1)).publish("pedestrianCrossing:Validator", AssetValidatorInfo(Set(asset.id)))
     }
   }
 
@@ -139,7 +142,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -149,6 +152,8 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.modifiedAt.isDefined should equal(true)
+
+      verify(mockEventBus, times(1)).publish("pedestrianCrossing:Validator", AssetValidatorInfo(Set(id, newId)))
     }
   }
 
@@ -158,7 +163,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075),Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 235, "test", linkSource = NormalLinkInterface)
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
@@ -166,6 +171,8 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       updatedAsset.lat should be (asset.lat)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
+
+      verify(mockEventBus, times(2)).publish("pedestrianCrossing:Validator", AssetValidatorInfo(Set(id, newId)))
     }
   }
 

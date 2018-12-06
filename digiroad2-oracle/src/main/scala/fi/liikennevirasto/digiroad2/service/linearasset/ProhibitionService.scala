@@ -24,14 +24,17 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def assetDao: OracleAssetDao = new OracleAssetDao
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) : Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
   /**
     * Returns linear assets by asset type and asset ids. Used by Digiroad2Api /linearassets POST and /linearassets DELETE endpoints.
     */
-  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
+  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if(newTransaction)
+      withDynTransaction {
+        dao.fetchProhibitionsByIds(typeId, ids)
+      }
+    else
       dao.fetchProhibitionsByIds(typeId, ids)
-    }
   }
 
   override def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
@@ -95,11 +98,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
       if(toUpdate.nonEmpty) {
-        val prohibitions = toUpdate.filter(a =>
-          Set(LinearAssetTypes.ProhibitionAssetTypeId, LinearAssetTypes.HazmatTransportProhibitionAssetTypeId).contains(a.typeId))
-        val persisted = (
-          dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
-            dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
+        val prohibitions = toUpdate.filter(a => Set(LinearAssetTypes.ProhibitionAssetTypeId).contains(a.typeId))
+        val persisted = dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted)
         if (newLinearAssets.nonEmpty)
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
@@ -255,10 +255,10 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
 
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
-    val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId)).head
+    val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).head
 
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, true )
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired =true, newTransaction = false)
     createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 }

@@ -33,7 +33,7 @@ trait WeightLimitService extends PointAssetOperations {
 
   override def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
+  override def update(id: Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = {
     persistedAsset

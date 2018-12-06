@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
@@ -13,6 +13,12 @@ class MunicipalityService (eventbus: DigiroadEventBus, roadLinkService: RoadLink
   def getMunicipalities: Seq[(Int, String)] = {
     withDynSession {
       municipalityDao.getMunicipalitiesInfo
+    }
+  }
+
+  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {
+    withDynSession {
+      municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
   }
 }

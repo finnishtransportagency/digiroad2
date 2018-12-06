@@ -1,89 +1,133 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
 class SpeedLimitValidator(trafficSignService: TrafficSignService) {
   val inaccurateAssetDAO: InaccurateAssetDAO = new InaccurateAssetDAO
   val polygonTools: PolygonTools = new PolygonTools
   val radiusDistance: Int = 50
+  val startUrbanAreaSpeedLimit: Int = 50
+  val endUrbanAreaSpeedLimit: Int = 80
+  val minimumAllowedLength = 2
+  val minimumAllowedEndSpeedLimitArea = 30
 
-  private def length(point: Point)(trafficSign: PersistedTrafficSign) = GeometryUtils.geometryLength(Seq(Point(trafficSign.lon, trafficSign.lat),point))
-  private def min(s1: (Double, Seq[PersistedTrafficSign]), s2: (Double, Seq[PersistedTrafficSign])): (Double, Seq[PersistedTrafficSign]) = if (s1._1 < s2._1) s1 else s2
+  private def speedLimitNormalAndZoneValidator(speedLimits: Seq[SpeedLimit], trafficSign: PersistedTrafficSign, roadLink: RoadLink): Seq[SpeedLimit] = {
+    val validatorValues =
+      speedLimits.flatMap {
+        speedLimit =>
+          println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
 
-  private def getGeometryPosition(first: Point, last: Point, sideCode: SideCode): Seq[(Point, SideCode)] = {
-    sideCode match {
-      case SideCode.TowardsDigitizing => Seq((first, SideCode.TowardsDigitizing))
-      case SideCode.AgainstDigitizing => Seq((last, SideCode.AgainstDigitizing))
-      case _ => Seq((first, SideCode.TowardsDigitizing), (last, SideCode.AgainstDigitizing))
-    }
-  }
+          val hasSameSpeedLimitValue =
+            speedLimit.value match {
+              case Some(NumericValue(speedLimitValue)) =>
+                trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value") match {
+                  case Some(trafficSignValue) if trafficSignValue.propertyValue == speedLimitValue.toString => true
+                  case _ => false
+                }
+              case _ => false
+            }
 
-  private def getTrafficSingsByRadius(speedLimit: SpeedLimit, roadLink: RoadLink): Seq[PersistedTrafficSign] = {
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
-
-    val speedLimitSideCode =
-      speedLimit.sideCode match {
-        case SideCode.BothDirections =>
-          TrafficDirection.toSideCode(roadLink.trafficDirection)
-        case _ =>
-          speedLimit.sideCode
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
       }
 
-    val trafficSingsByRadius = getGeometryPosition(first, last, speedLimitSideCode).flatMap { case (position, sideCode) =>
-      trafficSignService.getTrafficSignByRadius(position, radiusDistance, Some(SpeedLimits))
-        .filter(sign => SideCode.apply(sign.validityDirection) == sideCode)
-    }.filter(_.linkId == speedLimit.linkId)
-
-    if (trafficSingsByRadius.nonEmpty) {
-      (trafficSingsByRadius.groupBy(length(first)) ++ trafficSingsByRadius.groupBy(length(last))).reduceLeft(min)._2
-    }else
-      Seq()
-
+    if (validatorValues.exists(_._2 == true)) Seq() else validatorValues.map(_._1)
   }
 
-  private def speedLimitValueValidator(speedLimit: SpeedLimit, trafficSign: PersistedTrafficSign): Option[SpeedLimit] = {
-    val startUrbanAreaSpeedLimit: Int = 50
-    val endUrbanAreaSpeedLimit: Int = 80
+  private def speedLimitUrbanAreaValidator(speedLimits: Seq[SpeedLimit], trafficSign: PersistedTrafficSign, roadLink: RoadLink): Seq[SpeedLimit] = {
+    val validatorValues =
+      speedLimits.flatMap {
+        speedLimit =>
+          println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
 
-    val trafficSignType = TrafficSignType.apply(getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)
-    val trafficSignValueOption = getTrafficSignsProperties(trafficSign, "trafficSigns_value")
-
-    speedLimit.value match {
-      case Some(NumericValue(speedLimitValue)) =>
-        trafficSignType match {
-          case TrafficSignType.SpeedLimit | TrafficSignType.SpeedLimitZone =>
-            trafficSignValueOption match {
-              case Some(trafficSignValue) if trafficSignValue.propertyValue != speedLimitValue.toString =>
-                Some(speedLimit)
-              case _ => None
+          val hasSameSpeedLimitValue =
+            speedLimit.value match {
+              case Some(NumericValue(speedLimitValue)) =>
+                if (speedLimitValue == startUrbanAreaSpeedLimit) true else false
+              case _ => false
             }
-          case TrafficSignType.EndSpeedLimitZone | TrafficSignType.EndSpeedLimit =>
-            trafficSignValueOption match {
-              case Some(trafficSignValue) if trafficSignValue.propertyValue == speedLimitValue.toString =>
-                Some(speedLimit)
-              case _ => None
-            }
-          case TrafficSignType.UrbanArea if speedLimitValue != startUrbanAreaSpeedLimit =>
-            Some(speedLimit)
 
-          case TrafficSignType.EndUrbanArea if speedLimitValue != endUrbanAreaSpeedLimit =>
-            Some(speedLimit)
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
+      }
 
-          case _ => None
-        }
-      case _ => None
-    }
+    if (validatorValues.exists(_._2 == true)) Seq() else validatorValues.map(_._1)
   }
 
-  private def filterBySide(trafficSign: PersistedTrafficSign, speedLimit: SpeedLimit, roadLink: RoadLink) : Boolean = {
+  private def endSpeedLimitValidator(speedLimits: Seq[SpeedLimit], trafficSign: PersistedTrafficSign, roadLink: RoadLink): Seq[SpeedLimit] = {
+    val validatorValues =
+      speedLimits.flatMap {
+        speedLimit =>
+          println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
+
+          val hasSameSpeedLimitValue =
+            speedLimit.value match {
+              case Some(NumericValue(speedLimitValue)) =>
+                trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value") match {
+                  case Some(trafficSignValue)
+                    if trafficSignValue.propertyValue.toInt == speedLimitValue
+                      || (speedLimitValue != startUrbanAreaSpeedLimit && speedLimitValue != endUrbanAreaSpeedLimit) => true
+                  case _ => false
+                }
+              case _ => false
+            }
+
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
+      }
+
+    if (validatorValues.exists(_._2 == true)) validatorValues.map(_._1) else Seq()
+  }
+
+  private def endUrbanAreaValidator(speedLimits: Seq[SpeedLimit], trafficSign: PersistedTrafficSign, roadLink: RoadLink): Seq[SpeedLimit] = {
+    val validatorValues =
+      speedLimits.flatMap {
+        speedLimit =>
+          println(s"Proncessing traffic sign ${trafficSign.id} at speedlimit ${speedLimit.id} at linkId ${speedLimit.linkId}")
+
+          val hasSameSpeedLimitValue =
+            speedLimit.value match {
+              case Some(NumericValue(speedLimitValue)) =>
+                if (speedLimitValue != endUrbanAreaSpeedLimit) true else false
+              case _ => false
+            }
+
+          validateSpeedLimitDirectionAndValue(hasSameDirection(speedLimit, trafficSign, roadLink), hasSameSpeedLimitValue, speedLimit)
+      }
+
+    if (validatorValues.exists(_._2 == true)) validatorValues.map(_._1) else Seq()
+  }
+
+  def checkSpeedLimitUsingTrafficSign(trafficSigns: Seq[PersistedTrafficSign], roadLink: RoadLink, speedLimits: Seq[SpeedLimit]): Seq[SpeedLimit] = {
+    trafficSigns.flatMap { trafficSign =>
+      val trafficSignType = TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)
+
+      val speedLimitInRadiusDistance =
+        speedLimits.filter(
+          speedLimit =>
+            ((trafficSign.mValue - radiusDistance) >= (speedLimit.startMeasure + minimumAllowedLength) || (trafficSign.mValue - radiusDistance) <= (speedLimit.endMeasure - minimumAllowedLength))
+              || ((trafficSign.mValue + radiusDistance) >= (speedLimit.startMeasure + minimumAllowedLength) || (trafficSign.mValue + radiusDistance) <= (speedLimit.endMeasure - minimumAllowedLength))
+        )
+
+      trafficSignType match {
+        case TrafficSignType.SpeedLimit | TrafficSignType.SpeedLimitZone =>
+          speedLimitNormalAndZoneValidator(speedLimitInRadiusDistance, trafficSign, roadLink)
+        case TrafficSignType.UrbanArea =>
+          speedLimitUrbanAreaValidator(speedLimitInRadiusDistance, trafficSign, roadLink)
+        case TrafficSignType.EndSpeedLimit =>
+          endSpeedLimitValidator(speedLimitInRadiusDistance, trafficSign, roadLink)
+        case TrafficSignType.EndUrbanArea =>
+          endUrbanAreaValidator(speedLimitInRadiusDistance, trafficSign, roadLink)
+        case TrafficSignType.EndSpeedLimitZone if trafficSign.mValue > minimumAllowedEndSpeedLimitArea && (roadLink.length - trafficSign.mValue) > minimumAllowedEndSpeedLimitArea =>
+          endSpeedLimitValidator(speedLimitInRadiusDistance, trafficSign, roadLink)
+        case _ => Seq()
+      }
+    }.distinct
+  }
+
+  private def hasSameDirection(speedLimit: SpeedLimit, trafficSign: PersistedTrafficSign, roadLink: RoadLink): Boolean = {
     speedLimit.sideCode match {
       case SideCode.TowardsDigitizing | SideCode.AgainstDigitizing =>
         trafficSign.validityDirection == speedLimit.sideCode.value
@@ -95,35 +139,11 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
     }
   }
 
-  def checkInaccurateSpeedLimitValues(speedLimit: SpeedLimit, roadLink: RoadLink) = {
-    val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)
-    checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit, roadLink, trafficSigns)
-  }
-
-
-  def checkInaccurateSpeedLimitValuesWithTrafficSigns(speedLimit: SpeedLimit, roadLink: RoadLink, persistedTrafficSigns: Seq[PersistedTrafficSign]): Option[SpeedLimit]= {
-    val minimumAllowedLength = 2
-
-    val trafficSignsOnLinkId = persistedTrafficSigns
-      .filter(trafficSign => trafficSign.mValue >= (speedLimit.startMeasure + minimumAllowedLength) && trafficSign.mValue <= (speedLimit.endMeasure - minimumAllowedLength))
-      .filter(filterBySide(_, speedLimit, roadLink))
-
-    val trafficSigns = if (trafficSignsOnLinkId.nonEmpty) {
-      trafficSignsOnLinkId
-    } else {
-      persistedTrafficSigns match {
-        case Seq() => Seq()
-        case _ => getTrafficSingsByRadius(speedLimit, roadLink)
-      }
+  private def validateSpeedLimitDirectionAndValue(sameDirection: Boolean, sameValue: Boolean, speedLimit: SpeedLimit): Seq[(SpeedLimit, Boolean)] = {
+    (sameDirection, sameValue) match {
+      case (true, true) => Seq((speedLimit, true))
+      case (_, _) => Seq((speedLimit, false))
     }
-
-    trafficSigns.flatMap { trafficSign =>
-      speedLimitValueValidator(speedLimit, trafficSign)
-    }.headOption
   }
 
-
-  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
-  }
 }

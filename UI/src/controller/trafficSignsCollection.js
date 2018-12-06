@@ -3,6 +3,7 @@
   root.TrafficSignsCollection = function (backend, specs, verificationCollection) {
     PointAssetsCollection.call(this);
     var me = this;
+    this.trafficSignsAsset = [];
 
     var trafficSignsShowing = {
       speedLimits: false,
@@ -28,6 +29,16 @@
       priorityAndGiveWaySigns: {values: [94, 95, 96, 97, 98, 99], groupName: 'Etuajo-oikeus- ja väistämismerkit'},
       informationSigns: {values: [113, 114, 115, 116, 117, 118, 119], groupName: 'Opastusmerkit'},
       serviceSigns: {values: [120, 121, 122, 123, 124], groupName: 'Palvelukohteiden opastusmerkit'}
+    };
+
+    var trafficSignsTurnRestriction = [10, 11, 12];
+
+    var isTurningRestriction = function(current) {
+      return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
+    };
+
+    var getValue = function(current) {
+      return _.head(_.find(current.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
     };
 
     this.getGroup = function(signTypes){
@@ -76,9 +87,46 @@
           eventbus.trigger('pointAssets:fetched');
           me.allowComplementaryIsActive(specs.allowComplementaryLinks);
           verificationCollection.fetch(boundingBox, center, specs.typeId, specs.hasMunicipalityValidation);
+          me.trafficSignsAsset = assets;
           return filterTrafficSigns(me.filterComplementaries(assets));
         });
     };
+
+    var isRelevantToManoeuvres = function(current) {
+
+      if (isTurningRestriction(current)) {
+        var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
+        var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
+
+        //if traffic type changes, should be relevant to Manoeuvres
+        if (oldTrafficSignTypeValue !== getValue(current))
+          return true;
+
+        var diffProperties = _.reduce(oldTrafficSign, function (result, value, key) {
+          return _.isEqual(value, current[key]) ?
+            result : result.concat(key);
+        }, []);
+
+        //if traffic Signs moves or orientation changes, should be relevant to Manoeuvres
+       return _.some(diffProperties, function(prop) {
+            return _.includes(['validityDirection', 'lon', 'lat'], prop);
+        });
+      } else
+        return false;
+    };
+
+    eventbus.on('trafficSigns:updated', function(current) {
+      if(isRelevantToManoeuvres(current)) {
+        new GenericConfirmPopup('Huom! Liikennemerkin siirto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
+          {type: 'alert'});
+      }
+    });
+    eventbus.on('trafficSigns:deleted', function(current) {
+      if(isTurningRestriction(current)) {
+        new GenericConfirmPopup('Huom! Liikennemerkin poisto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
+          {type: 'alert'});
+      }
+    });
   };
 
 })(this);

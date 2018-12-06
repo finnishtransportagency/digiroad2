@@ -43,20 +43,20 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username)
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink,  username: String): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry)
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWithoutTransaction(id)
-        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username,old.createdBy, old.createdAt)
+        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username,old.createdBy, old.createdAt)
       case _ =>
-        OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username)
+        OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username)
     }
   }
 

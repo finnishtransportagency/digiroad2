@@ -1,9 +1,11 @@
-window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer, roadAddressInfoPopup) {
+window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer, roadAddressInfoPopup, isExperimental, clusterDistance) {
   var layerName = 'massTransitStop';
+  var clusterZoomLvl = 9;
   Layer.call(this, layerName, roadLayer);
   var me = this;
   var authorizationPolicy = new MassTransitStopAuthorizationPolicy();
-  me.minZoomForContent = zoomlevels.minZoomForAssets;
+  me.minZoomForContent = isExperimental ? zoomlevels.oneKmZoomLvl: zoomlevels.minZoomForRoadLinks;
+  var distance = clusterDistance ? parseInt(clusterDistance) : 60;
   var eventListener = _.extend({running: false}, eventbus);
   var selectedAsset;
   var movementPermissionConfirmed = false;
@@ -15,6 +17,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadNameFi: 'osoite_suomeksi',
     roadNameSe: 'osoite_ruotsiksi'
   };
+  var clusterView;
 
   var selectedControl = 'Select';
 
@@ -41,6 +44,50 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       }
   });
 
+  if(isExperimental) {
+    var clusterFeatureSource = new ol.source.Vector({});
+
+    var clusterSource = new ol.source.Cluster({
+      distance: distance, //url parameter
+      source: clusterFeatureSource
+    });
+    var styleCache = {};
+
+    var clusterLayer = new ol.layer.Vector({
+      source: clusterSource,
+      style: function(feature) {
+        var size = feature.get('features').length;
+        var style = styleCache[size];
+        if (!style) {
+          style = new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 10,
+              stroke: new ol.style.Stroke({
+                color: '#fff'
+              }),
+              fill: new ol.style.Fill({
+                color: '#3399CC'
+              })
+            }),
+            text: new ol.style.Text({
+              text: size.toString(),
+              fill: new ol.style.Fill({
+                color: '#fff'
+              })
+            })
+          });
+          styleCache[size] = style;
+        }
+        return style;
+      }
+    });
+
+    clusterLayer.set('name', 'clusterLayer:' + layerName);
+    clusterLayer.setOpacity(1);
+    clusterLayer.setVisible(true);
+    map.addLayer(clusterLayer);
+  }
+
   assetLayer.set('name', layerName);
   assetLayer.setOpacity(1);
   assetLayer.setVisible(true);
@@ -50,7 +97,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   terminalLayer.setOpacity(1);
   terminalLayer.setVisible(true);
   map.addLayer(terminalLayer);
-
 
   function onSelectMassTransitStop(event) {
     if(event.selected.length > 0){
@@ -165,6 +211,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   this.removeLayerFeatures = function () {
+    removeClusterLayerFeatures();
     roadLayer.clearSelection();
     _.each(visibleAssets, function (asset) { destroyAsset(asset); });
   };
@@ -206,6 +253,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       });
 
     });
+  };
+
+  function createFeature(asset) {
+    return new ol.Feature({geometry : new ol.geom.Point([asset.lon, asset.lat])});
+  }
+
+  var renderClusters = function(assetData) {
+    if(me.isStarted() && clusterView){
+      removeClusterLayerFeatures();
+      showClusterLayer();
+      var features = _.map(assetData, createFeature);
+      clusterFeatureSource.addFeatures(features);
+    }
   };
 
   var cancelCreate = function() {
@@ -673,19 +733,26 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   this.refreshView = function() {
     var extent = map.getView().calculateExtent(map.getSize());
     var center = map.getView().getCenter();
+    var zoomLvl = zoomlevels.getViewZoom(map);
+    clusterView = isExperimental && zoomLvl <= clusterZoomLvl;
 
     eventbus.once('roadLinks:fetched', function () {
       var roadLinks = roadCollection.getAll();
       roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
     });
-
-    massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true , center: center});
-
-    if (massTransitStopsCollection.isComplementaryActive()) {
-      roadCollection.fetchWithComplementary(extent);
+    if(clusterView){
+      massTransitStopsCollection.fetchLightAssets({ bbox: extent, layerName: layerName}).then(function(assets){
+        renderClusters(assets);
+      });
     } else {
-      roadCollection.fetch(extent);
+      hideClusterLayer();
+      massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true , center: center});
+      if (massTransitStopsCollection.isComplementaryActive()) {
+        roadCollection.fetchWithComplementary(extent);
+      } else {
+        roadCollection.fetch(extent);
+      }
     }
   };
 
@@ -799,6 +866,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     assetLayer.setVisible(true);
     registerRoadLinkFetched();
     roadAddressInfoPopup.start();
+    hideClusterLayer();
     me.show(map);
   };
 
@@ -815,6 +883,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var hideLayer = function() {
+    hideClusterLayer();
     roadLayer.activateSelection();
     selectedMassTransitStopModel.close();
     selectControl.clear();
@@ -823,6 +892,21 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
+  };
+
+  var showClusterLayer = function () {
+    if(isExperimental)
+      clusterLayer.setVisible(true);
+  };
+
+  var hideClusterLayer = function () {
+    if(isExperimental)
+      clusterLayer.setVisible(false);
+  };
+
+  var removeClusterLayerFeatures = function() {
+    if(isExperimental)
+      clusterFeatureSource.clear();
   };
 
   function excludeRoadByAdminClass(roadCollection) {

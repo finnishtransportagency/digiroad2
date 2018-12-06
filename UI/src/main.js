@@ -14,8 +14,9 @@ $(function() {
   var queryString = window.location.search.substring(1);
   var parameters = parseQueryParameters(queryString);
   var isExperimental = parameters.isExperimental === 'true';
+  var clusterDistance = parameters.clusterDistance;
 
   Analytics.start();
 
-  Application.start(undefined, undefined, isExperimental);
+  Application.start(undefined, undefined, isExperimental, clusterDistance);
 });

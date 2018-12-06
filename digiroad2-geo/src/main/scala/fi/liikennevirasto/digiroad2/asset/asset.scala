@@ -215,6 +215,36 @@ object PavementClass {
   case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
 }
 
+
+sealed trait ServicePointsClass {
+  def value: Int
+  def isAuthorityData: Boolean
+}
+object ServicePointsClass {
+  val values = Set(Customs, BorderCrossing, RestArea, Airport, FerryTerminal, RailwayStation, ParkingArea, TerminalForLoadingCars,
+                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Unknown)
+
+  def apply(value: Int): Boolean = {
+    values.find(_.value == value).getOrElse(Unknown).isAuthorityData
+  }
+
+  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true;}
+  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true;}
+  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true;}
+  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true;}
+  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true;}
+  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true;}
+  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true;}
+  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true;}
+  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true;}
+  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true;}
+  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true;}
+  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false;}
+  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false;}
+  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true;}
+}
+
+
 /**
   * Values for AnimalWarningTypes types enumeration
   */
@@ -405,7 +435,7 @@ object AssetTypeInfo {
     values.find(_.toString == stringValue).getOrElse(UnknownAssetTypeId)
   }
 }
-case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop"; val layerName = "massTransitStops"}
+case object MassTransitStopAsset extends AssetTypeInfo { val typeId = 10; def geometryType = "point"; val label = "MassTransitStop"; val layerName = "massTransitStop"}
 case object SpeedLimitAsset extends AssetTypeInfo { val typeId = 20; def geometryType = "linear"; val label = "SpeedLimit"; val layerName = "speedLimits"}
 case object TotalWeightLimit extends AssetTypeInfo { val typeId = 30; def geometryType = "linear"; val label = "TotalWeightLimit" ; val layerName = "totalWeightLimit"}
 case object TrailerTruckWeightLimit extends AssetTypeInfo { val typeId = 40; def geometryType = "linear"; val label = "TrailerTruckWeightLimit"; val layerName = "trailerTruckWeightLimit" }
@@ -424,7 +454,7 @@ case object TrafficVolume extends AssetTypeInfo { val typeId = 170; def geometry
 case object WinterSpeedLimit extends AssetTypeInfo { val typeId = 180; def geometryType = "linear"; val label = "WinterSpeedLimit"; val layerName = "winterSpeedLimits"  }
 case object Prohibition extends AssetTypeInfo { val typeId = 190; def geometryType = "linear"; val label = ""; val layerName = "prohibition" }
 case object PedestrianCrossings extends AssetTypeInfo { val typeId = 200; def geometryType = "point"; val label = "PedestrianCrossings"; val layerName = "pedestrianCrossings" }
-case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = ""; val layerName = "hazardousMaterialTransportProhibition" }
+case object HazmatTransportProhibition extends AssetTypeInfo { val typeId = 210; def geometryType = "linear"; val label = "HazmatTransportProhibition"; val layerName = "hazardousMaterialTransportProhibition" }
 case object Obstacles extends AssetTypeInfo { val typeId = 220; def geometryType = "point"; val label = ""; val layerName = "obstacles" }
 case object RailwayCrossings extends AssetTypeInfo { val typeId = 230; def geometryType = "point"; val label = ""; val layerName = "railwayCrossings" }
 case object DirectionalTrafficSigns extends AssetTypeInfo { val typeId = 240; def geometryType = "point"; val label = ""; val layerName = "directionalTrafficSigns" }

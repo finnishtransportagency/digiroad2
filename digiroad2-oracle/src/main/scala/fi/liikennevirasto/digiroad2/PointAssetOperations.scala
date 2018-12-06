@@ -88,6 +88,11 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
 }
 
 
+trait LightGeometry {
+  val lon: Double
+  val lat: Double
+}
+
 trait PointAssetOperations {
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
@@ -109,9 +114,11 @@ trait PointAssetOperations {
   def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long
-  def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
+  def update(id:Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String): Long
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
+  def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
+
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
@@ -166,6 +173,14 @@ trait PointAssetOperations {
         }
       }
       assetsBeforeUpdate.map(_.asset)
+    }
+  }
+
+  def getLightGeometryByBoundingBox(bounds: BoundingRectangle): Seq[LightGeometry] = {
+    withDynSession {
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      fetchLightGeometry(withValidAssets(filter))
     }
   }
 
@@ -248,17 +263,17 @@ trait PointAssetOperations {
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), (_, _, _, _, _) => None)
+    getByMunicipality(mapRoadLinks, roadLinks, Seq(), (_, _, _, _, _) => None, withMunicipality(municipalityCode))
   }
 
-  protected def getByMunicipality[T](municipalityCode: Int, mapRoadLinks: Map[Long, RoadLink], roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
-            adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {
+  protected def getByMunicipality[T](mapRoadLinks: Map[Long, RoadLink], roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
+            adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate], withFilter: String => String): Seq[PersistedAsset] = {
 
     def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
       mapRoadLinks.get(linkId)
 
     withDynSession {
-      fetchPointAssets(withMunicipality(municipalityCode))
+      fetchPointAssets(withFilter)
         .map(withFloatingUpdate(adjustPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks, adjustment)))
         .toList
     }
@@ -318,6 +333,11 @@ trait PointAssetOperations {
     }
   }
 
+  def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) = {
+    if(municipalityCodes.nonEmpty)
+      sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId and municipality_code in (#${municipalityCodes.mkString(",")})".execute
+  }
+
   def expire(id: Long, username: String): Long = {
     withDynSession {
       expireWithoutTransaction(id, username)
@@ -337,6 +357,17 @@ trait PointAssetOperations {
   def expireWithoutTransaction(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
+  }
+
+  def expireWithoutTransaction(ids: Seq[Long], username: String) = {
+    val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = sysdate, modified_by = ? where id = ?")
+
+    ids.foreach { id =>
+      expireAsset.setString(1, username)
+      expireAsset.setLong(2, id)
+      expireAsset.executeUpdate()
+      expireAsset.close()
+    }
   }
 
   protected def convertPersistedAsset[T](setFloating: (PersistedAsset, Boolean) => T,
@@ -369,6 +400,10 @@ trait PointAssetOperations {
     withFilter(s"where a.asset_type_id = $typeId and a.municipality_code = $municipalityCode")(query)
   }
 
+  protected def withValidAssets(filter: String)(query: String): String = {
+    withFilter(s"$filter and (a.valid_to is null or a.valid_to > sysdate) and a.valid_from < sysdate")(query)
+  }
+
   protected def withFloatingUpdate[T <: FloatingAsset](toPointAsset: PersistedAsset => (T, Option[FloatingReason]))
                                                       (persistedAsset: PersistedAsset): T = {
     val (pointAsset, floatingReason) = toPointAsset(persistedAsset)
@@ -399,6 +434,8 @@ trait PointAssetOperations {
     PointAssetOperations.isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
   }
+
+  def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = Map()
 
 }
 

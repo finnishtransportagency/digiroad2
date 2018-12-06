@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.{PersistedPoint, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PedestrianCrossings}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 
@@ -27,7 +27,7 @@ case class PedestrianCrossing(id: Long, linkId: Long,
                               linkSource: LinkGeomSource) extends PersistedPoint
 
 
-object OraclePedestrianCrossingDao {
+class OraclePedestrianCrossingDao() {
   def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
     sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
@@ -119,6 +119,21 @@ object OraclePedestrianCrossingDao {
     """
   }
 
+
+  def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val query =
+      """
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
+        pos.link_source
+        from asset a
+        join asset_link al on a.id = al.asset_id
+        join lrm_position pos on al.position_id = pos.id
+      """
+    val queryWithFilter =
+      query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.mkString(",")})" + filterExpired
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
+  }
 
   implicit val getPointAsset = new GetResult[PedestrianCrossing] {
     def apply(r: PositionedResult) = {

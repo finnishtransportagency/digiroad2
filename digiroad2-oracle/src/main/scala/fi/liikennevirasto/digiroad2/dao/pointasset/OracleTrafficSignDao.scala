@@ -8,7 +8,7 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -83,6 +83,26 @@ object OracleTrafficSignDao {
     val filter = s"Where a.asset_type_id = 300 and $boundingBoxFilter"
     fetchByFilter(query => query + filter).
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+  }
+
+  def fetchByTurningRestrictions(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
+    val values = enumValues.mkString(",")
+    val filter = s"where ev.id in ($values) and a.municipality_code = $municipality"
+    fetchByFilter(query => query + filter)
+  }
+
+  def fetchEnumeratedValueIds( tsType: Seq[TrafficSignType]): Seq[Long] = {
+    val values = tsType.map(_.value)
+
+    sql"""select distinct ev.id from PROPERTY p
+                join ENUMERATED_VALUE ev on ev.property_id = p.id
+                join SINGLE_CHOICE_VALUE sc on sc.ENUMERATED_VALUE_ID = ev.id
+                where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
+  }
+
+  def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
+    val filter = s"Where a.asset_type_id = 300 and lp.link_id in (${linkIds.mkString(",")})"
+    fetchByFilter(query => query + filter)
   }
 
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
@@ -346,6 +366,16 @@ object OracleTrafficSignDao {
         }
       }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
+
+  def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
+    if (municipalities.nonEmpty) {
+      sqlu"""
+        update asset set valid_to = sysdate - 1/86400
+        where asset_type_id = ${TrafficSigns.typeId}
+        and created_by != 'batch_process_trafficSigns'
+        and municipality_code in (#${municipalities.mkString(",")})""".execute
     }
   }
 }

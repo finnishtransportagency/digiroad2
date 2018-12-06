@@ -21,6 +21,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
   def maintenanceDAO: OracleMaintenanceDao = new OracleMaintenanceDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
   val maintenanceRoadAssetTypeId: Int = 290
 
@@ -244,10 +245,13 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   /**
     * Returns Maintenance assets by asset type and asset ids.
     */
-  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
+  override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if(newTransaction)
+      withDynTransaction {
+        maintenanceDAO.fetchMaintenancesByIds(MaintenanceRoadAsset.typeId, ids)
+      }
+    else
       maintenanceDAO.fetchMaintenancesByIds(MaintenanceRoadAsset.typeId, ids)
-    }
   }
 
   def getPersistedAssetsByLinkIds(linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {

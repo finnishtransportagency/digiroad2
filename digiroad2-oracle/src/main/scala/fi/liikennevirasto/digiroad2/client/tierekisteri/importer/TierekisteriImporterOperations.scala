@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
+import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -28,7 +29,9 @@ trait TierekisteriImporterOperations {
   }
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-
+  lazy val userProvider: UserProvider = {
+    Class.forName(getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+  }
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
   lazy val roadAddressService : RoadAddressesService = new RoadAddressesService(viiteClient)
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }

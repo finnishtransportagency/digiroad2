@@ -127,6 +127,12 @@
       };
     });
 
+    this.getLightAssetsWithCallback = latestResponseRequestor(function(boundingBox, type) {
+      return {
+        url: 'api/pointassets/light?type=' + type + '&bbox=' + boundingBox
+      };
+    });
+
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return {
         url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
@@ -189,6 +195,18 @@
 
     this.getSpeedLimitErrors = function () {
       return $.getJSON('api/speedLimits/inaccurates');
+    };
+
+    this.getInaccurateAssets = function(typeId) {
+      return $.getJSON('api/inaccurates?typeId=' + typeId);
+    };
+
+    this.getInaccuratePointAssets = function() {
+      return $.getJSON('api/pedestrianCrossings/inaccurates');
+    };
+
+    this.getInaccurateManoeuvre = function () {
+      return $.getJSON('api/manoeuvre/inaccurates');
     };
 
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
@@ -438,7 +456,7 @@
     });
 
     this.getUnverifiedMunicipalities = function() {
-      return $.getJSON('api/municipalities/unverified');
+      return $.getJSON('api/municipalities/byUser');
     };
 
     this.getMunicipalitiesWithUnknowns = function(){
