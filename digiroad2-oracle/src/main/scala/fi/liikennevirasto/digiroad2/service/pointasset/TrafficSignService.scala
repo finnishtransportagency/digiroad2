@@ -217,6 +217,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
   private val groupingDistance = 2
+  private val additionalPanelDistance = 2
 
   private val additionalInfoTypeGroups =
     Set(
@@ -521,5 +522,43 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
     OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
+  }
+
+  def checkAdditionalPanels(additionalType: Int): Boolean = additionalType == 45
+
+  protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
+    sideCode match {
+      case SideCode.TowardsDigitizing => Seq(last)
+      case SideCode.AgainstDigitizing => Seq(first)
+      case _ => Seq(first, last)
+    }
+  }
+
+  def getAdditionalPanels(sign: PersistedTrafficSign) : Set[PersistedTrafficSign] = {
+    val signPoint = Point(sign.lon, sign.lat)
+    val nearAdditionalPanels = getTrafficSignByRadius(signPoint, additionalPanelDistance, Some(TrafficSignTypeGroup.AdditionalPanels))
+    val allowedAdditionalPanels = nearAdditionalPanels.filter(panel => checkAdditionalPanels(getTrafficSignsProperties(panel, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
+    val signRoadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId)
+    val (first, last) = GeometryUtils.geometryEndpoints(signRoadLink.get.geometry)
+
+    Seq(first, last).flatMap { point =>
+      val adjacentRoadLinks = roadLinkService.getAdjacent(sign.linkId, Seq(point))
+      val signDistance = if(GeometryUtils.areAdjacent(point, first)) sign.mValue else GeometryUtils.geometryLength(signRoadLink.get.geometry) - sign.mValue
+      if (adjacentRoadLinks.isEmpty || signDistance > additionalPanelDistance) {
+        allowedAdditionalPanels.filter{ additionalPanel =>
+          Math.abs(additionalPanel.mValue - sign.mValue) <= additionalPanelDistance &&
+            additionalPanel.validityDirection == sign.validityDirection &&
+            additionalPanel.linkId == sign.linkId
+        }
+      } else if (adjacentRoadLinks.size == 1) {
+        allowedAdditionalPanels.filter(additionalSign => additionalSign.validityDirection == sign.validityDirection && additionalSign.linkId == sign.linkId) ++
+          allowedAdditionalPanels.filter{ additionalSign =>
+            val (adjacentFirst, _) = GeometryUtils.geometryEndpoints(adjacentRoadLinks.head.geometry)
+            val additionalPanelDistance = if(GeometryUtils.areAdjacent(adjacentFirst, point)) additionalSign.mValue else GeometryUtils.geometryLength(adjacentRoadLinks.head.geometry) - additionalSign.mValue
+            additionalSign.validityDirection == sign.validityDirection && additionalSign.linkId == adjacentRoadLinks.head.linkId && (additionalPanelDistance + signDistance) <= 2
+          }
+      } else
+        Seq()
+    }.toSet
   }
 }
