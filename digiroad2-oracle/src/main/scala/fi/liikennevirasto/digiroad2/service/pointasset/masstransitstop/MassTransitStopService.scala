@@ -10,9 +10,10 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.WidthLimit
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, LocalDate}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
@@ -137,6 +138,9 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssets(queryFilter)
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] =  { throw new UnsupportedOperationException("Not Supported Method") }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = massTransitStopDao.fetchLightGeometry(queryFilter)
 

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirec
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
+import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -13,12 +13,18 @@ import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreProvider
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import slick.jdbc.StaticQuery.interpolation
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+
 
 class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   def toRoadLink(l: VVHRoadlink) = {
@@ -30,6 +36,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+  val trafficSignsTypeId = TrafficSigns.typeId
   val batchProcessName = "batch_process_trafficSigns"
   private val typePublicId = "trafficSigns_type"
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -465,6 +472,96 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Get Traffic Signs changes by type group") {
+    runWithRollback {
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("83"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
+      val properties1 = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("84"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign MovingBridge type, part of Warning Signs"))))
+      val properties2 = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("85"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign ConstructionWork type, part of Warning Signs"))))
+      val properties3 = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("24"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign Pedestrians type, part of Prohibitions And Restrictions Signs"))))
+
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075l), false)).thenReturn(
+        Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+      )
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val (id, id1, id2, id3) =
+        (service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 2, None), testUser.username, roadLink),
+          service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties1, 2, None), testUser.username, roadLink),
+          service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties2, 2, None), testUser.username, roadLink),
+          service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties3, 2, None), testUser.username, roadLink))
+
+      val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      changes.length should be(3)
+
+      service.expire(id)
+
+      val changesAfterExpire = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      changesAfterExpire.length should be(3)
+    }
+  }
+
+  test("Get only one Traffic Sign change"){
+    runWithRollback{
+      val properties = Set(
+        SimpleProperty("trafficSigns_type", List(PropertyValue("83"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
+
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
+
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId,0, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, 300153, 300144, timestamp '2016-12-17 19:01:13.000000', null)""".execute
+      Queries.updateAssetGeometry(11, Point(5, 0))
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 2, None), testUser.username, roadLink)
+
+      val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-12-31T12:00Z"))
+      changes.length should be(1)
+    }
+  }
+
+  test(" Traffic Sign get change does not return floating obstacles"){
+    runWithRollback {
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
+
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$trafficSignsTypeId, 1, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(11, 300153, 300144, timestamp '2016-12-17 19:01:13.000000', null)""".execute
+      Queries.updateAssetGeometry(11, Point(5, 0))
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$trafficSignsTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
+      sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, 300153, 300144, timestamp '2016-12-17 20:01:13.000000', null)""".execute
+      Queries.updateAssetGeometry(2, Point(5, 0))
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075l), false)).thenReturn(
+        Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+      )
+
+      val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      changes.length should be(0)
+    }
+  }
   test("Prevent the creations of duplicated signs") {
     runWithRollback {
       val originalTrafficSignId = service.createFromCoordinates(5, 4, TRTrafficSignType.NoPedestrians, None, Some(false), TrafficDirection.UnknownDirection, None, Some("Original Traffic Sign!"), vvHRoadlink2)

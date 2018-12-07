@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, InformationSource, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.ProhibitionClass._
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -239,6 +240,17 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
       Seq(newId1, newId2).flatten
     }
+  }
+
+
+  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+    val excludedTypes = Seq(PassageThrough, HorseRiding, SnowMobile, RecreationalVehicle, OversizedTransport)
+    val prohibitions = withDynTransaction {
+      dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust)
+    }
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(prohibitions.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    mapPersistedAssetChanges(prohibitions, roadLinks)
+
   }
 
 
