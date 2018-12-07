@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{AnimalWarningsType, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
@@ -1536,10 +1536,10 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testAnimalWarnings.importAssets()
-      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testAnimalWarnings.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
+      val asset = dynamicDao.fetchDynamicLinearAssetsByLinkIds(testAnimalWarnings.typeId, Seq(5001)).head
 
       asset.linkId should be (5001)
-      asset.value should be (Some(NumericValue(1)))
+      asset.value should not be empty
     }
   }
 
