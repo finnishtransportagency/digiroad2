@@ -45,27 +45,30 @@
 
     this.getGroup = function(signTypes){
       var mainSignTypes = _.filter(_.head(signTypes), function(x){ return !_.includes(additionalValues.additionalPanels.values, parseInt(x.propertyValue));});
-      return propertyHandler(mainSignTypes);
+      return propertyHandler(mainSignTypes, trafficSignValues);
     };
 
     this.getAdditionalPanels = function(signTypes){
         var additionalPanels = _.filter(_.head(signTypes), function(x){ return _.includes(additionalValues.additionalPanels.values, parseInt(x.propertyValue));});
-        return propertyHandler(additionalPanels);
+        return propertyHandler(additionalPanels, additionalValues);
     };
 
-    var propertyHandler = function (values) {
-        return  _.groupBy(
-            _.map(values, function(signType) {
-                return _.find(_.map(trafficSignValues, function(trafficSignGroup, trafficSignGroupName){
-                    return {
-                        label: trafficSignGroup.groupName,
-                        types: trafficSignGroup.values,
-                        groupName: trafficSignGroupName,
-                        propertyValue: signType.propertyValue,
-                        propertyDisplayValue: signType.propertyDisplayValue };
-                    }), function(groups) {
-                    return _.some(groups.types, function(group){ return group == signType.propertyValue;  }); }); }), function(groups) {
-                 return groups.label;  });
+    var propertyHandler = function (values, signValues) {
+      return  _.groupBy(
+        _.map(values, function(signType) {
+          return _.find(_.map(signValues, function(trafficSignGroup, trafficSignGroupName){
+            return {
+              label: trafficSignGroup.groupName,
+              types: trafficSignGroup.values,
+              groupName: trafficSignGroupName,
+              propertyValue: signType.propertyValue,
+              propertyDisplayValue: signType.propertyDisplayValue };
+            }), function(groups) {
+            return _.some(groups.types, function(group){ return group == signType.propertyValue;  });
+          });
+        }), function(groups) {
+          return groups.label;
+        });
     };
 
     var filterTrafficSigns = function (asset) {
