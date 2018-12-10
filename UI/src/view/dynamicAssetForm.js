@@ -204,7 +204,7 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
-      var unitClass = _.isUndefined(unit) ? '' : ' unit';
+            var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
             me.element =   $('' +
                 '<div class="form-group">' +

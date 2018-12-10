@@ -28,7 +28,6 @@ class TierekisteriWeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, 
     val trBogieWeightValue = convertToInt(getFieldValue(data, trBogieWeight))
     val trThreeBogieWeightValue = convertToInt(getFieldValue(data, trThreeBogieWeight))
 
-
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
@@ -37,5 +36,5 @@ class TierekisteriWeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, 
 
     Some(TierekisteriWeightLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue,
       trTotalWeightValue, trTrailerTruckWeightValue, trAxleWeightValue, trBogieWeightValue, trThreeBogieWeightValue))
-  }
+     }
 }

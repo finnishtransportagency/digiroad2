@@ -186,11 +186,11 @@ trait TierekisteriImporterOperations {
     }
   }
 
-  def getAssetTypeId() = {
+  def getAssetTypeId : Int = {
     typeId
   }
 
-  def getAssetName() = {
+  def getAssetName : String = {
     assetName
   }
 

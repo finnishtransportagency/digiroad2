@@ -2,9 +2,9 @@ package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, _}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriWeightLimitAssetClient, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient,VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
@@ -22,6 +22,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockTierekisteriAssetDataClient: TierekisteriAssetDataClient = MockitoSugar.mock[TierekisteriAssetDataClient]
+  val mockTierekisteriWeightLimitAssetClient: TierekisteriWeightLimitAssetClient = MockitoSugar.mock[TierekisteriWeightLimitAssetClient]
 
   class TestTierekisteriPointConversionImporter1 extends TierekisteriPointConversionImporter {
     override def typeId: Int = 999
@@ -51,9 +52,26 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
     override val allowedVerticalLevel : Seq[Int] = { Seq(1, 2, 3, 4)}
   }
+//
+//  class TestWeightConversionTierekisteriImporter extends WeightConversionTierekisteriImporter {
+//    override def typeId: Int = 999
+//    override def withDynSession[T](f: => T): T = f
+//    override def withDynTransaction[T](f: => T): T = f
+//    override def assetName: String = "assetTest"
+//    override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
+//    override lazy val assetDao: OracleAssetDao = mockAssetDao
+//    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+//    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+//    override val tierekisteriClient: TierekisteriWeightLimitAssetClient = mockTierekisteriWeightLimitAssetClient
+//    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+//    override lazy val vvhClient: VVHClient = mockVVHClient
+//  }
 
-  case class TierekisteriWeightLimitDataTest(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Long,
-                                          totalWeight: Option[Int], trailerTruckWeight: Option[Int], axleWeight: Option[Int], bogieWeight: Option[Int], threeBogieWeight: Option[Int])  extends TierekisteriAssetData
+//  class TestTotalWeightLimitImporter extends TotalWeightLimitImporter {
+//
+//  }
+
+  case class TierekisteriDataTest(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Long)  extends TierekisteriAssetData
 
 
   test("create linear using point main method") {
@@ -65,7 +83,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val endAddressMValue: Int = 3400
     val track: Track = Track.RightSide
 
-    val trAssetData = TierekisteriWeightLimitDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, startAddressMValue, startAddressMValue , None, None, Some(1000), None, None)
+    val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, startAddressMValue, startAddressMValue)
     val section = AddressSection(roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(0,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("VERTICALLEVEL" -> 1))
     val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
@@ -90,7 +108,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val endAddressMValue: Int = 3400
     val track: Track = Track.RightSide
 
-    val trAssetData = TierekisteriWeightLimitDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, startAddressMValue, startAddressMValue , None, None, Some(1000), None, None)
+    val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, startAddressMValue, startAddressMValue)
     val section = AddressSection(roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(0,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
@@ -118,7 +136,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val endAddressMValue: Int = 3194
     val track: Track = Track.RightSide
 
-    val trAssetData = TierekisteriWeightLimitDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 2, 2 , None, None, Some(1000), None, None)
+    val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 2, 2)
     val section = AddressSection(roadNumber, startRoadPartNumber, track, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(5,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, track, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
@@ -148,7 +166,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val endAddressMValue: Int = 3194
     val track: Track = Track.RightSide
 
-    val trAssetData = TierekisteriWeightLimitDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 1, 1 , None, None, Some(1000), None, None)
+    val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 1, 1)
     val section = AddressSection(roadNumber, startRoadPartNumber, track, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(0,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, track, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
@@ -162,4 +180,19 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
     tierekisteriPointConversionImporter.getCreatedValues.size should be (0)
   }
+//
+//  test("get totalWeight Limit value") {
+//    val tierekisteriPointConversionImporter = new TestTotalWeightLimitImporter()
+//    val roadNumber: Int = 4
+//    val startRoadPartNumber: Int = 203
+//    val startAddressMValue: Int = 3184
+//    val endAddressMValue: Int = 3194
+//    val track: Track = Track.RightSide
+//
+//    val trAssetData = TierekisteriWeightLimitData(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 1, 1 , Some(1000), None, None, None, None)
+//
+//    val trValue = tierekisteriPointConversionImporter.getValue(trAssetData)
+//
+//    trValue should be (1000)
+//  }
 }

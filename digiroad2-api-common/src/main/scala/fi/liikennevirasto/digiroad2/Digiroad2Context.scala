@@ -3,13 +3,11 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorSystem, Props}
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{trailerTruckWeightLimitValidator, getClass}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePointMassLimitationDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -374,7 +372,7 @@ object Digiroad2Context {
   }
 
   lazy val linearMassLimitationService: LinearMassLimitationService = {
-    new LinearMassLimitationService(roadLinkService, new MassLimitationDao)
+    new LinearMassLimitationService(roadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {

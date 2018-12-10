@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetDataClient, TierekisteriHeightLimitAssetClient, TierekisteriWeightLimitAssetClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetDataClient, TierekisteriHeightLimitAssetClient, TierekisteriWeightLimitAssetClient, TierekisteriWeightLimitData}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -69,7 +69,10 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
         var distance = if (GeometryUtils.areAdjacent(point, first)) mValue else GeometryUtils.geometryLength(roadLink.geometry) - mValue
         findRelevantRoadLink((point, roadLink), mappedRoadLinks, distance)
       }
-      if(resultRoadLink.nonEmpty) Some(resultRoadLink.minBy(_._2)._1) else None
+      if(resultRoadLink.nonEmpty) Some(resultRoadLink.minBy(_._2)._1) else {
+        println(s"Cannot find RoadLink with requested conditions ${ra.roadNumber} ${ra.roadPartNumber} ${ra.endAddrMValue}")
+        None
+      }
     }
   }
 
@@ -103,6 +106,7 @@ trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionIm
     HttpClientBuilder.create().build())
 
   override val allowedVerticalLevel: Seq[Int] = Seq(1,2,3,4)
+  override type TierekisteriAssetData <: TierekisteriWeightLimitData
 
   def getValue(trAssetData: TierekisteriAssetData): Option[Int] = None
 
@@ -111,7 +115,7 @@ trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionIm
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.europeanRoadPropertyId, value)
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, value)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
@@ -123,7 +127,10 @@ class TotalWeightLimitImporter extends WeightConversionTierekisteriImporter {
   override def assetName : String = TotalWeightLimit.label
 
   override def getValue(trAssetData: TierekisteriAssetData): Option[Int] = {
-    trAssetData.totalWeight
+    trAssetData.totalWeight match {
+      case Some(value) => Some(value*1000)
+      case _ => None
+    }
   }
 }
 
@@ -133,7 +140,10 @@ class AxleWeightLimitImporter extends WeightConversionTierekisteriImporter {
   override def assetName : String = AxleWeightLimit.label
 
   override def getValue(trAssetData: TierekisteriAssetData): Option[Int] = {
-    trAssetData.axleWeight
+    trAssetData.axleWeight match {
+      case Some(value) => Some(value*1000)
+      case _ => None
+    }
   }
 }
 
@@ -143,7 +153,10 @@ class TruckWeightLimitImporter extends WeightConversionTierekisteriImporter {
   override def assetName : String = TrailerTruckWeightLimit.label
 
   override def getValue(trAssetData: TierekisteriAssetData): Option[Int] = {
-    trAssetData.trailerTruckWeight
+    trAssetData.trailerTruckWeight match {
+      case Some(value) => Some(value*1000)
+      case _ => None
+    }
   }
 }
 
@@ -156,16 +169,16 @@ class BogieWeightLimitImporter  extends WeightConversionTierekisteriImporter {
   override def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val properties: Seq[DynamicProperty] =
       Seq(trAssetData.bogieWeight.map { twoAxelValue =>
-        DynamicProperty("bogie_weight_2_axel", "number", false, Seq(DynamicPropertyValue(twoAxelValue)))
+        DynamicProperty("bogie_weight_2_axel", "number", false, Seq(DynamicPropertyValue(twoAxelValue*1000)))
       }, trAssetData.threeBogieWeight.map { threeAxelValue =>
-        DynamicProperty("bogie_weight_3_axel", "number", false, Seq(DynamicPropertyValue(threeAxelValue)))
+        DynamicProperty("bogie_weight_3_axel", "number", false, Seq(DynamicPropertyValue(threeAxelValue*1000)))
       }).flatten
 
     if (properties.nonEmpty) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-      dynamicLinearAssetService.dynamicLinearAssetDao.updateAssetProperties(typeId, properties)
+      dynamicLinearAssetService.dynamicLinearAssetDao.updateAssetProperties(assetId, properties)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
@@ -186,7 +199,7 @@ class HeightLimitImporter extends TierekisteriPointConversionImporter {
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.europeanRoadPropertyId, trAssetData.height )
+    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.height )
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
 }
