@@ -211,8 +211,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   val typePublicId = "trafficSigns_type"
-  private val valuePublicId = "trafficSigns_value"
-  private val infoPublicId = "trafficSigns_info"
+  val valuePublicId = "trafficSigns_value"
+  val infoPublicId = "trafficSigns_info"
+  val additionalPublicId = "additional_panel"
   private val counterPublicId = "counter"
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
@@ -449,7 +450,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup] = None): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
-      case Some(groupType) => assets.filter(asset => TrafficSignTypeGroup.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt) == groupType)
+      case Some(groupType) => assets.filter(asset => TrafficSignType.apply(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == groupType)
       case _ => assets
     }
   }
@@ -524,7 +525,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 
-  def checkAdditionalPanels(additionalType: Int): Boolean = additionalType == 45
+  def checkAdditionalPanels(signType: Int, additionalType: Int): Boolean = signType match {
+    case 20 => Seq(47, 49).contains(additionalType)
+    case _ => false
+  }
 
   protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
     sideCode match {
@@ -537,12 +541,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getAdditionalPanels(sign: PersistedTrafficSign) : Set[PersistedTrafficSign] = {
     val signPoint = Point(sign.lon, sign.lat)
     val nearAdditionalPanels = getTrafficSignByRadius(signPoint, additionalPanelDistance, Some(TrafficSignTypeGroup.AdditionalPanels))
-    val allowedAdditionalPanels = nearAdditionalPanels.filter(panel => checkAdditionalPanels(getTrafficSignsProperties(panel, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
-    val signRoadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId)
+    val allowedAdditionalPanels = nearAdditionalPanels.filter(panel => checkAdditionalPanels(getTrafficSignsProperties(sign, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt, getTrafficSignsProperties(panel, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
+    val signRoadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false)
     val (first, last) = GeometryUtils.geometryEndpoints(signRoadLink.get.geometry)
 
     Seq(first, last).flatMap { point =>
-      val adjacentRoadLinks = roadLinkService.getAdjacent(sign.linkId, Seq(point))
+      val adjacentRoadLinks = roadLinkService.getAdjacent(sign.linkId, Seq(point), false)
       val signDistance = if(GeometryUtils.areAdjacent(point, first)) sign.mValue else GeometryUtils.geometryLength(signRoadLink.get.geometry) - sign.mValue
       if (adjacentRoadLinks.isEmpty || signDistance > additionalPanelDistance) {
         allowedAdditionalPanels.filter{ additionalPanel =>

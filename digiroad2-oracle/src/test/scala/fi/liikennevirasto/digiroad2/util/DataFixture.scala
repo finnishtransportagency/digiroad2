@@ -10,14 +10,14 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -27,6 +27,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import slick.jdbc.{StaticQuery => Q}
+import scala.collection.mutable.ListBuffer
 
 
 object DataFixture {
@@ -1442,6 +1443,60 @@ object DataFixture {
     }
   }
 
+  def mergeAdditionalPanelsToTrafficSigns(): Unit = {
+    val errorLogBuffer: ListBuffer[String] = ListBuffer()
+
+    println("\nMerging additional panels to nearest traffic signs")
+    println(DateTime.now())
+
+    //Get all municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession{
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("")
+      println(s"Fetching Traffic Signs for Municipality: $municipality")
+
+      val existingAssets = trafficSignService.getByMunicipality(municipality)
+      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+
+      println("")
+      println(s"Number of existing assets: ${filteredAssets.length}")
+      println("")
+
+      filteredAssets.foreach { sign =>
+        println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
+        OracleDatabase.withDynSession {
+          val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign)
+          val orderedAdditionalPanels = additionalPanelsInRadius.toSeq.sortBy(_.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt)
+
+          if (orderedAdditionalPanels.size <= 3 && orderedAdditionalPanels.nonEmpty) {
+            val additionalPanels = orderedAdditionalPanels.zipWithIndex.map { case (panel, index) =>
+              AdditionalPanel(trafficSignService.getTrafficSignsProperties(panel, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
+                trafficSignService.getTrafficSignsProperties(panel, trafficSignService.infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+                trafficSignService.getTrafficSignsProperties(panel, trafficSignService.valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+                index)
+            }
+
+            val simpleTrafficSignProperties = SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanels)
+            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, Set(simpleTrafficSignProperties), sign.validityDirection, sign.bearing)
+
+            val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false).get
+            trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
+            orderedAdditionalPanels.foreach(additional => trafficSignService.expireAssetWithoutTransaction(additional.id, "batch_process_panel_merge"))
+          } else {
+            errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${orderedAdditionalPanels.size}"
+          }
+        }
+      }
+      println("")
+      errorLogBuffer.foreach(println)
+      println("Complete at time: " + DateTime.now())
+    }
+  }
+
   def removeExistingTrafficSignsDuplicates(): Unit = {
     println("\nStarting removing of traffic signs duplicates")
     println(DateTime.now())
@@ -1585,6 +1640,8 @@ object DataFixture {
         createManoeuvresUsingTrafficSigns()
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
+      case Some("merge_additional_panels_to_trafficSigns") =>
+        mergeAdditionalPanelsToTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1595,7 +1652,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs")
+        " create_manoeuvres_using_traffic_signs | merge_additional_panels_to_trafficSigns")
     }
   }
 }

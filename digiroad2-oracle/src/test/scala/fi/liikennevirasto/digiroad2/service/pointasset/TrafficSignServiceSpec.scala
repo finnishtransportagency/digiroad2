@@ -326,7 +326,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val propertiesSpeedLimit = properties80
 
       val propertiesMaximumRestrictions= Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("3"))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("8"))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("10"))))
 
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 50.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
