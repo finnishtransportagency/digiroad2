@@ -34,7 +34,12 @@ class TierekisteriWeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, 
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    Some(TierekisteriWeightLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue,
-      trTotalWeightValue, trTrailerTruckWeightValue, trAxleWeightValue, trBogieWeightValue, trThreeBogieWeightValue))
-     }
+    (trTotalWeightValue, trTrailerTruckWeightValue, trAxleWeightValue, trBogieWeightValue, trThreeBogieWeightValue) match {
+      case (None, None, None, None, None) => None
+      case _ =>
+
+        Some(TierekisteriWeightLimitData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue,
+        trTotalWeightValue, trTrailerTruckWeightValue, trAxleWeightValue, trBogieWeightValue, trThreeBogieWeightValue))
+    }
+  }
 }

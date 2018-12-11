@@ -59,12 +59,13 @@
 
         me.viewModeRender = function (field, propertyValues) {
             var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
-            var _value = value ? value.value : '-';
+            var unit = field.unit ? ' ' + field.unit : '';
+            var _value = value ? value.value + unit: '-';
 
             return $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <p class="form-control-static">' + _value + '</p>' +
+                '   <p class="form-control-static">' + _value  + '</p>' +
                 '</div>'
             );
         };
@@ -138,7 +139,7 @@
         var className = assetTypeConfiguration.className;
 
         me.hasValidValue = function() {
-            return /^\d+$/.test(me.element.find('input').val());
+            return /^(\d+\.)?\d+$/.test(me.element.find('input').val());
         };
 
         me.isValid = function(){
@@ -843,7 +844,7 @@
         function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
             var sideCodeClass = generateClassName(sideCode);
 
-            var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
+            var unit = asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
                 '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
@@ -881,15 +882,17 @@
                 input.prop('disabled', disabled);
 
                 if(disabled){
+                  forms.removeFields(sideCode);
                   removeValueFn();
                   _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
-                  if(asset.value)
-                    setValueFn(asset.value);
-                  else
-                    setValueFn({ properties: [] });
-                }
-                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  if(asset.value) {
+                      setValueFn(asset.value);
+                      formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  }else {
+                      setValueFn({properties: []});
+                      formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  }}
                 eventbus.trigger("radio-trigger-dirty");
             });
 
@@ -974,6 +977,9 @@
             //When both are deleted
             if(_.isEmpty(forms.getAllFields()))
                 return false;
+
+            if(_.isEmpty(forms.getFields('a')) || _.isEmpty(forms.getFields('b')))
+                return true;
 
       return _.some(forms.getFields('a'), function(fieldA){
         var propertyValueA = fieldA.getPropertyValue();

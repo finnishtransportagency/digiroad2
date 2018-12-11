@@ -156,8 +156,8 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
         fields: [
-            {label: "2-akselisen telin rajoitus", type: 'number', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
-            {label: "3-akselisen telin rajoitus", type: 'number', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2}
+            {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
+            {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2}
           ]
         })
       },

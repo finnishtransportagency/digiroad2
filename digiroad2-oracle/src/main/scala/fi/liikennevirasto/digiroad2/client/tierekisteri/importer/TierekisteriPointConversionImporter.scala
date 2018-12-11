@@ -85,15 +85,12 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
 
     roadAddressLink
       .foreach { case (ra, roadLink) =>
-        val measures = Measures(0, GeometryUtils.geometryLength(roadLink.get.geometry))
-        if (measures.endMeasure - measures.startMeasure > 0.01)
-
           if (checkVerticalLevel(roadLink.get))
-            createLinearAsset(roadLink.get, ra, section, measures, trAssetData)
+            createLinearAsset(roadLink.get, ra, section, Measures(0, roadLink.get.length), trAssetData)
           else {
             val nearestRoadLink = findNearesRoadLink(ra, section, roadLink.get, mappedRoadLinks)
             if (nearestRoadLink.nonEmpty)
-              createLinearAsset(nearestRoadLink.get, ra, section, measures, trAssetData)
+              createLinearAsset(nearestRoadLink.get, ra, section, Measures(0, nearestRoadLink.get.length), trAssetData)
           }
       }
   }
@@ -169,9 +166,9 @@ class BogieWeightLimitImporter  extends WeightConversionTierekisteriImporter {
   override def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val properties: Seq[DynamicProperty] =
       Seq(trAssetData.bogieWeight.map { twoAxelValue =>
-        DynamicProperty("bogie_weight_2_axel", "number", false, Seq(DynamicPropertyValue(twoAxelValue*1000)))
+        DynamicProperty("bogie_weight_2_axel", "integer", false, Seq(DynamicPropertyValue(twoAxelValue*1000)))
       }, trAssetData.threeBogieWeight.map { threeAxelValue =>
-        DynamicProperty("bogie_weight_3_axel", "number", false, Seq(DynamicPropertyValue(threeAxelValue*1000)))
+        DynamicProperty("bogie_weight_3_axel", "integer", false, Seq(DynamicPropertyValue(threeAxelValue*1000)))
       }).flatten
 
     if (properties.nonEmpty) {
