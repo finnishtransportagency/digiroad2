@@ -1455,7 +1455,7 @@ object DataFixture {
         Queries.getMunicipalities
       }
 
-    municipalities.foreach { municipality =>
+    val additionalPanelToExpire : Seq[PersistedTrafficSign] = municipalities.flatMap { municipality =>
       println("")
       println(s"Fetching Traffic Signs for Municipality: $municipality")
 
@@ -1466,7 +1466,7 @@ object DataFixture {
       println(s"Number of existing assets: ${filteredAssets.length}")
       println("")
 
-      filteredAssets.foreach { sign =>
+      filteredAssets.flatMap { sign =>
         println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
         OracleDatabase.withDynSession {
           val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign)
@@ -1485,16 +1485,19 @@ object DataFixture {
 
             val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false).get
             trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
-            orderedAdditionalPanels.foreach(additional => trafficSignService.expireAssetWithoutTransaction(additional.id, "batch_process_panel_merge"))
+            orderedAdditionalPanels
           } else {
             errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${orderedAdditionalPanels.size}"
+            Seq()
           }
         }
       }
-      println("")
-      errorLogBuffer.foreach(println)
-      println("Complete at time: " + DateTime.now())
     }
+    additionalPanelToExpire.foreach(additional => trafficSignService.expireAssetWithoutTransaction(additional.id, "batch_process_panel_merge"))
+
+    println("")
+    errorLogBuffer.foreach(println)
+    println("Complete at time: " + DateTime.now())
   }
 
   def removeExistingTrafficSignsDuplicates(): Unit = {
