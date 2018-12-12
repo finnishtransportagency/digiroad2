@@ -227,8 +227,8 @@ object NumericalLimitFiller {
         }
       }
 
-      if (segmentPieces.size < 2)
-        return segmentPieces
+//      if (segmentPieces.size < 2)
+//        return segmentPieces
 
       val seg1 = segmentPieces.head
       val seg2 = segmentPieces.last
