@@ -39,10 +39,13 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
 
   val assets = assetsTotalWeightLimits ++ assetsTrailerTruckWeightLimits
   val assets1 = assetsTrailerTruckWeightLimits1 ++ assetsAxleWeightLimits1
-  val assets2 = assetsTotalWeightLimits2 ++ assetsAxleWeightLimits2 ++ assetsBogieWeightLimits2
+  val assets2 = assetsTotalWeightLimits2 ++ assetsAxleWeightLimits2
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1000), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets)
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1001), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets1)
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1002), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets2)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1000))).thenReturn(Seq())
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001))).thenReturn(Seq())
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1002))).thenReturn(assetsBogieWeightLimits2)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("get assets with BothDirection split in TowardsDigitizing and AgainstDigitizing") {
