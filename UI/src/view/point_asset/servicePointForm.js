@@ -214,7 +214,7 @@
         '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
         '</div><div>' +
         '    <label class="control-label">Viranomaisdataa</label>' +
-        '    <p class="form-control-readOnly">'+ (isAuthorityData(service.serviceType) ?  'Kyllä' : 'Ei') +'</p>' +
+        '    <p class="form-control-readOnly">'+ (service.isAuthorityData ?  'Kyllä' : 'Ei') +'</p>' +
         '</div><div>' +
         (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
         '</div></div>' +
