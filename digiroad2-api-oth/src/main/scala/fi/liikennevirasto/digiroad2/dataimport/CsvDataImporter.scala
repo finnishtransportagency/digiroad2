@@ -10,18 +10,15 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 
 import scala.util.Try
-
-
 
 class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 
@@ -110,7 +107,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   }
 
   private def verifyValueCode(parameterName: String, parameterValue: String): ParsedAssetRow = {
-    if(parameterValue.forall(_.isDigit) && TRTrafficSignType.apply(parameterValue.toInt).source.contains("CSVimport")){
+    if(parameterValue.forall(_.isDigit) && TrafficSignType.applyTRValue(parameterValue.toInt).source.contains("CSVimport")){
       (Nil, List(AssetProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
     }else{
       (List(parameterName), Nil)
@@ -170,7 +167,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val lat = getPropertyValue(trafficSignAttributes, "lat").asInstanceOf[BigDecimal].toLong
     val additionalInfo = Some(getPropertyValue(trafficSignAttributes, "additionalInfo").toString)
 
-    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, Some(twoSided),
+    trafficSignService.createFromCoordinates(lon, lat, TrafficSignType.applyTRValue(trafficSignType), value, Some(twoSided),
       TrafficDirection.apply(trafficDirection), bearing, additionalInfo, roadLinks)
   }
 

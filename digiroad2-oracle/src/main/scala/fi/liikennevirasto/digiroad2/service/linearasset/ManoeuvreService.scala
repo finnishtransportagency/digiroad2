@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -319,19 +318,19 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
-      val tsType = TrafficSignType(prop.asInstanceOf[TextPropertyValue].propertyValue.toInt)
+      val tsType = TrafficSignType.applyOTHValue(prop.asInstanceOf[TextPropertyValue].propertyValue.toInt)
 
       tsType match {
 
-        case TrafficSignType.NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+        case NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
 
-        case TrafficSignType.NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
+        case NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
 
-        case TrafficSignType.NoUTurn => {
+        case NoUTurn =>
           val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
           val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint))
           (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
-        }
+
         case _ => Seq.empty[RoadLink]
       }
     }.getOrElse(Seq.empty[RoadLink])

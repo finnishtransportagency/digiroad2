@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
 import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
@@ -583,7 +582,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
           "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse("")),
-          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)),
+          "type" -> TrafficSignType.applyTRValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt),
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
           "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse("")),
           "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllTrafficSignsProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
@@ -594,7 +593,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
     panels.map{panel =>
       Map(
-        "type" -> TRTrafficSignType.apply(TrafficSignType.apply(panel.panelType)),
+        "type" -> TrafficSignType.applyTRValue(panel.panelType),
         "value" -> panel.panelValue,
         "information" -> panel.panelInfo
       )

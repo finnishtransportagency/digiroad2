@@ -6,8 +6,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, TrafficSignType}
 
 trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperations {
 
@@ -74,7 +73,7 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
 
               val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
               val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)

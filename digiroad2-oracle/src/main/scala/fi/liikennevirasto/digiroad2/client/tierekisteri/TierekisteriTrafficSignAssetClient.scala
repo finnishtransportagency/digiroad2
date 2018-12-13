@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri
 
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType.{SpeedLimit, SpeedLimitZone, UrbanArea}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup
+
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import org.apache.http.impl.client.CloseableHttpClient
 
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
+                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TrafficSignType, assetValue: String) extends TierekisteriAssetData
 
 class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
   override def tierekisteriRestApiEndPoint: String = trEndPoint
@@ -38,7 +38,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
       case _ =>
         convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
     }
-    Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
+    Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
   }
 }
 class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
@@ -49,7 +49,7 @@ class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Bool
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
 
     //Check if the traffic sign is in SpeedLimits group
-    if (TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.SpeedLimits) {
+    if (TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits) {
       val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
@@ -58,10 +58,10 @@ class TierekisteriTrafficSignSpeedLimitClient(trEndPoint: String, trEnable: Bool
       val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse(getFieldValue(data, trNOPRA506).getOrElse("")).trim
 
       getFieldValue(data, trLIIKVAST) match {
-        case Some(sideInfo) if sideInfo == wrongSideOfTheRoad && Seq(SpeedLimit, SpeedLimitZone, UrbanArea).contains(TRTrafficSignType.apply(assetNumber)) =>
+        case Some(sideInfo) if sideInfo == wrongSideOfTheRoad && Seq(SpeedLimitSign, SpeedLimitZone, UrbanArea).contains(TrafficSignType.applyTRValue(assetNumber)) =>
           None
         case _ =>
-          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue))
+          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
       }
     }else
       None

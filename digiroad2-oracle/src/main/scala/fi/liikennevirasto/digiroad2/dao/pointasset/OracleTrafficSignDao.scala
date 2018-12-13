@@ -3,12 +3,12 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point, TrafficSignType}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -86,7 +86,7 @@ object OracleTrafficSignDao {
   }
 
   def fetchEnumeratedValueIds( tsType: Seq[TrafficSignType]): Seq[Long] = {
-    val values = tsType.map(_.value)
+    val values = tsType.map(_.OTHvalue)
 
     sql"""select distinct ev.id from PROPERTY p
                 join ENUMERATED_VALUE ev on ev.property_id = p.id

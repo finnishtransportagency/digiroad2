@@ -10,10 +10,9 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.inaccurateAssetDAO
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 
 case class Inaccurate(assetId: Option[Long], linkId: Option[Long], municipalityCode: Int,  administrativeClass: AdministrativeClass)
@@ -178,7 +177,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
       municipality =>
         println(s"Start process for municipality $municipality")
         val trafficSigns = trafficSignService.getByMunicipalityExcludeByAdminClass(municipality, Private).filterNot(_.floating)
-          .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
+          .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
         splitBothDirectionTrafficSignInTwo(trafficSigns).foreach {
           trafficSign =>
             println(s"Validating assets for traffic sign with id: ${trafficSign.id} on linkId: ${trafficSign.linkId}")
@@ -200,7 +199,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     }
   }
 
-  protected def validateAndInsert(trafficSign: PersistedTrafficSign) = {
+  protected def validateAndInsert(trafficSign: PersistedTrafficSign) : Unit = {
     assetValidator(trafficSign).foreach {
       inaccurate =>
         (inaccurate.assetId, inaccurate.linkId) match {

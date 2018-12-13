@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.text.SimpleDateFormat
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, SpeedLimitSign, TelematicSpeedLimit}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
@@ -938,7 +938,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 500
     val starAddress = 0
     val endAddress = 500
-    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"))
+    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, SpeedLimitSign, "80"))
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Right)
@@ -968,8 +968,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val starAddress = 0
     val endAddress = 500
     val trAssets = Seq(
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"),
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 70, 70, RoadSide.Right, TRTrafficSignType.SpeedLimit, "90")
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, SpeedLimitSign, "80"),
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 70, 70, RoadSide.Right, SpeedLimitSign, "90")
     )
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
@@ -1006,7 +1006,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 500
     val starAddress = 0
     val endAddress = 500
-    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"))
+    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, SpeedLimitSign, "80"))
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Left)
@@ -1036,8 +1036,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val starAddress = 0
     val endAddress = 500
     val trAssets = Seq(
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"),
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 70, 70, RoadSide.Left, TRTrafficSignType.SpeedLimit, "90")
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, SpeedLimitSign, "80"),
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 70, 70, RoadSide.Left, SpeedLimitSign, "90")
     )
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
@@ -1332,7 +1332,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       VVHRoadlink(5002, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
 
       val startMValue = 118
-      val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TRTrafficSignType.TelematicSpeedLimit,""))
+      val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TelematicSpeedLimit,""))
       val mappedLinkType: Map[Long, Seq[(Long, LinkType)]] = Map((5001L, Seq((5001L, Motorway))))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(ras)

@@ -1,14 +1,14 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficSignAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider, ManoeuvreService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -33,8 +33,8 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels)
 
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
-    val trafficType = trAssetData.assetType.trafficSignType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
+    val trafficType = trAssetData.assetType
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.OTHvalue.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
       case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
       case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
@@ -45,7 +45,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   protected override def getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime) = {
     println("\nFetch " + assetName + " History by Road Number " + roadNumber)
-    val trAsset = tierekisteriClient.fetchHistoryAssetData(roadNumber, Some(lastExecution)).filter(_.assetType != TRTrafficSignType.Unknown)
+    val trAsset = tierekisteriClient.fetchHistoryAssetData(roadNumber, Some(lastExecution)).filter(_.assetType != TrafficSignType.Unknown)
 
     trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
     trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
@@ -53,7 +53,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   protected override def getAllTierekisteriAddressSections(roadNumber: Long) = {
     println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
-    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber).filter(_.assetType != TRTrafficSignType.Unknown)
+    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber).filter(_.assetType != Unknown)
 
     trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
     trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
@@ -61,14 +61,15 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   protected override def getAllTierekisteriAddressSections(roadNumber: Long, roadPart: Long): Seq[(AddressSection, TierekisteriAssetData)] = {
     println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
-    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart).filter(_.assetType != TRTrafficSignType.Unknown)
+    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart).filter(_.assetType != TrafficSignType.Unknown)
 
     trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
     trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
   }
 
   protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
-    if(TRTrafficSignType.apply(trAssetData.assetType.value).source.contains("TRimport"))
+    //TODO this filter could remove and only exclude the Telematic
+//    if(TrafficSignType.applyTRValue(trAssetData.assetType.TRvalue).source.contains("TRimport"))
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),

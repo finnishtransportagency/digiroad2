@@ -3,13 +3,12 @@ package fi.liikennevirasto.digiroad2.process
 import java.sql.SQLIntegrityConstraintViolationException
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{ElementTypes, Manoeuvre, ManoeuvreTurnRestrictionType}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 
 import scala.math.Pi
 
@@ -21,7 +20,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
   lazy val manoeuvreDao: ManoeuvreDao = new ManoeuvreDao(vvhClient)
 
-  val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.NoLeftTurn, TrafficSignType.NoRightTurn, TrafficSignType.NoUTurn)
+  val allowedTrafficSign: Set[TrafficSignType] = Set(NoLeftTurn, NoRightTurn, NoUTurn)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -42,14 +41,14 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
         val manoeuvreTurnRestrictionType = getManoeuvreTurnRestrictionType(manoeuvre, roadLinks)
 
         val manoeuvreLinkId = manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)
-        TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
-          case TrafficSignType.NoLeftTurn =>
+        TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
+          case NoLeftTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.LeftTurn)
               Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
-          case TrafficSignType.NoRightTurn =>
+          case NoRightTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.RightTurn)
               Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
-          case TrafficSignType.NoUTurn =>
+          case NoUTurn =>
             if (manoeuvreTurnRestrictionType != ManoeuvreTurnRestrictionType.UTurn)
               Seq(Inaccurate(None, manoeuvreLinkId, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
           case _ => throw new NumberFormatException("Not supported trafficSign on Manoeuvres asset")
@@ -62,10 +61,10 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
     if(adjacentInfo.size == 1) {
       adjacentInfo
     } else
-    TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
-      case TrafficSignType.NoLeftTurn | TrafficSignType.NoUTurn =>
+    TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
+      case NoLeftTurn | NoUTurn =>
         adjacentInfo.filter(_._1 == roadLinkService.pickLeftMost(previousInfo._2, adjacentInfo.map(_._1)))
-      case TrafficSignType.NoRightTurn =>
+      case NoRightTurn =>
         adjacentInfo.filter(_._1 == roadLinkService.pickRightMost(previousInfo._2, adjacentInfo.map(_._1)))
       case _ => Seq()
     }
@@ -151,7 +150,7 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
           val trafficSigns =
             splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(pointOfInterest, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(sourceLinkId)))
-              .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
+              .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
               .filterNot(_.floating)
 
           inaccurateAssetDAO.deleteInaccurateAssetByLinkIds((manoeuvre.map(_.linkId) ++ trafficSigns.map(_.linkId) ++ assetInfo.newLinkIds).toSet  ,assetTypeInfo.typeId)
