@@ -80,6 +80,7 @@ object TrafficSignType {
     override val OTHvalue = 999
     override val TRvalue = 999
 
+    override def source = Seq()
   }
 
 }

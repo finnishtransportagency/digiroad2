@@ -8,18 +8,19 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point, TrafficSignType}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import slick.util.iter.Empty
 
 import scala.util.Try
+
+
 
 class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 
@@ -56,16 +57,12 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   case class MalformedAsset(malformedParameters: List[String], csvRow: String)
   case class ExcludedAsset(affectedRoadLinkType: String, csvRow: String)
   case class NotImportedData(reason: String, csvRow: String)
-  case class CsvAssetRowAndRoadLink(properties: CsvAssetRow, roadLink: Seq[VVHRoadlink])
   case class ImportResult(incompleteAssets: List[IncompleteAsset] = Nil,
                           malformedAssets: List[MalformedAsset] = Nil,
                           excludedAssets: List[ExcludedAsset] = Nil,
-                          notImportedData: List[NotImportedData] = Nil,
-                          createdData: List[CsvAssetRowAndRoadLink] = Nil)
+                          notImportedData: List[NotImportedData] = Nil)
   case class AssetProperty(columnName: String, value: Any)
   case class CsvAssetRow(properties: Seq[AssetProperty])
-
-  type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
 
 
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -123,20 +120,15 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     Try(propertyValue.toInt).toOption
   }
 
-  private def verifyData(parsedRow: CsvAssetRow): ParsedCsv = {
-    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
-    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+  private def verifyData(parsedRow: CsvAssetRow): (List[String], Seq[VVHRoadlink]) = {
+    val lon = getPropertyValue(parsedRow, "lon").asInstanceOf[BigDecimal].toLong
+    val lat = getPropertyValue(parsedRow, "lat").asInstanceOf[BigDecimal].toLong
+    val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon, lat))
 
-    (optLon, optLat) match {
-      case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon.toLong, lat.toLong))
-        if(roadLinks.isEmpty) {
-          (List(s"Try to create in an unauthorized Municipality"), Seq())
-        } else
-          (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
-      case _ =>
-        (Nil, Nil) //That condition is already checked on assetRowToProperties
-    }
+    if(roadLinks.isEmpty) {
+      (List(s"Try to create in an unauthorized Municipality"), Seq())
+    } else
+      (List(), roadLinks)
   }
 
   private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
@@ -167,11 +159,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String) = {
     trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value).get
   }
-
-  def getPropertyValueOption(trafficSignAttributes: CsvAssetRow, propertyName: String) = {
-    trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value)
-  }
-
   def createTrafficSigns(trafficSignAttributes: CsvAssetRow, roadLinks: Seq[VVHRoadlink]): Unit = {
     val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString)
     val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt
@@ -195,10 +182,12 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     withDynTransaction{
       trafficSignService.expireAssetsByMunicipalities(municipalitiesToExpire)
       csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
-        val csvRow = row.map(r => (r._1.toLowerCase, r._2))
+        val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)
         val (malformedParameters, properties) = assetRowToProperties(csvRow)
-        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvAssetRow(properties = properties))
+        val (notImportedParameters, roadLinks) = if(malformedParameters.isEmpty) {
+         verifyData(CsvAssetRow(properties = properties))
+        } else (List(), Seq())
 
         if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
           result.copy(
@@ -217,33 +206,15 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
               case parameters =>
                 NotImportedData(reason = parameters.head, csvRow = rowToString(csvRow)) :: result.notImportedData
             }
-
           )
-        }else {
-          result.copy(
-            incompleteAssets = missingParameters match {
-              case Nil => result.incompleteAssets
-              case parameters =>
-                IncompleteAsset(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteAssets
-            },
-            malformedAssets = malformedParameters match {
-              case Nil => result.malformedAssets
-              case parameters =>
-                MalformedAsset(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedAssets
-            },
-            notImportedData = notImportedParameters match {
-              case Nil => result.notImportedData
-              case parameters =>
-                NotImportedData(reason = parameters.head, csvRow = rowToString(csvRow)) :: result.notImportedData
-            }
-          )
-        }
-
-          createTrafficSigns(parsedRowAndRoadLink.head.properties, parsedRowAndRoadLink._2)
+        } else {
+          val parsedRow = CsvAssetRow(properties = properties)
+          createTrafficSigns(parsedRow, roadLinks)
           result
         }
       }
     }
+  }
 }
 class RoadLinkCsvImporter extends CsvDataImporterOperations {
 
