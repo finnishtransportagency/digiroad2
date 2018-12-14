@@ -8,7 +8,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 127 , 'Sivutien risteys - takaviistosta', ' ' , 'db_migration_v190',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 128 , 'Rautatien tasoristeys ilman puomeja', ' ' , 'db_migration_v190',  (select id from property where public_ID = 'trafficSigns_type'))
+VALUES (primary_key_seq.nextval, 128 , 'Rautatien tasoristeys ilman puomeja', ' ' , 'db_migration_v190',  (select id from property where public_ID = 'trafficSigns_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 129 , 'Rautatien tasoristeys, jossa on puomit', ' ' , 'db_migration_v190',  (select id from property where public_ID = 'trafficSigns_type'));
