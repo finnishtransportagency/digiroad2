@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.DataFixture.trafficSignService
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import fi.liikennevirasto.digiroad2.{asset, _}
 import org.mockito.ArgumentCaptor
@@ -577,13 +578,19 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getRoadLinkFromVVH(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(any[Long], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
 
-      val result = service.getAdditionalPanels(service.getPersistedAssetsByIds(Set(trafficSign)).head)
+      val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
+
+      val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
+        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
+      }
+
+      val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
 
       result.size should be (2)
-      result.exists(_.id == additionalPanel) should be (true)
-      result.exists(_.id == additionalPanel2) should be (true)
-      result.exists(_.id == additionalPanel3) should be (false)
-      result.exists(_.id == additionalPanel4) should be (false)
+      result.exists(_.id.contains(additionalPanel)) should be (true)
+      result.exists(_.id.contains(additionalPanel2)) should be (true)
+      result.exists(_.id.contains(additionalPanel3)) should be (false)
+      result.exists(_.id.contains(additionalPanel4)) should be (false)
     }
   }
 
@@ -605,19 +612,101 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val roadLink3 = RoadLink(3000, Seq(Point(13.0, 0.0), Point(20.0, 0.0)), 7, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val trafficSign = service.create(IncomingTrafficSign(12.0, 0.0, 1000, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
-      val additionalSign2 = service.create(IncomingTrafficSign(10.0, 0.0, 2000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink2)
-      val additionalSign3 = service.create(IncomingTrafficSign(14.0, 0.0, 3000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink3)
+      val additionalPanel2 = service.create(IncomingTrafficSign(10.0, 0.0, 2000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink2)
+      val additionalPanel3 = service.create(IncomingTrafficSign(14.0, 0.0, 3000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink3)
 
 
       when(mockRoadLinkService.getRoadLinkFromVVH(roadLink.linkId)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.getAdjacent(1000, Seq(Point(10.0, 0.0)))).thenReturn(Seq(roadLink2))
       when(mockRoadLinkService.getAdjacent(1000, Seq(Point(13.0, 0.0)))).thenReturn(Seq(roadLink3))
 
-      val result = service.getAdditionalPanels(service.getPersistedAssetsByIds(Set(trafficSign)).head)
+      val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
+
+      val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel2, additionalPanel3)).map { panel =>
+        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
+      }
+
+      val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
 
       result.size should be (2)
-      result.exists(_.id == additionalSign2) should be (true)
-      result.exists(_.id == additionalSign3) should be (true)
+      result.exists(_.id.contains(additionalPanel2)) should be (true)
+      result.exists(_.id.contains(additionalPanel3)) should be (true)
+    }
+  }
+
+  test("No additional panels detected with adjacent links"){
+    runWithRollback {
+
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val additionalPanelProperties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("46"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(1000, Seq(Point(10.0, 0.0), Point(13.0, 0.0)), 3, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink2 = RoadLink(2000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink3 = RoadLink(3000, Seq(Point(13.0, 0.0), Point(20.0, 0.0)), 7, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      val trafficSign = service.create(IncomingTrafficSign(12.0, 0.0, 1000, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel2 = service.create(IncomingTrafficSign(10.0, 0.0, 2000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink2)
+      val additionalPanel3 = service.create(IncomingTrafficSign(14.0, 0.0, 3000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink3)
+
+
+      when(mockRoadLinkService.getRoadLinkFromVVH(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getAdjacent(1000, Seq(Point(10.0, 0.0)))).thenReturn(Seq(roadLink2))
+      when(mockRoadLinkService.getAdjacent(1000, Seq(Point(13.0, 0.0)))).thenReturn(Seq(roadLink3))
+
+      val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
+
+      val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel2, additionalPanel3)).map { panel =>
+        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
+      }
+
+      val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
+
+      result.size should be (0)
+    }
+  }
+
+  test("No additional panels detected"){
+    runWithRollback {
+
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val additionalPanelProperties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("46"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      val trafficSign = service.create(IncomingTrafficSign(5.0, 0.0, 1000, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+
+      val additionalPanel = service.create(IncomingTrafficSign(6.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel2 = service.create(IncomingTrafficSign(4.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel3 = service.create(IncomingTrafficSign(8.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel4 = service.create(IncomingTrafficSign(4.5, 0.0, 1000, additionalPanelProperties, SideCode.AgainstDigitizing.value, None), testUser.username, roadLink)
+
+
+      when(mockRoadLinkService.getRoadLinkFromVVH(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getAdjacent(any[Long], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
+
+      val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
+
+      val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
+        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
+      }
+
+      val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
+
+      result.size should be (0)
     }
   }
 }

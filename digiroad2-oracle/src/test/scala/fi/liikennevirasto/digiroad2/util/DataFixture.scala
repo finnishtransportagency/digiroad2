@@ -1455,7 +1455,7 @@ object DataFixture {
         Queries.getMunicipalities
       }
 
-    val additionalPanelToExpire : Seq[PersistedTrafficSign] = municipalities.flatMap { municipality =>
+    val additionalPanelIdToExpire : Seq[Long] = municipalities.flatMap { municipality =>
       println("")
       println(s"Fetching Traffic Signs for Municipality: $municipality")
 
@@ -1469,23 +1469,28 @@ object DataFixture {
       filteredAssets.flatMap { sign =>
         println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
         OracleDatabase.withDynSession {
-          val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign)
+          val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false).get
+          val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt
+          val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
+            AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.propertyType, x.values)).toSet, panel.validityDirection)
+          }
+
+          val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
           val orderedAdditionalPanels = additionalPanelsInRadius.toSeq.sortBy(_.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt)
 
           if (orderedAdditionalPanels.size <= 3 && orderedAdditionalPanels.nonEmpty) {
-            val additionalPanels = orderedAdditionalPanels.zipWithIndex.map { case (panel, index) =>
-              AdditionalPanel(trafficSignService.getTrafficSignsProperties(panel, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-                trafficSignService.getTrafficSignsProperties(panel, trafficSignService.infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-                trafficSignService.getTrafficSignsProperties(panel, trafficSignService.valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+            val additionalPanels = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
+              AdditionalPanel(panel.propertyData.find(p => p.publicId == trafficSignService.typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
+                panel.propertyData.find(p => p.publicId == trafficSignService.infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+                panel.propertyData.find(p => p.publicId == trafficSignService.valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
                 index)
             }
 
             val simpleTrafficSignProperties = SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanels)
             val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, Set(simpleTrafficSignProperties), sign.validityDirection, sign.bearing)
 
-            val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false).get
             trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
-            orderedAdditionalPanels
+            orderedAdditionalPanels.flatMap(_.id)
           } else {
             errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${orderedAdditionalPanels.size}"
             Seq()
@@ -1493,7 +1498,7 @@ object DataFixture {
         }
       }
     }
-    additionalPanelToExpire.foreach(additional => trafficSignService.expireAssetWithoutTransaction(additional.id, "batch_process_panel_merge"))
+    additionalPanelIdToExpire.foreach(id => trafficSignService.expireAssetWithoutTransaction(id, "batch_process_panel_merge"))
 
     println("")
     errorLogBuffer.foreach(println)
