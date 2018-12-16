@@ -318,7 +318,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
-      val tsType = TrafficSignType.applyOTHValue(prop.asInstanceOf[TextPropertyValue].propertyValue.toInt)
+      val tsType = TrafficSignType.applyvalue(prop.asInstanceOf[TextPropertyValue].propertyValue.toInt)
 
       tsType match {
 

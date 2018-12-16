@@ -1460,7 +1460,7 @@ object DataFixture {
       println(s"Fetching Traffic Signs for Municipality: $municipality")
 
       val existingAssets = trafficSignService.getByMunicipality(municipality)
-      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyvalue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
       println("")
       println(s"Number of existing assets: ${filteredAssets.length}")

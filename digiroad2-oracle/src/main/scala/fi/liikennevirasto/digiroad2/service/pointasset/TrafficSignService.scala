@@ -76,7 +76,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def belongsToTurnRestriction(asset: IncomingTrafficSign)  = {
     val turnRestrictionsGroup =  Seq(NoUTurn, NoRightTurn, NoLeftTurn)
-    turnRestrictionsGroup.contains(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType.applyOTHValue(t.asInstanceOf[TextPropertyValue].propertyValue.toInt)).get)
+    turnRestrictionsGroup.contains(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.headOption.map(t => TrafficSignType.applyvalue(t.asInstanceOf[TextPropertyValue].propertyValue.toInt)).get)
   }
 
   def createFloating(asset: IncomingTrafficSign, username: String, municipality: Int): Long = {
@@ -115,7 +115,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
     val result = super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
-    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt == PedestrianCrossingSign.OTHvalue)
+    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt == PedestrianCrossingSign.value)
 
     sortCrossings(pc, Seq()) ++ others
   }
@@ -215,7 +215,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val signValue = value.toString
     val signAdditionalInfo = additionalInfo
 
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficSignType.OTHvalue.toString)))
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficSignType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficSignType.group) match {
       case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(signAdditionalInfo)))
       case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(signValue)))
@@ -272,7 +272,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup] = None): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
-      case Some(groupType) => assets.filter(asset => TrafficSignType.applyOTHValue(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == groupType)
+      case Some(groupType) => assets.filter(asset => TrafficSignType.applyvalue(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == groupType)
       case _ => assets
     }
   }
@@ -359,8 +359,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
                           additionalPanels: Seq[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink]) : Set[AdditionalPanelInfo] = {
     val allowedAdditionalPanels = additionalPanels.filter {panel =>
-      val trafficSign =  TrafficSignType.applyTRValue(signPropertyValue)
-      val additionalPanel =  TrafficSignType.applyTRValue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
+      val trafficSign =  TrafficSignType.applyvalue(signPropertyValue)
+      val additionalPanel =  TrafficSignType.applyvalue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
       trafficSign.allowed(additionalPanel)
     }
 

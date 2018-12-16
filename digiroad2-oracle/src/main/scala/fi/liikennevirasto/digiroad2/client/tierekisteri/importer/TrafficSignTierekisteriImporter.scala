@@ -35,7 +35,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   private def generateProperties(trAssetData: TierekisteriAssetData, additionalProperties: Set[AdditionalPanelInfo] = Set()) = {
     val trafficType = trAssetData.assetType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.TRvalue.toString)))
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
       case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
       case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
@@ -77,7 +77,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData, properties: Set[AdditionalPanelInfo]): Unit = {
     //TODO this filter could remove and only exclude the Telematic
-//    if(TrafficSignType.applyTRValue(trAssetData.assetType.TRvalue).source.contains("TRimport"))
+//    if(TrafficSignType.applyvalue(trAssetData.assetType.value).source.contains("TRimport"))
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData, properties),
@@ -171,7 +171,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         ra.addressMValueToLRM(section.startAddressMValue).foreach{
           mValue =>
             val sideCode = getSideCode(ra, trAssetData.track, trAssetData.roadSide).value
-            val trafficSignType = trAssetData.assetType.TRvalue
+            val trafficSignType = trAssetData.assetType.value
             val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData, vvhRoadLinks)
             createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties)
         }

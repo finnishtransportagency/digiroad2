@@ -73,7 +73,7 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
 
               val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyvalue(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
               val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)

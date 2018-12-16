@@ -233,7 +233,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
      /*mock road link is set to (2,2), (4,4), so this asset is set to go against digitizing*/
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.value.toString))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
@@ -254,7 +254,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
 
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.value.toString))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
       val sign = IncomingTrafficSign(3, 2, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(225))
@@ -274,7 +274,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with direction against digitizing using coordinates with asset bearing") {
     /*asset bearing in this case indicates towards which direction the traffic sign is facing, not the flow of traffic*/
     val properties = Set(
-      SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
+      SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.value.toString))),
       SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
     val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
@@ -294,7 +294,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("two-sided traffic signs are effective in both directions ") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(PedestrianCrossingSign.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(PedestrianCrossingSign.value.toString))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
@@ -313,7 +313,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with additional information") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(FreeWidth.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(FreeWidth.value.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Info Test"))))
 
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
@@ -489,7 +489,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Prevent the creations of duplicated signs") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.value.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Original Traffic Sign!"))))
 
       val sign = IncomingTrafficSign(5, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
@@ -503,7 +503,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("Original Traffic Sign!")
 
       val properties2 = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.value.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Non Duplicated Traffic Sign!"))))
 
       val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, TrafficDirection.UnknownDirection.value, None)
@@ -520,8 +520,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("get by distance with same roadLink, trafficType and Direction") {
-      val speedLimitProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(SpeedLimitSign.OTHvalue.toString))))
-      val speedLimitZoneProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(SpeedLimitZone.OTHvalue.toString))))
+      val speedLimitProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(SpeedLimitSign.value.toString))))
+      val speedLimitZoneProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(SpeedLimitZone.value.toString))))
 
       val trafficSigns = Seq(
         PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),

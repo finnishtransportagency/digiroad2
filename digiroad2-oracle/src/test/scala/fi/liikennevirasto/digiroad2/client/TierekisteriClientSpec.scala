@@ -706,7 +706,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
         "LIIKVAST" -> fldLIIKVAST,
         "NOPRA506" -> fldNOPRA506,
         "AJORATA" -> "0",
-        "LMNUMERO" -> speedLimitType.TRvalue,
+        "LMNUMERO" -> speedLimitType.value,
         "TIE" -> "11008",
         "ETAISYYS" -> "15",
         "LMTEKSTI" -> fldLMTEKSTI

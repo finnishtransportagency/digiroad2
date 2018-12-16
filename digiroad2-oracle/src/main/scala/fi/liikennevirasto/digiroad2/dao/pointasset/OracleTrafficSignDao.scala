@@ -86,7 +86,7 @@ object OracleTrafficSignDao {
   }
 
   def fetchEnumeratedValueIds( tsType: Seq[TrafficSignType]): Seq[Long] = {
-    val values = tsType.map(_.OTHvalue)
+    val values = tsType.map(_.value)
 
     sql"""select distinct ev.id from PROPERTY p
                 join ENUMERATED_VALUE ev on ev.property_id = p.id
