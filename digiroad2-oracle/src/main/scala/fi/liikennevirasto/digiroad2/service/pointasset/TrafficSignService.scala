@@ -211,7 +211,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  private def generateProperties(trafficSignType: TrafficSignType, value: Any, additionalInfo: String) = {
+  private def generateProperties(trafficSignType: TrafficSignType, value: Any, additionalInfo: String) : Set[SimpleTrafficSignProperty] = {
     val signValue = value.toString
     val signAdditionalInfo = additionalInfo
 
@@ -224,32 +224,28 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     Set(typeProperty, valueProperty)
   }
 
-  def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TrafficSignType, value: Option[Int],
-                            twoSided: Option[Boolean], trafficDirection: TrafficDirection, bearing: Option[Int],
-                            additionalInfo: Option[String], roadLinks: Seq[VVHRoadlink]): Long = {
+  def createFromCoordinates(trafficSign: IncomingTrafficSign, roadLinks: Seq[VVHRoadlink], twoSided: Boolean): Long = {
 
-      val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
+      val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(trafficSign.lon.toLong, trafficSign.lat.toLong), r.geometry))
       val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
 
       if (vvhRoad.isEmpty || vvhRoad.size > 1) {
-        val asset = IncomingTrafficSign(lon, lat, 0, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), SideCode.Unknown.value, None)
-        createFloatingWithoutTransaction(asset, userProvider.getCurrentUser().username, municipality)
+        createFloatingWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, municipality)
       }
       else {
         roadLinkService.enrichRoadLinksFromVVH(Seq(closestLink)).map { roadLink =>
           val validityDirection =
-            bearing match {
-              case Some(assetBearing) if twoSided.getOrElse(false) => BothDirections.value
+            trafficSign.bearing match {
+              case Some(assetBearing) if twoSided => BothDirections.value
               case Some(assetBearing) => getAssetValidityDirection(assetBearing)
-              case None if twoSided.getOrElse(false) => BothDirections.value
-              case _ => getTrafficSignValidityDirection(Point(lon, lat), roadLink.geometry)
+              case None if twoSided => BothDirections.value
+              case _ => getTrafficSignValidityDirection(Point(trafficSign.lon, trafficSign.lat), roadLink.geometry)
             }
-          val newAsset = IncomingTrafficSign(lon, lat, roadLink.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(roadLink.geometry)))
-          checkDuplicates(newAsset) match {
+          checkDuplicates(trafficSign) match {
             case Some(existingAsset) =>
-              updateWithoutTransaction(existingAsset.id, newAsset, roadLink, userProvider.getCurrentUser().username, None, None)
+              updateWithoutTransaction(existingAsset.id, trafficSign, roadLink, userProvider.getCurrentUser().username, None, None)
             case _ =>
-              createWithoutTransaction(newAsset, userProvider.getCurrentUser().username, roadLink)
+              createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, roadLink)
           }
         }
       }.head
@@ -363,8 +359,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
                           additionalPanels: Seq[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink]) : Set[AdditionalPanelInfo] = {
     val allowedAdditionalPanels = additionalPanels.filter {panel =>
-      val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
-      val additionalPanel =  TrafficSignType.applyOTHValue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
+      val trafficSign =  TrafficSignType.applyTRValue(signPropertyValue)
+      val additionalPanel =  TrafficSignType.applyTRValue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
       trafficSign.allowed(additionalPanel)
     }
 

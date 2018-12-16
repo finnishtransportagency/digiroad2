@@ -211,7 +211,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with direction towards digitizing using coordinates without asset bearing") {
     /*mock road link is set to (2,2), (4,4), so this asset is set to go towards digitizing*/
     runWithRollback {
-      val id = service.createFromCoordinates(3, 2, SpeedLimitSign, Some(100), Some(false), TrafficDirection.UnknownDirection, None, None, vvHRoadlink2)
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("1"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+
+      val sign = IncomingTrafficSign(3, 2, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
+
+      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -226,7 +232,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with direction against digitizing using coordinates without asset bearing") {
      /*mock road link is set to (2,2), (4,4), so this asset is set to go against digitizing*/
     runWithRollback {
-      val id = service.createFromCoordinates(3, 4, SpeedLimitSign, Some(100), Some(false), TrafficDirection.UnknownDirection, None, None, vvHRoadlink2)
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+
+      val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
+
+      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -240,7 +252,14 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with direction towards digitizing using coordinates with asset bearing") {
     /*asset bearing in this case indicates towards which direction the traffic sign is facing, not the flow of traffic*/
     runWithRollback {
-      val id = service.createFromCoordinates(3, 2, SpeedLimitSign, Some(100), Some(false), TrafficDirection.UnknownDirection, Some(225), None, vvHRoadlink2)
+
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+
+      val sign = IncomingTrafficSign(3, 2, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(225))
+
+      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -254,8 +273,14 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Create traffic sign with direction against digitizing using coordinates with asset bearing") {
     /*asset bearing in this case indicates towards which direction the traffic sign is facing, not the flow of traffic*/
+    val properties = Set(
+      SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
+      SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+
+    val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
+
     runWithRollback {
-      val id = service.createFromCoordinates(3, 4, SpeedLimitSign, Some(100), Some(false), TrafficDirection.UnknownDirection, Some(45), None, vvHRoadlink2)
+      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -268,7 +293,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("two-sided traffic signs are effective in both directions ") {
     runWithRollback {
-      val id = service.createFromCoordinates(3, 4, PedestrianCrossingSign, None, Some(true), TrafficDirection.UnknownDirection, Some(45), None, vvHRoadlink2)
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(PedestrianCrossingSign.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+
+      val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
+
+      val id = service.createFromCoordinates(sign, vvHRoadlink2, true)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -281,7 +312,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Create traffic sign with additional information") {
     runWithRollback {
-      val id = service.createFromCoordinates(3, 4, FreeWidth, None, Some(false), TrafficDirection.UnknownDirection, Some(45), Some("Info Test"), vvHRoadlink2)
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(FreeWidth.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Info Test"))))
+
+      val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
+      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
+
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -451,7 +488,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   test("Prevent the creations of duplicated signs") {
     runWithRollback {
-      val originalTrafficSignId = service.createFromCoordinates(5, 4, NoPedestrians, None, Some(false), TrafficDirection.UnknownDirection, None, Some("Original Traffic Sign!"), vvHRoadlink2)
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Original Traffic Sign!"))))
+
+      val sign = IncomingTrafficSign(5, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
+      val originalTrafficSignId = service.createFromCoordinates(sign, vvHRoadlink2, false)
+
       val assetsInRadius = service.getTrafficSignByRadius(Point(5, 4), 10, None)
       assetsInRadius.size should be(1)
       val assetO = assetsInRadius.head
@@ -459,8 +502,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetO.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("24")
       assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("Original Traffic Sign!")
 
+      val properties2 = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.TRvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Non Duplicated Traffic Sign!"))))
 
-      val duplicatedTrafficSignId = service.createFromCoordinates(6, 4, NoPedestrians, None, Some(false), TrafficDirection.UnknownDirection, None, Some("Non Duplicated Traffic Sign!"), vvHRoadlink2)
+      val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, TrafficDirection.UnknownDirection.value, None)
+
+      val duplicatedTrafficSignId = service.createFromCoordinates(sign2, vvHRoadlink2, false)
       val assetsInRadius2 = service.getTrafficSignByRadius(Point(5, 4), 10, None)
       assetsInRadius2.size should be(1)
       val assetD = assetsInRadius2.head
