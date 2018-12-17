@@ -359,8 +359,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
                           additionalPanels: Seq[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink]) : Set[AdditionalPanelInfo] = {
     val allowedAdditionalPanels = additionalPanels.filter {panel =>
-      val trafficSign =  TrafficSignType.applyTRValue(signPropertyValue)
-      val additionalPanel =  TrafficSignType.applyTRValue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
+      val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
+      val additionalPanel =  TrafficSignType.applyOTHValue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
       trafficSign.allowed(additionalPanel)
     }
 

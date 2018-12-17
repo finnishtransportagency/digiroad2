@@ -127,15 +127,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  class TestTrafficSignOperations extends TrafficSignTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
-    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val vvhClient: VVHClient = mockVVHClient
-    override def withDynTransaction[T](f: => T): T = f
-  }
-
   class TestPavedRoadOperations extends PavedRoadTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
@@ -536,36 +527,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
        asset.value should be(Some(NumericValue(1)))
      }
    }
-
-  test("import assets (trafficSigns) from TR to OTH") {
-    TestTransactions.runWithRollback() {
-
-      val testTrafficSign = new TestTrafficSignOperations
-      val roadNumber = 4L
-      val startRoadPartNumber = 200L
-      val endRoadPartNumber = 200L
-      val startAddressMValue = 0L
-      val endAddressMValue = 250L
-
-      val tr = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue)
-      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
-      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-
-      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
-      when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
-
-      testTrafficSign.importAssets()
-      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testTrafficSign.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
-
-      asset.linkId should be(5001)
-      asset.value should be(Some(NumericValue(1)))
-    }
-  }
 
   test("update assets (litRoad) from TR to OTH"){
     TestTransactions.runWithRollback() {

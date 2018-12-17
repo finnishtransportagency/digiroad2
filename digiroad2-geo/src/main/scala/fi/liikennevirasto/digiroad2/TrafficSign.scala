@@ -75,10 +75,10 @@ object TrafficSignType {
   }
 
   case object Unknown extends TrafficSignType {
-    override def group: TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
+    override def group: TrafficSignTypeGroup = TrafficSignTypeGroup.Unknown
 
     override val OTHvalue = 999
-    override val TRvalue = 999
+    override val TRvalue = 99
 
     override def source = Seq()
   }
@@ -828,8 +828,7 @@ case object TimeLimit extends AdditionalPanelsType {
   override val TRvalue = 854
 }
 
-case object DistanceCompulsoryStop
-  extends AdditionalPanelsType {
+case object DistanceCompulsoryStop extends AdditionalPanelsType {
   override val OTHvalue = 138
   override val TRvalue = 816
 }

@@ -35,20 +35,29 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   private def generateProperties(trAssetData: TierekisteriAssetData, additionalProperties: Set[AdditionalPanelInfo] = Set()) = {
     val trafficType = trAssetData.assetType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.TRvalue.toString)))
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.OTHvalue.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
       case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
       case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
     }
-    val additionalPanels = SimpleTrafficSignProperty(trafficSignService.additionalPublicId,
-      additionalProperties.zipWithIndex.map{ case (panel, index) =>
-        AdditionalPanel(panel.propertyData.find(p => p.publicId == trafficSignService.typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-          panel.propertyData.find(p => p.publicId == trafficSignService.infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-          panel.propertyData.find(p => p.publicId == trafficSignService.valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-          index)
-      }.toSeq)
 
-    Set(typeProperty, valueProperty, additionalPanels)
+    val additionalPanel = additionalProperties.zipWithIndex.map{ case (panel, index) =>
+      AdditionalPanel(panel.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt,
+        panel.propertyData.find(p => p.publicId == infoPublicId) match {
+          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
+          case _ => ""
+        },
+        panel.propertyData.find(p => p.publicId == valuePublicId) match {
+          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
+          case _ => ""
+        },
+        index)
+    }.toSeq
+
+    if(additionalPanel.nonEmpty)
+      Set(typeProperty, valueProperty, SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanel))
+    else
+      Set(typeProperty, valueProperty)
   }
 
   protected override def getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime) = {
@@ -77,7 +86,6 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData, properties: Set[AdditionalPanelInfo]): Unit = {
     //TODO this filter could remove and only exclude the Telematic
-//    if(TrafficSignType.applyTRValue(trAssetData.assetType.TRvalue).source.contains("TRimport"))
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData, properties),
@@ -124,11 +132,11 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
     val municipalities = getAllMunicipalities
-//    municipalities.foreach { municipality =>
-//      withDynTransaction{
-//        expireAssets(municipality, Some(State))
-//      }
-//    }
+    municipalities.foreach { municipality =>
+      withDynTransaction{
+        expireAssets(municipality, Some(State))
+      }
+    }
 
     val roadNumbers = getAllViiteRoadNumbers
 
@@ -163,19 +171,21 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], vvhRoadLinks: Seq[VVHRoadlink], trAdditionalData: Seq[AdditionalPanelInfo]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
-
-    //Returns all the match Viite road address for the given section
-    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
-    roadAddressLink
-      .foreach { case (ra, roadlink) =>
-        ra.addressMValueToLRM(section.startAddressMValue).foreach{
-          mValue =>
-            val sideCode = getSideCode(ra, trAssetData.track, trAssetData.roadSide).value
-            val trafficSignType = trAssetData.assetType.TRvalue
-            val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData, vvhRoadLinks)
-            createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties)
+    if(trAssetData.assetType.source.contains("TRimport")) {
+      println("Asset: " + trAssetData.assetType.TRvalue + " / " + trAssetData.assetType.OTHvalue)
+      //Returns all the match Viite road address for the given section
+      val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
+      roadAddressLink
+        .foreach { case (ra, roadlink) =>
+          ra.addressMValueToLRM(section.startAddressMValue).foreach{
+            mValue =>
+              val sideCode = getSideCode(ra, trAssetData.track, trAssetData.roadSide).value
+              val trafficSignType = trAssetData.assetType.OTHvalue
+              val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData, vvhRoadLinks)
+              createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties)
+          }
         }
-      }
+    }
   }
 
   override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = throw new UnsupportedOperationException("Not Supported Method")
