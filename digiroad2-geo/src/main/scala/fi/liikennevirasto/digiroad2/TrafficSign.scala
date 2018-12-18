@@ -887,6 +887,14 @@ case object DrivingInServicePurposesAllowed  extends AdditionalPanelsType {
   override val OTHvalue = 62
   override val TRvalue = 872
 }
+case object DistanceFromSignToPointWhichSignApplies extends AdditionalPanelsType {
+  override val OTHvalue = 148
+  override val TRvalue = 814
+}
+case object DistanceWhichSignApplies extends AdditionalPanelsType {
+  override val OTHvalue = 149
+  override val TRvalue = 815
+}
 
 trait InformationSignsType extends TrafficSignType  {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns

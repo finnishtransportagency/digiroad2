@@ -173,7 +173,9 @@
           {signValue: [144], image: 'images/traffic-signs/additional-panels/RegulationEndsToTheSign.png'},
           {signValue: [145], image: 'images/traffic-signs/additional-panels/ValidMultiplePeriod.png'},
           {signValue: [146], image: 'images/traffic-signs/additional-panels/DirectionOfPriorityRoad.png'},
-          {signValue: [147], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'}
+          {signValue: [147], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
+          {signValue: [148], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png'},
+          {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png'}
         ];
       };
 

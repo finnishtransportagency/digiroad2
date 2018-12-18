@@ -31,7 +31,7 @@
     };
 
     var additionalValues = {
-        additionalPanels: { values : [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138], groupName: 'Lisakilvet'}
+        additionalPanels: { values : [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 148, 149], groupName: 'Lisakilvet'}
     };
 
     var trafficSignsTurnRestriction = [10, 11, 12];
