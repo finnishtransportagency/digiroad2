@@ -580,6 +580,14 @@ object Digiroad2Context {
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
 
+  lazy val massTransitLaneService: MassTransitLaneService = {
+    new MassTransitLaneService(roadLinkService, eventbus)
+  }
+
+  lazy val numberOfLanesService: NumberOfLanesService = {
+    new NumberOfLanesService(roadLinkService, eventbus)
+  }
+
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 
   lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()

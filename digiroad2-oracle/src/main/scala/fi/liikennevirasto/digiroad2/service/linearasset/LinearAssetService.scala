@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClien
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
@@ -54,6 +54,7 @@ trait LinearAssetOperations {
   def eventBus: DigiroadEventBus
   def polygonTools : PolygonTools
   def assetDao: OracleAssetDao
+  def assetFiller: AssetFiller = new AssetFiller
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -256,10 +257,14 @@ trait LinearAssetOperations {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val (filledTopology, changeSet) = fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     publish(eventBus, changeSet, projectedAssets)
     filledTopology
+  }
+
+  def fillTopology(roadLinks: Seq[RoadLink], groupedAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
+    assetFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
   }
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedAssets: Seq[PersistedLinearAsset]) {
@@ -284,7 +289,7 @@ trait LinearAssetOperations {
 
     val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
       case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection, cs)
+        val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, cs)
         (persistedAsset ++ Seq(linearAsset), changes)
       case _ => (Seq.empty[PersistedLinearAsset], changeSet)
     }
@@ -323,11 +328,11 @@ trait LinearAssetOperations {
     val (mStart, mEnd) = (givenAndEqualDoubles(replacementChangeInfo.newStartMeasure, extensionChangeInfo.newEndMeasure),
       givenAndEqualDoubles(replacementChangeInfo.newEndMeasure, extensionChangeInfo.newStartMeasure)) match {
       case (true, false) =>
-        (replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance,
-          replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance + NumericalLimitFiller.MaxAllowedError)
+        (replacementChangeInfo.oldStartMeasure.get + assetFiller.AllowedTolerance,
+          replacementChangeInfo.oldStartMeasure.get + assetFiller.AllowedTolerance + assetFiller.MaxAllowedError)
       case (false, true) =>
-        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - NumericalLimitFiller.AllowedTolerance - NumericalLimitFiller.MaxAllowedError),
-          Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - NumericalLimitFiller.AllowedTolerance))
+        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - assetFiller.AllowedTolerance - assetFiller.MaxAllowedError),
+          Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - assetFiller.AllowedTolerance))
       case (_, _) => (0.0, 0.0)
     }
 
@@ -812,7 +817,9 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
-  }
+//  override def NumericalLimitFiller: NumericalLimitFiller = new NumericalLimitFiller
+
+}
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
 }

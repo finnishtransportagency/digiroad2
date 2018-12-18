@@ -62,7 +62,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (existingAssets.filterNot(a => expiredIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val (filledTopology, changeSet) = fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     publish(eventBus, changeSet, newAssets)
     filledTopology
