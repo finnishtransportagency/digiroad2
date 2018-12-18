@@ -1,14 +1,15 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.{asset, _}
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider}
+import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreProvider
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
@@ -55,6 +56,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpired(queryFilter)
+
   override def setFloating(persistedAsset: PersistedTrafficSign, floating: Boolean): PersistedTrafficSign = {
     persistedAsset.copy(floating = floating)
   }
@@ -93,6 +96,28 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     withDynTransaction {
       updateWithoutTransaction(id, updatedAsset, roadLink, username, None, None)
     }
+  }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method, Try to used") }
+
+  def getChanged(trafficSignTypes: Set[Int], sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
+    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
+
+    val filter = s"where a.asset_type_id = $typeId and floating = 0 and " +
+      s"exists (select * from single_choice_value scv2, enumerated_value ev2 where a.id = scv2.asset_id and scv2.enumerated_value_id = ev2.id and ev2.value in (${trafficSignTypes.mkString(",")})) and (" +
+      s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
+      s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or "+
+      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
+
+    val assets = withDynSession {
+      fetchPointAssetsWithExpired(withFilter(filter))
+    }
+
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+
+    assets.map { asset =>
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
@@ -211,19 +236,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  private def generateProperties(trafficSignType: TrafficSignType, value: Any, additionalInfo: String) : Set[SimpleTrafficSignProperty] = {
-    val signValue = value.toString
-    val signAdditionalInfo = additionalInfo
-
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficSignType.OTHvalue.toString)))
-    val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficSignType.group) match {
-      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(signAdditionalInfo)))
-      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(signValue)))
-    }
-
-    Set(typeProperty, valueProperty)
-  }
-
   def createFromCoordinates(trafficSign: IncomingTrafficSign, roadLinks: Seq[VVHRoadlink], twoSided: Boolean): Long = {
 
       val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(trafficSign.lon.toLong, trafficSign.lat.toLong), r.geometry))
@@ -253,13 +265,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
-    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt
+    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(signToCreateType))
 
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts =>
-        getTrafficSignsProperties(ts, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt == signToCreateType
+        getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toInt == signToCreateType
           && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
     )
 
@@ -272,7 +284,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup] = None): Seq[PersistedTrafficSign] = {
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
-      case Some(groupType) => assets.filter(asset => TrafficSignType.applyOTHValue(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == groupType)
+      case Some(groupType) => assets.filter(asset =>
+        TrafficSignType.applyOTHValue(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == groupType)
       case _ => assets
     }
   }
@@ -321,23 +334,27 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
   }
 
-  def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[PointAssetValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Option[TextPropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
   }
 
-  def getTrafficSignsProperties(trafficSign: IncomingTrafficSign, property: String) : Option[PointAssetValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
+  def getTrafficSignsProperties(trafficSign: IncomingTrafficSign, property: String) : Option[TextPropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
   }
 
   def getAllTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Seq[PointAssetValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values
   }
 
+  def getTrafficSignTypeByGroup(trafficSignGroup: TrafficSignTypeGroup): Set[Int] = {
+    TrafficSignType.values.filter(_.group == trafficSignGroup).map(_.OTHvalue)
+  }
+
   def getTrafficSignsByDistance(sign: PersistedAsset, groupedAssets: Map[Long, Seq[PersistedAsset]], distance: Int): Seq[PersistedTrafficSign]={
     val sameLinkAssets = groupedAssets.getOrElse(sign.linkId, Seq())
 
     sameLinkAssets.filter{ ts =>
-      (getTrafficSignsProperties(ts, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt == getTrafficSignsProperties(sign, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt) &&
+      (getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toInt == getTrafficSignsProperties(sign, typePublicId).get.propertyValue.toInt) &&
         ts.validityDirection == sign.validityDirection &&
         GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(ts.lon, ts.lat))) <= distance
     }

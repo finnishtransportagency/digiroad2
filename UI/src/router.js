@@ -162,7 +162,7 @@
         'hazardousMaterialTransportProhibitionErrors(/:typeId)/:id': 'hazardousMaterialTransportProhibitionErrors',
         'manoeuvreErrors(/:typeId)/:id': 'manoeuvreErrors',
         'heightLimitErrors(/:typeId)/:id': 'heightLimitErrors',
-        'bogieWeightErrors(/:typeId)/:id': 'bogieWeightErrors',
+        'bogieWeightLimitErrors(/:typeId)/:id': 'bogieWeightErrors',
         'axleWeightLimitErrors(/:typeId)/:id': 'axleWeightLimitErrors',
         'lengthLimitErrors(/:typeId)/:id': 'lengthLimitErrors',
         'totalWeightLimitErrors(/:typeId)/:id': 'totalWeightLimitErrors',
@@ -211,7 +211,7 @@
         'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
         'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
         'work-list/heightLimitErrors': 'heightLimitErrorsWorkList',
-        'work-list/bogieWeightErrors': 'bogieWeightErrorsWorkList',
+        'work-list/bogieWeightLimitErrors': 'bogieWeightLimitErrorsWorkList',
         'work-list/lengthLimitErrors': 'lengthLimitErrorsWorkList',
         'work-list/axleWeightLimitErrors': 'axleWeightLimitErrorsWorkList',
         'work-list/totalWeightLimitErrors': 'totalWeightLimitErrorsWorkList',
@@ -378,53 +378,51 @@
         }
         else
           eventbus.trigger('municipalities:select', backend.getMunicipalitiesWithUnknowns());
-
         this.stateHistory = null;
-
       },
 
       speedLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'speedLimitErrors', backend.getSpeedLimitErrors());
+        eventbus.trigger('workList-inaccurate:select', 'speedLimitErrors', backend.getSpeedLimitErrors());
       },
 
       hazardousMaterialProhibitionErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'hazardousMaterialTransportProhibitionErrors', backend.getInaccurateAssets(getLinearAssetType('hazardousMaterialTransportProhibition')));
+        eventbus.trigger('workList-inaccurate:select', 'hazardousMaterialTransportProhibitionErrors', backend.getInaccurateAssets(getLinearAssetType('hazardousMaterialTransportProhibition')));
       },
 
       manoeuvreErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'manoeuvreErrors', backend.getInaccurateManoeuvre());
+        eventbus.trigger('workList-inaccurate:select', 'manoeuvreErrors', backend.getInaccurateManoeuvre());
       },
 
       heightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'heightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('heightLimit')));
+        eventbus.trigger('workList-inaccurate:select', 'heightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('heightLimit')));
       },
 
       lengthLimitErrorsWorkList: function(){
-        eventbus.trigger('workList:select', 'lengthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('lengthLimit')));
+        eventbus.trigger('workList-inaccurate:select', 'lengthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('lengthLimit')));
       },
 
-      bogieWeightErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'bogieWeightErrors', backend.getInaccurateAssets(getLinearAssetType('bogieWeight')));
+      bogieWeightLimitErrorsWorkList: function () {
+        eventbus.trigger('workList-inaccurate:select', 'bogieWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('bogieWeightLimit')));
       },
 
       axleWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'axleWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('axleWeightLimit')));
+        eventbus.trigger('workList-inaccurate:select', 'axleWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('axleWeightLimit')));
       },
 
       totalWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'totalWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('totalWeightLimit')));
+        eventbus.trigger('workList-inaccurate:select', 'totalWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('totalWeightLimit')));
       },
 
       trailerTruckWeightLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'trailerTruckWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('trailerTruckWeightLimit')));
+        eventbus.trigger('workList-inaccurate:select', 'trailerTruckWeightLimitErrors', backend.getInaccurateAssets(getLinearAssetType('trailerTruckWeightLimit')));
       },
 
       widthLimitErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'widthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('widthLimit')));
+        eventbus.trigger('workList-inaccurate:select', 'widthLimitErrors', backend.getInaccurateAssets(getLinearAssetType('widthLimit')));
       },
 
       pedestrianCrossingsErrorsWorkList: function () {
-        eventbus.trigger('workList:select', 'pedestrianCrossingsErrors', backend.getInaccuratePointAssets());
+        eventbus.trigger('workList-inaccurate:select', 'pedestrianCrossingsErrors', backend.getInaccuratePointAssets());
       },
 
       linkPropertyWorkList: function () {

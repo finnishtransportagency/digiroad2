@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point, TrafficSignType}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, Point, TrafficSignType}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -26,7 +26,8 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 modifiedAt: Option[DateTime] = None,
                                 validityDirection: Int,
                                 bearing: Option[Int],
-                                linkSource: LinkGeomSource) extends PersistedPointAsset
+                                linkSource: LinkGeomSource,
+                                expired: Boolean = false) extends PersistedPoint
 
 
 case class TrafficSignRow(id: Long, linkId: Long,
@@ -42,13 +43,13 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           modifiedBy: Option[String] = None,
                           modifiedAt: Option[DateTime] = None,
                           linkSource: LinkGeomSource,
-                          additionalPanel: Option[AdditionalPanelRow] = None)
+                          additionalPanel: Option[AdditionalPanelRow] = None,
+                          expired: Boolean = false)
 
 object OracleTrafficSignDao {
 
-  def fetchByFilter(queryFilter: String => String): Seq[PersistedTrafficSign] = {
-    val query =
-      """
+  private def query() =
+    """
         select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
                p.id, p.public_id, p.property_type, p.required, ev.value,
                case
@@ -57,6 +58,7 @@ object OracleTrafficSignDao {
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position
+               case when a.valid_to <= sysdate then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -66,7 +68,14 @@ object OracleTrafficSignDao {
         left join enumerated_value ev on scv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
       """
-    val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
+
+  def fetchByFilter(queryFilter: String => String): Seq[PersistedTrafficSign] = {
+    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
+    queryToPersistedTrafficSign(queryWithFilter)
+  }
+
+  def fetchByFilterWithExpired(queryFilter: String => String): Seq[PersistedTrafficSign] = {
+    val queryWithFilter = queryFilter(query())
     queryToPersistedTrafficSign(queryWithFilter)
   }
 
@@ -109,7 +118,7 @@ object OracleTrafficSignDao {
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing)
+        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired)
     }.values.toSeq
   }
 
@@ -150,8 +159,9 @@ object OracleTrafficSignDao {
         case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId, propertyType, panelType, panelInfo.getOrElse(""), panelValue.getOrElse(""), formPosition))
         case _ => None
       }
+      val expired = r.nextBoolean()
 
-      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel)
+      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired)
     }
   }
 

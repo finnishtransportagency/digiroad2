@@ -8,14 +8,15 @@ import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 class WidthLimitValidator extends SevenRestrictionsLimitationValidator{
   override def assetTypeInfo: AssetTypeInfo = WidthLimit
   override val allowedTrafficSign: Set[TrafficSignType] = Set(NoWidthExceeding, FreeWidth)
+  override val radiusDistance: Int = 50
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
     val assetValue = getAssetValue(asset)
-    TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
+    TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case NoWidthExceeding =>
-        trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).asInstanceOf[TextPropertyValue].propertyValue == getAssetValue(asset)
+        trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
       case FreeWidth =>
-        trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").getOrElse(PropertyValue("")).asInstanceOf[TextPropertyValue].propertyValue == getAssetValue(asset)
+        trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }

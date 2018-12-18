@@ -11,6 +11,7 @@
       maximumRestrictions: false,
       generalWarningSigns: false,
       prohibitionsAndRestrictions: false,
+      additionalPanels: false,
       mandatorySigns: false,
       priorityAndGiveWaySigns: false,
       informationSigns: false,
@@ -24,8 +25,8 @@
       generalWarningSigns: { values : [9, 36, 37, 38, 39, 40, 41, 42, 43, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
           92, 93, 125, 126, 133, 132, 131, 130, 129, 128, 127, 162, 163, 164, 171, 172, 176, 177], groupName: 'Varoitukset'},
       prohibitionsAndRestrictions: { values : [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 80, 81, 100, 101, 102, 103, 104, 134], groupName: 'Kiellot ja rajoitukset'},
-      mandatorySigns: {values: [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 136, 135], groupName: 'Maaraysmerkit'},
-      priorityAndGiveWaySigns: {values: [94, 95, 96, 97, 98, 99], groupName: 'Etuajo-oikeus- ja vaistamismerkit'},
+      mandatorySigns: {values: [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 136, 135], groupName: 'Määraysmerkit'},
+      priorityAndGiveWaySigns: {values: [94, 95, 96, 97, 98, 99], groupName: 'Etuajo-oikeus- ja väistämismerkit'},
       informationSigns: {values: [113, 114, 115, 116, 117, 118, 119], groupName: 'Opastusmerkit'},
       serviceSigns: {values: [120, 121, 122, 123, 124], groupName: 'Palvelukohteiden opastusmerkit'}
     };

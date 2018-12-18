@@ -27,7 +27,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
             speedLimit.value match {
               case Some(NumericValue(speedLimitValue)) =>
                 trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value") match {
-                  case Some(trafficSignValue) if trafficSignValue.asInstanceOf[TextPropertyValue].propertyValue == speedLimitValue.toString => true
+                  case Some(trafficSignValue) if trafficSignValue.propertyValue == speedLimitValue.toString => true
                   case _ => false
                 }
               case _ => false
@@ -69,7 +69,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case Some(NumericValue(speedLimitValue)) =>
                 trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue)
-                    if trafficSignValue.asInstanceOf[TextPropertyValue].propertyValue.toInt == speedLimitValue
+                    if trafficSignValue.propertyValue.toInt == speedLimitValue
                       || (speedLimitValue != startUrbanAreaSpeedLimit && speedLimitValue != endUrbanAreaSpeedLimit) => true
                   case _ => false
                 }
@@ -103,7 +103,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
   def checkSpeedLimitUsingTrafficSign(trafficSigns: Seq[PersistedTrafficSign], roadLink: RoadLink, speedLimits: Seq[SpeedLimitService]): Seq[SpeedLimitService] = {
     trafficSigns.flatMap { trafficSign =>
-      val trafficSignType = TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)
+      val trafficSignType = TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)
 
       val speedLimitInRadiusDistance =
         speedLimits.filter(

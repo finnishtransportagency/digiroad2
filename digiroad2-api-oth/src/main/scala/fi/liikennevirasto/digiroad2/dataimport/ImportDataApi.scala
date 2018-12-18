@@ -68,8 +68,8 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     try {
       val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
       val response = result match {
-        case trafficSignCsvImporter.ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
+        case trafficSignCsvImporter.ImportResult(Nil, Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
+        case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil, Nil, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
         case _ => pretty(Extraction.decompose(result))
       }
       ImportLogService.save(id, response, TRAFFIC_SIGN_LOG)

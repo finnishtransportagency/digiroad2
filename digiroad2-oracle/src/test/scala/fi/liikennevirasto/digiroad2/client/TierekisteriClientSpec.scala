@@ -108,6 +108,12 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val tierekisteriAnimalWarningsAsset: TierekisteriAnimalWarningsAssetClient = {
+    new TierekisteriAnimalWarningsAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -653,6 +659,34 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1, 3709, 2, 3301)
 
     assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Animal Warning with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriAnimalWarningsAsset.fetchActiveAssetData( 45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Animal Warning with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriAnimalWarningsAsset.fetchActiveAssetData( 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Animal Warning with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriAnimalWarningsAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Animal Warning with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriAnimalWarningsAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
   }
 
   test("When in 'wrong' side of the road (LIIKVAST = 1), don't map SpeedLimit, SpeedLimitZone and UrbanArea") {

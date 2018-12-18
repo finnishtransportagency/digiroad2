@@ -70,6 +70,9 @@
       }).filter(function(feature){ return !_.isUndefined(feature); }).value());
     };
 
+    this.isVisibleZoom = function(zoomLevel){
+      return zoomLevel >= 10;
+    };
 
     var defaultInfoValues =
       [ {type: 5, text: 'Rajanylityspaikka', colorText: '#ffffff'},

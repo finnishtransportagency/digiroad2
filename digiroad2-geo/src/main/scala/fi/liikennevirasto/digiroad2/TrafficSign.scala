@@ -1,29 +1,27 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.TrafficSignType.{Unknown, values}
-
-sealed trait TrafficSignTypeGroup {
+sealed trait TrafficSignTypeGroup{
   def value: Int
 }
-object TrafficSignTypeGroup {
+object TrafficSignTypeGroup{
   val values = Set(Unknown, SpeedLimits, RegulatorySigns, MaximumRestrictions, GeneralWarningSigns, ProhibitionsAndRestrictions, AdditionalPanels, MandatorySigns,
     PriorityAndGiveWaySigns, InformationSigns)
 
-  def apply(intValue: Int): TrafficSignTypeGroup = {
+  def apply(intValue: Int):TrafficSignTypeGroup= {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object SpeedLimits extends TrafficSignTypeGroup { def value = 1  }
-  case object RegulatorySigns extends TrafficSignTypeGroup { def value = 2 }
-  case object MaximumRestrictions extends TrafficSignTypeGroup { def value = 3 }
-  case object GeneralWarningSigns extends TrafficSignTypeGroup { def value = 4 }
-  case object ProhibitionsAndRestrictions extends TrafficSignTypeGroup { def value = 5 }
-  case object AdditionalPanels extends TrafficSignTypeGroup { def value = 6 }
-  case object MandatorySigns extends TrafficSignTypeGroup { def value = 7 }
-  case object PriorityAndGiveWaySigns extends TrafficSignTypeGroup { def value = 8 }
-  case object InformationSigns extends TrafficSignTypeGroup { def value = 9 }
-  case object ServiceSigns extends TrafficSignTypeGroup { def value = 10 }
-  case object Unknown extends TrafficSignTypeGroup { def value = 99 }
+  case object SpeedLimits extends TrafficSignTypeGroup{ def value = 1  }
+  case object RegulatorySigns extends TrafficSignTypeGroup{ def value = 2 }
+  case object MaximumRestrictions extends TrafficSignTypeGroup{ def value = 3 }
+  case object GeneralWarningSigns extends TrafficSignTypeGroup{ def value = 4 }
+  case object ProhibitionsAndRestrictions extends TrafficSignTypeGroup{ def value = 5 }
+  case object AdditionalPanels extends TrafficSignTypeGroup{ def value = 6 }
+  case object MandatorySigns extends TrafficSignTypeGroup{ def value = 7 }
+  case object PriorityAndGiveWaySigns extends TrafficSignTypeGroup{ def value = 8 }
+  case object InformationSigns extends TrafficSignTypeGroup{ def value = 9 }
+  case object ServiceSigns extends TrafficSignTypeGroup{ def value = 10 }
+  case object Unknown extends TrafficSignTypeGroup{ def value = 99 }
 }
 
 sealed trait TrafficSignType {
@@ -70,8 +68,8 @@ object TrafficSignType {
     values.find(_.TRvalue == intValue).getOrElse(Unknown)
   }
 
-  def apply(trafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
-    values.filter(_.group == trafficSignTypeGroup).map(_.OTHvalue)
+  def apply(TrafficSignTypeGroup1: TrafficSignTypeGroup): Set[Int] = {
+    values.filter(_.group == TrafficSignTypeGroup1).map(_.OTHvalue)
   }
 
   case object Unknown extends TrafficSignType {

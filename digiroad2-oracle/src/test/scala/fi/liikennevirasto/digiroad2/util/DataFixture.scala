@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.security.InvalidParameterException
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
@@ -1435,9 +1436,10 @@ object DataFixture {
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
           }
         }catch {
-          case ex: ManoeuvreCreationException => {
+          case ex: ManoeuvreCreationException =>
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
-          }
+          case ex: InvalidParameterException =>
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
         }
       )
     }
@@ -1460,7 +1462,7 @@ object DataFixture {
       println(s"Fetching Traffic Signs for Municipality: $municipality")
 
       val existingAssets = trafficSignService.getByMunicipality(municipality)
-      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
       println("")
       println(s"Number of existing assets: ${filteredAssets.length}")
@@ -1470,7 +1472,7 @@ object DataFixture {
         println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
         OracleDatabase.withDynSession {
           val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false).get
-          val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt
+          val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.propertyValue.toInt
           val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
             AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.propertyType, x.values)).toSet, panel.validityDirection)
           }

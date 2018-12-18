@@ -440,22 +440,24 @@ trait LinearAssetOperations {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
     }
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    mapPersistedAssetChanges(persistedLinearAssets, roadLinks)
+  }
 
+  def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinksWithoutWalkways: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
         val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
         val endPoints: Set[Point] =
           try {
-          val ep = GeometryUtils.geometryEndpoints(points)
-          Set(ep._1, ep._2)
-        } catch {
-          case ex: NoSuchElementException =>
-            logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
-            val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
-            Set(wholeLinkPoints._1, wholeLinkPoints._2)
-        }
+            val ep = GeometryUtils.geometryEndpoints(points)
+            Set(ep._1, ep._2)
+          } catch {
+            case ex: NoSuchElementException =>
+              logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
+              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+              Set(wholeLinkPoints._1, wholeLinkPoints._2)
+          }
         ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
             persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,

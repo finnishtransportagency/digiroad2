@@ -9,7 +9,8 @@ import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
-
+import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 
 class ChangeApi extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -39,6 +40,11 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+      case "vehicle_prohibitions"        => linearAssetsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
+      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until), pointAssetGenericProperties)
+      case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until), pointAssetGenericProperties)
+      case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetWarningSignsGroupProperties)
+      case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(Stop.OTHvalue), since, until), pointAssetStopSignProperties)
     }
   }
 
@@ -104,7 +110,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
             ),
             "properties" ->
               Map(
-                "value" -> linearAsset.value.map(_.toJson),
+                "value" -> mapValue(linearAsset.value),
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,
@@ -137,6 +143,87 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
           )
         }
     )
+
+  private def mapValue(optValue: Option[Value]): Option[Any] = {
+    optValue match {
+      case Some(Prohibitions(prohibitions)) => Some(prohibitions.map { prohibitionValue =>
+        Map("typeId" -> prohibitionValue.typeId,
+          "exceptions" -> prohibitionValue.exceptions,
+          "validityPeriod" ->
+            prohibitionValue.validityPeriods.map { validityPeriod =>
+              Map(
+                "startHour" -> validityPeriod.startHour,
+                "endHour" -> validityPeriod.endHour,
+                "startMinute" -> validityPeriod.startMinute,
+                "endMinute" -> validityPeriod.endMinute,
+                "days" -> validityPeriod.days.value)
+            }
+        )
+      })
+      case _ => optValue.map(_.toJson)
+    }
+  }
+
+  private def pointAssetsToGeoJson(since: DateTime, changedPointAssets: Seq[ChangedPointAsset], dynamicPointAssetProperties: (PersistedPointAsset, DateTime) => Map[String, Any]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedPointAssets.map {  case ChangedPointAsset(pointAsset, link) =>
+         val point = GeometryUtils.calculatePointFromLinearReference(link.geometry, pointAsset.mValue).getOrElse(Point(pointAsset.lon, pointAsset.lat))
+          Map(
+            "type" -> "Feature",
+            "id" -> pointAsset.id,
+            "geometry" -> Map(
+              "type" -> "Point",
+              "coordinates" -> Seq(point.x, point.y, point.z)
+            ),
+            "properties" ->
+              (Map(
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ))
+                ++ dynamicPointAssetProperties(pointAsset, since))
+          )
+        }
+    )
+
+
+  def pointAssetGenericProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PersistedPoint]
+   Map(
+    "mValue" -> point.mValue,
+    "createdBy" -> point.createdBy,
+    "modifiedAt" -> point.modifiedAt.map(DateTimePropertyFormat.print(_)),
+    "createdAt" -> point.createdAt.map(DateTimePropertyFormat.print(_)),
+    "modifiedBy" -> point.modifiedBy,
+    "changeType" -> extractChangeType(since, point.expired, point.createdAt),
+    "sideCode" -> SideCode.BothDirections.value
+   )
+  }
+
+  def pointAssetWarningSignsGroupProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PersistedTrafficSign]
+    pointAssetGenericProperties(pointAsset, since) ++
+    Map(
+      "typeValue" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.propertyValue.toInt,
+      "sideCode" -> point.validityDirection
+    )
+  }
+
+  def pointAssetStopSignProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
+    val point = pointAsset.asInstanceOf[PersistedTrafficSign]
+    pointAssetGenericProperties(pointAsset, since) ++ Map("sideCode" -> point.validityDirection)
+  }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
