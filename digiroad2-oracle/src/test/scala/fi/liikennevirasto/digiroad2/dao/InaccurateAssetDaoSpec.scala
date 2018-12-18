@@ -48,10 +48,10 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
       }
 
-      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetCreated.size == 5 should be(true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.last) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
       dynamicSession.rollback()
     }
@@ -66,10 +66,10 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
       }
 
-      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID, authorizedMunicipalitiesList)
+      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID, authorizedMunicipalitiesList)
       inaccurateAssetCreated.size == 5 should be(true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.last) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
       dynamicSession.rollback()
     }
@@ -83,14 +83,13 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, State)
       }
 
-      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetCreated.size == 10 should be(true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.last) should be (true)
-
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
       inaccurateAssetDao.deleteAllInaccurateAssets(speedLimitAssetTypeID)
-      val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+      val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetDeleted.isEmpty should be(true)
       dynamicSession.rollback()
     }
@@ -103,14 +102,14 @@ class InaccurateAssetDaoSpec extends FunSuite with Matchers {
         inaccurateAssetDao.createInaccurateAsset(speedLimitId, speedLimitAssetTypeID, municipalityCode, Municipality)
       }
 
-      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+      val inaccurateAssetCreated = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetCreated.size == 10 should be(true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.head) should be (true)
-      inaccurateAssetCreated.map(_._1).contains(listSpeedLimit.last) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.head)) should be (true)
+      inaccurateAssetCreated.map(_.assetId).contains(Some(listSpeedLimit.last)) should be (true)
 
 
       inaccurateAssetDao.deleteAllInaccurateAssets(speedLimitAssetTypeID)
-      val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAssetByTypeId(speedLimitAssetTypeID)
+      val inaccurateAssetDeleted = inaccurateAssetDao.getInaccurateAsset(speedLimitAssetTypeID)
       inaccurateAssetDeleted.isEmpty should be (true)
       dynamicSession.rollback()
     }

@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.{IncomingPointAsset, _}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleAxleWeightLimitDao, OracleBogieWeightLimitDao, OracleTrailerTruckWeightLimitDao, OracleWeightLimitDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
@@ -33,7 +33,7 @@ trait WeightLimitService extends PointAssetOperations {
 
   override def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
+  override def update(id: Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: WeightLimit, floating: Boolean) = {
     persistedAsset
@@ -43,11 +43,15 @@ trait WeightLimitService extends PointAssetOperations {
     OracleWeightLimitDao.fetchByFilter(queryFilter)
   }
 
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedAsset] =  { throw new UnsupportedOperationException("Not Supported Method") }
+
   override def create(asset: IncomingAsset, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = {  throw new UnsupportedOperationException("Not Supported Method") }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 }
 
 class TotalWeightLimitService(val roadLinkService: RoadLinkService) extends WeightLimitService {

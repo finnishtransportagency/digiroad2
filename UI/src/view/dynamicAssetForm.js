@@ -684,27 +684,32 @@
 
             eventbus.on(events('selected', 'cancelled'), function () {
                 var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
-                rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-
+              rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
+              rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
+              rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
             });
 
             eventbus.on(events('unselect'), function() {
-                rootElement.empty();
+              rootElement.find('#feature-attributes-header').empty();
+              rootElement.find('#feature-attributes-form').empty();
+              rootElement.find('#feature-attributes-footer').empty();
             });
 
             eventbus.on('layer:selected', function(layer) {
-                if(_assetTypeConfiguration.isVerifiable && _assetTypeConfiguration.layerName === layer){
+                if(_assetTypeConfiguration.layerName === layer){
+                  $('ul[class=information-content]').empty();
+
+                  if(_assetTypeConfiguration.isVerifiable)
                     renderLinkToWorkList(layer);
-                }
-                else {
-                    $('#information-content .form[data-layer-name="' + _assetTypeConfiguration.layerName +'"]').remove();
                 }
             });
 
             eventbus.on('application:readOnly', function(){
                 if(_assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && _assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
                     var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
-                    rootElement.html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled ));
+                  rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
+                  rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
+                  rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
                 }
             });
 
@@ -747,6 +752,47 @@
         function _isReadOnly(selectedAsset){
             return checkAuthorizationPolicy(selectedAsset) || applicationModel.isReadOnly();
         }
+
+        var createHeaderElement = function(selectedAsset) {
+          var title = function () {
+            if(selectedAsset.isUnknown() || selectedAsset.isSplit()) {
+              return '<span class="read-only-title" style="display: block">' +_assetTypeConfiguration.title + '</span>' +
+                '<span class="edit-mode-title" style="display: block">' + _assetTypeConfiguration.newTitle + '</span>';
+            }
+            return selectedAsset.count() === 1 ?
+            '<span>Kohteen ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
+          };
+
+          return $(title());
+        };
+
+      var createFooterElement = function() {
+          return $('<div class="linear-asset form-controls" style="display: none"></div>')
+            .append(new VerificationButton(_assetTypeConfiguration).element)
+            .append(new SaveButton(_assetTypeConfiguration, formStructure).element)
+            .append(new CancelButton(_assetTypeConfiguration).element);
+        };
+
+        me.renderHeader = function(selectedAsset) {
+          var isReadOnly = _isReadOnly(selectedAsset);
+
+          var header = createHeaderElement(selectedAsset);
+
+          header.filter('.read-only-title').toggle(isReadOnly);
+          header.filter('.edit-mode-title').toggle(!isReadOnly);
+          header.filter('.form-controls').toggle(!isReadOnly);
+
+          return header;
+        };
+
+        me.renderFooter = function(selectedAsset) {
+          var isReadOnly = _isReadOnly(selectedAsset);
+          var footer = createFooterElement();
+          //Hide or show elements depending on the readonly mode
+          footer.filter('.form-controls').toggle(!isReadOnly);
+
+          return footer;
+        };
 
         me.renderForm = function (selectedAsset, isDisabled) {
             forms = new AvailableForms();
@@ -849,10 +895,8 @@
         }
 
         function renderLinkToWorkList(layerName) {
-            $('#information-content').append('' +
-                '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-                '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a>' +
-                '</div>');
+            $('ul[class=information-content]').append('' +
+                '<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a></li>');
         }
 
         function createSideCodeMarker(sideCode) {
@@ -861,6 +905,11 @@
 
             return '<span class="marker">' + sideCode + '</span>';
         }
+
+
+      var informationLog = function (date, username) {
+        return date ? (date + ' / ' + username) : '-';
+      };
 
         function createBodyElement(selectedAsset) {
             var info = {
@@ -879,22 +928,7 @@
                     '</div>' : '';
             };
 
-            var title = function () {
-                if(selectedAsset.isUnknown() || selectedAsset.isSplit()) {
-                    return '<span class="read-only-title" style="display: block">' +_assetTypeConfiguration.title + '</span>' +
-                        '<span class="edit-mode-title" style="display: block">' + _assetTypeConfiguration.newTitle + '</span>';
-                }
-                return selectedAsset.count() === 1 ?
-                    '<span>Kohteen ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
-
-            };
-
-            var informationLog = function (date, username) {
-              return date ? (date + ' / ' + username) : '-';
-            };
-
-            var body = $('<header>' + title() + '<div class="linear-asset-header form-controls"></div></header>' +
-                '<div class="wrapper read-only">' +
+            return $('<div class="wrapper read-only">' +
                 '   <div class="form form-horizontal form-dark asset-factory">' +
                 '     <div class="form-group">' +
                 '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
@@ -907,23 +941,12 @@
                 '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
                 '     </div>' +
                 '   </div>' +
-                '</div>' +
-                '<footer >' +
-                '   <div class="linear-asset-footer form-controls" style="display: none">' +
-                '  </div>' +
-                '</footer>'
-            );
-
-            body.find('.linear-asset-footer').append( new VerificationButton(_assetTypeConfiguration).element).append( new SaveButton(_assetTypeConfiguration, formStructure).element).append(new CancelButton(_assetTypeConfiguration).element);
-            return body;
+                '</div>');
         }
 
         function toggleBodyElements(rootElement, isReadOnly) {
-            rootElement.find('.form-controls').toggle(!isReadOnly);
             rootElement.find('.editable .form-control-static').toggle(isReadOnly);
             rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
-            rootElement.find('.read-only-title').toggle(isReadOnly);
-            rootElement.find('.edit-mode-title').toggle(!isReadOnly);
         }
 
         function generateClassName(sideCode) {
@@ -943,9 +966,6 @@
             //When both are deleted
             if(_.isEmpty(forms.getAllFields()))
                 return false;
-
-            if(forms.getFields('a').length !== forms.getFields('b').length)
-                return true;
 
       return _.some(forms.getFields('a'), function(fieldA){
         var propertyValueA = fieldA.getPropertyValue();

@@ -29,7 +29,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def setAssetPosition(asset: IncomingHeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def update(id: Long, updatedAsset: IncomingHeightLimit, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not Supported Method")
+  override def update(id: Long, updatedAsset: IncomingHeightLimit, roadLink: RoadLink, username: String) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: HeightLimit, floating: Boolean) = {
     persistedAsset
@@ -44,6 +44,10 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[HeightLimit] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }
 
 

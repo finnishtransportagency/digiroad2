@@ -54,7 +54,7 @@
     ];
 
     var speedLimitFeatureSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 3}, pointRadius: 0}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({stroke: {width: 3}, pointRadius: 0}),
       new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 5}, pointRadius: 10}),
       new StyleRule().where('zoomLevel').is(11).use({stroke: {width: 7}, pointRadius: 14}),
       new StyleRule().where('zoomLevel').is(12).use({stroke: {width: 10}, pointRadius: 16}),
@@ -64,7 +64,7 @@
     ];
 
     var speedLimitImageSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
       new StyleRule().where('zoomLevel').is(10).and('type').isNot('unknown').use({ icon: {scale: 1}}),
       new StyleRule().where('zoomLevel').is(11).and('type').isNot('unknown').use({ icon: {scale: 1.3}}),
       new StyleRule().where('zoomLevel').is(12).and('type').isNot('unknown').use({ icon: {scale: 1.6}}),

@@ -3,10 +3,16 @@
 #feature-attributes {
   z-index: 1010;
 
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: calc(~"100vh - 80px");
+  width: @feature-attribute-panel-width;
+  background-color: @gray-darker;
+  flex-direction: column;
+  display: flex;
+
   header {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     border-bottom: 1px solid @gray-darker-2;
     font-size: @font-size-xl;
@@ -14,28 +20,69 @@
 
     span {
       display: block;
+      float: left;
       padding: @line-height-modifier * 2;
       line-height: (@line-height-modifier * 5) + 2;
     }
+
+    .linear-asset .form-controls {
+      width: 40%;
+      padding: 5px;
+    }
+  }
+
+  main {
+    height: 100%;
+    display: flex;
+    min-height: 0px;
+
+    article {
+      overflow-y: auto;
+      flex: auto;
+    }
+  }
+
+  footer {
+    min-height: 47px;
+    padding-bottom: 10px;
+    border-top: 1px solid #282826;
+  }
+
+  nav > ul {
+    list-style: none;
+    float: right;
+    margin-right: 15px;
+    text-align: right;
+
+    > li {
+      text-transform: uppercase;
+      text-decoration-line: underline;
+
+      > a {
+        color: #a4a4a2;
+      }
+
+      > a#feedback-data {
+        color: #ffffff;
+        background-color: #1c7fdd;
+      }
+    }
+
+    .log-info {
+      text-decoration-line: none;
+      color: #a4a4a2;
+      > p {margin: 0;}
+    }
+
   }
 
   .wrapper {
-    position: absolute;
-    top: 48px;
-    left: 0;
-    right: 0;
-    bottom: 175px;
     overflow-y: auto;
     padding: 10px;
   }
 
   .form-controls {
-    position: absolute;
-    bottom: 80px;
-    left: 0;
-    right: 0;
     padding: 10px;
-    border-top: 1px solid @gray-darker-2;
     text-align: right;
 
     .save {
@@ -336,6 +383,7 @@
   .checkbox,
   .select,
   .form-control-static,
+  .form-control-readOnly,
   .choice-group,
   .btn-block {
     width: 210px;
@@ -355,40 +403,5 @@
 
   .service-point > div {
     display: inline-block;
-  }
-}
-
-
-#information-content {
-  a {
-    z-index: 1011;
-    color: @input-color-placeholder-dark;
-    text-decoration: underline;
-  }
-
-  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets, .unchecked-linear-assets, .feedback-data-link {
-    position:absolute;
-    right: 10px;
-    bottom: 145px;
-    text-transform: uppercase;
-  }
-
-  a.feedback-data-link {
-    bottom: 123px;
-    padding-left: 5px;
-    padding-right: 5px;
-    color: @white;
-    .btn-primary();
-  }
-
-  .wrong-speed-limits {
-    position:absolute;
-    right: 10px;
-    text-transform: uppercase;
-    bottom: 141px;
-  }
-
-  .wrong-speed-limits.operator-user {
-    bottom: 200px;
   }
 }

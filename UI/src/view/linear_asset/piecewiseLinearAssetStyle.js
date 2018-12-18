@@ -9,7 +9,7 @@
     ];
 
     var zoomLevelRules = [
-      new StyleRule().where('zoomLevel').is(9).use({ stroke: {width: 3 }}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({ stroke: {width: 3 }}),
       new StyleRule().where('zoomLevel').is(10).use({ stroke: {width: 5 }}),
       new StyleRule().where('zoomLevel').is(11).use({ stroke: {width: 8 }}),
       new StyleRule().where('zoomLevel').is(12).use({ stroke: {width: 10 }}),

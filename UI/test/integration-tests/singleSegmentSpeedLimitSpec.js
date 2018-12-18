@@ -68,7 +68,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
           });
         });
         it('deselects speed limit', function() {
-            expect($('#feature-attributes header')).not.to.exist;
+            expect($('#feature-attributes header')[0].text).to.be.empty;
         });
       });
     });
@@ -86,7 +86,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
             testHelpers.selectLayer('speedLimit');
           });
           it('deselects speed limit', function() {
-            expect($('#feature-attributes header')).not.to.exist;
+            expect($('#feature-attributes header')[0].text).to.be.empty;
           });
         });
       });

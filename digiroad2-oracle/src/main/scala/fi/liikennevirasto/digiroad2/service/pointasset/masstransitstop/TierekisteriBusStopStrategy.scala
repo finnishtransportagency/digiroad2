@@ -96,9 +96,9 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
-  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Option[Long] = {
+  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {
+    //Remove the Livi ID
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, "")
-    massTransitStopDao.expireMassTransitStop(username, existingAsset.id)
     getLiviIdValue(existingAsset.propertyData).map {
       liviId =>
         if(MassTransitStopOperations.isVirtualBusStop(newProperties))
@@ -106,7 +106,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         else
           expireTierekisteriBusStop(existingAsset, liviId, username)
     }
-    None
   }
 
   override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {

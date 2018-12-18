@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, OracleDirectionalTrafficSignDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import org.joda.time.DateTime
 
 case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
 
@@ -14,6 +15,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   type PersistedAsset = DirectionalTrafficSign
 
   override def typeId: Int = 240
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[DirectionalTrafficSign] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def setAssetPosition(asset: IncomingDirectionalTrafficSign, geometry: Seq[Point], mValue: Double): IncomingDirectionalTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
@@ -41,22 +43,25 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     }
   }
 
-  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
+  override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink, username: String): Long = {
     withDynTransaction {
-      updateWithoutTransaction(id, updatedAsset, geometry, municipality, username, linkSource)
+      updateWithoutTransaction(id, updatedAsset, roadLink, username)
     }
   }
 
-  def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), geometry)
+  def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink,  username: String): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry)
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWithoutTransaction(id)
-        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username,old.createdBy, old.createdAt)
+        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username,old.createdBy, old.createdAt)
       case _ =>
-        OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username)
+        OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username)
     }
   }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
 }
 
 
