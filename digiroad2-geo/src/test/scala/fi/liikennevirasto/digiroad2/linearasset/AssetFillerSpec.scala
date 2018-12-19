@@ -12,7 +12,6 @@ import org.scalatest._
 class AssetFillerSpec extends FunSuite with Matchers {
 
   object assetFiller extends AssetFiller
-//  object oneWayAssetFiller extends OneWayAssetFiller
 
   test("create non-existent linear assets on empty road links") {
     val topology = Seq(
@@ -87,19 +86,12 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
-    filledTopology should have size 4
+    filledTopology should have size 2
+
+    filledTopology.filter(_.linkId == 2l).map(_.sideCode) should be(Seq(BothDirections))
 
     filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 1l).map(_.linkId) should be(Seq(1l))
-
-    filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 2l).map(_.linkId) should be(Seq(2l))
-
-    filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 3l).map(_.linkId) should be(Seq(2l))
-
-    filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(2l))
 
     changeSet.adjustedSideCodes should be(Seq(
       SideCodeAdjustment(1l, SideCode.BothDirections, PavedRoad.typeId),
@@ -107,7 +99,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       SideCodeAdjustment(3l, SideCode.BothDirections, PavedRoad.typeId)))
   }
 
-  test("generate one-sided asset when two-way road link is half-covered") {
+  test("generate two-sided asset when two-way road link is half-covered") {
     val topology = Seq(
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
@@ -116,16 +108,13 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
     val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
-    filledTopology should have size 2
-    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
+    filledTopology should have size 1
+
+    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
-    filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(AgainstDigitizing))
-    filledTopology.filter(_.id == 0).map(_.value) should be(Seq(None))
-    filledTopology.filter(_.id == 0).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-
-    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(1,BothDirections,110)), Set.empty[Long]))
   }
 
   test("project road lights to new geometry") {

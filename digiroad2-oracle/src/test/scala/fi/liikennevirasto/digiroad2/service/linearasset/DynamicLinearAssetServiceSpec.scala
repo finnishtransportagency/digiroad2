@@ -20,8 +20,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
-
-class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
+class DynamicLinearTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -97,6 +96,10 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
+}
+class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
+
   object ServiceWithDao extends DynamicLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -111,8 +114,6 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
-
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
 
 
   test("Create new linear asset") {
@@ -535,16 +536,6 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       DynamicProperty("mittauspaiva", "date", false, Seq(DynamicPropertyValue("11.9.2018")))
     )))
 
-
-
-    val massTransitLaneValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("public_validity_period", "time_period", false, Seq(DynamicPropertyValue(Map("days" -> 1,
-        "startHour" -> 2,
-        "endHour" -> 10,
-        "startMinute" -> 10,
-        "endMinute" -> 20))))
-    )))
-
     val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
       DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10)))
     )))
@@ -552,7 +543,6 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
     val assetsInfo = Seq(
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, massTransitLaneValue, SideCode.AgainstDigitizing.value, 0, None), MassTransitLane.typeId),
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId)
         )
 
@@ -576,14 +566,14 @@ class DynamicLinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId), 1204467577, 1, Some(0), Some(150), Some(100), Some(200), 1461970812000L))
 
     runWithRollback {
-      ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "KX1", 0).head
+      val assetId = ServiceWithDao.create(Seq(assetInfo.newLinearAsset), assetInfo.typeId, "KX1", 0).head
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
       ServiceWithDao.getByMunicipality(assetInfo.typeId, municipalityCode)
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
-        verify(mockEventBus, times(count))
-          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+        verify(mockEventBus, times(1))
+          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Seq(SideCodeAdjustment(assetId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,SideCode.BothDirections,assetInfo.typeId)), Set.empty[Long]))
 
         val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
         verify(mockEventBus, times(count)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())
