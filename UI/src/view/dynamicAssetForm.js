@@ -906,10 +906,57 @@
             return '<span class="marker">' + sideCode + '</span>';
         }
 
+        var userInformationLog = function() {
+            var selectedAsset = _assetTypeConfiguration.selectedLinearAsset;
+            var authorizationPolicy = _assetTypeConfiguration.authorizationPolicy;
 
-      var informationLog = function (date, username) {
-        return date ? (date + ' / ' + username) : '-';
-      };
+            var isStateRoad = function(linearAsset) {
+                return _.some(linearAsset.get(), function(asset){
+                    return authorizationPolicy.isState(asset);
+                });
+            };
+
+            var hasMunicipality = function(linearAsset) {
+                return _.some(linearAsset.get(), function(asset){
+                    return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+                });
+            };
+
+            if(authorizationPolicy.isOperator() && isStateRoad(selectedAsset)) {
+                return '' +
+                  '<div class="form-group user-information">' +
+                    '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+                  '</div>';
+            }
+            else if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
+                if(!hasMunicipality(selectedAsset)) {
+                    return '' +
+                      '<div class="form-group user-information">' +
+                      '<p class="form-control-static user-log-info"> Out of municipality range. </p>' +
+                      '</div>';
+                } else if(isStateRoad(selectedAsset)) {
+                    return '' +
+                      '<div class="form-group user-information">' +
+                        '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+                      '</div>';
+                } else {
+                    return '';
+                }
+            }
+            else if(checkAuthorizationPolicy(selectedAsset)) {
+                return '' +
+                  '<div class="form-group user-information">' +
+                    '<p class="form-control-static user-log-info"> Viewer is not authorized to edit. </p>' +
+                    //'<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
+                  '</div>';
+            } else {
+                return '';
+            }
+        };
+
+        var informationLog = function (date, username) {
+           return date ? (date + ' / ' + username) : '-';
+        };
 
         function createBodyElement(selectedAsset) {
             var info = {
@@ -940,6 +987,7 @@
                 '     <div class="form-group">' +
                 '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
                 '     </div>' +
+                userInformationLog() +
                 '   </div>' +
                 '</div>');
         }

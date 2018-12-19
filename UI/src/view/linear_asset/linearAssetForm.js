@@ -21,7 +21,7 @@
 
     eventbus.on(events('selected', 'cancelled'), function() {
       rootElement.find('#feature-attributes-header').html(header(selectedLinearAsset, title, newTitle));
-      rootElement.find('#feature-attributes-form').html(template(selectedLinearAsset, formElements));
+      rootElement.find('#feature-attributes-form').html(template(selectedLinearAsset, formElements, authorizationPolicy));
       rootElement.find('#feature-attributes-footer').html(footer(selectedLinearAsset, isVerifiable));
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
@@ -111,7 +111,7 @@
   };
 
 
-  function template(selectedLinearAsset, formElements) {
+  function template(selectedLinearAsset, formElements, authorizationPolicy) {
     var modifiedBy = selectedLinearAsset.getModifiedBy() || '-';
     var modifiedDateTime = selectedLinearAsset.getModifiedDateTime() ? ' ' + selectedLinearAsset.getModifiedDateTime() : '';
     var createdBy = selectedLinearAsset.getCreatedBy() || '-';
@@ -143,10 +143,63 @@
         '</div>';
     };
 
+
+
     var verifiedFields = function(isVerifiable) {
       return (isVerifiable && verifiedBy && verifiedDateTime) ? '<div class="form-group">' +
       '<p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(verifiedDateTime, verifiedBy) + '</p>' +
       '</div>' : '';
+    };
+
+    var userInformationLog = function() {
+      var isStateRoad = function(linearAsset) {
+        return _.some(linearAsset.get(), function(asset){
+          return authorizationPolicy.isState(asset);
+        });
+      };
+
+      var hasMunicipality = function(linearAsset) {
+        return _.some(linearAsset.get(), function(asset){
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      if(authorizationPolicy.isOperator() && isStateRoad(selectedLinearAsset)) {
+        return '' +
+          '<div class="form-group user-information">' +
+          '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+          '</div>';
+      } else if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
+        if(!hasMunicipality(selectedLinearAsset)){
+          return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info"> Out of municipality range. </p>' +
+            '</div>';
+        } else if(isStateRoad(selectedLinearAsset)) {
+          return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+            '</div>';
+        } else {
+          return '';
+        }
+      } else if(!authorizationPolicy.formEditModeAccess(selectedLinearAsset)) {
+        return '' +
+          '<div class="form-group user-information">' +
+          '<p class="form-control-static user-log-info"> Viewer is not authorized to edit. </p>' +
+          //'<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
+          '</div>';
+      } else {
+        return '';
+      }
+      // if(!authorizationPolicy.formEditModeAccess(selectedLinearAsset)) {
+      //   return '' +
+      //     '<div class="form-group user-information">' +
+      //     '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
+      //     '</div>';
+      // } else {
+      //   return '';
+      // }
     };
 
     var informationLog = function (date, username) {
@@ -165,6 +218,7 @@
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinearAsset.count() + '</p>' +
                '</div>' +
+               userInformationLog() +
                limitValueButtons() +
                separatorButton() +
              '</div>' +

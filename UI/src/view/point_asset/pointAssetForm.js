@@ -80,7 +80,7 @@ root.PointAssetForm = function() {
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
     var header = '<span>' + title + '</span>';
-    var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
+    var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
     var footer = me.renderButtons();
 
     rootElement.find("#feature-attributes-header").html(header);
@@ -116,13 +116,58 @@ root.PointAssetForm = function() {
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
   };
 
+  var userInformationLog = function(authorizationPolicy, asset) {
+    var hasMunicipality = function(linearAsset) {
+      return _.some(linearAsset.get(), function(selectedAsset){
+        return authorizationPolicy.hasRightsInMunicipality(selectedAsset.municipalityCode);
+      });
+    };
+
+    if(authorizationPolicy.isOperator() && authorizationPolicy.isState(asset.getAdministrativeClass())) {
+      return '' +
+        '<div class="form-group user-information">' +
+        '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+        '</div>';
+    } else if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
+      if(!hasMunicipality(asset)){
+        return '' +
+          '<div class="form-group user-information">' +
+          '<p class="form-control-static user-log-info"> Out of municipality range. </p>' +
+          '</div>';
+      } else if(authorizationPolicy.isState(asset.getAdministrativeClass())) {
+        return '' +
+          '<div class="form-group user-information">' +
+          '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+          '</div>';
+      } else {
+        return '';
+      }
+    } else if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection)) {
+      return '' +
+        '<div class="form-group user-information">' +
+        '<p class="form-control-static user-log-info"> Viewer is not authorized to edit. </p>' +
+        //'<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
+        '</div>';
+    } else {
+      return '';
+    }
+    // if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection)) {
+    //   return '' +
+    //   '<div class="form-group user-information">' +
+    //     '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
+    //   '</div>';
+    // } else {
+    //   return '';
+    // }
+  };
+
   var informationLog = function (date, username) {
     return date ? (date + ' / ' + username) : '-';
   };
 
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
-  this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection) {
+  this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
     var asset = selectedAsset.get();
 
     if (selectedAsset.isNew()) {
@@ -143,6 +188,7 @@ root.PointAssetForm = function() {
         '    <div class="form-group">' +
         '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
+        userInformationLog(authorizationPolicy, selectedAsset) +
         me.renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
         '      <div class="checkbox" >' +
