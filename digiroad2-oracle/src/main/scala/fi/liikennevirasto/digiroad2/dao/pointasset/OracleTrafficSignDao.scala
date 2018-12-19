@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -399,5 +399,42 @@ object OracleTrafficSignDao {
         and created_by != 'batch_process_trafficSigns'
         and municipality_code in (#${municipalities.mkString(",")})""".execute
     }
+  }
+
+  def expire(linkIds: Set[Long], username: String): Unit = {
+    MassQuery.withIds(linkIds) { idTableName =>
+      sqlu"""
+         update asset set valid_to = sysdate - 1/86400 where id in (
+          select a.id
+          from asset a
+          join asset_link al on al.asset_id = a.id
+          join lrm_position lrm on lrm.id = al.position_id
+          join  #$idTableName i on i.id = lrm.link_id
+          where a.asset_type_id = ${TrafficSigns.typeId}
+          AND (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+          AND a.created_by = $username
+         )
+      """.execute
+    }
+  }
+
+  def getTrafficSignType(id: Long): Option[Int]= {
+    sql""" select ev.value
+         from asset a
+         join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'trafficSigns_type'
+         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
+         left join enumerated_value ev on scv.enumerated_value_id = ev.id
+         where a.asset_type_id = ${TrafficSigns.typeId} and a.id = $id
+    """.as[Int].firstOption
+  }
+
+  def expireWithoutTransaction(queryFilter: String => String, username: Option[String]) : Unit = {
+    val modifiedBy = username match {case Some(user) => s", modified_date = sysdate , modified_by = '$user'" case _ => "" }
+    val query = s"""
+          update asset
+          set valid_to = sysdate $modifiedBy
+          where asset_type_id = ${TrafficSigns.typeId}
+          """
+    StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > SYSDATE)").execute
   }
 }

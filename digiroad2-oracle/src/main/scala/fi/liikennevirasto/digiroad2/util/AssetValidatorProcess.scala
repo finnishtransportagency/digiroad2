@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, _}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
@@ -42,6 +43,14 @@ object AssetValidatorProcess {
 
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
+  }
+
+  lazy val manoeuvreService: ManoeuvreService = {
+    new ManoeuvreService(roadLinkService, new DummyEventBus)
+  }
+
+  lazy val prohibitionService: ProhibitionService = {
+    new ProhibitionService(roadLinkService, new DummyEventBus)
   }
 
   lazy val manoeuvreServiceValidator: ManoeuvreValidator = {

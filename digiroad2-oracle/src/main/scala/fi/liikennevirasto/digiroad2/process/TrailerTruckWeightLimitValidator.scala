@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.{MaxMassCombineVehiclesExceeding, TrafficSignType}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PropertyValue, TextPropertyValue, TrailerTruckWeightLimit}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, TextPropertyValue, TrailerTruckWeightLimit}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 

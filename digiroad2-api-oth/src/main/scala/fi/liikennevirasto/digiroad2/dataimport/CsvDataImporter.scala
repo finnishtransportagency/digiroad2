@@ -10,6 +10,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point}
+import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, ManoeuvreService, Measures, ProhibitionService}
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point, TrafficSignType}
 import fi.liikennevirasto.digiroad2.{PriorityAndGiveWaySigns, _}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
@@ -79,6 +81,9 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService
   val roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
+
+  lazy val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService
+  lazy val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService
 
   private val longValueFieldMappings = Map(
     "koordinaatti x" -> "lon",
@@ -159,7 +164,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         }else
           result
       } else {
-          if (longValueFieldMappings.contains(key)) {
+        if (longValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (codeValueFieldMappings.contains(key)) {
@@ -293,6 +298,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       }
     }
 }
+
 class RoadLinkCsvImporter extends CsvDataImporterOperations {
 
   case class NonUpdatedLink(linkId: Long, csvRow: String)

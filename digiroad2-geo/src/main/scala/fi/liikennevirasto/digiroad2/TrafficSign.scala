@@ -41,6 +41,8 @@ sealed trait TrafficSignType {
   }
 
   def source = Seq("CSVimport", "TRimport")
+
+
 }
 object TrafficSignType {
   val values = Set(PriorityRoad, EndOfPriority, PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea,
@@ -70,6 +72,18 @@ object TrafficSignType {
 
   def apply(TrafficSignTypeGroup1: TrafficSignTypeGroup): Set[Int] = {
     values.filter(_.group == TrafficSignTypeGroup1).map(_.OTHvalue)
+  }
+
+
+  def belongsToManoeuvre(intValue: Int) : Boolean = {
+    val trafficSigns = Seq(NoLeftTurn, NoRightTurn, NoUTurn)
+    trafficSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
+
+  def belongsToProhibition(intValue: Int) : Boolean = {
+    val trafficSigns = Seq(ClosedToAllVehicles,  NoPowerDrivenVehicles,  NoLorriesAndVans,  NoVehicleCombinations,  NoAgriculturalVehicles,  NoMotorCycles,  NoMotorSledges,
+      NoBuses,  NoMopeds,  NoCyclesOrMopeds,  NoPedestrians,  NoPedestriansCyclesMopeds,  NoRidersOnHorseback)
+    trafficSigns.contains(TrafficSignType.applyOTHValue(intValue))
   }
 
   case object Unknown extends TrafficSignType {

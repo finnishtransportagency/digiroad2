@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.process
 
-import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao

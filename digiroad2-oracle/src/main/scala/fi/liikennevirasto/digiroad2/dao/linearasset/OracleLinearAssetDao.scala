@@ -366,7 +366,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
   def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
-    val excludedTypesValues = excludedTypes.map(_.prohibitionType)
+    val excludedTypesValues = excludedTypes.map(_.value)
 
     val assets =  sql"""
        select a.id, pos.link_id, pos.side_code, pv.id, pv.type, pvp.type, pvp.start_hour, pvp.end_hour,pe.type,
@@ -579,7 +579,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None): Long = {
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, trafficSignId: Option[Long] = None): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
@@ -626,7 +626,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       select * from dual
         """.execute
     }
+
+    if(trafficSignId.nonEmpty)
+      insertConnectedAsset(id, trafficSignId.get)
+
     id
+  }
+
+  def insertConnectedAsset(id: Long, connected_id : Long) : Int = {
+    sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
   }
 
   /**
@@ -781,5 +789,19 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           and a.floating = 0
       """.as[(Long, Long)].list
   }
-}
 
+  def deleteByTrafficSign(queryFilter: String => String, username: Option[String]) : Unit = {
+    val modifiedBy = username match { case Some(user) => s", modified_by = '$user' " case _ => ""}
+    val query = s"""
+          update asset aux
+          set valid_to = sysdate, modified_date = sysdate  $modifiedBy
+          Where (aux.valid_to IS NULL OR aux.valid_to > SYSDATE )
+          and exists ( select 1
+                       from connected_asset con
+                       join asset a on a.id = con.connected_asset_id
+                       where aux.id = con.asset_id
+                       and a.asset_type_id = ${TrafficSigns.typeId}
+          """
+    Q.updateNA(queryFilter(query) + ")").execute
+  }
+}

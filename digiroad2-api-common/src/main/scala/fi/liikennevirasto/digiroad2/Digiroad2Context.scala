@@ -3,7 +3,6 @@ package fi.liikennevirasto.digiroad2
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{trailerTruckWeightLimitValidator, getClass}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
@@ -11,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePointMassLimitationDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -77,7 +76,6 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     linearAssetService.updateChangeSet(changeSet)
   }
 }
-
 
 class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
   def receive = {
@@ -239,24 +237,6 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
   }
 }
 
-case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
-
-  val logger = LoggerFactory.getLogger(getClass)
-
-  def receive = {
-    case x: Long => manoeuvreProvider.deleteManoeuvreFromSign(x.asInstanceOf[Long])
-    case x: ManoeuvreProvider =>
-      try {
-        manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
-      }catch {
-        case e: ManoeuvreCreationException =>
-          logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
-      }
-    case _ => println("Manoeuvre not created")
-  }
-}
-
-
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -268,11 +248,12 @@ object Digiroad2Context {
   }
   lazy val revisionInfo: Properties = {
     val props = new Properties()
-      props.load(getClass.getResourceAsStream("/revision.properties"))
+    props.load(getClass.getResourceAsStream("/revision.properties"))
     props
   }
 
   val system = ActorSystem("Digiroad2")
+
   import system.dispatcher
 
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
@@ -330,10 +311,6 @@ object Digiroad2Context {
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
-
-  val manoeuvreUpdater = system.actorOf(Props(classOf[ManoeuvreUpdater[Int, ManoeuvreProvider]], manoeuvreService), name ="manoeuvreUpdater" )
-  eventbus.subscribe(manoeuvreUpdater, "manoeuvre:expire")
-  eventbus.subscribe(manoeuvreUpdater,"manoeuvre:create")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
