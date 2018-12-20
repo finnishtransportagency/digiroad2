@@ -117,27 +117,11 @@ root.PointAssetForm = function() {
   };
 
   var userInformationLog = function(authorizationPolicy, asset) {
-    var hasMunicipality = function(linearAsset) {
-      return _.some(linearAsset.get(), function(selectedAsset){
-        return authorizationPolicy.hasRightsInMunicipality(selectedAsset.municipalityCode);
-      });
-    };
-
-    if(authorizationPolicy.isOperator() && authorizationPolicy.isState(asset.getAdministrativeClass())) {
-      return '' +
-        '<div class="form-group user-information">' +
-        '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
-        '</div>';
-    } else if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
-      if(!hasMunicipality(asset)){
+    if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
+      if(!authorizationPolicy.hasRightsInMunicipality(asset.getMunicipalityCode())){
         return '' +
           '<div class="form-group user-information">' +
-          '<p class="form-control-static user-log-info"> Out of municipality range. </p>' +
-          '</div>';
-      } else if(authorizationPolicy.isState(asset.getAdministrativeClass())) {
-        return '' +
-          '<div class="form-group user-information">' +
-          '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
+          '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi. </p>' +
           '</div>';
       } else {
         return '';
@@ -145,20 +129,11 @@ root.PointAssetForm = function() {
     } else if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection)) {
       return '' +
         '<div class="form-group user-information">' +
-        '<p class="form-control-static user-log-info"> Viewer is not authorized to edit. </p>' +
-        //'<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
+        '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät riitä kohteen muokkaamiseen. </p>' +
         '</div>';
     } else {
       return '';
     }
-    // if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection)) {
-    //   return '' +
-    //   '<div class="form-group user-information">' +
-    //     '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
-    //   '</div>';
-    // } else {
-    //   return '';
-    // }
   };
 
   var informationLog = function (date, username) {
@@ -213,7 +188,7 @@ root.PointAssetForm = function() {
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
-      '<li><a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a></li>');
+      '<li><button id="point-asset-work-list-link" class="floating-point-assets" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -237,7 +212,7 @@ root.PointAssetForm = function() {
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
     $('ul[class=information-content]').append('' +
-      '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+      '<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</button></li>');
   };
 };
 })(this);

@@ -152,54 +152,29 @@
     };
 
     var userInformationLog = function() {
-      var isStateRoad = function(linearAsset) {
-        return _.some(linearAsset.get(), function(asset){
-          return authorizationPolicy.isState(asset);
-        });
-      };
-
-      var hasMunicipality = function(linearAsset) {
-        return _.some(linearAsset.get(), function(asset){
+      var hasMunicipality = function (linearAsset) {
+        return _.some(linearAsset.get(), function (asset) {
           return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
         });
       };
 
-      if(authorizationPolicy.isOperator() && isStateRoad(selectedLinearAsset)) {
-        return '' +
-          '<div class="form-group user-information">' +
-          '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
-          '</div>';
-      } else if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
-        if(!hasMunicipality(selectedLinearAsset)){
+      if (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
+        if (!hasMunicipality(selectedLinearAsset)) {
           return '' +
-            '<div class="form-group user-information">' +
-            '<p class="form-control-static user-log-info"> Out of municipality range. </p>' +
-            '</div>';
-        } else if(isStateRoad(selectedLinearAsset)) {
-          return '' +
-            '<div class="form-group user-information">' +
-            '<p class="form-control-static user-log-info"> Trying to change state road. </p>' +
-            '</div>';
+              '<div class="form-group user-information">' +
+              '<p class="form-control-static user-log-info">  Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi. </p>' +
+              '</div>';
         } else {
           return '';
         }
-      } else if(!authorizationPolicy.formEditModeAccess(selectedLinearAsset)) {
+      } else if (!authorizationPolicy.formEditModeAccess(selectedLinearAsset)) {
         return '' +
-          '<div class="form-group user-information">' +
-          '<p class="form-control-static user-log-info"> Viewer is not authorized to edit. </p>' +
-          //'<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
-          '</div>';
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät riitä kohteen muokkaamiseen.  </p>' +
+            '</div>';
       } else {
         return '';
       }
-      // if(!authorizationPolicy.formEditModeAccess(selectedLinearAsset)) {
-      //   return '' +
-      //     '<div class="form-group user-information">' +
-      //     '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät rittä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueetta. </p>' +
-      //     '</div>';
-      // } else {
-      //   return '';
-      // }
     };
 
     var informationLog = function (date, username) {
@@ -240,11 +215,11 @@
       default:
         textName = "Vanhentuneiden kohteiden lista";
     }
-    $('ul[class=information-content]').append('<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a></li>');
+    $('ul[class=information-content]').append('<li><button id="unchecked-links" class="unchecked-linear-assets" onclick=location.href="#work-list/' + layerName + '">' + textName + '</button></li>');
   };
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-    $('ul[class=information-content]').append('<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</button></li>');
   };
 
   function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){

@@ -87,15 +87,15 @@
 
       if (!authorizationPolicy.workListAccess()) {
         $('ul[class=information-content]').append('' +
-          '<li><a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a></li>' +
-          '<li><a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a></li>');
+          '<li><button id="work-list-link-errors" class="wrong-speed-limits" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet Lista</button></li>' +
+          '<li><button id="work-list-link" class="unknown-speed-limits" onclick=location.href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</button></li>');
        }
       else {
         $('ul[class=information-content]').append('' +
-          '   <li><a id="work-list-link-errors" class="wrong-speed-limits operator-user" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a></li>' +
+          '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet Lista</button></li>' +
           '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
-          '   <li><a id="work-list-link-municipality" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan Omistama</a></li>' +
-          '   <li><a id="work-list-link-state" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion Omistama</a></li>');
+          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan Omistama</button></li>' +
+          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion Omistama</button></li>');
       }
   };
 

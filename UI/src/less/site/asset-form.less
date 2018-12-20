@@ -25,6 +25,15 @@
       line-height: (@line-height-modifier * 5) + 2;
     }
 
+    #feedback-data {
+      padding: 1px 4px;
+      margin: 9px 15px;
+      border: 2px solid black;
+      background-color: yellow;
+      color: black;
+      float: right;
+    }
+
     .linear-asset .form-controls {
       width: 40%;
       padding: 5px;
@@ -51,20 +60,19 @@
   nav > ul {
     list-style: none;
     float: right;
-    margin-right: 15px;
+    margin: 7px 15px;
     text-align: right;
 
     > li {
-      text-transform: uppercase;
-      text-decoration-line: underline;
+      font-size: 13px;
 
-      > a {
-        color: #a4a4a2;
-      }
-
-      > a#feedback-data {
-        color: #ffffff;
-        background-color: #1c7fdd;
+      > button {
+        padding: 1px 4px;
+        margin: 3px 7px;
+        border: 2px solid darkgray;
+        background-color: lightgray;
+        color: black;
+        width: 100%;
       }
     }
 

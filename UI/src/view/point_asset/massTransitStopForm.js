@@ -825,10 +825,11 @@
       };
 
       var renderLinktoWorkList = function renderLinktoWorkList() {
+        $('ul[class=information-content]').empty();
         var notRendered = !$('#asset-work-list-link').length;
         if(notRendered) {
           $('ul[class=information-content]').append('' +
-            '<li><a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a></li>');
+            '<li><button id="asset-work-list-link" class="floating-stops" onclick=location.href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</button></li>');
         }
       };
 

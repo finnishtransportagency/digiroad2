@@ -165,7 +165,7 @@
       if(notRendered) {
         $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
-            '<li><a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a></li>');
+            '<li><button id="incomplete-links-link" class="incomplete-links" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
       }
     };
 
