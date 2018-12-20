@@ -166,13 +166,13 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     println(DateTime.now())
 
     println("Fetching municipalities")
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
-      Queries.getMunicipalities
-    }
-
-    OracleDatabase.withDynTransaction {
-      inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
-  }
+//    val municipalities: Seq[Int] = OracleDatabase.withDynSession{
+//      Queries.getMunicipalities
+//    }
+    val municipalities: Seq[Int] = Seq(62)
+//    OracleDatabase.withDynTransaction {
+//      inaccurateAssetDAO.deleteAllInaccurateAssets(assetTypeInfo.typeId)
+//  }
 
     municipalities.foreach{
       municipality =>
