@@ -1483,18 +1483,11 @@ object DataFixture {
           }
 
           val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
-          val orderedAdditionalPanels = additionalPanelsInRadius.toSeq.sortBy(_.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt)
+          val orderedAdditionalPanels = additionalPanelsInRadius.toSeq.sortBy(_.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).toSet
 
           if (orderedAdditionalPanels.size <= 3 && orderedAdditionalPanels.nonEmpty) {
-            val additionalPanels = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
-              AdditionalPanel(panel.propertyData.find(p => p.publicId == trafficSignService.typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-                panel.propertyData.find(p => p.publicId == trafficSignService.infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-                panel.propertyData.find(p => p.publicId == trafficSignService.valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-                index)
-            }
-
-            val simpleTrafficSignProperties = SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanels)
-            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, Set(simpleTrafficSignProperties), sign.validityDirection, sign.bearing)
+            val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanels)
+            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, additionalPanels, sign.validityDirection, sign.bearing)
 
             trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
             orderedAdditionalPanels.flatMap(_.id)
@@ -1651,7 +1644,6 @@ object DataFixture {
       println("Complete at time: " + DateTime.now())
     }
   }
-
 
   def createProhibitionsUsingTrafficSigns(): Unit = {
     //Get All Municipalities

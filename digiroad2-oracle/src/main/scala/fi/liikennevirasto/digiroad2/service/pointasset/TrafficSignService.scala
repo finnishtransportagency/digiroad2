@@ -225,31 +225,19 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  def createFromCoordinates(trafficSign: IncomingTrafficSign, roadLinks: Seq[VVHRoadlink], twoSided: Boolean): Long = {
+  def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, roadLinks: Seq[VVHRoadlink]): Long = {
 
-      val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(trafficSign.lon.toLong, trafficSign.lat.toLong), r.geometry))
-      val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
-
-      if (vvhRoad.isEmpty || vvhRoad.size > 1) {
+    val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
+      if (vvhRoad.isEmpty || vvhRoad.size > 1)
         createFloatingWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, municipality)
-      }
       else {
-        roadLinkService.enrichRoadLinksFromVVH(Seq(closestLink)).map { roadLink =>
-          val validityDirection =
-            trafficSign.bearing match {
-              case Some(assetBearing) if twoSided => BothDirections.value
-              case Some(assetBearing) => getAssetValidityDirection(assetBearing)
-              case None if twoSided => BothDirections.value
-              case _ => getTrafficSignValidityDirection(Point(trafficSign.lon, trafficSign.lat), roadLink.geometry)
-            }
           checkDuplicates(trafficSign) match {
             case Some(existingAsset) =>
-              updateWithoutTransaction(existingAsset.id, trafficSign, roadLink, userProvider.getCurrentUser().username, None, None)
+              updateWithoutTransaction(existingAsset.id, trafficSign, closestLink, userProvider.getCurrentUser().username, None, None)
             case _ =>
-              createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, roadLink)
-          }
+              createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, closestLink)
         }
-      }.head
+      }
   }
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
@@ -394,6 +382,32 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case SideCode.AgainstDigitizing => Seq(first)
       case _ => Seq(first, last)
     }
+  }
+
+  def getValidityDirection(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
+    if (twoSided)
+      BothDirections.value
+    else
+      SideCode.apply(optBearing match {
+      case Some(bearing) => getAssetValidityDirection(bearing)
+      case _ => getTrafficSignValidityDirection(point, roadLink.geometry)
+    }).value
+  }
+
+  def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimpleTrafficSignProperty] = {
+    val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).toSet
+
+    val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
+      AdditionalPanel(panel.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
+        panel.propertyData.find(p => p.publicId == infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+        panel.propertyData.find(p => p.publicId == valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+        index)
+    }.toSeq
+
+    if(additionalPanelsProperty.nonEmpty)
+      Set(SimpleTrafficSignProperty(additionalPublicId, additionalPanelsProperty))
+    else
+      Set()
   }
 
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],

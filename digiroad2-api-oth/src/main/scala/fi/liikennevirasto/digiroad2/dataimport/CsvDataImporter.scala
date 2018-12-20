@@ -8,7 +8,7 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties => Props}
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, ManoeuvreService, Measures, ProhibitionService}
@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.{AdditionalPanels, PriorityAndGiveWaySigns}
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
@@ -56,7 +57,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  case class CsvTrafficSign(incomingTrafficSign: IncomingTrafficSign, twoSide: Boolean, mValue: Double, roadLink: VVHRoadlink)
+  case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink)
 
   type MalformedParameters = List[String]
   type ParsedProperties = List[AssetProperty]
@@ -185,39 +186,29 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value)
   }
 
-  private def generateBaseProperties(trafficSignAttributes: CsvAssetRow, additionalProperties: Set[AdditionalPanelInfo] = Set()) : Set[SimpleTrafficSignProperty] = {
+  private def generateBaseProperties(trafficSignAttributes: CsvAssetRow) : Set[SimpleTrafficSignProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
-      SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(value.toString)))
-    }
+      SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(value.toString)))}
+
+    val additionalInfo = getPropertyValue(trafficSignAttributes, "additionalInfo").toString
+    val additionalProperty = if(additionalInfo.isEmpty)
+        Some(SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(getPropertyValue(trafficSignAttributes, "additionalInfo").toString))))
+      else
+        None
 
     val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString)))
-    val additionalProperty = SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(getPropertyValue(trafficSignAttributes, "additionalInfo").toString)))
 
-    Set(Some(typeProperty), valueProperty, Some(additionalProperty)).flatten
-  }
-
-  private def generateAddionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo] = Set()) : Set[SimpleTrafficSignProperty] = {
-
-    val additionalPanelsProperty = additionalProperties.zipWithIndex.map{ case (panel, index) =>
-      AdditionalPanel(panel.propertyData.find(p => p.publicId == trafficSignService.typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-        panel.propertyData.find(p => p.publicId == trafficSignService.infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-        panel.propertyData.find(p => p.publicId == trafficSignService.valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-        index)
-    }.toSeq
-
-    if(additionalPanelsProperty.nonEmpty)
-      Set(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanelsProperty))
-    else
-      Set()
+    Set(Some(typeProperty), valueProperty, additionalProperty).flatten
   }
 
   def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink]): Unit = {
+    val roadLinks = trafficSignAttributes.flatMap(_.roadLink)
 
-    val traffiSignAdditionalsAndRoadLinks = trafficSignAttributes.map { trafficSignAttribute =>
+    val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val properties = trafficSignAttribute.properties
       val roadLinks = trafficSignAttribute.roadLink
-      val bearing = tryToInt(getPropertyValue(properties, "bearing").toString)
-      val trafficDirection = tryToInt(getPropertyValue(properties, "trafficDirection").toString)
+      val optBearing = tryToInt(getPropertyValue(properties, "bearing").toString)
+      val optTrafficDirection = tryToInt(getPropertyValue(properties, "trafficDirection").toString)
       val twoSided = getPropertyValue(properties, "twoSided").toString match {
         case "Kaksipuoleinen" => true
         case _ => false
@@ -225,28 +216,28 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
 
-      val propertyData = generateBaseProperties(properties, Set())
       val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
-      if (TrafficSignType.applyTRValue(tryToInt(getPropertyValue(properties, "trafficSignType").toString).getOrElse(TrafficSignType.Unknown.TRvalue)).group == AdditionalPanels) {
-        val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLinks.head.geometry)
-        (Seq(), Seq(AdditionalPanelInfo(None, mValue, closestLink.linkId, propertyData, TrafficDirection.apply(trafficDirection).value)), roadLinks)
-      } else {
-        val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLinks.head.geometry)
-        (Seq(CsvTrafficSign(IncomingTrafficSign(lon, lat, closestLink.linkId, propertyData, TrafficDirection.apply(trafficDirection).value, bearing), twoSided, mValue, closestLink)), Seq(), roadLinks)
-      }
+      val bearing = Some(optBearing.getOrElse(GeometryUtils.calculateBearing(closestLink.geometry)))
+
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(Seq(closestLink)).head
+      val validityDirection = trafficSignService.getValidityDirection(Point(lon, lat), roadLink, Some(optBearing.getOrElse(GeometryUtils.calculateBearing(closestLink.geometry))), twoSided)
+
+
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLinks.head.geometry)
+      CsvTrafficSign(lon, lat, closestLink.linkId, generateBaseProperties(properties), validityDirection, bearing, mValue, roadLink)
     }
 
-    traffiSignAdditionalsAndRoadLinks.foreach { case (trafficSigns, additionalPanels, roadLinks) =>
+    val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
+      TrafficSignType.applyTRValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].toString.toInt).group == AdditionalPanels}
 
-      trafficSigns.foreach { sign =>
-        val signType = sign.incomingTrafficSign.propertyData.find(p => p.publicId == trafficSignService.typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt
-        val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.incomingTrafficSign.linkId, sign.mValue, sign.incomingTrafficSign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, roadLinks)
+    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(None, panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection)}
 
+    trafficSignInfo.foreach { sign =>
+      val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt
+      val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, roadLinks)
 
-        val propertyData = generateAddionalPanelProperties(filteredAdditionalPanel) ++ sign.incomingTrafficSign.propertyData
-
-        trafficSignService.createFromCoordinates(sign.incomingTrafficSign.copy(propertyData = propertyData), roadLinks, sign.twoSide)
-      }
+      val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
+      trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, sign.bearing), sign.roadLink, roadLinks)
     }
   }
 
@@ -281,7 +272,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
               case parameters =>
                 NotImportedData(reason = parameters.head, csvRow = rowToString(csvRow)) :: result.notImportedData
             }
-
           )
         }else {
           result.copy(
