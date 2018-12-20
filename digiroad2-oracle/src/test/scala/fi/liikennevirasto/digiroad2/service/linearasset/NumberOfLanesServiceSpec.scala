@@ -20,20 +20,6 @@ import slick.jdbc.{StaticQuery => Q}
 
 class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
 
-  object ServiceWithDao extends NumberOfLanesService(mockRoadLinkService, mockEventBus)  {
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = linearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
-    override def polygonTools: PolygonTools = mockPolygonTools
-    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
-
-    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
-  }
-
   val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
   when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -52,6 +38,10 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
   val len = GeometryUtils.geometryLength(geom)
 
   test("Adjust projected asset with creation: bi-directional road -> one way road updates one way asset to bi-directional"){
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
 
     val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.TowardsDigitizing, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
@@ -81,13 +71,17 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
       projectedAssets.foreach { proj =>
         proj.id should be (0)
         proj.linkId should be (6000)
-        proj.sideCode should be (TrafficDirection.BothDirections)
+        proj.sideCode should be (TrafficDirection.BothDirections.value)
       }
       dynamicSession.rollback()
     }
   }
 
   test("Adjust projected asset with creation: bi-directional road -> opposite one way road drops existing asset"){
+    val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+    val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
 
     val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
       RoadLink(newLinkId, geom, len, State, functionalClass, TrafficDirection.TowardsDigitizing, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
