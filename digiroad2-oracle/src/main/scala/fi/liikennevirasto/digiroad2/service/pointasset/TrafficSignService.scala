@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class AdditionalPanelInfo(id: Option[Long], mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int)
+case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
@@ -411,15 +411,22 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
-                          additionalPanels: Seq[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink]) : Set[AdditionalPanelInfo] = {
-    val allowedAdditionalPanels = additionalPanels.filter {panel =>
-      val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
-      val additionalPanel =  TrafficSignType.applyOTHValue(panel.propertyData.find(p => p.publicId == typePublicId).get.values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType]
-      trafficSign.allowed(additionalPanel)
+                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink]) : Set[AdditionalPanelInfo] = {
+
+    val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
+
+    def panelWithSamePosition(panel: AdditionalPanelInfo) : Boolean = {
+      //Remove panel with the same position of main sign
+      Math.abs(panel.mValue - mValue) < 0.001 && linkId == panel.linkId
+    }
+
+    def allowedAdditionalPanels: Seq[AdditionalPanelInfo] = additionalPanels.to.filter {panel =>
+      panelWithSamePosition(panel) ||
+        trafficSign.allowed(TrafficSignType.applyOTHValue(panel.propertyData.find(p => p.publicId == typePublicId).get.
+          values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType])
     }
 
     val (first, last) = GeometryUtils.geometryEndpoints(geometry)
-
     Seq(first, last).flatMap { point =>
       val signDistance = if (GeometryUtils.areAdjacent(point, first)) mValue else GeometryUtils.geometryLength(geometry) - mValue
       if (signDistance > AdditionalPanelDistance) {
@@ -429,19 +436,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
             additionalPanel.linkId == linkId
         }
       } else {
-        //TODO check if is the most correct method
-        val adjacentRoadLinkInfo = if (roadLinks.isEmpty) {
-          roadLinkService.getAdjacent(linkId, Seq(point), false).map { adjacentRoadLink =>
-            val (start, end) = GeometryUtils.geometryEndpoints(adjacentRoadLink.geometry)
-            (start, end, adjacentRoadLink.linkId, adjacentRoadLink.geometry)
-          }
-        }
-        else {
-          getAdjacent(point: Point, roadLinks: Seq[VVHRoadlink]).map { case (start, end, roadLink) =>
-            (start, end, roadLink.linkId, roadLink.geometry)
-          }
-        }
-
+        val adjacentRoadLinkInfo = getAdjacent(point, linkId, roadLinks)
         if (adjacentRoadLinkInfo.isEmpty) {
           allowedAdditionalPanels.filter { additionalPanel =>
             Math.abs(additionalPanel.mValue - mValue) <= AdditionalPanelDistance &&
@@ -460,13 +455,20 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }.toSet
   }
 
-  def getAdjacent(point: Point, roadLinks : Seq[VVHRoadlink]): Seq[(Point, Point, VVHRoadlink)] = {
-    roadLinks.flatMap{ roadLink =>
-      val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-      if(GeometryUtils.areAdjacent(point, first) || GeometryUtils.areAdjacent(point, last))
-        Seq((first, last, roadLink))
-      else
-        Seq()
+  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[VVHRoadlink]): Seq[(Point, Point, Long, Seq[Point])] = {
+    if (roadLinks.isEmpty) {
+      roadLinkService.getAdjacent(linkId, Seq(point), false).map { adjacentRoadLink =>
+        val (start, end) = GeometryUtils.geometryEndpoints(adjacentRoadLink.geometry)
+        (start, end, adjacentRoadLink.linkId, adjacentRoadLink.geometry)
+      }
+    } else {
+      roadLinks.flatMap { roadLink =>
+        val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+        if (GeometryUtils.areAdjacent(point, first) || GeometryUtils.areAdjacent(point, last))
+          Seq((first, last, roadLink.linkId, roadLink.geometry))
+        else
+          Seq()
+      }
     }
   }
 }

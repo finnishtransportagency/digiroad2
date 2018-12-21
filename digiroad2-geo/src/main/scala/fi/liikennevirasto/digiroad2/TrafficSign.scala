@@ -36,14 +36,15 @@ sealed trait TrafficSignType {
 
   val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq.empty[AdditionalPanelsType]
 
+  def relevantAdditionalPanel = Seq.empty[AdditionalPanelsType]
+
   def allowed(additionalPanelsType: AdditionalPanelsType) : Boolean = {
-    supportedAdditionalPanel.contains(additionalPanelsType)
+    relevantAdditionalPanel.contains(additionalPanelsType)
   }
 
   def source = Seq("CSVimport", "TRimport")
-
-
 }
+
 object TrafficSignType {
   val values = Set(PriorityRoad, EndOfPriority, PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea,
     TelematicSpeedLimit, PedestrianCrossingSign, InfartsparkeringParkAndRide, BusLane, BusLaneEnds, TramLane, BusStopForLocalTraffic, TramStop, TaxiStation, ParkingLot,
@@ -96,8 +97,12 @@ object TrafficSignType {
   }
 
 }
+
 trait PriorityAndGiveWaySigns extends TrafficSignType {
   override def group: TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object PriorityRoad extends PriorityAndGiveWaySigns {
@@ -105,7 +110,7 @@ case object PriorityRoad extends PriorityAndGiveWaySigns {
   override val OTHvalue = 94
   override val TRvalue = 211
 
-  override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(DirectionOfPriorityRoad)
+  override val supportedAdditionalPanel  = Seq(DirectionOfPriorityRoad)
 
 }
 
@@ -120,12 +125,14 @@ case object PriorityOverOncomingTraffic extends PriorityAndGiveWaySigns {
   override val OTHvalue = 96
   override val TRvalue = 221
 }
+
 case object PriorityForOncomingTraffic extends PriorityAndGiveWaySigns {
 
   override val OTHvalue = 97
   override val TRvalue = 222
 
 }
+
 case object GiveWay extends PriorityAndGiveWaySigns {
 
   override val OTHvalue = 98
@@ -133,6 +140,7 @@ case object GiveWay extends PriorityAndGiveWaySigns {
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(DistanceCompulsoryStop, DirectionOfPriorityRoad)
 }
+
 case object Stop extends PriorityAndGiveWaySigns {
 
   override val OTHvalue = 99
@@ -144,6 +152,9 @@ case object Stop extends PriorityAndGiveWaySigns {
 
 trait SpeedLimitsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object SpeedLimitSign extends SpeedLimitsType {
@@ -186,13 +197,15 @@ case object TelematicSpeedLimit extends SpeedLimitsType {
 
 trait RegulatorySignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.RegulatorySigns
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object PedestrianCrossingSign extends RegulatorySignsType {
   override val OTHvalue = 7
   override val TRvalue = 511
 }
-
 
 case object InfartsparkeringParkAndRide extends RegulatorySignsType { //TODO check that name
   override val OTHvalue = 137
@@ -201,7 +214,6 @@ case object InfartsparkeringParkAndRide extends RegulatorySignsType { //TODO che
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
 }
-
 
 case object BusLane extends RegulatorySignsType {
   override val OTHvalue = 63
@@ -297,6 +309,9 @@ case object BusStopForLongDistanceTraffic extends RegulatorySignsType {
 
 trait MaximumRestrictionsType extends TrafficSignType{
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.MaximumRestrictions
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object MaximumLength extends MaximumRestrictionsType {
@@ -340,6 +355,9 @@ case object MaxTonsOnBogieExceeding extends MaximumRestrictionsType {
 
 trait GeneralWarningSignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.GeneralWarningSigns
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object Warning extends GeneralWarningSignsType {
@@ -512,9 +530,11 @@ case object Reindeer extends GeneralWarningSignsType {
   override val TRvalue = 156
 }
 
-
 trait ProhibitionsAndRestrictionsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ProhibitionsAndRestrictions
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object NoLeftTurn extends ProhibitionsAndRestrictionsType {
@@ -670,9 +690,11 @@ case object AlternativeParkingEvenDays extends ProhibitionsAndRestrictionsType {
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
 }
 
-
 trait MandatorySignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
 }
 
 case object CompulsoryFootPath extends MandatorySignsType {
@@ -765,6 +787,82 @@ case object CompulsoryTrackRidersHorseback extends MandatorySignsType {
     ParkingAgainstFee,	ObligatoryUseOfParkingDisc)
 }
 
+trait InformationSignsType extends TrafficSignType  {
+  def group: TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+}
+
+case object NoThroughRoad extends InformationSignsType {
+  override val OTHvalue = 113
+  override val TRvalue = 651
+}
+
+case object NoThroughRoadRight extends InformationSignsType {
+  override val OTHvalue = 114
+  override val TRvalue = 652
+}
+
+case object SymbolOfMotorway extends InformationSignsType {
+  override val OTHvalue = 115
+  override val TRvalue = 671
+}
+
+case object Parking  extends InformationSignsType {
+  override val OTHvalue = 116
+  override val TRvalue = 677
+}
+
+case object ItineraryForIndicatedVehicleCategory extends InformationSignsType  {
+  override val OTHvalue = 117
+  override val TRvalue = 681
+}
+
+case object ItineraryForPedestrians extends InformationSignsType {
+  override val OTHvalue = 118
+  override val TRvalue = 682
+}
+
+case object ItineraryForHandicapped extends InformationSignsType {
+  override val OTHvalue = 119
+  override val TRvalue = 683
+}
+
+
+trait ServiceSignsType extends TrafficSignType  {
+  def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
+
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
+    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+}
+
+case object LocationSignForTouristService  extends ServiceSignsType {
+  override val OTHvalue = 120
+  override val TRvalue = 704
+}
+
+case object FirstAid  extends ServiceSignsType {
+  override val OTHvalue = 121
+  override val TRvalue = 715
+}
+
+case object FillingStation  extends ServiceSignsType {
+  override val OTHvalue = 122
+  override val TRvalue = 722
+}
+
+case object Restaurant  extends ServiceSignsType {
+  override val OTHvalue = 123
+  override val TRvalue = 724
+}
+
+case object PublicLavatory  extends ServiceSignsType {
+  override val OTHvalue = 124
+  override val TRvalue = 726
+}
+
+
 trait AdditionalPanelsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.AdditionalPanels
 }
@@ -793,7 +891,6 @@ case object SignAppliesBothDirectionsVertical extends AdditionalPanelsType {
   override val OTHvalue = 141
   override val TRvalue = 825
 }
-
 
 case object SignAppliesArrowDirections extends AdditionalPanelsType {
   override val OTHvalue = 142
@@ -859,110 +956,63 @@ case object PassengerCar  extends AdditionalPanelsType {
   override val OTHvalue = 52
   override val TRvalue = 831
 }
+
 case object Bus  extends AdditionalPanelsType {
   override val OTHvalue = 53
   override val TRvalue = 832
 }
+
 case object Lorry  extends AdditionalPanelsType {
   override val OTHvalue = 54
   override val TRvalue = 833
 }
+
 case object Van  extends AdditionalPanelsType {
   override val OTHvalue = 55
   override val TRvalue = 834
 }
+
 case object VehicleForHandicapped  extends AdditionalPanelsType {
   override val OTHvalue = 56
   override val TRvalue = 836
 }
+
 case object MotorCycle  extends AdditionalPanelsType {
   override val OTHvalue = 57
   override val TRvalue = 841
 }
+
 case object Cycle  extends AdditionalPanelsType {
   override val OTHvalue = 58
   override val TRvalue = 843
 }
+
 case object ParkingAgainstFee  extends AdditionalPanelsType {
   override val OTHvalue = 59
   override val TRvalue = 855
 }
+
 case object ObligatoryUseOfParkingDisc  extends AdditionalPanelsType {
   override val OTHvalue = 60
   override val TRvalue = 856
 }
+
 case object AdditionalPanelWithText  extends AdditionalPanelsType {
   override val OTHvalue = 61
   override val TRvalue = 871
 }
+
 case object DrivingInServicePurposesAllowed  extends AdditionalPanelsType {
   override val OTHvalue = 62
   override val TRvalue = 872
 }
+
 case object DistanceFromSignToPointWhichSignApplies extends AdditionalPanelsType {
   override val OTHvalue = 148
   override val TRvalue = 814
 }
+
 case object DistanceWhichSignApplies extends AdditionalPanelsType {
   override val OTHvalue = 149
   override val TRvalue = 815
 }
-
-trait InformationSignsType extends TrafficSignType  {
-  def group: TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
-}
-
-case object NoThroughRoad extends InformationSignsType {
-  override val OTHvalue = 113
-  override val TRvalue = 651
-}
-case object NoThroughRoadRight extends InformationSignsType {
-  override val OTHvalue = 114
-  override val TRvalue = 652
-}
-case object SymbolOfMotorway extends InformationSignsType {
-  override val OTHvalue = 115
-  override val TRvalue = 671
-}
-case object Parking  extends InformationSignsType {
-  override val OTHvalue = 116
-  override val TRvalue = 677
-}
-case object ItineraryForIndicatedVehicleCategory extends InformationSignsType  {
-  override val OTHvalue = 117
-  override val TRvalue = 681
-}
-case object ItineraryForPedestrians extends InformationSignsType {
-  override val OTHvalue = 118
-  override val TRvalue = 682
-}
-case object ItineraryForHandicapped extends InformationSignsType {
-  override val OTHvalue = 119
-  override val TRvalue = 683
-}
-
-trait ServiceSignsType extends TrafficSignType  {
-  def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
-}
-
-case object LocationSignForTouristService  extends ServiceSignsType {
-  override val OTHvalue = 120
-  override val TRvalue = 704
-}
-case object FirstAid  extends ServiceSignsType {
-  override val OTHvalue = 121
-  override val TRvalue = 715
-}
-case object FillingStation  extends ServiceSignsType {
-  override val OTHvalue = 122
-  override val TRvalue = 722
-}
-case object Restaurant  extends ServiceSignsType {
-  override val OTHvalue = 123
-  override val TRvalue = 724
-}
-case object PublicLavatory  extends ServiceSignsType {
-  override val OTHvalue = 124
-  override val TRvalue = 726
-}
-

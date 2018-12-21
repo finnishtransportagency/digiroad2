@@ -229,7 +229,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
       TrafficSignType.applyTRValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].toString.toInt).group == AdditionalPanels}
 
-    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(None, panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection)}
+    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection)}.toSet
 
     trafficSignInfo.foreach { sign =>
       val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt

@@ -897,7 +897,7 @@ object DataFixture {
       val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetPrevCreated.contains(f.linkId))
       println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
 
-      if (filteredRoadLinksByNonCreated.size != 0) {
+      if (filteredRoadLinksByNonCreated.nonEmpty) {
           //Create new Assets for the RoadLinks from VVH
           filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
@@ -905,13 +905,11 @@ object DataFixture {
             roadLinkProp.linkType match {
               case asset.SingleCarriageway =>
                 roadLinkProp.trafficDirection match {
-                  case asset.TrafficDirection.BothDirections => {
+                  case asset.TrafficDirection.BothDirections =>
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value , NumOfRoadLanesSingleCarriageway, username)
                     countSingleway = countSingleway+ 1
-                  }
-                  case _ => {
+                  case _ =>
                     None
-                  }
                 }
               case asset.Motorway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
@@ -919,13 +917,11 @@ object DataFixture {
                     dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value, NumOfRoadLanesMotorway, username)
                     countMotorway = countMotorway + 1
                   }
-                  case _ => {
+                  case _ =>
                     None
-                  }
                 }
-              case _ => {
+              case _ =>
                 None
-              }
             }
           }
         }
@@ -1215,8 +1211,8 @@ object DataFixture {
           if ((stopNameSE != nameSEinTR) || (stopRoofValue != roofValueinTR) || (stopRaisedBusStopValue != raisedValueinTR)) {
             val propertiesToUpdate = Seq(
               SimpleProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
-              SimpleProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString()))),
-              SimpleProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString())))
+              SimpleProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString))),
+              SimpleProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString)))
             )
 
             massTransitStopService.updatePropertiesForAsset(stop.id, propertiesToUpdate)
@@ -1476,11 +1472,11 @@ object DataFixture {
       filteredAssets.flatMap { sign =>
         println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
         OracleDatabase.withDynSession {
-          val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, false).get
+          val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
           val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.propertyValue.toInt
           val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
-            AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.propertyType, x.values)).toSet, panel.validityDirection)
-          }
+            AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.propertyType, x.values)).toSet, panel.validityDirection, Some(panel.id))
+          }.toSet
 
           val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
 
@@ -1675,9 +1671,8 @@ object DataFixture {
               println(s"Asset id ${ts.id} did not generate a prohibition ")
           }
         }catch {
-          case ex: ProhibitionCreationException => {
+          case ex: ProhibitionCreationException =>
             println(s"""creation of prohibition on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
-          }
         }
       )
     }

@@ -122,7 +122,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
       roadAddressLink.flatMap { case (ra, roadlink) =>
         ra.addressMValueToLRM(section.startAddressMValue).map{
           mValue =>
-            AdditionalPanelInfo(None, mValue, roadlink.get.linkId, generateProperties(properties), getSideCode(ra, properties.track, properties.roadSide).value)
+            AdditionalPanelInfo(mValue, roadlink.get.linkId, generateProperties(properties), getSideCode(ra, properties.track, properties.roadSide).value)
         }
       }
     }
@@ -180,7 +180,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
             mValue =>
               val sideCode = getSideCode(ra, trAssetData.track, trAssetData.roadSide).value
               val trafficSignType = trAssetData.assetType.OTHvalue
-              val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData, vvhRoadLinks)
+              val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData.toSet, vvhRoadLinks)
               createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties)
           }
         }

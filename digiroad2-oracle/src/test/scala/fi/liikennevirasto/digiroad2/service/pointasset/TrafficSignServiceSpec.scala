@@ -747,8 +747,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
-        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
-      }
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(panel.id))
+      }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
 
@@ -789,8 +789,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel2, additionalPanel3)).map { panel =>
-        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
-      }
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(panel.id))
+      }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
 
@@ -829,8 +829,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel2, additionalPanel3)).map { panel =>
-        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
-      }
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(panel.id))
+      }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
 
@@ -867,8 +867,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
-        AdditionalPanelInfo(Some(panel.id), panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection)
-      }
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(panel.id))
+      }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
 
