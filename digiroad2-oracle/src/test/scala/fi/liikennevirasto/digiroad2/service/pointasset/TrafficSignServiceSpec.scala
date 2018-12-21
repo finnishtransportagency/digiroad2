@@ -222,9 +222,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("1"))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
-      val sign = IncomingTrafficSign(3, 2, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
+      val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
+      val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
+      val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), bearing, false)
+      val sign = IncomingTrafficSign(3, 2, 1611400, properties, validityDirection, bearing)
 
-      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
+      val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), vvHRoadlink2)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -243,9 +246,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
-      val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
+      val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+      val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
+      val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
+      val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, bearing)
 
-      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -264,9 +270,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
-      val sign = IncomingTrafficSign(3, 2, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(225))
+      val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
+      val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
+      val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), bearing, false)
+      val sign = IncomingTrafficSign(3, 2, 1611400, properties, validityDirection, bearing)
 
-      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -284,10 +293,13 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.TRvalue.toString))),
       SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
-    val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
+    val bearing = Some(45)
+    val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+    val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
+    val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, bearing)
 
     runWithRollback {
-      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -304,9 +316,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(PedestrianCrossingSign.TRvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
-      val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
+      val bearing = Some(45)
+      val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+      val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, true)
+      val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, bearing)
 
-      val id = service.createFromCoordinates(sign, vvHRoadlink2, true)
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2)
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -323,8 +338,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(FreeWidth.TRvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Info Test"))))
 
-      val sign = IncomingTrafficSign(3, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, Some(45))
-      val id = service.createFromCoordinates(sign, vvHRoadlink2, false)
+      val bearing = Some(45)
+      val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
+      val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, true)
+      val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, bearing)
+
+      val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), vvHRoadlink2)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
@@ -589,8 +608,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.TRvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Original Traffic Sign!"))))
 
-      val sign = IncomingTrafficSign(5, 4, 1611400, properties, TrafficDirection.UnknownDirection.value, None)
-      val originalTrafficSignId = service.createFromCoordinates(sign, vvHRoadlink2, false)
+      val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(5, 4), r.geometry))
+      val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
+      val validityDirection = service.getValidityDirection(Point(5, 4), toRoadLink(closestLink), bearing, false)
+      val sign = IncomingTrafficSign(5, 4, 1611400, properties, validityDirection, bearing)
+
+      val originalTrafficSignId = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2)
 
       val assetsInRadius = service.getTrafficSignByRadius(Point(5, 4), 10, None)
       assetsInRadius.size should be(1)
@@ -603,9 +626,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.TRvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Non Duplicated Traffic Sign!"))))
 
-      val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, TrafficDirection.UnknownDirection.value, None)
+      val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, validityDirection, bearing)
 
-      val duplicatedTrafficSignId = service.createFromCoordinates(sign2, vvHRoadlink2, false)
+      val duplicatedTrafficSignId = service.createFromCoordinates(sign2, toRoadLink(closestLink), vvHRoadlink2)
       val assetsInRadius2 = service.getTrafficSignByRadius(Point(5, 4), 10, None)
       assetsInRadius2.size should be(1)
       val assetD = assetsInRadius2.head

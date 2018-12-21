@@ -220,8 +220,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       val bearing = Some(optBearing.getOrElse(GeometryUtils.calculateBearing(closestLink.geometry)))
 
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(Seq(closestLink)).head
-      val validityDirection = trafficSignService.getValidityDirection(Point(lon, lat), roadLink, Some(optBearing.getOrElse(GeometryUtils.calculateBearing(closestLink.geometry))), twoSided)
-
+      val validityDirection = trafficSignService.getValidityDirection(Point(lon, lat), roadLink, bearing, twoSided)
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLinks.head.geometry)
       CsvTrafficSign(lon, lat, closestLink.linkId, generateBaseProperties(properties), validityDirection, bearing, mValue, roadLink)

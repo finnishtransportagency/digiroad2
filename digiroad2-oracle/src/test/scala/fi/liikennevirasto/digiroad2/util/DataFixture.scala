@@ -1483,16 +1483,15 @@ object DataFixture {
           }
 
           val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
-          val orderedAdditionalPanels = additionalPanelsInRadius.toSeq.sortBy(_.propertyData.find(_.publicId == trafficSignService.typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).toSet
 
-          if (orderedAdditionalPanels.size <= 3 && orderedAdditionalPanels.nonEmpty) {
-            val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanels)
+          if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
+            val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
             val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, additionalPanels, sign.validityDirection, sign.bearing)
 
             trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
-            orderedAdditionalPanels.flatMap(_.id)
+            additionalPanelsInRadius.flatMap(_.id)
           } else {
-            errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${orderedAdditionalPanels.size}"
+            errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${additionalPanelsInRadius.size}"
             Seq()
           }
         }
