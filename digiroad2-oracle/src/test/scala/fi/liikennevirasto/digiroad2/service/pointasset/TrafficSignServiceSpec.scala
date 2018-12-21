@@ -696,8 +696,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
     val result = service.getByMunicipalityAndGroup(235, TrafficSignTypeGroup.GeneralWarningSigns)
 
+    result.exists(_.id == id) should be (true)
     result.exists(_.id == id1) should be (true)
-    result.exists(_.id == id2) should be (true)
     }
   }
 

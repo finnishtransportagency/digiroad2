@@ -244,7 +244,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val signToCreateLinkId = asset.linkId
     val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt
     val signToCreateDirection = asset.validityDirection
-    val groupType = Some(TrafficSignTypeGroup.apply(signToCreateType))
+    val groupType = Some(TrafficSignTypeGroup.apply(TrafficSignType.applyOTHValue(signToCreateType).group.value))
 
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts =>
