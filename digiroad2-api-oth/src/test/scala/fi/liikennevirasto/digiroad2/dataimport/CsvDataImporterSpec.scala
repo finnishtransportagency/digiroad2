@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{ByteArrayInputStream, InputStream}
 
 import javax.sql.DataSource
-import fi.liikennevirasto.digiroad2.asset.{Municipality, State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{Motorway, Municipality, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHComplementaryClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.mockito.ArgumentMatchers._
@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 object sTestTransactions {
@@ -44,8 +45,10 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
-  when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vvHRoadlink)
+  val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
 
+  when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vvHRoadlink)
+  when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(roadLink)
   val trafficSignCsvImporter : TrafficSignCsvImporter = new TrafficSignCsvImporter {
     override val roadLinkService = mockRoadLinkService
       }
