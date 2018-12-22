@@ -44,21 +44,10 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
       case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
     }
 
-    val additionalPanel = additionalProperties.zipWithIndex.map{ case (panel, index) =>
-      AdditionalPanel(panel.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-        panel.propertyData.find(p => p.publicId == infoPublicId) match {
-          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
-          case _ => ""
-        },
-        panel.propertyData.find(p => p.publicId == valuePublicId) match {
-          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
-          case _ => ""
-        },
-        index)
-    }.toSeq
+    val additionalPanel = trafficSignService.additionalPanelProperties(additionalProperties)
 
     if(additionalPanel.nonEmpty)
-      Set(typeProperty, valueProperty, SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanel))
+      Set(typeProperty, valueProperty) ++ additionalPanel
     else
       Set(typeProperty, valueProperty)
   }

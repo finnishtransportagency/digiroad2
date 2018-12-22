@@ -875,4 +875,36 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       result.size should be (0)
     }
   }
+
+  test("Additional panels in the same position without match relation"){
+    runWithRollback {
+
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("1"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val additionalPanelProperties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("139"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val roadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val trafficSign = service.create(IncomingTrafficSign(5.0, 0.0, 1000, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel = service.create(IncomingTrafficSign(5.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+
+      when(mockRoadLinkService.getRoadLinkFromVVH(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getAdjacent(any[Long], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
+
+      val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
+
+      val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel)).map { panel =>
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(panel.id))
+      }.toSet
+
+      val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
+
+      result.size should be (1)
+    }
+  }
 }

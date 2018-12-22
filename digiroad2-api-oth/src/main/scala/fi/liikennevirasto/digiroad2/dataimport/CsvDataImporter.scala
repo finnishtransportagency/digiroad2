@@ -179,7 +179,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
   private def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String) : Any = {
-    println(" ---- " + propertyName)
     trafficSignAttributes.properties.find (prop => prop.columnName == propertyName).map(_.value).get
   }
 
@@ -192,12 +191,12 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(value.toString)))}
 
     val additionalInfo = getPropertyValue(trafficSignAttributes, "additionalInfo").toString
-    val additionalProperty = if(additionalInfo.isEmpty)
+    val additionalProperty = if(additionalInfo.nonEmpty)
         Some(SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(additionalInfo))))
       else
         None
 
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString)))
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
 
     Set(Some(typeProperty), valueProperty, additionalProperty).flatten
   }
@@ -227,12 +226,12 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
-      TrafficSignType.applyTRValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].toString.toInt).group == AdditionalPanels}
+      TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
 
     val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection)}.toSet
 
     trafficSignInfo.foreach { sign =>
-      val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt
+      val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
       val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, roadLinks)
 
       val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
@@ -252,7 +251,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         val csvRow = row.map(r => (r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)
         val (malformedParameters, properties) = assetRowToProperties(csvRow)
-        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvAssetRow(properties = properties))
+        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvAssetRow(properties))
 
         if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
           result.copy(

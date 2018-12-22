@@ -61,7 +61,7 @@ object TrafficSignType {
     RegulationBeginsFromSign, RegulationEndsToTheSign, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, ValidMultiplePeriod, TimeLimit, DistanceCompulsoryStop, DirectionOfPriorityRoad,
     CrossingLogTransportRoad, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText,
     DrivingInServicePurposesAllowed, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, Parking, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
-    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory)
+    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies)
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
     values.find(_.OTHvalue == intValue).getOrElse(Unknown)
@@ -101,8 +101,8 @@ object TrafficSignType {
 trait PriorityAndGiveWaySigns extends TrafficSignType {
   override def group: TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object PriorityRoad extends PriorityAndGiveWaySigns {
@@ -153,8 +153,8 @@ case object Stop extends PriorityAndGiveWaySigns {
 trait SpeedLimitsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object SpeedLimitSign extends SpeedLimitsType {
@@ -198,8 +198,8 @@ case object TelematicSpeedLimit extends SpeedLimitsType {
 trait RegulatorySignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.RegulatorySigns
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object PedestrianCrossingSign extends RegulatorySignsType {
@@ -310,8 +310,8 @@ case object BusStopForLongDistanceTraffic extends RegulatorySignsType {
 trait MaximumRestrictionsType extends TrafficSignType{
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.MaximumRestrictions
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object MaximumLength extends MaximumRestrictionsType {
@@ -356,8 +356,8 @@ case object MaxTonsOnBogieExceeding extends MaximumRestrictionsType {
 trait GeneralWarningSignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.GeneralWarningSigns
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object Warning extends GeneralWarningSignsType {
@@ -533,8 +533,8 @@ case object Reindeer extends GeneralWarningSignsType {
 trait ProhibitionsAndRestrictionsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ProhibitionsAndRestrictions
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object NoLeftTurn extends ProhibitionsAndRestrictionsType {
@@ -693,8 +693,8 @@ case object AlternativeParkingEvenDays extends ProhibitionsAndRestrictionsType {
 trait MandatorySignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object CompulsoryFootPath extends MandatorySignsType {
@@ -790,8 +790,8 @@ case object CompulsoryTrackRidersHorseback extends MandatorySignsType {
 trait InformationSignsType extends TrafficSignType  {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object NoThroughRoad extends InformationSignsType {
@@ -833,8 +833,8 @@ case object ItineraryForHandicapped extends InformationSignsType {
 trait ServiceSignsType extends TrafficSignType  {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
 
-  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] =
-    Seq(AdditionalPanelWithText) ++ supportedAdditionalPanel
+  override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
+    Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
 
 case object LocationSignForTouristService  extends ServiceSignsType {

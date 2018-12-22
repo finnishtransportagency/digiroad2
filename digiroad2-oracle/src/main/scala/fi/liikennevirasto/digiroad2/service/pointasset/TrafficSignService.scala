@@ -396,13 +396,19 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimpleTrafficSignProperty] = {
     val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).toSet
-
     val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
-      AdditionalPanel(panel.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-        panel.propertyData.find(p => p.publicId == infoPublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
-        panel.propertyData.find(p => p.publicId == valuePublicId).get.asInstanceOf[TextPropertyValue].propertyValue,
+      AdditionalPanel(panel.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt,
+        panel.propertyData.find(p => p.publicId == infoPublicId) match {
+          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
+          case _ => ""
+        },
+        panel.propertyData.find(p => p.publicId == valuePublicId) match {
+          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
+          case _ => ""
+        },
         index)
     }.toSeq
+
 
     if(additionalPanelsProperty.nonEmpty)
       Set(SimpleTrafficSignProperty(additionalPublicId, additionalPanelsProperty))
