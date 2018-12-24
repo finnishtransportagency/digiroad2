@@ -44,7 +44,7 @@ trait CsvDataImporterOperations {
     new BoneCPDataSource(cfg)
   }
 
-  protected def getProperty(name: String) = {
+  protected def getProperty(name: String) : String = {
     val property = dr2properties.getProperty(name)
     if(property != null)
       property
@@ -133,7 +133,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def tryToInt(propertyValue: String ) = {
+  def tryToInt(propertyValue: String ) : Option[Int] = {
     Try(propertyValue.toInt).toOption
   }
 
@@ -201,7 +201,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     Set(Some(typeProperty), valueProperty, additionalProperty).flatten
   }
 
-  def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink]): Unit = {
+  def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink]): Seq[AdditionalPanelInfo] = {
     val roadLinks = trafficSignAttributes.flatMap(_.roadLink)
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
@@ -228,15 +228,20 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
       TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
 
-    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection)}.toSet
+    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat)))}.toSet
 
-    trafficSignInfo.foreach { sign =>
+    val usedAdditionalPanels = trafficSignInfo.flatMap { sign =>
       val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
       val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, roadLinks)
 
-      val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
-      trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, sign.bearing), sign.roadLink, roadLinks)
+     if (filteredAdditionalPanel.size <= 3) {
+        val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
+        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, sign.bearing), sign.roadLink, roadLinks)
+       filteredAdditionalPanel
+      } else Seq()
     }
+
+    additionalPanels.toSeq.diff(usedAdditionalPanels)
   }
 
   def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Set[Int]): ImportResult = {
@@ -280,7 +285,13 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         }
       }
 
-      createTrafficSigns(result.createdData)
+      val notImportedAdditionalPanel = createTrafficSigns(result.createdData)
+      result.copy(notImportedData =  notImportedAdditionalPanel.map{notImported =>
+        NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x:  ${notImported.position.get.x}  koordinaatti y  ${notImported.position.get.y} liikennevirran suunta ${notImported.validityDirection} " +
+          s" liikennemerkin tyyppi ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt} " +
+          s" arvo ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}}" +
+          s" lisatieto ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
+      }.toList ::: result.notImportedData)
       result
       }
     }
@@ -420,7 +431,7 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
 
   def validateAdministrativeClass(optionalAdminClassValue : Option[Any], dataLocation: String): List[String] = {
     optionalAdminClassValue match {
-      case Some(adminClassValue) if (administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue.toString.toInt))) =>
+      case Some(adminClassValue) if administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue.toString.toInt)) =>
                 List("AdminClass value State found on  " ++ dataLocation)
       case _ => List()
     }
@@ -577,8 +588,8 @@ class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
 
   def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow): Unit = {
     val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[Integer].toLong
-    val newKoProperty = Props("huoltotie_kayttooikeus", "single_choice", getPropertyValue(maintenanceRoadAttributes, "rightOfUse").toString())
-    val orAccessProperty = Props("huoltotie_huoltovastuu", "single_choice", getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility").toString())
+    val newKoProperty = Props("huoltotie_kayttooikeus", "single_choice", getPropertyValue(maintenanceRoadAttributes, "rightOfUse").toString)
+    val orAccessProperty = Props("huoltotie_huoltovastuu", "single_choice", getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility").toString)
 
     Digiroad2Context.roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId)).map { roadlink =>
       val values = MaintenanceRoad(Seq(newKoProperty, orAccessProperty))

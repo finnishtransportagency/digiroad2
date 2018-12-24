@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, id: Option[Long] = None)
+case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
@@ -353,6 +353,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
   }
 
+  def getTrafficSignsProperties(propertyData: Set[SimpleTrafficSignProperty], property: String) : Option[TextPropertyValue] = {
+    propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+  }
+
   def getAllTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Seq[PointAssetValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values
   }
@@ -397,15 +401,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimpleTrafficSignProperty] = {
     val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).toSet
     val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
-      AdditionalPanel(panel.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt,
-        panel.propertyData.find(p => p.publicId == infoPublicId) match {
-          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
-          case _ => ""
-        },
-        panel.propertyData.find(p => p.publicId == valuePublicId) match {
-          case Some(info) => info.values.head.asInstanceOf[TextPropertyValue].propertyValue
-          case _ => ""
-        },
+      AdditionalPanel(getTrafficSignsProperties(panel.propertyData, typePublicId).get.propertyValue.toInt,
+        getTrafficSignsProperties(panel.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue,
+        getTrafficSignsProperties(panel.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue,
         index)
     }.toSeq
 
@@ -428,8 +426,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     def allowedAdditionalPanels: Seq[AdditionalPanelInfo] = additionalPanels.to.filter {panel =>
       panelWithSamePosition(panel) ||
-        trafficSign.allowed(TrafficSignType.applyOTHValue(panel.propertyData.find(p => p.publicId == typePublicId).get.
-          values.map(_.asInstanceOf[TextPropertyValue].propertyValue.toInt).head).asInstanceOf[AdditionalPanelsType])
+        trafficSign.allowed(TrafficSignType.applyOTHValue(getTrafficSignsProperties(panel.propertyData, typePublicId).
+          get.propertyValue.toInt).asInstanceOf[AdditionalPanelsType])
     }
 
     val (first, last) = GeometryUtils.geometryEndpoints(geometry)

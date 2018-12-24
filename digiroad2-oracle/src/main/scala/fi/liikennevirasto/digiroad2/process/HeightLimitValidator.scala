@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.{FreeHeight, MaxHeightExceeding, TrafficSignType}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, HeightLimit, PropertyValue, TextPropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, HeightLimit, TextPropertyValue}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 
