@@ -201,11 +201,11 @@ module.exports = function(grunt) {
     exec: {
       prepare_openlayers: {
         cmd: 'npm install',
-        cwd: './node_modules/openlayers/'
+        cwd: './node_modules/ol/'
       },
       oth_build_openlayers: {
         cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './node_modules/openlayers/'
+        cwd: './node_modules/ol/'
       }
     }
   });
