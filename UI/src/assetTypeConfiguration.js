@@ -417,7 +417,7 @@
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
         label: new WinterSpeedLimitLabel()
       },
       {
