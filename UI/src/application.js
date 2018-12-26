@@ -1,5 +1,5 @@
 (function(application) {
-  application.start = function(customBackend, withTileMaps, isExperimental) {
+  application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -125,6 +125,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
@@ -133,15 +134,15 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedServicePoint = getSelectedPointAsset(pointAssets, 'servicePoints');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
@@ -165,7 +166,8 @@
           { selectedGroupPointAsset: selectedGroupPointAsset},
           { selectedGroupPointAsset: selectedTrHeightLimits},
           { selectedGroupPointAsset: selectedTrWidthLimits},
-          { linearAssets: linearAssets}
+          { linearAssets: linearAssets},
+          { pointAssets: pointAssets}
     ));
       eventbus.trigger('application:initialized');
     }
@@ -261,7 +263,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -296,13 +298,19 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-    new PointAssetForm(
-       pointAsset,
-       pointAsset.roadCollection,
-       applicationModel,
-       backend,
-       pointAsset.saveCondition || function() {return true;},
-        new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset));
+      var parameters = {
+          pointAsset: pointAsset,
+          roadCollection: pointAsset.roadCollection,
+          applicationModel: applicationModel,
+          backend: backend,
+          saveCondition: pointAsset.saveCondition || function() {return true;},
+          feedbackCollection : new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset)
+      };
+
+      if(pointAsset.form) {
+        new pointAsset.form().initialize(parameters);
+      }else
+        new PointAssetForm().initialize(parameters);
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
@@ -333,7 +341,9 @@
        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
        massLimitation: asset.editControlLabels.massLimitations,
        typeId: asset.typeId,
-       isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed
+       isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed,
+       minZoomForContent: asset.minZoomForContent,
+       isExperimental: isExperimental
       };
       acc[asset.layerName] = asset.layer ? new asset.layer(parameters) : new LinearAssetLayer(parameters);
       return acc;
@@ -356,7 +366,8 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
-       authorizationPolicy: asset.authorizationPolicy
+       authorizationPolicy: asset.authorizationPolicy,
+       readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
      });
      return acc;
     }, {});
@@ -385,8 +396,8 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(36), roadLayer, roadAddressInfoPopup),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup, isExperimental),
+       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(36), roadLayer, roadAddressInfoPopup, isExperimental, clusterDistance),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
@@ -395,9 +406,10 @@
        readOnlyLayer: new TrafficSignReadOnlyLayer({ layerName: 'speedLimit', map: map, backend: backend }),
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
-       roadAddressInfoPopup: roadAddressInfoPopup
+       roadAddressInfoPopup: roadAddressInfoPopup,
+       isExperimental: isExperimental
        }),
-       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }) )
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 
@@ -453,6 +465,7 @@
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
+    var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -468,7 +481,7 @@
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
           .concat(getPointAsset(assetType.directionalTrafficSigns))
-          .concat(getPointAsset(assetType.pedestrianCrossings))
+          .concat([pedestrianCrossingBox])
           .concat(getPointAsset(assetType.trafficLights))
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),

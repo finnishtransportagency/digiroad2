@@ -7,13 +7,9 @@
       return assetConfig.title;
     };
 
-    this.title = function () {
-      return assetConfig.title;
-    };
+    this.title = assetConfig.title;
 
-    this.layerName = function () {
-      return assetConfig.layerName;
-    };
+    this.layerName = assetConfig.layerName;
 
     this.elements = function (){
       return { expanded: $([
@@ -38,11 +34,11 @@
     this.labeling = function () {
       return _(assetConfig.legendValues).map(function (val) {
         return '<div class="legend-entry">' +
-               '  <div class="label">' +
-               '    <span>' + val.label + '</span> ' +
-               '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
-               '  </div>' +
-               '</div>';
+          '  <div class="' + (val.cssClass ? val.cssClass : 'label') + '">' +
+          '    <span>' + val.label + '</span> ' +
+          '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
+          '  </div>' +
+          '</div>';
       }).join('');
     };
 
@@ -88,7 +84,7 @@
       me.getElement().hide();
     }
 
-    this.renderTemplate = function () {
+    this.template = function () {
       this.expanded = me.elements().expanded;
       me.eventHandler();
       return me.getElement()
@@ -108,12 +104,7 @@
       return hide();
     };
 
-    return {
-      title: me.title(),
-      layerName: me.layerName(),
-      element: me.renderTemplate(),
-      show: show,
-      hide: hide
-    };
+    this.show = show;
+    this.hide = hide;
   };
 })(this);

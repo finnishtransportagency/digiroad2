@@ -26,6 +26,8 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   val defaultMultiTypePropSeq = DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue("99")))))
   val defaultPropertyData = DynamicValue(defaultMultiTypePropSeq)
+  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
 
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
@@ -109,7 +111,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
               PavedRoad.typeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource, None, None, Some(MmlNls)))
           else
             assets.filterNot(a => expiredAssetsIds.contains(a.id) ||
-              (a.value.isEmpty && a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
+              (a.value.isEmpty || a.vvhTimeStamp >= changeInfo.vvhTimeStamp)
             ).map(a => a.copy(vvhTimeStamp = changeInfo.vvhTimeStamp, value=a.value,
               startMeasure=0.0, endMeasure=roadlink.length, informationSource = Some(MmlNls)))
         else
@@ -178,6 +180,12 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
       updateWithoutTransaction(ids, value, username, informationSource = Some(MunicipalityMaintenainer.value))
+    }
+  }
+
+  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
+    withDynTransaction {
+      updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures, informationSource = Some(MunicipalityMaintenainer.value))
     }
   }
 

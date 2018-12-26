@@ -216,7 +216,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateMeasures(Set(pointAsset.mValue), pointAsset.linkId)
     val link = roadLinkService.getRoadLinkAndComplementaryFromVVH(pointAsset.linkId).getOrElse(throw new NoSuchElementException(s"Roadlink with ${pointAsset.linkId} does not exist"))
     val incomingAsset = service.toIncomingAsset(pointAsset, link)
-    val updatedAsset = service.update(assetId, incomingAsset.get, link.geometry, link.municipalityCode, user.username, link.linkSource)
+    val updatedAsset = service.update(assetId, incomingAsset.get, link, user.username)
     getPointAssetById(typeId, updatedAsset)
   }
 
@@ -289,7 +289,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           NewManoeuvre(
             convertValidityPeriod(manoeuvre.properties.find(_.name == "validityPeriods")).getOrElse(Seq()).toSet,
             manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt)).getOrElse(Seq()),
-            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds),
+            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds, None),
          roadLinks.filter(road => linkIds.contains(road.linkId))
         )
       }

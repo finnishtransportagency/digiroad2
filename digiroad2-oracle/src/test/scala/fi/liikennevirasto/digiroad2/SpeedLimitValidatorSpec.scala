@@ -1,19 +1,21 @@
 package fi.liikennevirasto.digiroad2
 
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup.SpeedLimits
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import org.mockito.ArgumentMatchers.any
 
 class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -22,182 +24,330 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
-  val validator = new SpeedLimitValidator(mockTrafficSignService)
+  lazy val dataSource = {
+    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    new BoneCPDataSource(cfg)
+  }
+
+  object testTrafficSignService extends TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus){
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
+
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
+
+  val validator = new SpeedLimitValidator(testTrafficSignService)
+  val simpleProp50 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("5"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("50"))))
   val simpleProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val speedLimitEndsProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("2"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val urbanAreaEndsProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("6"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val speedLimitAreaEndsProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("4"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
   val simpleProp80 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("80"))))
 
-  test("add new inaccurate SpeedLimit when traffic sign inside the asset") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("get inaccurate SpeedLimit when speed limit traffic sign value is different of the speed limit value") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 10, 0, 5, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
+      val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
-
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSign, roadLink, Seq(speedLimit))
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits.head should be(speedLimit)
+    }
   }
 
-  test("when exist more than one trafficSign on same linkId and the value of one doesn't match") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadlink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("when existing two speed limit traffic signs at on speed limit, and one sign it's ok the other not") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0),
-      Point(20, 0.0)), 0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-     val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 10, 0, 10, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
-                          PersistedTrafficSign(2, speedLimit.linkId, 15, 0, 15, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
+          PersistedTrafficSign(2, speedLimit.linkId, 50, 0, 25, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSigns)
 
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadlink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, Seq(speedLimit))
+
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits.head should be(speedLimit)
+    }
   }
 
-  test("when traffic Signs has the same linkId out of asset length geometry and value doesn't match") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("when existing speed limit traffic signs, with different direction of the Speed limit asset") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      10.0, 20.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-    val trafficSign = Seq(PersistedTrafficSign(2, speedLimit.linkId, 5, 5, 5, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSigns)
 
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
-    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSign)
-    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, Seq(speedLimit))
 
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits.head should be(speedLimit)
+    }
   }
 
-  test("when traffic Signs has the same linkId but out of asset geometry")  {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("when existing speed limit traffic sign, with valid asset") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      10, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+        0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
-    val trafficSign = Seq(PersistedTrafficSign(2, speedLimit.linkId, 9, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSigns)
 
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, Seq(speedLimit))
 
-    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSign)
-    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())
-
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      inaccurateSpeedLimits.size should be(0)
+    }
   }
 
-  test("when traffic Signs has the same linkId but out of asset geometry choose the nearest trafficSign (begin asset)")  {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("verify two Speed Limits in one road link, with a valid traffic sign for one of them") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      10.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 90, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
+          SpeedLimit(2, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(80)), Seq(Point(0.0, 0.0)),
+            90, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(2, speedLimit.linkId, 9, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, simpleProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
 
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
 
-    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSign)
-    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())
-
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      inaccurateSpeedLimits.size should be(0)
+    }
   }
 
-  test("when traffic Signs has the same linkId but out of asset geometry choose the nearest trafficSign") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("validate Speed Limit when exist a urban area traffic sign") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      10.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
 
-    val trafficSignFirst = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(2, speedLimit.linkId, 8, 1, 9, false, 0, 235, simpleProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
-    val trafficSignLast = Seq(PersistedTrafficSign(3, speedLimit.linkId, 22, 1, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(4, speedLimit.linkId, 21, 1, 9, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, simpleProp50, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSignFirst ++ trafficSignLast)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
 
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
-
-    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSignFirst)
-    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(trafficSignLast)
-
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits should be(speedLimitsSeq)
+    }
   }
 
-  test("should exclude traffic Signs with different direction") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("validate Speed Limit when exist a Speed limit ends traffic sign with different direction") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      0.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 2, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(2, speedLimit.linkId, 5, 1, 2, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, speedLimitEndsProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
 
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(0)
+    }
   }
 
-  test("should exclude traffic Signs with different direction byRadius") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("validate Speed Limit when exist a Speed limit ends traffic sign with valid conditions") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      1.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
 
-    val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 5, 5, 1, false, 0, 235, simpleProp70, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface),
-      PersistedTrafficSign(2, speedLimit.linkId, 5, 1, 1, false, 0, 235, simpleProp80, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface))
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, speedLimitEndsProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(trafficSign)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
 
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
-
-    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(trafficSign)
-    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())
-
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (speedLimit)
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits should be(speedLimitsSeq)
+    }
   }
 
-  test("without traffic Sign shouldn't return asset id") {
-    val geometry = Seq(Point(0.0, 0.0), Point(20, 0.0))
-    val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+  test("validate Speed Limit when exist a Speed limit ends traffic sign with valid conditions but value different") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
 
-    val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
-      1.0, 20, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
 
-    when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(speedLimit.linkId)).thenReturn(Seq())
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, speedLimitEndsProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
 
-    val speedLimitGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure)
-    val (first, last) = GeometryUtils.geometryEndpoints(speedLimitGeometry)
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
 
-    when(mockTrafficSignService.getTrafficSignByRadius(first, 50, Some(SpeedLimits))).thenReturn(Seq())
-    when(mockTrafficSignService.getTrafficSignByRadius(last, 50, Some(SpeedLimits))).thenReturn(Seq())
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits should be(speedLimitsSeq)
+    }
+  }
 
-    val inaccurateId = validator.checkInaccurateSpeedLimitValues(speedLimit, roadLink).getOrElse(0)
-    inaccurateId should be (0)
+  test("validate Speed Limit when exist a Urban area ends traffic sign with valid conditions and value different of 80") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
+
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
+
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, urbanAreaEndsProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
+
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
+
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits should be(speedLimitsSeq)
+    }
+  }
+
+  test("validate Speed Limit when exist a Speed limit area ends traffic sign with valid values but at 30 meters or less of the beginning of road link") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
+
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
+
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 20, false, 0, 235, speedLimitAreaEndsProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
+
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
+
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(0)
+    }
+  }
+
+  test("validate Speed Limit when exist a Speed limit area ends traffic sign with valid values but at 30 meters or less of the end of road link") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
+
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
+
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 190, false, 0, 235, speedLimitAreaEndsProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
+
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
+
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(0)
+    }
+  }
+
+  test("validate Speed Limit when exist a Speed limit area ends traffic sign with valid values") {
+    runWithRollback {
+      val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
+      val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val linkIdForTests = 1000
+
+      val speedLimitsSeq =
+        Seq(
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+            0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+        )
+
+      val trafficSigns =
+        Seq(
+          PersistedTrafficSign(1, linkIdForTests, 80, 0, 50, false, 0, 235, speedLimitAreaEndsProp70, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+        )
+
+      when(mockTrafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkIdForTests)).thenReturn(trafficSigns)
+
+      val inaccurateSpeedLimits = validator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimitsSeq)
+      inaccurateSpeedLimits.size should be(1)
+      inaccurateSpeedLimits should be(speedLimitsSeq)
+    }
   }
 }

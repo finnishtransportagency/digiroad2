@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, ServicePointsClass}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{FunSuite, Matchers}
@@ -67,6 +67,35 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
       updatedServicePoint.id should equal (result.id)
       updatedServicePoint.modifiedBy should equal(Some("unit_test"))
       updatedServicePoint.modifiedAt shouldBe defined
+    }
+  }
+
+  test("Create service point with wrong authority data ") {
+    runWithRollback {
+      intercept[ServicePointException] {
+        service.create(IncomingServicePoint(374128.0, 6677512.0, Set(IncomingService(10, Some("Testipalvelu1"), Some("Lisätieto1"), Some(3), Some(100)))), 235, "jakke")
+      }
+    }
+  }
+
+  test("Create service point with right authority data ") {
+    runWithRollback {
+      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
+      val assets = service.getPersistedAssetsByIds(Set(id))
+      assets.size should be(1)
+
+      val asset = assets.head
+      asset.id should be(id)
+      asset.lon should be(374128)
+      asset.lat should be(6677512)
+      asset.createdBy should be(Some("jakke"))
+      asset.createdAt shouldBe defined
+      val servicePoint =  asset.services.find(_.serviceType == ServicePointsClass.RestArea.value).get
+      servicePoint.isAuthorityData should be (true)
+      servicePoint.serviceType should be (ServicePointsClass.RestArea.value)
+      val servicePoint1 =  asset.services.find(_.serviceType == ServicePointsClass.Airport.value).get
+      servicePoint1.isAuthorityData should be (true)
+      servicePoint1.serviceType should be (ServicePointsClass.Airport.value)
     }
   }
 }

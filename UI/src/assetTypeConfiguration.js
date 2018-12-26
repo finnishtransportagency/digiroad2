@@ -1,6 +1,8 @@
 (function(root) {
   root.AssetTypeConfiguration = function () {
 
+    var oneKmZoomLvl = 8;
+
     var assetType = {
       massTransitStop: 10,
       speedLimit: 20,
@@ -69,9 +71,11 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.trailerTruckWeightLimit,
@@ -93,9 +97,11 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.axleWeightLimit,
@@ -117,9 +123,11 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.bogieWeightLimit,
@@ -141,9 +149,11 @@
         label: new MassLimitationsLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.heightLimit,
@@ -164,9 +174,11 @@
         label: new LinearAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.lengthLimit,
@@ -187,9 +199,11 @@
         label: new LinearAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.widthLimit,
@@ -211,9 +225,11 @@
         label: new LinearAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
+        hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.litRoad,
@@ -234,7 +250,8 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.roadDamagedByThaw,
@@ -261,7 +278,8 @@
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.roadWidth,
@@ -284,7 +302,8 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.pavedRoad,
@@ -323,7 +342,8 @@
           }
         ),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.trafficVolume,
@@ -345,7 +365,8 @@
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.massTransitLane,
@@ -371,7 +392,8 @@
           fields: [
             {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
           ]
-        })
+        }),
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -395,6 +417,7 @@
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
         label: new WinterSpeedLimitLabel()
       },
       {
@@ -415,7 +438,8 @@
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -433,9 +457,13 @@
           disabled: 'Ei rajoitusta'
         },
         isVerifiable: true,
+        hasInaccurate: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl,
+        readOnlyLayer: TrafficSignReadOnlyLayer
+
       },
       {
         typeId: assetType.europeanRoads,
@@ -456,7 +484,8 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.exitNumbers,
@@ -477,7 +506,8 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -519,11 +549,12 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: true,
+        isVerifiable: false,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true
+        isMultipleLinkSelectionAllowed: true,
+        minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.numberOfLanes,
@@ -545,9 +576,10 @@
         isVerifiable: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: oneKmZoomLvl
       },
-        {
+      {
             typeId: assetType.careClass,
             singleElementEventCategory: 'careClass',
             multiElementEventCategory: 'careClasses',
@@ -606,7 +638,8 @@
             authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
             layer: CareClassLayer,
             style: new CareClassStyle(),
-            collection: CareClassCollection
+            collection: CareClassCollection,
+            minZoomForContent: oneKmZoomLvl
       },
       {
         typeId: assetType.carryingCapacity,
@@ -654,7 +687,8 @@
             },
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
-        })
+        }),
+        minZoomForContent: oneKmZoomLvl
       }
     ];
 
@@ -678,7 +712,8 @@
         label: new TRSpeedLimitAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         style: new TRSpeedLimitStyle(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl
       }
     ];
 
@@ -699,6 +734,8 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
+        hasInaccurate: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy()
       },
       {
@@ -718,6 +755,7 @@
           newAssetLabel: 'esterakennelma'
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: ObstacleForm,
         hasMunicipalityValidation: true,
         roadCollection: ObstaclesRoadCollection
       },
@@ -741,6 +779,7 @@
           return selected.code ? selected.code !== '' : false;
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: RailwayCrossingForm,
         hasMunicipalityValidation: true
       },
       {
@@ -759,6 +798,7 @@
           newAssetLabel: 'opastustaulu'
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: DirectionalTrafficSignForm,
         hasMunicipalityValidation: true
       },
       {
@@ -766,16 +806,35 @@
         layerName: 'servicePoints',
         title: 'Palvelupiste',
         allowComplementaryLinks: false,
-        newAsset: { services: [] },
+        allowGrouping: true,
+        groupingDistance: Math.pow(3, 2),
+         newAsset: { services: [] },
         legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
+          {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
+          {symbolUrl: 'images/service_points/parking.png', label: 'Pysäköintialue'},
+          {symbolUrl: 'images/service_points/railwayStation2.png', label: 'Merkittävä rautatieasema'},
+          {symbolUrl: 'images/service_points/railwayStation.png', label: 'Vähäisempi rautatieasema'},
+          {symbolUrl: 'images/service_points/subwayStation.png', label: 'Metroasema'},
+          {symbolUrl: 'images/service_points/busStation.png', label: 'Linja-autoasema'},
+          {symbolUrl: 'images/service_points/airport.png', label: 'Lentokenttä'},
+          {symbolUrl: 'images/service_points/ferry.png', label: 'Laivaterminaali'},
+          {symbolUrl: 'images/service_points/taxiStation.png', label: 'Taksiasema'},
+          {symbolUrl: 'images/service_points/picnicSite.png', label: 'Lepoalue'},
+          {symbolUrl: 'images/service_points/customsControl.png', label: 'Tulli'},
+          {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka'},
+          {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'label loading-terminal'},
+          {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'label parking-area'},
+          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste'}
+
         ],
         formLabels: {
           singleFloatingAssetLabel: 'palvelupisteen',
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
         },
+        label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
+        form: ServicePointForm,
         hasMunicipalityValidation: true
       },
       {
@@ -816,6 +875,7 @@
           newAssetLabel: 'liikennemerkki'
         },
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
+        form: TrafficSignForm,
         hasMunicipalityValidation: true,
         saveCondition: function (selectedAsset) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
@@ -841,10 +901,13 @@
         ],
         formLabels: {
           title: 'Rajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'TR suurin sallitut korkeudet',
+          singleFloatingAssetLabel: 'TR suurin sallittu korkeus'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
+        form: HeightLimitForm,
         label: new HeightLimitLabel(Math.pow(5, 2))
       },
       {
@@ -860,10 +923,13 @@
         ],
         formLabels: {
           title: 'Rajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'TR suurin sallitut leveydet',
+          singleFloatingAssetLabel: 'TR suurin sallittu leveys'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
+        form: WidthLimitForm,
         label: new WidthLimitLabel(Math.pow(5, 2))
       }
     ];

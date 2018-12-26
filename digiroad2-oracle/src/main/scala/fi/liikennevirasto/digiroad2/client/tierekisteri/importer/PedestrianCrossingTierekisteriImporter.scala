@@ -18,6 +18,8 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
+  lazy val dao = new OraclePedestrianCrossingDao()
+
   override val tierekisteriClient = new TierekisteriPedestrianCrossingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
@@ -29,7 +31,7 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
       point =>
         val pedestrianCrossing = IncomingPedestrianCrossing(point.x, point.y, vvhRoadlink.linkId)
 
-        OraclePedestrianCrossingDao.create(pedestrianCrossing, mValue, s"batch_process_$assetName", vvhRoadlink.municipalityCode,
+        dao.create(pedestrianCrossing, mValue, s"batch_process_$assetName", vvhRoadlink.municipalityCode,
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
 
         println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $typeId")

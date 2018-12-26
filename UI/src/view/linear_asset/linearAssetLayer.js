@@ -14,11 +14,13 @@ root.LinearAssetLayer  = function(params) {
       massLimitation = params.massLimitation,
       trafficSignReadOnlyLayer = params.readOnlyLayer,
       isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed,
-      authorizationPolicy = params.authorizationPolicy;
+      authorizationPolicy = params.authorizationPolicy,
+      isExperimental = params.isExperimental,
+      minZoomForContent = params.minZoomForContent;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
-  me.minZoomForContent = zoomlevels.minZoomForAssets;
+  me.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
   var isComplementaryChecked = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -540,7 +542,6 @@ root.LinearAssetLayer  = function(params) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
-    me.refreshView();
     roadAddressInfoPopup.start();
     me.show(map);
   };

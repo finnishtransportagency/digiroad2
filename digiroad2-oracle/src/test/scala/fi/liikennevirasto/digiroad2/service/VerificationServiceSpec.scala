@@ -86,7 +86,8 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       ServiceWithDao.setAssetTypeVerification(20, Set(100), "testuser")
       ServiceWithDao.removeAssetTypeVerification(20, Set(100), "testuser")
       val verificationInfo = ServiceWithDao.getAssetVerification(20, 100)
-      verificationInfo should have size 0
+      verificationInfo should have size 1
+      verificationInfo.head.verified should be (false)
     }
   }
 
@@ -105,7 +106,8 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       val oldVerification = ServiceWithDao.getAssetVerification(20, 120)
       ServiceWithDao.verifyAssetType(20, Set(120), "testuser")
       val newVerification = ServiceWithDao.getAssetVerification(20, 120)
-      oldVerification should have size 0
+      oldVerification should have size 1
+      oldVerification.head.verified should be (false)
       newVerification should have size 1
       newVerification.head.verifiedBy should be (Some("testuser"))
     }

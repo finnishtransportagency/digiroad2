@@ -61,7 +61,7 @@
 
 
     var speedLimitFeatureSizeRules = [
-      new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 3}, pointRadius: 0}),
+      new StyleRule().where('zoomLevel').isIn([8 ,9]).use({stroke: {width: 3}, pointRadius: 0}),
       new StyleRule().where('zoomLevel').is(10).use({stroke: {width: 5}, pointRadius: 10}),
       new StyleRule().where('zoomLevel').is(11).use({stroke: {width: 7}, pointRadius: 14}),
       new StyleRule().where('zoomLevel').is(12).use({stroke: {width: 10}, pointRadius: 16}),

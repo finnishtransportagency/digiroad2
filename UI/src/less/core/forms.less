@@ -238,7 +238,7 @@ input[type="checkbox"] {
 // Apply class to a `p` element to make any string of text align with labels in
 // a horizontal form layout.
 
-.form-control-static {
+.form-control-static, .form-control-readOnly {
   margin: 0; // Remove default margin from `p`
 }
 
@@ -305,6 +305,7 @@ input[type="checkbox"] {
   .checkbox,
   .select,
   .form-control-static,
+  .form-control-readOnly,
   .choice-group {
     float: left;
   }
@@ -339,7 +340,7 @@ input[type="checkbox"] {
     float: left;
   }
 
-  .form-control-static {
+  .form-control-static, .form-control-readOnly {
     padding-top: (@line-height-modifier  + 1);
     padding-bottom: (@line-height-modifier + 1);
     line-height: @line-height-modifier * 3;
@@ -568,6 +569,81 @@ input[type="checkbox"] {
       display: none;
     }
   }
+
+  &#csvImport {
+    .form-group {
+      border-bottom: none;
+      .municipalities {
+        clear: both;
+        margin-left: -13px;
+        padding-top: 0px;
+        display: none;
+      }
+    }
+
+    .row {
+      min-width: 360px;
+    }
+
+    .col-xs-5 {
+      max-width: 151px;
+      display: inline-block;
+    }
+
+    .col-xs-2 {
+      max-width: 24px;
+      display: inline-block;
+    }
+
+    #municipalities_search, #municipalities_search_to {
+      width: 151px;
+      margin-top: 0;
+      max-height: 72px;
+    }
+
+    #municipalities_search_rightSelected, #municipalities_search_leftSelected {
+      width: 24px;
+    }
+
+    #right_municipalities, #left_municipalities{
+      width: 151px;
+    }
+
+    .control-label.labelBoxRight, .control-label.labelBoxLeft {
+      padding-left: 0;
+      font-size: 11px;
+      margin-top: 0;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .control-label.labelBoxRight {
+      width: 107px;
+    }
+
+    .control-label.labelBoxLeft {
+      width: 99px;
+    }
+
+    .btn.btn-primary.btn-lg {
+      float: none;
+    }
+
+    .form-controls {
+      width: 580px;
+    }
+
+    #csvImportPoistaCheckbox{
+      padding-left: 30px;
+      display: none;
+    }
+    
+    #labelCsvImportPoistaCheckbox {
+      line-height: 11px;
+      padding-left: 0;
+    }
+  }
+
 }
 
 // Inverted colors

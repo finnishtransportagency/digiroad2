@@ -28,7 +28,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mocklinearAssetService = MockitoSugar.mock[LinearAssetService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
@@ -44,7 +44,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val roadLink = RoadLink(1000L, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
   when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
@@ -112,7 +112,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     Seq((PieceWiseLinearAsset(1, 1000, SideCode.BothDirections, Some(NumericValue(1)), Seq(Point(0, 5), Point(5, 10)), false, 0, 10, Set(), None, None, None, None, TotalWeightLimit.typeId, TrafficDirection.BothDirections, 0, None, NormalLinkInterface, Municipality, Map(), None, None, None), roadLink)))
   when(mockOnOffLinearAssetService.getPersistedAssetsByIds(LitRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LitRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0, 0), Point(0, 500))))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.update(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]], any[Option[Measures]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
@@ -137,13 +137,13 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService)
   addServlet(municipalityApi, "/*")
 
-  when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
-  when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, NormalLinkInterface)))
+  when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))
+  when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, linkSource = NormalLinkInterface)))
   when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getById(1)).thenReturn(Some(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
-  when(mockPedestrianCrossingService.getByMunicipality(235)).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
-  when(mockObstacleService.getByMunicipality(235)).thenReturn(Seq(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, NormalLinkInterface)))
+  when(mockPedestrianCrossingService.getByMunicipality(235)).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))
+  when(mockObstacleService.getByMunicipality(235)).thenReturn(Seq(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, linkSource =  NormalLinkInterface)))
   when(mockRailwayCrossingService.getByMunicipality(235)).thenReturn(Seq(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getByMunicipality(235)).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
@@ -152,8 +152,8 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockRailwayCrossingService.create(any[IncomingRailwayCrossing], any[String], any[RoadLink])).thenReturn(1L)
   when(mockTrafficLightService.create(any[IncomingTrafficLight], any[String], any[RoadLink])).thenReturn(1L)
 
-  when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, NormalLinkInterface)))
-  when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, NormalLinkInterface)))
+  when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, linkSource = NormalLinkInterface)))
+  when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, linkSource =  NormalLinkInterface)))
   when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 

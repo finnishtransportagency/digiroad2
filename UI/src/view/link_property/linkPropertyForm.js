@@ -98,7 +98,7 @@
              '</div>';
     };
 
-    var title = function() {
+    var header = function() {
       if (selectedLinkProperty.count() == 1) {
         return '<span>Linkin ID: ' + _.head(selectedLinkProperty.get()).linkId + '</span>';
       } else {
@@ -111,15 +111,14 @@
         '<button class="save btn btn-primary" disabled>Tallenna</button>' +
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
+
+
     var template = function(options) {
       return _.template('' +
-        '<header>' +
-          title() + buttons +
-        '</header>' +
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedAt %> / <%- modifiedBy %></p>' +
             '</div>' +
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
@@ -156,17 +155,17 @@
             staticField('MML ID', 'mmlId') +
             staticField('Linkin tila', 'constructionType') +
           '</div>' +
-        '</div>' +
-      '<footer>' + buttons + '</footer>', options);
+        '</div>', options);
     };
+
+    var footer = function() { return buttons;};
 
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
       var notRendered = !$('#incomplete-links-link').length;
       if(notRendered) {
-        $('#information-content').append('' +
-          '<div class="form form-horizontal">' +
-            '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
-          '</div>');
+        $('ul[class=information-content]').empty();
+        $('ul[class=information-content]').append('' +
+            '<li><a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a></li>');
       }
     };
 
@@ -250,7 +249,11 @@
                                     functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
                                     linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags),
                                     administrativeClassOptionTags : defaultUnknownOptionTag.concat(administrativeClassOptionTags)}};
-        rootElement.html(template(options)(linkProperties));
+
+        rootElement.find('#feature-attributes-header').html(header());
+        rootElement.find('#feature-attributes-form').html(template(options)(linkProperties));
+        rootElement.find('#feature-attributes-footer').html(footer());
+
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
         });
@@ -270,7 +273,10 @@
         rootElement.find('.link-properties button').attr('disabled', false);
       });
       eventbus.on('linkProperties:unselected', function() {
-        rootElement.empty();
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
+        rootElement.find('li > a[id=feedback-data]').remove();
       });
       eventbus.on('application:readOnly', function(readOnly){
         toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
