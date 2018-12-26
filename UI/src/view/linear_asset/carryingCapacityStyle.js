@@ -30,7 +30,7 @@
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([287, 434]).use({stroke: {color: '#ff982c'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([434, 671]).use({stroke: {color: '#ffe82d'}}),
       new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isBetween([671, 2051]).use({stroke: {color: '#11bb00'}}),
-      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isGreater(2051).use({stroke: {color: '#439232'}})
+      new StyleRule().where(function(asset){if(valueExists(asset)){return findValue(asset, "kevatkantavuus"); }}).isGreaterOrEqual(2051).use({stroke: {color: '#439232'}})
     ];
 
     var frostHeavingFactorRules = [

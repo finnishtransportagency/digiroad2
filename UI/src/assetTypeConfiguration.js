@@ -418,6 +418,7 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl
+        label: new WinterSpeedLimitLabel()
       },
       {
         typeId: assetType.prohibition,
