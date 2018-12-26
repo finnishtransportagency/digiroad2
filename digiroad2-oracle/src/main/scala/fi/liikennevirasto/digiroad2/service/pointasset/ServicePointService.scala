@@ -1,28 +1,23 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.dao.Queries
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, ServicePointsClass}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, OracleServicePointDao, ServicePoint}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery
-import slick.jdbc.StaticQuery.interpolation
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 class ServicePointService {
   val typeId: Int = 250
 
   def create(asset: IncomingServicePoint, municipalityCode: Int, username: String) = {
     withDynTransaction {
+      checkAuthorityData(asset)
       OracleServicePointDao.create(asset, municipalityCode, username)
     }
   }
 
   def update(id: Long, updatedAsset: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     withDynTransaction {
+      checkAuthorityData(updatedAsset)
       OracleServicePointDao.update(id, updatedAsset, municipalityCode, username)
     }
   }
@@ -64,6 +59,7 @@ class ServicePointService {
   }
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   def getPersistedAssetsByIds(ids: Set[Long]): Set[ServicePoint] = {
@@ -76,6 +72,15 @@ class ServicePointService {
 
   def fetchPointAssets(filter: String): Set[ServicePoint] = OracleServicePointDao.fetchByFilter(filter)
 
+
+  def checkAuthorityData(incomingServicePoint: IncomingServicePoint) = {
+    incomingServicePoint.services.foreach { service =>
+      val shouldBe = ServicePointsClass.apply(service.serviceType)
+      if(shouldBe != service.isAuthorityData)
+        throw new ServicePointException(s"the authority data is not matching for type ${service.serviceType}")
+    }
+  }
 }
+class ServicePointException(val servicePointException: String) extends RuntimeException { override def getMessage: String = servicePointException }
 
 

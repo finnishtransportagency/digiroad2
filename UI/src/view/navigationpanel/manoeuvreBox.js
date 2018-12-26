@@ -1,6 +1,6 @@
 (function(root) {
   root.ManoeuvreBox = function() {
-    this.layerName = 'manoeuvre';
+    var layerName = 'manoeuvre';
     var authorizationPolicy = new AuthorizationPolicy();
     var values = ['Ei kääntymisrajoitusta', 'Kääntymisrajoituksen lähde', 'Kääntymisrajoituksen lähde, useampi', 'Kääntymisrajoituksen välilinkki', 'Kääntymisrajoituksen välilinkki, useampi', 'Kääntymisrajoituksen kohde', 'Kääntymisrajoituksen kohde, useampi', 'Kääntymisrajoituksen lähde ja kohde'];
     var manoeuvreLegendTemplate = _.map(values, function(value, idx) {
@@ -10,6 +10,13 @@
         '</div>';
     }).join('');
 
+    var manoeuvreSignsCheckBox = [
+      '<div class="check-box-container">' +
+      '<input id="manoeuvreSignsCheckBox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
+      '</div>' +
+      '</div>'
+    ].join('');
+
     var expandedTemplate = [
       '<div class="panel">',
       '  <header class="panel-header expanded">',
@@ -17,6 +24,7 @@
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
       manoeuvreLegendTemplate,
+      manoeuvreSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -70,10 +78,25 @@
       element.hide();
     }
 
-    this.title = 'Kääntymisrajoitus';
-    this.template = function() { return element;};
-    this.show =  show;
-    this.hide = hide;
+    var template = function() {
+      return element;
+    };
+
+    $(elements.expanded).find('#manoeuvreSignsCheckBox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger(layerName + '-readOnlyTrafficSigns:show');
+      } else {
+        eventbus.trigger(layerName + '-readOnlyTrafficSigns:hide');
+      }
+    });
+
+    return {
+      title: 'Kääntymisrajoitus',
+      layerName: layerName,
+      template: template,
+      show: show,
+      hide: hide
+    };
   };
 })(this);
 

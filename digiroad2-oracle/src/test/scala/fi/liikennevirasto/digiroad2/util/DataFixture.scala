@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.security.InvalidParameterException
+import java.util.Properties
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.{Date, Properties}
@@ -88,7 +90,7 @@ object DataFixture {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -100,7 +102,7 @@ object DataFixture {
   }
 
   lazy val manoeuvreService: ManoeuvreService = {
-    new ManoeuvreService(roadLinkService)
+    new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
@@ -1436,9 +1438,10 @@ object DataFixture {
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
           }
         }catch {
-          case ex: ManoeuvreCreationException => {
+          case ex: ManoeuvreCreationException =>
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
-          }
+          case ex: InvalidParameterException =>
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
         }
       )
     }
@@ -1609,8 +1612,6 @@ object DataFixture {
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
-      case Some("verify_inaccurate_speed_limit_assets") =>
-        verifyInaccurateSpeedLimits()
       case Some("update_information_source_on_existing_assets") =>
         updateInformationSource()
       case Some("update_information_source_on_paved_road_assets") =>
