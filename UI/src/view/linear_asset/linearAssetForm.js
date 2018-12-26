@@ -88,24 +88,19 @@
   }
 
   function header(selectedLinearAsset, title, newTitle) {
-    var disabled = selectedLinearAsset.isDirty() ? '' : 'disabled';
-    var topButtons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
-      '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-
     var generateTitle = function () {
       if (selectedLinearAsset.isUnknown() || selectedLinearAsset.isSplit()) {
         return '<span class="read-only-title">' + title + '</span>' +
           '<span class="edit-mode-title">' + newTitle + '</span>';
       } else {
         if (selectedLinearAsset.count() === 1) {
-          return '<span>Segmentin ID: ' + selectedLinearAsset.getId() + '</span>';
+          return '<span>Kohteen ID: ' + selectedLinearAsset.getId() + '</span>';
         } else {
           return '<span>' + title + '</span>';
         }
       }
     };
-
-    return generateTitle() + '<div class="linear-asset form-controls">' + topButtons + '</div>';
+    return generateTitle();
   }
 
   var buttons = function(selectedLinearAsset, isVerifiable) {
@@ -150,17 +145,21 @@
 
     var verifiedFields = function(isVerifiable) {
       return (isVerifiable && verifiedBy && verifiedDateTime) ? '<div class="form-group">' +
-      '<p class="form-control-static asset-log-info">Tarkistettu: ' + verifiedBy + ' ' + verifiedDateTime + '</p>' +
+      '<p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(verifiedDateTime, verifiedBy) + '</p>' +
       '</div>' : '';
+    };
+
+    var informationLog = function (date, username) {
+      return date ? (date + ' / ' + username) : '-';
     };
 
     return '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(createdDateTime, createdBy) + '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(modifiedDateTime, modifiedBy)  + '</p>' +
                '</div>' +
                verifiedFields() +
                '<div class="form-group">' +

@@ -98,7 +98,7 @@
              '</div>';
     };
 
-    var title = function() {
+    var header = function() {
       if (selectedLinkProperty.count() == 1) {
         return '<span>Linkin ID: ' + _.head(selectedLinkProperty.get()).linkId + '</span>';
       } else {
@@ -112,14 +112,13 @@
         '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
-    var header = function() {return '' + title() + buttons;};
 
     var template = function(options) {
       return _.template('' +
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedAt %> / <%- modifiedBy %></p>' +
             '</div>' +
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +

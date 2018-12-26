@@ -4,7 +4,6 @@
   var authorizationPolicy;
 
   var rootElement = $("#feature-attributes");
-
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
@@ -202,7 +201,6 @@
           } else {
             header = $('' + '<span>Uusi pys&auml;kki</span>');
           }
-
           return header.add(buttons(isTerminalBusStop));
         }
 
@@ -283,11 +281,21 @@
         return label;
       };
 
+      var informationLog = function (propertyVal) {
+        if(_.isEmpty(propertyVal))
+          return propertyVal;
+
+        var info = propertyVal.split(/ (.*)/);
+
+        return info[1] ? (info[1] + ' / ' + info[0]) : '-';
+      };
+
+
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
         if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty_terminaaliin') {
-          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
+          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
         } else {
           outer.append(createLabelElement(property));
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
