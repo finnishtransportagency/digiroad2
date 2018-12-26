@@ -711,6 +711,9 @@
           case '7': //TerminalChildless
               text = 'Kyseisellä terminaalipysäkillä ei ole yhtään liitettyä pysäkkiä.';
               break;
+          case '8': //EndedRoadBusStop
+            text = 'Kadun tai tien hallinnollinen luokka on muuttunut tai tieosoite on lakkautettu. Tarkista ja korjaa pysäkin sijainti.';
+            break;
           default:
             text = 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.';
         }
