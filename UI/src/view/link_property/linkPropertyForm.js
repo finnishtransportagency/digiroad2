@@ -325,7 +325,7 @@
         };
 
         rootElement.find('#feature-attributes-header').html(header());
-        rootElement.find('#feature-attributes-form').html(template(options)(linkProperties));
+        rootElement.find('#feature-attributes-form').html(template(options)(linkProperty));
         rootElement.find('#feature-attributes-footer').html(footer());
 
         rootElement.find('.traffic-direction').change(function(event) {
