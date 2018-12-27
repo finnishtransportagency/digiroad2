@@ -201,7 +201,7 @@
           } else {
             header = $('' + '<span>Uusi pys&auml;kki</span>');
           }
-          return header.add(buttons(isTerminalBusStop));
+          return header;
         }
 
         rootElement.find("#feature-attributes-header").html(busStopHeader());
