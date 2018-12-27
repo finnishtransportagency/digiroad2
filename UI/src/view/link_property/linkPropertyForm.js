@@ -231,11 +231,7 @@
       return !_.isEmpty(selectedAssets);
     };
 
-    var showAccessRightsOnForm = function (linkProperty) {
-      return linkProperty.administrativeClass === 'Private';
-    };
-
-    var validadeSelectedAccessRight = function(selectedLinkProperty){
+    var validateSelectedAccessRight = function(selectedLinkProperty){
      return !_.isEmpty(_.filter(selectedLinkProperty.get(), function (link) {
         return link.administrativeClass === "Private";
       }));
@@ -278,7 +274,7 @@
         rootElement.find('select').toggle(!readOnly);
         rootElement.find('input').toggle(!readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
-        rootElement.find('.editable.private-road').toggle(validadeSelectedAccessRight(selectedLinkProperty));
+        rootElement.find('.editable.private-road').toggle(validateSelectedAccessRight(selectedLinkProperty));
       };
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(properties) {

@@ -328,7 +328,7 @@ object RoadLinkDAO{
     def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
       sqlu"""
             update road_link_attributes
-            set valid_to = sysdate,
+            set valid_to = sysdate - 1,
                 modified_by = $username
             where link_id = ${linkProperty.linkId}
             	and name = $attributeName
