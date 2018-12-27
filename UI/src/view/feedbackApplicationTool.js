@@ -108,10 +108,8 @@
                         '</div>' +
                     '</form>' +
                     '<div class="actions feedback-actions">' +
-                        '<div class="buttons">' +
                             '<button class = "btn btn-primary save" disabled>' + options.saveButton + '</button>' +
                             '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
-                        '</div>' +
                     '</div>' +
                 '</div>' +
            '</div>';
