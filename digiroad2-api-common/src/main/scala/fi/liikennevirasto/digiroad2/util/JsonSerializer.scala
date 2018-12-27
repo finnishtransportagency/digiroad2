@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, NodeType, VVHRoadNodes}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.service.AdditionalInformation
 import org.json4s.JsonAST.{JDouble, JInt, JObject, JString}
 import org.json4s.jackson.Serialization.{read, write}
 import org.json4s._
@@ -18,7 +19,7 @@ class JsonSerializer extends VVHSerializer {
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
-    TrackSerializer + PointSerializer
+    TrackSerializer + PointSerializer + AdditionalInfoClassSerializer
 
   override def readCachedTinyRoadLinks(file: File): Seq[TinyRoadLink] = {
     val json = new FileReader(file)
@@ -83,9 +84,8 @@ class JsonSerializer extends VVHSerializer {
 object DigiroadSerializers {
   val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
     LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer +
-    TrackSerializer + PointSerializer
+    TrackSerializer + PointSerializer + AdditionalInfoClassSerializer
 }
-
 
 case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
   null
@@ -116,6 +116,12 @@ case object AdministrativeClassSerializer extends CustomSerializer[Administrativ
 }, {
   case ac: AdministrativeClass =>
     JInt(BigInt(ac.value))
+}))
+
+case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
+  case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+}, {
+  case ai: AdditionalInformation => JString(ai.toString)
 }))
 
 case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ( {

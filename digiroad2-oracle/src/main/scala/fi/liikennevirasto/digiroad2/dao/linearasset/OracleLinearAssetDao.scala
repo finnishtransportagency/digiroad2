@@ -27,6 +27,9 @@ case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId:
 
 case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 
+case class AssetLink(id: Long, linkId: Long)
+
+
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -195,6 +198,29 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         .as[PersistedLinearAsset].list
     }
   }
+
+  def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[Long], includeExpired: Boolean = false): Seq[AssetLink] = {
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
+        select a.id, pos.link_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join #$idTableName i on i.id = pos.link_id
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink].list
+    }
+  }
+
+  implicit val getAssetLink = new GetResult[AssetLink] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+
+      AssetLink(id, linkId)
+    }
+  }
+
 
   def fetchExpireAssetLastModificationsByLinkIds(assetTypeId: Int, linkIds: Seq[Long]) : Seq[AssetLastModification] = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
