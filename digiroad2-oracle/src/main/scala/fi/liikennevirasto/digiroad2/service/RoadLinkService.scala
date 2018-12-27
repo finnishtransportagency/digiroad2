@@ -455,7 +455,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
 
     withDynTransaction {
-      (enrichCacheRoadLinksFromVVH(links, changes), changes, enrichCacheRoadLinksFromVVH(complementaryLinks, changes))
+      (enrichRoadLinksFromVVH(links, changes), changes, enrichRoadLinksFromVVH(complementaryLinks, changes))
     }
   }
 
@@ -968,7 +968,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param changes
     * @return Road links
     */
-  protected def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
+  def enrichRoadLinksFromVVH(allVvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
     val vvhRoadLinks = allVvhRoadLinks.filterNot(_.featureClass == FeatureClass.WinterRoads)
     def autoGenerateProperties(roadLink: RoadLink): RoadLink = {
       val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
@@ -1460,9 +1460,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (roadLinks ++ complementaries, changes)
   }
 
-  protected def enrichCacheRoadLinksFromVVH(vvhRoadLinks: Seq[VVHRoadlink], changes: Seq[ChangeInfo] = Nil): Seq[RoadLink] = {
-    enrichRoadLinksFromVVH(vvhRoadLinks, changes)
-  }
+
 
   protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
     def getFeatureClass(roadLink: RoadLink): Int ={

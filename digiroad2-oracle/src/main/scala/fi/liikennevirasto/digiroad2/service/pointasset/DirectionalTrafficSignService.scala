@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, OracleDirectionalTrafficSignDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import org.joda.time.DateTime
 
 case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
 
@@ -14,6 +15,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   type PersistedAsset = DirectionalTrafficSign
 
   override def typeId: Int = 240
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[DirectionalTrafficSign] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def setAssetPosition(asset: IncomingDirectionalTrafficSign, geometry: Seq[Point], mValue: Double): IncomingDirectionalTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
@@ -57,6 +59,9 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
         OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username)
     }
   }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
 }
 
 

@@ -125,6 +125,7 @@
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
+    new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
@@ -165,7 +166,8 @@
           { selectedGroupPointAsset: selectedGroupPointAsset},
           { selectedGroupPointAsset: selectedTrHeightLimits},
           { selectedGroupPointAsset: selectedTrWidthLimits},
-          { linearAssets: linearAssets}
+          { linearAssets: linearAssets},
+          { pointAssets: pointAssets}
     ));
       eventbus.trigger('application:initialized');
     }
@@ -296,13 +298,19 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-    new PointAssetForm(
-       pointAsset,
-       pointAsset.roadCollection,
-       applicationModel,
-       backend,
-       pointAsset.saveCondition || function() {return true;},
-        new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset));
+      var parameters = {
+          pointAsset: pointAsset,
+          roadCollection: pointAsset.roadCollection,
+          applicationModel: applicationModel,
+          backend: backend,
+          saveCondition: pointAsset.saveCondition || function() {return true;},
+          feedbackCollection : new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset)
+      };
+
+      if(pointAsset.form) {
+        new pointAsset.form().initialize(parameters);
+      }else
+        new PointAssetForm().initialize(parameters);
     });
 
     _.forEach(groupedPointAssets, function(pointAsset) {
@@ -358,7 +366,8 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
-       authorizationPolicy: asset.authorizationPolicy
+       authorizationPolicy: asset.authorizationPolicy,
+       readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
      });
      return acc;
     }, {});
@@ -400,7 +409,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        isExperimental: isExperimental
        }),
-       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
+       manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }) )
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 
@@ -455,6 +464,7 @@
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
+    var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
     return [
       [roadLinkBox],
       [].concat(getLinearAsset(assetType.litRoad))
@@ -470,7 +480,7 @@
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
           .concat(getPointAsset(assetType.directionalTrafficSigns))
-          .concat(getPointAsset(assetType.pedestrianCrossings))
+          .concat([pedestrianCrossingBox])
           .concat(getPointAsset(assetType.trafficLights))
           .concat([trafficSignBox])
           .concat(getPointAsset(assetType.servicePoints)),

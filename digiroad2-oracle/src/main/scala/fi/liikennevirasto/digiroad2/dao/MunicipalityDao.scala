@@ -45,15 +45,6 @@ class MunicipalityDao {
     sql"""select id from municipality where id = $id """.as[Int].list
   }
 
-  def getMunicipalitiesNameByCode(codes: Set[Int]): Seq[String] = {
-    val filter = if (codes.nonEmpty) {"where id in " + codes.mkString(",") } else ""
-
-    sql"""
-      select name_fi from municipality
-      #$filter
-    """.as[String].list
-  }
-
   def getMunicipalitiesNameAndIdByCode(codes: Set[Int]): List[MunicipalityInfo] = {
     val filter = if (codes.nonEmpty) {"where id in (" + codes.mkString(",") + ")" } else ""
 

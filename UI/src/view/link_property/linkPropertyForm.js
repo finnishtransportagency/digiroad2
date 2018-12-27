@@ -115,7 +115,7 @@
         '</div>';
     };
 
-    var title = function() {
+    var header = function() {
       if (selectedLinkProperty.count() === 1) {
         return '<span>Linkin ID: ' + _.head(selectedLinkProperty.get()).linkId + '</span>';
       } else {
@@ -132,13 +132,10 @@
 
     var template = function(options) {
       return _.template('' +
-        '<header>' +
-          title() + buttons +
-        '</header>' +
         '<div class="wrapper read-only">' +
           '<div class="form form-horizontal form-dark">' +
             '<div class="form-group">' +
-              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
+              '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedAt %> / <%- modifiedBy %></p>' +
             '</div>' +
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
@@ -190,17 +187,17 @@
               '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
             '</div>' +
           '</div>' +
-        '</div>' +
-      '<footer>' + buttons + '</footer>', options);
+        '</div>', options);
     };
+
+    var footer = function() { return buttons;};
 
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
       var notRendered = !$('#incomplete-links-link').length;
       if(notRendered) {
-        $('#information-content').append('' +
-          '<div class="form form-horizontal">' +
-          '<a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a>' +
-          '</div>');
+        $('ul[class=information-content]').empty();
+        $('ul[class=information-content]').append('' +
+            '<li><a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a></li>');
       }
     };
 
@@ -327,7 +324,9 @@
             additionalInfoValueTag: defaultUnknownOptionTag.concat(additionalInfoValueTag)}
         };
 
-        rootElement.html(template(options)(linkProperty));
+        rootElement.find('#feature-attributes-header').html(header());
+        rootElement.find('#feature-attributes-form').html(template(options)(linkProperties));
+        rootElement.find('#feature-attributes-footer').html(footer());
 
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
@@ -364,7 +363,10 @@
       });
 
       eventbus.on('linkProperties:unselected', function() {
-        rootElement.empty();
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
+        rootElement.find('li > a[id=feedback-data]').remove();
       });
 
       eventbus.on('application:readOnly', function(readOnly){
