@@ -248,7 +248,7 @@
         roadPartNumber : linkProperty.roadPartNumber || '',
         localizedFunctionalClass : _.find(functionalClasses, function(x) { return x === linkProperty.functionalClass; }) || 'Tuntematon',
         localizedAdministrativeClass : localizedAdministrativeClasses[linkProperty.administrativeClass] || 'Tuntematon',
-        localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || localizedAdditionalInfoIds.NotDelivered,
+        localizedAdditionalInfoIds: getAdditionalInfo(parseInt(linkProperty.additionalInfo)) || '',
         localizedTrafficDirection : localizedTrafficDirections[linkProperty.trafficDirection] || 'Tuntematon',
         localizedLinkTypes : getLocalizedLinkType(linkProperty.linkType) || 'Tuntematon',
         addressNumbersRight : addressNumberString(linkProperty.minAddressNumberRight, linkProperty.maxAddressNumberRight),
@@ -262,7 +262,7 @@
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
         accessRightID: linkProperty.accessRightID || '',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '',
-        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 3 // Ei toimitettu
+        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99 // Ei toimitettu
       });
     };
 

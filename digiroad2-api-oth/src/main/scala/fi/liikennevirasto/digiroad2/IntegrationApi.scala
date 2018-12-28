@@ -174,13 +174,18 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startNode" -> roadLink.attributes.get("STARTNODE"),
         "endNode" -> roadLink.attributes.get("ENDNODE"),
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
-                                                                         .filterNot(_._1 == "ROADNUMBER")
-                                                                         .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                         .filterNot(_._1 == "STARTNODE")
-                                                                         .filterNot(_._1 == "ENDNODE")
-                                                                         .filterNot(_._1 == "CUST_OWNER")
-                                                                         .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+        "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+        "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+        "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+                                                                                              .filterNot(_._1 == "ROADNUMBER")
+                                                                                              .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                                              .filterNot(_._1 == "STARTNODE")
+                                                                                              .filterNot(_._1 == "ENDNODE")
+                                                                                              .filterNot(_._1 == "CUST_OWNER")
+                                                                                              .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+                                                                                              .filterNot(_._1 == "ACCESS_RIGHT_ID")
+                                                                                              .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
+                                                                                              .filterNot(_._1 == "ADDITIONAL_INFO")
 
     }
   }
