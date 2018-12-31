@@ -318,7 +318,6 @@ root.LinearAssetLayer  = function(params) {
 
   var bindEvents = function(eventListener) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
-    var linearAssetsChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
     eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
     eventListener.listenTo(eventbus, singleElementEvents('selected'), linearAssetSelected);
@@ -331,7 +330,7 @@ root.LinearAssetLayer  = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-    eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetsChanged);
+    eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     eventListener.listenTo(eventbus, 'layer:linearAsset', refreshReadOnlyLayer);
   };
