@@ -32,9 +32,6 @@ object LinearAssetPartitioner extends GraphPartitioner {
       clusterLinks(p)
     }).toSeq.flatten
 
-
-    //val clusters = for (linkGroup <- linksToPartition.values.toSeq;
-    //                    cluster <- clusterLinks(linkGroup)) yield cluster
     val linkPartitions = clusters.map(linksFromCluster)
 
     linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ oneWayLinks.map(x => Seq(x))
