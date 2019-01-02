@@ -628,7 +628,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
     val result = service.getByMunicipalityAndGroup(235, TrafficSignTypeGroup.GeneralWarningSigns)
 
-    result.map(_.id) should be (Seq(id, id1))
+    result.map(_.id).forall(resultId => Seq(id, id1).contains(resultId)) should be (true)
     }
   }
 
