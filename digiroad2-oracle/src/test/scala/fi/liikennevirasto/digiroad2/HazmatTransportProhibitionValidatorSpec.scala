@@ -38,7 +38,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
       val roadLink2 = RoadLink(1002l, Seq(Point(0.0, 10.0), Point(10, 10.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val propHazmatProhibitionA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
+      val propHazmatProhibitionA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propHazmatProhibitionA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
@@ -62,7 +62,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
       val roadLink3 = RoadLink(1003l, Seq(Point(0.0, 20.0), Point(0.0, 30.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink4 = RoadLink(1004l, Seq(Point(0.0, 30.0), Point(0.0, 40.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val propHazmatProhibitionA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
+      val propHazmatProhibitionA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propHazmatProhibitionA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
@@ -85,7 +85,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 20.0), Point(0.0, 20.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink4 = RoadLink(1004l, Seq(Point(10.0, 20.0), Point(20.0, 20.0)), 25.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val propHazmatProhibitionA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
+      val propHazmatProhibitionA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.HazmatProhibitionA.value.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propHazmatProhibitionA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))

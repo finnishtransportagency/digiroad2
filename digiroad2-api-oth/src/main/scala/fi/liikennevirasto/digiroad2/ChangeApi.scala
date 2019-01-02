@@ -235,7 +235,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     val point = pointAsset.asInstanceOf[PersistedTrafficSign]
     pointAssetGenericProperties(pointAsset, since) ++
     Map(
-      "typeValue" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.propertyValue.toInt,
+      "typeValue" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
       "sideCode" -> point.validityDirection
     )
   }

@@ -26,6 +26,7 @@ object Queries {
     }
   }
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String, propertyMaxCharacters: Option[Int] = None)
+  case class AdditionalPanelRow(publicId: String, propertyType: String, panelType: Int, panelInfo: String, panelValue: String, formPosition: Int)
   case class DynamicPropertyRow(publicId: String, propertyType: String, required: Boolean = false, propertyValue: Option[Any])
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
@@ -207,6 +208,20 @@ object Queries {
         (select id from enumerated_value where property_id = $propertyId and value = $value)
         where asset_id = $assetId and property_id = $propertyId
     """
+
+  def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanel) = {
+    val id = Sequences.nextPrimaryKeySeqValue
+    sqlu"""
+    INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position)
+    VALUES ($id, $assetId, (select id from property where public_id='additional_panel'), ${value.panelType}, ${value.panelValue}, ${value.panelInfo}, ${value.formPosition})
+    """
+  }
+
+  def deleteAdditionalPanelProperty(assetId: Long) = {
+    sqlu"""
+    DELETE FROM additional_panel where asset_id = $assetId
+    """
+  }
 
   def existsSingleChoiceProperty =
     "select asset_id from single_choice_value where asset_id = ? and property_id = ?"

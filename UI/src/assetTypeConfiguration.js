@@ -863,7 +863,9 @@
         newAsset: { validityDirection: 2, propertyData: [
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
-          {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
+          {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
+          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : ""}}
+
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
         collection: TrafficSignsCollection,
