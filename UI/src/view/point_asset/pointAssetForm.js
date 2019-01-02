@@ -163,7 +163,7 @@ root.PointAssetForm = function() {
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
-  }
+  };
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
