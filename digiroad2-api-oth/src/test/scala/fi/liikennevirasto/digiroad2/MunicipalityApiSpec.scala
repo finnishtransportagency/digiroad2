@@ -40,6 +40,8 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockPedestrianCrossingService = MockitoSugar.mock[PedestrianCrossingService]
   val mockRailwayCrossingService = MockitoSugar.mock[RailwayCrossingService]
   val mockTrafficLightService = MockitoSugar.mock[TrafficLightService]
+  val mockMassTransitLaneService = MockitoSugar.mock[MassTransitLaneService]
+  val mockNumberOfLanesService = MockitoSugar.mock[NumberOfLanesService]
 
   val roadLink = RoadLink(1000L, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
@@ -134,7 +136,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockManoeuvreService.createManoeuvre(any[String], any[NewManoeuvre], any[Seq[RoadLink]])).thenReturn(10)
   when(mockManoeuvreService.find(any[Long])).thenReturn(Some(Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), "")))
 
-  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService)
+  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService)
   addServlet(municipalityApi, "/*")
 
   when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))

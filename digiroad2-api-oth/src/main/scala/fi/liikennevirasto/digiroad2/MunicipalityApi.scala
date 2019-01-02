@@ -27,7 +27,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val obstacleService: ObstacleService,
                       val pedestrianCrossingService: PedestrianCrossingService,
                       val railwayCrossingService: RailwayCrossingService,
-                      val trafficLightService: TrafficLightService
+                      val trafficLightService: TrafficLightService,
+                      val massTransitLaneService: MassTransitLaneService,
+                      val numberOfLanesService: NumberOfLanesService
                      ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
   override def baseAuth: String = "municipality."
@@ -72,9 +74,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
+      case LitRoad.typeId => onOffLinearAssetService
       case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
+      case MassTransitLane.typeId => massTransitLaneService
+      case NumberOfLanes.typeId => numberOfLanesService
       case _ => linearAssetService
     }
   }

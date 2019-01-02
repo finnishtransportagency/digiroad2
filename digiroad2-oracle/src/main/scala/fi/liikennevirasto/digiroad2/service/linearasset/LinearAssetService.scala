@@ -257,14 +257,10 @@ trait LinearAssetOperations {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     publish(eventBus, changeSet, projectedAssets)
     filledTopology
-  }
-
-  def fillTopology(roadLinks: Seq[RoadLink], groupedAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    assetFiller.fillTopology(roadLinks, groupedAssets, typeId, changedSet)
   }
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedAssets: Seq[PersistedLinearAsset]) {
@@ -817,7 +813,6 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
-//  override def NumericalLimitFiller: NumericalLimitFiller = new NumericalLimitFiller
 
 }
 

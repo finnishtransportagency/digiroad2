@@ -568,37 +568,3 @@ class AssetFiller {
       informationSource = asset.informationSource), changeSet)
   }
 }
-
-class OneWayAssetFiller extends AssetFiller {
-  override protected def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
-    def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
-      val sl1 = segments.find(_.id == seg1.assetId).get
-      val sl2 = segments.find(_.id == seg2.assetId).get
-      if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
-        val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
-          s.endMeasure - s.startMeasure).head
-        Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
-      } else {
-        segmentPieces
-      }
-    }
-
-    if(segmentPieces.size < 2)
-      return segmentPieces
-
-    val seg1 = segmentPieces.head
-    val seg2 = segmentPieces.last
-    (seg1.value, seg2.value) match {
-      case (Some(v1), Some(v2)) =>
-        if (v1.equals(v2)) {
-          chooseSegment(seg1, seg2)
-        } else
-          segmentPieces
-      case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
-      case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
-      case (None, None) =>
-        chooseSegment(seg1, seg2)
-      case _ => segmentPieces
-    }
-  }
-}

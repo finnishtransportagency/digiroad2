@@ -22,7 +22,6 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
-//  override def NumericalLimitFiller: NumericalLimitFiller = new NumericalLimitFiller
 
   val roadName_FI = "osoite_suomeksi"
   val roadName_SE = "osoite_ruotsiksi"

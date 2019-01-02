@@ -61,7 +61,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }
 
       val groupedAssets = (existingAssets.filterNot(a => changedSet.expiredAssetIds.contains(a.id) || newAssets.exists(_.linkId == a.linkId)) ++ newAssets).groupBy(_.linkId)
-      val (filledTopology, changeSet) = fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+      val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
       eventBus.publish("roadWidth:update", changeSet)
       eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets.filter(_.id == 0L))

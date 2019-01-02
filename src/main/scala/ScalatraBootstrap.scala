@@ -45,7 +45,9 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.obstacleService,
       Digiroad2Context.pedestrianCrossingService,
       Digiroad2Context.railwayCrossingService,
-      Digiroad2Context.trafficLightService
+      Digiroad2Context.trafficLightService,
+      Digiroad2Context.massTransitLaneService,
+      Digiroad2Context.numberOfLanesService
     ), "/api/municipality/*")
     context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService ), "/api/livi/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
