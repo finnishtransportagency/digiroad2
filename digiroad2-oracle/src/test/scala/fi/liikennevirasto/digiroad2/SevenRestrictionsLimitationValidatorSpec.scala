@@ -75,16 +75,21 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val bogieWeightLimitValidator = new TestBogieWeightLimitValidator
   val lengthLimitValidator = new TestLengthLimitValidator
 
-  val sevenRestrictionsAssets = Seq(
-    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator, TrafficSignType.FreeWidth, "200"),
-    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator,  TrafficSignType.NoWidthExceeding, "100"),
-    SevenRestrictionsValidation(HeightLimit.typeId, heightLimitValidator, TrafficSignType.MaxHeightExceeding, "100"),
+  val weightLimitAssets = Seq(
     SevenRestrictionsValidation(TotalWeightLimit.typeId, totalWeightLimitValidator, TrafficSignType.MaxLadenExceeding, "100"),
     SevenRestrictionsValidation(TrailerTruckWeightLimit.typeId, trailerTruckWeightLimitValidator,TrafficSignType.MaxMassCombineVehiclesExceeding, "100"),
     SevenRestrictionsValidation(AxleWeightLimit.typeId, axleWeightLimitValidator, TrafficSignType.MaxTonsOneAxleExceeding, "100"),
-    SevenRestrictionsValidation(BogieWeightLimit.typeId, bogieWeightLimitValidator, TrafficSignType.MaxTonsOnBogieExceeding, "100"),
+    SevenRestrictionsValidation(BogieWeightLimit.typeId, bogieWeightLimitValidator, TrafficSignType.MaxTonsOnBogieExceeding, "100")
+  )
+
+  val otherLimitAssets = Seq(
+    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator, TrafficSignType.FreeWidth, "200"),
+    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator,  TrafficSignType.NoWidthExceeding, "100"),
+    SevenRestrictionsValidation(HeightLimit.typeId, heightLimitValidator, TrafficSignType.MaxHeightExceeding, "100"),
     SevenRestrictionsValidation(LengthLimit.typeId, lengthLimitValidator, TrafficSignType.MaximumLength, "100")
   )
+
+  val sevenRestrictionsAssets = weightLimitAssets ++ otherLimitAssets
 
   val roadLink1 = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(10, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
   val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 0.0), Point(20, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -181,6 +186,34 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
+  def massLimitationWithMatchedAssetAfter500meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
+    OracleDatabase.withDynTransaction {
+      val propTrafficSign = Seq(
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+
+      val trafficSign = PersistedTrafficSign(1, 1002l, 120, 0, 120, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
+
+      val roadLink1 = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(100, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink2 = RoadLink(1002l, Seq(Point(100.0, 0.0), Point(200, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink3 = RoadLink(1003l, Seq(Point(200.0, 0.0), Point(500.0, 0.0)), 30.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val roadLink4 = RoadLink(1004l, Seq(Point(500.0, 0.0), Point(700.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
+      when(sevenRestrictionsAsset.service.dao.fetchLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l, 1004l), LinearAssetTypes.numericValuePropertyId, false))
+        .thenReturn(Seq(PersistedLinearAsset(1, 1004l, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 121, 200, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+
+      val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
+      withClue("assetName " + AssetTypeInfo.apply(sevenRestrictionsAsset.typeId).toString) {
+        result should have size 1
+        result.head.linkId should be (Some(roadLink2.linkId))
+      }
+
+      dynamicSession.rollback()
+    }
+  }
+
   test("sevenRestiction traffic sign without match asset") {
     sevenRestrictionsAssets.foreach { sevenRestrictionsAsset =>
       massLimitationWithoutMatchedAsset(sevenRestrictionsAsset)
@@ -199,9 +232,15 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("sevenRestiction traffic sign without a match asset only after 50m") {
-    sevenRestrictionsAssets.foreach { sevenRestrictionsAsset =>
-      massLimitationWithMatchedAssetAfter50meter(sevenRestrictionsAsset)
+  test("weightLimitAssets traffic sign without a match asset before 500m") {
+    weightLimitAssets.foreach { weightLimitLimitAsset =>
+      massLimitationWithMatchedAssetAfter500meter(weightLimitLimitAsset)
+    }
+  }
+
+  test("WidthLimit, heightLimit and lengthLimit traffic sign without a match asset before 50m") {
+    otherLimitAssets.foreach { otherLimitAsset =>
+      massLimitationWithMatchedAssetAfter50meter(otherLimitAsset)
     }
   }
 }

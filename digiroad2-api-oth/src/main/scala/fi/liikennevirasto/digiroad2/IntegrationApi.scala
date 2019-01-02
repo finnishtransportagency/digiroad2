@@ -174,13 +174,18 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startNode" -> roadLink.attributes.get("STARTNODE"),
         "endNode" -> roadLink.attributes.get("ENDNODE"),
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
-                                                                         .filterNot(_._1 == "ROADNUMBER")
-                                                                         .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                         .filterNot(_._1 == "STARTNODE")
-                                                                         .filterNot(_._1 == "ENDNODE")
-                                                                         .filterNot(_._1 == "CUST_OWNER")
-                                                                         .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+        "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+        "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+        "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+                                                                                              .filterNot(_._1 == "ROADNUMBER")
+                                                                                              .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                                              .filterNot(_._1 == "STARTNODE")
+                                                                                              .filterNot(_._1 == "ENDNODE")
+                                                                                              .filterNot(_._1 == "CUST_OWNER")
+                                                                                              .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+                                                                                              .filterNot(_._1 == "ACCESS_RIGHT_ID")
+                                                                                              .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
+                                                                                              .filterNot(_._1 == "ADDITIONAL_INFO")
 
     }
   }
@@ -242,7 +247,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case Prohibition.typeId => prohibitionService
         case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
         case HeightLimitInfo.typeId => linearHeightLimitService
         case   LengthLimit.typeId => linearLengthLimitService
         case WidthLimitInfo.typeId => linearWidthLimitService
@@ -690,6 +695,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
         case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
+        case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

@@ -34,11 +34,11 @@
     this.labeling = function () {
       return _(assetConfig.legendValues).map(function (val) {
         return '<div class="legend-entry">' +
-               '  <div class="label">' +
-               '    <span>' + val.label + '</span> ' +
-               '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
-               '  </div>' +
-               '</div>';
+          '  <div class="' + (val.cssClass ? val.cssClass : 'label') + '">' +
+          '    <span>' + val.label + '</span> ' +
+          '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
+          '  </div>' +
+          '</div>';
       }).join('');
     };
 

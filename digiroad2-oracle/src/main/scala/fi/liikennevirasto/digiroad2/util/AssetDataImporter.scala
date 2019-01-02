@@ -816,6 +816,23 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     }
   }
 
+  def getTierekisteriStops(): Seq[(Long, Int, String, Int)] = {
+    withDynSession {
+      sql"""
+           select id, floating, liviId, reason
+                    from (
+                     select  a.id, a.floating, min(tv.value_fi) liviId , min(np.value) reason
+                         from asset a
+                         inner join property p on a.asset_type_id = p.asset_type_id and public_id in ('kellumisen_syy',  'yllapitajan_koodi')
+                         left join text_property_value tv on tv.property_id = p.id and tv.asset_id = a.id
+                         left join number_property_value np on np.property_id = p.id and np.asset_id = a.id
+                         where a.asset_type_id = 10
+                 group by  a.id, a.floating)
+                 where liviId is not NULL
+      """.as[(Long, Int, String, Int)].list
+    }
+  }
+
   def getFloatingAssetsWithNumberPropertyValue(assetTypeId: Long, publicId: String, municipality: Int) : Seq[(Long, Long, Point, Double, Option[Int])] = {
     implicit val getPoint = GetResult(r => bytesToPoint(r.nextBytes))
     sql"""

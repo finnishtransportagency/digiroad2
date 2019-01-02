@@ -237,7 +237,7 @@
         new ol.style.Style({
           text: new ol.style.Text(({
             text: ''+nationalId,
-            textAlign: 'start',
+            textAlign: 'left',
             offsetX: scale(beginOffset),
             offsetY: scale(-(offsetY + groupOffset)),
             fill: new ol.style.Fill({ color: '#fff'}),
@@ -247,7 +247,7 @@
         new ol.style.Style({
           text: new ol.style.Text(({
             text: ''+name,
-            textAlign: 'start',
+            textAlign: 'left',
             offsetX: scale(beginOffset + NATIONAL_ID_WIDTH),
             offsetY: scale(-(offsetY + groupOffset)),
             fill: new ol.style.Fill({ color: '#a4a4a2'}),
@@ -259,7 +259,7 @@
             text: ''+direction,
             offsetX: scale(beginOffset + NATIONAL_ID_WIDTH + getOffset(name)),
             offsetY: scale(-(offsetY + groupOffset)),
-            textAlign: 'start',
+            textAlign: 'left',
             fill: new ol.style.Fill({ color: '#fff'}),
             scale: styleScale
           }))

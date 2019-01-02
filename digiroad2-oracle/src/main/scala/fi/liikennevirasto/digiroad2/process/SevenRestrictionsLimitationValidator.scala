@@ -13,8 +13,8 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
 
   override type AssetType = PersistedLinearAsset
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
-  override def assetTypeInfo: AssetTypeInfo =  HazmatTransportProhibition
-  override val radiusDistance: Int = 50
+  override def assetTypeInfo: AssetTypeInfo
+  override val radiusDistance: Int
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {true}

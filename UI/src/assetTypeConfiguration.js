@@ -417,7 +417,8 @@
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        label: new WinterSpeedLimitLabel()
       },
       {
         typeId: assetType.prohibition,
@@ -548,7 +549,7 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: true,
+        isVerifiable: false,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
@@ -820,10 +821,10 @@
           {symbolUrl: 'images/service_points/taxiStation.png', label: 'Taksiasema'},
           {symbolUrl: 'images/service_points/picnicSite.png', label: 'Lepoalue'},
           {symbolUrl: 'images/service_points/customsControl.png', label: 'Tulli'},
-          {symbolUrl: 'images/service_points/linearLabel_largeText_blue.png', label: 'Rajanylityspaikka'},
-          {symbolUrl: 'images/service_points/linearLabel_largeText_yellow_red.png', label: 'Autojen lastausterminaali'},
-          {symbolUrl: 'images/service_points/linearLabel_largeText_yellow_red.png', label: 'Linja- ja kuorma-autojen pysäköintialue'},
-          {symbolUrl: 'images/service_points/linearLabel_largeText_blue.png', label: 'Sähköautojen latauspiste'}
+          {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka'},
+          {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'label loading-terminal'},
+          {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'label parking-area'},
+          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste'}
 
         ],
         formLabels: {

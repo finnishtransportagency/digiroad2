@@ -141,6 +141,9 @@
     var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
     var setLinkType = _.partial(setLinkProperty, 'linkType');
     var setAdministrativeClass = _.partial(setLinkProperty, 'administrativeClass');
+    var setAccessRightId =  _.partial(setLinkProperty, 'accessRightID');
+    var setPrivateRoadAssociation =  _.partial(setLinkProperty, 'privateRoadAssociation');
+    var setAdditionalInfo =  _.partial(setLinkProperty, 'additionalInfo');
 
     var get = function() {
       return _.map(current, function(roadLink) {
@@ -163,6 +166,9 @@
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
       setAdministrativeClass: setAdministrativeClass,
+      setAccessRightId : setAccessRightId,
+      setPrivateRoadAssociation: setPrivateRoadAssociation,
+      setAdditionalInfo: setAdditionalInfo,
       get: get,
       count: count,
       openMultiple: openMultiple

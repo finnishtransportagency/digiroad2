@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
+import org.joda.time.DateTime
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
 case class IncomingObstacleAsset(linkId: Long, mValue: Long, obstacleType: Int)  extends IncomePointAsset
@@ -20,6 +21,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   override def typeId: Int = 220
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpired(queryFilter)
 
   override def setFloating(persistedAsset: Obstacle, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
@@ -82,7 +84,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource)
 
   }
 

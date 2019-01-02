@@ -19,6 +19,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.collection.immutable.Stream.Empty
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 
@@ -985,4 +986,99 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       mostLeft.linkId should be(445518)
     }
   }
+
+  test("Added privateRoadAssociation, additionalInfo and accessRightId fields if private road") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
+      roadLink.map(_.administrativeClass) should be(Some(Private))
+      roadLink.map(_.attributes(service.privateRoadAssociationPublicId) should be("Private Road Name Text Dummy"))
+      roadLink.map(_.attributes(service.additionalInfoPublicId) should be(AdditionalInformation.DeliveredWithRestrictions.value))
+      roadLink.map(_.attributes(service.accessRightIDPublicId) should be("999999"))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Added privateRoadAssociation, additionalInfo and accessRightId fields if road different from private") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Municipality, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
+      roadLink.map(_.administrativeClass) should be(Some(Municipality))
+      roadLink.map(_.attributes.contains(service.privateRoadAssociationPublicId) should be(false))
+      roadLink.map(_.attributes.contains(service.additionalInfoPublicId) should be(false))
+      roadLink.map(_.attributes.contains(service.accessRightIDPublicId) should be(false))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Update privateRoadAssociation, additionalInfo and accessRightId fields if private road") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
+      roadLink.map(_.administrativeClass) should be(Some(Private))
+      roadLink.map(_.attributes(service.privateRoadAssociationPublicId) should be("Private Road Name Text Dummy"))
+      roadLink.map(_.attributes(service.additionalInfoPublicId) should be(AdditionalInformation.DeliveredWithRestrictions.value))
+      roadLink.map(_.attributes(service.accessRightIDPublicId) should be("999999"))
+
+      val linkPropertyUpdated = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy99"), Some(AdditionalInformation.DeliveredWithoutRestrictions), Some("11111"))
+      val roadLinkUpdated = service.updateLinkProperties(linkPropertyUpdated, Option("testuser"), { (_, _) => })
+      roadLinkUpdated.map(_.administrativeClass) should be(Some(Private))
+      roadLinkUpdated.map(_.attributes(service.privateRoadAssociationPublicId) should be("Private Road Name Text Dummy99"))
+      roadLinkUpdated.map(_.attributes(service.additionalInfoPublicId) should be(AdditionalInformation.DeliveredWithoutRestrictions.value))
+      roadLinkUpdated.map(_.attributes(service.accessRightIDPublicId) should be("11111"))
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Expire privateRoadAssociation, additionalInfo and accessRightId fields if switch private road to another type") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
+        .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+      val service = new TestService(mockVVHClient)
+      val linkProperty = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
+      val roadLink = service.updateLinkProperties(linkProperty, Option("testuser"), { (_, _) => })
+      roadLink.map(_.administrativeClass) should be(Some(Private))
+      roadLink.map(_.attributes(service.privateRoadAssociationPublicId) should be("Private Road Name Text Dummy"))
+      roadLink.map(_.attributes(service.additionalInfoPublicId) should be(AdditionalInformation.DeliveredWithRestrictions.value))
+      roadLink.map(_.attributes(service.accessRightIDPublicId) should be("999999"))
+
+      val linkPropertyUpdated = LinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Municipality, Some("Private Road Name Text Dummy"), Some(AdditionalInformation.DeliveredWithRestrictions), Some("999999"))
+      val roadLinkUpdated = service.updateLinkProperties(linkPropertyUpdated, Option("testuser"), { (_, _) => })
+
+      val roadLinkAttributes =
+        sql"""
+              Select name, value From road_link_attributes where link_id = 1 and (valid_to is null or valid_to > sysdate)
+        """.as[(String, String)].list
+
+      roadLinkAttributes should be (Empty)
+      dynamicSession.rollback()
+    }
+  }
+
+
 }

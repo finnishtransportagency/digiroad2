@@ -88,7 +88,14 @@ class ManoeuvreValidator extends AssetServiceValidatorOperations {
 
     val angles = manoeuvre.elements.filterNot(_.elementType == ElementTypes.LastElement).map {
       manoeuvreElement =>
-        getAngle(roadLinks.filter(_.linkId == manoeuvreElement.sourceLinkId).head, roadLinks.filter(_.linkId == manoeuvreElement.destLinkId).head)
+        val sourceRoadLink = roadLinks.filter(_.linkId == manoeuvreElement.sourceLinkId)
+        val destRoadLink = roadLinks.filter(_.linkId == manoeuvreElement.destLinkId)
+
+        if (sourceRoadLink.nonEmpty && destRoadLink.nonEmpty){
+          getAngle(sourceRoadLink.head, destRoadLink.head)
+        } else {
+          return ManoeuvreTurnRestrictionType.Unknown
+        }
     }
 
     val angleStandardization =  angles.map { angle => if(Math.abs(angle) - epsilon <= 0) 0 else angle }

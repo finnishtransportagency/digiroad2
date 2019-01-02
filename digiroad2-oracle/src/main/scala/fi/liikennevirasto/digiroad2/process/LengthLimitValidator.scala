@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
 class LengthLimitValidator extends SevenRestrictionsLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo =  LengthLimit
   override val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.MaximumLength)
+  override val radiusDistance: Int = 50
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
     TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
