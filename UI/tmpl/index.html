@@ -5,6 +5,7 @@
   <link rel="stylesheet" type="text/css" href="node_modules/pikaday/css/pikaday.css">
   <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
   <link rel="stylesheet" type="text/css" href="components/ol-dist/ol.css">
+  <script type="text/javascript" src="components/ol-dist/ol.js"></script>
 
     <!-- Google Analytics loaded asynchronously -->
   <script>
@@ -76,7 +77,6 @@
 <script type="text/javascript" src="node_modules/pikaday/pikaday.js"></script>
 <script type="text/javascript" src="node_modules/proj4/dist/proj4.js"></script>
 <!-- @if NODE_ENV == 'DEVELOPMENT' -->
-<script type="text/javascript" src="components/ol-dist/ol.js"></script>
 <script type="text/javascript" src="src/utils/eventbus.js"></script>
 <script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="src/utils/locationInputParser.js"></script>
@@ -249,8 +249,8 @@
 <script type="text/javascript" src="src/controller/assetsVerificationCollection.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'STAGING' -->
-<script type="text/javascript" src="components/ol3.js"></script>
 <script type="text/javascript" src="js/digiroad2.min.js"></script>
+<script type="text/javascript" src="components/ol-dist/ol.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'PRODUCTION' -->
 <script type="text/javascript" src="components/ol3.js"></script>
