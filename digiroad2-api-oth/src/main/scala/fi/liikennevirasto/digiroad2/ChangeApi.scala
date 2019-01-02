@@ -3,8 +3,6 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
-import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
@@ -12,13 +10,14 @@ import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
 import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignTypeGroup
 
 
-class ChangeApi extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
+  protected val applicationDescription = "Change API "
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   before() {
@@ -26,7 +25,22 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
   }
 
-  get("/:assetType") {
+  //Description of Api entry point to get assets changes by asset type and between two dates
+  val getChangesOfAssetsByType =
+    (apiOperation[Long]("getChangesOfAssetsByType")
+      .parameters(
+        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
+        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
+        pathParam[String]("assetType").description("Asset type name to get the changes")
+      )
+      tags "Change API"
+      summary "List all changes per assets type between two specific dates."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: api/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
+      )
+
+  get("/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))

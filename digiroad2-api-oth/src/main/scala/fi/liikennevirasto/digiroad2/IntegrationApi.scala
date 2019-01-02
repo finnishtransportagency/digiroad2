@@ -15,11 +15,13 @@ import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTran
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
-class IntegrationApi(val massTransitStopService: MassTransitStopService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class IntegrationApi(val massTransitStopService: MassTransitStopService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
   val logger = LoggerFactory.getLogger(getClass)
+  protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
@@ -605,7 +607,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  get("/changes/:assetType") {
+  //Description of Api entry point to get assets changes by asset type and between two dates
+  val getChangesOfAssetsByType =
+    (apiOperation[Long]("getChangesOfAssetsByType")
+      .parameters(
+        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
+        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.").optional,
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by vvh_generated and not modified yet on the response. The value is True by default.").optional,
+        pathParam[String]("assetType").description("Asset type name to get the changes")
+      )
+      tags "Integration API (Kalpa API)"
+      summary "List all changes per assets type between two specific dates."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: api/integration/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
+      )
+
+  get("/changes/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
      val until = params.get("until") match {
@@ -639,7 +656,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  get("/:assetType") {
+  //Description of Api entry point to get all assets by asset type and municipality
+  val getAssetsByTypeMunicipality =
+    (apiOperation[Long]("getAssetsByTypeMunicipality")
+      .parameters(
+        queryParam[Int]("municipality").description("Municipality Code where we will execute the search by specific asset type"),
+        pathParam[String]("assetType").description("Asset type name to get all assets")
+      )
+      tags "Integration API (Kalpa API)"
+      summary "List all valid assets on a specific municipality."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /api/integration/animal_warnings?municipality=749"
+      )
+
+  get("/:assetType", operation(getAssetsByTypeMunicipality)) {
     contentType = formats("json")+ "; charset=utf-8"
     params.get("municipality").map { municipality =>
       val municipalityNumber = municipality.toInt

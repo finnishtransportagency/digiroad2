@@ -91,6 +91,14 @@ module.exports = function(grunt) {
                     xforward: false
                 },
                 {
+                    context: '/api-docs',
+                    host: '127.0.0.1',
+                    port: '8080',
+                    https: false,
+                    changeOrigin: true,
+                    xforward: false
+                },
+                {
                     context: '/maasto',
                     host: 'oag.liikennevirasto.fi',
                     https: false,

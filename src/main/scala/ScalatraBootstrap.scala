@@ -8,6 +8,8 @@ import javax.servlet.ServletContext
 
 class
 ScalatraBootstrap extends LifeCycle {
+  implicit val swagger = new OthSwagger
+
   override def init(context: ServletContext) {
     context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
       Digiroad2Context.roadAddressesService,
@@ -30,8 +32,8 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new MassTransitStopImportApi, "/api/import/*")
     context.mount(new ImportDataApi, "/api/import/data/*")
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
-    context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService), "/api/integration/*")
-    context.mount(new ChangeApi(), "/api/changes/*")
+    context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), "/api/integration/*")
+    context.mount(new ChangeApi(swagger), "/api/changes/*")
     context.mount(new MunicipalityApi(Digiroad2Context.onOffLinearAssetService,
       Digiroad2Context.roadLinkService,
       Digiroad2Context.linearAssetService,
@@ -43,12 +45,14 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.obstacleService,
       Digiroad2Context.pedestrianCrossingService,
       Digiroad2Context.railwayCrossingService,
-      Digiroad2Context.trafficLightService
+      Digiroad2Context.trafficLightService,
+      swagger
     ), "/api/municipality/*")
-    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService ), "/api/livi/*")
+    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService, swagger), "/api/livi/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       // Mount for manual testing purposes but do not use them
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
     }
+    context.mount(new ResourcesApp, "/api-docs")
   }
 }
