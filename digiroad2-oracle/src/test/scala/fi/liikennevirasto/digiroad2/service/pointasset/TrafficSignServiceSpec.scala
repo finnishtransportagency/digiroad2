@@ -22,6 +22,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import org.joda.time.DateTime
 
 
 class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -458,21 +459,21 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Get Traffic Signs changes by type group") {
     runWithRollback {
       val properties = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("83"))),
-        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
-        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("83"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
       val properties1 = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("84"))),
-        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
-        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign MovingBridge type, part of Warning Signs"))))
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("84"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign MovingBridge type, part of Warning Signs"))))
       val properties2 = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("85"))),
-        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
-        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign ConstructionWork type, part of Warning Signs"))))
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("85"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign ConstructionWork type, part of Warning Signs"))))
       val properties3 = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("24"))),
-        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
-        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign Pedestrians type, part of Prohibitions And Restrictions Signs"))))
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("24"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign Pedestrians type, part of Prohibitions And Restrictions Signs"))))
 
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075l), false)).thenReturn(
@@ -499,9 +500,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Get only one Traffic Sign change"){
     runWithRollback{
       val properties = Set(
-        SimpleProperty("trafficSigns_type", List(PropertyValue("83"))),
-        SimpleProperty("trafficSigns_value", List(PropertyValue(""))),
-        SimpleProperty("trafficSigns_info", List(PropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("83"))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
 
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 

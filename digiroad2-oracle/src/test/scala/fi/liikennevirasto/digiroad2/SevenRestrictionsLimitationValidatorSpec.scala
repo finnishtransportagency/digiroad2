@@ -189,9 +189,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAssetAfter500meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
-        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
-        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
+        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 120, 0, 120, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
