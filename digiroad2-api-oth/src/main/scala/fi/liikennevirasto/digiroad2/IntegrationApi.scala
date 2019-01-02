@@ -3,13 +3,15 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType
+import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, LinearAssetTypes, Manoeuvre}
-import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
+import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
@@ -174,13 +176,18 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "startNode" -> roadLink.attributes.get("STARTNODE"),
         "endNode" -> roadLink.attributes.get("ENDNODE"),
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
-                                                                         .filterNot(_._1 == "ROADNUMBER")
-                                                                         .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                         .filterNot(_._1 == "STARTNODE")
-                                                                         .filterNot(_._1 == "ENDNODE")
-                                                                         .filterNot(_._1 == "CUST_OWNER")
-                                                                         .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+        "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+        "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+        "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+                                                                                              .filterNot(_._1 == "ROADNUMBER")
+                                                                                              .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                                              .filterNot(_._1 == "STARTNODE")
+                                                                                              .filterNot(_._1 == "ENDNODE")
+                                                                                              .filterNot(_._1 == "CUST_OWNER")
+                                                                                              .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+                                                                                              .filterNot(_._1 == "ACCESS_RIGHT_ID")
+                                                                                              .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
+                                                                                              .filterNot(_._1 == "ADDITIONAL_INFO")
 
     }
   }
@@ -239,9 +246,17 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case MaintenanceRoadAsset.typeId => maintenanceRoadService
         case PavedRoad.typeId => pavedRoadService
         case RoadWidth.typeId => roadWidthService
-        case HazmatTransportProhibition.typeId | Prohibition.typeId => prohibitionService
+        case Prohibition.typeId => prohibitionService
+        case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case CareClass.typeId | DamagedByThaw.typeId  => dynamicLinearAssetService
+        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
+        case HeightLimitInfo.typeId => linearHeightLimitService
+        case   LengthLimit.typeId => linearLengthLimitService
+        case WidthLimitInfo.typeId => linearWidthLimitService
+        case TotalWeightLimit.typeId => linearTotalWeightLimitService
+        case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
+        case AxleWeightLimit.typeId => linearAxleWeightLimitService
+        case BogieWeightLimit.typeId => linearBogieWeightLimitService
         case _ => linearAssetService
       }
     }
@@ -564,6 +579,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "linkSource" -> widthLimit.linkSource.value)
     }
   }
+  def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
+    trafficSigns.filterNot(_.floating).map{ trafficSign =>
+     Map("id" -> trafficSign.id,
+          "point" -> Point(trafficSign.lon, trafficSign.lat),
+          geometryWKTForPoints(trafficSign.lon, trafficSign.lat),
+          "linkId" -> trafficSign.linkId,
+          "m_value" -> trafficSign.mValue,
+          latestModificationTime(trafficSign.createdAt, trafficSign.modifiedAt),
+          lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
+          "linkSource" -> trafficSign.linkSource.value,
+          "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue).getOrElse(""),
+          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)),
+          "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
+          "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue).getOrElse("")
+      )
+    }
+  }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
     if (expired) {
@@ -610,6 +642,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
      }
   }
 
+  def getTrafficSignGroup(groupName: String):TrafficSignTypeGroup = {
+    groupName match {
+      case "speed_limits" => TrafficSignTypeGroup.SpeedLimits
+      case "pedestrian_crossings" => TrafficSignTypeGroup.RegulatorySigns
+      case "maximum_restrictions" => TrafficSignTypeGroup.MaximumRestrictions
+      case "warnings" => TrafficSignTypeGroup.GeneralWarningSigns
+      case "prohibitory_signs" => TrafficSignTypeGroup.ProhibitionsAndRestrictions
+      case "mandatory_signs" => TrafficSignTypeGroup.MandatorySigns
+      case "regulatory_signs" => TrafficSignTypeGroup.RegulatorySigns
+      case "additional_panels" => TrafficSignTypeGroup.AdditionalPanels
+      case _ => TrafficSignTypeGroup.Unknown
+    }
+  }
+
   //Description of Api entry point to get all assets by asset type and municipality
   val getAssetsByTypeMunicipality =
     (apiOperation[Long]("getAssetsByTypeMunicipality")
@@ -631,30 +677,30 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
         case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
-        case "total_weight_limits" => linearAssetsToApi(30, municipalityNumber)
-        case "trailer_truck_weight_limits" => linearAssetsToApi(40, municipalityNumber)
-        case "axle_weight_limits" => linearAssetsToApi(50, municipalityNumber)
-        case "bogie_weight_limits" => linearAssetsToApi(60, municipalityNumber)
-        case "height_limits" => linearAssetsToApi(70, municipalityNumber)
-        case "length_limits" => linearAssetsToApi(80, municipalityNumber)
-        case "width_limits" => linearAssetsToApi(90, municipalityNumber)
+        case "total_weight_limits" => linearAssetsToApi(TotalWeightLimit.typeId, municipalityNumber)
+        case "trailer_truck_weight_limits" => linearAssetsToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
+        case "axle_weight_limits" => linearAssetsToApi(AxleWeightLimit.typeId, municipalityNumber)
+        case "bogie_weight_limits" => linearAssetsToApi(BogieWeightLimit.typeId, municipalityNumber)
+        case "height_limits" => linearAssetsToApi(HeightLimitInfo.typeId, municipalityNumber)
+        case "length_limits" => linearAssetsToApi(LengthLimit.typeId, municipalityNumber)
+        case "width_limits" => linearAssetsToApi(WidthLimitInfo.typeId, municipalityNumber)
         case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
         case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
         case "directional_traffic_signs" => directionalTrafficSignsToApi(directionalTrafficSignService.getByMunicipality(municipalityNumber))
         case "railway_crossings" => railwayCrossingsToApi(railwayCrossingService.getByMunicipality(municipalityNumber))
-        case "vehicle_prohibitions" => linearAssetsToApi(190, municipalityNumber)
-        case "hazardous_material_transport_prohibitions" => linearAssetsToApi(210, municipalityNumber)
-        case "number_of_lanes" => linearAssetsToApi(140, municipalityNumber)
+        case "vehicle_prohibitions" => linearAssetsToApi(Prohibition.typeId, municipalityNumber)
+        case "hazardous_material_transport_prohibitions" => linearAssetsToApi(HazmatTransportProhibition.typeId, municipalityNumber)
+        case "number_of_lanes" => linearAssetsToApi(NumberOfLanes.typeId, municipalityNumber)
         case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
-        case "roads_affected_by_thawing" => linearAssetsToApi(130, municipalityNumber)
+        case "roads_affected_by_thawing" => linearAssetsToApi(DamagedByThaw.typeId, municipalityNumber)
         case "widths" => linearAssetsToApiWithInformationSource(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApiWithInformationSource(pavedRoadService.getByMunicipality(PavedRoad.typeId, municipalityNumber))
-        case "lit_roads" => linearAssetsToApi(100, municipalityNumber)
-        case "speed_limits_during_winter" => linearAssetsToApi(180, municipalityNumber)
-        case "traffic_volumes" => linearAssetsToApi(170, municipalityNumber)
-        case "european_roads" => linearAssetsToApi(260, municipalityNumber)
-        case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
+        case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
+        case "speed_limits_during_winter" => linearAssetsToApi(WinterSpeedLimit.typeId, municipalityNumber)
+        case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
+        case "european_roads" => linearAssetsToApi(EuropeanRoads.typeId, municipalityNumber)
+        case "exit_numbers" => linearAssetsToApi(ExitNumbers.typeId, municipalityNumber)
         case "road_link_properties" => roadLinkPropertiesToApi(roadAddressesService.roadLinkWithRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
@@ -667,10 +713,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "tr_width_limits" => trWidthLimitsToApi(widthLimitService.getByMunicipality(municipalityNumber))
         case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
+        case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
+        case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
       BadRequest("Missing mandatory 'municipality' parameter")
+    }
+  }
+
+  get("/traffic_signs/:group_name"){
+    contentType = formats("json")
+    params.get("municipality").map { municipality =>
+      val groupName = getTrafficSignGroup(params("group_name"))
+      groupName match {
+        case TrafficSignTypeGroup.Unknown => BadRequest("Invalid group type")
+        case _ => trafficSignsToApi(trafficSignService.getByMunicipalityAndGroup(municipality.toInt, groupName))
+      }
     }
   }
 }

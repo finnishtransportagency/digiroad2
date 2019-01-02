@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
+  root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection, trafficSignReadOnlyLayer) {
     var me = this;
     var layerName = 'manoeuvre';
     var indicatorVector = new ol.source.Vector({});
@@ -12,6 +12,7 @@
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     var mode = "view";
     var authorizationPolicy = new ManoeuvreAuthorizationPolicy();
+    var isActiveTrafficSigns = false;
 
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     Layer.call(this, layerName, roadLayer);
@@ -30,6 +31,7 @@
     };
 
     var hideLayer = function() {
+      hideReadOnlyLayer();
       unselectManoeuvre();
       me.stop();
       me.hide();
@@ -57,6 +59,8 @@
       eventListener.listenTo(eventbus, 'manoeuvre:linkDropped', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'adjacents:updated', drawExtension);
       eventListener.listenTo(eventbus, 'manoeuvre:removeMarkers', manoeuvreRemoveMarkers);
+      eventListener.listenTo(eventbus, layerName + '-readOnlyTrafficSigns:hide', hideReadOnlyTrafficSigns);
+      eventListener.listenTo(eventbus, layerName + '-readOnlyTrafficSigns:show', showReadOnlyTrafficSigns);
     };
 
     /**
@@ -65,6 +69,8 @@
      */
     this.refreshView = function() {
       manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), draw, map.getView().getCenter());
+      if(isActiveTrafficSigns)
+        trafficSignReadOnlyLayer.refreshView();
     };
 
     /**
@@ -98,6 +104,7 @@
       if (event.selected.length > 0 && enableSelect(event)) {
         selectManoeuvreFeatures(event.selected[0]);
         selectedManoeuvreSource.open(event.selected[0].getProperties().linkId);
+        unHighLightReadOnlyLayer();
        }
     };
 
@@ -132,6 +139,7 @@
       selectedManoeuvreSource.close();
       indicatorLayer.getSource().clear();
       selectedManoeuvreSource.setTargetRoadLink(null);
+      highLightReadOnlyLayer();
     };
 
     var selectControl = new SelectToolControl(application, roadLayer.layer, map, false, {
@@ -511,6 +519,27 @@
       console.log("Draw Extension");
       console.log(manoeuvre);
       handleManoeuvreExtensionBuilding(manoeuvre);
+    };
+
+    var unHighLightReadOnlyLayer = function(){
+      trafficSignReadOnlyLayer.unHighLightLayer();
+    };
+
+    var highLightReadOnlyLayer = function(){
+      trafficSignReadOnlyLayer.highLightLayer();
+    };
+
+    var hideReadOnlyLayer = function(){
+      trafficSignReadOnlyLayer.hide();
+      trafficSignReadOnlyLayer.removeLayerFeatures();
+    };
+
+    var showReadOnlyTrafficSigns = function() {
+      isActiveTrafficSigns = true;
+    };
+
+    var hideReadOnlyTrafficSigns = function() {
+      isActiveTrafficSigns = false;
     };
 
     return {

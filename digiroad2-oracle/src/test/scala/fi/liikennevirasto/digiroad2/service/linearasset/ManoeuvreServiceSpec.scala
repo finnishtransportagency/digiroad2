@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
@@ -28,6 +29,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
+  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn(Seq(vvhRoadLink(1611419, 235), vvhRoadLink(1611412, 235), vvhRoadLink(1611410, 235)))
@@ -36,7 +38,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean]))
     .thenReturn(Seq(vvhRoadLink(1611420, 235), vvhRoadLink(1611411, 235)))
 
-  val manoeuvreService = new ManoeuvreService(mockRoadLinkService) {
+  val manoeuvreService = new ManoeuvreService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
   }
 

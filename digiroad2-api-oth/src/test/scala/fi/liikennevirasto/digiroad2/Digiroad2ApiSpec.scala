@@ -153,6 +153,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
   val testLinearAssetService = new LinearAssetService(mockRoadLinkService, new DummyEventBus)
+  val testLinearTotalWeightLimitService = new LinearTotalWeightLimitService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
   val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao)
@@ -163,7 +164,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   
   addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
-    testPavedRoadService, testRoadWidthService), "/*")
+    testPavedRoadService, testRoadWidthService, linearTotalWeightLimitService = testLinearTotalWeightLimitService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {
