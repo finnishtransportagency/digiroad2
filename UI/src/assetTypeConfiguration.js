@@ -412,7 +412,9 @@
         style : new WinterSpeedLimitStyle(),
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy()
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        minZoomForContent: oneKmZoomLvl,
+        label: new WinterSpeedLimitLabel()
       },
       {
         typeId: assetType.prohibition,
@@ -539,7 +541,7 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: true,
+        isVerifiable: false,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
@@ -792,15 +794,33 @@
         layerName: 'servicePoints',
         title: 'Palvelupiste',
         allowComplementaryLinks: false,
-        newAsset: { services: [] },
+        allowGrouping: true,
+        groupingDistance: Math.pow(3, 2),
+         newAsset: { services: [] },
         legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
+          {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
+          {symbolUrl: 'images/service_points/parking.png', label: 'Pysäköintialue'},
+          {symbolUrl: 'images/service_points/railwayStation2.png', label: 'Merkittävä rautatieasema'},
+          {symbolUrl: 'images/service_points/railwayStation.png', label: 'Vähäisempi rautatieasema'},
+          {symbolUrl: 'images/service_points/subwayStation.png', label: 'Metroasema'},
+          {symbolUrl: 'images/service_points/busStation.png', label: 'Linja-autoasema'},
+          {symbolUrl: 'images/service_points/airport.png', label: 'Lentokenttä'},
+          {symbolUrl: 'images/service_points/ferry.png', label: 'Laivaterminaali'},
+          {symbolUrl: 'images/service_points/taxiStation.png', label: 'Taksiasema'},
+          {symbolUrl: 'images/service_points/picnicSite.png', label: 'Lepoalue'},
+          {symbolUrl: 'images/service_points/customsControl.png', label: 'Tulli'},
+          {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka'},
+          {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'label loading-terminal'},
+          {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'label parking-area'},
+          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste'}
+
         ],
         formLabels: {
           singleFloatingAssetLabel: 'palvelupisteen',
           manyFloatingAssetsLabel: 'palvelupisteet',
           newAssetLabel: 'palvelupiste'
         },
+        label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         hasMunicipalityValidation: true

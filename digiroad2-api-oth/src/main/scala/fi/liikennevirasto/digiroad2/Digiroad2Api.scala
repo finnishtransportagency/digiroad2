@@ -142,7 +142,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ac: AdministrativeClass => JString(ac.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer
+  case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
+    case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+  }, {
+    case ai: AdditionalInformation => JString(ai.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + AdditionalInfoClassSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -587,7 +593,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "linkSource" -> roadLink.linkSource.value,
       "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
       "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
-      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR")
+      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR"),
+      "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+      "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+      "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
     )
   }
 
@@ -1261,9 +1270,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     user.isOperator() match {
       case true =>
-        speedLimitService.getSpeedLimitsWithInaccurates()
+        speedLimitService.getInaccurateRecords()
       case false =>
-        speedLimitService.getSpeedLimitsWithInaccurates(municipalityCode, Set(Municipality))
+        speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
     }
   }
 
@@ -1725,7 +1734,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
-        servicePointService.create(asset, link.municipalityCode, user.username)
+        try {
+          servicePointService.create(asset, link.municipalityCode, user.username)
+        } catch {
+        case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+      }
     }
   }
 
@@ -1738,7 +1751,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
-        servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+        try {
+          servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+        } catch {
+          case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+        }
     }
   }
 

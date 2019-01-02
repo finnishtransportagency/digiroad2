@@ -215,6 +215,95 @@ object PavementClass {
   case object Unknown extends PavementClass { def value = 99;  def typeDescription = "Unknown";}
 }
 
+
+sealed trait ServicePointsClass {
+  def value: Int
+  def isAuthorityData: Boolean
+}
+object ServicePointsClass {
+  val values = Set(Customs, BorderCrossing, RestArea, Airport, FerryTerminal, RailwayStation, ParkingArea, TerminalForLoadingCars,
+                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Unknown)
+
+  def apply(value: Int): Boolean = {
+    values.find(_.value == value).getOrElse(Unknown).isAuthorityData
+  }
+
+  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true;}
+  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true;}
+  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true;}
+  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true;}
+  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true;}
+  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true;}
+  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true;}
+  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true;}
+  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true;}
+  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true;}
+  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true;}
+  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false;}
+  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false;}
+  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true;}
+}
+
+
+/**
+  * Values for AnimalWarningTypes types enumeration
+  */
+sealed trait AnimalWarningsType {
+  def value: Int
+  def typeDescription: String
+}
+object AnimalWarningsType {
+  val values = Set(MooseWarningArea, MooseFence, DeerWarningArea, Unknown)
+
+  def apply(value: Int): AnimalWarningsType = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object MooseWarningArea extends AnimalWarningsType { def value = 1; def typeDescription = "Moose Warning Area";}
+  case object MooseFence extends AnimalWarningsType { def value = 2; def typeDescription = "Moose Fence";}
+  case object DeerWarningArea extends AnimalWarningsType { def value = 3; def typeDescription = "Deer Warning Area";}
+  case object Unknown extends AnimalWarningsType { def value = 99;  def typeDescription = "Unknown";}
+}
+
+sealed trait ProhibitionClass {
+  def prohibitionType: Int
+  def typeDescription: String
+  def rosatteType: String
+}
+object ProhibitionClass {
+  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bud,
+                   Taxi, PassengerCar, DeliveryCar, Truck, RecreationalVehicle, MilitaryVehicle, ArticulatedVehicle, TractorFarmVehicle,
+                   OversizedTransport, DrivingInServicePurpose, DrivingToALot, Unknown)
+
+  def apply(value: Int): ProhibitionClass = {
+    values.find(_.prohibitionType == value).getOrElse(Unknown)
+  }
+
+  case object Vehicle extends ProhibitionClass { def prohibitionType = 2; def typeDescription = "Vehicle"; def rosatteType = "AllVehicle"; }
+  case object MotorVehicle extends ProhibitionClass { def prohibitionType = 3; def typeDescription = "MotorVehicle"; def rosatteType = "AllVehicle"; }
+  case object PassageThrough extends ProhibitionClass { def prohibitionType = 23; def typeDescription = "PassageThrough"; def rosatteType = ""; }
+  case object Pedestrian extends ProhibitionClass { def prohibitionType = 12; def typeDescription = "Pedestrian"; def rosatteType = "Pedestrian";}
+  case object Bicycle extends ProhibitionClass { def prohibitionType = 11; def typeDescription = "Bicycle"; def rosatteType = "Bicycle";}
+  case object HorseRiding extends ProhibitionClass { def prohibitionType = 26; def typeDescription = "HorseRiding"; def rosatteType = "";}
+  case object Moped extends ProhibitionClass { def prohibitionType = 10; def typeDescription = "Moped"; def rosatteType = "Moped";}
+  case object Motorcycle extends ProhibitionClass { def prohibitionType = 9;  def typeDescription = "Motorcycle"; def rosatteType = "Motorcycle";}
+  case object SnowMobile extends ProhibitionClass { def prohibitionType = 27;  def typeDescription = "SnowMobile"; def rosatteType = "";}
+  case object Bud extends ProhibitionClass { def prohibitionType = 5;  def typeDescription = "Bud"; def rosatteType = "PublicBus + PrivateBus";}
+  case object Taxi extends ProhibitionClass { def prohibitionType = 8;  def typeDescription = "Taxi"; def rosatteType = "Taxi";}
+  case object PassengerCar extends ProhibitionClass { def prohibitionType = 7;  def typeDescription = "PassengerCar"; def rosatteType = "PassangerCar";}
+  case object DeliveryCar extends ProhibitionClass { def prohibitionType = 6;  def typeDescription = "DeliveryCar"; def rosatteType = "DeliveryTruck";}
+  case object Truck extends ProhibitionClass { def prohibitionType = 4;  def typeDescription = "Truck"; def rosatteType = "TransportTruck";}
+  case object RecreationalVehicle extends ProhibitionClass { def prohibitionType = 15;  def typeDescription = "RecreationalVehicle"; def rosatteType = "";}
+  case object MilitaryVehicle extends ProhibitionClass { def prohibitionType = 19;  def typeDescription = "MilitaryVehicle"; def rosatteType = "MilitaryVehicle";}
+  case object ArticulatedVehicle extends ProhibitionClass { def prohibitionType = 13;  def typeDescription = "ArticulatedVehicle"; def rosatteType = "CarWithTrailer";}
+  case object TractorFarmVehicle extends ProhibitionClass { def prohibitionType = 14;  def typeDescription = "TractorFarmVehicle"; def rosatteType = "FarmVehicle";}
+  case object OversizedTransport extends ProhibitionClass { def prohibitionType = 28;  def typeDescription = "OversizedTransport"; def rosatteType = "";}
+  case object DrivingInServicePurpose extends ProhibitionClass { def prohibitionType = 21;  def typeDescription = "DrivingInServicePurpose"; def rosatteType = "DeliveryTruck + EmergencyVehicle + FacilityVehicle + MailVehicle";}
+  case object DrivingToALot extends ProhibitionClass { def prohibitionType = 22;  def typeDescription = "DrivingToALot"; def rosatteType = "ResidentialVehicle";}
+  case object Unknown extends ProhibitionClass { def prohibitionType = 99;  def typeDescription = "Unknown"; ; def rosatteType = "";}
+}
+
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]
@@ -234,6 +323,7 @@ object Asset {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   val DatePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
+  val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
 }
 
 abstract class AbstractProperty {
@@ -335,7 +425,7 @@ object AssetTypeInfo {
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
                     TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, TrHeightLimit, TrWidthLimit,
-                    CareClass, CarryingCapacity, UnknownAssetTypeId)
+                    CareClass, CarryingCapacity, AnimalWarnings, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -385,6 +475,7 @@ case object TrWeightLimit extends  AssetTypeInfo {val typeId = 320; def geometry
 case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryType = "linear"; val label = "Manoeuvre"; val layerName = "manoeuvres" }
 case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"; val layerName = "careClass"}
 case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" ; val layerName = "carryingCapacity"}
+case object AnimalWarnings extends AssetTypeInfo { val typeId = 410; def geometryType = "linear"; val label = "AnimalWarnings" ; val layerName = "animalWarnings"}
 
 object AutoGeneratedValues {
   val allAutoGeneratedValues =

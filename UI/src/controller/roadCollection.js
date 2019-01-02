@@ -41,6 +41,7 @@
       data.trafficDirection = original.trafficDirection;
       data.functionalClass = original.functionalClass;
       data.linkType = original.linkType;
+      data.administrativeClass = original.administrativeClass;
     };
 
     return {

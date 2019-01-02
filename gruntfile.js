@@ -91,6 +91,14 @@ module.exports = function(grunt) {
                     xforward: false
                 },
                 {
+                    context: '/api-docs',
+                    host: '127.0.0.1',
+                    port: '8080',
+                    https: false,
+                    changeOrigin: true,
+                    xforward: false
+                },
+                {
                     context: '/maasto',
                     host: 'oag.liikennevirasto.fi',
                     https: false,
@@ -199,14 +207,6 @@ module.exports = function(grunt) {
       }
     },
     exec: {
-      prepare_openlayers: {
-        cmd: 'npm install',
-        cwd: './node_modules/openlayers/'
-      },
-      oth_build_openlayers: {
-        cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './node_modules/openlayers/'
-      }
     }
   });
 
@@ -232,9 +232,9 @@ module.exports = function(grunt) {
 
     grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-    grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+    grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-    grunt.registerTask('deploy', ['clean', 'env:' + target, 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+    grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
     grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 

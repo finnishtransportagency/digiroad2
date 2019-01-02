@@ -25,8 +25,9 @@
       { value: 4,  label: 'Tulli' },
       { value: 5,  label: 'Rajanylityspaikka' },
       { value: 13, label: 'Autojen lastausterminaali' },
-      { value: 14, label: 'Kuorma-autojen pysäköintialue' },
-      { value: 17, label: 'Sähköautojen latauspiste'}
+      { value: 14, label: 'Linja- ja kuorma-autojen pysäköintialue' },
+      { value: 17, label: 'Sähköautojen latauspiste'},
+      { value: 18, label: 'E18 rekkaparkki' }
     ];
 
     var commonServiceExtension = [
@@ -40,6 +41,7 @@
       6: commonServiceExtension,
       12: commonServiceExtension,
       14: commonServiceExtension,
+      18: commonServiceExtension,
       11: [
         {value: 5, label: 'Merkittävä rautatieasema'},
         {value: 6, label: 'Vähäisempi rautatieasema'},
@@ -55,6 +57,7 @@
       var layerName = me.pointAsset.layerName;
       var localizedTexts = me.pointAsset.formLabels;
       var authorizationPolicy = me.pointAsset.authorizationPolicy;
+      new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
 
       eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
         if(event.assetType === typeId)
@@ -65,7 +68,7 @@
 
       eventbus.on('application:readOnly', function(readOnly) {
         if(me.applicationModel.getSelectedLayer() === layerName && (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
-          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, roadCollection) || readOnly);
+          me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || readOnly);
           if (isSingleService(selectedAsset)){
             rootElement.find('button.delete').hide();
           }
@@ -90,11 +93,14 @@
       });
 
       eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
-        rootElement.empty();
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
       });
 
       eventbus.on('layer:selected', function() {
-        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
+        if(layerName === applicationModel.getSelectedLayer())
+        $('ul[class=information-content]').empty();
       });
     };
 
@@ -185,9 +191,9 @@
 
       var selectedServiceType = _.find(serviceTypes, { value: service.serviceType });
       var parkingPlaceElements = '' +
-        '<label class="control-label">Pysäköintipaikkojen lukumäärä</label>' +
+        '<div><label class="control-label">Pysäköintipaikkojen lukumäärä</label>' +
         '<p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
-        '<input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '">';
+        '<input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '"></div>';
 
       return '<li>' +
         '  <div class="form-group service-point editable">' +
@@ -208,8 +214,9 @@
         '    <label class="control-label">Palvelun lisätieto</label>' +
         '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
         '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
+        '</div><div>' +
         '    <label class="control-label">Viranomaisdataa</label>' +
-        '    <p class="form-control-readOnly">'+ (isAuthorityData(service.serviceType) ?  'Kyllä' : 'Ei') +'</p>' +
+        '    <p class="form-control-readOnly">'+ (service.isAuthorityData ?  'Kyllä' : 'Ei') +'</p>' +
         '</div><div>' +
         (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
         '</div></div>' +

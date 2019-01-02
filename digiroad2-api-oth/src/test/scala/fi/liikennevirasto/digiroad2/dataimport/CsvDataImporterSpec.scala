@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{ByteArrayInputStream, InputStream}
-import javax.sql.DataSource
 
+import javax.sql.DataSource
 import fi.liikennevirasto.digiroad2.asset.{Municipality, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHComplementaryClient, VVHRoadlink}
@@ -15,7 +15,8 @@ import org.scalatest.{BeforeAndAfter, Tag}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{userProvider}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 object sTestTransactions {
   def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
@@ -40,7 +41,14 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
   val testUserProvider = userProvider
   val roadLinkCsvImporter = importerWithNullService()
-  val trafficSignCsvImporter : TrafficSignCsvImporter = new TrafficSignCsvImporter
+
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+  when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vvHRoadlink)
+
+  val trafficSignCsvImporter : TrafficSignCsvImporter = new TrafficSignCsvImporter {
+    override val roadLinkService = mockRoadLinkService
+      }
 
   private def importerWithNullService() : RoadLinkCsvImporter = {
     new RoadLinkCsvImporter {
@@ -334,6 +342,18 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       asset =>
         asset.csvRow should be (trafficSignCsvImporter.rowToString(defaultValues ++ assetFields))
     }
+  }
+
+  test("validation for traffic sign import fails if user try to create in an authorize municipality", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "671")
+    val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+    val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+    when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(Seq())
+
+    trafficSignCsvImporter.importTrafficSigns(invalidCsv, Set()) should equal(trafficSignCsvImporter.ImportResult(
+      notImportedData = List(trafficSignCsvImporter.NotImportedData(
+        reason = "Try to create in an unauthorized Municipality",
+        csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())

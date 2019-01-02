@@ -57,18 +57,18 @@ root.PointAssetForm = function() {
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
-      rootElement.empty();
+      rootElement.find("#feature-attributes-header").empty();
+      rootElement.find("#feature-attributes-form").empty();
+      rootElement.find("#feature-attributes-footer").empty();
     });
 
     eventbus.on('layer:selected', function(layer) {
       if (layer === layerName) {
+        $('ul[class=information-content]').empty();
         me.renderLinktoWorkList(layer, localizedTexts);
         if(parameters.pointAsset.hasInaccurate){
           renderInaccurateWorkList(layer);
         }
-      }
-      else {
-        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
       }
     });
   };
@@ -79,11 +79,13 @@ root.PointAssetForm = function() {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
+    var header = '<span>' + title + '</span>';
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
-    var footer = '<footer>' + renderButtons() + '</footer>';
+    var footer = me.renderButtons();
 
-    rootElement.html(header + form + footer);
+    rootElement.find("#feature-attributes-header").html(header);
+    rootElement.find("#feature-attributes-form").html(form);
+    rootElement.find("#feature-attributes-footer").html(footer);
 
     rootElement.find('input[type="checkbox"]').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
@@ -114,6 +116,10 @@ root.PointAssetForm = function() {
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
   };
 
+  var informationLog = function (date, username) {
+    return date ? (date + ' / ' + username) : '-';
+  };
+
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
   this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection) {
@@ -132,10 +138,10 @@ root.PointAssetForm = function() {
         '  <div class="form form-horizontal form-dark form-pointasset">' +
         renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(asset.createdAt, asset.createdBy) + '</p>' +
         '    </div>' +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
         me.renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
@@ -149,19 +155,19 @@ root.PointAssetForm = function() {
     }
   };
 
-  function renderButtons() {
+  this.renderValueElement = function(asset, collection) { return ''; };
+
+  this.renderButtons = function() {
     return '' +
       '<div class="pointasset form-controls">' +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
-  }
+  };
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
-    $('#information-content').append('' +
-      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-      '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
-      '</div>');
+    $('ul[class=information-content]').append('' +
+      '<li><a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a></li>');
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -184,10 +190,8 @@ root.PointAssetForm = function() {
   };
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-    $('#information-content').append('' +
-      '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-      '<a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a>' +
-      '</div>');
+    $('ul[class=information-content]').append('' +
+      '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
   };
 };
 })(this);

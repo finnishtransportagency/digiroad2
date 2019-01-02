@@ -186,7 +186,9 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         val csvRow = row.map( r =>(r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)
         val (malformedParameters, properties) = assetRowToProperties(csvRow)
-        val (notImportedParameters, roadLinks) = verifyData(CsvAssetRow(properties = properties))
+        val (notImportedParameters, roadLinks) = if(malformedParameters.isEmpty) {
+         verifyData(CsvAssetRow(properties = properties))
+        } else (List(), Seq())
 
         if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
           result.copy(
