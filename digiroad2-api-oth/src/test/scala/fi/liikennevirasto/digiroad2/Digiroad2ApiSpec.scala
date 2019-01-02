@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
@@ -156,7 +156,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testLinearTotalWeightLimitService = new LinearTotalWeightLimitService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
-  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao)
+  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
   val testPavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
   val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
   val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)

@@ -59,12 +59,13 @@
 
         me.viewModeRender = function (field, propertyValues) {
             var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
-            var _value = value ? value.value : '-';
+            var unit = field.unit ? ' ' + field.unit : '';
+            var _value = value ? value.value + unit: '-';
 
             return $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <p class="form-control-static">' + _value + '</p>' +
+                '   <p class="form-control-static">' + _value  + '</p>' +
                 '</div>'
             );
         };
@@ -138,7 +139,7 @@
         var className = assetTypeConfiguration.className;
 
         me.hasValidValue = function() {
-            return /^\d+$/.test(me.element.find('input').val());
+            return /^(\d+\.)?\d+$/.test(me.element.find('input').val());
         };
 
         me.isValid = function(){
@@ -204,7 +205,7 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
-      var unitClass = _.isUndefined(unit) ? '' : ' unit';
+            var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
             me.element =   $('' +
                 '<div class="form-group">' +
@@ -701,6 +702,8 @@
 
                   if(_assetTypeConfiguration.isVerifiable)
                     renderLinkToWorkList(layer);
+                  if(_assetTypeConfiguration.hasInaccurate)
+                    renderInaccurateWorkList(layer);
                 }
             });
 
@@ -841,7 +844,7 @@
         function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
             var sideCodeClass = generateClassName(sideCode);
 
-            var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
+            var unit = asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
                 '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
@@ -879,15 +882,17 @@
                 input.prop('disabled', disabled);
 
                 if(disabled){
+                  forms.removeFields(sideCode);
                   removeValueFn();
                   _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
-                  if(asset.value)
-                    setValueFn(asset.value);
-                  else
-                    setValueFn({ properties: [] });
-                }
-                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  if(asset.value) {
+                      setValueFn(asset.value);
+                      formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  }else {
+                      setValueFn({properties: []});
+                      formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  }}
                 eventbus.trigger("radio-trigger-dirty");
             });
 
@@ -901,6 +906,11 @@
         function renderLinkToWorkList(layerName) {
             $('ul[class=information-content]').append('' +
                 '<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a></li>');
+        }
+
+        function renderInaccurateWorkList(layerName) {
+            $('ul[class=information-content]').append('' +
+                '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
         }
 
         function createSideCodeMarker(sideCode) {
@@ -967,6 +977,9 @@
             //When both are deleted
             if(_.isEmpty(forms.getAllFields()))
                 return false;
+
+            if(_.isEmpty(forms.getFields('a')) || _.isEmpty(forms.getFields('b')))
+                return true;
 
       return _.some(forms.getFields('a'), function(fieldA){
         var propertyValueA = fieldA.getPropertyValue();

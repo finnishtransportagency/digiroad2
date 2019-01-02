@@ -73,7 +73,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -99,7 +99,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -125,7 +125,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -137,7 +137,7 @@
         title: 'Suurin sallittu telimassa',
         newTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
-        unit: 'kg',
+        unit: 'Kg',
         isSeparable: false,
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',
@@ -151,9 +151,15 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+        fields: [
+            {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
+            {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2}
+          ]
+        })
       },
       {
         typeId: assetType.heightLimit,
@@ -177,7 +183,7 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl
       },
       {

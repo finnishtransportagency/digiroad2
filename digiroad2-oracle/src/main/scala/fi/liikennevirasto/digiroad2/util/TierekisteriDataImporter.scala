@@ -132,6 +132,26 @@ object TierekisteriDataImporter {
     new AnimalWarningsTierekisteriImporter()
   }
 
+  lazy val bogieWeightLimitImporter: BogieWeightLimitImporter = {
+    new BogieWeightLimitImporter()
+  }
+
+  lazy val axleWeightLimitImporter: AxleWeightLimitImporter = {
+    new AxleWeightLimitImporter()
+  }
+
+  lazy val truckWeightLimitImporter: TruckWeightLimitImporter = {
+    new TruckWeightLimitImporter()
+  }
+
+  lazy val totalWeightLimitImporter: TotalWeightLimitImporter = {
+    new TotalWeightLimitImporter()
+  }
+
+  lazy val heightLimitImporter: HeightLimitImporter = {
+    new HeightLimitImporter()
+  }
+
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
       val assetId = tierekisteriAssetImporter.getAssetTypeId
@@ -172,7 +192,7 @@ object TierekisteriDataImporter {
     roadNumbers.foreach(ra => println(ra))
 
     roadNumbers.foreach {
-      case roadNumber =>
+      roadNumber =>
         println("\nFetch Traffic Volume by Road Number " + roadNumber)
         val trTrafficVolume = tierekisteriTrafficVolumeAsset.fetchActiveAssetData(roadNumber)
 
@@ -242,6 +262,14 @@ object TierekisteriDataImporter {
     "animalWarnings" -> animalWarningsTierekisteriImporter
   )
 
+  val tierekisteriDataConverter = Map[String, TierekisteriImporterOperations](
+    "bogieWeightConverterImporter" -> bogieWeightLimitImporter,
+    "axleWeightConverterImporter" -> axleWeightLimitImporter,
+    "totalWeightConverterImporter" -> totalWeightLimitImporter,
+    "trailerTruckWeightConverterImporter" -> truckWeightLimitImporter,
+    "heightLimitConverterImporter" -> heightLimitImporter
+  )
+
   private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {
     val assetType = tierekisteriAssetImporter.getAssetName
 
@@ -284,9 +312,9 @@ object TierekisteriDataImporter {
   }
 
   private def getDateFromArgs(args:Array[String]): Option[DateTime] = {
-    if(args.size >= 4)
+    if(args.length >= 4)
       convertStringToDate("yyyy-MM-dd hh:mm:ss", Some(args(2) + " " + args(3)))
-    else if(args.size >= 3)
+    else if(args.length >= 3)
       convertStringToDate("yyyy-MM-dd", Some(args(2)))
     else
       None
@@ -309,13 +337,13 @@ object TierekisteriDataImporter {
       }
     }
 
-    if(args.size < 2){
+    if(args.length < 2){
       println("Usage: TierekisteriDataImporter <operation> <assetType> [<args>]")
     }else{
       val operation = args(0)
       val assetType = args(1)
 
-      val availableAssetTypes = tierekisteriDataImporters.keySet ++ Set("trafficVolume")
+      val availableAssetTypes = tierekisteriDataImporters.keySet ++ tierekisteriDataConverter.keySet ++ Set("trafficVolume")
 
       if(availableAssetTypes.contains(assetType)){
         operation match {
@@ -323,13 +351,15 @@ object TierekisteriDataImporter {
             if(assetType == "trafficVolume")
               importTrafficVolumeAsset(tierekisteriTrafficVolumeAssetClient)
             else
-              importAssets(tierekisteriDataImporters.get(assetType).get)
+              importAssets(tierekisteriDataImporters(assetType))
           case "update" =>
             val lastExecutionDate = getDateFromArgs(args)
             if(assetType == "trafficVolume")
               println("The asset type trafficVolume doesn't support update operation.")
             else
-              updateAssets(tierekisteriDataImporters.get(assetType).get, lastExecutionDate)
+              updateAssets(tierekisteriDataImporters(assetType), lastExecutionDate)
+          case "converter" =>
+              importAssets(tierekisteriDataConverter(assetType))
         }
       }else{
         println(s"The asset type $assetType is not supported")
