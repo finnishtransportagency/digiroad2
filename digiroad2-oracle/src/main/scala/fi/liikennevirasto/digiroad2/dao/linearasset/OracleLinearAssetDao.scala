@@ -417,7 +417,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
   def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, linkSource: Option[LinkGeomSource] = None): Seq[PieceWiseLinearAsset] = {
     val linkGeomCondition = linkSource match {
-      case Some(LinkGeomSource.NormalLinkInterface) => " and pos.link_source = 1"
+      case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
       case _ => ""
     }
     sql"""

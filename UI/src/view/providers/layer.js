@@ -1,5 +1,5 @@
 (function(root) {
-  root.Layer = function(layerName, roadLayer, highZoomLevel) {
+  root.Layer = function(layerName, roadLayer) {
     var me = this;
 
     var mapOverLinkMiddlePoints = function(links, transformation) {
