@@ -39,6 +39,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val pedestrianCrossingService: PedestrianCrossingService,
                       val railwayCrossingService: RailwayCrossingService,
                       val trafficLightService: TrafficLightService,
+                      val massTransitLaneService: MassTransitLaneService,
+                      val numberOfLanesService: NumberOfLanesService,
                       implicit val swagger: Swagger
                      ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
 
@@ -85,9 +87,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
+      case LitRoad.typeId => onOffLinearAssetService
       case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
+      case MassTransitLane.typeId => massTransitLaneService
+      case NumberOfLanes.typeId => numberOfLanesService
       case _ => linearAssetService
     }
   }
@@ -876,7 +880,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   private def isDynamic(assetId: Int): Boolean = {
-    val dynamicAssetType = Seq(PavedRoad.typeId)
+    val dynamicAssetType = Seq(PavedRoad.typeId, MassTransitLane.typeId)
 
     dynamicAssetType.contains(assetId)
   }

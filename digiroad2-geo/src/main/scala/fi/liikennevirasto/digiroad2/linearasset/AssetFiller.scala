@@ -4,9 +4,10 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import org.joda.time.DateTime
 
-object NumericalLimitFiller {
+class AssetFiller {
   val AllowedTolerance = 0.5
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
@@ -208,43 +209,7 @@ object NumericalLimitFiller {
         case _ => Seq()
       }
     }
-    /**
-      * Combine sides together if matching m-values and segment values.
-      * @param segmentPieces Sequence of one or two segment pieces (guaranteed by squash operation)
-      * @param segments All segments on road link
-      * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
-      */
-    def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
-      def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
-        val sl1 = segments.find(_.id == seg1.assetId).get
-        val sl2 = segments.find(_.id == seg2.assetId).get
-        if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
-          val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
-            s.endMeasure - s.startMeasure).head
-          Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
-        } else {
-          segmentPieces
-        }
-      }
 
-      if (segmentPieces.size < 2)
-        return segmentPieces
-
-      val seg1 = segmentPieces.head
-      val seg2 = segmentPieces.last
-      (seg1.value, seg2.value) match {
-        case (Some(v1), Some(v2)) =>
-          if (v1.equals(v2)) {
-            chooseSegment(seg1, seg2)
-          } else
-            segmentPieces
-        case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
-        case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
-        case (None, None) =>
-          chooseSegment(seg1, seg2)
-        case _ => segmentPieces
-      }
-    }
 
     /**
       * Take pieces of segment and combine two of them if they are related to the similar segment and extend each other
@@ -330,6 +295,41 @@ object NumericalLimitFiller {
     val returnSegments = cleanNumericalLimitIds(resultingNumericalLimits, Seq())
     (returnSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
+  }
+
+  /**
+    * Combine sides together if matching m-values and segment values.
+    * @param segmentPieces Sequence of one or two segment pieces (guaranteed by squash operation)
+    * @param segments All segments on road link
+    * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
+    */
+  protected def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
+    def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
+      val sl1 = segments.find(_.id == seg1.assetId).get
+      val sl2 = segments.find(_.id == seg2.assetId).get
+      if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
+        val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
+          s.endMeasure - s.startMeasure).head
+        Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
+      } else {
+        segmentPieces
+      }
+    }
+
+    val seg1 = segmentPieces.head
+    val seg2 = segmentPieces.last
+    (seg1.value, seg2.value) match {
+      case (Some(v1), Some(v2)) =>
+        if (v1.equals(v2)) {
+          chooseSegment(seg1, seg2)
+        } else
+          segmentPieces
+      case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
+      case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
+      case (None, None) =>
+        chooseSegment(seg1, seg2)
+      case _ => segmentPieces
+    }
   }
 
   case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[Value])

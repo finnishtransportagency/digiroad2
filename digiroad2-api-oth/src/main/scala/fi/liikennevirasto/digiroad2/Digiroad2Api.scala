@@ -60,6 +60,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val maintenanceRoadService: MaintenanceService,
                    val pavedRoadService: PavedRoadService,
                    val roadWidthService: RoadWidthService,
+                   val massTransitLaneService: MassTransitLaneService,
+                   val numberOfLanesService: NumberOfLanesService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
                    val hazmatTransportProhibitionService: HazmatTransportProhibitionService = Digiroad2Context.hazmatTransportProhibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
@@ -1709,7 +1711,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case DamagedByThaw.typeId | CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -1717,6 +1719,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
       case AxleWeightLimit.typeId => linearAxleWeightLimitService
       case BogieWeightLimit.typeId => linearBogieWeightLimitService
+      case MassTransitLane.typeId => massTransitLaneService
+      case NumberOfLanes.typeId => numberOfLanesService
       case _ => linearAssetService
     }
   }
