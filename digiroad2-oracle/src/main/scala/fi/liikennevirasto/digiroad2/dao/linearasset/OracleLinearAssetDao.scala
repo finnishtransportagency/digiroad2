@@ -664,23 +664,26 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Option[Seq[Point]] = None): Long = {
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
     val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
 
-    val geom: String = if(geometry.isDefined){
-      val geom = GeometryUtils.truncateGeometry2D(geometry.get, measures.startMeasure, measures.endMeasure)
-      val assetLength = measures.endMeasure - measures.startMeasure
+    val geom: String = {
+      val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
+      if(geom.nonEmpty){
+        val assetLength = measures.endMeasure - measures.startMeasure
 
-      s"""DSYS.SDO_GEOMETRY(4002,
+        s"""DSYS.SDO_GEOMETRY(4002,
         3067,
         NULL,
         MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
         MDSYS.SDO_ORDINATE_ARRAY(${geom.head.x},${geom.head.y},0,0.0,${geom.last.x},${geom.last.y},0,$assetLength))"""
-    } else {
-      "null"
+        "null"
+      } else {
+        "null"
+      }
     }
 
 

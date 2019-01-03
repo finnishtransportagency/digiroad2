@@ -77,11 +77,10 @@ trait LinearAssetOperations {
     }
   }
 
-  protected def getGeometry(roadLink: Option[RoadLinkLike]): Option[Seq[Point]] = {
+  protected def getGeometry(roadLink: Option[RoadLinkLike]): Seq[Point] = {
     roadLink match {
-      case Some(road) =>
-        Some(road.geometry)
-      case _ => None
+      case Some(road) => road.geometry
+      case _ => Seq()
     }
   }
 

@@ -1031,7 +1031,7 @@ object DataFixture {
           val roadLink = roadLinks.find(_.linkId == linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
           val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-            Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value), geometry = Some(roadLink.geometry))
+            Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value), geometry = roadLink.geometry)
           linearAsset.value match {
             case Some(NumericValue(intValue)) =>
               dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
