@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
@@ -32,12 +33,41 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels)
 
+  def converter(trafficType: TRTrafficSignType, value: String): String = {
+    val regexGetNumber = "^(\\d*\\.?\\d)?".r
+
+    val weightType : Seq[TRTrafficSignType] = Seq(MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding)
+    val measuresType : Seq[TRTrafficSignType] = Seq(MaximumLength, MaxWidthExceeding, MaxHeightExceeding)
+    val speedLimitType : Seq[TRTrafficSignType] = Seq(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
+
+    val trimValue = value.replaceAll("\\s", "").replaceAll(",", ".")
+
+    trafficType match {
+      case x if weightType.contains(trafficType) && Seq("(?i)\\d+\\.?\\d*t$".r, "(?i)\\d+\\.?\\d*t\\.$".r, "(?i)\\d+\\.?\\d*tn$".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+        regexGetNumber.findFirstMatchIn(trimValue) match {
+          case Some(matchedValue) => (matchedValue.toString().toDouble * 1000).toInt.toString
+          case _ => value
+        }
+      case x if measuresType.contains(trafficType) && "(?i)\\d+?\\.?\\d*m$".r.findFirstMatchIn(trimValue).nonEmpty =>
+        regexGetNumber.findFirstMatchIn(trimValue) match {
+          case Some(matchedValue) => matchedValue.toString().toDouble.toString
+          case _ => value
+        }
+      case x if speedLimitType.contains(trafficType) && Seq("^(?i)\\d+km\\\\h".r, "^(?i)\\d+kmh".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+        regexGetNumber.findFirstMatchIn(trimValue) match {
+          case Some(matchedValue) => matchedValue.toString().toDouble.toInt.toString
+          case _ => value
+        }
+      case _ => value
+    }
+  }
+
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
     val trafficType = trAssetData.assetType.trafficSignType
     val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
       case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
-      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
+      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(converter(trAssetData.assetType, trAssetData.assetValue))))
     }
 
     Set(typeProperty, valueProperty)
