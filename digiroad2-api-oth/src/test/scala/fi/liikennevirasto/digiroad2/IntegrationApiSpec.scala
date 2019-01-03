@@ -23,7 +23,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
-  private val integrationApi = new IntegrationApi(mockMassTransitStopService)
+  private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger)
   addServlet(integrationApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {

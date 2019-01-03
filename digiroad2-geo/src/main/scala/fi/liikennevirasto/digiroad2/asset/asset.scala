@@ -331,11 +331,36 @@ abstract class AbstractProperty {
   def values: Seq[PropertyValue]
 }
 
+abstract class AssetPropertyValue {
+  def propertyValue: Any
+}
+
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
+case class SimpleTrafficSignProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractTrafficSignProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
+case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
+
+abstract class AbstractTrafficSignProperty {
+  def publicId: String
+  def values: Seq[PointAssetValue]
+}
+
+
+sealed trait PointAssetValue {
+  def toJson: Any
+}
+case class TrafficSignProperty(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractTrafficSignProperty
+
+case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int) extends PointAssetValue {
+  override def toJson: Any = this
+}
+
+case class TextPropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
+  override def toJson: Any = this
+}
+
 case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
@@ -398,6 +423,7 @@ object PropertyTypes {
   val Number = "number"
   val IntegerProp = "integer"
   val TimePeriod = "time_period"
+  val AdditionalPanelType = "additional_panel_type"
 }
 
 object MassTransitStopValidityPeriod {

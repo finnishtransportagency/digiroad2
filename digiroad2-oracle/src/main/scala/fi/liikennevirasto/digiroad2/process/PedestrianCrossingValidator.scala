@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PedestrianCrossings, Private, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -78,7 +78,7 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
             case Some(roadLink) =>
                 val trafficSingsByRadius: Set[PersistedTrafficSign] =
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), radiusDistance) ++ trafficSignService.getTrafficSign(Seq(roadLink.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
                   .filterNot(_.floating)
 
               val allLinkIds = assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId)

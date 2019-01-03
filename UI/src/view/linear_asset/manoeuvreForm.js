@@ -26,7 +26,7 @@
         '</div>';
 
 
-    var header = '<span>Linkin LINK ID: <%= linkId %></span>' +  saveAndCancelButtons;
+    var header = '<span>Linkin LINK ID: <%= linkId %></span>';
 
     var footer =  saveAndCancelButtons;
 
@@ -34,7 +34,7 @@
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
           '<div class="form-group">' +
-            '<p class="form-control-static asset-log-info">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %> </p>' +
+            '<p class="form-control-static asset-log-info">Muokattu viimeksi:  <%- modifiedAt %> / <%- modifiedBy %></p>' +
           '</div>' +
           '<label>Kääntyminen kielletty linkeille</label>' +
           '<div></div>' +

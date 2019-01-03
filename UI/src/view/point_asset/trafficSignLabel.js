@@ -189,12 +189,14 @@
         return _.flatten(_.chain(groupedAssets).map(function (assets) {
           var imgPosition = {x: 0, y: me.stickPosition.y};
           return _.map(assets, function (asset) {
-            var value = me.getValue(asset);
-            if (value !== undefined) {
+            var values = me.getValue(asset);
+            if (values !== undefined) {
               var styles = [];
               styles = styles.concat(me.getStickStyle());
-              imgPosition.y += me.getLabelProperty(value).getHeight();
-              styles = styles.concat(me.getStyle(value, imgPosition));
+              _.map(values, function(value){
+                imgPosition.y += me.getLabelProperty(value).getHeight();
+                styles = styles.concat(me.getStyle(value, imgPosition));
+              });
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);
               feature.setProperties(_.omit(asset, 'geometry'));
@@ -216,16 +218,30 @@
         }).values);
       };
 
+    var getProperties = function (asset, publicId) {
+      return _.find(asset.propertyData, function (prop) {
+        return prop.publicId === publicId;
+      }).values;
+    };
+
       me.getValue = function (asset) {
         if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
           return;
         var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
         var additionalInfo = getProperty(asset, "trafficSigns_info") ? getProperty(asset, "trafficSigns_info").propertyValue : '';
-        return {
+        var panels = _.map(getProperties(asset, "additional_panel"), function(panel){
+          return {
+            value: panel.panelValue,
+            type: parseInt(panel.panelType),
+            additionalInfo:  panel.panelInfo
+          };
+        });
+        panels.unshift({
           value: value,
           type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue),
           additionalInfo: additionalInfo
-        };
+        });
+        return panels.reverse();
       };
     };
 })(this);

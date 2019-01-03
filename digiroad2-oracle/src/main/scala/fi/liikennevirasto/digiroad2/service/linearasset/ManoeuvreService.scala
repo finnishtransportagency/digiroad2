@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, DigiroadEventBus}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SideCode, AdministrativeClass, Manoeuvres}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -319,7 +319,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     val manoeuvreInit = manouvreProvider.sourceRoadLink +: intermediates
 
     val roadLinks = getTrafficSignsProperties(manouvreProvider.trafficSign, "trafficSigns_type").map { prop =>
-      val tsType = TrafficSignType(prop.propertyValue.toInt)
+      val tsType = TrafficSignType(prop.asInstanceOf[TextPropertyValue].propertyValue.toInt)
 
       tsType match {
 
@@ -353,7 +353,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       createManoeuvreFromTrafficSign(manouvreProvider)
   }
 
-  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PropertyValue] = {
+  private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[PointAssetValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.headOption
   }
 

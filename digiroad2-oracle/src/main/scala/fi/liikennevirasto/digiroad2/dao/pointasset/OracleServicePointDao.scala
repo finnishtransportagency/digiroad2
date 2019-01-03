@@ -119,10 +119,13 @@ object OracleServicePointDao {
       if (servicePoints.isEmpty)
         Map.empty
       else
-        StaticQuery.queryNA[Service](s"""
-          select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data
+        StaticQuery.queryNA[Service](
+          s"""
+          select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION, PARKING_PLACE_COUNT,
+          CASE WHEN IS_AUTHORITY_DATA IS NULL AND (TYPE = 10 OR TYPE = 17)THEN '0'
+          WHEN IS_AUTHORITY_DATA IS NULL THEN '1' ELSE IS_AUTHORITY_DATA END AS IS_AUTHORITY_DATA
           from SERVICE_POINT_VALUE
-          where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({x => s"($x, $x)"}).mkString(",")})
+          where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({ x => s"($x, $x)" }).mkString(",")})
         """).iterator.toSet.groupBy(_.assetId)
 
     servicePoints.map { servicePoint =>
