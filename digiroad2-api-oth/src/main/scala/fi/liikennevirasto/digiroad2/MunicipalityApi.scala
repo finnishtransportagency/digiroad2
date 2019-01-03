@@ -880,7 +880,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   private def isDynamic(assetId: Int): Boolean = {
-    val dynamicAssetType = Seq(PavedRoad.typeId)
+    val dynamicAssetType = Seq(PavedRoad.typeId, MassTransitLane.typeId)
 
     dynamicAssetType.contains(assetId)
   }
