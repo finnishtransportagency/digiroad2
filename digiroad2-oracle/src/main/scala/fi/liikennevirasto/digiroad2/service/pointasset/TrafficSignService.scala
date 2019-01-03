@@ -424,7 +424,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       Math.abs(panel.mValue - mValue) < 0.001 && linkId == panel.linkId
     }
 
-    def allowedAdditionalPanels: Seq[AdditionalPanelInfo] = additionalPanels.to.filter {panel =>
+    def allowedAdditionalPanels: Seq[AdditionalPanelInfo] = additionalPanels.toSeq.filter {panel =>
       panelWithSamePosition(panel) ||
         trafficSign.allowed(TrafficSignType.applyOTHValue(getTrafficSignsProperties(panel.propertyData, typePublicId).
           get.propertyValue.toInt).asInstanceOf[AdditionalPanelsType])

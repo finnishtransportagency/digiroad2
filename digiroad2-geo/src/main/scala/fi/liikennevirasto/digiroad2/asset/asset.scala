@@ -266,6 +266,71 @@ object AnimalWarningsType {
   case object Unknown extends AnimalWarningsType { def value = 99;  def typeDescription = "Unknown";}
 }
 
+sealed trait TimePeriodClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object TimePeriodClass {
+  val values = Set(ValidMultiplePeriodTime, ValidSatTime, ValidMonFriTime, Unknown)
+
+  def apply(value: Int): TimePeriodClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def toTrafficSign(timeValue: Seq[Int]): Seq[TrafficSignType] = {
+    if (timeValue.size > 1) {
+      Seq(ValidMultiplePeriod)
+    } else
+      timeValue.map { value =>
+        TimePeriodClass.apply(value).trafficSign
+    }
+  }
+
+  case object ValidMultiplePeriodTime extends TimePeriodClass {
+    def value: Int = 1
+    override val trafficSign: TrafficSignType = ValidMultiplePeriod
+  }
+  case object ValidSatTime extends TimePeriodClass {
+    def value: Int = 7
+    override val trafficSign: TrafficSignType = ValidSat
+  }
+  case object ValidMonFriTime extends TimePeriodClass {
+    def value: Int = 2
+    override val trafficSign: TrafficSignType = ValidMonFri
+  }
+  case object Unknown extends TimePeriodClass {
+    def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
+sealed trait HazmatTransportProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object HazmatTransportProhibitionClass {
+  val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[ProhibitionClass] = ???
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType = ???
+
+  case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = HazmatProhibitionA
+  }
+
+  case object HazmatProhibitionTypeB extends HazmatTransportProhibitionClass {
+    def value: Int = 25
+    override val trafficSign: TrafficSignType = HazmatProhibitionB
+  }
+
+  case object Unknown extends HazmatTransportProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
 sealed trait ProhibitionClass {
   def value: Int
   def typeDescription: String

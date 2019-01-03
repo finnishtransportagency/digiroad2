@@ -339,7 +339,7 @@ object OracleTrafficSignDao {
           assetRow.property.propertyType match {
             case AdditionalPanelType =>
               assetRow.additionalPanel match {
-                case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelValue, panel.panelInfo, panel.formPosition))
+                case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
                 case _ => Seq()
               }
             case _ => Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
