@@ -3,7 +3,7 @@
     var allowGrouping = true,
         parentLayerName = params.layerName,
         style = new PointAssetStyle('trafficSigns'),
-        assetLabel = new TrafficSignLabel(),
+        assetLabel = new TrafficSignLabel(9),
         collection = new TrafficSignsReadOnlyCollection(params.backend, 'trafficSigns', true),
         assetGrouping = new AssetGrouping(9),
         map = params.map;
@@ -86,6 +86,7 @@
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function (assets) {
         var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
         me.removeLayerFeatures();
+        me.highLightLayer();
         if(zoomlevels.getViewZoom(map) >= minZoomForContent){
           vectorLayer.getSource().addFeatures(features);
           vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));

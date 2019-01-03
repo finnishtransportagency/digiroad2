@@ -6,10 +6,10 @@
 
   var name = function() {
     var environmentName = {
-      'extranet.liikennevirasto.fi': 'production',
-      'testiextranet.liikennevirasto.fi': 'integration',
-      'apptest.liikennevirasto.fi': 'training',
-      'devtest.liikennevirasto.fi': 'staging'
+      'extranet.vayla.fi': 'production',
+      'testiextranet.vayla.fi': 'integration',
+      'apptest.vayla.fi': 'training',
+      'devtest.vayla.fi': 'staging'
     };
 
     return environmentName[urlParts()[1]] || 'unknown';

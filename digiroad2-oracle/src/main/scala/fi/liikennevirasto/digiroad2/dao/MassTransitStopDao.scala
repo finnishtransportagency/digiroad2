@@ -316,7 +316,7 @@ class MassTransitStopDao {
 
   def deleteNumberPropertyValue(assetId: Long, propertyPublicId: String): Unit = {
     val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(propertyPublicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + propertyPublicId + " not found"))
-    deleteNumberProperty(assetId, propertyId)
+    deleteNumberProperty(assetId, propertyId).execute
   }
 
   private def numberPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {

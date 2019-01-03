@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficLightDao, Traff
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
+import org.joda.time.DateTime
 
 case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
 case class IncomingTrafficLightAsset(linkId: Long, mValue: Long) extends IncomePointAsset
@@ -92,4 +93,8 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
       point =>  IncomingTrafficLight(point.x, point.y, link.linkId)
     }
   }
+
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[TrafficLight] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

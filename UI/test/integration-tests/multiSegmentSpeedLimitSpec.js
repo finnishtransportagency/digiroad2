@@ -31,8 +31,9 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectSpeedLimit(openLayersMap, speedLimit.id);
       });
       it('shows the latest modification within selected speed limits', function() {
-        var lastModifiedElement = _.find($('#feature-attributes .form-control-static.asset-log-info'), function(e) { return _.includes($(e).text(), 'Muokattu viimeksi'); });
-        expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: later 11.07.2015 13:30:00');
+        var lastModifiedElement = _.find($('#feature-attributes .form-cont' +
+          'rol-static.asset-log-info'), function(e) { return _.includes($(e).text(), 'Muokattu viimeksi'); });
+        expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: 11.07.2015 13:30:00 / later');
       });
 
       describe('and clicking on the background map', function() {
@@ -49,7 +50,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
             });
           });
           it('deselects speed limit', function() {
-              expect($('#feature-attributes header')).not.to.exist;
+              expect($('#feature-attributes-header')[0].text).to.be.empty;
           });
       });
 
@@ -62,7 +63,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
             testHelpers.selectLayer('speedLimit');
           });
           it('deselects speed limit', function() {
-            expect($('#feature-attributes header')).not.to.exist;
+            expect($('#feature-attributes-header')[0].text).to.be.empty;
           });
         });
       });

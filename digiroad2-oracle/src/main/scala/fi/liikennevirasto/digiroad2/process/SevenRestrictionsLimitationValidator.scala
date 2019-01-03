@@ -13,8 +13,8 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
 
   override type AssetType = PersistedLinearAsset
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
-  override def assetTypeInfo: AssetTypeInfo =  HazmatTransportProhibition
-  override val radiusDistance: Int = 50
+  override def assetTypeInfo: AssetTypeInfo
+  override val radiusDistance: Int
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {true}
@@ -74,7 +74,7 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
 
               val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
               val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)

@@ -22,7 +22,9 @@
       setPropertyByPublicId: setPropertyByPublicId,
       getMunicipalityCode: getMunicipalityCode,
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
-      getCoordinates: getCoordinates
+      getCoordinates: getCoordinates,
+      setAdditionalPanels: setAdditionalPanels,
+      setAdditionalPanel: setAdditionalPanel
     };
 
     function place(asset) {
@@ -155,6 +157,27 @@
       _.map(current.propertyData, function (prop) {
         if (prop.publicId === propertyPublicId) {
           prop.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
+        }
+      });
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function setAdditionalPanels(panels) {
+      dirty = true;
+      _.map(current.propertyData, function (prop) {
+        if (prop.publicId === 'additional_panel') {
+          prop.values = panels;
+        }
+      });
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function setAdditionalPanel(myobj) {
+      dirty = true;
+      _.map(current.propertyData, function (prop) {
+        if (prop.publicId === 'additional_panel') {
+          var index = _.findIndex(prop.values, {formPosition: myobj.formPosition});
+          prop.values.splice(index, 1, myobj);
         }
       });
       eventbus.trigger(assetName + ':changed');

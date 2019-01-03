@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import java.util.{Date, NoSuchElementException}
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, PointAssetOperations}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{Equipment, TierekisteriBusStopMarshaller, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Queries, Sequences}
@@ -96,9 +96,9 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
-  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Option[Long] = {
+  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {
+    //Remove the Livi ID
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, "")
-    massTransitStopDao.expireMassTransitStop(username, existingAsset.id)
     getLiviIdValue(existingAsset.propertyData).map {
       liviId =>
         if(MassTransitStopOperations.isVirtualBusStop(newProperties))
@@ -106,7 +106,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         else
           expireTierekisteriBusStop(existingAsset, liviId, username)
     }
-    None
   }
 
   override def enrichBusStop(persistedStop: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
@@ -327,4 +326,14 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   private def deleteTierekisteriBusStop(liviId: String): Unit  =
     if(tierekisteriClient.isTREnabled) tierekisteriClient.deleteMassTransitStop(liviId)
 
+
+  override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    val floatingReason = persistedAsset.propertyData.find(_.publicId == "kellumisen_syy").map(_.values).getOrElse(Seq()).headOption
+
+    if(persistedAsset.floating && floatingReason.nonEmpty && floatingReason.get.propertyValue == FloatingReason.TerminatedRoad.value.toString)
+      (persistedAsset.floating, Some(FloatingReason.TerminatedRoad))
+    else {
+      (false, None)
+    }
+  }
 }

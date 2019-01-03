@@ -15,11 +15,13 @@ import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTran
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
-class IntegrationApi(val massTransitStopService: MassTransitStopService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class IntegrationApi(val massTransitStopService: MassTransitStopService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
   val logger = LoggerFactory.getLogger(getClass)
+  protected val applicationDescription = "Integration API "
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
@@ -174,13 +176,18 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startNode" -> roadLink.attributes.get("STARTNODE"),
         "endNode" -> roadLink.attributes.get("ENDNODE"),
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
-                                                                         .filterNot(_._1 == "ROADNUMBER")
-                                                                         .filterNot(_._1 == "ROADPARTNUMBER")
-                                                                         .filterNot(_._1 == "STARTNODE")
-                                                                         .filterNot(_._1 == "ENDNODE")
-                                                                         .filterNot(_._1 == "CUST_OWNER")
-                                                                         .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+        "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+        "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+        "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+                                                                                              .filterNot(_._1 == "ROADNUMBER")
+                                                                                              .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                                              .filterNot(_._1 == "STARTNODE")
+                                                                                              .filterNot(_._1 == "ENDNODE")
+                                                                                              .filterNot(_._1 == "CUST_OWNER")
+                                                                                              .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+                                                                                              .filterNot(_._1 == "ACCESS_RIGHT_ID")
+                                                                                              .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
+                                                                                              .filterNot(_._1 == "ADDITIONAL_INFO")
 
     }
   }
@@ -242,7 +249,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case Prohibition.typeId => prohibitionService
         case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+        case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
         case HeightLimitInfo.typeId => linearHeightLimitService
         case   LengthLimit.typeId => linearLengthLimitService
         case WidthLimitInfo.typeId => linearWidthLimitService
@@ -582,10 +589,21 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           latestModificationTime(trafficSign.createdAt, trafficSign.modifiedAt),
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
-          "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue).getOrElse(""),
-          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt)),
+          "value" ->trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_value").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse("")),
+          "type" -> TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)),
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
-          "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue).getOrElse("")
+          "additionalInformation" -> trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse("")),
+          "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllTrafficSignsProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
+     )
+    }
+  }
+
+  private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
+    panels.map{panel =>
+      Map(
+        "type" -> TRTrafficSignType.apply(TrafficSignType.apply(panel.panelType)),
+        "value" -> panel.panelValue,
+        "information" -> panel.panelInfo
       )
     }
   }
@@ -600,7 +618,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  get("/changes/:assetType") {
+  //Description of Api entry point to get assets changes by asset type and between two dates
+  val getChangesOfAssetsByType =
+    (apiOperation[Long]("getChangesOfAssetsByType")
+      .parameters(
+        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
+        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.").optional,
+        queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presense of records modified by vvh_generated and not modified yet on the response. The value is True by default.").optional,
+        pathParam[String]("assetType").description("Asset type name to get the changes")
+      )
+      tags "Integration API (Kalpa API)"
+      summary "List all changes per assets type between two specific dates."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: api/integration/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
+      )
+
+  get("/changes/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
      val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
      val until = params.get("until") match {
@@ -634,7 +667,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-  get("/:assetType") {
+  //Description of Api entry point to get all assets by asset type and municipality
+  val getAssetsByTypeMunicipality =
+    (apiOperation[Long]("getAssetsByTypeMunicipality")
+      .parameters(
+        queryParam[Int]("municipality").description("Municipality Code where we will execute the search by specific asset type"),
+        pathParam[String]("assetType").description("Asset type name to get all assets")
+      )
+      tags "Integration API (Kalpa API)"
+      summary "List all valid assets on a specific municipality."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /api/integration/animal_warnings?municipality=749"
+      )
+
+  get("/:assetType", operation(getAssetsByTypeMunicipality)) {
     contentType = formats("json")+ "; charset=utf-8"
     params.get("municipality").map { municipality =>
       val municipalityNumber = municipality.toInt
@@ -679,6 +725,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "carrying_capacity" => carryingCapacitiesToApi(municipalityNumber)
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
         case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
+        case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

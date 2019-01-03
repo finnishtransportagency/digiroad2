@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimpleProperty, State}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
@@ -64,10 +64,10 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
     val trafficType = trAssetData.assetType.trafficSignType
-    val typeProperty = SimpleProperty(typePublicId, Seq(PropertyValue(trafficType.value.toString)))
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(trAssetData.assetValue)))
-      case _ => SimpleProperty(valuePublicId, Seq(PropertyValue(converter(trAssetData.assetType, trAssetData.assetValue))))
+      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
+      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(converter(trAssetData.assetType, trAssetData.assetValue))))
     }
 
     Set(typeProperty, valueProperty)

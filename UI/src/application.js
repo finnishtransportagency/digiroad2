@@ -366,7 +366,8 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
-       authorizationPolicy: asset.authorizationPolicy
+       authorizationPolicy: asset.authorizationPolicy,
+       readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
      });
      return acc;
     }, {});
@@ -426,6 +427,7 @@
 
   var setupProjections = function() {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+    ol.proj.proj4.register(proj4);
   };
 
   function getSelectedPointAsset(pointAssets, layerName) {

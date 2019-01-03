@@ -23,13 +23,15 @@
         });
 
         eventbus.on(layerName + ':unselected', function() {
-            rootElement.empty();
+          rootElement.find('#feature-attributes-header').empty();
+          rootElement.find('#feature-attributes-form').empty();
+          rootElement.find('#feature-attributes-footer').empty();
         });
     }
 
     function renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy) {
         var title = localizedTexts.title;
-        var header = '<header><span>' + title + '</span></header>';
+        var header = '<span>' + title + '</span>';
         var form = '';
         var propertyData;
 
@@ -41,7 +43,10 @@
             form += renderAssetFormElements(selectedAsset, typeId, propertyData);
         });
 
-        rootElement.html(header + '<div class="wrapper">' + form + '</div>');
+        rootElement.find('#feature-attributes-header').html(header);
+        rootElement.find('#feature-attributes-form').html('<div class="wrapper">' + form + '</div>');
+        rootElement.find('#feature-attributes-footer').html('');
+        rootElement.find('.information-content').empty();
     }
 
     function renderAssetFormElements(selectedAsset, typeId, propertyData) {
@@ -52,17 +57,21 @@
 
         var assetToDisplay = asset ? asset : defaultAsset;
 
-        return '' +
+      var informationLog = function (date, username) {
+         return date ? (date + ' / ' + username) : '-';
+      };
+
+      return '' +
             '  <div class="form form-horizontal form-dark form-pointasset">' +
             '    <div class="form-group">' +
             '      <p class="form-control-static asset-type-info grouped-assets">' + weightLimitsTypes[typeId] + '</p>' +
             '      <p class="form-control-static asset-type-info"> ID: ' + assetToDisplay.id + '</p>' +
             '    </div>' +
             '    <div class="form-group">' +
-            '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + assetToDisplay.createdBy + ' ' + assetToDisplay.createdAt + '</p>' +
+            '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n:' + informationLog(assetToDisplay.createdAt, assetToDisplay.createdBy) + '</p>' +
             '    </div>' +
             '    <div class="form-group">' +
-            '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (assetToDisplay.modifiedBy ? assetToDisplay.modifiedBy : '') + ' ' + (assetToDisplay.modifiedAt ? assetToDisplay.modifiedAt : '') + '</p>' +
+            '      <p class="form-control-static asset-log-info">Muokattu viimeksi:' + (assetToDisplay.modifiedAt ? assetToDisplay.modifiedAt + ' / ': '')  + (assetToDisplay.modifiedBy ? assetToDisplay.modifiedBy : '')  + '</p>' +
             '    </div>' +
             renderValueElement(assetToDisplay, propertyData) +
             '  </div>';

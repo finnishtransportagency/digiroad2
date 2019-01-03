@@ -16,6 +16,7 @@ import fi.liikennevirasto.digiroad2.dao.Queries
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
 
@@ -331,6 +332,71 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.obstacleType should equal(1)
+    }
+  }
+
+  test("Get obstacles changes") {
+    runWithRollback {
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_2", roadLink))
+
+      val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
+      changes.length should be(3)
+
+      service.expire(id)
+
+      val changesAfterExpire = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
+      changesAfterExpire.length should be(3)
+
+    }
+  }
+
+  test("Get only one obstacle change"){
+    runWithRollback{
+      val obstacleAssetTypeId = 220
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
+
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId,0, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
+      Queries.updateAssetGeometry(11, Point(5, 0))
+
+      val assets = service.getPersistedAssetsByIds(Set(11))
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink)
+
+      val changes = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-12-31T12:00Z"))
+      changes.length should be(1)
+    }
+  }
+
+  test("Obstacles get change does not return floating obstacles"){
+    runWithRollback{
+      val obstacleAssetTypeId = 220
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
+
+      sqlu"""insert into asset (id,asset_type_id,floating, created_date) VALUES (11,$obstacleAssetTypeId, 1, TO_DATE('17/12/2016', 'DD/MM/YYYY'))""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(10)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (11,${lrmPositionsIds(10)})""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400011, 11, 300080, 1)""".execute
+      Queries.updateAssetGeometry(11, Point(5, 0))
+
+      sqlu"""insert into asset (id,asset_type_id,floating) VALUES (2,$obstacleAssetTypeId,1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 388553075, null, 0.000, 25.000)""".execute
+      sqlu"""insert into asset_link (asset_id,position_id) VALUES (2,${lrmPositionsIds(1)})""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, 300080, 1)""".execute
+      Queries.updateAssetGeometry(2, Point(5, 0))
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+
+      val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
+      changes.length should be(0)
     }
   }
 }

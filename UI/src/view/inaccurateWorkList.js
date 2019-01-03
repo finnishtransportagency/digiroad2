@@ -6,6 +6,15 @@
       me.bindEvents();
     };
 
+    this.bindEvents = function() {
+      eventbus.on('workList-inaccurate:select', function(layerName, listP) {
+        $('.container').hide();
+        $('#work-list').show();
+        $('body').addClass('scrollable');
+        me.generateWorkList(layerName, listP);
+      });
+    };
+
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
 
       var municipalityHeader = function(municipalityName) {

@@ -55,7 +55,7 @@ object TRTrafficSignType {
     TimeLimit, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText, DrivingInServicePurposesAllowed, BusLane,
     BusLaneEnds, TramLane, BusStopForLocalTraffic, BusStopForLongDistanceTraffic, TramStop, TaxiStation, CompulsoryFootPath, CompulsoryCycleTrack, CombinedCycleTrackAndFootPath, ParallelCycleTrackAndFootPath,
     ParallelCycleTrackAndFootPath2, DirectionToBeFollowed3, DirectionToBeFollowed4, DirectionToBeFollowed5, CompulsoryRoundabout, PassThisSide, DividerOfTraffic, TaxiStationZoneBeginning, StandingPlaceForTaxi,
-    RoadNarrows, TwoWayTraffic, SwingBridge, RoadWorks, SlipperyRoad, PedestrianCrossingWarningSign, Cyclists, IntersectionWithEqualRoads, LightSignals, TramwayLine, FallingRocks, CrossWind, PriorityRoad, EndOfPriority,
+    RoadNarrows, TwoWayTraffic, SwingBridge, RoadWorks, SlipperyRoad, PedestrianCrossingWarningSign, Cyclists, Moose, Reindeer, IntersectionWithEqualRoads, LightSignals, TramwayLine, FallingRocks, CrossWind, PriorityRoad, EndOfPriority,
     PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, ParkingLot, OneWayRoad, Motorway, MotorwayEnds, ResidentialZone, EndOfResidentialZone, PedestrianZone, EndOfPedestrianZone, NoThroughRoad, NoThroughRoadRight,
     SymbolOfMotorway, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped, LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, StandingAndParkingProhibited,
     ParkingProhibited, ParkingProhibitedZone, EndOfParkingProhibitedZone, AlternativeParkingOddDays, Parking)
@@ -119,6 +119,8 @@ object TRTrafficSignType {
   case object PedestrianCrossingWarningSign extends TRTrafficSignType { def value = 151; def trafficSignType = TrafficSignType.PedestrianCrossingWarningSign; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
   case object WChildren extends TRTrafficSignType { def value = 152; def trafficSignType = TrafficSignType.WChildren; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
   case object Cyclists extends TRTrafficSignType { def value = 153; def trafficSignType = TrafficSignType.Cyclists; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
+  case object Moose extends TRTrafficSignType { def value = 155; def trafficSignType = TrafficSignType.Moose; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
+  case object Reindeer extends TRTrafficSignType { def value = 156; def trafficSignType = TrafficSignType.Reindeer; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
   case object IntersectionWithEqualRoads extends TRTrafficSignType { def value = 161; def trafficSignType = TrafficSignType.IntersectionWithEqualRoads; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
   case object LightSignals extends TRTrafficSignType { def value = 165; def trafficSignType = TrafficSignType.LightSignals; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }
   case object TramwayLine extends TRTrafficSignType { def value = 167; def trafficSignType = TrafficSignType.TramwayLine; def group = TrafficSignTypeGroup.GeneralWarningSigns; def source = Seq("CSVimport", "TRimport") }

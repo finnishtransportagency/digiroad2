@@ -6,6 +6,7 @@
     var originalLinearAssetValue = null;
     var isSeparated = false;
     var isValid = true;
+    var multipleSelected;
 
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
@@ -35,6 +36,7 @@
     };
 
     this.open = function(linearAsset, singleLinkSelect) {
+      multipleSelected = false;
       self.close();
       selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       originalLinearAssetValue = self.getValue();
@@ -63,6 +65,7 @@
     };
 
     this.openMultiple = function(linearAssets) {
+      multipleSelected = true;
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
       var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
@@ -283,14 +286,14 @@
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
+        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
       }
     };
 
     this.setMultiValue = function(value) {
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
-        eventbus.trigger(multiElementEvent('valueChanged'), self);
+        eventbus.trigger(multiElementEvent('valueChanged'), self, multipleSelected);
     };
 
     function isValueDifferent(selection){
