@@ -179,7 +179,7 @@ object AssetValidatorProcess {
         if(assetName == "speedLimit")
           verifyInaccurateSpeedLimits()
         else
-          validateAssets(validatorProcessAssets.get(assetName).get)
+          validateAssets(validatorProcessAssets(assetName))
       }else{
         println(s"The asset with name $assetName is not supported")
         println()

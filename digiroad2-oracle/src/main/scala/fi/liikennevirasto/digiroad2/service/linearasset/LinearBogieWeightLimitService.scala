@@ -18,20 +18,8 @@ class LinearBogieWeightLimitService(roadLinkServiceImpl: RoadLinkService, eventB
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
-  def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-
-  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = {
-    withDynTransaction {
-      inaccurateDAO.getInaccurateAsset(typeId, municipalities, adminClass)
-        .groupBy(_.municipality)
-        .mapValues {
-          _.groupBy(_.administrativeClass)
-            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
-        }
-    }
-  }
 
   override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
     val outputIds = withDynTransaction {
