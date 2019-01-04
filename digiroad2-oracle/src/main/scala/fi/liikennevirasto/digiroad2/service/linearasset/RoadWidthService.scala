@@ -144,15 +144,16 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
         }
       toInsert.foreach{ linearAsset =>
+        val roadlink = roadLinks.find(_.linkId == linearAsset.linkId)
         val id = (linearAsset.createdBy, linearAsset.createdDateTime) match {
           case (Some(createdBy), Some(createdDateTime)) =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
               Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.modifiedBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, Some(MmlNls.value))
+              getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, Some(MmlNls.value), geometry = getGeometry(roadlink))
           case _ =>
             dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
               Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp,
-              getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), verifiedBy = linearAsset.verifiedBy, informationSource = Some(MmlNls.value))
+              getLinkSource(roadlink), verifiedBy = linearAsset.verifiedBy, informationSource = Some(MmlNls.value), geometry = getGeometry(roadlink))
         }
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>

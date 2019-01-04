@@ -19,4 +19,21 @@ object LinearAssetPartitioner extends GraphPartitioner {
 
     linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ oneWayLinks.map(x => Seq(x))
   }
+
+  def partition[T <: PieceWiseLinearAsset](links: Seq[T]): Seq[Seq[T]] = {
+    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
+    val linkGroups = twoWayLinks.groupBy { link =>
+      (link.administrativeClass, link.value, link.id == 0)
+    }
+
+    val (linksToPartition, linksToPass) = linkGroups.partition { case ((_, _, _), _) => true }
+
+    val clusters = linksToPartition.values.map(p => {
+      clusterLinks(p)
+    }).toSeq.flatten
+
+    val linkPartitions = clusters.map(linksFromCluster)
+
+    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ oneWayLinks.map(x => Seq(x))
+  }
 }

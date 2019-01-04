@@ -146,7 +146,7 @@
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     var isComplementaryActive = false;
     var extraEventListener = _.extend({running: false}, eventbus);
-    this.minZoomForContent = isExperimental ? zoomlevels.oneKmZoomLvl: zoomlevels.minZoomForRoadLinks;
+    this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
     var historyLayer = new RoadHistoryLayer(map, roadCollection);
     var linkPropertyHistoryLayerStyles = LinkPropertyLayerStyles(historyLayer);

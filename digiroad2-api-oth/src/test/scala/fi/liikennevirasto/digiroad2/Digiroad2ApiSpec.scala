@@ -323,7 +323,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
@@ -333,19 +333,19 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(400)
     }
   }
 
   test("get complementary numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(400)
     }
   }
 
   test("get complementary numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)

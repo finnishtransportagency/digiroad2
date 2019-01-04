@@ -78,6 +78,13 @@ trait LinearAssetOperations {
     }
   }
 
+  protected def getGeometry(roadLink: Option[RoadLinkLike]): Seq[Point] = {
+    roadLink match {
+      case Some(road) => road.geometry
+      case _ => Seq()
+    }
+  }
+
   def validateMinDistance(measure1: Double, measure2: Double): Boolean = {
     val minDistanceAllow = 0.01
     val (maxMeasure, minMeasure) = (math.max(measure1, measure2), math.min(measure1, measure2))
@@ -548,16 +555,17 @@ trait LinearAssetOperations {
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
       }
       toInsert.foreach{ linearAsset =>
+        val roadlink = roadLinks.find(_.linkId == linearAsset.linkId)
         val id =
           (linearAsset.createdBy, linearAsset.createdDateTime) match {
             case (Some(createdBy), Some(createdDateTime)) =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate)
+                getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = getGeometry(roadlink))
             case _ =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+                getLinkSource(roadlink), geometry = getGeometry(roadlink))
           }
 
         linearAsset.value match {
@@ -643,6 +651,14 @@ trait LinearAssetOperations {
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       Seq(existingId, createdId).flatten
+    }
+  }
+
+
+  def getByZoomLevel(typeId: Int, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[PieceWiseLinearAsset]] = {
+    withDynTransaction {
+      val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), linkGeomSource)
+      LinearAssetPartitioner.partition(assets)
     }
   }
 
@@ -740,7 +756,7 @@ trait LinearAssetOperations {
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource, geometry = getGeometry(roadLink))
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
