@@ -309,9 +309,11 @@ sealed trait HazmatTransportProhibitionClass {
 object HazmatTransportProhibitionClass {
   val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
 
-  def fromTrafficSign(trafficSign: TrafficSignType): Set[ProhibitionClass] = ???
+  def apply(value: Int): HazmatTransportProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
 
-  def toTrafficSign(prohibitionValue: Int): TrafficSignType = ???
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    HazmatTransportProhibitionClass.apply(prohibitionValue).trafficSign
 
   case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
     def value: Int = 24

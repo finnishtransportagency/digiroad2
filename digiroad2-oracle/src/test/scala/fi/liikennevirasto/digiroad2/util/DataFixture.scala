@@ -1664,51 +1664,82 @@ object DataFixture {
 
       val (first, last) = if (oppositePoint == start) {
         val middle = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, 20)
-        if(middle.nonEmpty) (start, middle.get) else (start, end)
+        if (middle.nonEmpty) (start, middle.get) else (start, end)
       } else {
         val middle = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry.reverse, 20)
-        if(middle.nonEmpty) (middle.get, end) else (start, end)
+        if (middle.nonEmpty) (middle.get, end) else (start, end)
       }
 
       val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
-//      val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).filterNot( _ == TrafficSignType.Unknown).map {
-//        trafficValue =>
-//          SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(trafficValue.OTHvalue.toString)))}
+      //      val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).filterNot( _ == TrafficSignType.Unknown).map {
+      //        trafficValue =>
+      //          SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(trafficValue.OTHvalue.toString)))}
 
-      val assetPublicProperty = SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString)))
+      val assetPublicProperty = Seq(SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))))
 
-      val additionalProperties = additionalPanelOrganizer(assetValue)
-      additionalProperties
-      //(propertiesData.map { propertyData => IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, Set(propertyData), validityDirection, Some(angle.toInt))}.toSet, roadLink)
-    }
 
-    def additionalPanelOrganizer(assetValues: Seq[ProhibitionValue]): Seq[SimpleTrafficSignProperty] = {
-      val formIndex = 1
-      val properties = Seq()
-      if(assetValues.size < 3) {
-        assetValues.map { value =>
-          properties :+ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(value.typeId).OTHvalue, "", "", formIndex))))
-          val convertedDays = value.validityPeriods.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
-          val timePeriods = value.validityPeriods.map { period =>
-            val day = ValidityPeriodDayOfWeek.apply(period.days.toString)
-            if(day == ValidityPeriodDayOfWeek.Saturday)
-              s"(${period.startHour} - ${period.endHour})"
-            else
-              s"${period.startHour} - ${period.endHour}"
-          }.mkString(" ")
-          if(convertedDays.size > 1 && convertedDays.size <= 3) {
-            properties :+ SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", formIndex + 1)))
-//          } else if(convertedDays.size > 3){
-//
-          } else {
-            properties :+ SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", formIndex + 1)))
-          }
+
+      val numberOfAdditionalPanels = assetValue.map { group =>
+        Math.ceil(group.validityPeriods.size.toFloat / 3) + 1
+      }.sum
+
+      if(numberOfAdditionalPanels > 3) {
+        val groupedAssetValue = assetValue.groupBy(_.typeId).values.head.map { validityPeriod =>
+          getProperties(validityPeriod)
+
+          (IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, propertiesA.toSet, validityDirection, Some(angle.toInt)), roadLink)
         }
-      }
-      properties
+      } else
+        getProperties(validityPeriod)
+
+//      if (Math.ceil(groupedAssetValue._1.head.validityPeriods.size % 3) + Math.ceil(groupedAssetValue._2.head.validityPeriods.size % 3) > 1) {
+//
+//        val propertiesA = if (groupedAssetValue._1.nonEmpty)
+//          getProperties(groupedAssetValue._1.head)
+//        else
+//          Seq()
+//
+//        val propertiesB = if (groupedAssetValue._2.nonEmpty)
+//          getProperties(groupedAssetValue._2.head)
+//        else
+//          Seq()
+//
+//        val result = propertiesA ++ propertiesB
+//        result
+//      }
+      //(IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, propertiesA.toSet, validityDirection, Some(angle.toInt)), roadLink)
     }
+
+    def validPeriods(periodValues: Set[ValidityPeriod], position: Int) : Seq[SimpleTrafficSignProperty] = {
+      val splitPeriods = periodValues.splitAt(3)
+      if(splitPeriods._1.nonEmpty) {
+        val convertedDays = splitPeriods._1.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
+        val timePeriods = splitPeriods._1.map { period =>
+          val day = ValidityPeriodDayOfWeek.apply(period.days.toString)
+          if(day == ValidityPeriodDayOfWeek.Saturday)
+            s"(${period.startHour} - ${period.endHour})"
+          else
+            s"${period.startHour} - ${period.endHour}"
+        }.mkString(" ")
+        Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", position)))) ++ validPeriods(splitPeriods._2, position + 1)
+      } else {
+        Seq()
+      }
+    }
+
+    def getProperties(assetValues: ProhibitionValue): Seq[SimpleTrafficSignProperty] = {
+      val formIndex = 1
+      val properties = Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(assetValues.typeId).OTHvalue, "", "", formIndex))))
+      if(assetValues.validityPeriods.nonEmpty)
+        properties ++ validPeriods(assetValues.validityPeriods, formIndex + 1)
+      else
+        properties
+    }
+
+
     println("\nStarting create traffic signs using Linear Asset")
     println(DateTime.now())
+
 
     //Get All Municipalities
     val municipalities: Seq[Int] = Seq(766)
