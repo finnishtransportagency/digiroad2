@@ -277,13 +277,11 @@ object TimePeriodClass {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  def toTrafficSign(timeValue: Seq[Int]): Seq[TrafficSignType] = {
+  def toTrafficSign(timeValue: Seq[Int]): TrafficSignType = {
     if (timeValue.size > 1) {
-      Seq(ValidMultiplePeriod)
+      ValidMultiplePeriod
     } else
-      timeValue.map { value =>
-        TimePeriodClass.apply(value).trafficSign
-    }
+      TimePeriodClass.apply(timeValue.head).trafficSign
   }
 
   case object ValidMultiplePeriodTime extends TimePeriodClass {

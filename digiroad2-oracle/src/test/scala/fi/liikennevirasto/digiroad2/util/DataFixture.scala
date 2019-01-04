@@ -1654,7 +1654,7 @@ object DataFixture {
         }}
     }
 
-    def setTrafficSignInfo(roadLink: RoadLink, persistedAsset: PersistedLinearAsset, oppositePoint: Point): (Set[IncomingTrafficSign], RoadLink) = {
+    def setTrafficSignInfo(roadLink: RoadLink, persistedAsset: PersistedLinearAsset, oppositePoint: Point) = {
       val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
       val (mValue, validityDirection) = if (oppositePoint == start) (persistedAsset.startMeasure, SideCode.TowardsDigitizing.value) else (persistedAsset.endMeasure, SideCode.AgainstDigitizing.value)
 
@@ -1677,34 +1677,54 @@ object DataFixture {
 
       val assetPublicProperty = SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString)))
 
-      val additionalProperties = assetValue.map { value =>
-        SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(value.typeId).OTHvalue, "", "", 1)))
-
-        val validityPeriods = value.validityPeriods.map(_.days)
-
-      }
-
+      val additionalProperties = additionalPanelOrganizer(assetValue)
+      additionalProperties
       //(propertiesData.map { propertyData => IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, Set(propertyData), validityDirection, Some(angle.toInt))}.toSet, roadLink)
     }
 
+    def additionalPanelOrganizer(assetValues: Seq[ProhibitionValue]): Seq[SimpleTrafficSignProperty] = {
+      val formIndex = 1
+      val properties = Seq()
+      if(assetValues.size < 3) {
+        assetValues.map { value =>
+          properties :+ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(value.typeId).OTHvalue, "", "", formIndex))))
+          val convertedDays = value.validityPeriods.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
+          val timePeriods = value.validityPeriods.map { period =>
+            val day = ValidityPeriodDayOfWeek.apply(period.days.toString)
+            if(day == ValidityPeriodDayOfWeek.Saturday)
+              s"(${period.startHour} - ${period.endHour})"
+            else
+              s"${period.startHour} - ${period.endHour}"
+          }.mkString(" ")
+          if(convertedDays.size > 1 && convertedDays.size <= 3) {
+            properties :+ SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", formIndex + 1)))
+//          } else if(convertedDays.size > 3){
+//
+          } else {
+            properties :+ SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", formIndex + 1)))
+          }
+        }
+      }
+      properties
+    }
     println("\nStarting create traffic signs using Linear Asset")
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+    val municipalities: Seq[Int] = Seq(766)
+//      OracleDatabase.withDynSession {
+//        Queries.getMunicipalities
+//      }
 
     municipalities.foreach { municipality =>
       println(s"Starting create traffic signs for municipality $municipality")
       val roadLinks: Map[Long, Seq[RoadLink]] = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).groupBy(_.linkId)
 
       val existingAssets = withDynTransaction {
-        println(s"Expiring asset on municipaity $municipality")
-        trafficSignService.expire(roadLinks.keySet, username, false)
+//        println(s"Expiring asset on municipaity $municipality")
+//        trafficSignService.expire(roadLinks.keySet, username, false)
         println(s"Getting asset on municipaity $municipality")
-        oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, roadLinks.keySet.toSeq, false)
+        oracleLinearAssetDao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, roadLinks.keySet.toSeq, false)
       }
 
       val trafficSignsToCreate = existingAssets.flatMap { currentAsset =>
@@ -1735,12 +1755,12 @@ object DataFixture {
         }
       }.flatten
 
-      trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
-        trafficSigns.map {trafficSign =>
-          println("traffic ->  type: " + trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
-          trafficSignService.create(trafficSign, username, roadLink)
-        }
-      }
+//      trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
+//        trafficSigns.map {trafficSign =>
+//          println("traffic ->  type: " + trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
+//          trafficSignService.create(trafficSign, username, roadLink)
+//        }
+//      }
       println("")
       println("Complete at time: " + DateTime.now())
     }
@@ -1887,6 +1907,8 @@ object DataFixture {
         mergeAdditionalPanelsToTrafficSigns()
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
+      case Some("create_hazmat_traffic_signs_using_linear_asset") =>
+        createTrafficSignsUsingLinearAssetsForHazmat()
       case Some("create_prohibitions_using_traffic_signs") =>
         createProhibitionsUsingTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -1899,7 +1921,8 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs")
+        " create_manoeuvres_using_traffic_signs | merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs |" +
+        " create_hazmat_traffic_signs_using_linear_asset")
     }
   }
 }
