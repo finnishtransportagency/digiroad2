@@ -1679,7 +1679,6 @@ object DataFixture {
       }
 
       val lastFormIndex = numberOfAdditionalPanels.head.toInt + 1
-
       val formIndex = 1
 
       if(numberOfAdditionalPanels.sum > 3) {
@@ -1695,7 +1694,7 @@ object DataFixture {
       if(splitPeriods._1.nonEmpty) {
         val convertedDays = splitPeriods._1.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
         val timePeriods = splitPeriods._1.map { period =>
-          val day = ValidityPeriodDayOfWeek.apply(period.days.toString)
+          val day = period.days.value
           if(day == ValidityPeriodDayOfWeek.Saturday)
             s"(${period.startHour} - ${period.endHour})"
           else
