@@ -1654,7 +1654,7 @@ object DataFixture {
         }}
     }
 
-    def setTrafficSignInfo(roadLink: RoadLink, persistedAsset: PersistedLinearAsset, oppositePoint: Point) = {
+    def setTrafficSignInfo(roadLink: RoadLink, persistedAsset: PersistedLinearAsset, oppositePoint: Point): (Set[IncomingTrafficSign], RoadLink) = {
       val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
       val (mValue, validityDirection) = if (oppositePoint == start) (persistedAsset.startMeasure, SideCode.TowardsDigitizing.value) else (persistedAsset.endMeasure, SideCode.AgainstDigitizing.value)
 
@@ -1671,43 +1671,23 @@ object DataFixture {
       }
 
       val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
-      //      val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).filterNot( _ == TrafficSignType.Unknown).map {
-      //        trafficValue =>
-      //          SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(trafficValue.OTHvalue.toString)))}
 
       val assetPublicProperty = Seq(SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))))
 
-
-
       val numberOfAdditionalPanels = assetValue.map { group =>
         Math.ceil(group.validityPeriods.size.toFloat / 3) + 1
-      }.sum
+      }
 
-      if(numberOfAdditionalPanels > 3) {
-        val groupedAssetValue = assetValue.groupBy(_.typeId).values.head.map { validityPeriod =>
-          getProperties(validityPeriod)
+      val lastFormIndex = numberOfAdditionalPanels.head.toInt + 1
 
-          (IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, propertiesA.toSet, validityDirection, Some(angle.toInt)), roadLink)
-        }
-      } else
-        getProperties(validityPeriod)
+      val formIndex = 1
 
-//      if (Math.ceil(groupedAssetValue._1.head.validityPeriods.size % 3) + Math.ceil(groupedAssetValue._2.head.validityPeriods.size % 3) > 1) {
-//
-//        val propertiesA = if (groupedAssetValue._1.nonEmpty)
-//          getProperties(groupedAssetValue._1.head)
-//        else
-//          Seq()
-//
-//        val propertiesB = if (groupedAssetValue._2.nonEmpty)
-//          getProperties(groupedAssetValue._2.head)
-//        else
-//          Seq()
-//
-//        val result = propertiesA ++ propertiesB
-//        result
-//      }
-      //(IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, propertiesA.toSet, validityDirection, Some(angle.toInt)), roadLink)
+      if(numberOfAdditionalPanels.sum > 3) {
+        (assetValue.map { asset => IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, (assetPublicProperty ++ getProperties(asset, formIndex)).toSet, validityDirection, Some(angle.toInt))}.toSet, roadLink)
+      } else {
+        val properties = assetPublicProperty ++ getProperties(assetValue.head, formIndex) ++ getProperties(assetValue.tail.head, lastFormIndex)
+        (Set(IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, properties.toSet, validityDirection, Some(angle.toInt))), roadLink)
+      }
     }
 
     def validPeriods(periodValues: Set[ValidityPeriod], position: Int) : Seq[SimpleTrafficSignProperty] = {
@@ -1727,8 +1707,7 @@ object DataFixture {
       }
     }
 
-    def getProperties(assetValues: ProhibitionValue): Seq[SimpleTrafficSignProperty] = {
-      val formIndex = 1
+    def getProperties(assetValues: ProhibitionValue, formIndex: Int): Seq[SimpleTrafficSignProperty] = {
       val properties = Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(assetValues.typeId).OTHvalue, "", "", formIndex))))
       if(assetValues.validityPeriods.nonEmpty)
         properties ++ validPeriods(assetValues.validityPeriods, formIndex + 1)
@@ -1786,12 +1765,12 @@ object DataFixture {
         }
       }.flatten
 
-//      trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
-//        trafficSigns.map {trafficSign =>
-//          println("traffic ->  type: " + trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
-//          trafficSignService.create(trafficSign, username, roadLink)
-//        }
-//      }
+      trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
+        trafficSigns.map {trafficSign =>
+          println("traffic ->  type: " + trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
+          trafficSignService.create(trafficSign, username, roadLink)
+        }
+      }
       println("")
       println("Complete at time: " + DateTime.now())
     }
