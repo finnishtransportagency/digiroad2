@@ -202,7 +202,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   }
 
   def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink]): Seq[AdditionalPanelInfo] = {
-    val roadLinks = trafficSignAttributes.flatMap(_.roadLink)
+    val roadLinks = trafficSignAttributes.flatMap(_.roadLink) //TODO: toSet?
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val properties = trafficSignAttribute.properties
@@ -240,8 +240,8 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
        filteredAdditionalPanel
       } else Seq()
     }
-
-    additionalPanels.toSeq.diff(usedAdditionalPanels)
+    additionalPanels.filterNot(usedAdditionalPanels.toSet).toSeq
+//    additionalPanels.toSeq.diff(usedAdditionalPanels)
   }
 
   def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Set[Int]): ImportResult = {
@@ -286,13 +286,13 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       }
 
       val notImportedAdditionalPanel = createTrafficSigns(result.createdData)
-      result.copy(notImportedData =  notImportedAdditionalPanel.map{notImported =>
+      val resultWithExcluded  = result.copy(notImportedData = notImportedAdditionalPanel.map{notImported =>
         NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x:  ${notImported.position.get.x}  koordinaatti y  ${notImported.position.get.y} liikennevirran suunta ${notImported.validityDirection} " +
-          s" liikennemerkin tyyppi ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt} " +
-          s" arvo ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}}" +
+          s" liikennemerkin tyyppi ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt} " + //TODO: tr value, not oth value
+          s" arvo ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}" +
           s" lisatieto ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
       }.toList ::: result.notImportedData)
-      result
+      resultWithExcluded
       }
     }
 }

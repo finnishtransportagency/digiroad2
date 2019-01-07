@@ -354,11 +354,17 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   def getTrafficSignsProperties(propertyData: Set[SimpleTrafficSignProperty], property: String) : Option[TextPropertyValue] = {
-    propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+    propertyData.find(p => p.publicId == property) match {
+      case Some(additionalProperty) => additionalProperty.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+      case _ => None
+    }
   }
 
   def getAllTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Seq[PointAssetValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values
+    trafficSign.propertyData.find(p => p.publicId == property) match {
+      case Some(additionalProperty) => additionalProperty.values
+      case _ => Seq()
+    }
   }
 
   def getTrafficSignTypeByGroup(trafficSignGroup: TrafficSignTypeGroup): Set[Int] = {
@@ -424,7 +430,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       Math.abs(panel.mValue - mValue) < 0.001 && linkId == panel.linkId
     }
 
-    def allowedAdditionalPanels: Seq[AdditionalPanelInfo] = additionalPanels.to.filter {panel =>
+    def allowedAdditionalPanels: Seq[AdditionalPanelInfo] = additionalPanels.toSeq.filter {panel =>
       panelWithSamePosition(panel) ||
         trafficSign.allowed(TrafficSignType.applyOTHValue(getTrafficSignsProperties(panel.propertyData, typePublicId).
           get.propertyValue.toInt).asInstanceOf[AdditionalPanelsType])

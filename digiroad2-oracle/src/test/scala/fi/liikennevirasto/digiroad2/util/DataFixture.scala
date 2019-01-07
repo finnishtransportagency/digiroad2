@@ -1453,10 +1453,10 @@ object DataFixture {
     println(DateTime.now())
 
     //Get all municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession{
-        Queries.getMunicipalities
-      }
+    val municipalities: Seq[Int] = Seq(766)
+//      OracleDatabase.withDynSession{
+//        Queries.getMunicipalities
+//      }
 
     val additionalPanelIdToExpire : Seq[Long] = municipalities.flatMap { municipality =>
       println("")
@@ -1475,7 +1475,7 @@ object DataFixture {
           val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
           val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.propertyValue.toInt
           val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
-            AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.propertyType, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
+            AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
           }.toSet
 
           val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
@@ -1493,8 +1493,9 @@ object DataFixture {
         }
       }
     }
-    additionalPanelIdToExpire.foreach(id => trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id)), Some("batch_process_panel_merge")))
-
+    withDynSession{ //TODO: visualization: should probably be a session
+      additionalPanelIdToExpire.foreach(id => trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id)), Some("batch_process_panel_merge")))
+    }
     println("")
     errorLogBuffer.foreach(println)
     println("Complete at time: " + DateTime.now())
