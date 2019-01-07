@@ -1678,18 +1678,19 @@ object DataFixture {
         Math.ceil(group.validityPeriods.size.toFloat / 3) + 1
       }
 
-      val lastFormIndex = numberOfAdditionalPanels.head.toInt + 1
       val formIndex = 1
+      val lastFormIndex = numberOfAdditionalPanels.head.toInt + 1
 
       if(numberOfAdditionalPanels.sum > 3) {
-        (assetValue.map { asset => IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, (assetPublicProperty ++ getProperties(asset, formIndex)).toSet, validityDirection, Some(angle.toInt))}.toSet, roadLink)
+        (assetValue.map { asset =>
+          IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, (assetPublicProperty ++ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, getProperties(asset, formIndex)))).toSet, validityDirection, Some(angle.toInt))}.toSet, roadLink)
       } else {
-        val properties = assetPublicProperty ++ getProperties(assetValue.head, formIndex) ++ getProperties(assetValue.tail.head, lastFormIndex)
+        val properties = assetPublicProperty ++ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, getProperties(assetValue.head, formIndex) ++ getProperties(assetValue.tail.head, lastFormIndex)))
         (Set(IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, properties.toSet, validityDirection, Some(angle.toInt))), roadLink)
       }
     }
 
-    def validPeriods(periodValues: Set[ValidityPeriod], position: Int) : Seq[SimpleTrafficSignProperty] = {
+    def validPeriods(periodValues: Set[ValidityPeriod], position: Int) : Seq[AdditionalPanel] = {
       val splitPeriods = periodValues.splitAt(3)
       if(splitPeriods._1.nonEmpty) {
         val convertedDays = splitPeriods._1.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
@@ -1700,30 +1701,30 @@ object DataFixture {
           else
             s"${period.startHour} - ${period.endHour}"
         }.mkString(" ")
-        Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", position)))) ++ validPeriods(splitPeriods._2, position + 1)
+        Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", position)) ++ validPeriods(splitPeriods._2, position + 1)
       } else {
         Seq()
       }
     }
 
-    def getProperties(assetValues: ProhibitionValue, formIndex: Int): Seq[SimpleTrafficSignProperty] = {
-      val properties = Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(assetValues.typeId).OTHvalue, "", "", formIndex))))
-      if(assetValues.validityPeriods.nonEmpty)
+    def getProperties(assetValues: ProhibitionValue, formIndex: Int): Seq[AdditionalPanel] = {
+      val properties = Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(assetValues.typeId).OTHvalue, "", "", formIndex))
+      if(assetValues.validityPeriods.nonEmpty) {
         properties ++ validPeriods(assetValues.validityPeriods, formIndex + 1)
+      }
       else
         properties
     }
-
 
     println("\nStarting create traffic signs using Linear Asset")
     println(DateTime.now())
 
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = Seq(766)
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     municipalities.foreach { municipality =>
       println(s"Starting create traffic signs for municipality $municipality")
