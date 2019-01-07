@@ -329,6 +329,12 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
+  val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService, trafficSignManager), name = "trafficSignExpire")
+  eventbus.subscribe(trafficSignExpire, "trafficSign:expire")
+
+  val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
+  eventbus.subscribe(trafficSignCreate, "trafficSign:create")
+
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
 
