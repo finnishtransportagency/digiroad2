@@ -225,19 +225,19 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, roadLinks: Seq[VVHRoadlink]): Long = {
+  def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, nearbyLinks: Seq[VVHRoadlink]): Long = {
 
-    val (vvhRoad, municipality) = (roadLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
-      if (vvhRoad.isEmpty || vvhRoad.size > 1)
-        createFloatingWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, municipality)
-      else {
-          checkDuplicates(trafficSign) match {
-            case Some(existingAsset) =>
-              updateWithoutTransaction(existingAsset.id, trafficSign, closestLink, userProvider.getCurrentUser().username, None, None)
-            case _ =>
-              createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, closestLink)
-        }
+    val (vvhRoad, municipality) = (nearbyLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
+    if (vvhRoad.isEmpty || vvhRoad.size > 1)
+      createFloatingWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, municipality)
+    else {
+      checkDuplicates(trafficSign) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, trafficSign, closestLink, userProvider.getCurrentUser().username, None, None)
+        case _ =>
+          createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, closestLink)
       }
+    }
   }
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {

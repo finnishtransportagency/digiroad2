@@ -1453,25 +1453,26 @@ object DataFixture {
     println(DateTime.now())
 
     //Get all municipalities
-    val municipalities: Seq[Int] = Seq(766)
-//      OracleDatabase.withDynSession{
-//        Queries.getMunicipalities
-//      }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession{
+        Queries.getMunicipalities
+      }
 
-    val additionalPanelIdToExpire : Seq[Long] = municipalities.flatMap { municipality =>
-      println("")
-      println(s"Fetching Traffic Signs for Municipality: $municipality")
+    OracleDatabase.withDynSession {
 
-      val existingAssets = trafficSignService.getByMunicipality(municipality)
-      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+      val additionalPanelIdToExpire : Seq[Long] = municipalities.flatMap { municipality =>
+        println("")
+        println(s"Fetching Traffic Signs for Municipality: $municipality")
 
-      println("")
-      println(s"Number of existing assets: ${filteredAssets.length}")
-      println("")
+        val existingAssets = trafficSignService.getByMunicipality(municipality)
+        val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
-      filteredAssets.flatMap { sign =>
-        println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
-        OracleDatabase.withDynSession {
+        println("")
+        println(s"Number of existing assets: ${filteredAssets.length}")
+        println("")
+
+        filteredAssets.flatMap { sign =>
+          println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
           val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
           val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.propertyValue.toInt
           val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
@@ -1492,8 +1493,6 @@ object DataFixture {
           }
         }
       }
-    }
-    withDynSession{ //TODO: visualization: should probably be a session
       additionalPanelIdToExpire.foreach(id => trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id)), Some("batch_process_panel_merge")))
     }
     println("")
