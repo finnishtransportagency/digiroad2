@@ -397,45 +397,49 @@ object NumericalLimitFiller {
   }
 
   private def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    if (segments.size >= 2) {
-      val roadLinkLength = BigDecimal(roadLink.length).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-      val sortedSegmentsByStartMeasure = sortByStartMeasure(segments.distinct)
+    val segmenstWitoutDuplicates = segments.distinct
 
-      val mergeValues = sortedSegmentsByStartMeasure.flatMap { segment =>
-        sortedSegmentsByStartMeasure.filter(_.id != segment.id).map { segment2 =>
-          if (segment2.startMeasure >= segment.startMeasure &&
-            segment2.endMeasure <= segment.endMeasure) {
+    if (segmenstWitoutDuplicates.size >= 2 &&
+      segmenstWitoutDuplicates.count(_.createdBy.contains("automatic_process_prohibitions")) == segmenstWitoutDuplicates.size) {
 
-            val values = segment.value.get.asInstanceOf[Prohibitions].prohibitions.toSet ++ segment2.value.get.asInstanceOf[Prohibitions].prohibitions.toSet
-            val valueChanges =
-              if (values.size > 1) {
-                Seq(ValueAdjustment(segment2.id, Prohibitions(values.toSeq).asInstanceOf[Value], segment2.typeId))
-              } else {
-                Seq()
-              }
-            val segment2ToUpdate = segment2.copy(value = Some(Prohibitions(values.toSeq).asInstanceOf[Value]))
+      val minLengthToZip = 1.0
+      val pointsOfInterestOnSegments = (Seq(0, roadLink.length) ++ segments.flatMap(s => Seq(s.startMeasure, s.endMeasure))).distinct.sorted
+      val pointsOfInterestOnSegmentsZiped = pointsOfInterestOnSegments.zip(pointsOfInterestOnSegments.tail).filterNot{piece => (piece._2 - piece._1) < minLengthToZip}
 
-            if (segment.endMeasure == roadLinkLength &&
-              segment2.endMeasure == roadLinkLength) {
-              val segmentesMValueAdjust = MValueAdjustment(segment.id, segment.linkId, segment.startMeasure, segment2.startMeasure)
-              val segmentToUpdate = segment.copy(endMeasure = segment2.startMeasure)
-              (Seq(segmentToUpdate) ++ Seq(segment2ToUpdate), Seq(segmentesMValueAdjust), valueChanges)
-            } else {
-              val segmentesMValueAdjust = MValueAdjustment(segment2.id, segment2.linkId, segment.endMeasure, segment2.endMeasure)
-              val segmentToUpdate = segment2.copy(startMeasure = segment.endMeasure)
-              (Seq(segmentToUpdate) ++ Seq(segment2ToUpdate), Seq(segmentesMValueAdjust), valueChanges)
-            }
-
-          } else {
-            (Seq.empty, Seq.empty, Seq.empty)
-          }
-        }
+      val segmentsInOverlap = pointsOfInterestOnSegmentsZiped.find { poi =>
+        val startMeasurePOI = poi._1
+        val endMeasurePOI = poi._2
+        segmenstWitoutDuplicates.count(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure) > 1
       }
-      val newSegments = mergeValues.flatMap(_._1)
-      val newAdjustedMValues = mergeValues.flatMap(_._2)
-      val newAdjustedValues = mergeValues.flatMap(_._3)
 
-      (segments ++ newSegments, changeSet.copy(adjustedMValues = newAdjustedMValues, adjustedValues = newAdjustedValues))
+      val mergeValues =
+        if (segmentsInOverlap.nonEmpty) {
+          pointsOfInterestOnSegmentsZiped.flatMap { poi =>
+            val startMeasurePOI = poi._1
+            val endMeasurePOI = poi._2
+            val segmentsInsidePOI = segments.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
+
+            segmentsInsidePOI.size match {
+              case 0 =>
+                Seq.empty
+              case 1 =>
+                val segmentToUpdate = segmentsInsidePOI.head.copy(startMeasure = startMeasurePOI, endMeasure = endMeasurePOI)
+                Seq(segmentToUpdate)
+              case _ =>
+                val values =
+                  segmentsInsidePOI.flatMap { sPOI =>
+                    sPOI.value.get.asInstanceOf[Prohibitions].prohibitions
+                  }.toSet
+
+                val segmentToUpdate = segmentsInsidePOI.head.copy(startMeasure = startMeasurePOI, endMeasure = endMeasurePOI, value = Some(Prohibitions(values.toSeq).asInstanceOf[Value]))
+                Seq(segmentToUpdate)
+            }
+          }
+        } else {
+          return (segments, changeSet)
+        }
+
+      (segments ++ mergeValues, changeSet)
     } else {
       (segments, changeSet)
     }
@@ -534,7 +538,7 @@ object NumericalLimitFiller {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
-//      mergeValuesExistingOnSameRoadLink,
+      mergeValuesExistingOnSameRoadLink,
       expireOverlappingSegments,
       combine,
       fuse,
