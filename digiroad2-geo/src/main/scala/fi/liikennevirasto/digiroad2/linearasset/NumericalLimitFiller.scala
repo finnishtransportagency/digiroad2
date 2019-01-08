@@ -414,32 +414,36 @@ object NumericalLimitFiller {
 
       val mergeValues =
         if (segmentsInOverlap.nonEmpty) {
-          pointsOfInterestOnSegmentsZiped.flatMap { poi =>
+          pointsOfInterestOnSegmentsZiped.map { poi =>
             val startMeasurePOI = poi._1
             val endMeasurePOI = poi._2
-            val segmentsInsidePOI = segments.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
+            val segmentsInsidePOI = segmenstWitoutDuplicates.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
 
             segmentsInsidePOI.size match {
               case 0 =>
-                Seq.empty
+                (Seq.empty, Seq.empty)
               case 1 =>
-                val segmentToUpdate = segmentsInsidePOI.head.copy(startMeasure = startMeasurePOI, endMeasure = endMeasurePOI)
-                Seq(segmentToUpdate)
+                val segmentToUpdate = segmentsInsidePOI.head.copy(id = 0L, startMeasure = startMeasurePOI, endMeasure = endMeasurePOI)
+                (Seq(segmentToUpdate), segmenstWitoutDuplicates.map(_.id))
               case _ =>
                 val values =
                   segmentsInsidePOI.flatMap { sPOI =>
                     sPOI.value.get.asInstanceOf[Prohibitions].prohibitions
                   }.toSet
-
-                val segmentToUpdate = segmentsInsidePOI.head.copy(startMeasure = startMeasurePOI, endMeasure = endMeasurePOI, value = Some(Prohibitions(values.toSeq).asInstanceOf[Value]))
-                Seq(segmentToUpdate)
+                val segmentToCreate =
+                  sortNewestFirst(segmentsInsidePOI).head.copy(id = 0L, startMeasure = startMeasurePOI,
+                    endMeasure = endMeasurePOI, value = Some(Prohibitions(values.toSeq).asInstanceOf[Value]))
+                (Seq(segmentToCreate), segmenstWitoutDuplicates.map(_.id))
             }
           }
         } else {
           return (segments, changeSet)
         }
 
-      (segments ++ mergeValues, changeSet)
+      val newSegments = mergeValues.flatMap(_._1)
+      val segmentsToExpire = mergeValues.flatMap(_._2).toSet
+
+      (newSegments ++ segments, changeSet.copy(expiredAssetIds = segmentsToExpire))
     } else {
       (segments, changeSet)
     }
