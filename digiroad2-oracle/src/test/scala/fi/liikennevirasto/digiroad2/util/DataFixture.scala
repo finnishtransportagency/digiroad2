@@ -1496,7 +1496,7 @@ object DataFixture {
     println("\nStart process to add geometry on linear assets")
     println(DateTime.now())
 
-    val assetTypes = Set(DamagedByThaw.typeId)
+    val assetTypes = Set(DamagedByThaw.typeId, LitRoad.typeId, NumberOfLanes.typeId, TotalWeightLimit.typeId)
     //Get All Municipalities
     val municipalities: Seq[Int] =  OracleDatabase.withDynSession {
         Queries.getMunicipalities
