@@ -1,13 +1,15 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, TrafficSignType}
+import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibitionClass, TimePeriodClass, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
 class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -20,6 +22,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
   override def assetDao: OracleAssetDao = new OracleAssetDao
 
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
+  lazy val trafficSignService = new TrafficSignService(roadLinkService, new OracleUserProvider, eventBus)
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     if (newLinearAssets.nonEmpty)
@@ -89,5 +92,81 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
             .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
         }
     }
+  }
+
+  def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel) : Set[ValidityPeriod] = {
+    TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
+      val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
+      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
+      val validPeriods =  regexMatch.findAllMatchIn(additionalPanel.panelInfo)
+
+      if(validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
+        val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
+        validPeriods.zipWithIndex.map { case (timePeriod, index) =>
+          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
+          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, convertPeriod(index))
+        }.toSet
+
+      }else
+        validPeriods.map { timePeriod =>
+          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
+          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value))
+        }
+    }
+  }
+
+
+  def createValue(additionalPanels: Seq[AdditionalPanel]) :Seq[ProhibitionValue] = {
+    additionalPanels.foldLeft(Seq.empty[ProhibitionValue]) { case (result, additionalPanel) =>
+      val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
+
+      val typeId = HazmatTransportProhibitionClass.fromTrafficSign(trafficSignType)
+
+      if (typeId.nonEmpty) {
+        result ++ Seq(ProhibitionValue(typeId.head.value, Set(), Set()))
+      }else {
+        val validityPeriod: Set[ValidityPeriod] = createValidPeriod(trafficSignType, additionalPanel)
+        result.init :+ result.last.copy(validityPeriods = validityPeriod)
+      }
+    }
+  }
+
+  override def createProhibitionFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+    logger.info("Creating prohibition from traffic sign")
+    val tsLinkId = trafficSignInfo.linkId
+    val tsDirection = trafficSignInfo.validityDirection
+
+    if (tsLinkId != trafficSignInfo.roadLink.linkId)
+      throw new ProhibitionCreationException(Set("Wrong roadlink"))
+
+    if (SideCode(tsDirection) == SideCode.BothDirections)
+      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
+
+    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
+
+    val roadLinks = roadLinkService.recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
+    logger.info("End of fetch for adjacents")
+
+    val orderedPanel = trafficSignInfo.additionalPanel.sortBy(_.formPosition)
+
+    val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+
+    if (prohibitionValue.nonEmpty) {
+      val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
+        val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
+          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
+          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
+          case _ => (0, roadLink.length)
+
+        }
+        val assetId = createWithoutTransaction(HazmatTransportProhibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
+          "automatic_process_hazmatTransportProhibition", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
+
+        logger.info(s"HazmatTransportProhibition created with id: $assetId")
+        assetId
+      }
+      ids
+    }
+    else Seq()
   }
 }

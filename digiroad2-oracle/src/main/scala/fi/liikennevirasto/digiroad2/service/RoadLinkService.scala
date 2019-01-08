@@ -1141,6 +1141,28 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }).getOrElse(Nil)
   }
 
+  def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): Seq[RoadLink] = {
+    val (roadNamePublicId, roadNameSource) =
+      sourceRoadLink.attributes.get("ROADNAME_FI") match {
+        case Some(nameFi) =>
+          ("ROADNAME_FI", nameFi.toString)
+        case _ =>
+          ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+      }
+
+    val adjacents = getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.getOrElse(roadNamePublicId, "").toString != roadNameSource)
+    if(adjacents.isEmpty)
+      Seq.empty
+    else {
+      val nextAdjacents = getAdjacent(adjacents.head.linkId, Seq(GeometryUtils.getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)
+      if (adjacents.size == 1 && nextAdjacents.exists(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)) {
+        recursiveGetAdjacent(adjacents.head, GeometryUtils.getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
+      } else {
+        intermediants ++ adjacents
+      }
+    }
+  }
+
   def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
     val cPoint =  getConnectionPoint(lastLink, candidates)
     val forward = getGeometryLastSegmentVector(cPoint, lastLink)

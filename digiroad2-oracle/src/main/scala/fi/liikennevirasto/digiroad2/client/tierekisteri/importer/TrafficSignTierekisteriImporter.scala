@@ -33,6 +33,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  val additionalPublicId = "additional_panel"
 
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels)
 
@@ -87,7 +88,8 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getTrafficSignsProperties(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.trafficSignsCreateAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink), false)
+            val additionalPanel = trafficSignService.getAllTrafficSignsProperties(trafficSign, additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
+            trafficSignManager.trafficSignsCreateAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, additionalPanel), false)
           }
           newId
       }

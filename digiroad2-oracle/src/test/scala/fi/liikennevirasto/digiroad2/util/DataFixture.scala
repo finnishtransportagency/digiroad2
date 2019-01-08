@@ -1430,7 +1430,7 @@ object DataFixture {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
+              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, Seq()))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
@@ -1801,7 +1801,7 @@ object DataFixture {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
+              prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, Seq()))
               println(s"prohibition created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create prohibition")

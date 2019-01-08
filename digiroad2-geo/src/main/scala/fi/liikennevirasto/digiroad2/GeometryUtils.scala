@@ -412,4 +412,12 @@ object GeometryUtils {
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+
+  def getOpositePoint(geometry: Seq[Point], point: Point) : Point = {
+    val (headPoint, lastPoint) = geometryEndpoints(geometry)
+    if(areAdjacent(headPoint, point))
+      lastPoint
+    else
+      headPoint
+  }
 }

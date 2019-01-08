@@ -15,7 +15,7 @@ import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
-case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink)
+case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, additionalPanel: Seq[AdditionalPanel])
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
   def eventBus: DigiroadEventBus = eventBusImpl
@@ -71,7 +71,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val id = OracleTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
 
-    eventBus.publish("trafficSign:create", TrafficSignInfo(id, asset.linkId, asset.validityDirection, getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt, mValue, roadLink))
+    eventBus.publish("trafficSign:create", TrafficSignInfo(id, asset.linkId, asset.validityDirection, getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt, mValue, roadLink, getAllTrafficSignsProperties(asset, additionalPublicId).map(_.asInstanceOf[AdditionalPanel])))
     id
   }
 
@@ -354,11 +354,24 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   def getTrafficSignsProperties(propertyData: Set[SimpleTrafficSignProperty], property: String) : Option[TextPropertyValue] = {
-    propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+    propertyData.find(p => p.publicId == property) match {
+      case Some(additionalProperty) => additionalProperty.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+      case _ => None
+    }
   }
 
   def getAllTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Seq[PointAssetValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values
+    trafficSign.propertyData.find(p => p.publicId == property) match {
+      case Some(result) => result.values
+      case _ => Seq()
+    }
+  }
+
+  def getAllTrafficSignsProperties(trafficSign: IncomingTrafficSign, property: String) : Seq[PointAssetValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property) match {
+      case Some(result) => result.values
+      case _ => Seq()
+    }
   }
 
   def getTrafficSignTypeByGroup(trafficSignGroup: TrafficSignTypeGroup): Set[Int] = {

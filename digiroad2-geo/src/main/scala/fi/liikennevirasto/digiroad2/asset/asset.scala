@@ -277,6 +277,10 @@ object TimePeriodClass {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[TimePeriodClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+
   def toTrafficSign(timeValue: Seq[Int]): TrafficSignType = {
     if (timeValue.size > 1) {
       ValidMultiplePeriod
@@ -309,6 +313,9 @@ sealed trait HazmatTransportProhibitionClass {
 object HazmatTransportProhibitionClass {
   val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
 
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[HazmatTransportProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
   def apply(value: Int): HazmatTransportProhibitionClass =
     values.find(_.value == value).getOrElse(Unknown)
 
