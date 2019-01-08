@@ -1521,7 +1521,8 @@ object DataFixture {
                   println(s"Calculating geometry of asset with id ${asset.id}")
                   val geometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
                   println(s"Updating asset with id ${asset.id}")
-                  assetDao.updateAssetsWithGeometry(asset, geometry.head, geometry.last)
+                  if(geometry.nonEmpty)
+                    assetDao.updateAssetsWithGeometry(asset, geometry.head, geometry.last)
               }
           }
         }
