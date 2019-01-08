@@ -22,12 +22,13 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import slick.jdbc.{StaticQuery => Q}
+
 import scala.collection.mutable.ListBuffer
 
 
@@ -93,6 +94,10 @@ object DataFixture {
 
   lazy val prohibitionService: ProhibitionService = {
     new ProhibitionService(roadLinkService, eventbus)
+  }
+
+  lazy val hazmatProhibitionService: HazmatTransportProhibitionService = {
+    new HazmatTransportProhibitionService(roadLinkService, eventbus)
   }
 
   lazy val trafficSignService: TrafficSignService = {
@@ -486,7 +491,7 @@ object DataFixture {
 
     println("Processing %d assets floating".format(assets.length))
 
-    if(assets.length > 0){
+    if(assets.nonEmpty){
 
       val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
@@ -516,7 +521,7 @@ object DataFixture {
 
     println("Processing %d assets not floating".format(assets.length))
 
-    if(assets.length > 0){
+    if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
       val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
@@ -611,16 +616,14 @@ object DataFixture {
                 println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" national ID "+peristedStop.nationalId+" distance "+distance)
                 Some(NearestBusStops(trStop, peristedStop, distance))
               }
-            case _ => {
+            case _ =>
               println("Can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
               None
-            }
           }
         }catch {
-          case e: RoadAddressException => {
+          case e: RoadAddressException =>
             println("RoadAddress throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
             None
-          }
         }
     }
 
@@ -652,7 +655,7 @@ object DataFixture {
 
     println("Processing %d assets not floating".format(assets.length))
 
-    if (assets.length > 0) {
+    if (assets.nonEmpty) {
 
       val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
@@ -810,13 +813,12 @@ object DataFixture {
         roadLinkDirectionValue match {
           case Some(trafficDirection) =>
             // Validate if OTH Bus stop are in conflict with road link traffic direction
-            if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head.toString() != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
+            if ((roadLinkDirectionValue.head.toString != SideCode.BothDirections.toString) && (roadLinkDirectionValue.head.toString != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
               //Add a list of conflicted Bus Stops
               conflictedBusStopsOTH = conflictedBusStopsOTH ++ List(stop)
             }
-          case _ => {
+          case _ =>
             None
-          }
         }
       }
 
@@ -1120,9 +1122,8 @@ object DataFixture {
             val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
             assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
           } catch {
-            case ex: Exception => {
+            case ex: Exception =>
               println(s"""asset id ${asset._1} in link id ${asset._2} as failed with the following exception ${ex.getMessage}""")
-            }
           }
         }
       }
@@ -1696,7 +1697,7 @@ object DataFixture {
         val convertedDays = splitPeriods._1.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
         val timePeriods = splitPeriods._1.map { period =>
           val day = period.days.value
-          if(day == ValidityPeriodDayOfWeek.Saturday)
+          if(day == Saturday.value)
             s"(${period.startHour} - ${period.endHour})"
           else
             s"${period.startHour} - ${period.endHour}"
@@ -1776,8 +1777,7 @@ object DataFixture {
     }
   }
 
-
-  def createProhibitionsUsingTrafficSigns(): Unit = {
+  def createProhibitionsUsingTrafficSigns(service : ProhibitionService): Unit = {
     //Get All Municipalities
     println(s"Obtaining Municipalities")
     val municipalities: Seq[Int] =
@@ -1801,10 +1801,11 @@ object DataFixture {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, Seq()))
+              val additional_info = trafficSignService.getAllTrafficSignsProperties(ts, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
+              service.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, additional_info))
               println(s"prohibition created for traffic sign with id: ${ts.id}")
             case _ =>
-              println(s"No roadLink available to create prohibition")
+              println("No roadLink available to create prohibition")
               println(s"Asset id ${ts.id} did not generate a prohibition ")
           }
         }catch {
@@ -1920,7 +1921,9 @@ object DataFixture {
       case Some("create_hazmat_traffic_signs_using_linear_asset") =>
         createTrafficSignsUsingLinearAssetsForHazmat()
       case Some("create_prohibitions_using_traffic_signs") =>
-        createProhibitionsUsingTrafficSigns()
+        createProhibitionsUsingTrafficSigns(prohibitionService)
+      case Some("create_hazmat_prohibitions_using_traffic_signs") =>
+        createProhibitionsUsingTrafficSigns(hazmatProhibitionService)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +

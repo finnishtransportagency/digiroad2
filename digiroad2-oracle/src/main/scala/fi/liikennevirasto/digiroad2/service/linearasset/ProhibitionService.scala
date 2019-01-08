@@ -300,6 +300,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue.toSeq), BothDirections.value, Measures(startMeasure, endMeasure),
           "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
 
+        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
+
         logger.info(s"Prohibition created with id: $assetId")
         assetId
       }

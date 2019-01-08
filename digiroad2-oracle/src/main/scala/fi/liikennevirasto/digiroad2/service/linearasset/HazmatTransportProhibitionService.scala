@@ -162,6 +162,8 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         val assetId = createWithoutTransaction(HazmatTransportProhibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
           "automatic_process_hazmatTransportProhibition", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
 
+        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
+
         logger.info(s"HazmatTransportProhibition created with id: $assetId")
         assetId
       }
