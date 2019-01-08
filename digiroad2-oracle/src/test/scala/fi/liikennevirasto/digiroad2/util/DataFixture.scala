@@ -1506,7 +1506,7 @@ object DataFixture {
       municipality =>
 
         println(s"Obtaining all Road Links for Municipality: $municipality")
-        val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipality)
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)._1
         println(s"End of roadLinks fetch for Municipality: $municipality")
         OracleDatabase.withDynTransaction {
           println("Fetching assets")
