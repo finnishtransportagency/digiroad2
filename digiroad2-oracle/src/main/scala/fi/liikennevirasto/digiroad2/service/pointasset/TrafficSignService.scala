@@ -25,7 +25,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _ )
 
-  override def typeId: Int = 300
+  override def typeId: Int = TrafficSigns.typeId
 
   override def setAssetPosition(asset: IncomingTrafficSign, geometry: Seq[Point], mValue: Double): IncomingTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {

@@ -22,7 +22,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday, Weekday}
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -1575,6 +1575,7 @@ object DataFixture {
       }
 
      val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
+
       val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).filterNot( _ == TrafficSignType.Unknown).map {
         trafficValue =>
           SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(trafficValue.OTHvalue.toString)))}
@@ -1641,26 +1642,22 @@ object DataFixture {
     }
   }
 
-  def createTrafficSignsUsingLinearAssetsForHazmat(): Unit = {
-    val username = "batch_traffic_based_on_linerAsset_hazmat"
 
-    def getPointOfInterest(first: Point, last: Point, trafficDirection: TrafficDirection, assetSideCode: SideCode): Seq[Point] = {
-      assetSideCode match {
-        case SideCode.TowardsDigitizing => Seq(first)
-        case SideCode.AgainstDigitizing => Seq(last)
-        case _ => trafficDirection match {
-          case TrafficDirection.TowardsDigitizing => Seq(first)
-          case TrafficDirection.AgainstDigitizing => Seq(last)
-          case _ => Seq(first, last)
-        }}
-    }
+  def getPointOfInterest(first: Point, last: Point, trafficDirection: TrafficDirection, assetSideCode: SideCode): Seq[Point] = {
+    assetSideCode match {
+      case SideCode.TowardsDigitizing => Seq(first)
+      case SideCode.AgainstDigitizing => Seq(last)
+      case _ => trafficDirection match {
+        case TrafficDirection.TowardsDigitizing => Seq(first)
+        case TrafficDirection.AgainstDigitizing => Seq(last)
+        case _ => Seq(first, last)
+      }}
+  }
 
     def setTrafficSignInfo(roadLink: RoadLink, persistedAsset: PersistedLinearAsset, oppositePoint: Point): (Set[IncomingTrafficSign], RoadLink) = {
       val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
       val (mValue, validityDirection) = if (oppositePoint == start) (persistedAsset.startMeasure, SideCode.TowardsDigitizing.value) else (persistedAsset.endMeasure, SideCode.AgainstDigitizing.value)
-
       val assetValue: Seq[ProhibitionValue] = persistedAsset.value.get.asInstanceOf[Prohibitions].prohibitions
-
       val position = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).head
 
       val (first, last) = if (oppositePoint == start) {
@@ -1673,53 +1670,55 @@ object DataFixture {
 
       val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
 
+
+  def getProperties(assetValues: Seq[ProhibitionValue]): Seq[(Int, Seq[AdditionalPanel])] = {
+    val additionalPanelInfo = assetValues.map { values =>
+      val prohibitionType = HazmatTransportProhibitionClass.toTrafficSign(values.typeId).OTHvalue
+      (prohibitionType,
+        TimePeriodClass.toTrafficSign(values.validityPeriods))
+    }
+
+    def createdAdditionalProps(additionalPanelInfo: Seq[(Int, Seq[(TrafficSignType, String)])], existingPanel: Seq[(Int, Seq[AdditionalPanel])] = Seq()): Seq[(Int, Seq[AdditionalPanel])] = {
+      val groupedAdditional = additionalPanelInfo.groupBy(_._1)
+
+      if ((groupedAdditional.values.flatten.map(_._2).size + groupedAdditional.keys.size) > 3) {
+        groupedAdditional.values.flatten.flatMap { case (prohibitionType, signInfo) =>
+          val additionalTime = signInfo.splitAt(2)
+          val newPanel = Seq((existingPanel.last._1 + 1, Seq(AdditionalPanel(prohibitionType, "", "", 1)) ++
+            additionalTime._1.zipWithIndex.map { case (additional, index) =>
+              AdditionalPanel(additional._1.OTHvalue, "", additional._2, index + 1)
+            }))
+          val result = additionalPanelInfo.diff(additionalTime._1)
+          createdAdditionalProps(result, newPanel ++ existingPanel)
+        }.toSeq
+      } else {
+        var formPosition = 0
+        additionalPanelInfo.flatMap { case (prohibitionType, additionalTime) =>
+          formPosition += 1
+          Seq((existingPanel.last._1 + 1, Seq(AdditionalPanel(prohibitionType, "", "", formPosition)) ++
+
+            additionalTime.zipWithIndex.map { case (additional, index) =>
+              formPosition += 1
+              AdditionalPanel(additional._1.OTHvalue, "", additional._2, formPosition)
+            }))
+        } ++ existingPanel
+      }
+    }
+
+    createdAdditionalProps(additionalPanelInfo)
+  }
       val assetPublicProperty = Seq(SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))))
+      (getProperties(persistedAsset.value.get.asInstanceOf[Prohibitions].prohibitions).map { case (_, additionalPanel) =>
+        IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, (assetPublicProperty ++ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanel))).toSet, validityDirection, Some(angle.toInt))
 
-      val numberOfAdditionalPanels = assetValue.map { group =>
-        Math.ceil(group.validityPeriods.size.toFloat / 3) + 1
-      }
-
-      val formIndex = 1
-      val lastFormIndex = numberOfAdditionalPanels.head.toInt + 1
-
-      if(numberOfAdditionalPanels.sum > 3) {
-        (assetValue.map { asset =>
-          IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, (assetPublicProperty ++ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, getProperties(asset, formIndex)))).toSet, validityDirection, Some(angle.toInt))}.toSet, roadLink)
-      } else {
-        val properties = assetPublicProperty ++ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, getProperties(assetValue.head, formIndex) ++ getProperties(assetValue.tail.head, lastFormIndex)))
-        (Set(IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, properties.toSet, validityDirection, Some(angle.toInt))), roadLink)
-      }
+      }.toSet, roadLink)
     }
 
-    def validPeriods(periodValues: Set[ValidityPeriod], position: Int) : Seq[AdditionalPanel] = {
-      val splitPeriods = periodValues.splitAt(3)
-      if(splitPeriods._1.nonEmpty) {
-        val convertedDays = splitPeriods._1.map(period => ValidityPeriodDayOfWeek.apply(period.days.toString).value).toSeq
-        val timePeriods = splitPeriods._1.map { period =>
-          val day = period.days.value
-          if(day == Saturday.value)
-            s"(${period.startHour} - ${period.endHour})"
-          else
-            s"${period.startHour} - ${period.endHour}"
-        }.mkString(" ")
-        Seq(AdditionalPanel(TimePeriodClass.toTrafficSign(convertedDays).OTHvalue, timePeriods, "", position)) ++ validPeriods(splitPeriods._2, position + 1)
-      } else {
-        Seq()
-      }
-    }
-
-    def getProperties(assetValues: ProhibitionValue, formIndex: Int): Seq[AdditionalPanel] = {
-      val properties = Seq(AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(assetValues.typeId).OTHvalue, "", "", formIndex))
-      if(assetValues.validityPeriods.nonEmpty) {
-        properties ++ validPeriods(assetValues.validityPeriods, formIndex + 1)
-      }
-      else
-        properties
-    }
+  def createTrafficSignsUsingLinearAssets(): Unit = {
+    val username = "batch_traffic_based_on_linerAsset"
 
     println("\nStarting create traffic signs using Linear Asset")
     println(DateTime.now())
-
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -1732,8 +1731,8 @@ object DataFixture {
       val roadLinks: Map[Long, Seq[RoadLink]] = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).groupBy(_.linkId)
 
       val existingAssets = withDynTransaction {
-//        println(s"Expiring asset on municipaity $municipality")
-//        trafficSignService.expire(roadLinks.keySet, username, false)
+        println(s"Expiring asset on municipaity $municipality")
+        trafficSignService.expire(roadLinks.keySet, username, false)
         println(s"Getting asset on municipaity $municipality")
         oracleLinearAssetDao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, roadLinks.keySet.toSeq, false)
       }
@@ -1750,7 +1749,7 @@ object DataFixture {
           val unMatchedLinkId = filteredAdjacentRoadLink.keySet.diff(roadLinks.keySet)
           val unMatchedAssets = if (unMatchedLinkId.nonEmpty) {
             withDynTransaction {
-              oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, unMatchedLinkId.toSeq, false)
+              oracleLinearAssetDao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, unMatchedLinkId.toSeq, false)
             }
           } else Seq()
 
@@ -1919,7 +1918,7 @@ object DataFixture {
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
       case Some("create_hazmat_traffic_signs_using_linear_asset") =>
-        createTrafficSignsUsingLinearAssetsForHazmat()
+        createTrafficSignsUsingLinearAssets()
       case Some("create_prohibitions_using_traffic_signs") =>
         createProhibitionsUsingTrafficSigns(prohibitionService)
       case Some("create_hazmat_prohibitions_using_traffic_signs") =>
