@@ -229,7 +229,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     val (vvhRoad, municipality) = (nearbyLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
     if (vvhRoad.isEmpty || vvhRoad.size > 1)
-      createFloatingWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, municipality)
+      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0), userProvider.getCurrentUser().username, municipality)
     else {
       checkDuplicates(trafficSign) match {
         case Some(existingAsset) =>
