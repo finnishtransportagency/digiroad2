@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{AssetAdjustment, ChangeSet}
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -164,6 +164,13 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
   def receive = {
     case x: Seq[T] => prohibitionProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
     case _ => println("prohibitionSaveProjected: Received unknown message")
+  }
+}
+
+class ProhibitionSaveAssetConnection (prohibitionProvider: ProhibitionService) extends Actor {
+  def receive = {
+    case x: Seq[AssetAdjustment] => prohibitionProvider.autoGenerateAssets(x)
+    case _ => println("prohibitionsSaveAssetConnection: Received unknown message")
   }
 }
 
@@ -328,6 +335,9 @@ object Digiroad2Context {
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
+
+  val prohibitionsMerge = system.actorOf(Props(classOf[ProhibitionSaveAssetConnection], prohibitionService), name = "assetMerge")
+  eventbus.subscribe(prohibitionsMerge, "prohibition:assetMerge")
 
   val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService, trafficSignManager), name = "trafficSignExpire")
   eventbus.subscribe(trafficSignExpire, "trafficSign:expire")

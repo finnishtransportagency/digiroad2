@@ -400,7 +400,7 @@ object NumericalLimitFiller {
     val segmenstWitoutDuplicates = segments.distinct
 
     if (segmenstWitoutDuplicates.size >= 2 &&
-      segmenstWitoutDuplicates.count(_.createdBy.contains("automatic_process_prohibitions")) == segmenstWitoutDuplicates.size) {
+      segmenstWitoutDuplicates.exists(_.createdBy.contains("automatic_process_prohibitions"))) {
 
       val minLengthToZip = 1.0
       val pointsOfInterestOnSegments = (Seq(0, roadLink.length) ++ segments.flatMap(s => Seq(s.startMeasure, s.endMeasure))).distinct.sorted
@@ -421,10 +421,10 @@ object NumericalLimitFiller {
 
             segmentsInsidePOI.size match {
               case 0 =>
-                (Seq.empty, Seq.empty)
+                (Seq.empty, Seq.empty, Seq.empty)
               case 1 =>
                 val segmentToUpdate = segmentsInsidePOI.head.copy(id = 0L, startMeasure = startMeasurePOI, endMeasure = endMeasurePOI)
-                (Seq(segmentToUpdate), segmenstWitoutDuplicates.map(_.id))
+                (Seq(segmentToUpdate), segmenstWitoutDuplicates.map(_.id), Seq(AssetAdjustment(segmentToUpdate, segmentsInsidePOI.map(_.id))))
               case _ =>
                 val values =
                   segmentsInsidePOI.flatMap { sPOI =>
@@ -433,7 +433,7 @@ object NumericalLimitFiller {
                 val segmentToCreate =
                   sortNewestFirst(segmentsInsidePOI).head.copy(id = 0L, startMeasure = startMeasurePOI,
                     endMeasure = endMeasurePOI, value = Some(Prohibitions(values.toSeq).asInstanceOf[Value]))
-                (Seq(segmentToCreate), segmenstWitoutDuplicates.map(_.id))
+                (Seq(segmentToCreate), segmenstWitoutDuplicates.map(_.id), Seq(AssetAdjustment(segmentToCreate, segmentsInsidePOI.map(_.id))))
             }
           }
         } else {
@@ -442,8 +442,9 @@ object NumericalLimitFiller {
 
       val newSegments = mergeValues.flatMap(_._1)
       val segmentsToExpire = mergeValues.flatMap(_._2).toSet
+      val assetsToAdjust = mergeValues.flatMap(_._3)
 
-      (newSegments ++ segments, changeSet.copy(expiredAssetIds = segmentsToExpire))
+      (newSegments ++ segments, changeSet.copy(expiredAssetIds = segmentsToExpire, assetAdjustments = assetsToAdjust))
     } else {
       (segments, changeSet)
     }

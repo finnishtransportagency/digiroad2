@@ -1714,7 +1714,7 @@ object DataFixture {
       }.toSet, roadLink)
     }
 
-  def createTrafficSignsUsingLinearAssets(): Unit = {
+  def createTrafficSignsUsingLinearAssetsHazmat(): Unit = {
     val username = "batch_traffic_based_on_linerAsset"
 
     println("\nStarting create traffic signs using Linear Asset")
@@ -1918,7 +1918,7 @@ object DataFixture {
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
       case Some("create_hazmat_traffic_signs_using_linear_asset") =>
-        createTrafficSignsUsingLinearAssets()
+        createTrafficSignsUsingLinearAssetsHazmat()
       case Some("create_prohibitions_using_traffic_signs") =>
         createProhibitionsUsingTrafficSigns(prohibitionService)
       case Some("create_hazmat_prohibitions_using_traffic_signs") =>
