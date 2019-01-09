@@ -88,11 +88,19 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+
+//    val newAssetsOnFilledTopology = filledTopology.filter(ft => ft.id == 0 && ft.createdBy.contains("automatic_process_prohibitions")).map { asset =>
+//      PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value, asset.value, asset.startMeasure,
+//        asset.endMeasure, asset.createdBy, asset.createdDateTime, asset.modifiedBy, asset.modifiedDateTime,
+//        asset.expired, asset.typeId, asset.vvhTimeStamp, asset.geomModifiedDate, asset.linkSource, asset.verifiedBy,
+//        asset.verifiedDate, asset.informationSource)
+//    }
+
     //Remove the asset ids adjusted in the "prohibition:saveProjectedProhibition" otherwise if the "prohibition:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
     eventBus.publish("prohibition:update", changeSet)
     eventBus.publish("prohibition:saveProjectedProhibition", newAssets.filter(_.id == 0L))
-
+//    eventBus.publish("prohibition:auto_generation", changeSet.assetValues)
     filledTopology
   }
 
@@ -201,7 +209,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
                                                   createdByFromUpdate: Option[String] = Some(""),
                                                   createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None, trafficSignId: Option[Long] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, trafficSignId = trafficSignId)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
     value match {
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, prohibitions)

@@ -173,6 +173,7 @@
     }
 
     function setAdditionalPanel(myobj) {
+      dirty = true;
       _.map(current.propertyData, function (prop) {
         if (prop.publicId === 'additional_panel') {
           var index = _.findIndex(prop.values, {formPosition: myobj.formPosition});

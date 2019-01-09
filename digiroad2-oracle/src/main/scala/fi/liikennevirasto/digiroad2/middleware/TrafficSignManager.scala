@@ -2,10 +2,10 @@ package fi.liikennevirasto.digiroad2.middleware
 
 
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
-import fi.liikennevirasto.digiroad2.TrafficSignType
-import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
+import fi.liikennevirasto.digiroad2.{NoVehiclesWithDangerGoods, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
 
-class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService) {
+class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService, hazmatTransportProhibitionService: HazmatTransportProhibitionService) {
 
   def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
@@ -13,6 +13,9 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
     }
     else if (TrafficSignType.belongsToProhibition(trafficSignInfo.signType)) {
       prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+    }
+    else if (TrafficSignType.applyOTHValue(trafficSignInfo.signType).OTHvalue == NoVehiclesWithDangerGoods.OTHvalue) {
+      hazmatTransportProhibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }
   }
 
@@ -23,6 +26,9 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
     }
     else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
       prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id), username)
+    }
+    else if (trafficSignType == NoVehiclesWithDangerGoods.OTHvalue) {
+      hazmatTransportProhibitionService.deleteAssetBasedOnSign(hazmatTransportProhibitionService.withId(id), username)
     }
   }
 }
