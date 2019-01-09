@@ -207,8 +207,8 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       val properties = trafficSignAttribute.properties
       val nearbyLinks = trafficSignAttribute.roadLink
       val optBearing = tryToInt(getPropertyValue(properties, "bearing").toString)
-      val twoSided = getPropertyValue(properties, "twoSided").toString match {
-        case "Kaksipuoleinen" => true
+      val twoSided = getPropertyValue(properties, "twoSided") match {
+        case "1" => true
         case _ => false
       }
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
