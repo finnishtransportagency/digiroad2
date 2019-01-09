@@ -124,11 +124,12 @@
 
       var setAllPanels = function() {
           var allPanels = $('.single-panel-container').map(function(index){
+            var self = this;
             return {
               formPosition: (index + 1),
-              panelType: parseInt($(this).find('#panelType').val()),
-              panelValue: $(this).find('#panelValue').val(),
-              panelInfo:  $(this).find('#panelInfo').val()
+              panelType: parseInt($(self).find('#panelType').val()),
+              panelValue: $(self).find('#panelValue').val(),
+              panelInfo:  $(self).find('#panelInfo').val()
             };
           });
           selectedAsset.setAdditionalPanels(allPanels.toArray());
