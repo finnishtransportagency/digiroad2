@@ -335,11 +335,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       OracleTrafficSignDao.expire(linkIds, username)
   }
 
-  def getTrafficType(id: Long) : Option[Int] = {
-    withDynSession {
-      OracleTrafficSignDao.getTrafficSignType(id)
-    }
-  }
+//  def getTrafficType(id: Long) : Option[Int] = {
+//    withDynSession {
+//      OracleTrafficSignDao.getTrafficSignType(id)
+//    }
+//  }
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }

@@ -635,8 +635,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getConnectedAssetFromAssetId(id: Long) : Seq[Long] = {
-    val trafficSignsId = sql"""select connected_asset_id from connected_asset where (asset_id = $id)""".as[(Long)].list
-    trafficSignsId
+    val trafficSignsIds = sql"""select connected_asset_id from connected_asset where (asset_id = $id)""".as[(Long)].list
+    trafficSignsIds
+  }
+
+  def getConnectedAssetFromTrafficSign(id: Long): Seq[Long] = {
+    val linearAssetsIds = sql"""select asset_id from connected_asset where (connected_asset_id = $id)""".as[(Long)].list
+    linearAssetsIds
   }
 
   /**

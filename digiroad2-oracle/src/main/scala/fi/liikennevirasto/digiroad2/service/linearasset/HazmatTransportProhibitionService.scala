@@ -171,4 +171,54 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     }
     else Seq()
   }
+
+  def deleteByTrafficSign(ids: Set[Long], username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    if (withTransaction) {
+      withDynTransaction {
+        dao.deleteByTrafficSign(withIds(ids), username)
+      }
+    }
+    else
+      dao.deleteByTrafficSign(withIds(ids), username)
+  }
+
+  def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val assets = if(withTransaction) {
+      withDynTransaction {
+        val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
+        dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
+      }
+    } else {
+      val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
+      dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
+    }
+    assets
+  }
+
+  def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    logger.info("expiring asset")
+
+    val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(id)
+
+
+
+
+    //    propertyData.map(_.)
+
+
+
+
+//    val orderedPanel = trafficSignInfo.additionalPanel.sortBy(_.formPosition)
+//    val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+//
+//    updadeAssetBasedOnSign
+//    trafficSignInfo: TrafficSignInfo
+
+
+
+
+  }
+
+
+
 }

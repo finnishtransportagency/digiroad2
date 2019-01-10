@@ -801,7 +801,7 @@ trait LinearAssetOperations {
   def validateAssetValue(value: Option[Value]): Unit = {}
 
 
-  def deleteAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+  def deleteOrUpdateAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")
     if (withTransaction) {
       withDynTransaction {

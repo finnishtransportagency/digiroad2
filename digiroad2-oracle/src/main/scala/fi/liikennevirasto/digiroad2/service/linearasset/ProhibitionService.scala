@@ -326,6 +326,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   def autoGenerateAssets(adjustedValues: Seq[AssetAdjustment]): Unit = {
+    if (adjustedValues.nonEmpty)
+      logger.info("Merging prohibition assets")
+
     val assetsToCreate = adjustedValues.map(_.asset)
     withDynTransaction {
       val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(assetsToCreate.map(_.linkId).toSet, false)
@@ -333,7 +336,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         val linearAsset = value.asset
 
         val newLinearAsset = createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, linearAsset.value.get, linearAsset.sideCode,
-          Measures(linearAsset.startMeasure, linearAsset.endMeasure), "", linearAsset.vvhTimeStamp, roadLink.find(_.linkId == linearAsset.linkId), verifiedBy = getVerifiedBy("", linearAsset.typeId))
+          Measures(linearAsset.startMeasure, linearAsset.endMeasure), "automatically_generated_by_sign", linearAsset.vvhTimeStamp, roadLink.find(_.linkId == linearAsset.linkId), verifiedBy = getVerifiedBy("automatically_generated_by_sign", linearAsset.typeId))
 
         val relatedTrafficSigns = value.mergedAssets.flatMap { mergedValue =>
           dao.getConnectedAssetFromAssetId(mergedValue)
