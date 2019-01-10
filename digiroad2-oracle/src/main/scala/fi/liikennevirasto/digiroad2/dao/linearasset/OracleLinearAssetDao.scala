@@ -631,7 +631,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def insertConnectedAsset(id: Long, connected_id : Long) : Unit = {
-    sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".execute
+    val trafficSignId = sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".execute
+  }
+
+  def getConnectedAssetFromAssetId(id: Long) : Seq[Long] = {
+    val trafficSignsId = sql"""select connected_asset_id from connected_asset where (asset_id = $id)""".as[(Long)].list
+    trafficSignsId
   }
 
   /**
@@ -677,7 +682,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       None
     }
   }
-
 
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.

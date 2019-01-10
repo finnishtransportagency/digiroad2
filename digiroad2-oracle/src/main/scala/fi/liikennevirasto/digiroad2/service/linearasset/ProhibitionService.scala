@@ -8,15 +8,12 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
 
@@ -329,6 +326,23 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   }
 
   def autoGenerateAssets(adjustedValues: Seq[AssetAdjustment]): Unit = {
+    val assetsToCreate = adjustedValues.map(_.asset)
+    withDynTransaction {
+      val roadLink = roadLinkService.getRoadLinksAndComplementariesFromVVH(assetsToCreate.map(_.linkId).toSet, false)
+      adjustedValues.foreach { value =>
+        val linearAsset = value.asset
 
+        val newLinearAsset = createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, linearAsset.value.get, linearAsset.sideCode,
+          Measures(linearAsset.startMeasure, linearAsset.endMeasure), "", linearAsset.vvhTimeStamp, roadLink.find(_.linkId == linearAsset.linkId), verifiedBy = getVerifiedBy("", linearAsset.typeId))
+
+        val relatedTrafficSigns = value.mergedAssets.flatMap { mergedValue =>
+          dao.getConnectedAssetFromAssetId(mergedValue)
+        }
+
+        relatedTrafficSigns.foreach { trafficSign =>
+          dao.insertConnectedAsset(newLinearAsset, trafficSign)
+        }
+      }
+    }
   }
 }
