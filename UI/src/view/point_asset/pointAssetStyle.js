@@ -36,7 +36,9 @@
       featureTypeRules = [
         new StyleRule().where('floating').is(false).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg'} } ),
         new StyleRule().where('floating').is(true).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg'} } ),
-        new StyleRule().where('validityDirection').is(1).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg'} } )
+        new StyleRule().where('validityDirection').is(1).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg'} } ),
+        new StyleRule().where('validityDirection').is(1).and('floating').is(true).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } ),
+        new StyleRule().where('bearing').isUndefined().use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } )
       ];
     }
     else {
