@@ -534,9 +534,7 @@ root.LinearAssetLayer  = function(params) {
           _.each(currentFeatures, removeFeature);
 
           if(selectedLinearAsset.isSplitOrSeparated() || _.some(linearAssets, function(asset){return !_.isEqual(asset.sideCode, 1);})){
-            var offsetAssets = _.map(_.cloneDeep(linearAssets), offsetBySideCode);
-            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(offsetAssets, me.uiState.zoomLevel));
-            me.drawIndicators(offsetAssets);
+            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
           }else
             selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
         }
@@ -544,6 +542,10 @@ root.LinearAssetLayer  = function(params) {
 
       vectorSource.addFeatures(selectedFeatures);
       selectToolControl.addSelectionFeatures(selectedFeatures);
+
+      if (selectedLinearAsset.isSplitOrSeparated()) {
+        me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
+      }
     }
   };
 
