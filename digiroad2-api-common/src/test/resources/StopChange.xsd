@@ -195,6 +195,13 @@
 								</xs:unique>
 							</xs:element>
 
+							<xs:element name="ZoneId" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>Id zone where stop exists
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
