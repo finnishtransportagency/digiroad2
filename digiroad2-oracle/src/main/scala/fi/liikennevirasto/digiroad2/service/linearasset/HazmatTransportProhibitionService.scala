@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, TrafficSignType}
 import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibitionClass, TimePeriodClass, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
@@ -201,7 +202,16 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     // Obter todos os sinais que contem o respetivo traffic sign
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(id)
 
+    // TODO - Alterar - retorna valor se existir
+    val isExpired = OracleTrafficSignDao.fetchByFilterWithExpired(withId(id))
+
     // Mapear valores do traffic sign numa propriedade que permita comparar com o asset
+    propertyData.filter(_.publicId.equals(trafficSignService.additionalPublicId)).map{ data =>
+      val convertedData = data.asInstanceOf[AdditionalPanel]
+      ProhibitionValue(convertedData.panelType, Set(ValidityPeriod(convertedData.panelInfo)), "", "")
+    }
+
+    trafficSignRelatedAssets.map(_.value.head.asInstanceOf[Prohibitions].prohibitions.head.)
 
     // Compara valores do traffic sign com os do asset e separa pelos que precisam de update ou de ser eliminados
 
