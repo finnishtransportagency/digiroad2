@@ -198,8 +198,14 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
   def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")
 
+    // Obter todos os sinais que contem o respetivo traffic sign
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(id)
 
+    // Mapear valores do traffic sign numa propriedade que permita comparar com o asset
+
+    // Compara valores do traffic sign com os do asset e separa pelos que precisam de update ou de ser eliminados
+
+    // fazer update ou eliminar
 
 
 
