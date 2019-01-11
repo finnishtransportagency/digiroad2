@@ -161,7 +161,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
 
         }
         val assetId = createWithoutTransaction(HazmatTransportProhibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
-          "automatic_process_hazmatTransportProhibition", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
+          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
 
         dao.insertConnectedAsset(assetId, trafficSignInfo.id)
 
@@ -213,7 +213,8 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
       asset.value.get.asInstanceOf[Prohibitions].equals(Prohibitions(trProhibitionValue))
     }
 
-    deleteByTrafficSign(toDelete.map(_.id).toSet, username)
+    if(toDelete.nonEmpty)
+      deleteByTrafficSign(toDelete.map(_.id).toSet, username)
 
     val groupedAssetsToUpdate = toUpdate.map { asset =>
       (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
