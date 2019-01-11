@@ -886,13 +886,9 @@
                   removeValueFn();
                   _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
-                  if(asset.value) {
-                      setValueFn(asset.value);
-                      formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-                  }else {
-                      setValueFn({properties: []});
-                      formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
-                  }}
+                  setValueFn(asset.value || {properties: []} );
+                  formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                }
                 eventbus.trigger("radio-trigger-dirty");
             });
 

@@ -24,7 +24,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
   val mockTierekisteriAssetDataClient: TierekisteriAssetDataClient = MockitoSugar.mock[TierekisteriAssetDataClient]
   val mockTierekisteriWeightLimitAssetClient: TierekisteriWeightLimitAssetClient = MockitoSugar.mock[TierekisteriWeightLimitAssetClient]
 
-  class TestTierekisteriPointConversionImporter1 extends TierekisteriPointConversionImporter {
+  class TestTierekisteriPointConversionImporter extends TierekisteriPointConversionImporter {
     override def typeId: Int = 999
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -52,30 +52,28 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
     override val allowedVerticalLevel : Seq[Int] = { Seq(1, 2, 3, 4)}
   }
-//
-//  class TestWeightConversionTierekisteriImporter extends WeightConversionTierekisteriImporter {
-//    override def typeId: Int = 999
-//    override def withDynSession[T](f: => T): T = f
-//    override def withDynTransaction[T](f: => T): T = f
-//    override def assetName: String = "assetTest"
-//    override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
-//    override lazy val assetDao: OracleAssetDao = mockAssetDao
-//    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-//    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
-//    override val tierekisteriClient: TierekisteriWeightLimitAssetClient = mockTierekisteriWeightLimitAssetClient
-//    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-//    override lazy val vvhClient: VVHClient = mockVVHClient
-//  }
 
-//  class TestTotalWeightLimitImporter extends TotalWeightLimitImporter {
-//
-//  }
+
+  class TestTotalWeightLimitImporter extends TotalWeightLimitImporter {
+    override def typeId: Int = 999
+    override def withDynSession[T](f: => T): T = f
+    override def withDynTransaction[T](f: => T): T = f
+    override def assetName: String = "assetTest"
+    override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override val tierekisteriClient: TierekisteriWeightLimitAssetClient = mockTierekisteriWeightLimitAssetClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+  }
+
 
   case class TierekisteriDataTest(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Long)  extends TierekisteriAssetData
 
 
   test("create linear using point main method") {
-    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter1()
+    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter()
 
     val roadNumber: Int = 4
     val startRoadPartNumber: Int = 203
@@ -100,7 +98,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
   }
 
   test("create linear on adjacent link using point main method") {
-    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter1()
+    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter()
 
     val roadNumber: Int = 4
     val startRoadPartNumber: Int = 203
@@ -128,7 +126,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
   }
 
   test("create linear on nearest adjacent link using point main method") {
-    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter1()
+    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter()
 
     val roadNumber: Int = 4
     val startRoadPartNumber: Int = 203
@@ -158,7 +156,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
   }
 
   test("not create linear when 'silta' is more than 50m far") {
-    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter1()
+    val tierekisteriPointConversionImporter = new TestTierekisteriPointConversionImporter()
 
     val roadNumber: Int = 4
     val startRoadPartNumber: Int = 203
@@ -180,19 +178,21 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
     tierekisteriPointConversionImporter.getCreatedValues.size should be (0)
   }
-//
-//  test("get totalWeight Limit value") {
-//    val tierekisteriPointConversionImporter = new TestTotalWeightLimitImporter()
-//    val roadNumber: Int = 4
-//    val startRoadPartNumber: Int = 203
-//    val startAddressMValue: Int = 3184
-//    val endAddressMValue: Int = 3194
-//    val track: Track = Track.RightSide
-//
-//    val trAssetData = TierekisteriWeightLimitData(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 1, 1 , Some(1000), None, None, None, None)
-//
-//    val trValue = tierekisteriPointConversionImporter.getValue(trAssetData)
-//
-//    trValue should be (1000)
-//  }
+
+  test("get totalWeight Limit value") {
+    val tierekisteriPointConversionImporter = new TestTotalWeightLimitImporter()
+    val roadNumber: Int = 4
+    val startRoadPartNumber: Int = 203
+    val startAddressMValue: Int = 3184
+    val endAddressMValue: Int = 3194
+    val track: Track = Track.RightSide
+    val weightLimitInTonnes = 1000
+    def inKilograms(tonnes: Int): Int = {tonnes * 1000}
+
+    val trAssetData = TierekisteriWeightLimitData(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 1, 1 , Some(weightLimitInTonnes), None, None, None, None)
+
+    val trValue = tierekisteriPointConversionImporter.getValue(trAssetData)
+
+    trValue.get should be (inKilograms(weightLimitInTonnes))
+  }
 }
