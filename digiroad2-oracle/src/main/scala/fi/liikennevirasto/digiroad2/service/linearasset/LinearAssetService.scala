@@ -800,16 +800,8 @@ trait LinearAssetOperations {
 
   def validateAssetValue(value: Option[Value]): Unit = {}
 
+  def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
 
-  def deleteOrUpdateAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-    logger.info("expiring asset")
-    if (withTransaction) {
-      withDynTransaction {
-        dao.deleteByTrafficSign(filter, username)
-      }
-    }
-    else
-      dao.deleteByTrafficSign(filter, username)
   }
 
   def withId(id: Long)(query: String): String = {

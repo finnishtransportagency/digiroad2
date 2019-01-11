@@ -103,8 +103,9 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     if(trafficSignsIds.nonEmpty) {
       trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds), withTransaction = false)
-      hazmatTransportProhibitionService.deleteAssetBasedOnSign(hazmatTransportProhibitionService.withIds(trafficSignsIds), withTransaction = false)
+//      trafficSignManager.trafficSignsDeleteAssets(trafficSignsIds)
+//      prohibitionService.deleteOrUpdateAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds), withTransaction = false)
+//      hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(hazmatTransportProhibitionService.withIds(trafficSignsIds), withTransaction = false)
     }
   }
 

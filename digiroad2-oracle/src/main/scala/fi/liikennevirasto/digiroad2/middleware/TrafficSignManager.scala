@@ -20,18 +20,22 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
     }
   }
 
-  def trafficSignsDeleteAssets(id: Long, propertyData: Seq[TrafficSignProperty] = Seq()): Unit = {
+  def trafficSignsDeleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
     val username = Some("automatic_trafficSign_deleted")
-    val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
-    if (TrafficSignType.belongsToManoeuvre(trafficSignType)) {
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(id)), username)
-    }
-    else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
-      prohibitionService.deleteOrUpdateAssetBasedOnSign(prohibitionService.withId(id), username)
-    }
-    else if (trafficSignType == NoVehiclesWithDangerGoods.OTHvalue) {
-      hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData = propertyData, username = username)
+    signInfo.foreach {
+      case (id, propertyData) =>
+        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+
+        if (TrafficSignType.belongsToManoeuvre(trafficSignType)) {
+          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(id)), username)
+        }
+        else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
+          prohibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData, username)
+        }
+        else if (trafficSignType == NoVehiclesWithDangerGoods.OTHvalue) {
+          hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData, username = username)
+        }
     }
   }
 }

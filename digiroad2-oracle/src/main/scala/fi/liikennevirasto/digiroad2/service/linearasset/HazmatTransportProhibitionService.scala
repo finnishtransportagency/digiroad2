@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, TrafficSignType}
 import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibitionClass, TimePeriodClass, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
@@ -196,45 +196,31 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     assets
   }
 
-  def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+  override def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")
 
-    // Obter todos os sinais que contem o respetivo traffic sign
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(id)
 
-    // TODO - Alterar - retorna valor se existir
-    val isExpired = OracleTrafficSignDao.fetchByFilterWithExpired(withId(id))
+    val trafficSignInfo = (propertyData.find(p => p.publicId == "additional_panel") match {
+      case Some(result) => result.values
+      case _ => Seq()
+    }).map(_.asInstanceOf[AdditionalPanel])
 
-    // Mapear valores do traffic sign numa propriedade que permita comparar com o asset
-    propertyData.filter(_.publicId.equals(trafficSignService.additionalPublicId)).map{ data =>
-      val convertedData = data.asInstanceOf[AdditionalPanel]
-      ProhibitionValue(convertedData.panelType, Set(ValidityPeriod(convertedData.panelInfo)), "", "")
+    val orderedPanel = trafficSignInfo.sortBy(_.formPosition)
+    val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+
+    val (toDelete, toUpdate) = trafficSignRelatedAssets.partition{ asset =>
+      asset.value.get.asInstanceOf[Prohibitions].equals(Prohibitions(trProhibitionValue))
     }
 
-    trafficSignRelatedAssets.map(_.value.head.asInstanceOf[Prohibitions].prohibitions.head.)
+    deleteByTrafficSign(toDelete.map(_.id).toSet, username)
 
-    // Compara valores do traffic sign com os do asset e separa pelos que precisam de update ou de ser eliminados
+    val groupedAssetsToUpdate = toUpdate.map { asset =>
+      (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
+    }.groupBy(_._2)
 
-    // fazer update ou eliminar
-
-
-
-    //    propertyData.map(_.)
-
-
-
-
-//    val orderedPanel = trafficSignInfo.additionalPanel.sortBy(_.formPosition)
-//    val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
-//
-//    updadeAssetBasedOnSign
-//    trafficSignInfo: TrafficSignInfo
-
-
-
-
+    groupedAssetsToUpdate.values.map { value =>
+      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
+    }
   }
-
-
-
 }

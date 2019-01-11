@@ -309,7 +309,19 @@ trait PointAssetOperations {
     }
   }
 
+  def getPersistedAssetsByIdsWithExpire(ids: Set[Long]): Seq[PersistedAsset] = {
+    withDynSession {
+      getPersistedAssetsByIdsWithExpireWithoutTransaction(ids)
+    }
+  }
+
   def getPersistedAssetsByIdsWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
+      val idsStr = ids.toSeq.mkString(",")
+      val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
+      fetchPointAssets(withFilter(filter))
+  }
+
+  def getPersistedAssetsByIdsWithExpireWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
