@@ -6,10 +6,6 @@
       '<div class="column-2"></div>'+
       '</div>');
 
-    var column1 =  $('<div class="column-1"></div>');
-    var column2 = $('<div class="column-2"></div>');
-
-
     var linearAssets = $('<div class="linear-assets-column"></div>');
     var pointAssets = $('<div class="point-assets-column"></div>');
     var maintenanceAsset = $('<div class="maintenance-asset-column"></div>');
