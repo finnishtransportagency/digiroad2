@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider, ManoeuvreService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -124,8 +124,72 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
 
-  protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds)
-    trafficSignsIds.foreach( sign => trafficSignService.expireAssetWithoutTransaction(sign, "batch_process_trafficSigns"))
+  protected def expireAssets(linkIds: Seq[Long], signTypes: Set[Int]): Unit = {
+    val trafficSignsIds = trafficSignService.expireAssetsByLinkId(linkIds, signTypes, Some("batch_process_trafficSigns"))
   }
+}
+
+trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImporter {
+  val trafficSignGroup: TrafficSignTypeGroup
+
+  def trafficSignsInGroup(trafficSignGroup: TrafficSignTypeGroup) = TrafficSignType.apply(trafficSignGroup)
+  //TODO uncomment this line after merge  US 1707
+  def filterCondition(assetNumber : Int): Boolean = /*TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.AdditionalPanels ||*/ TRTrafficSignType.apply(assetNumber).trafficSignType.group == trafficSignGroup
+
+  override val tierekisteriClient = new TierekisteriTrafficSignGroupClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())(filterCondition)
+
+  override def expireAssets() : Unit = {
+    val municipalities = getAllMunicipalities
+    municipalities.foreach { municipality =>
+      withDynTransaction {
+        trafficSignService.expireAssetsByMunicipality(municipality, Some(State), trafficSignsInGroup(trafficSignGroup))
+      }
+    }
+  }
+
+  override def getLastExecutionDate: Option[DateTime] = {
+      trafficSignService.getLastExecutionDate(s"batch_process_$assetName", trafficSignsInGroup(trafficSignGroup))
+  }
+}
+
+class TrafficSignSpeedLimitTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
+}
+
+class TrafficSignRegulatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.RegulatorySigns
+}
+
+class TrafficSignMaximumRestrictionsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MaximumRestrictions
+}
+
+class TrafficSignGeneralWarningSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.GeneralWarningSigns
+}
+
+class TrafficSignProhibitionsAndRestrictionsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ProhibitionsAndRestrictions
+}
+
+class TrafficSignMandatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
+}
+
+class TrafficSignPriorityAndGiveWaySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
+}
+class TrafficSignInformationSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
+}
+
+class TrafficSignServiceSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
+}
+
+//TODO remove this code after merge US 1707
+class TrafficSignAdditionalPanelsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.AdditionalPanels
 }

@@ -10,7 +10,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreProvider}
+import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreProvider
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.values
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
@@ -552,5 +553,24 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   override def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) : Unit = {
     OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
+  }
+
+  def expireAssetsByMunicipality(municipality: Int, administrativeClass: Option[AdministrativeClass] = None, signsType: Set[Int]) : Unit = {
+    println("\nStart assets expiration in municipality %d".format(municipality))
+    val roadLinksWithStateFilter = administrativeClass match {
+      case Some(state) => roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == state).map(_.linkId)
+      case _ => roadLinkService.getVVHRoadLinksF(municipality).map(_.linkId)
+    }
+
+    expireAssetsByLinkId(roadLinksWithStateFilter, signsType)
+    println("\nEnd assets expiration in municipality %d".format(municipality))
+  }
+
+  def expireAssetsByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String] = None) : Unit = {
+    OracleTrafficSignDao.expireAssetByLinkId(linkIds, signsType, username)
+  }
+
+  def getLastExecutionDate(createdBy: String, signTypes: Set[Int]) : Option[DateTime] = {
+    OracleTrafficSignDao.getLastExecutionDate(createdBy, signTypes)
   }
 }
