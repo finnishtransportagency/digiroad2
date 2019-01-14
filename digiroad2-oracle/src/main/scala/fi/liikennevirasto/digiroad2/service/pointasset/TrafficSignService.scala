@@ -225,20 +225,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  private def generateProperties(tRTrafficSignType: TRTrafficSignType, value: Any, additionalInfo: String) = {
-    val signValue = value.toString
-    val signAdditionalInfo = additionalInfo
-    val trafficType = tRTrafficSignType.trafficSignType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
-    val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(signAdditionalInfo)))
-      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(signValue)))
-    }
-
-    Set(typeProperty, valueProperty)
-  } //check if used
-
-
   def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, nearbyLinks: Seq[VVHRoadlink]): Long = {
 
     val (vvhRoad, municipality) = (nearbyLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
@@ -256,13 +242,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
-    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt
+    val signToCreateType = getTrafficSignsProperties(asset, typePublicId).get.propertyValue.toInt
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(TrafficSignType.applyOTHValue(signToCreateType).group.value))
 
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts =>
-        getTrafficSignsProperties(ts, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt == signToCreateType
+        getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toInt == signToCreateType
           && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
     )
 
@@ -381,10 +367,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getAllTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String) : Seq[PointAssetValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values
-  }
-
   def getTrafficSignTypeByGroup(trafficSignGroup: TrafficSignTypeGroup): Set[Int] = {
     TrafficSignType.values.filter(_.group == trafficSignGroup).map(_.OTHvalue)
   }
@@ -393,7 +375,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     val sameLinkAssets = groupedAssets.getOrElse(sign.linkId, Seq())
 
     sameLinkAssets.filter{ ts =>
-      (getTrafficSignsProperties(ts, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt == getTrafficSignsProperties(sign, typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt) &&
+      (getTrafficSignsProperties(ts, typePublicId).get.propertyValue.toInt == getTrafficSignsProperties(sign, typePublicId).get.propertyValue.toInt) &&
         ts.validityDirection == sign.validityDirection &&
         GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(ts.lon, ts.lat))) <= distance
     }

@@ -12,7 +12,7 @@ class HeightLimitValidator extends SevenRestrictionsLimitationValidator {
   override val radiusDistance: Int = 50
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
-    TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
+    TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case FreeHeight =>
         trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_info").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
       case MaxHeightExceeding =>

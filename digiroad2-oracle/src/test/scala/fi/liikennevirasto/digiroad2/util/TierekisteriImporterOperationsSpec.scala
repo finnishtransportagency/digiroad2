@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.text.SimpleDateFormat
 
-import fi.liikennevirasto.digiroad2.{Point, SpeedLimitSign, TelematicSpeedLimit}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{AnimalWarningsType, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
@@ -1604,26 +1604,26 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   test("traffic sign converter"){
     val traffic  = new TestTrafficSignTierekisteriImporter
 
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30t") should be ("30000")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30T") should be ("30000")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.t") should be ("30000")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "30t") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.t") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30T") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
 
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30") should be ("30")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30tt") should be ("30tt")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "30tt") should be ("30tt")
+    traffic.converter(MaxTonsOnBogieExceeding, "30") should be ("30")
+    traffic.converter(MaxTonsOnBogieExceeding, "30tt") should be ("30tt")
+    traffic.converter(NoWidthExceeding, "30tt") should be ("30tt")
 
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 m") should be ("2.2")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2,2 M") should be ("2.2")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2") should be ("2.2")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 MM") should be ("2.2 MM")
+    traffic.converter(NoWidthExceeding, "2.2 m") should be ("2.2")
+    traffic.converter(NoWidthExceeding, "2,2 M") should be ("2.2")
+    traffic.converter(NoWidthExceeding, "2.2") should be ("2.2")
+    traffic.converter(NoWidthExceeding, "2.2 MM") should be ("2.2 MM")
 
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h ") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100KM\\H") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100kmh") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100") should be ("100")
+    traffic.converter(SpeedLimitSign, "100km\\h ") should be ("100")
+    traffic.converter(SpeedLimitSign, "100km\\h") should be ("100")
+    traffic.converter(SpeedLimitSign, "100KM\\H") should be ("100")
+    traffic.converter(SpeedLimitSign, "100kmh") should be ("100")
+    traffic.converter(SpeedLimitSign, "100") should be ("100")
   }
 }

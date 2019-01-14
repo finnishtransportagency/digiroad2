@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
@@ -13,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, Inc
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignType, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficSignAssetClient
 
@@ -55,23 +52,12 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
       Set(typeProperty, valueProperty)
   }
 
-  private def generateProperties(trAssetData: TierekisteriAssetData) = {
-    val trafficType = trAssetData.assetType.trafficSignType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
-    val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
-      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(converter(trAssetData.assetType, trAssetData.assetValue))))
-    }
-
-    Set(typeProperty, valueProperty)
-  }
-
-  def converter(trafficType: TRTrafficSignType, value: String): String = {
+  def converter(trafficType: TrafficSignType, value: String): String = {
     val regexGetNumber = "^(\\d*\\.?\\d)?".r
 
-    val weightType : Seq[TRTrafficSignType] = Seq(MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding)
-    val measuresType : Seq[TRTrafficSignType] = Seq(MaximumLength, MaxWidthExceeding, MaxHeightExceeding)
-    val speedLimitType : Seq[TRTrafficSignType] = Seq(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
+    val weightType : Seq[TrafficSignType] = Seq(MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding)
+    val measuresType : Seq[TrafficSignType] = Seq(MaximumLength, NoWidthExceeding, MaxHeightExceeding)
+    val speedLimitType : Seq[TrafficSignType] = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
 
     val trimValue = value.replaceAll("\\s", "").replaceAll(",", ".")
 
