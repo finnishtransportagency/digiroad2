@@ -271,41 +271,40 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     OracleTrafficSignDao.fetchByLinkId(linkIds)
   }
 
-  def getTrafficSignsWithTrafficRestrictions( municipality: Int, enumeratedValueIds: Boolean => Seq[Long], newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
+  def getTrafficSigns(municipality: Int, enumeratedValueIds: Boolean => Seq[Long], newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
     val enumeratedValues = enumeratedValueIds(newTransaction)
     if(newTransaction)
         withDynSession {
-          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValues, municipality)
+          OracleTrafficSignDao.fetchByTypeValues(enumeratedValues, municipality)
         }
     else {
-      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValues, municipality)
+      OracleTrafficSignDao.fetchByTypeValues(enumeratedValues, municipality)
     }
   }
 
-
-  def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
+  def getRestrictionsEnumeratedValues(trafficType: Seq[TrafficSignType])( newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction)
       withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(NoLeftTurn, NoRightTurn, NoUTurn))
+        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficType)
       }
     else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(NoLeftTurn, NoRightTurn, NoUTurn))
+      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficType)
     }
   }
 
-  def getProhibitionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
-    val trafficSignValues = Seq(ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations,
-      NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoBuses, NoMopeds,
-      NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback)
-
-    if(newTransaction)
-      withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-      }
-    else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-    }
-  }
+//  def getProhibitionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
+//    val trafficSignValues = Seq(ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations,
+//      NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoBuses, NoMopeds,
+//      NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback)
+//
+//    if(newTransaction)
+//      withDynSession {
+//        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
+//      }
+//    else {
+//      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
+//    }
+//  }
 
   override def expire(id: Long, username: String): Long = {
     withDynSession {

@@ -98,14 +98,10 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   }
 
   protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
-
+    val trafficSignsIds = trafficSignService.getTrafficSign(linkIds)
     if(trafficSignsIds.nonEmpty) {
-      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-//      trafficSignManager.trafficSignsDeleteAssets(trafficSignsIds)
-//      prohibitionService.deleteOrUpdateAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds), withTransaction = false)
-//      hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(hazmatTransportProhibitionService.withIds(trafficSignsIds), withTransaction = false)
+      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds.map(_.id).toSet), Some("batch_process_trafficSigns"))
+      trafficSignManager.trafficSignsDeleteAssets(trafficSignsIds.map(tr => (tr.id, tr.propertyData)))
     }
   }
 

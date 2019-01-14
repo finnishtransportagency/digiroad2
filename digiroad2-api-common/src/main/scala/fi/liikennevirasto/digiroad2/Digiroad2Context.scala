@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, 
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{AssetAdjustment, ChangeSet}
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -167,9 +167,9 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
   }
 }
 
-class ProhibitionSaveAssetConnection (prohibitionProvider: ProhibitionService) extends Actor {
+class ProhibitionSaveAssetConnection[T] (prohibitionProvider: ProhibitionService) extends Actor {
   def receive = {
-    case x: Seq[AssetAdjustment] => prohibitionProvider.autoGenerateAssets(x)
+    case x: Seq[T] => prohibitionProvider.autoGenerateAssets(x.asInstanceOf[Seq[LinearAssetFiller.AssetAdjustment]])
     case _ => println("prohibitionsSaveAssetConnection: Received unknown message")
   }
 }
@@ -336,7 +336,7 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
-  val prohibitionsMerge = system.actorOf(Props(classOf[ProhibitionSaveAssetConnection], prohibitionService), name = "assetMerge")
+  val prohibitionsMerge = system.actorOf(Props(classOf[ProhibitionSaveAssetConnection[AssetAdjustment]], prohibitionService), name = "assetMerge")
   eventbus.subscribe(prohibitionsMerge, "prohibition:assetMerge")
 
   val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService, trafficSignManager), name = "trafficSignExpire")

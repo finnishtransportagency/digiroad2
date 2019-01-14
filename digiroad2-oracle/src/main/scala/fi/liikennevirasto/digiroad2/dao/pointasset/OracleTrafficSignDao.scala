@@ -88,7 +88,7 @@ object OracleTrafficSignDao {
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
   }
 
-  def fetchByTurningRestrictions(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
+  def fetchByTypeValues(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
     val values = enumValues.mkString(",")
     val filter = s"where ev.id in ($values) and a.municipality_code = $municipality"
     fetchByFilter(query => query + filter)

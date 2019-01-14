@@ -2,20 +2,38 @@ package fi.liikennevirasto.digiroad2.middleware
 
 
 import fi.liikennevirasto.digiroad2.asset.{TextPropertyValue, TrafficSignProperty}
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
-import fi.liikennevirasto.digiroad2.{NoVehiclesWithDangerGoods, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
 
-class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService, hazmatTransportProhibitionService: HazmatTransportProhibitionService) {
+object TrafficSignManager {
+  val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
+  def belongsToManoeuvre(intValue: Int) : Boolean = {
+    manoeuvreRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
+
+  val prohibitionRelatedSigns : Seq[TrafficSignType] = Seq(ClosedToAllVehicles,  NoPowerDrivenVehicles,  NoLorriesAndVans,  NoVehicleCombinations, NoAgriculturalVehicles,
+    NoMotorCycles,  NoMotorSledges, NoBuses,  NoMopeds,  NoCyclesOrMopeds,  NoPedestrians,  NoPedestriansCyclesMopeds,  NoRidersOnHorseback)
+  def belongsToProhibition(intValue: Int) : Boolean = {
+    prohibitionRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
+
+  val hazmatRelatedSigns : Seq[TrafficSignType] = Seq(NoVehiclesWithDangerGoods)
+  def belongsToHazmat(intValue: Int) : Boolean = {
+    hazmatRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
+}
+
+case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService, hazmatTransportProhibitionService: HazmatTransportProhibitionService) {
 
   def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
-    if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
+    if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType)) {
       manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }
-    else if (TrafficSignType.belongsToProhibition(trafficSignInfo.signType)) {
+    else if (TrafficSignManager.belongsToProhibition(trafficSignInfo.signType)) {
       prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }
-    else if (TrafficSignType.applyOTHValue(trafficSignInfo.signType).OTHvalue == NoVehiclesWithDangerGoods.OTHvalue) {
+    else if (TrafficSignManager.belongsToHazmat(trafficSignInfo.signType)) {
       hazmatTransportProhibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }
   }
@@ -23,17 +41,23 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
   def trafficSignsDeleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
     val username = Some("automatic_trafficSign_deleted")
 
-    signInfo.foreach {
+    val (turnRestrictionSigns, others) = signInfo.partition{
+      case (id, propertyData) =>
+        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+        TrafficSignManager.belongsToManoeuvre(trafficSignType)
+    }
+
+    if(turnRestrictionSigns.map(_._1).nonEmpty)
+        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
+
+    others.foreach {
       case (id, propertyData) =>
         val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
-        if (TrafficSignType.belongsToManoeuvre(trafficSignType)) {
-          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(id)), username)
-        }
-        else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
+        if (TrafficSignManager.belongsToProhibition(trafficSignType)) {
           prohibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData, username)
         }
-        else if (trafficSignType == NoVehiclesWithDangerGoods.OTHvalue) {
+        else if (TrafficSignManager.belongsToHazmat(trafficSignType)) {
           hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData, username = username)
         }
     }
