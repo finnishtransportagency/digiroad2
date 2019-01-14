@@ -181,8 +181,7 @@
         }
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render())
-          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
-
+          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(userInformationLog()).append(getAssetForm()));
 
         var buttons = function(isTerminalBusStop) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
@@ -290,6 +289,25 @@
         return info[1] ? (info[1] + ' / ' + info[0]) : '-';
       };
 
+      var userInformationLog = function() {
+
+        var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+        var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+        var message = '';
+
+        if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
+          message = limitedRights;
+        } else if (authorizationPolicy.formEditModeAccess())
+          message = noRights;
+
+        if(message) {
+          return '' +
+              '<div class="form-group user-information">' +
+              '<p class="form-control-static user-log-info">' + message + '</p>' +
+              '</div>';
+        } else
+          return '';
+      };
 
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();

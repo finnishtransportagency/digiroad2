@@ -30,6 +30,31 @@
 
     var footer =  saveAndCancelButtons;
 
+    var userInformationLog = function() {
+      var hasMunicipality = function (linearAsset) {
+        return _.some(linearAsset.get(), function (asset) {
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var message = '';
+
+      if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
+        message = limitedRights;
+      } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
+    };
+
     var templateWithHeaderAndFooter = '' +
       '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark form-manoeuvre">' +
@@ -38,6 +63,7 @@
           '</div>' +
           '<label>Kääntyminen kielletty linkeille</label>' +
           '<div></div>' +
+          userInformationLog() +
         '</div>' +
       '</div>';
 

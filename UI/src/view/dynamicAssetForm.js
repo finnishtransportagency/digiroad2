@@ -916,23 +916,22 @@
                 });
             };
 
-            if(authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) {
-                if(!hasMunicipality(selectedAsset)) {
-                    return '' +
-                      '<div class="form-group user-information">' +
-                      '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi. </p>' +
-                      '</div>';
-                } else {
-                    return '';
-                }
-            } else if(checkAuthorizationPolicy(selectedAsset)) {
+            var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+            var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+            var message = '';
+
+            if((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
+                message = limitedRights;
+            } else if(checkAuthorizationPolicy(selectedAsset))
+                message = noRights;
+
+            if(message) {
                 return '' +
-                  '<div class="form-group user-information">' +
-                    '<p class="form-control-static user-log-info"> Käyttöoikeudet eivät riitä kohteen muokkaamiseen </p>' +
-                  '</div>';
-            } else {
+                    '<div class="form-group user-information">' +
+                    '<p class="form-control-static user-log-info">' + message + '</p>' +
+                    '</div>';
+            } else
                 return '';
-            }
         };
 
         var informationLog = function (date, username) {
