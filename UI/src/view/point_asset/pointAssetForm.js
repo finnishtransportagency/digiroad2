@@ -79,15 +79,15 @@ root.PointAssetForm = function() {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<span>' + title + '</span>' + renderButtons();
+    var header = '<span>' + title + '</span>';
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
-    var footer = renderButtons();
-    
+    var footer = me.renderButtons();
+
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
 
-    rootElement.find('input[type="checkbox"]').on('change', function (event) {
+    rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
     });
@@ -116,6 +116,10 @@ root.PointAssetForm = function() {
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
   };
 
+  var informationLog = function (date, username) {
+    return date ? (date + ' / ' + username) : '-';
+  };
+
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
   this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection) {
@@ -134,10 +138,10 @@ root.PointAssetForm = function() {
         '  <div class="form form-horizontal form-dark form-pointasset">' +
         renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(asset.createdAt, asset.createdBy) + '</p>' +
         '    </div>' +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
         me.renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
@@ -151,13 +155,15 @@ root.PointAssetForm = function() {
     }
   };
 
-  function renderButtons() {
+  this.renderValueElement = function(asset, collection) { return ''; };
+
+  this.renderButtons = function() {
     return '' +
       '<div class="pointasset form-controls">' +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
-  }
+  };
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +

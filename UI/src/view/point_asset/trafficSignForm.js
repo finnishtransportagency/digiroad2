@@ -2,6 +2,7 @@
   root.TrafficSignForm = function() {
     PointAssetForm.call(this);
     var me = this;
+    var defaultAdditionalPanelValue = null;
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -10,7 +11,14 @@
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
       me.feedbackCollection = parameters.feedbackCollection;
+      defaultAdditionalPanelValue = _.find(parameters.pointAsset.newAsset.propertyData, function(obj){return obj.publicId === 'additional_panel';}).defaultValue;
       me.bindEvents(parameters);
+    };
+
+    var getProperties = function(properties, publicId) {
+      return _.find(properties, function(feature){
+        return feature.publicId === publicId;
+      });
     };
 
     this.renderValueElement = function(asset, collection) {
@@ -32,14 +40,27 @@
 
       }), function(prev, curr) { return prev + curr; }, '');
 
+      var additionalPanels = getProperties(asset.propertyData, "additional_panel");
+      var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
+      var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
+
+      var panelCheckbox =
+      '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
+      '      <div class="checkbox" >' +
+      '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
+      '      </div>' +
+      '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
+      '    </div>';
+
+
       if(asset.validityDirection)
         return components +
           '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
           '      <label class="control-label">Vaikutussuunta</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-          '    </div>';
+          '    </div>' + panelCheckbox + renderedPanels;
 
-      return components;
+      return components + panelCheckbox + renderedPanels;
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -56,6 +77,81 @@
         $('.form-traffic-sign select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
         selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-traffic-sign select#trafficSigns_type').val());
       });
+
+      rootElement.find('#additional-panel-checkbox').on('change', function (event) {
+        if(!$(event.currentTarget).prop('checked')) {
+          $('.panel-group-container').remove();
+          selectedAsset.setAdditionalPanels();
+        }
+        else {
+          $('.additional-panel-checkbox').after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
+          setAllPanels();
+        }
+        bindPanelEvents();
+      });
+
+      bindPanelEvents();
+
+      function toggleButtonVisibility() {
+        var cont = rootElement.find('.panel-group-container');
+        var panels = cont.children().size();
+
+        cont.find('.remove-panel').toggle(panels !== 1);
+        cont.find('.add-panel').prop("disabled", panels === 3);
+      }
+
+      function bindPanelEvents(){
+        rootElement.find('.remove-panel').on('click', function (event) {
+          removeSingle(event);
+          $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
+          bindPanelEvents();
+        });
+
+        rootElement.find('input[type=text]#panelValue, input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
+          setSinglePanel(event);
+        });
+
+        rootElement.find('.add-panel').on('click', function (event) {
+          $(event.currentTarget).parent().after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection));
+          $('.panel-group-container').replaceWith(renderAdditionalPanels({values:setAllPanels()}, collection));
+          bindPanelEvents();
+        });
+
+        me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
+
+        toggleButtonVisibility();
+      }
+
+      var setAllPanels = function() {
+          var allPanels = $('.single-panel-container').map(function(index){
+            var self = this;
+            return {
+              formPosition: (index + 1),
+              panelType: parseInt($(self).find('#panelType').val()),
+              panelValue: $(self).find('#panelValue').val(),
+              panelInfo:  $(self).find('#panelInfo').val()
+            };
+          });
+          selectedAsset.setAdditionalPanels(allPanels.toArray());
+          return allPanels;
+      };
+
+      var setSinglePanel = function(event) {
+        var eventTarget = $(event.currentTarget);
+        var panelId = eventTarget.parent().parent().attr('id');
+        var container = $('.single-panel-container#'+panelId);
+        var panel = {
+          formPosition: parseInt(panelId),
+          panelType: parseInt(container.find('#panelType').val()),
+          panelValue: container.find('#panelValue').val(),
+          panelInfo:  container.find('#panelInfo').val()
+        };
+        selectedAsset.setAdditionalPanel(panel);
+      };
+
+      var removeSingle = function(event) {
+        $('.single-panel-container#'+ $(event.currentTarget).prop('id')).remove();
+      };
     };
 
     var sortAndFilterTrafficSignProperties = function(properties) {
@@ -141,5 +237,111 @@
         '        <p class="form-control-static">' + propertyValue + '</p>' +
         '    </div>';
     };
+
+    var sortPanelKeys = function(properties) {
+
+      var propertyOrdering = [
+        'formPosition',
+        'panelType',
+        'panelValue',
+        'panelInfo'];
+
+      var sorted = {};
+
+      _.forEach(propertyOrdering, function(key){
+        sorted[key] = properties[key];
+      });
+      return sorted;
+    };
+
+    var renderAdditionalPanels = function (property, collection) {
+      var sortedByProperties = _.map(property.values, function(prop) {
+        return sortPanelKeys(prop);
+      });
+
+      var sortedByFormPosition = _.sortBy(sortedByProperties, function(o){
+        return o.formPosition;
+      });
+
+      var panelContainer = $('<div class="panel-group-container"></div>');
+
+      var components = _.flatMap(sortedByFormPosition, function(panel, index) {
+        var body =
+          $('<div class="single-panel-container" id='+ (index + 1)+'>' +
+          Object.entries(panel).map(function (feature) {
+            if(_.head(feature) === "formPosition")
+              return panelLabel(index+1);
+
+            if (_.head(feature) === "panelValue")
+              return panelTextHandler(feature);
+
+            if (_.head(feature) === "panelType")
+              return singleChoiceForPanels(feature, collection);
+
+            if (_.head(feature) === "panelInfo")
+              return panelTextHandler(feature);
+          }).join(''));
+
+        var buttonDiv = $('<div class="form-group editable form-traffic-sign-panel traffic-panel-buttons">' + (sortedByFormPosition.length === 1 ? '' : removeButton(index+1)) + addButton(index+1) + '</div>');
+
+        body.filter('.single-panel-container').append(buttonDiv);
+
+        return body;
+      });
+      return panelContainer.append(components)[0].outerHTML;
+    };
+
+    var removeButton = function(id) {
+      return '<button class="btn edit-only btn-secondary remove-panel" id="'+id+'" >Poista lisäkilpi</button>';
+    };
+
+    var addButton = function(id) {
+      return '<button class="btn edit-only editable btn-secondary add-panel" id="'+id+'" >Uusi lisäkilpi</button>';
+    };
+
+    var singleChoiceForPanels = function (property, collection) {
+      var propertyValue = _.isUndefined(_.last(property))  ? '' : _.last(property);
+      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+      var groups =  collection.getGroup(signTypes);
+      var panels = groups.Lisäkilvet;
+      var propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
+
+      var subTypesTrafficSigns = _.map(_.map(panels, function (group) {
+        return $('<option>',
+          {
+            value: group.propertyValue,
+            selected: propertyValue == group.propertyValue,
+            text: group.propertyDisplayValue
+          }
+        )[0].outerHTML;
+      })).join('');
+
+      return '<div class="form-group editable form-traffic-sign-panel">' +
+        '      <label class="control-label"> ALITYYPPI</label>' +
+        '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
+        '      <select class="form-control" style="display:none" id="panelType">  ' +
+        subTypesTrafficSigns +
+        '      </select></div>';
+    };
+
+    var panelTextHandler = function (property) {
+      var publicId = _.first(property);
+      var propertyValue = _.isUndefined(_.last(property)) ? '' : _.last(property);
+      var label = publicId == 'panelInfo' ? 'LISÄTIETO' : 'ARVO';
+      return '' +
+        '    <div class="form-group editable form-traffic-sign-panel">' +
+        '        <label class="control-label">' + label + '</label>' +
+        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+        '        <input type="text" class="form-control" id="' + publicId + '" value="' + propertyValue + '">' +
+        '    </div>';
+    };
+
+    var panelLabel = function(index) {
+      return '' +
+        '    <div class="form-group editable form-traffic-sign-panel">' +
+        '        <label class="traffic-panel-label">Lisäkilpi ' + index + '</label>' +
+        '    </div>';
+    };
+
   };
 })(this);

@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClien
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
@@ -54,6 +54,7 @@ trait LinearAssetOperations {
   def eventBus: DigiroadEventBus
   def polygonTools : PolygonTools
   def assetDao: OracleAssetDao
+  def assetFiller: AssetFiller = new AssetFiller
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -74,6 +75,13 @@ trait LinearAssetOperations {
       case Some(road) =>
         Some(road.linkSource.value)
       case _ => None
+    }
+  }
+
+  protected def getGeometry(roadLink: Option[RoadLinkLike]): Seq[Point] = {
+    roadLink match {
+      case Some(road) => road.geometry
+      case _ => Seq()
     }
   }
 
@@ -256,7 +264,7 @@ trait LinearAssetOperations {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newAssets.length, System.currentTimeMillis - timing))
     }
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedAssets.exists(_.linkId == a.linkId)) ++ projectedAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
     publish(eventBus, changeSet, projectedAssets)
     filledTopology
@@ -284,7 +292,7 @@ trait LinearAssetOperations {
 
     val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
       case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = NumericalLimitFiller.projectLinearAsset(asset, roadLink, projection, cs)
+        val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, cs)
         (persistedAsset ++ Seq(linearAsset), changes)
       case _ => (Seq.empty[PersistedLinearAsset], changeSet)
     }
@@ -323,11 +331,11 @@ trait LinearAssetOperations {
     val (mStart, mEnd) = (givenAndEqualDoubles(replacementChangeInfo.newStartMeasure, extensionChangeInfo.newEndMeasure),
       givenAndEqualDoubles(replacementChangeInfo.newEndMeasure, extensionChangeInfo.newStartMeasure)) match {
       case (true, false) =>
-        (replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance,
-          replacementChangeInfo.oldStartMeasure.get + NumericalLimitFiller.AllowedTolerance + NumericalLimitFiller.MaxAllowedError)
+        (replacementChangeInfo.oldStartMeasure.get + assetFiller.AllowedTolerance,
+          replacementChangeInfo.oldStartMeasure.get + assetFiller.AllowedTolerance + assetFiller.MaxAllowedError)
       case (false, true) =>
-        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - NumericalLimitFiller.AllowedTolerance - NumericalLimitFiller.MaxAllowedError),
-          Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - NumericalLimitFiller.AllowedTolerance))
+        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - assetFiller.AllowedTolerance - assetFiller.MaxAllowedError),
+          Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - assetFiller.AllowedTolerance))
       case (_, _) => (0.0, 0.0)
     }
 
@@ -440,22 +448,24 @@ trait LinearAssetOperations {
     val persistedLinearAssets = withDynTransaction {
       dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
     }
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
-    val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
+    mapPersistedAssetChanges(persistedLinearAssets, roadLinks)
+  }
 
+  def mapPersistedAssetChanges(persistedLinearAssets: Seq[PersistedLinearAsset], roadLinksWithoutWalkways: Seq[RoadLink]): Seq[ChangedLinearAsset] = {
     persistedLinearAssets.flatMap { persistedLinearAsset =>
       roadLinksWithoutWalkways.find(_.linkId == persistedLinearAsset.linkId).map { roadLink =>
         val points = GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
         val endPoints: Set[Point] =
           try {
-          val ep = GeometryUtils.geometryEndpoints(points)
-          Set(ep._1, ep._2)
-        } catch {
-          case ex: NoSuchElementException =>
-            logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
-            val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
-            Set(wholeLinkPoints._1, wholeLinkPoints._2)
-        }
+            val ep = GeometryUtils.geometryEndpoints(points)
+            Set(ep._1, ep._2)
+          } catch {
+            case ex: NoSuchElementException =>
+              logger.warn("Asset is outside of geometry, asset id " + persistedLinearAsset.id)
+              val wholeLinkPoints = GeometryUtils.geometryEndpoints(roadLink.geometry)
+              Set(wholeLinkPoints._1, wholeLinkPoints._2)
+          }
         ChangedLinearAsset(
           linearAsset = PieceWiseLinearAsset(
             persistedLinearAsset.id, persistedLinearAsset.linkId, SideCode(persistedLinearAsset.sideCode), persistedLinearAsset.value, points, persistedLinearAsset.expired,
@@ -545,16 +555,17 @@ trait LinearAssetOperations {
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
       }
       toInsert.foreach{ linearAsset =>
+        val roadlink = roadLinks.find(_.linkId == linearAsset.linkId)
         val id =
           (linearAsset.createdBy, linearAsset.createdDateTime) match {
             case (Some(createdBy), Some(createdDateTime)) =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate)
+                getLinkSource(roadlink), fromUpdate = true, Some(createdBy), Some(createdDateTime), linearAsset.verifiedBy, linearAsset.verifiedDate, geometry = getGeometry(roadlink))
             case _ =>
               dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
                 Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-                getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+                getLinkSource(roadlink), geometry = getGeometry(roadlink))
           }
 
         linearAsset.value match {
@@ -640,6 +651,14 @@ trait LinearAssetOperations {
       val existingId = existingValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(existingLinkMeasures._1, existingLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink),fromUpdate = true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       val createdId = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, Measures(createdLinkMeasures._1, createdLinkMeasures._2), username, linearAsset.vvhTimeStamp, Some(roadLink), fromUpdate= true, createdByFromUpdate = linearAsset.createdBy, createdDateTimeFromUpdate = linearAsset.createdDateTime))
       Seq(existingId, createdId).flatten
+    }
+  }
+
+
+  def getByZoomLevel(typeId: Int, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[PieceWiseLinearAsset]] = {
+    withDynTransaction {
+      val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), linkGeomSource)
+      LinearAssetPartitioner.partition(assets)
     }
   }
 
@@ -737,7 +756,7 @@ trait LinearAssetOperations {
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource, geometry = getGeometry(roadLink))
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -810,7 +829,8 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
-  }
+
+}
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
 }

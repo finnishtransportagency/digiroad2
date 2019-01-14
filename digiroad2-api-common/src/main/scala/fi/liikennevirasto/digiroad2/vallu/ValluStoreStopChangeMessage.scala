@@ -60,6 +60,7 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
         <ContactEmails>
           <Contact>pysakit@digiroad.fi</Contact>
         </ContactEmails>
+        <ZoneId>{extractPropertyValueOption(stop, "vyohyketieto").getOrElse("")}</ZoneId>
       </Stop>
     </Stops>.toString
   }

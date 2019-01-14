@@ -1,14 +1,27 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
+case class AssetLink(id: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
 
 class OracleAssetDao {
+
+  implicit val getAssetLink = new GetResult[AssetLink] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+
+      AssetLink(id, linkId, startMeasure, endMeasure)
+    }
+  }
 
   def getLastExecutionDate(typeId: Int, createdBy: String): Option[DateTime] = {
 
@@ -85,6 +98,31 @@ class OracleAssetDao {
          where A.ASSET_TYPE_ID = $typeId AND (A.valid_to IS NULL OR A.valid_to > SYSDATE ) """.as[Long].list
     }
   }
+
+  def getAssetsByTypesAndLinkId(assetTypeId: Set[Int], linkIds: Seq[Long]): Seq[AssetLink]  = {
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""select a.id, lp.link_id, lp.start_measure, lp.end_measure
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lp on lp.id = al.position_id
+            join #$idTableName i on i.id = lp.link_id
+            where a.asset_type_id in (#${assetTypeId.mkString(",")}) and (a.valid_to is null or a.valid_to > sysdate)""".as[AssetLink].list
+    }
+  }
+
+  def updateAssetsWithGeometry(asset: AssetLink, startPoint: Point, endPoint: Point) = {
+    val assetLength = asset.endMeasure - asset.startMeasure
+    sqlu"""UPDATE asset
+          SET geometry = MDSYS.SDO_GEOMETRY(4002,
+                                            3067,
+                                            NULL,
+                                            MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
+                                            MDSYS.SDO_ORDINATE_ARRAY(${startPoint.x},${startPoint.y},0,0.0,${endPoint.x},${endPoint.y},0,${assetLength}))
+          WHERE id = ${asset.id}
+      """.execute
+  }
+
+
 
   def expireWithoutTransaction(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first

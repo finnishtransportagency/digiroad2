@@ -1,6 +1,10 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.security.InvalidParameterException
 import java.util.Properties
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.{Date, Properties}
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
@@ -16,7 +20,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.{LinkProperties, RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, LinkProperties, RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
@@ -1027,7 +1031,7 @@ object DataFixture {
           val roadLink = roadLinks.find(_.linkId == linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
           val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-            Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value))
+            Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value), geometry = roadLink.geometry)
           linearAsset.value match {
             case Some(NumericValue(intValue)) =>
               dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -1434,9 +1438,10 @@ object DataFixture {
               println(s"Asset id ${ts.id} did not generate a manoeuvre ")
           }
         }catch {
-          case ex: ManoeuvreCreationException => {
+          case ex: ManoeuvreCreationException =>
             println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
-          }
+          case ex: InvalidParameterException =>
+            println(s"""creation of manoeuvre on link id ${ts.linkId} from traffic sign ${ts.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
         }
       )
     }
@@ -1485,6 +1490,103 @@ object DataFixture {
       println("")
       println("Complete at time: " + DateTime.now())
     }
+  }
+
+  def addGeometryToLinearAssets(): Unit ={
+    println("\nStart process to add geometry on linear assets")
+    println(DateTime.now())
+
+    val assetTypes = Set(DamagedByThaw.typeId, LitRoad.typeId, NumberOfLanes.typeId, TotalWeightLimit.typeId)
+    //Get All Municipalities
+    val municipalities: Seq[Int] =  OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach {
+      municipality =>
+
+        println(s"Obtaining all Road Links for Municipality: $municipality")
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)._1
+        println(s"End of roadLinks fetch for Municipality: $municipality")
+        OracleDatabase.withDynTransaction {
+          println("Fetching assets")
+          val assets = assetDao.getAssetsByTypesAndLinkId(assetTypes, roadLinks.map(_.linkId))
+          println(s"Number of fetched assets: ${assets.length}")
+          roadLinks.foreach {
+            roadLink =>
+              println(s"Begining of process for linkId ${roadLink.linkId}")
+              val assetsOnLink = assets.filter(_.linkId == roadLink.linkId)
+              assetsOnLink.foreach {
+                asset =>
+                  println(s"Calculating geometry of asset with id ${asset.id}")
+                  val geometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
+                  println(s"Updating asset with id ${asset.id}")
+                  if(geometry.nonEmpty)
+                    assetDao.updateAssetsWithGeometry(asset, geometry.head, geometry.last)
+              }
+          }
+        }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
+
+  def updatePrivateRoads(): Unit = {
+    println("\nStart of update private roads")
+    println(DateTime.now())
+      val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
+      //Get All Municipalities
+      val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+
+      municipalities.foreach { municipality =>
+        println(s"Obtaining all Road Links for Municipality: $municipality")
+        val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
+          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
+          val linkIds = roadLinks.map(_.linkId)
+
+          val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
+          roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
+        }
+        roadLinksWithAssets.foreach { roadLink =>
+          val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some(""), Some(AdditionalInformation.DeliveredWithRestrictions), Some(""))
+          roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roads_process"), (_, _) => {})
+        }
+      }
+  }
+
+  private def updateFloatingStopsOnTerminatedRoads(): Unit ={
+    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
+
+    def convertDateToString(dateOpt: Option[Date]): String = {
+      dateOpt match {
+        case Some(date) => dateFormatter.format(date)
+        case _ => LocalDate.now().toString
+      }
+    }
+
+    println("Starting fetch of OTH stops")
+    println(DateTime.now())
+
+    val trStops = dataImporter.getTierekisteriStops()
+    val floatingTerminated = trStops.filter(stop => stop._2 > 0 && stop._4 == FloatingReason.TerminatedRoad.value)
+
+    println("Starting fetch of Tierekisteri stops")
+    println(DateTime.now())
+    val (terminated, active) = tierekisteriClient.fetchActiveMassTransitStops().partition(stop => convertDateToString(stop.removalDate).compareTo(LocalDate.now().toString) == -1)
+
+    val stopsToUpdateFloatingReason = trStops.filter(stop => terminated.map(_.liviId).contains(stop._3))
+    val stopsToRemoveFloatingReason = floatingTerminated.filter(stop => active.map(_.liviId).contains(stop._3))
+
+    OracleDatabase.withDynTransaction {
+      stopsToUpdateFloatingReason.foreach(stop => massTransitStopService.updateFloating(stop._1, floating = true, Some(FloatingReason.TerminatedRoad)))
+
+      if(stopsToRemoveFloatingReason.nonEmpty)
+        stopsToRemoveFloatingReason.foreach(stop => massTransitStopService.updateFloating(stop._1, floating = false, None))
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
   }
 
   def main(args:Array[String]) : Unit = {
@@ -1585,6 +1687,12 @@ object DataFixture {
         createManoeuvresUsingTrafficSigns()
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
+      case Some("update_floating_stops_on_terminated_roads") =>
+        updateFloatingStopsOnTerminatedRoads()
+      case Some("update_private_roads") =>
+        updatePrivateRoads()
+      case Some("add_geometry_to_linear_assets") =>
+        addGeometryToLinearAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1595,7 +1703,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs")
+        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets")
     }
   }
 }

@@ -128,6 +128,10 @@ object TierekisteriDataImporter {
     new CarryingCapacityTierekisteriImporter()
   }
 
+  lazy val animalWarningsTierekisteriImporter: AnimalWarningsTierekisteriImporter = {
+    new AnimalWarningsTierekisteriImporter()
+  }
+
   lazy val bogieWeightLimitImporter: BogieWeightLimitImporter = {
     new BogieWeightLimitImporter()
   }
@@ -254,7 +258,8 @@ object TierekisteriDataImporter {
     "widthLimit" -> widthLimitTierekisteriImporter,
     "careClass" -> careClassTierekisteriImporter,
     "carryingCapacity" -> carryingCapacityTierekisteriImporter,
-    "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter
+    "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter,
+    "animalWarnings" -> animalWarningsTierekisteriImporter
   )
 
   val tierekisteriDataConverter = Map[String, TierekisteriImporterOperations](

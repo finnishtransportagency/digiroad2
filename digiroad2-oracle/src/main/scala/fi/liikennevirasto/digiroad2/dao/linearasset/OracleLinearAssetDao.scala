@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{linearasset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
-import org.joda.time.{DateTime}
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -26,6 +27,9 @@ case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId:
 
 
 case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+
+case class AssetLink(id: Long, linkId: Long)
+
 
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   val logger = LoggerFactory.getLogger(getClass)
@@ -99,8 +103,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-
-
   implicit val getLinearAsset = new GetResult[PersistedLinearAsset] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -125,6 +127,41 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
       PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
         linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
+    }
+  }
+
+  implicit val getPiecewise = new GetResult[PieceWiseLinearAsset] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val sideCode = r.nextInt()
+      val value = r.nextIntOption().map(NumericValue)
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val createdBy = r.nextStringOption()
+      val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
+      val typeId = r.nextInt()
+      val vvhTimeStamp = r.nextLong()
+      val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = LinkGeomSource.apply(r.nextInt())
+      val verifiedBy = r.nextStringOption()
+      val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val informationSource = r.nextIntOption()
+      val startPoint_x = r.nextDouble()
+      val startPoint_y = r.nextDouble()
+      val endPoint_x = r.nextDouble()
+      val endPoint_y = r.nextDouble()
+      val administrativeClass = AdministrativeClass(r.nextInt())
+
+      val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
+      PieceWiseLinearAsset(id, linkId, SideCode(sideCode), value, geometry, expired, startMeasure, endMeasure,
+                           geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode)), vvhTimeStamp,
+                           geomModifiedDate, linkSource, administrativeClass, verifiedBy = verifiedBy, verifiedDate = verifiedDate, informationSource = informationSource.map(info => InformationSource.apply(info)))
+
+
     }
   }
 
@@ -198,6 +235,29 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+  def fetchAssetsByLinkIds(assetTypeId: Set[Int], linkIds: Seq[Long], includeExpired: Boolean = false): Seq[AssetLink] = {
+    val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
+        select a.id, pos.link_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          join #$idTableName i on i.id = pos.link_id
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink].list
+    }
+  }
+
+  implicit val getAssetLink = new GetResult[AssetLink] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+
+      AssetLink(id, linkId)
+    }
+  }
+
+
   def fetchExpireAssetLastModificationsByLinkIds(assetTypeId: Int, linkIds: Seq[Long]) : Seq[AssetLastModification] = {
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       val assets = sql"""
@@ -246,6 +306,28 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+  def groupProhibitionsResult(assets: List[ProhibitionsRow], assetTypeId: Int): Seq[PersistedLinearAsset] = {
+    val groupedByAssetId = assets.groupBy(_.id)
+    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
+
+    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
+      val asset = groupedByAssetId(assetId).head
+      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
+        val rows = rowsByProhibitionId(prohibitionId)
+        val prohibitionType = rows.head.prohibitionType
+        val prohibitionAdditionalInfo = rows.head.additionalInfo
+        val exceptions = rows.flatMap(_.exceptionType).toSet
+        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
+          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
+        }.toSet
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
+      }
+      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
+        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
+        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
+    }.toSeq
+  }
+
   /**
     * Iterates a set of link ids with prohibition asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     * and CsvGenerator.generateDroppedProhibitions.
@@ -276,25 +358,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           #$floatingFilter""".as[ProhibitionsRow].list
     }
 
-    val groupedByAssetId = assets.groupBy(_.id)
-    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
-
-    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val asset = groupedByAssetId(assetId).head
-      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
-        val rows = rowsByProhibitionId(prohibitionId)
-        val prohibitionType = rows.head.prohibitionType
-        val prohibitionAdditionalInfo = rows.head.additionalInfo
-        val exceptions = rows.flatMap(_.exceptionType).toSet
-        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
-          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
-        }.toSet
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
-      }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
-        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, prohibitionAssetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
-    }.toSeq
+    groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
   /**
@@ -328,25 +392,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         .as[ProhibitionsRow].list
     }
 
-    val groupedByAssetId = assets.groupBy(_.id)
-    val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_.prohibitionId))
-
-    groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val asset = groupedByAssetId(assetId).head
-      val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
-        val rows = rowsByProhibitionId(prohibitionId)
-        val prohibitionType = rows.head.prohibitionType
-        val exceptions = rows.flatMap(_.exceptionType).toSet
-        val prohibitionAdditionalInfo = rows.head.additionalInfo
-        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
-          ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
-        }.toSet
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
-      }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
-        asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, prohibitionAssetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
-        asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
-    }.toSeq
+    groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
   def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean) : List[PersistedLinearAsset] = {
@@ -377,6 +423,61 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
       PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }
+  }
+
+  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, linkSource: Option[LinkGeomSource] = None): Seq[PieceWiseLinearAsset] = {
+    val linkGeomCondition = linkSource match {
+      case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
+      case _ => ""
+    }
+    sql"""
+         select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
+                a.created_by, a.created_date, a.modified_by, a.modified_date,
+                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
+                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date,
+                a.information_source, t.X, t.Y, t2.X, t2.Y, ad.administrative_class
+           from asset a
+           join asset_link al on a.id = al.asset_id
+           join lrm_position pos on al.position_id = pos.id
+           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t
+           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t2
+           join property p on p.public_id = 'mittarajoitus'
+           left join administrative_class ad on pos.link_id = ad.link_id
+           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId #$linkGeomCondition"""
+      .as[PieceWiseLinearAsset].list
+  }
+
+
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean): Seq[PersistedLinearAsset] = {
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val excludedTypesValues = excludedTypes.map(_.prohibitionType)
+
+    val assets =  sql"""
+       select a.id, pos.link_id, pos.side_code, pv.id, pv.type, pvp.type, pvp.start_hour, pvp.end_hour,pe.type,
+              pos.start_measure, pos.end_measure, a.created_by, a.created_date, a.modified_by, a.modified_date,
+              case when a.valid_to <= sysdate then 1 else 0 end as expired,
+              pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
+              pvp.end_minute, pv.additional_info, pos.link_source,
+              a.verified_by, a.verified_date, a.information_source
+       from asset a
+       join asset_link al on a.id = al.asset_id
+       join lrm_position pos on al.position_id = pos.id
+       join prohibition_value pv on pv.asset_id = a.id
+       left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
+       left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+       where a.asset_type_id = $assetTypeId and pv.TYPE not in (#${excludedTypesValues.mkString(",")} )
+       and (
+         (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+         or
+         (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+         or
+         (a.created_date > $sinceDate and a.created_date <= $untilDate)
+       )
+       #$withAutoAdjustFilter
+    """.as[ProhibitionsRow].list
+
+    groupProhibitionsResult(assets, assetTypeId)
   }
 
   /**
@@ -563,18 +664,35 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None): Long = {
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
     val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
 
+    val geom: String = {
+      val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
+      if(geom.nonEmpty){
+        val assetLength = measures.endMeasure - measures.startMeasure
+
+        s"""DSYS.SDO_GEOMETRY(4002,
+        3067,
+        NULL,
+        MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
+        MDSYS.SDO_ORDINATE_ARRAY(${geom.head.x},${geom.head.y},0,0.0,${geom.last.x},${geom.last.y},0,$assetLength))"""
+        "null"
+      } else {
+        "null"
+      }
+    }
+
+
     if (fromUpdate) {
       verifiedDateFromUpdate match {
         case Some(value) => sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, $verifiedDateFromUpdate, $informationSource, #$geom)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
@@ -585,8 +703,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     """.execute
         case None => sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate, $informationSource)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, verified_by, verified_date, information_source, geometry)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate, $verifiedBy, #$verifiedDate, $informationSource, #$geom)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
@@ -599,8 +717,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     } else {
       sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source)
-      values ($id, $typeId, $username, sysdate, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, verified_by, verified_date, information_source, geometry)
+      values ($id, $typeId, $username, sysdate, #$validTo, ${verifiedBy.getOrElse("")}, #$verifiedDate, $informationSource, #$geom)
 
       into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
       values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)

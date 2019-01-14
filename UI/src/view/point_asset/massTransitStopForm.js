@@ -4,7 +4,6 @@
   var authorizationPolicy;
 
   var rootElement = $("#feature-attributes");
-
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
@@ -59,11 +58,12 @@
     }
   };
 
-  function optionalSave(properties) {
-    var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY(properties);
-    var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress(properties);
-    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL(properties);
-    return authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()  && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && isAdministratorHSL));
+  function optionalSave() {
+    var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY();
+    var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress();
+    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL();
+    var floating = selectedMassTransitStopModel.getFloatingReason();
+    return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && isAdministratorHSL)) && !floating;
   }
 
   var SaveButton = function(isTerminalActive) {
@@ -77,7 +77,7 @@
           }
         });
       } else {
-        if(optionalSave(selectedMassTransitStopModel.getProperties())){
+        if(optionalSave()){
           new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
             successCallback: function () {
               selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
@@ -201,8 +201,7 @@
           } else {
             header = $('' + '<span>Uusi pys&auml;kki</span>');
           }
-
-          return header.add(buttons(isTerminalBusStop));
+          return header;
         }
 
         rootElement.find("#feature-attributes-header").html(busStopHeader());
@@ -282,11 +281,21 @@
         return label;
       };
 
+      var informationLog = function (propertyVal) {
+        if(_.isEmpty(propertyVal))
+          return propertyVal;
+
+        var info = propertyVal.split(/ (.*)/);
+
+        return info[1] ? (info[1] + ' / ' + info[0]) : '-';
+      };
+
+
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
         if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty_terminaaliin') {
-          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
+          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
         } else {
           outer.append(createLabelElement(property));
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
@@ -702,6 +711,9 @@
           case '7': //TerminalChildless
               text = 'Kyseisellä terminaalipysäkillä ei ole yhtään liitettyä pysäkkiä.';
               break;
+          case '8': //EndedRoadBusStop
+            text = 'Kadun tai tien hallinnollinen luokka on muuttunut tai tieosoite on lakkautettu. Tarkista ja korjaa pysäkin sijainti.';
+            break;
           default:
             text = 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.';
         }

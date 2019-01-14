@@ -46,6 +46,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "Comments").text must equal("")
     (xml \ "PlatformCode").text must equal("")
     (xml \ "ConnectedToTerminal").text must equal("")
+    (xml \ "ZoneId").text must equal("")
   }
 
   it must "specify external id" in {

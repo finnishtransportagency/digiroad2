@@ -97,6 +97,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
@@ -129,6 +130,7 @@ object Digiroad2Build extends Build {
         "org.scalatra" %% "scalatra" % ScalatraVersion,
         "org.scalatra" %% "scalatra-json" % ScalatraVersion,
         "org.json4s"   %% "json4s-jackson" % "3.5.3",
+        "org.json4s"   %% "json4s-native" % "3.5.2",
         "org.scala-lang.modules"   %% "scala-parser-combinators" % "1.1.0",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
@@ -138,7 +140,8 @@ object Digiroad2Build extends Build {
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
         "commons-io" % "commons-io" % "2.6",
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
-        "org.apache.httpcomponents" % "httpclient" % "4.3.3"
+        "org.apache.httpcomponents" % "httpclient" % "4.3.3",
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3"
       ),
       unmanagedResourceDirectories in Compile += baseDirectory.value / "conf" /  env,
       unmanagedResourceDirectories in Test += baseDirectory.value / "conf" /  testEnv,
@@ -171,6 +174,7 @@ object Digiroad2Build extends Build {
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
         "org.scalatra" %% "scalatra-auth" % ScalatraVersion,
+        "org.scalatra" %% "scalatra-swagger"  % "2.6.3",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.typesafe.akka" %% "akka-testkit" % "2.5.12" % "test",
         "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",

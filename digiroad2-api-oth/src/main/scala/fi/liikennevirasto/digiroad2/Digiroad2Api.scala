@@ -7,7 +7,7 @@ import java.time.LocalDate
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service._
+import fi.liikennevirasto.digiroad2.service.{pointasset, _}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
@@ -28,6 +28,8 @@ import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.scalatra._
 import org.scalatra.json._
@@ -58,6 +60,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val maintenanceRoadService: MaintenanceService,
                    val pavedRoadService: PavedRoadService,
                    val roadWidthService: RoadWidthService,
+                   val massTransitLaneService: MassTransitLaneService,
+                   val numberOfLanesService: NumberOfLanesService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
                    val hazmatTransportProhibitionService: HazmatTransportProhibitionService = Digiroad2Context.hazmatTransportProhibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
@@ -141,7 +145,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ac: AdministrativeClass => JString(ac.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer
+  case object TrafficSignSerializer extends CustomSerializer[SimpleTrafficSignProperty](format =>
+    ({
+      case jsonObj: JObject =>
+        val publicId = (jsonObj \ "publicId").extract[String]
+        val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+
+        SimpleTrafficSignProperty(publicId, propertyValue)
+    },
+      {
+        case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
+      }))
+
+  case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
+    case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+  }, {
+    case ai: AdditionalInformation => JString(ai.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + AdditionalInfoClassSerializer + TrafficSignSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -586,7 +608,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "linkSource" -> roadLink.linkSource.value,
       "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
       "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
-      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR")
+      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR"),
+      "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+      "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+      "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
     )
   }
 
@@ -772,7 +797,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLinearAssets(typeId)
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 8
+    val maxZoom = 9
+    zoom >= minVisibleZoom && zoom <= maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId, Some(LinkGeomSource.NormalLinkInterface)))
+      case false => getLinearAssets(typeId)
+    }
   }
 
   private def getLinearAssets(typeId: Int) = {
@@ -792,7 +823,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/complementary"){
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLinearAssetsWithComplementary(typeId)
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 8
+    val maxZoom = 9
+    zoom >= minVisibleZoom && zoom <= maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId))
+      case false => getLinearAssetsWithComplementary(typeId)
+    }
   }
 
   private def getLinearAssetsWithComplementary(typeId: Int) = {
@@ -1684,13 +1721,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | BogieWeightLimit.typeId =>  dynamicLinearAssetService
+      case DamagedByThaw.typeId | CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
       case TotalWeightLimit.typeId => linearTotalWeightLimitService
       case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
       case AxleWeightLimit.typeId => linearAxleWeightLimitService
+      case BogieWeightLimit.typeId => linearBogieWeightLimitService
+      case MassTransitLane.typeId => massTransitLaneService
+      case NumberOfLanes.typeId => numberOfLanesService
       case _ => linearAssetService
     }
   }
@@ -1710,7 +1750,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
-        servicePointService.create(asset, link.municipalityCode, user.username)
+        try {
+          servicePointService.create(asset, link.municipalityCode, user.username)
+        } catch {
+        case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+      }
     }
   }
 
@@ -1723,7 +1767,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
       case Some(link) =>
         validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
-        servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+        try {
+          servicePointService.update(id, updatedAsset, link.municipalityCode, user.username)
+        } catch {
+          case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+        }
     }
   }
 

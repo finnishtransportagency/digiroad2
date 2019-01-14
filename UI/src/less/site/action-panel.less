@@ -689,3 +689,42 @@
     }
   }
 }
+
+.service-points {
+  .panel-legend {
+    width: 185px;
+    display: inline-block;
+
+    .label {
+      > span {
+        width: 140px;
+        display: inline-block;
+      }
+
+      > img {
+        position: absolute;
+        right: 10px;
+        left: unset;
+        width: auto;
+      }
+    }
+
+    .loading-terminal {
+      &:extend(.label);
+      > span {
+        width: 111px;
+      }
+
+      > img {
+        margin-top: 10px
+      }
+    }
+
+    .parking-area {
+      &:extend(.label);
+      > img {
+        margin-top: 10px
+      }
+    }
+  }
+}

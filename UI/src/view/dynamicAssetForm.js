@@ -763,17 +763,13 @@
                 '<span class="edit-mode-title" style="display: block">' + _assetTypeConfiguration.newTitle + '</span>';
             }
             return selectedAsset.count() === 1 ?
-              '<span>Segmentin ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
+            '<span>Kohteen ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
           };
 
-          var buttons = $('<div class="linear-asset form-controls" style="display: none"></div>')
-                        .append(new SaveButton(_assetTypeConfiguration, formStructure).element)
-                        .append(new CancelButton(_assetTypeConfiguration).element);
-
-          return $(title()).add(buttons);
+          return $(title());
         };
 
-        var createFooterElement = function() {
+      var createFooterElement = function() {
           return $('<div class="linear-asset form-controls" style="display: none"></div>')
             .append(new VerificationButton(_assetTypeConfiguration).element)
             .append(new SaveButton(_assetTypeConfiguration, formStructure).element)
@@ -916,39 +912,42 @@
             return '<span class="marker">' + sideCode + '</span>';
         }
 
+
+      var informationLog = function (date, username) {
+        return date ? (date + ' / ' + username) : '-';
+      };
+
         function createBodyElement(selectedAsset) {
             var info = {
-                modifiedBy :  selectedAsset.getModifiedBy() || '-',
-                modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '-',
-                createdBy : selectedAsset.getCreatedBy() || '-',
+                modifiedBy :  selectedAsset.getModifiedBy() || '',
+                modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '',
+                createdBy : selectedAsset.getCreatedBy() || '',
                 createdDate : selectedAsset.getCreatedDateTime() ? ' ' + selectedAsset.getCreatedDateTime(): '',
                 verifiedBy : selectedAsset.getVerifiedBy(),
                 verifiedDateTime : selectedAsset.getVerifiedDateTime()
             };
 
             var verifiedFields = function() {
-                return (selectedAsset.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
+                return (_assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
                     '<div class="form-group">' +
-                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' + info.verifiedBy + ' ' + info.verifiedDateTime + '</p>' +
+                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
                     '</div>' : '';
             };
 
             return $('<div class="wrapper read-only">' +
                 '   <div class="form form-horizontal form-dark asset-factory">' +
                 '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + info.createdBy + info.createdDate + '</p>' +
+                '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
                 '     </div>' +
                 '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + info.modifiedBy + info.modifiedDate + '</p>' +
+                '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
                 '     </div>' +
                 verifiedFields() +
                 '     <div class="form-group">' +
                 '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
                 '     </div>' +
                 '   </div>' +
-                '</div>'
-
-            );
+                '</div>');
         }
 
         function toggleBodyElements(rootElement, isReadOnly) {
