@@ -22,6 +22,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import org.joda.time.DateTime
 
 
 class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
@@ -696,8 +697,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
     val result = service.getByMunicipalityAndGroup(235, TrafficSignTypeGroup.GeneralWarningSigns)
 
-    result.exists(_.id == id) should be (true)
-    result.exists(_.id == id1) should be (true)
+    result.map(_.id).forall(resultId => Seq(id, id1).contains(resultId)) should be (true)
     }
   }
 

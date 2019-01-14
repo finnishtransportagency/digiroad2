@@ -60,6 +60,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val maintenanceRoadService: MaintenanceService,
                    val pavedRoadService: PavedRoadService,
                    val roadWidthService: RoadWidthService,
+                   val massTransitLaneService: MassTransitLaneService,
+                   val numberOfLanesService: NumberOfLanesService,
                    val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService,
                    val hazmatTransportProhibitionService: HazmatTransportProhibitionService = Digiroad2Context.hazmatTransportProhibitionService,
                    val textValueLinearAssetService: TextValueLinearAssetService = Digiroad2Context.textValueLinearAssetService,
@@ -156,7 +158,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
       }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + TrafficSignSerializer
+  case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
+    case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+  }, {
+    case ai: AdditionalInformation => JString(ai.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + AdditionalInfoClassSerializer + TrafficSignSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -601,7 +609,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "linkSource" -> roadLink.linkSource.value,
       "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
       "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
-      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR")
+      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR"),
+      "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
+      "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
+      "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
     )
   }
 
@@ -787,7 +798,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLinearAssets(typeId)
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 8
+    val maxZoom = 9
+    zoom >= minVisibleZoom && zoom <= maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId, Some(LinkGeomSource.NormalLinkInterface)))
+      case false => getLinearAssets(typeId)
+    }
   }
 
   private def getLinearAssets(typeId: Int) = {
@@ -807,7 +824,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/complementary"){
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    getLinearAssetsWithComplementary(typeId)
+    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
+    val minVisibleZoom = 8
+    val maxZoom = 9
+    zoom >= minVisibleZoom && zoom <= maxZoom match {
+      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId))
+      case false => getLinearAssetsWithComplementary(typeId)
+    }
   }
 
   private def getLinearAssetsWithComplementary(typeId: Int) = {
@@ -1701,7 +1724,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case DamagedByThaw.typeId | CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -1709,6 +1732,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case TrailerTruckWeightLimit.typeId => linearTrailerTruckWeightLimitService
       case AxleWeightLimit.typeId => linearAxleWeightLimitService
       case BogieWeightLimit.typeId => linearBogieWeightLimitService
+      case MassTransitLane.typeId => massTransitLaneService
+      case NumberOfLanes.typeId => numberOfLanesService
       case _ => linearAssetService
     }
   }

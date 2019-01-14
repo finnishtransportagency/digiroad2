@@ -40,16 +40,20 @@
       return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
     };
 
+    var informationLog = function (date, username) {
+      return date ? (date + ' / ' + username) : ' '+ username;
+    };
+
     return '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n:' + informationLog(createdDateTime, createdBy)+ '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Muokattu viimeksi:' + informationLog(modifiedDateTime, modifiedBy) + '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedSpeedLimit.count() + '</p>' +
+                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä:' + selectedSpeedLimit.count() + '</p>' +
                '</div>' +
                limitValueButtons() +
                separatorButton() +
@@ -58,21 +62,17 @@
   };
 
   var header = function(selectedSpeedLimit) {
-    var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
-    var buttons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
-      '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-
     var title = function() {
       if (selectedSpeedLimit.isUnknown() || selectedSpeedLimit.isSplit()) {
         return '<span>Uusi nopeusrajoitus</span>';
       } else if (selectedSpeedLimit.count() == 1) {
-        return '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>';
+        return '<span>Kohteen ID: ' + selectedSpeedLimit.getId() + '</span>';
       } else {
         return '<span>Nopeusrajoitus</span>';
       }
     };
 
-    return title() + '<div class="speed-limit form-controls">' + buttons + '</div>';
+    return title();
   };
 
   var footer = function(selectedSpeedLimit) {

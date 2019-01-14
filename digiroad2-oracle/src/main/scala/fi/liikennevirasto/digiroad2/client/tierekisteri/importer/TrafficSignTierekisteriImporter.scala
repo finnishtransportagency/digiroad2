@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignType, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficSignAssetClient
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
@@ -13,6 +13,9 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, Inc
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignType, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficSignAssetClient
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
@@ -50,6 +53,46 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
       Set(typeProperty, valueProperty) ++ additionalPanel
     else
       Set(typeProperty, valueProperty)
+  }
+
+  private def generateProperties(trAssetData: TierekisteriAssetData) = {
+    val trafficType = trAssetData.assetType.trafficSignType
+    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.value.toString)))
+    val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
+      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
+      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(converter(trAssetData.assetType, trAssetData.assetValue))))
+    }
+
+    Set(typeProperty, valueProperty)
+  }
+
+  def converter(trafficType: TRTrafficSignType, value: String): String = {
+    val regexGetNumber = "^(\\d*\\.?\\d)?".r
+
+    val weightType : Seq[TRTrafficSignType] = Seq(MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding)
+    val measuresType : Seq[TRTrafficSignType] = Seq(MaximumLength, MaxWidthExceeding, MaxHeightExceeding)
+    val speedLimitType : Seq[TRTrafficSignType] = Seq(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
+
+    val trimValue = value.replaceAll("\\s", "").replaceAll(",", ".")
+
+    trafficType match {
+      case x if weightType.contains(trafficType) && Seq("(?i)\\d+\\.?\\d*t$".r, "(?i)\\d+\\.?\\d*t\\.$".r, "(?i)\\d+\\.?\\d*tn$".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+        regexGetNumber.findFirstMatchIn(trimValue) match {
+          case Some(matchedValue) => (matchedValue.toString().toDouble * 1000).toInt.toString
+          case _ => value
+        }
+      case x if measuresType.contains(trafficType) && "(?i)\\d+?\\.?\\d*m$".r.findFirstMatchIn(trimValue).nonEmpty =>
+        regexGetNumber.findFirstMatchIn(trimValue) match {
+          case Some(matchedValue) => matchedValue.toString().toDouble.toString
+          case _ => value
+        }
+      case x if speedLimitType.contains(trafficType) && Seq("^(?i)\\d+km\\\\h".r, "^(?i)\\d+kmh".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+        regexGetNumber.findFirstMatchIn(trimValue) match {
+          case Some(matchedValue) => matchedValue.toString().toDouble.toInt.toString
+          case _ => value
+        }
+      case _ => value
+    }
   }
 
   protected override def getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime) = {

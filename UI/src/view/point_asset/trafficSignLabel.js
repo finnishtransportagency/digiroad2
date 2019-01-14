@@ -199,7 +199,7 @@
         var output = "";
         var timePeriods = this.additionalInfo ? this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/g) : [];
 
-        while (index < counter && timePeriods.length > index) {
+        while (index < counter && !_.isEmpty(timePeriods) && timePeriods.length > index) {
 
           output = output.concat((index > 0 ? '\n' : ""), timePeriods[index]);
           index++;

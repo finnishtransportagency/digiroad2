@@ -14,12 +14,7 @@
       massTransitLanes: function() { return true; },
       carryingCapacity: function() { return true; },
       pavedRoad: function() { return true; },
-      careClass: function(val) {
-        return true;
-        //TODO: check functionality after merge
-        // if(_.isUndefined(val) {return false;}
-        // else if(val.properties[0].values.length > 0) {return true;}
-      },
+      careClass: function() {return true; },
       default: function(val) {
         if(_.isUndefined(val)) { return true; }
         else if(val > 0) { return true; }
@@ -32,7 +27,7 @@
     if(!_.isUndefined(val)){
       var values = val.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
       return _.every(values, function(value){
-        return value.match(/^[0-9|Ee][0-9|Bb]{0,2}/);
+        return value.match(/^[0-9|Ee][0-9|a-zA-Z]{0,2}$/);
       });
     }
     return true;
