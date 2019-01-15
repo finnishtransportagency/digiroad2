@@ -130,7 +130,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 }
 
 trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImporter {
-  val trafficSignGroup: TrafficSignTypeGroup
+  lazy val trafficSignGroup: TrafficSignTypeGroup = throw new IllegalArgumentException
 
   def trafficSignsInGroup(trafficSignGroup: TrafficSignTypeGroup) = TrafficSignType.apply(trafficSignGroup)
   //TODO uncomment this line after merge  US 1707
@@ -155,41 +155,41 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
 }
 
 class TrafficSignSpeedLimitTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
 }
 
 class TrafficSignRegulatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.RegulatorySigns
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.RegulatorySigns
 }
 
 class TrafficSignMaximumRestrictionsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MaximumRestrictions
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MaximumRestrictions
 }
 
 class TrafficSignGeneralWarningSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.GeneralWarningSigns
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.GeneralWarningSigns
 }
 
 class TrafficSignProhibitionsAndRestrictionsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ProhibitionsAndRestrictions
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ProhibitionsAndRestrictions
 }
 
 class TrafficSignMandatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
 }
 
 class TrafficSignPriorityAndGiveWaySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
 }
 class TrafficSignInformationSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
 }
 
 class TrafficSignServiceSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
 }
 
 //TODO remove this code after merge US 1707
 class TrafficSignAdditionalPanelsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
-  override val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.AdditionalPanels
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.AdditionalPanels
 }
