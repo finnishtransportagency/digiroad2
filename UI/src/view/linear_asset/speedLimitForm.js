@@ -94,8 +94,8 @@
         $('ul[class=information-content]').append('' +
           '   <li><a id="work-list-link-errors" class="wrong-speed-limits operator-user" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a></li>' +
           '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
-          '   <li><a id="work-list-link-municipality" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan Omistama</a></li>' +
-          '   <li><a id="work-list-link-state" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion Omistama</a></li>');
+          '   <li><a id="work-list-link-municipality" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan omistama</a></li>' +
+          '   <li><a id="work-list-link-state" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion omistama</a></li>');
       }
   };
 
