@@ -302,11 +302,22 @@ object GeometryUtils {
     }
   }
 
-  def calculateBearing(geom: Seq[Point]): Int = {
-    //TODO Test bearing calculation
+  def calculateBearing(geom: Seq[Point], assetMValue: Option[Double] = None): Int = {
     val points = geometryEndpoints(geom)
-    val startPoint = points._1
-    val endPoint = points._2
+
+    val (startPoint, endPoint) =
+      assetMValue match {
+        case Some(mValue) =>
+          (calculatePointFromLinearReference(geom, mValue - 5), calculatePointFromLinearReference(geom, mValue + 5)) match {
+            case (Some(p1), Some(p2)) =>
+              (p1, p2)
+            case _ =>
+              (points._1, points._2)
+          }
+        case _ =>
+          (points._1, points._2)
+      }
+
     val rad = Math.atan2(startPoint.x - endPoint.x, startPoint.y - endPoint.y)
     (180 + (rad * (180 / Math.PI))).asInstanceOf[Int]
   }

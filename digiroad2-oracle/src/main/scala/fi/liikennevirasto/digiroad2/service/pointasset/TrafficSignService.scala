@@ -209,7 +209,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
     val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
-    val linkBearing = GeometryUtils.calculateBearing(geometry)
+    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
 
     val lonDifference = assetLocation.x - roadLinkPoint.get.x
     val latDifference = assetLocation.y - roadLinkPoint.get.y
@@ -220,8 +220,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getAssetBearing(validityDirection: Int, geometry: Seq[Point]): Int = {
-    val linkBearing = GeometryUtils.calculateBearing(geometry)
+  def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None): Int = {
+    val linkBearing = GeometryUtils.calculateBearing(geometry, assetMValue)
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 

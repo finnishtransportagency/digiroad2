@@ -301,4 +301,26 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(location, linkGeometry)
     mValue should be(1.0)
   }
+
+  test("Test bearing calculation on Roadlink only with two points, without asset mValue") {
+    val linkGeometry: Seq[Point] = List(Point(1.0, 1.0), Point(5.0, 5.0))
+    val bearingValue = GeometryUtils.calculateBearing(linkGeometry)
+    bearingValue should be(45.0)
+  }
+
+  test("Test bearing calculation on Roadlink only with two points, with asset mValue") {
+    val linkGeometry: Seq[Point] = List(Point(10.0, 10.0), Point(50.0, 50.0))
+    val assetPosition: Point = Point(20.0, 20.0)
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(assetPosition, linkGeometry)
+    val bearingValue = GeometryUtils.calculateBearing(linkGeometry, Some(mValue))
+    bearingValue should be(45.0)
+  }
+
+  test("Test bearing calculation on Roadlink with more that two points and with asset mValue") {
+    val assetPosition: Point = Point(20.0, 20.0)
+    val linkGeometry: Seq[Point] = List(Point(10.0, 10.0), Point(50.0, 50.0), Point(70.0, 10.0), Point(70.0, -20.0))
+    val mValue: Double = GeometryUtils.calculateLinearReferenceFromPoint(assetPosition, linkGeometry)
+    val bearingValue = GeometryUtils.calculateBearing(linkGeometry, Some(mValue))
+    bearingValue should be(45.0)
+  }
 }
