@@ -799,8 +799,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/linearassets") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
     val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
-    val bbx = params.get("bbox")
-    val boundingRectangle = constructBoundingRectangle(bbx.get)
     val minVisibleZoom = 8
     val maxZoom = 9
     zoom >= minVisibleZoom && zoom <= maxZoom match {

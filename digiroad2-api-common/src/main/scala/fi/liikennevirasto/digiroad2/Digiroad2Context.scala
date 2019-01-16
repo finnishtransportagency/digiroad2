@@ -239,7 +239,7 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
 
 class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: TrafficSignInfo => trafficSignManager.trafficSignsCreateAssets(x)
+    case x: TrafficSignInfo => trafficSignManager.createAssets(x)
     case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
@@ -247,7 +247,7 @@ class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Ac
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: Long => trafficSignService.getTrafficType(x) match {
-      case Some(trafficType) => trafficSignManager.trafficSignsDeleteAssets(x, trafficType)
+      case Some(trafficType) => trafficSignManager.deleteAssets(x, trafficType)
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")

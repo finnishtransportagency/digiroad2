@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationExcept
 
 class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService) {
 
-  def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
+  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
       try{
         manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
@@ -25,7 +25,7 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
     }
   }
 
-  def trafficSignsDeleteAssets(id: Long, trafficSignType: Int): Unit = {
+  def deleteAssets(id: Long, trafficSignType: Int): Unit = {
     val username = Some("automatic_trafficSign_deleted")
     if (TrafficSignType.belongsToManoeuvre(trafficSignType)) {
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(id)), username)

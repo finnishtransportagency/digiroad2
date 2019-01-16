@@ -28,7 +28,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
-  override def assetFiller: AssetFiller = new OneWayAssetFiller
+  override def assetFiller: AssetFiller = new ProhibitionFiller
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) : Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
