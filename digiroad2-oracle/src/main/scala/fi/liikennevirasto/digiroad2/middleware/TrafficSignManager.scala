@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.middleware
 
 
-import fi.liikennevirasto.digiroad2.asset.{TextPropertyValue, TrafficSignProperty}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, PointAssetValue, TextPropertyValue, TrafficSignProperty}
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
 
 object TrafficSignManager {
@@ -25,6 +26,7 @@ object TrafficSignManager {
 }
 
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService, hazmatTransportProhibitionService: HazmatTransportProhibitionService) {
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType)) {
@@ -54,12 +56,41 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionSer
       case (id, propertyData) =>
         val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
+       val additionalPanel = (propertyData.find(p => p.publicId == "additional_panel") match {
+          case Some(result) => result.values
+          case _ => Seq()
+        }).map(_.asInstanceOf[AdditionalPanel])
+
         if (TrafficSignManager.belongsToProhibition(trafficSignType)) {
-          prohibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData, username)
+          prohibitionService.deleteOrUpdateAssetBasedOnSign(id, additionalPanel, username)
         }
         else if (TrafficSignManager.belongsToHazmat(trafficSignType)) {
-          hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(id, propertyData, username = username)
+          hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(id, additionalPanel, username = username)
         }
+    }
+  }
+
+  def trafficSignsExpireAndCreateAssets(signInfo: (Int, TrafficSignInfo)): Unit = {
+  val username = Some("automatic_trafficSign_deleted")
+
+    val (expireId, trafficSignInfo) = signInfo
+
+    withDynTransaction {
+      val newTransaction = false
+
+      true match {
+        case x if TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType) =>
+          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username, newTransaction)
+          manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+
+        case x if TrafficSignManager.belongsToProhibition(trafficSignInfo.signType) =>
+          prohibitionService.deleteOrUpdateAssetBasedOnSign(expireId, Seq(), username)
+          prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+
+        case x if TrafficSignManager.belongsToHazmat(trafficSignInfo.signType) =>
+          hazmatTransportProhibitionService.deleteOrUpdateAssetBasedOnSign(expireId, trafficSignInfo.additionalPanel, username)
+          hazmatTransportProhibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+      }
     }
   }
 }

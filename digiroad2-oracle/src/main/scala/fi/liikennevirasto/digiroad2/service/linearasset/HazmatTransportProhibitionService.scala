@@ -173,16 +173,6 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     else Seq()
   }
 
-  def deleteByTrafficSign(ids: Set[Long], username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-    if (withTransaction) {
-      withDynTransaction {
-        dao.deleteByTrafficSign(withIds(ids), username)
-      }
-    }
-    else
-      dao.deleteByTrafficSign(withIds(ids), username)
-  }
-
   def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     val assets = if(withTransaction) {
       withDynTransaction {
@@ -196,17 +186,11 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     assets
   }
 
-  override def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+  override def deleteOrUpdateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")
 
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(id)
-
-    val trafficSignInfo = (propertyData.find(p => p.publicId == "additional_panel") match {
-      case Some(result) => result.values
-      case _ => Seq()
-    }).map(_.asInstanceOf[AdditionalPanel])
-
-    val orderedPanel = trafficSignInfo.sortBy(_.formPosition)
+    val orderedPanel = additionalPanel.sortBy(_.formPosition)
     val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
 
     val (toDelete, toUpdate) = trafficSignRelatedAssets.partition{ asset =>
@@ -214,11 +198,27 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     }
 
     if(toDelete.nonEmpty)
-      deleteByTrafficSign(toDelete.map(_.id).toSet, username)
+      expire(toDelete.map(_.id), username.getOrElse(""))
 
     val groupedAssetsToUpdate = toUpdate.map { asset =>
       (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
     }.groupBy(_._2)
+
+    groupedAssetsToUpdate.values.map { value =>
+      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
+    }
+  }
+
+  def updateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    logger.info("updating asset")
+
+    val persistAssets = fetchTrafficSignRelatedAssets(id)
+    val orderedPanel = additionalPanel.sortBy(_.formPosition)
+    val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+
+    persistAssets.map { asset =>
+      update(asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue) + )
+    }
 
     groupedAssetsToUpdate.values.map { value =>
       update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))

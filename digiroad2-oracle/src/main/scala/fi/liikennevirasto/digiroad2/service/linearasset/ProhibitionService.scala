@@ -86,13 +86,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
 
-//    val newAssetsOnFilledTopology = filledTopology.filter(ft => ft.id == 0 && ft.createdBy.contains("automatic_process_prohibitions")).map { asset =>
-//      PersistedLinearAsset(asset.id, asset.linkId, asset.sideCode.value, asset.value, asset.startMeasure,
-//        asset.endMeasure, asset.createdBy, asset.createdDateTime, asset.modifiedBy, asset.modifiedDateTime,
-//        asset.expired, asset.typeId, asset.vvhTimeStamp, asset.geomModifiedDate, asset.linkSource, asset.verifiedBy,
-//        asset.verifiedDate, asset.informationSource)
-//    }
-
     //Remove the asset ids adjusted in the "prohibition:saveProjectedProhibition" otherwise if the "prohibition:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
     eventBus.publish("prohibition:update", changeSet)
@@ -262,7 +255,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     mapPersistedAssetChanges(prohibitions, roadLinks)
 
   }
-
 
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).head

@@ -261,6 +261,13 @@ class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSig
   }
 }
 
+class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+  def receive = {
+    case x: (Int, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case _ => println("trafficSignCreateAssets: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -344,6 +351,9 @@ object Digiroad2Context {
 
   val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
   eventbus.subscribe(trafficSignCreate, "trafficSign:create")
+
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")

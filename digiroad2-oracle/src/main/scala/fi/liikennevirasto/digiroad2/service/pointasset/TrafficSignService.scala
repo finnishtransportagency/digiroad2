@@ -119,10 +119,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
         val newId = OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
-        eventBus.publish("trafficSign:update", ((newId, roadLink), id))
+        eventBus.publish("trafficSign:update", (old.id, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getTrafficSignsProperties(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink, getAllTrafficSignsProperties(updatedAsset, additionalPublicId).map(_.asInstanceOf[AdditionalPanel]))))
         newId
       case _ =>
-        OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        val updatedId = OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getTrafficSignsProperties(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink, getAllTrafficSignsProperties(updatedAsset, additionalPublicId).map(_.asInstanceOf[AdditionalPanel]))))
+        updatedId
     }
   }
 
@@ -291,20 +293,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       OracleTrafficSignDao.fetchEnumeratedValueIds(trafficType)
     }
   }
-
-//  def getProhibitionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
-//    val trafficSignValues = Seq(ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations,
-//      NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoBuses, NoMopeds,
-//      NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback)
-//
-//    if(newTransaction)
-//      withDynSession {
-//        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-//      }
-//    else {
-//      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-//    }
-//  }
 
   override def expire(id: Long, username: String): Long = {
     withDynSession {

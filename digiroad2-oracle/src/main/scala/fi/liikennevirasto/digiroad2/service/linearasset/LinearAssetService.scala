@@ -813,8 +813,13 @@ trait LinearAssetOperations {
 
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 
-  def deleteOrUpdateAssetBasedOnSign(id: Long, propertyData: Seq[TrafficSignProperty] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-
+  def deleteOrUpdateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    logger.info("expiring asset")
+    if (withTransaction) {
+      withDynTransaction {
+        dao.deleteByTrafficSign(withId(id), username)
+      }
+    }
   }
 
   def withId(id: Long)(query: String): String = {
