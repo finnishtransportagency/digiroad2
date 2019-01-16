@@ -395,7 +395,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
     val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
-    val linkBearing = GeometryUtils.calculateBearing(geometry)
+    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
 
     val lonDifference = assetLocation.x - roadLinkPoint.get.x
     val latDifference = assetLocation.y - roadLinkPoint.get.y
@@ -406,8 +406,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getAssetBearing(validityDirection: Int, geometry: Seq[Point]): Int = {
-    val linkBearing = GeometryUtils.calculateBearing(geometry)
+  def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None): Int = {
+    val linkBearing = GeometryUtils.calculateBearing(geometry, assetMValue)
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
@@ -444,7 +444,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
               case None if twoSided.getOrElse(false) => BothDirections.value
               case _ => getTrafficSignValidityDirection(Point(lon, lat), roadLink.geometry)
             }
-          val newAsset = IncomingTrafficSign(lon, lat, roadLink.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(GeometryUtils.calculateBearing(roadLink.geometry)))
+          val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.geometry)
+          val newAsset = IncomingTrafficSign(lon, lat, roadLink.linkId, generateProperties(trafficSignType, value.getOrElse(""), additionalInfo.getOrElse("")), validityDirection, Some(getAssetBearing(validityDirection, roadLink.geometry, Some(mValue))))
           checkDuplicates(newAsset) match {
             case Some(existingAsset) =>
               updateWithoutTransaction(existingAsset.id, newAsset, roadLink, userProvider.getCurrentUser().username, None, None)
