@@ -563,11 +563,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       case Some(state) => roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == state).map(_.linkId)
       case _ => roadLinkService.getVVHRoadLinksF(municipality).map(_.linkId)
     }
-    logger.info("Finnish get all roadLinks in municipality %d in %d ms after start".format(municipality, System.currentTimeMillis - timing))
+    println("Finnish get all roadLinks in municipality %d in %d ms after start".format(municipality, System.currentTimeMillis - timing))
 
     val expireTiming = System.currentTimeMillis
     expireAssetsByLinkId(roadLinksWithStateFilter, signsType)
-    logger.info("Finnish expire assets in %d ms after start".format(System.currentTimeMillis - expireTiming))
+    println("Finnish expire assets in %d ms after start".format(System.currentTimeMillis - expireTiming))
 
     println("\nEnd assets expiration in municipality %d".format(municipality))
   }
