@@ -10,18 +10,14 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point}
-import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, ManoeuvreService, Measures, ProhibitionService}
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point, TrafficSignType}
-import fi.liikennevirasto.digiroad2.{PriorityAndGiveWaySigns, _}
+import fi.liikennevirasto.digiroad2.{_}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
-import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.{AdditionalPanels, PriorityAndGiveWaySigns}
-import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.{AdditionalPanels}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
 import slick.util.iter.Empty
 
@@ -82,9 +78,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService
   val roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
-
-  lazy val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService
-  lazy val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService
 
   private val longValueFieldMappings = Map(
     "koordinaatti x" -> "lon",
@@ -283,9 +276,9 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       val notImportedAdditionalPanel = createTrafficSigns(result.createdData)
       val resultWithExcluded  = result.copy(notImportedData = notImportedAdditionalPanel.map{notImported =>
         NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x: ${notImported.position.get.x}, koordinaatti y: ${notImported.position.get.y}, liikennevirran suunta: ${notImported.validityDirection}, " +
-          s"liikennemerkin tyyppi: ${TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt).TRvalue}, " +
-          s"arvo: ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}, " +
-          s"lisätieto: ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
+          s"liikennemerkin tyyppi: ${TrafficSignType.applyOTHValue(trafficSignService.getProperty(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt).TRvalue}, " +
+          s"arvo: ${trafficSignService.getProperty(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}, " +
+          s"lisätieto: ${trafficSignService.getProperty(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
       }.toList ::: result.notImportedData)
       resultWithExcluded
       }

@@ -49,10 +49,6 @@ object AssetValidatorProcess {
     new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
-  lazy val prohibitionService: ProhibitionService = {
-    new ProhibitionService(roadLinkService, new DummyEventBus)
-  }
-
   lazy val manoeuvreServiceValidator: ManoeuvreValidator = {
     new ManoeuvreValidator()
   }

@@ -1433,7 +1433,7 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
+              val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
               manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
@@ -1469,7 +1469,7 @@ object DataFixture {
         println(s"Fetching Traffic Signs for Municipality: $municipality")
 
         val existingAssets = trafficSignService.getByMunicipality(municipality)
-        val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+        val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
         println("")
         println(s"Number of existing assets: ${filteredAssets.length}")
@@ -1478,7 +1478,7 @@ object DataFixture {
         filteredAssets.flatMap { sign =>
           println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
           val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
-          val signType = trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.propertyValue.toInt
+          val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
           val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
             AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
           }.toSet
@@ -1732,7 +1732,7 @@ object DataFixture {
 
       trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
         trafficSigns.map {trafficSign =>
-          println("traffic ->  type: " + trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
+          println("traffic ->  type: " + trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
           trafficSignService.create(trafficSign, username, roadLink)
         }
       }
@@ -1764,7 +1764,7 @@ object DataFixture {
         try {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
-              val trafficType = trafficSignService.getTrafficSignsProperties(ts, trafficSignService.typePublicId).get.propertyValue.toInt
+              val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
               prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
               println(s"prohibition created for traffic sign with id: ${ts.id}")
             case _ =>
