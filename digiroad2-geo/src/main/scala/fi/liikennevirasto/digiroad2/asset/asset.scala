@@ -289,19 +289,20 @@ object TimePeriodClass {
       val groupedDayAndTime : Map[ValidityPeriodDayOfWeek, Seq[ValidityPeriod]] = dayAndTimeValue.groupBy(_.days)
       if (groupedDayAndTime.keys.size == 3) {
 
-        val result :  Seq[(Seq[ValidityPeriod], String)] =  values.map { timePeriod =>
-          val time : ValidityPeriod  = groupedDayAndTime(ValidityPeriodDayOfWeek.apply(timePeriod.value)).head
-          val existing = groupedDayAndTime(ValidityPeriodDayOfWeek.apply(timePeriod.value)).diff(Seq(time))
+        val result :  Seq[(Seq[ValidityPeriod], (String, String))] =  values.map { timePeriod =>
+          val day = ValidityPeriodDayOfWeek.fromTimeDomainValue(timePeriod.value)
+          val time : ValidityPeriod  = groupedDayAndTime(day).head
+          val existing = groupedDayAndTime(day).diff(Seq(time))
 
-          (existing, if(timePeriod.value == Sunday.value) s"(${time.startHour} - ${time.endHour})" else s"${time.startHour} - ${time.endHour}")
+          (existing, (day.toString, if(time.days == Sunday) s"(${time.startHour} - ${time.endHour})" else s"${time.startHour} - ${time.endHour}"))
         }.toSeq
 
-        val signInfo = result.sortBy(period => period._1.toString).map(_._2).mkString(" ")
-        convertSigns( result.flatMap(_._1), Seq((ValidMultiplePeriod, signInfo)))
+        val signInfo = result.sortBy(period => period._2._1).reverse.map(_._2._2).mkString(" ")
+        convertSigns( result.flatMap(_._1), Seq((ValidMultiplePeriod, signInfo)) ++ trafficSign)
       } else
         dayAndTimeValue.map { validPeriod =>
           (TimePeriodClass.apply(validPeriod.days.value).trafficSign, if(validPeriod.days == Sunday) s"(${validPeriod.startHour} - ${validPeriod.endHour})" else s"${validPeriod.startHour} - ${validPeriod.endHour}")
-        }
+        } ++ trafficSign
     }
     convertSigns(dayAndTimeValue.toSeq, Seq())
   }
@@ -421,7 +422,7 @@ object ProhibitionClass {
     def value = 26
     def typeDescription = "HorseRiding"
     def rosatteType = ""
-    override val trafficSign = Seq(NoRidersOnHorseback)
+    override val trafficSign : Seq[TrafficSignType] = Seq(NoRidersOnHorseback)
   }
   case object Moped extends ProhibitionClass {
     def value = 10

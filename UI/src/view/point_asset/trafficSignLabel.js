@@ -147,20 +147,6 @@
           {signValue: [172], image: 'images/traffic-signs/general-warning-signs/LevelCrossingWithGates.png'},
           {signValue: [176], image: 'images/traffic-signs/general-warning-signs/LevelCrossingWithOneTrack.png'},
           {signValue: [177], image: 'images/traffic-signs/general-warning-signs/LevelCrossingWithManyTracks.png'},
-          {signValue: [382], image: 'images/traffic-signs/prohibitions-and-restrictions/AlternativeParkingEvenDays.png'},
-          {signValue: [426], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackMotorSledges.png'},
-          {signValue: [427], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackRidersHorseback.png'},
-          {signValue: [520], image: 'images/traffic-signs/regulatory-signs/InfartsparkeringParkAndRide.png'},
-          {signValue: [816], image: 'images/traffic-signs/additional-panels/DistanceCompulsoryStop.png'},
-          {signValue: [823], image: 'images/traffic-signs/additional-panels/HeightElectricLine.png'},
-          {signValue: [824], image: 'images/traffic-signs/additional-panels/SignAppliesBothDirections.png'},
-          {signValue: [825], image: 'images/traffic-signs/additional-panels/SignAppliesBothDirectionsVertical.png'},
-          {signValue: [826], image: 'images/traffic-signs/additional-panels/SignAppliesArrowDirections.png'},
-          {signValue: [827], image: 'images/traffic-signs/additional-panels/RegulationBeginsFromSign.png'},
-          {signValue: [828], image: 'images/traffic-signs/additional-panels/RegulationEndsToTheSign.png'},
-          {signValue: [853], image: 'images/traffic-signs/additional-panels/ValidMultiplePeriod.png'},
-          {signValue: [861], image: 'images/traffic-signs/additional-panels/DirectionOfPriorityRoad.png'},
-          {signValue: [862], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
           {signValue: [135], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackMotorSledges.png'},
           {signValue: [136], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackRidersHorseback.png'},
           {signValue: [137], image: 'images/traffic-signs/regulatory-signs/InfartsparkeringParkAndRide.png'},
@@ -171,7 +157,7 @@
           {signValue: [142], image: 'images/traffic-signs/additional-panels/SignAppliesArrowDirections.png'},
           {signValue: [143], image: 'images/traffic-signs/additional-panels/RegulationBeginsFromSign.png'},
           {signValue: [144], image: 'images/traffic-signs/additional-panels/RegulationEndsToTheSign.png'},
-          {signValue: [145], image: 'images/traffic-signs/additional-panels/ValidMultiplePeriod.png'},
+          {signValue: [145], image: 'images/traffic-signs/additional-panels/ValidMultiplePeriod.png', validation: validateAdditionalInfo, maxLabelLength: 28, additionalInfo: showPeriodDayAdditionalInfo, height: 50},
           {signValue: [146], image: 'images/traffic-signs/additional-panels/DirectionOfPriorityRoad.png'},
           {signValue: [147], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
           {signValue: [148], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png'},
@@ -194,7 +180,7 @@
       };
 
       var showPeriodDayAdditionalInfo = function () {
-        var counter = 2;
+        var counter = 3;
         var index = 0;
         var output = "";
         var timePeriods = this.additionalInfo ? this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/g) : [];

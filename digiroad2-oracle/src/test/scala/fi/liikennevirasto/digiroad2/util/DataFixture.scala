@@ -1677,40 +1677,42 @@ object DataFixture {
   def createTrafficSignsUsingHazmatPrhohibition(): Unit = {
     val username = "batch_traffic_based_on_linerAsset"
 
-    def getProperties(prohibitionValue: Seq[ProhibitionValue]): Seq[(Int, Seq[AdditionalPanel])] = {
+    def getProperties(prohibitionValue: Seq[ProhibitionValue]): Seq[Seq[AdditionalPanel]] = {
 
-        var formPosition = 0
-        val additionalPanel = prohibitionValue.flatMap { prohibition =>
-          formPosition += 1
-          Seq((HazmatTransportProhibitionClass.toTrafficSign(prohibition.typeId).OTHvalue, AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(prohibition.typeId).OTHvalue, "", "", formPosition))) ++
-            TimePeriodClass.toTrafficSign(prohibition.validityPeriods).map { case (signType, info) =>
-              formPosition += 1
-              (HazmatTransportProhibitionClass.toTrafficSign(prohibition.typeId).OTHvalue, AdditionalPanel(signType.OTHvalue, info, "", formPosition))
-            }
-        }
+      var formPosition = 0
+      val additionalPanel = prohibitionValue.flatMap { prohibition =>
+        formPosition += 1
+        Seq((HazmatTransportProhibitionClass.toTrafficSign(prohibition.typeId).OTHvalue, AdditionalPanel(HazmatTransportProhibitionClass.toTrafficSign(prohibition.typeId).OTHvalue, "", "", formPosition))) ++
+          TimePeriodClass.toTrafficSign(prohibition.validityPeriods).map { case (signType, info) =>
+            formPosition += 1
+            (HazmatTransportProhibitionClass.toTrafficSign(prohibition.typeId).OTHvalue, AdditionalPanel(signType.OTHvalue, info, "", formPosition))
+          }
+      }
 
-        var numberOfSigns = 1
-        if (additionalPanel.size <= 3)
-          Seq((numberOfSigns, additionalPanel.map(_._2)))
-        else {
+      if (additionalPanel.size <= 3)
+        Seq(additionalPanel.map(_._2))
+      else {
+        val (hazmatA, hazmatB) = additionalPanel.partition(_._1 == HazmatProhibitionA.OTHvalue)
+        val hazmatPanels = Seq(hazmatA.map(_._2), hazmatB.map(_._2))
 
-          val (hazmatA, hazmatB) = additionalPanel.partition(_._1 == HazmatProhibitionA.OTHvalue)
-          val hazmat = Seq(hazmatA, hazmatB).flatten
-
-          val hazmatAPanel = hazmatA.map(_._2)
+        hazmatPanels.flatMap { hazmatPanel =>
           var positionIndex = 0
-          hazmatAPanel.splitAt(3)._2.foldLeft(Seq((numberOfSigns, hazmatAPanel.splitAt(3)._1))) { case (result, panel) =>
+          hazmatPanel.foldLeft(Seq.empty[Seq[AdditionalPanel]]) { case (result, panel) =>
             positionIndex += 1
 
-            if (result.last._2.size % 3 == 0) {
-              numberOfSigns += 1
-              positionIndex += 1
-              result ++ Seq((numberOfSigns, Seq(panel.copy(formPosition = positionIndex)) ++ Seq(result.head._2.head)))
+            if (result.isEmpty) {
+              result :+ Seq(panel.copy(formPosition = positionIndex))
             } else {
-              result ++ Seq(result.last.copy(_2 = panel.copy(formPosition = positionIndex) +: result.last._2))
+              if (result.nonEmpty && result.last.size % 3 == 0) {
+                positionIndex = 2
+                result ++ Seq(Seq(panel.copy(formPosition = positionIndex)) ++ Seq(result.last.minBy(_.formPosition)))
+              } else {
+                result.init ++ Seq(panel.copy(formPosition = positionIndex) +: result.last)
+              }
             }
           }
         }
+      }
     }
 
     def setTrafficSignInfo(roadLink: RoadLink, persistedAsset: PersistedLinearAsset, oppositePoint: Point): (Set[IncomingTrafficSign], RoadLink) = {
@@ -1720,7 +1722,7 @@ object DataFixture {
       val position = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).head
 
       val assetPublicProperty = Seq(SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))))
-      (getProperties(persistedAsset.value.get.asInstanceOf[Prohibitions].prohibitions).map { case (_, additionalPanel) =>
+      (getProperties(assetValue).map { additionalPanel =>
         IncomingTrafficSign(position.x, position.y, persistedAsset.linkId, (assetPublicProperty ++ Seq(SimpleTrafficSignProperty(trafficSignService.additionalPublicId, additionalPanel))).toSet, validityDirection, Some(getBearing(start, end, oppositePoint, roadLink)))
 
       }.toSet, roadLink)
