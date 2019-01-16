@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.dao.linearasset
 import fi.liikennevirasto.digiroad2.{linearasset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -425,11 +425,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, linkSource: Option[LinkGeomSource] = None): Seq[PieceWiseLinearAsset] = {
+  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, bounds: BoundingRectangle, linkSource: Option[LinkGeomSource] = None): Seq[PieceWiseLinearAsset] = {
     val linkGeomCondition = linkSource match {
       case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
       case _ => ""
     }
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+
     sql"""
          select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
                 a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -444,7 +446,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
            join property p on p.public_id = 'mittarajoitus'
            left join administrative_class ad on pos.link_id = ad.link_id
            left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId #$linkGeomCondition"""
+           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId #$linkGeomCondition and #$boundingBoxFilter"""
       .as[PieceWiseLinearAsset].list
   }
 
