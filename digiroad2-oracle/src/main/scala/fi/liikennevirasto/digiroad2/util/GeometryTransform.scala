@@ -129,7 +129,7 @@ class GeometryTransform(roadAddressService: RoadAddressesService) {
         if (assetSideCode == SideCode.AgainstDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
       case Some(addr) =>
         if (assetSideCode == SideCode.TowardsDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
-      case None => throw new RoadAddressException("No road address found")
+      case None => throw new RoadAddressException("No road address found for linkId: " + linkId + " mValue: " + mValue)
     }
 
     (address, roadSide )
