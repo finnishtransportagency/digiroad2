@@ -302,7 +302,7 @@
     var singleChoiceForPanels = function (property, collection) {
       var propertyValue = _.isUndefined(_.last(property))  ? '' : _.last(property);
       var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
-      var panels = _.find(collection.getAdditionalPanels(signTypes))
+      var panels = _.find(collection.getAdditionalPanels(signTypes));
       var propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
 
       var subTypesTrafficSigns = _.map(_.map(panels, function (group) {
