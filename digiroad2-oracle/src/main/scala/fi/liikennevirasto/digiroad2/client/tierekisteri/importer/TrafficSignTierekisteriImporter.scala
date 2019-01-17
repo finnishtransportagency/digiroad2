@@ -34,8 +34,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels)
 
   def converter(trafficType: TRTrafficSignType, value: String): String = {
-    val regexGetNumber = "^(\\d*\\.?\\d)?".r
-
+    val regexRemoveChar = "[a-zA-Z]".r
     val weightType : Seq[TRTrafficSignType] = Seq(MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding)
     val measuresType : Seq[TRTrafficSignType] = Seq(MaximumLength, MaxWidthExceeding, MaxHeightExceeding)
     val speedLimitType : Seq[TRTrafficSignType] = Seq(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
@@ -43,21 +42,15 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     val trimValue = value.replaceAll("\\s", "").replaceAll(",", ".")
 
     trafficType match {
-      case x if weightType.contains(trafficType) && Seq("(?i)\\d+\\.?\\d*t$".r, "(?i)\\d+\\.?\\d*t\\.$".r, "(?i)\\d+\\.?\\d*tn$".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
-        regexGetNumber.findFirstMatchIn(trimValue) match {
-          case Some(matchedValue) => (matchedValue.toString().toDouble * 1000).toInt.toString
-          case _ => value
-        }
-      case x if measuresType.contains(trafficType) && "(?i)\\d+?\\.?\\d*m$".r.findFirstMatchIn(trimValue).nonEmpty =>
-        regexGetNumber.findFirstMatchIn(trimValue) match {
-          case Some(matchedValue) => matchedValue.toString().toDouble.toString
-          case _ => value
-        }
-      case x if speedLimitType.contains(trafficType) && Seq("^(?i)\\d+km\\\\h".r, "^(?i)\\d+kmh".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
-        regexGetNumber.findFirstMatchIn(trimValue) match {
-          case Some(matchedValue) => matchedValue.toString().toDouble.toInt.toString
-          case _ => value
-        }
+      case x if weightType.contains(trafficType) && Seq("""(?i)(\s*\d+\.?\d*t)""".r, """(?i)(\s*\d+\.?\d*tn)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+        (regexRemoveChar.replaceAllIn(trimValue,"").toDouble * 1000).toInt.toString
+
+      case x if measuresType.contains(trafficType) && """(?i)(\s*\d+?\.?\d*m)""".r.findFirstMatchIn(trimValue).nonEmpty =>
+        (regexRemoveChar.replaceAllIn(trimValue,"").toDouble * 100).toInt.toString
+
+      case x if speedLimitType.contains(trafficType) && Seq("""(?i)(\s*\d+km\\h)""".r, """(?i)(\s*\d+kmh)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+        """[a-zA-Z|\\\/]""".r.replaceAllIn(trimValue,"")
+
       case _ => value
     }
   }

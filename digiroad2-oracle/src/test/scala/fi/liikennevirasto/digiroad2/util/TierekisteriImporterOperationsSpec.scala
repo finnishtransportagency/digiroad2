@@ -1610,20 +1610,23 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
     traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
     traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "some text 30.1 tn") should be ("30100")
+    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "some text 30.1 tn some text") should be ("30100")
 
     traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30") should be ("30")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30tt") should be ("30tt")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "30tt") should be ("30tt")
 
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 m") should be ("2.2")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2,2 M") should be ("2.2")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 m") should be ("220")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2,2 M") should be ("220")
     traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2") should be ("2.2")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 MM") should be ("2.2 MM")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "some text 2.2m") should be ("220")
+    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "some text 2.2m some text") should be ("220")
 
     traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h ") should be ("100")
     traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h") should be ("100")
     traffic.converter(TRTrafficSignType.SpeedLimit, "100KM\\H") should be ("100")
     traffic.converter(TRTrafficSignType.SpeedLimit, "100kmh") should be ("100")
+    traffic.converter(TRTrafficSignType.SpeedLimit, "some text 100kmh") should be ("100")
+    traffic.converter(TRTrafficSignType.SpeedLimit, "some text 100kmh some text") should be ("100")
     traffic.converter(TRTrafficSignType.SpeedLimit, "100") should be ("100")
   }
 }
