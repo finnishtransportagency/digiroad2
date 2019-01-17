@@ -12,7 +12,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriTrafficSignAssetClient
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
@@ -212,8 +212,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
   lazy val trafficSignGroup: TrafficSignTypeGroup = throw new IllegalArgumentException
 
   def trafficSignsInGroup(trafficSignGroup: TrafficSignTypeGroup) = TrafficSignType.apply(trafficSignGroup)
-  //TODO uncomment this line after merge  US 1707
-  def filterCondition(assetNumber : Int): Boolean = /*TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.AdditionalPanels ||*/ TRTrafficSignType.apply(assetNumber).trafficSignType.group == trafficSignGroup
+  def filterCondition(assetNumber : Int): Boolean = TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.AdditionalPanels || TrafficSignType.applyTRValue(assetNumber).group == trafficSignGroup
 
   override val tierekisteriClient = new TierekisteriTrafficSignGroupClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -223,7 +222,12 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
     val municipalities = getAllMunicipalities
     municipalities.foreach { municipality =>
       withDynTransaction {
-        trafficSignService.expireAssetsByMunicipality(municipality, Some(State), trafficSignsInGroup(trafficSignGroup))
+
+        val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
+        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter)
+
+        trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
+        trafficSignManager.deleteAssets(trafficSigns.map(tr => (tr.id, tr.propertyData)))
       }
     }
   }

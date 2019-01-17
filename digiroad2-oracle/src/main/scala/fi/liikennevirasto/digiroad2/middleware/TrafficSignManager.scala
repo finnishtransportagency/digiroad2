@@ -5,6 +5,7 @@ import java.security.InvalidParameterException
 
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.TrafficSignType
+import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, TextPropertyValue, TrafficSignProperty}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreService, ProhibitionService}
 
 class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService) {
@@ -25,13 +26,25 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
     }
   }
 
-  def deleteAssets(id: Long, trafficSignType: Int): Unit = {
+  def deleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
     val username = Some("automatic_trafficSign_deleted")
-    if (TrafficSignType.belongsToManoeuvre(trafficSignType)) {
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(id)), username)
+
+    val (turnRestrictionSigns, others) = signInfo.partition{
+      case (id, propertyData) =>
+        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+        TrafficSignType.belongsToManoeuvre(trafficSignType)
     }
-    else if (TrafficSignType.belongsToProhibition(trafficSignType)) {
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id), username)
+
+    if(turnRestrictionSigns.map(_._1).nonEmpty)
+      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
+
+    others.foreach {
+      case (id, propertyData) =>
+        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+
+        if (TrafficSignType.belongsToProhibition(trafficSignType)) {
+          prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id), username)
+        }
     }
   }
 }

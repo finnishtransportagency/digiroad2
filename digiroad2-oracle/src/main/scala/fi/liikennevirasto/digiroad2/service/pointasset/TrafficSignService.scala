@@ -481,23 +481,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def expireAssetsByMunicipality(municipality: Int, administrativeClass: Option[AdministrativeClass] = None, signsType: Set[Int]) : Unit = {
-    println("\nStart assets expiration in municipality %d".format(municipality))
-
-    val timing = System.currentTimeMillis
-    val roadLinksWithStateFilter = administrativeClass match {
-      case Some(state) => roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == state).map(_.linkId)
-      case _ => roadLinkService.getVVHRoadLinksF(municipality).map(_.linkId)
-    }
-    println("Finnish get all roadLinks in municipality %d in %d ms after start".format(municipality, System.currentTimeMillis - timing))
-
-    val expireTiming = System.currentTimeMillis
-    expireAssetsByLinkId(roadLinksWithStateFilter, signsType)
-    println("Finnish expire assets in %d ms after start".format(System.currentTimeMillis - expireTiming))
-
-    println("\nEnd assets expiration in municipality %d".format(municipality))
-  }
-
   def expireAssetsByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String] = None) : Unit = {
     OracleTrafficSignDao.expireAssetByLinkId(linkIds, signsType, username)
   }
