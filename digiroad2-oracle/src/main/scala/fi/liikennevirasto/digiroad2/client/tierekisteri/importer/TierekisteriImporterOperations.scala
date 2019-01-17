@@ -186,17 +186,21 @@ trait TierekisteriImporterOperations {
     }
   }
 
-  def getAssetTypeId() = {
+  def getAssetTypeId: Int = {
     typeId
   }
 
-  def getAssetName() = {
+  def getAssetName : String = {
     assetName
   }
 
   def importAssets()
 
   def updateAssets(lastExecution: DateTime)
+
+  def getLastExecutionDate: Option[DateTime] = {
+      assetDao.getLastExecutionDate(typeId, s"batch_process_$assetName")
+  }
 }
 
 trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations {
@@ -264,14 +268,19 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
 
   protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit
 
-  def importAssets(): Unit = {
-    //Expire all asset in state roads in all the municipalities
+
+  def expireAssets() : Unit = {
     val municipalities = getAllMunicipalities
     municipalities.foreach { municipality =>
-      withDynTransaction{
+      withDynTransaction {
         expireAssets(municipality, Some(State))
       }
     }
+  }
+
+  def importAssets(): Unit = {
+    //Expire all asset in state roads in all the municipalities
+    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 

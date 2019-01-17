@@ -61,7 +61,7 @@ trait CsvImporter {
     "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
     "Liikennöintisuunta" -> "liikennointisuunta",
     "Lisätiedot" -> "lisatiedot",
-    "Vyöhyketieto" -> "vyöhyketieto"
+    "Vyöhyketieto" -> "vyohyketieto"
   )
 
   private val multipleChoiceFieldMappings = Map(

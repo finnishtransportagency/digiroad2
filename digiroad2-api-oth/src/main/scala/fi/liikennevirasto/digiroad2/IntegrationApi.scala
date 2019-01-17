@@ -177,7 +177,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
         "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
-        "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+        "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
+        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                                               .filterNot(_._1 == "ROADNUMBER")
                                                                                               .filterNot(_._1 == "ROADPARTNUMBER")
                                                                                               .filterNot(_._1 == "STARTNODE")
