@@ -40,20 +40,34 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     val speedLimitType : Seq[TRTrafficSignType] = Seq(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
 
     val trimValue = value.replaceAll("\\s", "").replaceAll(",", ".")
+    try {
+      trafficType match {
+        case x if weightType.contains(trafficType) && Seq("""(?i)(\s*\d+\.?\d*t)""".r, """(?i)(\s*\d+\.?\d*tn)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+          val matched = """(?i)(\s*\d+\.?\d*t)""".r.findFirstMatchIn(trimValue)
+          if(matched.nonEmpty)
+            (regexRemoveChar.replaceAllIn(matched.get.toString, "").toDouble * 1000).toInt.toString
+          else
+            (regexRemoveChar.replaceAllIn("""(?i)(\s*\d+\.?\d*tn)""".r.findFirstMatchIn(trimValue).get.toString, "").toDouble * 1000).toInt.toString
 
-    trafficType match {
-      case x if weightType.contains(trafficType) && Seq("""(?i)(\s*\d+\.?\d*t)""".r, """(?i)(\s*\d+\.?\d*tn)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
-        (regexRemoveChar.replaceAllIn(trimValue,"").toDouble * 1000).toInt.toString
+        case x if measuresType.contains(trafficType) && """(?i)(\s*\d+?\.?\d*m)""".r.findFirstMatchIn(trimValue).nonEmpty =>
+          val value = """(?i)(\s*\d+?\.?\d*m)""".r.findFirstMatchIn(trimValue).get.toString
+          (regexRemoveChar.replaceAllIn(value, "").toDouble * 100).toInt.toString
 
-      case x if measuresType.contains(trafficType) && """(?i)(\s*\d+?\.?\d*m)""".r.findFirstMatchIn(trimValue).nonEmpty =>
-        (regexRemoveChar.replaceAllIn(trimValue,"").toDouble * 100).toInt.toString
-
-      case x if speedLimitType.contains(trafficType) && Seq("""(?i)(\s*\d+km\\h)""".r, """(?i)(\s*\d+kmh)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
-        """[a-zA-Z|\\\/]""".r.replaceAllIn(trimValue,"")
-
-      case _ => value
-    }
+        case x if speedLimitType.contains(trafficType) && Seq("""(?i)(\d+km\\h)""".r, """(?i)(\d+kmh)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+          val matched = """(?i)(\d+km\\h)""".r.findFirstMatchIn(trimValue)
+          if(matched.nonEmpty)
+              """[a-zA-Z|\\\/]""".r.replaceAllIn(matched.get.toString, "")
+          else
+            """[a-zA-Z|\\\/]""".r.replaceAllIn("""(?i)(\d+kmh)""".r.findFirstMatchIn(trimValue).get.toString, "")
+        case _ => value
+      }
+    } catch {
+      case _: Throwable =>
+        println(s"Conversion fail for the following value -> value")
+        value
+      }
   }
+
 
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
     val trafficType = trAssetData.assetType.trafficSignType
