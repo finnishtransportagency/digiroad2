@@ -209,19 +209,19 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     }
   }
 
-  def updateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-    logger.info("updating asset")
-
-    val persistAssets = fetchTrafficSignRelatedAssets(id)
-    val orderedPanel = additionalPanel.sortBy(_.formPosition)
-    val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
-
-    persistAssets.map { asset =>
-      update(asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue) + )
-    }
-
-    groupedAssetsToUpdate.values.map { value =>
-      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
-    }
-  }
+//  def updateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+//    logger.info("updating asset")
+//
+//    val persistAssets = fetchTrafficSignRelatedAssets(id)
+//    val orderedPanel = additionalPanel.sortBy(_.formPosition)
+//    val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+//
+//    persistAssets.map { asset =>
+//      update(asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue), )
+//    }
+//
+//    groupedAssetsToUpdate.values.map { value =>
+//      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
+//    }
+//  }
 }
