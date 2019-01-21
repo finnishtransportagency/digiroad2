@@ -978,6 +978,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithoutGate, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithGate, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.CarRoad_IIIa => roadLink.copy(functionalClass = 5, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case _ => roadLink //similar logic used in roadaddressbuilder
       }
     }
