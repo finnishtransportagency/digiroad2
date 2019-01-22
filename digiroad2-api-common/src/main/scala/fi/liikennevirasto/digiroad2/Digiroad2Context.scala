@@ -246,8 +246,8 @@ class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Ac
 
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: Long => trafficSignService.getTrafficType(x) match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(x, trafficType)
+    case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq((x, trafficType.propertyData)))
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")
