@@ -655,10 +655,10 @@ trait LinearAssetOperations {
   }
 
 
-  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[PieceWiseLinearAsset]] = {
+  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle) : Seq[Seq[LightLinearAsset]] = {
     withDynTransaction {
-      val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), boundingRectangle, linkGeomSource)
-      LinearAssetPartitioner.partition(assets)
+      val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), boundingRectangle)
+      Seq(assets)
     }
   }
 
