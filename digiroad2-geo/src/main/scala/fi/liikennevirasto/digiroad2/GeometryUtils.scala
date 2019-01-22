@@ -308,9 +308,9 @@ object GeometryUtils {
     val (startPoint, endPoint) =
       assetMValue match {
         case Some(mValue) =>
-          (calculatePointFromLinearReference(geom, mValue - 5), calculatePointFromLinearReference(geom, mValue + 5)) match {
-            case (Some(p1), Some(p2)) =>
-              (p1, p2)
+          calculatePointFromLinearReference(geom, mValue) match {
+            case Some(p1) =>
+              (p1, p1)
             case _ =>
               (points._1, points._2)
           }

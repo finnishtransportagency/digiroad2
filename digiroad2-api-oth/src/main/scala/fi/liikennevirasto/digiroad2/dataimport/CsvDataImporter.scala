@@ -126,6 +126,37 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
 
+  def getRightRoadLinkUsingBearing(assetBearing: Option[Int], assetCoordinates: Point, assetTrafficDirection: Option[Int]) = {
+    val toleranceInDegrees = 25
+    val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), assetCoordinates)
+
+    (assetBearing, assetTrafficDirection) match {
+      case (Some(aBearing), Some(aTrafficDirection)) if roadLinks.nonEmpty =>
+
+        roadLinks.filter { roadLink =>
+          val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
+          val roadLinkBearing = trafficSignService.getAssetBearing(TrafficDirection.toSideCode(roadLink.trafficDirection).value, roadLink.geometry, Some(mValue))
+
+          if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+            val reverseRoadLinkBearing =
+              if (roadLinkBearing - 180 < 0) {
+                roadLinkBearing + 180
+              } else {
+                roadLinkBearing - 180
+              }
+
+            Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees ||
+              Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
+          } else {
+            Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees &&
+              roadLink.trafficDirection == TrafficDirection.apply(aTrafficDirection)
+          }
+        }
+      case _ =>
+        roadLinks
+    }
+  }
+
   def tryToInt(propertyValue: String ) : Option[Int] = {
     Try(propertyValue.toInt).toOption
   }
@@ -133,12 +164,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   private def verifyData(parsedRow: CsvAssetRow): ParsedCsv = {
     val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
     val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+    val bearing = tryToInt(getPropertyValue(parsedRow, "bearing").toString)
+    val trafficDirection = tryToInt(getPropertyValue(parsedRow, "trafficDirection").toString)
 
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon.toLong, lat.toLong))
+        val roadLinks = getRightRoadLinkUsingBearing(bearing, Point(lon.toLong, lat.toLong), trafficDirection)
         if(roadLinks.isEmpty) {
-          (List(s"Tried to create in an unauthorized municipality"), Seq())
+          (List(s"Unauthorized Municipality Or RoadLind inexistent near of Asset"), Seq())
         } else
           (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
       case _ =>
@@ -220,12 +253,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat)))}.toSet
 
     val usedAdditionalPanels = trafficSignInfo.flatMap { sign =>
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(sign.lon, sign.lat), sign.roadLink.geometry)
+      val signBearing = Some(trafficSignService.getAssetBearing(sign.validityDirection, sign.roadLink.geometry, Some(mValue)))
       val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
       val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, sign.nearbyLinks)
 
       if (filteredAdditionalPanel.size <= 3) {
         val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
-        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, sign.bearing), sign.roadLink, sign.nearbyLinks)
+        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, signBearing), sign.roadLink, sign.nearbyLinks)
         filteredAdditionalPanel
       } else Seq()
     }
