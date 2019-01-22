@@ -393,8 +393,6 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.refreshView = function() {
-    vectorLayer.set('renderBuffer', 0);
-    selectToolControl
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     if (isComplementaryChecked) {
