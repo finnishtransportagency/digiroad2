@@ -42,7 +42,8 @@
       trWidthLimits: 370,
       manoeuvre: 380,
       careClass: 390,
-      carryingCapacity: 400
+      carryingCapacity: 400,
+      roadSideParking: 420
     };
 
     var assetGroups = {
@@ -683,7 +684,44 @@
             },
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
-        })
+        }),
+        minZoomForContent: oneKmZoomLvl
+      },
+      {
+        typeId: assetType.roadSideParking,
+        defaultValue: 1,
+        singleElementEventCategory: 'roadSideParking',
+        multiElementEventCategory: 'roadSideParkings',
+        layerName: 'roadSideParking',
+        title: 'Pysäköintikielto',
+        newTitle: 'Uusi Pysäköintikielto',
+        className: 'road-side-parking',
+        isSeparable: true,
+        allowComplementaryLinks: false,
+        editControlLabels: {
+          title: 'Pysäköintikielto',
+          enabled: 'Pysäköintikielto',
+          disabled: 'Ei pysäköintikieltoa'
+        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        style: new RoadSideParkingStyle(),
+        form: new DynamicAssetForm ( {
+          fields : [
+            {
+              label: 'Rajoitus', required: 'required', type: 'single_choice', publicId: "road_side_parking", defaultValue: "1", weight: 1,
+              values: [
+                {id: 1, label: 'Pysähtyminen kielletty'},
+                {id: 2, label: 'Pysäköinti kielletty'}
+              ]
+            },
+            {label: "", type: 'time_period', publicId: "parking_validity_period", weight: 2}
+          ]
+        }),
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        minZoomForContent: oneKmZoomLvl
       }
     ];
 
