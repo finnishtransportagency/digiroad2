@@ -898,8 +898,8 @@
         formLabels: {
           title: 'Rajoitus',
           showUnit: true,
-          manyFloatingAssetsLabel: 'TR suurin sallitut korkeudet',
-          singleFloatingAssetLabel: 'TR suurin sallittu korkeus'
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
@@ -920,8 +920,8 @@
         formLabels: {
           title: 'Rajoitus',
           showUnit: true,
-          manyFloatingAssetsLabel: 'TR suurin sallitut leveydet',
-          singleFloatingAssetLabel: 'TR suurin sallittu leveys'
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
@@ -943,7 +943,9 @@
         ],
         formLabels: {
           title: 'Painorajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,

@@ -897,7 +897,7 @@
 
         function renderLinkToWorkList(layerName) {
             $('ul[class=information-content]').append('' +
-                '<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a></li>');
+                '<li><button id="unchecked-links" class="unchecked-linear-assets" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
         }
 
         function renderInaccurateWorkList(layerName) {
@@ -912,10 +912,37 @@
             return '<span class="marker">' + sideCode + '</span>';
         }
 
+        var userInformationLog = function() {
+            var selectedAsset = _assetTypeConfiguration.selectedLinearAsset;
+            var authorizationPolicy = _assetTypeConfiguration.authorizationPolicy;
 
-      var informationLog = function (date, username) {
-        return date ? (date + ' / ' + username) : '-';
-      };
+            var hasMunicipality = function(linearAsset) {
+                return _.some(linearAsset.get(), function(asset){
+                    return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+                });
+            };
+
+            var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+            var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+            var message = '';
+
+            if((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
+                message = limitedRights;
+            } else if(checkAuthorizationPolicy(selectedAsset))
+                message = noRights;
+
+            if(message) {
+                return '' +
+                    '<div class="form-group user-information">' +
+                    '<p class="form-control-static user-log-info">' + message + '</p>' +
+                    '</div>';
+            } else
+                return '';
+        };
+
+        var informationLog = function (date, username) {
+           return date ? (date + ' / ' + username) : '-';
+        };
 
         function createBodyElement(selectedAsset) {
             var info = {
@@ -946,6 +973,7 @@
                 '     <div class="form-group">' +
                 '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
                 '     </div>' +
+                userInformationLog() +
                 '   </div>' +
                 '</div>');
         }
