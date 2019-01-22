@@ -183,6 +183,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
 
+  val minVisibleZoom = 8
+  val maxZoom = 9
+
   get("/userNotification") {
     val user = userProvider.getCurrentUser()
 
@@ -797,25 +800,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets") {
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
-    val minVisibleZoom = 8
-    val maxZoom = 9
-    zoom >= minVisibleZoom && zoom <= maxZoom match {
-      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId, Some(LinkGeomSource.NormalLinkInterface)))
-      case false => getLinearAssets(typeId)
-    }
+    getLinearAssets(typeId)
   }
 
   private def getLinearAssets(typeId: Int) = {
     params.get("bbox").map { bbox =>
+      val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
       val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
       val usedService = getLinearAssetService(typeId)
-      val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
-      if(params("withRoadAddress").toBoolean)
-        mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
-      else
-        mapLinearAssets(assets)
+      zoom >= minVisibleZoom && zoom <= maxZoom match {
+        case true => mapLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
+        case false =>
+          validateBoundingBox(boundingRectangle)
+          val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
+          if(params("withRoadAddress").toBoolean)
+            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
+          else
+            mapLinearAssets(assets)
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -823,25 +825,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/linearassets/complementary"){
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
-    val minVisibleZoom = 8
-    val maxZoom = 9
-    zoom >= minVisibleZoom && zoom <= maxZoom match {
-      case true => mapLinearAssets(getLinearAssetService(typeId).getByZoomLevel(typeId))
-      case false => getLinearAssetsWithComplementary(typeId)
-    }
+    getLinearAssetsWithComplementary(typeId)
   }
 
   private def getLinearAssetsWithComplementary(typeId: Int) = {
     params.get("bbox").map { bbox =>
+      val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
       val boundingRectangle = constructBoundingRectangle(bbox)
-      validateBoundingBox(boundingRectangle)
       val usedService = getLinearAssetService(typeId)
-      val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
-      if(params("withRoadAddress").toBoolean)
-        mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
-      else
-        mapLinearAssets(assets)
+      zoom >= minVisibleZoom && zoom <= maxZoom match {
+        case true => mapLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle))
+        case false =>
+          validateBoundingBox(boundingRectangle)
+          val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
+          if(params("withRoadAddress").toBoolean)
+            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
+          else
+            mapLinearAssets(assets)
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }

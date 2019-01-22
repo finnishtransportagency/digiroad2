@@ -66,8 +66,8 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriSpeedLimitTrafficSignAsset: TierekisteriTrafficSignSpeedLimitClient = {
-    new TierekisteriTrafficSignSpeedLimitClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriSpeedLimitTrafficSignAsset: TierekisteriTrafficSignAssetSpeedLimitClient = {
+    new TierekisteriTrafficSignAssetSpeedLimitClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }

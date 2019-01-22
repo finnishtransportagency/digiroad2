@@ -1,15 +1,15 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRTrafficSignType, TierekisteriTrafficSignAssetClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreProvider, ManoeuvreService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService, TrafficSignType, TrafficSignTypeGroup}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -34,33 +34,40 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels)
 
   def converter(trafficType: TRTrafficSignType, value: String): String = {
-    val regexGetNumber = "^(\\d*\\.?\\d)?".r
-
+    val regexRemoveChar = "[a-zA-Z]".r
     val weightType : Seq[TRTrafficSignType] = Seq(MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding)
     val measuresType : Seq[TRTrafficSignType] = Seq(MaximumLength, MaxWidthExceeding, MaxHeightExceeding)
     val speedLimitType : Seq[TRTrafficSignType] = Seq(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
 
     val trimValue = value.replaceAll("\\s", "").replaceAll(",", ".")
+    try {
+      trafficType match {
+        case x if weightType.contains(trafficType) && Seq("""(?i)(\s*\d+\.?\d*t)""".r, """(?i)(\s*\d+\.?\d*tn)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+          val matched = """(?i)(\s*\d+\.?\d*t)""".r.findFirstMatchIn(trimValue)
+          if(matched.nonEmpty)
+            (regexRemoveChar.replaceAllIn(matched.get.toString, "").toDouble * 1000).toInt.toString
+          else
+            (regexRemoveChar.replaceAllIn("""(?i)(\s*\d+\.?\d*tn)""".r.findFirstMatchIn(trimValue).get.toString, "").toDouble * 1000).toInt.toString
 
-    trafficType match {
-      case x if weightType.contains(trafficType) && Seq("(?i)\\d+\\.?\\d*t$".r, "(?i)\\d+\\.?\\d*t\\.$".r, "(?i)\\d+\\.?\\d*tn$".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
-        regexGetNumber.findFirstMatchIn(trimValue) match {
-          case Some(matchedValue) => (matchedValue.toString().toDouble * 1000).toInt.toString
-          case _ => value
-        }
-      case x if measuresType.contains(trafficType) && "(?i)\\d+?\\.?\\d*m$".r.findFirstMatchIn(trimValue).nonEmpty =>
-        regexGetNumber.findFirstMatchIn(trimValue) match {
-          case Some(matchedValue) => matchedValue.toString().toDouble.toString
-          case _ => value
-        }
-      case x if speedLimitType.contains(trafficType) && Seq("^(?i)\\d+km\\\\h".r, "^(?i)\\d+kmh".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
-        regexGetNumber.findFirstMatchIn(trimValue) match {
-          case Some(matchedValue) => matchedValue.toString().toDouble.toInt.toString
-          case _ => value
-        }
-      case _ => value
-    }
+        case x if measuresType.contains(trafficType) && """(?i)(\s*\d+?\.?\d*m)""".r.findFirstMatchIn(trimValue).nonEmpty =>
+          val value = """(?i)(\s*\d+?\.?\d*m)""".r.findFirstMatchIn(trimValue).get.toString
+          (regexRemoveChar.replaceAllIn(value, "").toDouble * 100).toInt.toString
+
+        case x if speedLimitType.contains(trafficType) && Seq("""(?i)(\d+km\\h)""".r, """(?i)(\d+kmh)""".r).exists(regex => regex.findFirstMatchIn(trimValue).nonEmpty) =>
+          val matched = """(?i)(\d+km\\h)""".r.findFirstMatchIn(trimValue)
+          if(matched.nonEmpty)
+              """[a-zA-Z|\\\/]""".r.replaceAllIn(matched.get.toString, "")
+          else
+            """[a-zA-Z|\\\/]""".r.replaceAllIn("""(?i)(\d+kmh)""".r.findFirstMatchIn(trimValue).get.toString, "")
+        case _ => value
+      }
+    } catch {
+      case _: Throwable =>
+        println(s"Conversion fail for the following value -> value")
+        value
+      }
   }
+
 
   private def generateProperties(trAssetData: TierekisteriAssetData) = {
     val trafficType = trAssetData.assetType.trafficSignType
@@ -124,8 +131,72 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
 
-  protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds)
-    trafficSignsIds.foreach( sign => trafficSignService.expireAssetWithoutTransaction(sign, "batch_process_trafficSigns"))
+  protected def expireAssets(linkIds: Seq[Long], signTypes: Set[Int]): Unit = {
+    val trafficSignsIds = trafficSignService.expireAssetsByLinkId(linkIds, signTypes, Some("batch_process_trafficSigns"))
   }
+}
+
+trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImporter {
+  lazy val trafficSignGroup: TrafficSignTypeGroup = throw new IllegalArgumentException
+
+  def trafficSignsInGroup(trafficSignGroup: TrafficSignTypeGroup) = TrafficSignType.apply(trafficSignGroup)
+  //TODO uncomment this line after merge  US 1707
+  def filterCondition(assetNumber : Int): Boolean = /*TRTrafficSignType.apply(assetNumber).trafficSignType.group == TrafficSignTypeGroup.AdditionalPanels ||*/ TRTrafficSignType.apply(assetNumber).trafficSignType.group == trafficSignGroup
+
+  override val tierekisteriClient = new TierekisteriTrafficSignGroupClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())(filterCondition)
+
+  override def expireAssets() : Unit = {
+    val municipalities = getAllMunicipalities
+    municipalities.foreach { municipality =>
+      withDynTransaction {
+        trafficSignService.expireAssetsByMunicipality(municipality, Some(State), trafficSignsInGroup(trafficSignGroup))
+      }
+    }
+  }
+
+  override def getLastExecutionDate: Option[DateTime] = {
+      trafficSignService.getLastExecutionDate(s"batch_process_$assetName", trafficSignsInGroup(trafficSignGroup))
+  }
+}
+
+class TrafficSignSpeedLimitTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
+}
+
+class TrafficSignRegulatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.RegulatorySigns
+}
+
+class TrafficSignMaximumRestrictionsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MaximumRestrictions
+}
+
+class TrafficSignGeneralWarningSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.GeneralWarningSigns
+}
+
+class TrafficSignProhibitionsAndRestrictionsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ProhibitionsAndRestrictions
+}
+
+class TrafficSignMandatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
+}
+
+class TrafficSignPriorityAndGiveWaySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.PriorityAndGiveWaySigns
+}
+class TrafficSignInformationSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.InformationSigns
+}
+
+class TrafficSignServiceSignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
+}
+
+//TODO remove this code after merge US 1707
+class TrafficSignAdditionalPanelsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
+  override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.AdditionalPanels
 }
