@@ -88,7 +88,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
                    val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
                    val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback,
+                   val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1734,6 +1735,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case BogieWeightLimit.typeId => linearBogieWeightLimitService
       case MassTransitLane.typeId => massTransitLaneService
       case NumberOfLanes.typeId => numberOfLanesService
+      case RoadSideParking.typeId => parkingProhibitionService
       case _ => linearAssetService
     }
   }
