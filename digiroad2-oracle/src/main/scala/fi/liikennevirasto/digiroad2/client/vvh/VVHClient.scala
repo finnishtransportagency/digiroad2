@@ -30,6 +30,7 @@ object FeatureClass {
   case object WinterRoads extends FeatureClass
   case object SpecialTransportWithoutGate extends FeatureClass
   case object SpecialTransportWithGate extends FeatureClass
+  case object CarRoad_IIIa extends FeatureClass
   case object AllOthers extends FeatureClass
 }
 
@@ -61,6 +62,7 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
                        constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, length: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+  def verticalLevel: Option[String] = attributes.get("VERTICALLEVEL").map(_.toString)
   val vvhTimeStamp = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
 }
 
@@ -758,7 +760,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     12314 -> FeatureClass.CycleOrPedestrianPath,
     12312 -> FeatureClass.WinterRoads,
     12153 -> FeatureClass.SpecialTransportWithoutGate,
-    12154 -> FeatureClass.SpecialTransportWithGate
+    12154 -> FeatureClass.SpecialTransportWithGate,
+    12131 -> FeatureClass.CarRoad_IIIa
   )
 
   protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(

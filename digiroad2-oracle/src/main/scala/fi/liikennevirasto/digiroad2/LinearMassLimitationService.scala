@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.dao.MassLimitationDao
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 case class MassLimitationAsset(linkId: Long, administrativeClass: AdministrativeClass, sideCode: Int, value: Option[Value], geometry: Seq[Point],
                               attributes: Map[String, Any] = Map())
 
-class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLimitationDao) {
+class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLimitationDao, dynamicDao: DynamicLinearAssetDao) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   val MassLimitationAssetTypes = Seq(LinearAssetTypes.TotalWeightLimits,
@@ -45,7 +45,8 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
 
   private def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      dao.fetchLinearAssetsByLinkIds(typeIds, linkIds, LinearAssetTypes.numericValuePropertyId)
+      dao.fetchLinearAssetsByLinkIds(typeIds, linkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.typeId == LinearAssetTypes.BogieWeightLimits) ++
+      dynamicDao.fetchDynamicLinearAssetsByLinkIds(LinearAssetTypes.BogieWeightLimits, linkIds)
     }.filterNot(_.expired)
   }
 
@@ -58,8 +59,15 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
     }
   }
 
+  def getDynamicValue(value: DynamicAssetValue, publicID: String) : Option[String] = {value.properties.find(_.publicId == publicID).map(_.values.head.value.toString)}
+
   private def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point], roadLink: RoadLink): MassLimitationAsset = {
-    val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString))
+    val values = assets.map{asset =>
+      AssetTypes(asset.typeId ,asset.value match {
+        case Some(NumericValue(value)) => value.toString
+        case Some(DynamicValue(value)) => getDynamicValue(value , "bogie_weight_2_axel").getOrElse(getDynamicValue(value , "bogie_weight_3_axel").getOrElse(""))
+        case _ => ""
+      })}
     MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, assets.head.sideCode, Some(MassLimitationValue(values)), geometry)
   }
 }

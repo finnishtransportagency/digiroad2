@@ -135,6 +135,7 @@
   .dynamic-form.editable {
     margin-left: 10px;
   }
+
   .choice-group {
     width: 270px;
   }
@@ -208,22 +209,38 @@ form.maintenanceRoad-b {
 }
 
 .mass-update-modal {
+  .linear-asset {
+    .prohibition {
+        .new-prohibition select {
+          width: 100%;
+        }
+        .validity-period-group, .exception-group, .additionalInfo-group {
+          margin-left: 10px;
+          float: left;
+        }
+    }
+  }
+
   .dynamic-form {
+    .control-label {
+      width: 125px;
+      text-align: left;
+    }
 
     .choice-group {
-      margin-left: 5px;
+      width: 270px;
+      margin-left: 30px;
     }
 
     .input-unit-combination {
       width: 280px;
 
-      .form-group .dynamic-form{
+      .form-group {
         border-bottom: none;
         padding: 10px 0 10px 0;
 
         .control-label {
-          width: 125px;
-          margin: 0 5px 0 0;
+          text-align: right;
         }
 
         .form-control {
@@ -302,7 +319,7 @@ form.maintenanceRoad-b {
     margin-left: 3px;
   }
   .validity-period-group{
-    margin-left: 89px;
+    margin-left: 79px;
     margin-top: 6px;
 
     label {
