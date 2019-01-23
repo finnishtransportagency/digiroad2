@@ -231,7 +231,8 @@ root.LinearAssetLayer  = function(params) {
     onInteractionEnd: onInteractionEnd,
     onSelect: onSelect,
     onMultipleSelect: onMultipleSelect,
-    onClose: onCloseForm
+    onClose: onCloseForm,
+    enableSelect: selectableZoomLevel
   });
 
   this.getSelectToolControl = function() {
