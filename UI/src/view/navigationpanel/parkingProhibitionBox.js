@@ -1,5 +1,5 @@
 (function(root) {
-    root.RoadSideParkingBox = function (assetConfig) {
+    root.ParkingProhibitionBox = function (assetConfig) {
       LinearAssetBox.call(this, assetConfig);
       var me = this;
 
@@ -8,25 +8,25 @@
       };
 
       this.legendName = function () {
-        return 'linear-asset-legend road-side-parking';
+        return 'linear-asset-legend parking-prohibition';
       };
 
       this.labeling = function () {
-        var roadSideParkingValues = [
+        var parkingProhibitionValues = [
             [1, 'Ei tietoa rajoituksesta'],
             [2, 'Pysähtyminen kielletty'],
             [3, 'Pysäköinti kielletty']
         ];
 
-        return _.map(roadSideParkingValues, function (roadSideParkingValue) {
+        return _.map(parkingProhibitionValues, function (parkingProhibitionValue) {
            return '<div class="legend-entry">' +
-            '<div class="label">' + roadSideParkingValue[1] + '</div>' +
-            '<div class="symbol linear road-side-parking-' + roadSideParkingValue[0] + '" />' +
+            '<div class="label">' + parkingProhibitionValue[1] + '</div>' +
+            '<div class="symbol linear parking-prohibition-' + parkingProhibitionValue[0] + '" />' +
             '</div>';
         }).join('') + '</div>';
       };
 
-      var element = $('<div class="panel-group road-side-parking"/>');
+      var element = $('<div class="panel-group parking-prohibition"/>');
 
       function show() {
           if(!assetConfig.authorizationPolicy.editModeAccess()) {

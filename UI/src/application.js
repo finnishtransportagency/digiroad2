@@ -467,13 +467,13 @@
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
-    var roadSideParkingBox = new RoadSideParkingBox(_.find(linearAssets, {typeId: assetType.roadSideParking}));
+    var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
     return [
       [roadLinkBox]
         .concat([speedLimitBox])
         .concat([winterSpeedLimits])
         .concat(getLinearAsset(assetType.litRoad))
-        .concat([roadSideParkingBox])
+        .concat([parkingProhibitionBox])
         .concat([pavedRoadBox])
         .concat(getLinearAsset(assetType.roadWidth))
         .concat(getLinearAsset(assetType.numberOfLanes))

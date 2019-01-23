@@ -260,6 +260,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case BogieWeightLimit.typeId => linearBogieWeightLimitService
         case MassTransitLane.typeId => massTransitLaneService
         case NumberOfLanes.typeId => numberOfLanesService
+        case ParkingProhibition.typeId => parkingProhibitionService
         case _ => linearAssetService
       }
     }
@@ -314,6 +315,25 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         }))
 
       defaultMultiValueLinearAssetsMap(massTransitLane) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def parkingProhibitionsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val parkingProhibitions = getMultiValueLinearAssetByMunicipality(ParkingProhibition.typeId, municipalityNumber)
+
+     parkingProhibitions.map { parkingProhibition =>
+     val dynamicMultiValueLinearAssetMap = parkingProhibition.value match {
+       case Some(DynamicValue(value)) =>
+         Map(
+           "parking_prohibition" -> value.properties.find(_.publicId ==  "parking_prohibition").get.values.head.value,
+           "parking_validity_period" -> value.properties.find(_.publicId == "parking_validity_period").get.values.map(_.value).map { timePeriod =>
+             timePeriod.asInstanceOf[Map[String, Any]]
+           }.map(ValidityPeriodValue.fromMap).map(a => toTimeDomain(a))
+         )
+       case _ => Map()
+     }
+
+      defaultMultiValueLinearAssetsMap(parkingProhibition) ++ dynamicMultiValueLinearAssetMap
     }
   }
 
@@ -755,6 +775,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
         case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
         case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
+        case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
