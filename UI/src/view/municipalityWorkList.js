@@ -75,7 +75,7 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
+        return '<thead><th></th> <th id="name">TIETOLAJI</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
@@ -133,7 +133,7 @@
           '<tr>' +
           '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
           '<td headers="name">' + asset.assetName + '</td>' +
-          '<td headers="count">' + (asset.counter ? asset.counter : '' ) + '</td>' +
+          '<td headers="count">' + asset.type == 'point' ? (asset.counter ? asset.counter : '' ) : 'Kyllä' + '</td>' +
           '<td headers="date" >' + asset.verified_date + '</td>' +
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '</tr>';
