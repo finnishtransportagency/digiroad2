@@ -15,12 +15,11 @@
     };
 
     var renderFeedbackLink = function (enable) {
-      var infoContent = $('ul[class=information-content]');
+      var infoContent = $('.feedback-data');
       if (enable && allowFeedBack() ) {
-        if (!infoContent.find('#feedback-data').length)
-          infoContent.append('<li class="feedback-data"><a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a></li>');
-      }else {
-        infoContent.find('.feedback-data').remove();
+        infoContent.html('<button id="feedback-data" onclick=location.href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</button>');
+      } else {
+        infoContent.find('#feedback-data').remove();
       }
 
       $('#feedback-data').on('click', function(){

@@ -31,19 +31,9 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def equals(obj: scala.Any): Boolean = {
     obj match {
       case prohs: Prohibitions =>
-        prohibitions.size == prohs.prohibitions.size && prohibitions.forall(
-          argValue1  =>
-            prohs.prohibitions.find(_.typeId == argValue1.typeId) match {
-              case Some(argValue2) =>
-                argValue1.typeId == argValue2.typeId && argValue1.additionalInfo == argValue2.additionalInfo &&
-                  argValue1.exceptions.size == argValue2.exceptions.size && argValue1.validityPeriods.size == argValue2.validityPeriods.size &&
-                  argValue1.exceptions.subsetOf(argValue2.exceptions) && argValue1.validityPeriods.subsetOf(argValue2.validityPeriods)
-              case _ => false
-            }
-        )
+        prohibitions.toSet.diff(prohs.prohibitions.toSet).isEmpty && prohs.prohibitions.toSet.diff(prohibitions.toSet).isEmpty
       case _ => super.equals(obj)
     }
-
   }
 }
 case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
@@ -51,7 +41,7 @@ case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
 }
 
 case class DynamicAssetValue(properties: Seq[DynamicProperty])
-case class DynamicValue(value: DynamicAssetValue) extends Value{
+case class DynamicValue(value: DynamicAssetValue) extends Value {
   override def toJson: Any = value
 
   override def equals(obj: scala.Any): Boolean = {
