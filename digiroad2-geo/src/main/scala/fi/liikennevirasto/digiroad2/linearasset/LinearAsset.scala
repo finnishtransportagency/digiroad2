@@ -173,3 +173,5 @@ case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double
 
 case class InaccurateLinearAsset(assetId: Option[Long], municipality: String, administrativeClass: String, linkId: Option[Long])
 
+case class LightLinearAsset(geometry: Seq[Point], value: Int, expired: Boolean, typeId: Int, sideCode: Int)
+
