@@ -655,9 +655,9 @@ trait LinearAssetOperations {
   }
 
 
-  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle) : Seq[Seq[LightLinearAsset]] = {
+  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLinearAsset]] = {
     withDynTransaction {
-      val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), boundingRectangle)
+      val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), boundingRectangle, linkGeomSource)
       Seq(assets)
     }
   }

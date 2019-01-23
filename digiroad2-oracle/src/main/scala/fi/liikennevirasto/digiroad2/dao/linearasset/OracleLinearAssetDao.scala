@@ -175,7 +175,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val endPoint_x = r.nextDouble()
       val endPoint_y = r.nextDouble()
       val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
-      LightLinearAsset(geometry, value, expired, typeId)
+      val sideCode = r.nextInt()
+      LightLinearAsset(geometry, value, expired, typeId, sideCode)
     }
   }
 
@@ -439,14 +440,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, bounds: BoundingRectangle): Seq[LightLinearAsset] = {
+  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, bounds: BoundingRectangle, linkSource: Option[LinkGeomSource] = None): Seq[LightLinearAsset] = {
+    val linkGeomCondition = linkSource match {
+      case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
+      case _ => ""
+    }
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
     sql"""
-         SELECT case when a.valid_to <= sysdate then 1 else 0 end as expired, CASE WHEN a.valid_to IS NULL THEN 1 ELSE NULL END AS value, a.asset_type_id, t.X, t.Y, t2.X, t2.Y
+         SELECT case when a.valid_to <= sysdate then 1 else 0 end as expired, CASE WHEN a.valid_to IS NULL THEN 1 ELSE NULL END AS value, a.asset_type_id, t.X, t.Y, t2.X, t2.Y, pos.side_code
           from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t
           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t2
-          where a.valid_to is null and a.floating = 0 and a.asset_type_id = #$assetTypeId and #$boundingBoxFilter"""
+          where a.valid_to is null and a.floating = 0 and a.asset_type_id = #$assetTypeId #$linkGeomCondition and #$boundingBoxFilter"""
       .as[LightLinearAsset].list
   }
 

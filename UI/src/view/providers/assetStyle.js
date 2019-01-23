@@ -26,8 +26,7 @@
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
         var hasAsset = me.hasValue(linearAsset);
         var type =  me.isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
-        var sideCode = linearAsset.sideCode ? linearAsset.sideCode : 1;
-        return _.merge({}, linearAsset, { hasAsset: hasAsset }, type, {sideCode: sideCode});
+        return _.merge({}, linearAsset, { hasAsset: hasAsset }, type);
       });
       var offsetBySideCode = function(linearAsset) {
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
