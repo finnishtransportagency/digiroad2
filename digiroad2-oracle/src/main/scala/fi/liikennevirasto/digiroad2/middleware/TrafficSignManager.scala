@@ -26,9 +26,21 @@ object TrafficSignManager {
 }
 
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService, hazmatTransportProhibitionService: HazmatTransportProhibitionService) {
-  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+    def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
+    def trafficSignsCreateAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
+      if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType)) {
+        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+      }
+      else if (TrafficSignManager.belongsToProhibition(trafficSignInfo.signType)) {
+        prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+      }
+      else if (TrafficSignManager.belongsToHazmat(trafficSignInfo.signType)) {
+        hazmatTransportProhibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+      }
+    }
+
+  def trafficSignsCreateAssetsMass(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType)) {
       manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
     }

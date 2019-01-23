@@ -1141,7 +1141,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }).getOrElse(Nil)
   }
 
-  def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): Seq[RoadLink] = {
+  def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Set[RoadLink] = Set(), numberOfConnections: Int = 0): Set[RoadLink] = {
     val (roadNamePublicId, roadNameSource) =
       sourceRoadLink.attributes.get("ROADNAME_FI") match {
         case Some(nameFi) =>
@@ -1150,17 +1150,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
       }
 
-    val adjacents = getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.getOrElse(roadNamePublicId, "").toString != roadNameSource)
-    if(adjacents.isEmpty)
-      Seq.empty
-    else {
-      val nextAdjacents = getAdjacent(adjacents.head.linkId, Seq(GeometryUtils.getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)
-      if (adjacents.size == 1 && nextAdjacents.exists(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)) {
-        recursiveGetAdjacent(adjacents.head, GeometryUtils.getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
+    def iterativeProcess(sourceRoadLink: RoadLink, point: Point, intermediants: Set[RoadLink], numberOfConnections: Int = 0, roadNamePublicId: String, roadNameSource: String): Set[RoadLink] = {
+    val adjRoadLink = getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filter(adjLink => adjLink.attributes.getOrElse(roadNamePublicId, "").toString.nonEmpty && adjLink.attributes.getOrElse(roadNamePublicId, "") == roadNameSource)
+    val filteredRoadLink = adjRoadLink.filterNot(adj => intermediants.contains(adj))
+
+      if(filteredRoadLink.isEmpty) {
+        intermediants
       } else {
-        intermediants ++ adjacents
-      }
+        filteredRoadLink.flatMap { roadLink =>
+          iterativeProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), intermediants ++ Set(roadLink), numberOfConnections + 1, roadNamePublicId, roadNameSource)
+        }
+      }.toSet
     }
+    iterativeProcess(sourceRoadLink, point, intermediants, numberOfConnections, roadNamePublicId, roadNameSource)
+
   }
 
   def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {

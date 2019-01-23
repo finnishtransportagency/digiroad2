@@ -302,7 +302,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         logger.info(s"Prohibition created with id: $assetId")
         assetId
       }
-      ids
+      ids.toSeq
     }
     else Seq()
   }

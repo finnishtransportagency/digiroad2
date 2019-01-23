@@ -543,7 +543,7 @@ object NumericalLimitFiller {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
-      mergeValuesExistingOnSameRoadLink,
+//      mergeValuesExistingOnSameRoadLink,
       expireOverlappingSegments,
       combine,
       fuse,

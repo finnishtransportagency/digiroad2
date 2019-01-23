@@ -727,7 +727,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       )
 
       when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100)))
-      when(mockRoadLinkService.recursiveGetAdjacent(sourceRoadLink, Point(0, 100))).thenReturn(Seq(roadLink, roadLink1))
+      when(mockRoadLinkService.recursiveGetAdjacent(sourceRoadLink, Point(0, 100))).thenReturn(Set(roadLink, roadLink1))
 
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head

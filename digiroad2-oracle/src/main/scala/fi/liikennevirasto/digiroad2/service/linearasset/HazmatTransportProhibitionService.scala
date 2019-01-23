@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, TrafficSignType}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibitionClass, TimePeriodClass, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -153,7 +153,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
 
     if (prohibitionValue.nonEmpty) {
-      val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
+      val ids = (roadLinks ++ Set(trafficSignInfo.roadLink)).map { roadLink =>
         val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
           case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
           case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
@@ -168,7 +168,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         logger.info(s"HazmatTransportProhibition created with id: $assetId")
         assetId
       }
-      ids
+      ids.toSeq
     }
     else Seq()
   }
@@ -209,19 +209,41 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     }
   }
 
-//  def updateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-//    logger.info("updating asset")
+
+
+//  def recursiveGetAdjacentLimited(sourceRoadLink: RoadLink, point: Point, trSignByMunicipality: Map[Int, Seq[IncomingPointAsset]]): Set[RoadLink] = {
 //
-//    val persistAssets = fetchTrafficSignRelatedAssets(id)
-//    val orderedPanel = additionalPanel.sortBy(_.formPosition)
-//    val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+//    def iterativeProcess(sourceRoadLink: RoadLink, point: Point, trSignByMunicipality: Map[Int, Seq[IncomingPointAsset]], intermediates: Set[RoadLink], roadNamePublicId: String, roadNameSource: String): Set[RoadLink] = {
+//      val adjRoadLink = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filter(adjLink => adjLink.attributes.getOrElse(roadNamePublicId, "").toString.nonEmpty && adjLink.attributes.getOrElse(roadNamePublicId, "") == roadNameSource)
+//      val filteredRoadLink = adjRoadLink.filterNot(adj => intermediates.contains(adj))
 //
-//    persistAssets.map { asset =>
-//      update(asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue), )
+//      if(filteredRoadLink.isEmpty) {
+//        intermediates
+//      } else {
+//        filteredRoadLink.flatMap { roadLink =>
+//          if(trSignByMunicipality(roadLink.municipalityCode).isEmpty) {
+//            //get trafficSign on database by roadLink and type if some result
+//            Seq()
+//          } else if (trSignByMunicipality(roadLink.municipalityCode).exists(_.linkId == roadLink.linkId)) {
+//            intermediates
+//          } else {
+//            iterativeProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), trSignByMunicipality: Map[Int, Seq[IncomingPointAsset]], intermediates ++ Set(roadLink), roadNamePublicId, roadNameSource)
+//          }
+//        }
+//      }.toSet
 //    }
 //
-//    groupedAssetsToUpdate.values.map { value =>
-//      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
-//    }
+//    val (roadNamePublicId, roadNameSource) =
+//      sourceRoadLink.attributes.get("ROADNAME_FI") match {
+//        case Some(nameFi) =>
+//          ("ROADNAME_FI", nameFi.toString)
+//        case _ =>
+//          ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+//      }
+//
+//    iterativeProcess(sourceRoadLink, point, trSignByMunicipality, Set(), roadNamePublicId, roadNameSource)
+//
 //  }
+
+
 }
