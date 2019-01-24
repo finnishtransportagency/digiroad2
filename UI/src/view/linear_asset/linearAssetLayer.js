@@ -183,7 +183,7 @@ root.LinearAssetLayer  = function(params) {
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
   var selectableZoomLevel = function() {
-    return me.uiState.zoomLevel > zoomlevels.minZoomForAssets;
+    return me.uiState.zoomLevel >= zoomlevels.minZoomForAssets;
   };
 
   var onSelect = function(evt) {
