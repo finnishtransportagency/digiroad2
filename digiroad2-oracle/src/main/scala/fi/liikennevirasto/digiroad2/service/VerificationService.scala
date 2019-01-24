@@ -11,7 +11,8 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.util.iter.Empty
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, counter: Option[Int] = None)
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, counter: Option[Int] = None,
+                            modifiedBy: Option[String] = None, modifiedDate: Option[DateTime] = None, geometryType: String)
 case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {

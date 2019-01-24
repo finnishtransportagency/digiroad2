@@ -1644,6 +1644,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/municipalities/:municipalityCode/assetTypes") {
+    /**
+      For testing without database process
+     */
+//    val verifiedAssets = List(VerificationInfo(766, "Sottunga", 10, "Joukkoliikenteen pysäkki", Some("User1"), Some(DateTime.now()), true, Some(30), Some("User31"), Some(DateTime.now()), Some("point")),
+//                              VerificationInfo(766, "Sottunga", 110, "Päällyste", Some("User2"), Some(DateTime.now()), true, Some(55), Some("User31"), Some(DateTime.now()), Some("linear")),
+//      VerificationInfo(766, "Sottunga", 100, "Leveys", Some("User2"), Some(DateTime.now()), true, None, Some("User31"), Some(DateTime.now()), Some("linear")),
+//      VerificationInfo(766, "Sottunga", 200, "Suojatie", Some("User1"), Some(DateTime.now()), true, None, Some("User31"), Some(DateTime.now()), Some("point")))
+//
+//    verifiedAssets.groupBy(_.municipalityName)
+//          .mapValues(
+//            _.map(assetType =>Map("typeId" -> assetType.assetTypeCode,
+//              "assetName" -> assetType.assetTypeName,
+//              "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+//              "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+//              "verified"   -> assetType.verified,
+//              "counter" -> assetType.counter,
+//              "modified_by" -> assetType.modifiedBy.getOrElse(""),
+//              "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+//              "type" -> assetType.geometryType)))
     val id = params("municipalityCode").toInt
     val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
@@ -1654,7 +1673,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "verified_by"   -> assetType.verifiedBy.getOrElse(""),
           "verified"   -> assetType.verified,
           "counter" -> assetType.counter,
-          "type" -> "point")))
+          "modified_by" -> assetType.modifiedBy.getOrElse(""),
+          "modified_date" -> assetType.modifiedDate.getOrElse(""),
+          "type" -> assetType.geometryType)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {
