@@ -38,7 +38,7 @@ p. 040-507 2301
 Pys&auml;kkeihin liittyv&auml;t asiat:
 pysakit@digiroad.fi
 
-1.2 Usein kysytyt kysymykset ja ongelmatilanteet
+1.2 Usein kysytyt kysymykset (UKK) ja ongelmatilanteet
 ------------------------------------------------
 
 Digiroad -sovelluksen k&auml;yt&ouml;n usein kysytyt kysymykset on koottu Digiroad-sivustolle. Usein kysyttyihin kysymyksiin p&auml;&auml;set <a href=http://www.digiroad.fi/yllapito/fi_FI/pysakkiohjeet/  target="_blank">t&auml;&auml;lt&auml;. </a>
@@ -363,6 +363,7 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Vyöhyketieto|Mahdollinen seudullisen matkustajaliikenteen ilmoittama tieto siitä, mihin liikennöintivyöhykkeeseen pysäkki kuuluu.||||
 |Maastokoordinaatti X|Pys&auml;kin sijainnin mitattu X-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Vaihtoehtoinen link_ID|Mikäli tieverkon geometrian kuvaus estää pysäkille ohjauksen esim. rampista, vaikka maastossa pysäkkiä on mahdollista käyttää sekä päätien että rampin kautta, tässä kentässä on mahdollista ilmoittaa rampin link_ID, jolta pysäkille on mahdollista kulkea.|||| 
+|Liitetty terminaaliin|Mikäli pysäkki on liitetty johonkin pysäkkiterminaaliin (esim. linja-autoasemaan), näkyy kentässä terminaalipysäkin ID. Jos pysäkki ei kuulu terminaaliin, kenttä ei ole näkyvissä.||||
 |Maastokoordinaatti Y|Pys&auml;kin sijainnin mitattu Y-koordinaatti: EUREF FIN ETRS89-TM35FIN.||||
 |Maastokoordinaatti Z|Pys&auml;kin sijainnin mitattu Z-koordinaatti: N2000 korkeusj&auml;rjestelm&auml;ss&auml;.||||
 |Liikenn&ouml;intisuunta|Pys&auml;kin suunta sanallisesti kuvattuna. Esimerkiksi:"Keskustaan".||||
