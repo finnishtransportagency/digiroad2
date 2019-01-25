@@ -49,7 +49,7 @@
     this.createVerificationForm = function(municipality) {
       $('#tableData').hide();
       $('.filter-box').hide();
-      if (showFormBtnVisible) $('.content-box').attr('class', 'content-asset-box').find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
+      if (showFormBtnVisible) $('.page').attr('class', 'page-content-box').find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
           me.generateWorkList(municipalityList);
         })
       );
