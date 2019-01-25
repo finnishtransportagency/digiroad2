@@ -220,8 +220,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None): Int = {
-    val linkBearing = GeometryUtils.calculateBearing(geometry, assetMValue)
+  def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None, geometryLength: Option[Double] = None): Int = {
+    val linkBearing = GeometryUtils.calculateBearing(geometry, assetMValue, geometryLength)
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 

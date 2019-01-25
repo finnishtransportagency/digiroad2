@@ -63,7 +63,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   case class MalformedAsset(malformedParameters: List[String], csvRow: String)
   case class ExcludedAsset(affectedRoadLinkType: String, csvRow: String)
   case class NotImportedData(reason: String, csvRow: String)
-  case class CsvAssetRowAndRoadLink(properties: CsvAssetRow, roadLink: Seq[VVHRoadlink])
+  case class CsvAssetRowAndRoadLink(properties: CsvAssetRow, roadLink: Seq[VVHRoadlink], enrichedRoadLink: Seq[RoadLink] = Seq())
   case class ImportResult(incompleteAssets: List[IncompleteAsset] = Nil,
                           malformedAssets: List[MalformedAsset] = Nil,
                           excludedAssets: List[ExcludedAsset] = Nil,
@@ -126,34 +126,44 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def getRightRoadLinkUsingBearing(assetBearing: Option[Int], assetCoordinates: Point, assetTrafficDirection: Option[Int]) = {
+  def getRightRoadLinkUsingBearing(assetBearing: Option[Int], assetCoordinates: Point): (Seq[VVHRoadlink], Seq[RoadLink]) = {
     val toleranceInDegrees = 25
     val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), assetCoordinates)
 
-    (assetBearing, assetTrafficDirection) match {
-      case (Some(aBearing), Some(aTrafficDirection)) if roadLinks.nonEmpty =>
+    assetBearing match {
+      case Some(aBearing) if roadLinks.nonEmpty =>
+        val enrichedRoadLinks = roadLinkService.enrichRoadLinksFromVVH(roadLinks)
 
-        roadLinks.filter { roadLink =>
-          val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
-          val roadLinkBearing = trafficSignService.getAssetBearing(TrafficDirection.toSideCode(roadLink.trafficDirection).value, roadLink.geometry, Some(mValue))
+        val filteredEnrichedRoadLinks =
+          enrichedRoadLinks.filter { roadLink =>
+            val aTrafficDirection = trafficSignService.getTrafficSignValidityDirection(assetCoordinates, roadLink.geometry)
 
-          if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
-            val reverseRoadLinkBearing =
-              if (roadLinkBearing - 180 < 0) {
-                roadLinkBearing + 180
-              } else {
-                roadLinkBearing - 180
-              }
+            val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
+            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue), Some(roadLink.length) )
 
-            Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees ||
-              Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
-          } else {
-            Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees &&
-              roadLink.trafficDirection == TrafficDirection.apply(aTrafficDirection)
+            if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+              val reverseRoadLinkBearing =
+                if (roadLinkBearing - 180 < 0) {
+                  roadLinkBearing + 180
+                } else {
+                  roadLinkBearing - 180
+                }
+
+              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees ||
+                Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
+            } else {
+              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees &&
+                (roadLink.trafficDirection == TrafficDirection.apply(aTrafficDirection) || TrafficDirection.apply(aTrafficDirection) == TrafficDirection.BothDirections)
+            }
           }
-        }
+
+        if (filteredEnrichedRoadLinks.nonEmpty) {
+          (roadLinks.filter { rl => filteredEnrichedRoadLinks.exists(_.linkId == rl.linkId) }, filteredEnrichedRoadLinks)
+        } else
+          (roadLinks, enrichedRoadLinks)
+
       case _ =>
-        roadLinks
+        (roadLinks, Seq())
     }
   }
 
@@ -165,15 +175,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
     val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
     val bearing = tryToInt(getPropertyValue(parsedRow, "bearing").toString)
-    val trafficDirection = tryToInt(getPropertyValue(parsedRow, "trafficDirection").toString)
 
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val roadLinks = getRightRoadLinkUsingBearing(bearing, Point(lon.toLong, lat.toLong), trafficDirection)
+        val (roadLinks, enrichedRoadLinks) = getRightRoadLinkUsingBearing(bearing, Point(lon.toLong, lat.toLong))
         if(roadLinks.isEmpty) {
           (List(s"Unauthorized Municipality Or RoadLind inexistent near of Asset"), Seq())
         } else
-          (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+          (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks, enrichedRoadLinks)))
       case _ =>
         (Nil, Nil) //That condition is already checked on assetRowToProperties
     }
@@ -232,6 +241,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val properties = trafficSignAttribute.properties
       val nearbyLinks = trafficSignAttribute.roadLink
+      val enrichedNearbyLinks = trafficSignAttribute.enrichedRoadLink
       val optBearing = tryToInt(getPropertyValue(properties, "bearing").toString)
       val twoSided = getPropertyValue(properties, "twoSided") match {
         case "1" => true
@@ -240,11 +250,12 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
 
-      val closestRoadLink = roadLinkService.enrichRoadLinksFromVVH(Seq(nearbyLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry)))).head
+      val closestRoadLink = Seq(enrichedNearbyLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))).head
       val validityDirection = trafficSignService.getValidityDirection(Point(lon, lat), closestRoadLink, optBearing, twoSided)
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), closestRoadLink.geometry)
-      CsvTrafficSign(lon, lat, closestRoadLink.linkId, generateBaseProperties(properties), validityDirection, Some(GeometryUtils.calculateBearing(closestRoadLink.geometry)), mValue, closestRoadLink, nearbyLinks)
+      val bearingRecalculation = GeometryUtils.calculateBearing(closestRoadLink.geometry, Some(mValue), Some(closestRoadLink.length) )
+      CsvTrafficSign(lon, lat, closestRoadLink.linkId, generateBaseProperties(properties), validityDirection, Some(bearingRecalculation), mValue, closestRoadLink, nearbyLinks)
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
@@ -254,7 +265,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
     val usedAdditionalPanels = trafficSignInfo.flatMap { sign =>
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(sign.lon, sign.lat), sign.roadLink.geometry)
-      val signBearing = Some(trafficSignService.getAssetBearing(sign.validityDirection, sign.roadLink.geometry, Some(mValue)))
+      val signBearing = Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue), Some(sign.roadLink.length)))
       val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
       val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, sign.nearbyLinks)
 
@@ -303,7 +314,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
             createdData = parsedRowAndRoadLink match {
               case Nil => result.createdData
               case parameters =>
-                CsvAssetRowAndRoadLink(properties = parameters.head.properties, roadLink = parameters.head.roadLink) :: result.createdData
+                CsvAssetRowAndRoadLink(properties = parameters.head.properties, roadLink = parameters.head.roadLink, enrichedRoadLink = parameters.head.enrichedRoadLink) :: result.createdData
             })
         }
       }
