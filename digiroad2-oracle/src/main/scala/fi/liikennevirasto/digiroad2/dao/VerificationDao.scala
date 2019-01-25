@@ -12,11 +12,11 @@ import slick.jdbc.StaticQuery.interpolation
 class VerificationDao {
   val TwoYears: Int = 24
 
-  def getVerifiedAssetTypes(municipalityId: Int) = {
+  def getVerifiedAssetTypes(municipalityId: Int) : List[VerificationInfo] = {
     val verifiedAssetTypes =
       sql"""
        SELECT tableResult.id, tableResult.name_fi, tableResult.verified_by, tableResult.verified_date, tableResult.assetId, tableResult.assetName,
-              tableResult.verified, tableResult.counting
+              tableResult.verified, tableResult.geometry_type, tableResult.counting
          FROM
          (SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
                 (CASE
@@ -37,50 +37,114 @@ class VerificationDao {
                 WHERE m.id = $municipalityId
                 GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
-                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, Option[Int])].list
-
-    verifiedAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, counter) =>
-      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, verified, counter)
+                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, String, Option[Int])].list
+    verifiedAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, geometryType, counter) =>
+      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, verified, geometryType, counter)
     }
   }
 
-
-  def getAssetVerificationById(Id: Long): Option[VerificationInfo] = {
-    val verifiedAssetType =
+  def getVerifiedInfoTypes(municipalityId: Int) : List[VerificationInfo] = {
+    val verifiedAssetTypes =
       sql"""
-       SELECT tableResult.id, tableResult.name_fi, tableResult.verified_by, tableResult.verified_date, tableResult.assetId, tableResult.assetName,
-              tableResult.verified, tableResult.counting
-         FROM
-         (SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
-                (CASE
-                    WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears
-                      THEN 1
-                      ELSE 0
-                END) AS verified,
-                atype.GEOMETRY_TYPE,
-                (CASE
-                    WHEN atype.GEOMETRY_TYPE = 'point'
-                      THEN count(*)
-                      ELSE NULL
-                END) AS counting
-                FROM municipality m
-                JOIN asset_type atype ON atype.verifiable = 1
-                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id
-                LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID
-                WHERE mv.id = $Id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
-                GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
-                      (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
-                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, Option[Int])].firstOption
-    verifiedAssetType.map { case (municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, counter) =>
-      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, verified, counter)
+          SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS typeId, atype.name AS assetName,
+          (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END) AS verified, atype.geometry_type
+           FROM municipality m
+           JOIN asset_type atype ON atype.verifiable = 1
+           LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+           WHERE m.id = $municipalityId""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, String)].list
+    verifiedAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, geometryType) =>
+      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, verified, geometryType)
     }
   }
+
+  def getNumberOfPointAssets(municipalityId: Int) : Seq[(Int, Int)] = {
+      sql"""
+           Select a.asset_type_id , count(a.id)
+                from asset_type atype
+                JOIN asset a ON a.ASSET_TYPE_ID = atype.ID and (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+                WHERE a.municipality_code = $municipalityId
+                and atype.verifiable = 1
+                and atype.GEOMETRY_TYPE = 'point'
+                GROUP BY a.asset_type_id """.as[(Int, Int)].list
+  }
+
+  def getLastModificationPointAssets(municipalityId: Int) : Seq[LatestModificationInfo] = {
+    val lastModification =
+      sql"""
+        select typeId, modified_date, modified_by
+        from  (
+          select atype.id AS typeId, atype.GEOMETRY_TYPE as geomType, a.modified_date, a.modified_by,
+          ROW_NUMBER () OVER (PARTITION BY a.asset_type_id, a.modified_by ORDER BY a.modified_date desc nulls last) AS rownumber
+          from asset_type atype
+          JOIN asset a ON a.ASSET_TYPE_ID = atype.ID  AND a.VALID_TO IS NULL
+          WHERE atype.verifiable = 1
+          and a.municipality_code = $municipalityId
+          and atype.GEOMETRY_TYPE = 'point'
+        ) tb
+        where tb.rownumber = 1""".as[(Int, Option[DateTime], Option[String])].list
+    lastModification.map { case ( typeId, modifiedDate, modifiedBy) =>
+      LatestModificationInfo(typeId, modifiedBy, modifiedDate)
+    }
+  }
+
+  def getLastModificationLinearAssets(ids: Set[Long]) : Seq[LatestModificationInfo] = {
+    val lastModification = MassQuery.withIds(ids) { idTableName =>
+      sql"""
+      select typeId, modified_date, modified_by
+      from  (
+        SELECT atype.id AS typeId, a.modified_date, a.modified_by,
+        ROW_NUMBER () OVER (PARTITION BY a.asset_type_id, a.modified_by ORDER BY a.modified_date desc nulls last) AS rownumber
+        from asset_type atype
+        JOIN asset a ON a.ASSET_TYPE_ID = atype.ID AND a.VALID_TO IS NULL
+        join asset_link al on a.id = al.asset_id
+        join lrm_position lrm on lrm.id = al.position_id
+        join #$idTableName i on i.id = lrm.id
+        where atype.GEOMETRY_TYPE = 'linear'
+        and atype.verifiable = 1
+      ) tb
+      where tb.rownumber = 1 """.as[(Int, Option[DateTime], Option[String])].list
+      }
+    lastModification.map { case ( typeId, modifiedDate, modifiedBy) =>
+      LatestModificationInfo(typeId, modifiedBy, modifiedDate)
+    }
+  }
+
+//  def getAssetVerificationById(Id: Long): Option[VerificationInfo] = {
+//    val verifiedAssetType =
+//      sql"""
+//       SELECT tableResult.id, tableResult.name_fi, tableResult.verified_by, tableResult.verified_date, tableResult.assetId, tableResult.assetName,
+//              tableResult.verified, tableResult.counting
+//         FROM
+//         (SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
+//                (CASE
+//                    WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears
+//                      THEN 1
+//                      ELSE 0
+//                END) AS verified,
+//                atype.GEOMETRY_TYPE,
+//                (CASE
+//                    WHEN atype.GEOMETRY_TYPE = 'point'
+//                      THEN count(*)
+//                      ELSE NULL
+//                END) AS counting
+//                FROM municipality m
+//                JOIN asset_type atype ON atype.verifiable = 1
+//                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id
+//                LEFT JOIN asset a ON a.ASSET_TYPE_ID = atype.ID
+//                WHERE mv.id = $Id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
+//                GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
+//                      (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
+//                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, String, Option[Int])].firstOption
+//    verifiedAssetType.map { case (municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, verified, geometryType, counter) =>
+//      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, verified, counter)
+//    }
+//  }
 
   def getAssetVerification(municipalityCode: Int, assetTypeCode: Int): Seq[VerificationInfo] = {
     val verifiedAssetType =
       sql"""
        SELECT tableResult.id, tableResult.name_fi, tableResult.verified_by, tableResult.verified_date, tableResult.assetId, tableResult.assetName,
-              tableResult.verified, tableResult.counting
+              tableResult.verified, tableResult.geometry_type, tableResult.counting
          FROM
          (SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
                 (CASE
@@ -102,23 +166,23 @@ class VerificationDao {
                 GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
                       (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
-                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, Option[Int])].list
+                      atype.GEOMETRY_TYPE ) tableResult""".as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, String, Option[Int])].list
 
-    verifiedAssetType.map { case (municipality, municipalityName, verifiedBy, verifiedDate, assetType, assetTypeName, verified, counter) =>
-      VerificationInfo(municipality, municipalityName, assetType, assetTypeName, verifiedBy, verifiedDate, verified, counter)
+    verifiedAssetType.map { case (municipality, municipalityName, verifiedBy, verifiedDate, assetType, assetTypeName, verified, geometryType, counter) =>
+      VerificationInfo(municipality, municipalityName, assetType, assetTypeName, verifiedBy, verifiedDate, verified, geometryType, counter)
     }
   }
 
   def getCriticalAssetVerification(municipalityId: Int, assetTypeCodes: Seq[Int]) = {
     val criticalAssetTypes =
       sql"""
-          SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName
+          SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName, atype.geometry_type
           FROM municipality m
           JOIN asset_type atype ON atype.verifiable = 1 AND atype.id IN  (#${assetTypeCodes.mkString(",")})
           LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL OR mv.valid_to > sysdate
-          WHERE m.id = $municipalityId""".as[(Int, String, Option[String], Option[DateTime], Int, String)].list
-    criticalAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName) =>
-      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate)
+          WHERE m.id = $municipalityId""".as[(Int, String, Option[String], Option[DateTime], Int, String, String)].list
+    criticalAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, geometryType) =>
+      VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, geometryType = geometryType )
     }
   }
 

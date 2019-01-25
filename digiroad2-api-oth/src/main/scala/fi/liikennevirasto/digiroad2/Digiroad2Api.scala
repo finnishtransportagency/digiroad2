@@ -1645,7 +1645,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/municipalities/:municipalityCode/assetTypes") {
     val id = params("municipalityCode").toInt
-    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipalityF(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
         _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
