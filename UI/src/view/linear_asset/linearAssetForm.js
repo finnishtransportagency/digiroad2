@@ -35,7 +35,7 @@
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
-      toggleMode( validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || applicationModel.isReadOnly());
+      toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy));
     });
 
     eventbus.on(events('unselect'), function() {
@@ -52,7 +52,7 @@
 
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
-        toggleMode(validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || readOnly);
+        toggleMode(!validateAccess(selectedLinearAsset, authorizationPolicy) || readOnly);
       }
     });
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
@@ -164,7 +164,7 @@
 
       if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinearAsset)) {
         message = limitedRights;
-      } else if (!authorizationPolicy.formEditModeAccess(selectedLinearAsset))
+      } else if (!authorizationPolicy.validateMultiple(selectedLinearAsset.get()))
         message = noRights;
 
       if(message) {
@@ -221,11 +221,8 @@
     $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</button></li>');
   };
 
-  function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
-    var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-      return !authorizationPolicy.formEditModeAccess(selected);
-    });
-    return !_.isEmpty(selectedAssets);
+  function validateAccess(selectedLinearAsset, authorizationPolicy){
+    return authorizationPolicy.validateMultiple(selectedLinearAsset.get());
   }
 
 })(this);

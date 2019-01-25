@@ -753,7 +753,7 @@
         };
 
         function _isReadOnly(selectedAsset){
-            return checkAuthorizationPolicy(selectedAsset) || applicationModel.isReadOnly();
+            return applicationModel.isReadOnly() || !checkAuthorizationPolicy(selectedAsset);
         }
 
         var createHeaderElement = function(selectedAsset) {
@@ -928,7 +928,7 @@
 
             if((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
                 message = limitedRights;
-            } else if(checkAuthorizationPolicy(selectedAsset))
+            } else if(!checkAuthorizationPolicy(selectedAsset))
                 message = noRights;
 
             if(message) {
@@ -989,11 +989,7 @@
 
         function checkAuthorizationPolicy(selectedAsset){
             var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
-
-            var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-                return auth.formEditModeAccess(asset);
-            });
-            return _.isEmpty(selectedAssets);
+            return auth.validateMultiple(selectedAsset.get());
         }
 
         me.isSplitOrSeparatedAllowed = function(){
