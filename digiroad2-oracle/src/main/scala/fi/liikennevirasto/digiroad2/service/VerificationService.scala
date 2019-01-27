@@ -21,11 +21,11 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   def dao: VerificationDao = new VerificationDao
 
-  def getAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
+/*  def getAssetTypesByMunicipality(municipalityCode: Int): List[VerificationInfo] = {
     withDynSession {
       dao.getVerifiedAssetTypes(municipalityCode)
     }
-  }
+  }*/
 
   def getAssetVerification(municipalityCode: Int, assetTypeId: Int): Seq[VerificationInfo] = {
     withDynSession {
@@ -39,14 +39,14 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
-  def verifyAssetType(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
+  def verifyAssetType(municipalityCode: Int, assetTypeIds: Set[Int], username: String) : Set[Long] = {
     withDynSession {
       if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
         throw new IllegalStateException("Asset type not allowed")
 
       assetTypeIds.map { typeId =>
-        dao.expireAssetTypeVerification(municipalityCode, typeId, userName)
-        dao.insertAssetTypeVerification(municipalityCode, typeId, userName)
+        dao.expireAssetTypeVerification(municipalityCode, typeId, username)
+        dao.insertAssetTypeVerification(municipalityCode, typeId, username)
       }
     }
   }
@@ -66,16 +66,16 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       .getOrElse( throw new IllegalArgumentException("Asset type or municipality Code not found"))
   }
 
-  def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
-    if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
-      throw new IllegalStateException("Asset type not allowed")
-
-    withDynTransaction {
-      assetTypeIds.map { assetTypeId =>
-        dao.insertAssetTypeVerification(municipalityCode, assetTypeId, username)
-      }
-    }.toSeq
-  }
+//  def setAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String): Seq[Long] = {
+//    if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
+//      throw new IllegalStateException("Asset type not allowed")
+//
+//    withDynTransaction {
+//      assetTypeIds.map { assetTypeId =>
+//        dao.insertAssetTypeVerification(municipalityCode, assetTypeId, username)
+//      }
+//    }.toSeq
+//  }
 
   def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Set[Int] = {
     withDynTransaction{
