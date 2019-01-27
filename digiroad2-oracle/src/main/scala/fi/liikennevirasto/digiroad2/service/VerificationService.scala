@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
@@ -39,12 +38,6 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
     }
   }
-//
-//  def getAssetVerificationById(id: Long, assetTypeId: Int): Option[VerificationInfo] = {
-//    withDynSession {
-//      dao.getAssetVerificationById(id)
-//    }
-//  }
 
   def verifyAssetType(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) = {
     withDynSession {

@@ -1655,7 +1655,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "verified"   -> assetType.verified,
           "counter" -> assetType.counter,
           "modified_by" -> assetType.modifiedBy.getOrElse(""),
-          "modified_date" -> assetType.modifiedDate.getOrElse(""),
+          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
           "type" -> assetType.geometryType)))
   }
 
