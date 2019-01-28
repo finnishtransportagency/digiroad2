@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import org.scalatra.servlet.{FileUploadSupport, MultipartConfig}
 import javax.servlet.ServletException
-
 import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import java.io.InputStreamReader
 
@@ -25,9 +24,8 @@ import java.io.FileWriter
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Municipality, Private, State}
 import javax.naming.OperationNotSupportedException
-
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.oracle.ImportLogService
+import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, Status}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopService
 
 class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with RequestHeaderAuthentication with FileUploadSupport with JacksonJsonSupport {
@@ -69,7 +67,7 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
   }
 
   get("/log/:id") {
-    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, BUS_STOP_LOG)).getOrElse("Logia ei löytynyt.")
+    params.getAs[Long]("id").flatMap(id => ImportLogDAO.get(id)).getOrElse("Logia ei löytynyt.")
   }
 
   private def fork(f: => Unit): Unit = {
@@ -89,8 +87,9 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
       params.get("limit-import-to-streets").map(_ => Municipality),
       params.get("limit-import-to-private-roads").map(_ => Private)
     ).flatten
-    val id = ImportLogService.save("Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", BUS_STOP_LOG)
     val user = userProvider.getCurrentUser()
+    val id = ImportLogDAO.save(user.username, BUS_STOP_LOG, "")
+
     val csvFileInputStream = fileParams("csv-file").getInputStream
     fork {
       // Current user is stored in a thread-local variable (feel free to provide better solution)
@@ -102,12 +101,12 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
           case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
           case _ => pretty(Extraction.decompose(result))
         }
-        ImportLogService.save(id, response, BUS_STOP_LOG )
+        ImportLogDAO.update(id, Status.OK, Some(response) )
       } catch {
-        case e: Exception => {
-          ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), BUS_STOP_LOG )
+        case e: Exception =>
+          ImportLogDAO.update(id, Status.Abend, Some( "Latauksessa tapahtui odottamaton virhe: " + e.toString))
           throw e
-        }
+
       } finally {
         csvFileInputStream.close()
       }

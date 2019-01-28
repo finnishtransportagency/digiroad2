@@ -4,7 +4,7 @@ import java.io.InputStream
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{Digiroad2ServerOriginatedResponseHeader, userProvider}
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.oracle.ImportLogService
+import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, Status}
 import org.json4s.{DefaultFormats, Extraction, Formats}
 import org.scalatra._
 import org.scalatra.servlet.FileUploadSupport
@@ -64,7 +64,8 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   }
 
   def importTrafficSigns(csvFileInputStream: InputStream, municipalitiesToExpire: Set[Int]): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", TRAFFIC_SIGN_LOG)
+    val user = userProvider.getCurrentUser()
+    val id = ImportLogDAO.save(user.username, TRAFFIC_SIGN_LOG, "")
     try {
       val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
       val response = result match {
@@ -72,10 +73,10 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
         case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil, Nil, _) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
         case _ => pretty(Extraction.decompose(result.copy(createdData = Nil)))
       }
-      ImportLogService.save(id, response, TRAFFIC_SIGN_LOG)
+      ImportLogDAO.update(id, Status.OK)
     } catch {
       case e: Exception =>
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString, TRAFFIC_SIGN_LOG) //error when saving log
+        ImportLogDAO.update(id, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
         throw e
     } finally {
       csvFileInputStream.close()
@@ -84,7 +85,8 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   }
 
   def importRoadLinks(csvFileInputStream: InputStream): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", ROAD_LINK_LOG)
+    val user = userProvider.getCurrentUser()
+    val id = ImportLogDAO.save(user.username,ROAD_LINK_LOG, ""/*,"Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan."*/)
     try {
       val result = roadLinkCsvImporter.importLinkAttribute(csvFileInputStream)
       val response = result match {
@@ -92,10 +94,10 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
         case roadLinkCsvImporter.ImportResult(Nil, Nil, Nil, excludedLinks) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
         case _ => pretty(Extraction.decompose(result))
       }
-      ImportLogService.save(id, response, ROAD_LINK_LOG)
+      ImportLogDAO.update(id, Status.OK, Some(response))
     } catch {
       case e: Exception => {
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), ROAD_LINK_LOG) //error when saving log
+        ImportLogDAO.update(id, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString())) //error when saving log
         throw e
       }
     } finally {
@@ -105,7 +107,8 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   }
 
   def importMaintenanceRoads(csvFileInputStream: InputStream): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", MAINTENANCE_ROAD_LOG)
+    val user = userProvider.getCurrentUser()
+    val id = ImportLogDAO.save(user.username, MAINTENANCE_ROAD_LOG, "")
     try {
       val result = maintenanceRoadCsvImporter.importMaintenanceRoads(csvFileInputStream)
       val response = result match {
@@ -113,20 +116,19 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
         case maintenanceRoadCsvImporter.ImportResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
         case _ => pretty(Extraction.decompose(result))
       }
-      ImportLogService.save(id, response, MAINTENANCE_ROAD_LOG)
+      ImportLogDAO.update(id, Status.OK, Some(response))
     } catch {
-      case e: Exception => {
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), MAINTENANCE_ROAD_LOG) //error when saving log
+      case e: Exception =>
+        ImportLogDAO.update(id, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
         throw e
-      }
     } finally {
       csvFileInputStream.close()
     }
     redirect(url("/log/" + id + "/" + MAINTENANCE_ROAD_LOG))
   }
 
-  get("/log/:id/:assetTypeLog") {
-    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, params("assetTypeLog"))).getOrElse("Logia ei löytynyt.")
+  get("/log/:id") {
+    params.getAs[Long]("id").flatMap(id => ImportLogDAO.get(id)).getOrElse("Logia ei löytynyt.")
   }
 
   post("/csv") {
