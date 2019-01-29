@@ -121,7 +121,7 @@ root.PointAssetForm = function() {
     var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
     var message = '';
 
-    if((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(asset.getMunicipalityCode())) {
+    if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(asset.getMunicipalityCode())) {
       message = limitedRights;
     } else if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection))
       message = noRights;
