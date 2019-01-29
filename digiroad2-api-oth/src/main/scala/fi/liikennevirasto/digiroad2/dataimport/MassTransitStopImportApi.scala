@@ -1,3 +1,4 @@
+/*
 package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.ImportResult
@@ -114,3 +115,4 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
     redirect(url("/log/" + id))
   }
 }
+*/

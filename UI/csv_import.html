@@ -65,7 +65,9 @@
                 opt.selected = true;
               });
 
-              form.submit();
+              var url = "api/import/data/csv/" + $('#asset-selection').find(":selected").val();
+              $('.form.form-horizontal').attr('action', url  ).submit();
+
               indicatorOverlayForCsvImport();
               return true;
             },
@@ -75,7 +77,8 @@
           });
         } else {
           indicatorOverlayForCsvImport();
-          form.submit();
+            var url = "api/import/" + $('#asset-selection').find(":selected").val();
+            $('.form.form-horizontal').attr('action', url  ).submit();
           return true;
         }
         return false;
@@ -119,7 +122,7 @@
     <div class="container"></div>
     <div class="content-box form-box">
         <header>Päivitä tietolajit CSV-tiedostosta</header>
-        <form class="form form-horizontal" id="csvImport" role="form" method="post" action="api/import/data/csv"
+        <form class="form form-horizontal" id="csvImport" role="form" method="post"
               enctype="multipart/form-data">
             <div class="form-group">
                 <div class="file-upload">
