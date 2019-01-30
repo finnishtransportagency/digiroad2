@@ -316,6 +316,32 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
+  private def bogieWeightLimitsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val bogieWeightLimits = getMultiValueLinearAssetByMunicipality(BogieWeightLimit.typeId, municipalityNumber)
+
+    bogieWeightLimits.map { bogieWeightLimit =>
+      val dynamicMultiValueLinearAssetsMap = bogieWeightLimit.value match {
+        case Some(DynamicValue(value)) =>
+          value.properties.flatMap { bogieWeightAxel =>
+            bogieWeightAxel.publicId match {
+              case "bogie_weight_2_axel" =>
+                bogieWeightAxel.values.map { v =>
+                  "twoAxelValue" -> v.value
+                }
+              case "bogie_weight_3_axel" =>
+                bogieWeightAxel.values.map { v =>
+                  "threeAxelValue" -> v.value
+                }
+              case _ => None
+            }
+          }
+        case _ => Map()
+      }
+
+      defaultMultiValueLinearAssetsMap(bogieWeightLimit) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
   def carryingCapacitiesToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val carryingCapacities = getMultiValueLinearAssetByMunicipality(CarryingCapacity.typeId, municipalityNumber)
 
@@ -693,7 +719,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "total_weight_limits" => linearAssetsToApi(TotalWeightLimit.typeId, municipalityNumber)
         case "trailer_truck_weight_limits" => linearAssetsToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
         case "axle_weight_limits" => linearAssetsToApi(AxleWeightLimit.typeId, municipalityNumber)
-        case "bogie_weight_limits" => linearAssetsToApi(BogieWeightLimit.typeId, municipalityNumber)
+        case "bogie_weight_limits" => bogieWeightLimitsToApi(municipalityNumber)
         case "height_limits" => linearAssetsToApi(HeightLimitInfo.typeId, municipalityNumber)
         case "length_limits" => linearAssetsToApi(LengthLimit.typeId, municipalityNumber)
         case "width_limits" => linearAssetsToApi(WidthLimitInfo.typeId, municipalityNumber)

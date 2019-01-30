@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.MassLimitationDao
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
@@ -18,6 +18,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMassLimitationDao = MockitoSugar.mock[MassLimitationDao]
+  val mockDynamicDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val TotalWeightLimits = 30
   val TrailerTruckWeightLimits = 40
   val AxleWeightLimits = 50
@@ -38,14 +39,17 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
 
   val assets = assetsTotalWeightLimits ++ assetsTrailerTruckWeightLimits
   val assets1 = assetsTrailerTruckWeightLimits1 ++ assetsAxleWeightLimits1
-  val assets2 = assetsTotalWeightLimits2 ++ assetsAxleWeightLimits2 ++ assetsBogieWeightLimits2
+  val assets2 = assetsTotalWeightLimits2 ++ assetsAxleWeightLimits2
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1000), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets)
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1001), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets1)
   when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1002), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets2)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1000))).thenReturn(Seq())
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001))).thenReturn(Seq())
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1002))).thenReturn(assetsBogieWeightLimits2)
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("get assets with BothDirection split in TowardsDigitizing and AgainstDigitizing") {
-    val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao)
+    val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao, mockDynamicDao)
 
     runWithRollback {
       val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
@@ -70,7 +74,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   }
 
   test("get max length geometry when the same asset is split on the same road link ") {
-    val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao)
+    val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao, mockDynamicDao)
 
     runWithRollback {
       val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)
@@ -94,7 +98,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   }
 
   test("only create a list of mass Limitation for one sideCode (AgainstDigitizing) ") {
-    val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao)
+    val service = new LinearMassLimitationService(mockRoadLinkService, mockMassLimitationDao, mockDynamicDao)
 
     runWithRollback {
       val municipalityCode = "MUNICIPALITYCODE" -> BigInt(235)

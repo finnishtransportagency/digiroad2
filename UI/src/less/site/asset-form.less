@@ -25,6 +25,17 @@
       line-height: (@line-height-modifier * 5) + 2;
     }
 
+    #feedback-data {
+      padding: 1px 4px;
+      margin: 9px 15px;
+      border: 2px solid black;
+      background-color: yellow;
+      color: black;
+      float: right;
+      font-weight: bold;
+      font-size: small;
+    }
+
     .linear-asset .form-controls {
       width: 40%;
       padding: 5px;
@@ -51,20 +62,19 @@
   nav > ul {
     list-style: none;
     float: right;
-    margin-right: 15px;
+    margin: 7px 15px;
     text-align: right;
 
     > li {
-      text-transform: uppercase;
-      text-decoration-line: underline;
+      font-size: 13px;
 
-      > a {
-        color: #a4a4a2;
-      }
-
-      > a#feedback-data {
-        color: #ffffff;
-        background-color: #1c7fdd;
+      > button {
+        padding: 1px 4px;
+        margin: 3px 7px;
+        border: 2px solid darkgray;
+        background-color: lightgray;
+        color: black;
+        width: 100%;
       }
     }
 
@@ -299,6 +309,11 @@
     color: @input-color-placeholder-dark;
   }
 
+  .user-log-info {
+    font-size: 15px;
+    line-height: normal;
+  }
+
   a {
     color: @input-color-placeholder-dark;
     text-decoration: underline;
@@ -396,6 +411,14 @@
     width: 100%;
     padding-top: 0;
     padding-bottom: 0;
+  }
+
+  .user-log-info {
+    border: darkorange;
+    border-style: solid;
+    border-width: 1px;
+    width: 320px;
+    padding: 12px;
   }
 
   .asset-type-info {

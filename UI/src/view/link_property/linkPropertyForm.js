@@ -129,6 +129,30 @@
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
+    var userInformationLog = function() {
+      var hasMunicipality = function (linearAsset) {
+        return _.some(linearAsset.get(), function (asset) {
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var message = '';
+
+      if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinkProperty)) {
+        message = limitedRights;
+      } else if (!authorizationPolicy.formEditModeAccess(selectedLinkProperty))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
+    };
 
     var template = function(options) {
       return _.template('' +
@@ -143,6 +167,7 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Geometrian lähde: <%- linkSource %></p>' +
             '</div>' +
+            userInformationLog() +
             '<div class="form-group editable">' +
               '<label class="control-label">Hallinnollinen luokka</label>' +
               '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
@@ -197,7 +222,7 @@
       if(notRendered) {
         $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
-            '<li><a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a></li>');
+            '<li><button id="incomplete-links-link" class="incomplete-links" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
       }
     };
 
