@@ -10,14 +10,22 @@ import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImp
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import javax.servlet.ServletException
-import org.json4s.{DefaultFormats, Extraction, Formats}
+import org.joda.time.DateTime
+import org.json4s.JsonAST.JInt
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JString}
 import org.scalatra._
 import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 import org.scalatra.json.JacksonJsonSupport
 
 class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJsonSupport with RequestHeaderAuthentication {
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
+    case _ => throw new NotImplementedError("DateTime deserialization")
+  }, {
+    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
   private val roadLinkCsvImporter = new RoadLinkCsvImporter
   private val trafficSignCsvImporter = new TrafficSignCsvImporter
