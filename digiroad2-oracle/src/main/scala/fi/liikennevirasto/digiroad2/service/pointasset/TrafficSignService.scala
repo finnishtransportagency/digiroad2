@@ -200,8 +200,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
   def getAssetValidityDirection(bearing: Int): Int = {
     bearing >= 270 || bearing < 90 match {
-      case true => AgainstDigitizing.value
-      case false => TowardsDigitizing.value
+      case true => TowardsDigitizing.value
+      case false => AgainstDigitizing.value
     }
   }
 
@@ -238,6 +238,10 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
           createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, closestLink)
       }
     }
+  }
+
+  def createFloatingFromCoordinates(trafficSign: IncomingTrafficSign, nearbyLink: VVHRoadlink): Unit = {
+    createFloatingWithoutTransaction(trafficSign.copy(linkId = 0, bearing = None), userProvider.getCurrentUser().username, nearbyLink.municipalityCode)
   }
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
