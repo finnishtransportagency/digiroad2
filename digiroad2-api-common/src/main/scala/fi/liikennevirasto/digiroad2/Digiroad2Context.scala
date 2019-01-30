@@ -11,8 +11,8 @@ import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, 
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -76,6 +76,15 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
     linearAssetService.updateChangeSet(changeSet)
   }
 }
+
+
+class DataImporter(dataImportManager: DataImportManager) extends Actor {
+  def receive = {
+    case x: CsvDataImporterInfo => dataImportManager.importer(x)
+    case _ => println("DataImporter: Received unknown message")
+  }
+}
+
 
 class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
   def receive = {
@@ -288,6 +297,9 @@ object Digiroad2Context {
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
   eventbus.subscribe(valluTerminal, "terminal:saved")
 
+  val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
+  eventbus.subscribe(importCSVDataUpdater, "importCSVData")
+
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
@@ -488,6 +500,26 @@ object Digiroad2Context {
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
     new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
+  }
+
+  lazy val dataImportManager: DataImportManager = {
+    new DataImportManager(trafficSignCsvImporter, maintenanceRoadCsvImporter, massTransitStopCsvImporter, roadLinkCsvImporter)
+  }
+
+  lazy val trafficSignCsvImporter: TrafficSignCsvImporter = {
+    new TrafficSignCsvImporter
+  }
+
+  lazy val maintenanceRoadCsvImporter: MaintenanceRoadCsvImporter = {
+    new MaintenanceRoadCsvImporter
+  }
+
+  lazy val massTransitStopCsvImporter: MassTransitStopCsvImporter = {
+    new MassTransitStopCsvImporter
+  }
+
+  lazy val roadLinkCsvImporter: RoadLinkCsvImporter = {
+    new RoadLinkCsvImporter
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {

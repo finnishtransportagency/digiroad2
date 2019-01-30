@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{ImportStatusInfo, Status}
+
+
+import fi.liikennevirasto.digiroad2.{ImportStatusInfo, Status}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
