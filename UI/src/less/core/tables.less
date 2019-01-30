@@ -89,11 +89,19 @@ th {
 }
 
 .job-status {
+  padding-top: 20px;
+  border-top: 4px solid @gray-light-2;
+  font-size: 14px;
+  width: 100%;
+  display: flex;
+  overflow: auto;
+
   table {
     font-family: arial, sans-serif;
     border-collapse: collapse;
     width: 100%;
-    font-size: 14px;
+    max-height: 100px;
+    overflow: auto;
   }
 
   td, th {

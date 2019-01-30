@@ -34,6 +34,7 @@ import scala.util.Try
 sealed trait Status {
   def value : Int
   def description: String
+  def descriptionFi: String
 }
 
 object Status {
@@ -43,11 +44,11 @@ object Status {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object InProgress extends Status {def value = 1; def description = "In progress ..."}
-  case object OK extends Status {def value = 2; def description = "All records was treated "}
-  case object NotOK extends Status {def value = 3; def description = "Process Executed but some record fails"}
-  case object Abend extends Status {def value = 4; def description = "Process fail"}
-  case object Unknown extends Status {def value = 99; def description = "Unknown Status Type"}
+  case object InProgress extends Status {def value = 1; def description = "In progress ..."; def descriptionFi = "Lataus kesken"}
+  case object OK extends Status {def value = 2; def description = "All records was treated "; def descriptionFi = "Kaikki kohteet käsitelty"}
+  case object NotOK extends Status {def value = 3; def description = "Process Executed but some record fails"; def descriptionFi = "Kaikki kohteet käsitelty, joitakin virhetilanteita"}
+  case object Abend extends Status {def value = 4; def description = "Process fail"; def descriptionFi = "Lataus epäonnistunut"}
+  case object Unknown extends Status {def value = 99; def description = "Unknown Status Type"; def descriptionFi = "Tuntematon tilakoodi"}
 }
 
 case class ImportStatusInfo(id: Long, status: Status, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], logType: String, content: Option[String])

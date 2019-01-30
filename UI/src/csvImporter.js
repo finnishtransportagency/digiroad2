@@ -115,7 +115,7 @@ var buildTable = function(jobs) {
   };
 
   var tableHeaderRow = function () {
-    return '<thead><th id="date">Date</th> <th id="file">File</th> <th id="status">Status</th> <th id="detail">Detail</th></tr></thead>';
+    return '<thead><th id="date">Päivämäärä</th> <th id="file">Tiedosto</th> <th id="status">Tila</th> <th id="detail">Raportti</th></tr></thead>';
   };
   var tableBodyRows = function (jobs) {
     return $('<tbody>').append(tableContentRows(jobs));
@@ -130,21 +130,23 @@ var buildTable = function(jobs) {
       '<tr>' +
       '<td headers="date">' + job.createdDate + '</td>' +
       '<td headers="file">' + job.fileName + '</td>' +
-      '<td headers="status" >' + job.status + '</td>' +
+      '<td headers="status" >' + getStatusIcon(job.status, job.description) + '</td>' +
       '<td headers="detail">' + job.id + '</td>' +
       '</tr>';
   };
-  return $('<div id="formTable"/>').append(table(jobs));
+  return table(jobs);
 };
 
-// var getStatusIcon = function(status) {
-//   var icon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
-//   var icons = {
-//                1: "images/check-icon.png",
-//                2: "images/check-icon.png",
-//                3
-//               }
-// };
+var getStatusIcon = function(status, description) {
+  var icon = {
+               1: "images/csv-status-icons/clock-outline.png",
+               2: "images/csv-status-icons/check-icon.png",
+               3: "images/csv-status-icons/not-ok-check-icon.png",
+               4: "images/csv-status-icons/error-icon-small.png",
+               99: "images/csv-status-icons/unknown-error.png"
+              };
+  return '<img src="' + icon[status] + '" title="' + description + '"/>';
+};
 
 var spinnerOn = function() {
   $('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');

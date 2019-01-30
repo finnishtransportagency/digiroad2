@@ -99,6 +99,26 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     params.getAs[Long]("id").flatMap(id =>  csvDataImporter.getById(id)).getOrElse("Logia ei löytynyt.")
   }
 
+  get("/log") {
+    Seq(ImportStatusInfo(1, Status.OK, "filename1", Some("oskar"), Some(DateTime.now()), "mass transit stop", Some("this is the text content")),
+      ImportStatusInfo(1, Status.OK, "filename1", Some("oskar"), Some(DateTime.now()), "mass transit stop", Some("this is the text content")),
+      ImportStatusInfo(1, Status.NotOK, "filename1", Some("oskar"), Some(DateTime.now()), "mass transit stop", Some("this is the text content")),
+      ImportStatusInfo(1, Status.InProgress, "filename1", Some("oskar"), Some(DateTime.now()), "mass transit stop", Some("this is the text content")),
+      ImportStatusInfo(1, Status.Abend, "filename2", Some("kari"), Some(DateTime.now()), "traffic signs", Some("this is the text content")),
+      ImportStatusInfo(1, Status.Unknown, "filename3", Some("erik"), Some(DateTime.now()), "road links", Some("this12312312312132312312tent"))).map(job => Map(
+      "id" -> job.id,
+      "status" -> job.status.value,
+      "fileName" -> job.fileName,
+      "createdBy" -> job.createdBy,
+      "createdDate" -> job.createdDate,
+      "assetType" -> job.logType,
+      "content" -> job.content,
+      "description" -> job.status.descriptionFi
+
+    )
+    )
+  }
+
   //TODO check if this is necessary
   override def isSizeConstraintException(e: Exception) = e match {
     case se: ServletException if se.getMessage.contains("exceeds max filesize") ||
