@@ -233,7 +233,10 @@
         type: "POST",
         url: "api/" + endPointName,
         data: JSON.stringify({asset: asset}),
-        dataType: "json"
+        dataType: "json",
+        success: function(){
+            eventbus.trigger('trafficSigns:created', asset);
+        }
       });
     };
 
