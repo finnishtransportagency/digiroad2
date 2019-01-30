@@ -11,11 +11,11 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import javax.servlet.ServletException
 import org.joda.time.DateTime
-import org.json4s.JsonAST.JInt
-import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JString}
+import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
 import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 import org.scalatra.json.JacksonJsonSupport
+import fi.liikennevirasto.digiroad2.asset.Asset._
 
 class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJsonSupport with RequestHeaderAuthentication {
 
@@ -27,10 +27,6 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
 
   protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
-  private val roadLinkCsvImporter = new RoadLinkCsvImporter
-  private val trafficSignCsvImporter = new TrafficSignCsvImporter
-  private val maintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter
-  private val massTransitStopCsvImporter = new MassTransitStopCsvImporter
 
   lazy val csvDataImporter = new CsvDataImporter
   private final val threeMegabytes: Long = 3*1024*1024
@@ -124,16 +120,16 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     val fileName = csvFileItem.getName
     if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
 
-    eventbus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, csvFileInputStream))
+    eventbus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user.username, csvFileInputStream))
 
   }
 
-  def importRoadLinks(csvFileItem: FileItem ): Nothing = {
+  def importRoadLinks(csvFileItem: FileItem ): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
     if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
 
-
+    eventbus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, user.username, csvFileInputStream))
   }
 
   def importMaintenanceRoads(csvFileItem: FileItem): Unit = {
@@ -141,17 +137,13 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     val fileName = csvFileItem.getName
     if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
 
-    val logId =  maintenanceRoadCsvImporter.create(user.username,  maintenanceRoadCsvImporter.MAINTENANCE_ROAD_LOG, fileName)
-
-    eventbus.publish("importCSVData", CsvDataImporterInfo("maintenanceRoads", logId, csvFileInputStream))
+    eventbus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user.username, csvFileInputStream))
   }
 
   def importMassTransitStop(csvFileItem: FileItem, administrativeClassLimitations: Set[AdministrativeClass]) : Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
 
-    val logId = massTransitStopCsvImporter.create(user.username, massTransitStopCsvImporter.BUS_STOP_LOG, fileName)
-
-    eventbus.publish("importCSVData", CsvDataImporterInfo("massTransitStop", logId, csvFileInputStream, Some(administrativeClassLimitations.asInstanceOf[AdministrativeValues])))
+    eventbus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, user.username, csvFileInputStream, Some(administrativeClassLimitations.asInstanceOf[AdministrativeValues])))
   }
 }

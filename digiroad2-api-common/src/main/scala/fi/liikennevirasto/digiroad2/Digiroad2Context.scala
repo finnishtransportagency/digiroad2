@@ -503,23 +503,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager(trafficSignCsvImporter, maintenanceRoadCsvImporter, massTransitStopCsvImporter, roadLinkCsvImporter)
-  }
-
-  lazy val trafficSignCsvImporter: TrafficSignCsvImporter = {
-    new TrafficSignCsvImporter
-  }
-
-  lazy val maintenanceRoadCsvImporter: MaintenanceRoadCsvImporter = {
-    new MaintenanceRoadCsvImporter
-  }
-
-  lazy val massTransitStopCsvImporter: MassTransitStopCsvImporter = {
-    new MassTransitStopCsvImporter
-  }
-
-  lazy val roadLinkCsvImporter: RoadLinkCsvImporter = {
-    new RoadLinkCsvImporter
+    new DataImportManager
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
