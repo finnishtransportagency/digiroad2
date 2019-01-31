@@ -5,7 +5,6 @@ $(function() {
 
   var rootElement = $('.form-box');
   getMunicipalities();
-  console.time("load");
   getJobs();
 
   rootElement.find('#upload-btn').on('change', function () {

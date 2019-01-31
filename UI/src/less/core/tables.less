@@ -92,22 +92,42 @@ th {
   padding-top: 20px;
   border-top: 4px solid @gray-light-2;
   font-size: 14px;
-  width: 100%;
-  display: flex;
-  overflow: auto;
+  max-height: 100%;
+  min-height: 0;
 
-  table {
+  table ,tr td{
     font-family: arial, sans-serif;
     border-collapse: collapse;
-    width: 100%;
-    max-height: 100px;
-    overflow: auto;
+  }
+
+  table {
+    height: 289px;
+  }
+  tbody {
+    display:block;
+    overflow-y:auto;
+    flex-direction: column;
+    max-height: 289px;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+  thead, tbody tr {
+    display:table;
+    width:100%;
+    table-layout:fixed;
+  }
+  thead {
+    width: 97%
   }
 
   td, th {
     border: 1px solid #dddddd;
     text-align: left;
     padding: 8px;
+  }
+
+  th:last-child {
+    border-right: none;
   }
 
   tr:nth-child(even) {
