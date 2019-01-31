@@ -109,50 +109,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
     }
   }
-// TODO please check if it is suppose delete the test as well as the method
-//  test("get asset verification"){
-//    runWithRollback {
-//      ServiceWithDao.setAssetTypeVerification(235, Set(120), "testuser")
-//      val newVerification = ServiceWithDao.getAssetVerification(235, 120)
-//      newVerification should have size 1
-//      newVerification.head.verifiedBy should equal (Some("testuser"))
-//    }
-//  }
-//  test("get point asset verification and check if it has count"){
-//    runWithRollback {
-//      ServiceWithDao.setAssetTypeVerification(235, Set(10), "testuser")
-//      val newVerification = ServiceWithDao.getAssetVerification(235, 10)
-//      newVerification.head.counter should not be None
-//    }
-//  }
-//
-//  test("get linear asset verification and check if doesn't have count "){
-//    runWithRollback {
-//      ServiceWithDao.setAssetTypeVerification(235, Set(120), "testuser")
-//      val newVerification = ServiceWithDao.getAssetVerification(235, 120)
-//      newVerification.head.counter should be (None)
-//    }
-//  }
-//
-//  test("remove asset type verification") {
-//    runWithRollback {
-//      ServiceWithDao.setAssetTypeVerification(20, Set(100), "testuser")
-//      ServiceWithDao.removeAssetTypeVerification(20, Set(100), "testuser")
-//      val verificationInfo = ServiceWithDao.getAssetVerification(20, 100)
-//      verificationInfo should have size 1
-//      verificationInfo.head.verified should be (false)
-//    }
-//  }
-//
-//  test("update asset type verification") {
-//    runWithRollback {
-//      ServiceWithDao.setAssetTypeVerification(20, Set(100), "testuser")
-//      ServiceWithDao.verifyAssetType(20, Set(100), "updateuser")
-//      val newVerification = ServiceWithDao.getAssetVerification(20, 100)
-//      newVerification should have size 1
-//      newVerification.head.verifiedBy should be (Some("updateuser"))
-//    }
-//  }
 
   test("set verify an unverified asset type") {
     runWithRollback {
