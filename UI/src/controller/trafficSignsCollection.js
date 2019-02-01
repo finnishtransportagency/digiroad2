@@ -36,7 +36,7 @@
     };
 
     var trafficSignsTurnRestriction = [10, 11, 12];
-    var trafficSignProhibitionRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 26];
+    var trafficSignProhibitionRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26];
 
     var isTurningRestriction = function(current) {
       return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
