@@ -4,8 +4,20 @@ var backend =  new CsvBackend();
 $(function() {
 
   var rootElement = $('.form-box');
+
+  var showImporter = function() {
+    $('.csv-import').show();
+    $('.job-content').empty();
+  };
+
+  var hideImporter = function() {
+    $('.csv-import').hide();
+    $('.job-content').show();
+  };
+
   getMunicipalities();
   getJobs();
+  showImporter();
 
   rootElement.find('#upload-btn').on('change', function () {
     $('#uploaded-file').val(this.value);
@@ -101,40 +113,71 @@ $(function() {
 
   function getJobs() {
      backend.getJobs().then(function(jobs){
-      $('.job-status').html(buildTable(jobs));
+      if(!_.isEmpty(jobs)){
+        $('.job-status').html(buildJobTable(jobs));
+        rootElement.find('.job-status-link').on('click', function(event){
+          getJob(event);
+        });
+      }else
+        $('.job-status').hide();
     });
   }
-});
 
-var buildTable = function(jobs) {
-  var table = function (jobs) {
-    return $('<table>').addClass('job-status-table')
-      .append(tableHeaderRow())
-      .append(tableBodyRows(jobs));
-  };
-
-  var tableHeaderRow = function () {
-    return '<thead><th id="date">Päivämäärä</th> <th id="file">Tiedosto</th> <th id="status">Tila</th> <th id="detail">Raportti</th></tr></thead>';
-  };
-  var tableBodyRows = function (jobs) {
-    return $('<tbody>').append(tableContentRows(jobs));
-  };
-  var tableContentRows = function (jobs) {
-    return _.map(jobs, function (job) {
-      return jobRow(job).concat('');
+  function getJob(evt){
+    var id = $(evt.currentTarget).prop('id');
+    backend.getJob(id).then(function(job){
+      hideImporter();
+      buildJobView(job);
     });
+  }
+
+  var buildJobView = function(job) {
+    var jobView = $('.job-content');
+    jobView.append('' +
+      '<div class="job-content-box">' +
+      '<header id="error-list-header">' + 'CSV-eräajon virhetilanteet: ' + job.fileName +
+      '<a class="header-link" style="cursor: pointer;">Sulje</a>' +
+      '</header>' +
+      '<div class="error-list">' +
+      '</div>'
+    );
+    jobView.find('.header-link').on('click', function(){
+      showImporter();
+    });
+    $('.error-list').html(job.content);
   };
-  var jobRow = function (job) {
-    return '' +
-      '<tr>' +
-      '<td headers="date">' + job.createdDate + '</td>' +
-      '<td headers="file">' + job.fileName + '</td>' +
-      '<td headers="status" >' + getStatusIcon(job.status, job.description) + '</td>' +
-      '<td headers="detail">' + job.id + '</td>' +
-      '</tr>';
+
+  var buildJobTable = function(jobs) {
+    var table = function (jobs) {
+      return $('<table>').addClass('job-status-table')
+        .append(tableHeaderRow())
+        .append(tableBodyRows(jobs));
+    };
+
+    var tableHeaderRow = function () {
+      return '<thead><th id="date">Päivämäärä</th> <th id="file" style="width:50%">Tiedosto</th> <th id="status">Tila</th> <th id="detail">Raportti</th></tr></thead>';
+    };
+    var tableBodyRows = function (jobs) {
+      return $('<tbody>').append(tableContentRows(jobs));
+    };
+    var tableContentRows = function (jobs) {
+      return _.map(jobs, function (job) {
+        return jobRow(job).concat('');
+      });
+    };
+    var jobRow = function (job) {
+      return '' +
+        '<tr>' +
+        '<td headers="date">' + job.createdDate + '</td>' +
+        '<td headers="file" style="width:50%">' + 'HSL_kaikki_ominaisuustiedot_importiin (1)HSL_kaikki_ominaisuustiedot_importiin (1)' + '</td>' +
+        '<td headers="status" >' + getStatusIcon(job.status, job.description) + '</td>' +
+        '<td headers="detail">' + (job.content ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+        '</tr>';
+    };
+    return table(jobs);
   };
-  return table(jobs);
-};
+
+});
 
 var getStatusIcon = function(status, description) {
   var icon = {
