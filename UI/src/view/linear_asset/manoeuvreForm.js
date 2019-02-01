@@ -41,7 +41,7 @@
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var message = '';
 
-      if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
+      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
         message = limitedRights;
       } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
         message = noRights;

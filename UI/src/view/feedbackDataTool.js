@@ -36,6 +36,12 @@
       }
     };
 
+    this.closeAssetFeedBack = function() {
+      purge();
+      $('.feedback-data').find('#feedbackData').remove();
+      applicationModel.setApplicationkState(applicationState.Normal);
+    };
+
     this.closeFeedback = function(){
       purge();
       renderFeedbackLink(false);
@@ -60,7 +66,9 @@
         new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
       });
 
-      eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed closeFeedBackData', me.closeFeedback);
+      eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed', me.closeFeedback);
+
+      eventbus.on('closeFeedBackData', me.closeAssetFeedBack);
 
       eventbus.on('linkProperties:selected linkProperties:cancelled manoeuvres:selectedAvailable speedLimit:selected speedLimit:cancelled asset:modified manoeuvres:selected', me.initFeedback);
 

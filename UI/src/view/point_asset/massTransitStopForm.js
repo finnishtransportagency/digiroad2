@@ -295,9 +295,9 @@
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
         var message = '';
 
-        if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
+        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
-        } else if (authorizationPolicy.formEditModeAccess())
+        } else if (!authorizationPolicy.assetSpecificAccess())
           message = noRights;
 
         if(message) {
