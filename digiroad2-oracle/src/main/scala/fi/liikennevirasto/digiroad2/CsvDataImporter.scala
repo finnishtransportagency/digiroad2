@@ -7,7 +7,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao, RoadLinkDAO}
+import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
@@ -15,17 +15,17 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
-import fi.liikennevirasto.digiroad2.service.{IncompleteLink, RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import java.io.InputStreamReader
 
-import org.json4s.{DefaultFormats, Extraction}
+import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization
 
 import scala.util.Try
@@ -51,7 +51,7 @@ object Status {
   case object Unknown extends Status {def value = 99; def description = "Unknown Status Type"; def descriptionFi = "Tuntematon tilakoodi"}
 }
 
-case class ImportStatusInfo(id: Long, status: Status, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], logType: String, content: Option[String])
+case class ImportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], logType: String, content: Option[String])
 
 class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 
@@ -69,16 +69,9 @@ sealed trait ImportResult {
 trait CsvDataImporterOperations {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-
-  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
-  lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-  lazy val userProvider: UserProvider = {
-    Class.forName(getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
-  }
-
-  val eventbus: DigiroadEventBus = {
-    new DigiroadEventBus
-  }
+  def roadLinkService: RoadLinkService
+  def vvhClient: VVHClient
+  def eventBus: DigiroadEventBus
 
   lazy val dr2properties: Properties = {
     val props = new Properties()
@@ -95,6 +88,10 @@ trait CsvDataImporterOperations {
     new RoadAddressesService(viiteClient)
   }
 
+//  lazy val userProvider: UserProvider = {
+//    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+//  }
+
   lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -104,14 +101,21 @@ trait CsvDataImporterOperations {
   lazy val roadAddressesService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
   }
+  implicit val formats = DefaultFormats
+
+  type MalformedParameters = List[String]
+  type ParsedProperties = List[AssetProperty]
+  type ParsedRow = (MalformedParameters, ParsedProperties)
 
   type ImportResultData <: ImportResult
 
-  val ROAD_LINK_LOG = "road link import"
-  val TRAFFIC_SIGN_LOG = "traffic sign import"
-  val DELETE_TRAFFIC_SIGN_LOG = "traffic sign delete"
-  val MAINTENANCE_ROAD_LOG = "maintenance import"
-  val BUS_STOP_LOG = "bus stop import"
+  val logInfo : String
+
+  def mappingContent(result: ImportResultData) : Map[String, Any] = {
+    Map("excludeLinks" -> result.excludedRows,
+        "incompleteRows" -> result.incompleteRows,
+        "malformedRows" -> result.malformedRows)
+  }
 
   protected def getProperty(name: String) : String = {
     val property = dr2properties.getProperty(name)
@@ -129,9 +133,9 @@ trait CsvDataImporterOperations {
       }
     }
 
-    def getByUser(username: String, logTypes: Seq[String]) : Seq[ImportStatusInfo]  = {
+    def getByUser(username: String) : Seq[ImportStatusInfo]  = {
       OracleDatabase.withDynTransaction {
-        importLogDao.getByUser(username, logTypes)
+        importLogDao.getByUser(username)
       }
     }
 
@@ -147,19 +151,23 @@ trait CsvDataImporterOperations {
       }
     }
 
-    def create(username: String, logType: String, fileName: String) : Long  = {
+    def create(username: String, logInfo: String, fileName: String) : Long  = {
       OracleDatabase.withDynTransaction {
-        importLogDao.create(username, logType, fileName)
+        importLogDao.create(username, logInfo, fileName)
       }
     }
-
-
-
 }
-class TrafficSignCsvImporter extends CsvDataImporterOperations {
+
+class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  override val logInfo = "traffic sign import"
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, nearbyLinks: Seq[VVHRoadlink])
   case class NotImportedData(reason: String, csvRow: String)
@@ -172,17 +180,11 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
                           createdData: List[CsvAssetRowAndRoadLink] = Nil) extends ImportResult
 
   type ImportResultData = ImportResultTrafficSign
-  type MalformedParameters = List[String]
-  type ParsedProperties = List[AssetProperty]
-  type ParsedRow = (MalformedParameters, ParsedProperties)
 
   case class CsvAssetRow(properties: Seq[AssetProperty])
-
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
 
-
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
   private val longValueFieldMappings = Map(
     "koordinaatti x" -> "lon",
@@ -200,7 +202,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   private val codeValueFieldMappings = Map(
     "liikennemerkin tyyppi" -> "trafficSignType"
   )
-  val mappings = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
+  val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
 
   private val mandatoryFields = List("koordinaatti x", "koordinaatti y", "liikennemerkin tyyppi")
 
@@ -230,9 +232,9 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def getRightRoadLinkUsingBearing(assetBearing: Option[Int], assetCoordinates: Point): (Seq[VVHRoadlink], Seq[RoadLink]) = {
+  def getRightRoadLinkUsingBearing(assetBearing: Option[Int], assetCoordinates: Point, user: User): (Seq[VVHRoadlink], Seq[RoadLink]) = {
     val toleranceInDegrees = 25
-    val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), assetCoordinates)
+    val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, assetCoordinates)
 
     assetBearing match {
       case Some(aBearing) if roadLinks.nonEmpty =>
@@ -275,14 +277,14 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     Try(propertyValue.toInt).toOption
   }
 
-  private def verifyData(parsedRow: CsvAssetRow): ParsedCsv = {
+  private def verifyData(parsedRow: CsvAssetRow, user: User): ParsedCsv = {
     val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
     val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
     val bearing = tryToInt(getPropertyValue(parsedRow, "bearing").toString)
 
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
-        val (roadLinks, enrichedRoadLinks) = getRightRoadLinkUsingBearing(bearing, Point(lon.toLong, lat.toLong))
+        val (roadLinks, enrichedRoadLinks) = getRightRoadLinkUsingBearing(bearing, Point(lon.toLong, lat.toLong), user)
         if(roadLinks.isEmpty) {
           (List(s"Unauthorized Municipality Or RoadLind inexistent near of Asset"), Seq())
         } else
@@ -340,7 +342,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     Set(Some(typeProperty), valueProperty, additionalProperty).flatten
   }
 
-  def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink]): Seq[AdditionalPanelInfo] = {
+  def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User): Seq[AdditionalPanelInfo] = {
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val properties = trafficSignAttribute.properties
@@ -375,39 +377,33 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
       if (filteredAdditionalPanel.size <= 3) {
         val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
-        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, signBearing), sign.roadLink, sign.nearbyLinks)
+        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, signBearing), sign.roadLink, sign.nearbyLinks, user.username)
         filteredAdditionalPanel
       } else Seq()
     }
     additionalPanels.filterNot(usedAdditionalPanels.toSet).toSeq
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String, municipalitiesToExpire: Set[Int]) : Long = {
-    implicit val formats = DefaultFormats
-
-    val logId = create(username, TRAFFIC_SIGN_LOG, fileName)
+  def importAssets(inputStream: InputStream, fileName: String, user: User, municipalitiesToExpire: Seq[Int]) : Unit = {
+  val logId = create(user.username, logInfo, fileName)
 
     try {
-      val result = processing(inputStream, municipalitiesToExpire)
+      val result = processing(inputStream, municipalitiesToExpire.toSet, user)
       result match {
         case ImportResultTrafficSign(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
-          val content = Map("excludeLinks" -> result.excludedRows,
-                            "incompleteRows" -> result.incompleteRows,
-                            "malformedRows" -> result.malformedRows,
-                            "notImportedData" -> result.notImportedData)
+          val content = mappingContent(result) ++  Map("notImportedData" -> result.notImportedData)
           update(logId, Status.NotOK, Some(Serialization.write(content)))
       }
     } catch {
       case e: Exception =>
         update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
-        throw e
     } finally {
       inputStream.close()
     }
   }
 
-  def processing(inputStream: InputStream, municipalitiesToExpire: Set[Int]): ImportResultTrafficSign = {
+  def processing(inputStream: InputStream, municipalitiesToExpire: Set[Int], user: User): ImportResultTrafficSign = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -418,7 +414,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         val csvRow = row.map(r => (r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)
         val (malformedParameters, properties) = assetRowToProperties(csvRow)
-        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvAssetRow(properties))
+        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvAssetRow(properties), user)
 
         if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
           result.copy(
@@ -447,7 +443,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
         }
       }
 
-      val notImportedAdditionalPanel = createTrafficSigns(result.createdData)
+      val notImportedAdditionalPanel = createTrafficSigns(result.createdData, user)
       val resultWithExcluded  = result.copy(notImportedData = notImportedAdditionalPanel.map{notImported =>
         NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x: ${notImported.position.get.x}, koordinaatti y: ${notImported.position.get.y}, liikennevirran suunta: ${notImported.validityDirection}, " +
           s"liikennemerkin tyyppi: ${TrafficSignType.applyOTHValue(trafficSignService.getProperty(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt).TRvalue}, " +
@@ -459,7 +455,11 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
 }
 
-class RoadLinkCsvImporter extends CsvDataImporterOperations {
+class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
+override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
 
   case class NonUpdatedLink(linkId: Long, csvRow: String)
   case class ImportResultRoadLink(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
@@ -470,9 +470,11 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
   case class CsvRoadLinkRow(linkId: Int, objectID: Int = 0, properties: Seq[AssetProperty])
 
   type ImportResultData = ImportResultRoadLink
-  type MalformedParameters = List[String]
-  type ParsedProperties = List[AssetProperty]
-  type ParsedRow = (MalformedParameters, ParsedProperties)
+//  type MalformedParameters = List[String]
+//  type ParsedProperties = List[AssetProperty]
+//  type ParsedRow = (MalformedParameters, ParsedProperties)
+
+  override val logInfo: String = "road link import"
 
   private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
   val autorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
@@ -599,31 +601,25 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
   }
 
   def importAssets(inputStream: InputStream, fileName: String, username: String): Long = {
-    implicit val formats = DefaultFormats
-
-    val logId =  create(username,  ROAD_LINK_LOG, fileName)
+    val logId =  create(username,  logInfo, fileName)
 
     try {
-      val result = processing(inputStream)
+      val result = processing(inputStream, username)
       result match {
         case ImportResultRoadLink(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
         case _ =>
-          val content = Map("excludeLinks" -> result.excludedRows,
-                            "incompleteRows" -> result.incompleteRows,
-                            "malformedRows" -> result.malformedRows,
-                            "nonUpdatedLinks" -> result.nonUpdatedLinks)
+          val content = mappingContent(result) ++ Map("nonUpdatedLinks" -> result.nonUpdatedLinks)
           update(logId, Status.NotOK, Some(Serialization.write(content)))
       }
     } catch {
       case e: Exception =>
         update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
-        throw e
     } finally {
       inputStream.close()
     }
   }
 
-  def processing(inputStream: InputStream): ImportResultRoadLink = {
+  def processing(inputStream: InputStream, username: String): ImportResultRoadLink = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -667,7 +663,7 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
           withDynTransaction {
             if (propertiesOTH.nonEmpty || hasDirectionType) {
               val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertiesOTH)
-              updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), hasDirectionType) match {
+              updateRoadLinkOTH(parsedRowOTH, Some(username), hasDirectionType) match {
                 case None => result
                 case Some(value) =>
                   result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
@@ -700,22 +696,21 @@ class RoadLinkCsvImporter extends CsvDataImporterOperations {
   }
 }
 
-class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
-
+class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
 
   case class ImportMaintenanceRoadResult(incompleteRows: List[IncompleteRow] = Nil,
                                          malformedRows: List[MalformedRow] = Nil,
                                          excludedRows: List[ExcludedRow] = Nil) extends ImportResult
 
-  type ImportResultMaintenanceRoad = ImportResult
-  type MalformedParameters = List[String]
-  type ParsedProperties = List[AssetProperty]
-  type ParsedRow = (MalformedParameters, ParsedProperties)
+  type ImportResultData = ImportMaintenanceRoadResult
   case class CsvAssetRow(properties: Seq[AssetProperty])
+  override val logInfo: String = "maintenance import"
 
-//  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
-  lazy val maintenanceService: MaintenanceService = new MaintenanceService(roadLinkService, eventbus)
+  lazy val maintenanceService: MaintenanceService = new MaintenanceService(roadLinkService, eventBusImpl)
 
   private val intFieldMappings = Map(
     "new_ko" -> "rightOfUse",
@@ -767,7 +762,7 @@ class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
     maintenanceRoadAttributes.properties.find(prop => prop.columnName == propertyName).map(_.value).get
   }
 
-  def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow): Unit = {
+  def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow, username: String): Unit = {
     val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[Integer].toLong
     val newKoProperty = Props("huoltotie_kayttooikeus", "single_choice", getPropertyValue(maintenanceRoadAttributes, "rightOfUse").toString)
     val orAccessProperty = Props("huoltotie_huoltovastuu", "single_choice", getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility").toString)
@@ -776,35 +771,31 @@ class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
       val values = MaintenanceRoad(Seq(newKoProperty, orAccessProperty))
 
       maintenanceService.createWithHistory(MaintenanceRoadAsset.typeId, linkId, values,
-        SideCode.BothDirections.value, Measures(0, roadlink.length), userProvider.getCurrentUser().username, Some(roadlink))
+        SideCode.BothDirections.value, Measures(0, roadlink.length), username, Some(roadlink))
     }
   }
 
   def importAssets(inputStream: InputStream, fileName: String, username: String) {
-    implicit val formats = DefaultFormats
 
-    val logId = create(username, MAINTENANCE_ROAD_LOG, fileName)
+    val logId = create(username, logInfo, fileName)
     try {
-      val result = processing(inputStream)
+      val result = processing(inputStream, username)
       result match {
         case ImportMaintenanceRoadResult(Nil, Nil, Nil) => update(logId, Status.OK)
         case _ =>
-          val content = Map("excludeLinks" -> result.excludedRows,
-                            "incompleteRows" -> result.incompleteRows,
-                            "malformedRows" -> result.malformedRows)
+          val content = mappingContent(result)
           update(logId, Status.NotOK, Some(Serialization.write(content)))
       }
     } catch {
       case e: Exception =>
         update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString)) //error when saving log
-        throw e
     } finally {
       inputStream.close()
     }
   }
 
 
-  def processing(inputStream: InputStream): ImportMaintenanceRoadResult = {
+  def processing(inputStream: InputStream, username: String): ImportMaintenanceRoadResult = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -827,7 +818,7 @@ class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
 
       } else {
         val parsedRow = CsvAssetRow(properties = properties)
-        createMaintenanceRoads(parsedRow)
+        createMaintenanceRoads(parsedRow, username)
         result
       }
 
@@ -835,7 +826,12 @@ class MaintenanceRoadCsvImporter extends CsvDataImporterOperations {
   }
 }
 
-class MassTransitStopCsvImporter extends CsvDataImporterOperations {
+class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+
     case class NonExistingAsset(externalId: Long, csvRow: String)
     case class ImportResultMassTransitStop(nonExistingAssets: List[NonExistingAsset] = Nil,
                             incompleteRows: List[IncompleteRow] = Nil,
@@ -843,12 +839,12 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
                             excludedRows: List[ExcludedRow] = Nil) extends ImportResult
 
   class AssetNotFoundException(externalId: Long) extends RuntimeException
-  case class CsvAssetRow(externalId: Long, properties: Seq[SimpleProperty])
-  type MalformedParameters = List[String]
-  type ParsedProperties = List[SimpleProperty]
-  type ParsedRow = (MalformedParameters, ParsedProperties)
+  case class CsvAssetRow(externalId: Long, properties: Seq[AssetProperty])
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
+  type ImportResultData = ImportResultMassTransitStop
+
+  override val logInfo: String = "bus stop import"
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -858,7 +854,7 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
       override val municipalityDao: MunicipalityDao = new MunicipalityDao
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService, roadAddressService)
+    new MassTransitStopServiceWithDynTransaction(eventBusImpl, roadLinkServiceImpl, roadAddressService)
   }
 
   private def maybeInt(string: String): Option[Int] = {
@@ -907,10 +903,10 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
   val MandatoryParameters: Set[String] = mappings.keySet + "Valtakunnallinen ID"
 
 
-  private def resultWithType(result: (MalformedParameters, List[SimpleProperty]), assetType: Int): ParsedRow = {
+  private def resultWithType(result: (MalformedParameters, List[AssetProperty]), assetType: Int): ParsedRow = {
     result.copy(_2 = result._2 match {
-      case List(SimpleProperty("pysakin_tyyppi", xs)) => List(SimpleProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.toList))
-      case _ => List(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
+      case List(AssetProperty("pysakin_tyyppi", xs)) => List(AssetProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.asInstanceOf[Seq[PropertyValue]].toList))
+      case _ => List(AssetProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
     })
   }
 
@@ -933,7 +929,7 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
     val isValidStopAdminstratorValue = singleChoiceFieldMappings(parameterName) == stopAdministratorProperty && stopAdministratorValueMappings(assetSingleChoice)
 
     if (singleChoiceValueMappings(assetSingleChoice) || isValidStopAdminstratorValue) {
-      (Nil, List(SimpleProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
+      (Nil, List(AssetProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
     } else {
       (List(parameterName), Nil)
     }
@@ -946,7 +942,7 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
         result
       } else {
         if (textFieldMappings.contains(key)) {
-          result.copy(_2 = SimpleProperty(publicId = textFieldMappings(key), values = Seq(PropertyValue(value))) :: result._2)
+          result.copy(_2 = AssetProperty(columnName = textFieldMappings(key), value = Seq(PropertyValue(value))) :: result._2)
         } else if (multipleChoiceFieldMappings.contains(key)) {
           val (malformedParameters, properties) = assetTypeToProperty(value)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
@@ -960,22 +956,22 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  private def municipalityValidation(municipality: Int): Unit = {
-    if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipality)) {
+  private def municipalityValidation(municipality: Int)(user: User): Unit = {
+    if (!user.isAuthorizedToWrite(municipality)) {
       throw new IllegalArgumentException("User does not have write access to municipality")
     }
   }
 
-  private def updateAssetByExternalId(externalId: Long, properties: Seq[SimpleProperty]): MassTransitStopWithProperties = {
+  private def updateAssetByExternalId(externalId: Long, properties: Seq[AssetProperty], user: User): MassTransitStopWithProperties = {
     val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
     optionalAsset match {
       case Some(asset) =>
-        massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, (_, _) => Unit)
+        massTransitStopService.updateExistingById(asset.id, None, properties.map(prop =>SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, user.username, (_, _) => Unit)
       case None => throw new AssetNotFoundException(externalId)
     }
   }
 
-  private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
+  private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
       val roadLink = vvhClient.roadLinkData.fetchByLinkId(stop.linkId)
@@ -987,7 +983,7 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.toSet, userProvider.getCurrentUser().username, (_, _) => Unit))
+        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.map(prop =>SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, username, (_, _) => Unit))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(externalId)
     }
@@ -1001,17 +997,17 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
     MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
   }
 
-  def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): ExcludedRoadLinkTypes = {
+  def updateAsset(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
     // Remove livi-id from properties, we don't want to change is with CSV
-    val propertiesWithoutLiviId = properties.filterNot(_.publicId == "yllapitajan_koodi")
+    val propertiesWithoutLiviId = properties.filterNot(_.columnName == "yllapitajan_koodi")
     if(roadTypeLimitations.nonEmpty) {
-      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations)
+      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations, user.username)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
       }
     } else {
-      updateAssetByExternalId(externalId, propertiesWithoutLiviId)
+      updateAssetByExternalId(externalId, propertiesWithoutLiviId, user)
       Nil
     }
   }
@@ -1024,35 +1020,28 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
     }).start()
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String, roadTypeLimitations: Set[AdministrativeClass]) : Unit = {
+  def importAssets(inputStream: InputStream, fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]) : Unit = {
 
-    val logId = create(username, BUS_STOP_LOG, fileName)
-
-    implicit val formats = DefaultFormats
+    val logId = create(user.username, logInfo, fileName)
     fork {
       try {
-        val result = processing(inputStream, roadTypeLimitations)
+        val result = processing(inputStream, user, roadTypeLimitations)
         result match {
           case ImportResultMassTransitStop(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
           case _ =>
-            val content = Map("excludeLinks" -> result.excludedRows,
-                              "incompleteRows" -> result.incompleteRows,
-                              "malformedRows" -> result.malformedRows,
-                              "nonExistingAssets" -> result.nonExistingAssets)
+            val content = mappingContent(result) ++ Map("nonExistingAssets" -> result.nonExistingAssets)
             update(logId, Status.NotOK, Some(Serialization.write(content)))
         }
       } catch {
         case e: Exception =>
           update(logId, Status.Abend, Some( "Latauksessa tapahtui odottamaton virhe: " + e.toString))
-          throw e
-
       } finally {
         inputStream.close()
       }
     }
   }
 
-  def processing(inputStream: InputStream, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResultMassTransitStop = {
+  def processing(inputStream: InputStream, user: User, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResultMassTransitStop = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -1063,7 +1052,7 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
         val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
         try {
-          val excludedRows = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations)
+          val excludedRows = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, user)
             .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
           result.copy(excludedRows = excludedRows ::: result.excludedRows)
         } catch {
@@ -1085,4 +1074,11 @@ class MassTransitStopCsvImporter extends CsvDataImporterOperations {
   }
 }
 
-class CsvDataImporter extends CsvDataImporterOperations
+class CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporterOperations {
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def eventBus: DigiroadEventBus = eventBusImpl
+  override val logInfo: String = ""
+}

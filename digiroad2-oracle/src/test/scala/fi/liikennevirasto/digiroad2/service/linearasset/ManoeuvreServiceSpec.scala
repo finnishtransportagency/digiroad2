@@ -23,7 +23,6 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private def vvhRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
     RoadLink(linkId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
   val testUser = User(
     id = 1,
     username = "Hannu",
@@ -43,7 +42,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 
-  val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus) {
+  val trafficSignService = new TrafficSignService(mockRoadLinkService, new DummyEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }

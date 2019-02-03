@@ -15,14 +15,14 @@ class ImportLogDAO {
   implicit val getResult = new GetResult[ImportStatusInfo] {
     def apply(r: PositionedResult) : ImportStatusInfo = {
       val id = r.nextLong()
-      val status = r.nextInt()
       val fileName = r.nextString()
+      val status = r.nextInt()
       val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextStringOption()
       val logType = r.nextString()
       val content = r.nextStringOption()
 
-      ImportStatusInfo(id, Status.apply(status), fileName, createdBy, createdDate, logType, content)
+      ImportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, logType, content)
     }
   }
 
@@ -46,16 +46,17 @@ class ImportLogDAO {
   }
 
   def get(logId: Long): Option[ImportStatusInfo] = {
-    sql"""select ID, ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, CONTENT
+    sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, CONTENT
           from import_log
           where id = $logId
       """.as[ImportStatusInfo].firstOption
   }
 
-  def getByUser(username: String, importTypes: Seq[String]): Seq[ImportStatusInfo] = {
-    sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE
+  def getByUser(username: String): Seq[ImportStatusInfo] = {
+    sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, CONTENT
           from import_log
-          where username = $username and import_type in (${importTypes.mkString(",")})
+          where created_by = $username
+          order by created_date desc
       """.as[ImportStatusInfo].list
   }
 

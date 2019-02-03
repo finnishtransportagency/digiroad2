@@ -77,14 +77,12 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
-
 class DataImporter(dataImportManager: DataImportManager) extends Actor {
   def receive = {
     case x: CsvDataImporterInfo => dataImportManager.importer(x)
     case _ => println("DataImporter: Received unknown message")
   }
 }
-
 
 class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
   def receive = {
@@ -503,7 +501,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager
+    new DataImportManager(roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
@@ -563,7 +561,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, eventbus)
   }
 
   lazy val manoeuvreService = {

@@ -113,13 +113,12 @@ $(function() {
 
   function getJobs() {
      backend.getJobs().then(function(jobs){
-      if(!_.isEmpty(jobs)){
+      if(!_.isEmpty(jobs)) {
         $('.job-status').html(buildJobTable(jobs));
-        rootElement.find('.job-status-link').on('click', function(event){
+        rootElement.find('.job-status-link').on('click', function (event) {
           getJob(event);
         });
-      }else
-        $('.job-status').hide();
+      }
     });
   }
 
@@ -169,8 +168,8 @@ $(function() {
       return '' +
         '<tr>' +
         '<td headers="date">' + job.createdDate + '</td>' +
-        '<td headers="file" style="width:50%">' + 'HSL_kaikki_ominaisuustiedot_importiin (1)HSL_kaikki_ominaisuustiedot_importiin (1)' + '</td>' +
-        '<td headers="status" >' + getStatusIcon(job.status, job.description) + '</td>' +
+        '<td headers="file" style="width:50%">' + job.fileName + '</td>' +
+        '<td headers="status" >' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
         '<td headers="detail">' + (job.content ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
         '</tr>';
     };

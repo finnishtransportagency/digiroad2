@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -10,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
@@ -18,7 +17,7 @@ case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyD
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink)
 
-class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
+class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
   def eventBus: DigiroadEventBus = eventBusImpl
   type IncomingAsset = IncomingTrafficSign
   type PersistedAsset = PersistedTrafficSign
@@ -226,17 +225,17 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, nearbyLinks: Seq[VVHRoadlink]): Long = {
+  def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, nearbyLinks: Seq[VVHRoadlink], username: String): Long = {
 
     val (vvhRoad, municipality) = (nearbyLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
     if (vvhRoad.isEmpty || vvhRoad.size > 1)
-      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0, bearing = None), userProvider.getCurrentUser().username, municipality)
+      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0, bearing = None), username, municipality)
     else {
       checkDuplicates(trafficSign) match {
         case Some(existingAsset) =>
-          updateWithoutTransaction(existingAsset.id, trafficSign, closestLink, userProvider.getCurrentUser().username, None, None)
+          updateWithoutTransaction(existingAsset.id, trafficSign, closestLink, username, None, None)
         case _ =>
-          createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, closestLink)
+          createWithoutTransaction(trafficSign, username, closestLink)
       }
     }
   }
