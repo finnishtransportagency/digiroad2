@@ -112,9 +112,12 @@ trait CsvDataImporterOperations {
   val logInfo : String
 
   def mappingContent(result: ImportResultData) : Map[String, Any] = {
-    Map("excludedLinks" -> result.excludedRows,
-        "incompleteRows" -> result.incompleteRows,
-        "malformedRows" -> result.malformedRows)
+    val excludedResult = result.excludedRows.map{row => "<p>" + row.affectedRows + "</p>"}
+    val incompleteResult = result.incompleteRows.map{row => "<p>" + row.missingParameters + "</p>"}
+    val malformedResult = result.malformedRows.map{row => "<p>" + row.malformedParameters + "</p>"}
+    Map("excludedLinks" -> s"<br> $excludedResult </br>" ,
+        "incompleteRows" -> s"<br> $incompleteResult </br>",
+        "malformedRows" -> s"<br> $malformedResult </br>")
   }
 
   protected def getProperty(name: String) : String = {
@@ -398,7 +401,10 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       result match {
         case ImportResultTrafficSign(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
-          val content = mappingContent(result) ++  Map("notImportedData" -> result.notImportedData)
+          val content = mappingContent(result) ++  Map("notImportedData" ->
+          result.notImportedData.groupBy(_.reason).map { case (key, values) =>
+            Map(key -> values)
+          })
           update(logId, Status.NotOK, Some(Serialization.write(content)))
       }
     } catch {

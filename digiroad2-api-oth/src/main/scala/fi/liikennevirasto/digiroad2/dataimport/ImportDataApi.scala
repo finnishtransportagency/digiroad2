@@ -8,7 +8,6 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
-import javax.servlet.ServletException
 import org.joda.time.DateTime
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
@@ -97,7 +96,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     csvDataImporter.getByUser(user.username)
   }
 
-  get("/log/:ids") {
+  get("/logs/:ids") {
     val ids = params("ids").split(',').map(_.toLong).toSet
     csvDataImporter.getByIds(ids)
   }
@@ -117,32 +116,28 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
 
     eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user, csvFileInputStream))
-
   }
 
-  def importRoadLinks(csvFileItem: FileItem ): String = {
+  def importRoadLinks(csvFileItem: FileItem ): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
     if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
 
     eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, user, csvFileInputStream))
-    fileName
   }
 
-  def importMaintenanceRoads(csvFileItem: FileItem): String = {
+  def importMaintenanceRoads(csvFileItem: FileItem): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
     if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
 
-    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream))
-    fileName
+    eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, user, csvFileInputStream))
   }
 
-  def importMassTransitStop(csvFileItem: FileItem, administrativeClassLimitations: Set[AdministrativeClass]) : String = {
+  def importMassTransitStop(csvFileItem: FileItem, administrativeClassLimitations: Set[AdministrativeClass]) : Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
 
-    eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, user, csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues]).toSeq))
-    fileName
+    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues]).toSeq))
   }
 }

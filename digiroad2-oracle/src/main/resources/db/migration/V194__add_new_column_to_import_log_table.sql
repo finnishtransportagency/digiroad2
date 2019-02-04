@@ -4,3 +4,5 @@ alter table import_log add (
   created_date date default sysdate not null enable,
   created_by varchar2(128)
 );
+
+create index created_by_idx on import_log (created_by);
