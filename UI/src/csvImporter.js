@@ -118,6 +118,7 @@ $(function() {
         rootElement.find('.job-status-link').on('click', function (event) {
           getJob(event);
         });
+        $('.job-row').toggleClass('in-progress', 1 === 1);
       }
     });
   }
@@ -166,11 +167,11 @@ $(function() {
     };
     var jobRow = function (job) {
       return '' +
-        '<tr>' +
+        '<tr class="job-row">' +
         '<td headers="date">' + job.createdDate + '</td>' +
         '<td headers="file" style="width:50%">' + job.fileName + '</td>' +
-        '<td headers="status" >' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-        '<td headers="detail">' + (job.content ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+        '<td headers="status" id="status" class="' + job.status + '">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
+        '<td headers="detail">' + (!(job.status === 1 ||job.status === 2) ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
         '</tr>';
     };
     return table(jobs);

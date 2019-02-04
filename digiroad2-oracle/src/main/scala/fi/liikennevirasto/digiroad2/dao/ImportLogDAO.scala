@@ -52,8 +52,15 @@ class ImportLogDAO {
       """.as[ImportStatusInfo].firstOption
   }
 
+  def getByIds(logIds: Set[Long]): Seq[ImportStatusInfo] = {
+    sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, NULL
+          from import_log
+          where id in (${logIds.mkString(",")})
+      """.as[ImportStatusInfo].list
+  }
+
   def getByUser(username: String): Seq[ImportStatusInfo] = {
-    sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, CONTENT
+    sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, NULL
           from import_log
           where created_by = $username
           order by created_date desc

@@ -97,6 +97,11 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     csvDataImporter.getByUser(user.username)
   }
 
+  get("/log/:ids") {
+    val ids = params("ids").split(',').map(_.toLong).toSet
+    csvDataImporter.getByIds(ids)
+  }
+
   //TODO check if this exist
   post("/csv") {
     if (!user.isOperator()) {

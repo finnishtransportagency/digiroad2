@@ -112,7 +112,7 @@ trait CsvDataImporterOperations {
   val logInfo : String
 
   def mappingContent(result: ImportResultData) : Map[String, Any] = {
-    Map("excludeLinks" -> result.excludedRows,
+    Map("excludedLinks" -> result.excludedRows,
         "incompleteRows" -> result.incompleteRows,
         "malformedRows" -> result.malformedRows)
   }
@@ -142,6 +142,12 @@ trait CsvDataImporterOperations {
     def getById(id: Long) : Option[ImportStatusInfo]  = {
       OracleDatabase.withDynTransaction {
         importLogDao.get(id)
+      }
+    }
+
+    def getByIds(ids: Set[Long]) : Seq[ImportStatusInfo]  = {
+      OracleDatabase.withDynTransaction {
+        importLogDao.getByIds(ids)
       }
     }
 

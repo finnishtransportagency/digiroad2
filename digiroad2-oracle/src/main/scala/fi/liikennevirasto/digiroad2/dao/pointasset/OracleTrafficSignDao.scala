@@ -99,7 +99,7 @@ object OracleTrafficSignDao {
     sql"""select distinct ev.id from PROPERTY p
                 join ENUMERATED_VALUE ev on ev.property_id = p.id
                 join SINGLE_CHOICE_VALUE sc on sc.ENUMERATED_VALUE_ID = ev.id
-                where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in (#${values.mkString(",")}) """.as[Long].list
+                where p.ASSET_TYPE_ID = 300 and p.PUBLIC_ID = 'trafficSigns_type' and ev.VALUE in logIds """.as[Long].list
   }
 
   def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {

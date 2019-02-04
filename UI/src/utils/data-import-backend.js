@@ -30,5 +30,9 @@
     this.getJob = function(id) {
       return $.getJSON('api/import/log/' + id);
     };
+
+    this.getJobsById = function(ids) {
+      return $.getJSON('api/import/log/' + ids);
+    };
   };
 }(this));
