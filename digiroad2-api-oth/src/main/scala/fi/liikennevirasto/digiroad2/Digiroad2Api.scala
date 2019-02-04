@@ -1644,28 +1644,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/createdLinearAssets/byUser") {
-    Map("result" ->
-      Seq(Map("typeId" -> 190,
-        "municipalities" ->
-          Seq(
-            Map("municipality" -> "Sottunga",
-            "asset_ids" -> Seq(1111, 2222, 3333)),
-            Map("municipality" -> "Kaustinen",
-            "asset_ids"  -> Seq(1111, 2222, 3333))
-            )
-      ),
-        Map("typeId" -> 210,
-          "municipalities" ->
-            Seq(
-              Map("municipality" -> "Sottunga",
-                "asset_ids"  -> Seq(6565, 9898, 3223)),
-              Map("municipality" -> "Kaustinen",
-                "asset_ids" -> Seq(7878, 4545, 1212))
-            )
-        )
-    )
-    )
+  get("/createdLinearAssets/byUser/:assetTypeId") {
+    val assetTypeId = params("assetTypeId").toInt
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if(user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    val createdAssets = linearAssetService.getAutomaticGeneratedAssets(municipalities, assetTypeId)
+
+    createdAssets.groupBy(_._3).map{ asset =>
+      Map(
+        "municipality" -> municipalityService.getMunicipalitiesNameAndIdByCode(Set(asset._1)).map(_.name).head,
+        "created_assets" -> asset._2
+      )
+    }
   }
 
   get("/municipalities/:municipalityCode/assetTypes") {

@@ -466,7 +466,7 @@
       },
 
       createdLinearAssets: function() {
-        eventbus.trigger('createdLinearAssets:select', backend.getCreatedLinearAssets());
+        eventbus.trigger('createdLinearAssets:select');
       },
 
       speedLimitErrors: function (id) {

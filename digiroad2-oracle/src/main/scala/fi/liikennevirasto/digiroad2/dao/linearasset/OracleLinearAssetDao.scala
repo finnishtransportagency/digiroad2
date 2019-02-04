@@ -914,4 +914,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           """
     Q.updateNA(queryFilter(query) + ")").execute
   }
+
+  def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int) = {
+    val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities}) "
+
+    sql"""select a.id, TO_DATE(TO_CHAR(a.created_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), a1.municipality_code
+         from asset a
+         JOIN connected_asset ca ON a.id = ca.linear_asset_id
+         JOIN asset a1 ON ca.point_asset_id = a1.id and a1.asset_type_id = ${TrafficSigns.typeId}
+         where  (a.valid_to is null or a.valid_to > sysdate)
+         and a.created_by = 'automatic_process'
+         and a.asset_type_id = $assetTypeId #$municipalityFilter""".as[(Int, DateTime, Int)].list
+  }
 }

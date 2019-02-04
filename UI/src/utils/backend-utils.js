@@ -462,8 +462,8 @@
       return $.getJSON('api/municipalities/byUser');
     };
 
-    this.getCreatedLinearAssets = function() {
-      return $.getJSON('api/createdLinearAssets/byUser');
+    this.getCreatedLinearAssets = function(assetId) {
+      return $.getJSON('api/createdLinearAssets/byUser/' + assetId);
     };
 
     this.getMunicipalitiesWithUnknowns = function(){

@@ -847,6 +847,12 @@ trait LinearAssetOperations {
   def withMunicipalities(municipalities: Set[Int])(query: String): String = {
     query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
   }
+
+  def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(Int, DateTime, Int)] = {
+    withDynTransaction {
+      dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId)
+    }
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
