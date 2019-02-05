@@ -6,9 +6,6 @@
     this.title = 'Lisätyt viivamaiset kohteet';
     var backend;
     var showFormBtnVisible = true;
-    var assetsList;
-    var assetTypeName;
-    var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
 
     var availableAssetsTypeId = [190];
@@ -22,8 +19,6 @@
       eventbus.on('createdLinearAssets:select', function() {
         $('.container').hide();
         $('#work-list').show();
-        $('body').addClass('scrollable');
-        // assetsList = assetsCreated;
         me.generateWorkList(availableAssetsTypeId);
       });
     };
@@ -35,7 +30,6 @@
           me.generateWorkList(availableAssetsTypeId);
         })
       );
-      assetTypeName = renameAssetLink(assetType);
       me.reloadForm(assetType);
     };
 
@@ -53,10 +47,6 @@
       };
 
       return $('<table id="tableData"><tbody>').append(tableContentRows(assetsTypeIds)).append('</tbody></table>');
-    };
-
-    this.assetHeader = function(assetName) {
-      return $('<h2/>').html(renameAsset(assetName));
     };
 
     this.generatedLinearAssetsTable = function(assetContent, assetTypeId) {
@@ -126,19 +116,6 @@
       var element = $('#work-list .work-list');
       element.html($('<div class="linear-asset-list">').append(me.assetTypesTable(assetsList)));
 
-      // assetsList.then(function(createdLinearAssets){
-      //
-      //   // if (authorizationPolicy.workListAccess())
-      //   //   searchbox.insertBefore('#tableData');
-      //   //
-      //   // $('#searchBox').on('keyup', function (event) {
-      //   //   var currentInput = event.currentTarget.value;
-      //   //
-      //   //   var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
-      //   //   $('#tableData tbody').html(unknownLimits);
-      //   // });
-      //
-      // });
     };
 
   };

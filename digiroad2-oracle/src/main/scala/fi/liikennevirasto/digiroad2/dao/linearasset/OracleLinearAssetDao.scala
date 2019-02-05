@@ -916,7 +916,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int) = {
-    val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities}) "
+    val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities.mkString(",")}) "
 
     sql"""select a.id, TO_DATE(TO_CHAR(a.created_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), a1.municipality_code
          from asset a
