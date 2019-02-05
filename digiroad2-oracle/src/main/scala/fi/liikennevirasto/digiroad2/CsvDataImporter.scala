@@ -4,7 +4,6 @@ import java.io.InputStream
 import java.util.Properties
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao._
@@ -24,12 +23,7 @@ import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import java.io.InputStreamReader
-
-import org.json4s.DefaultFormats
-import org.json4s.jackson.Serialization
-
 import scala.util.Try
-
 
 sealed trait Status {
   def value : Int
@@ -79,18 +73,9 @@ trait CsvDataImporterOperations {
     props
   }
 
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
-    new BoneCPDataSource(cfg)
-  }
-
   lazy val roadAddressService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
   }
-
-//  lazy val userProvider: UserProvider = {
-//    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
-//  }
 
   lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
@@ -101,7 +86,6 @@ trait CsvDataImporterOperations {
   lazy val roadAddressesService: RoadAddressesService = {
     new RoadAddressesService(viiteClient)
   }
-  implicit val formats = DefaultFormats
 
   type MalformedParameters = List[String]
   type ParsedProperties = List[AssetProperty]
@@ -111,13 +95,14 @@ trait CsvDataImporterOperations {
 
   val logInfo : String
 
-  def mappingContent(result: ImportResultData) : Map[String, Any] = {
-    val excludedResult = result.excludedRows.map{row => "<p>" + row.affectedRows + "</p>"}
-    val incompleteResult = result.incompleteRows.map{row => "<p>" + row.missingParameters + "</p>"}
-    val malformedResult = result.malformedRows.map{row => "<p>" + row.malformedParameters + "</p>"}
-    Map("excludedLinks" -> s"<br> $excludedResult </br>" ,
-        "incompleteRows" -> s"<br> $incompleteResult </br>",
-        "malformedRows" -> s"<br> $malformedResult </br>")
+  def mappingContent(result: ImportResultData): String  = {
+    val excludedResult = result.excludedRows.map{rows => "<ul>" + rows.affectedRows.mkString(";") ->  rows.csvRow + "</ul>"}
+    val incompleteResult = result.incompleteRows.map{ rows=> "<ul>" + rows.missingParameters.mkString(";") -> rows.csvRow + "</ul>"}
+    val malformedResult = result.malformedRows.map{ rows => "<ul>" + rows.malformedParameters.mkString(";") -> rows.csvRow + "</ul>"}
+
+    s"<ul> excludedLinks: ${excludedResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
+    s"<ul> incompleteRows: ${incompleteResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
+    s"<ul> malformedRows: ${malformedResult.mkString.replaceAll("[(|)]{1}","")} </ul>"
   }
 
   protected def getProperty(name: String) : String = {
@@ -401,11 +386,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       result match {
         case ImportResultTrafficSign(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
-          val content = mappingContent(result) ++  Map("notImportedData" ->
-          result.notImportedData.groupBy(_.reason).map { case (key, values) =>
-            Map(key -> values)
-          })
-          update(logId, Status.NotOK, Some(Serialization.write(content)))
+          val content = mappingContent(result) +
+            s"<ul>notImportedData: </ul> ${result.notImportedData.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}"
+          update(logId, Status.NotOK, Some(content))
       }
     } catch {
       case e: Exception =>
@@ -482,9 +465,6 @@ override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   case class CsvRoadLinkRow(linkId: Int, objectID: Int = 0, properties: Seq[AssetProperty])
 
   type ImportResultData = ImportResultRoadLink
-//  type MalformedParameters = List[String]
-//  type ParsedProperties = List[AssetProperty]
-//  type ParsedRow = (MalformedParameters, ParsedProperties)
 
   override val logInfo: String = "road link import"
 
@@ -620,8 +600,9 @@ override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
       result match {
         case ImportResultRoadLink(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
         case _ =>
-          val content = mappingContent(result) ++ Map("nonUpdatedLinks" -> result.nonUpdatedLinks)
-          update(logId, Status.NotOK, Some(Serialization.write(content)))
+          val content = mappingContent(result) +
+          s"<ul>nonExistingAssets: </ul> ${result.nonUpdatedLinks.map{ rows => "<li>" + rows.linkId -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}"
+          update(logId, Status.NotOK, Some(content))
       }
     } catch {
       case e: Exception =>
@@ -796,7 +777,7 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
         case ImportMaintenanceRoadResult(Nil, Nil, Nil) => update(logId, Status.OK)
         case _ =>
           val content = mappingContent(result)
-          update(logId, Status.NotOK, Some(Serialization.write(content)))
+          update(logId, Status.NotOK, Some(content))
       }
     } catch {
       case e: Exception =>
@@ -1041,8 +1022,9 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
         result match {
           case ImportResultMassTransitStop(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
           case _ =>
-            val content = mappingContent(result) ++ Map("nonExistingAssets" -> result.nonExistingAssets)
-            update(logId, Status.NotOK, Some(Serialization.write(content)))
+            val content = mappingContent(result) +
+              s"<ul>nonExistingAssets: </ul> ${result.nonExistingAssets.map{ rows => "<li>" + rows.externalId -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}"
+            update(logId, Status.NotOK, Some(content))
         }
       } catch {
         case e: Exception =>
