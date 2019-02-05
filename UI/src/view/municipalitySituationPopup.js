@@ -115,6 +115,7 @@ window.MunicipalitySituationPopup = function (models) {
         $('.confirm-modal#municipalitySituation .save').on('click', function() {
             options.saveCallback();
         });
+
         $(' .confirm-modal#municipalitySituation .sulje').on('click', function() {
             options.closeCallback();
         });
