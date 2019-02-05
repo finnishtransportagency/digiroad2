@@ -1,5 +1,6 @@
 var municipalities;
 var backend =  new CsvBackend();
+var refresh;
 
 $(function() {
 
@@ -26,7 +27,7 @@ $(function() {
   rootElement.find('#asset-selection').on('change', function () {
     $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
     $('#deleteCheckbox').prop('disabled', !$(this).val());
-    $('#csvImportPoistaCheckbox').toggle($(this).val() === 'trafficsigns');
+    $('#csvImportPoistaCheckbox').toggle($(this).val() === 'trafficSigns');
     $('.mass-transit-stop-limit').toggle($(this).val() === 'massTransitStop');
   }).trigger('change');
 
@@ -48,10 +49,13 @@ $(function() {
       backend.uploadFile(formData, assetType,
         function() {
           spinnerOff();
+          getJobs();
         },
         function(xhr) {
           spinnerOff();
-          alert(xhr.responseText);
+          if(xhr.status === 403)
+            alert("Vain operaattori voi suorittaa Excel-ajon");
+          getJobs();
         });
     }
     if ($('#deleteCheckbox').is(':checked')) {
@@ -114,14 +118,27 @@ $(function() {
   function getJobs() {
      backend.getJobs().then(function(jobs){
       if(!_.isEmpty(jobs)) {
-        $('.job-status').html(buildJobTable(jobs));
+        $('.job-status').empty().html(buildJobTable(jobs));
         rootElement.find('.job-status-link').on('click', function (event) {
           getJob(event);
         });
-        $('.job-row').toggleClass('in-progress', 1 === 1);
+        if(!refresh)
+          refresh = setInterval(refreshJobs, 30000);
       }
     });
   }
+
+  var refreshJobs = function() {
+    var jobsInProgress = $('.in-progress').map(function(){
+      return $(this).attr('id');
+    });
+    if(!_.isEmpty(jobsInProgress)){
+      backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
+        if(_.some(jobs, function(job){return job.status !== 1;}))
+          getJobs();
+      });
+    }
+  };
 
   function getJob(evt){
     var id = $(evt.currentTarget).prop('id');
@@ -167,11 +184,11 @@ $(function() {
     };
     var jobRow = function (job) {
       return '' +
-        '<tr class="job-row">' +
+        '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
         '<td headers="date">' + job.createdDate + '</td>' +
         '<td headers="file" style="width:50%">' + job.fileName + '</td>' +
-        '<td headers="status" id="status" class="' + job.status + '">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-        '<td headers="detail">' + (!(job.status === 1 ||job.status === 2) ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+        '<td headers="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
+        '<td headers="detail">' + (!(job.status === 1 || job.status === 2) ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
         '</tr>';
     };
     return table(jobs);
@@ -186,7 +203,7 @@ var getStatusIcon = function(status, description) {
                3: "images/csv-status-icons/not-ok-check-icon.png",
                4: "images/csv-status-icons/error-icon-small.png",
                99: "images/csv-status-icons/unknown-error.png"
-              };
+             };
   return '<img src="' + icon[status] + '" title="' + description + '"/>';
 };
 

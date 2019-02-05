@@ -31,8 +31,8 @@
       return $.getJSON('api/import/log/' + id);
     };
 
-    this.getJobsById = function(ids) {
-      return $.getJSON('api/import/log/' + ids);
+    this.getJobsByIds = function(ids) {
+      return $.getJSON('api/import/logs/' + ids);
     };
   };
 }(this));

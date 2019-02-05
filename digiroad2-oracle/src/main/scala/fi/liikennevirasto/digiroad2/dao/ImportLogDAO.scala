@@ -55,7 +55,7 @@ class ImportLogDAO {
   def getByIds(logIds: Set[Long]): Seq[ImportStatusInfo] = {
     sql"""select ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, NULL
           from import_log
-          where id in (${logIds.mkString(",")})
+          where id in (#${logIds.mkString(",")})
       """.as[ImportStatusInfo].list
   }
 
