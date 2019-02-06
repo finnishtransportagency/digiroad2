@@ -12,6 +12,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.Asset.DatePropertyFormat
 
 
 case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
@@ -346,7 +347,27 @@ class DynamicLinearAssetDao {
     }
   }
 
-  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue )
+  def getDatePeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[DynamicProperty]] = {
+    val assets = MassQuery.withIds (ids) {
+      idTableName =>
+        sql"""
+          select dp.asset_id, p.public_id, p.property_type, p.required, dp.start_date, dp.end_date
+          from date_period_value dp
+          join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
+          join #$idTableName i on i.id = dp.asset_id
+          where dp.property_id = p.id
+        """.as[DatePeriodRow].list
+    }
+    assets.groupBy(_.assetId).mapValues{ assetGroup =>
+      assetGroup.groupBy(_.publicId).map { case (_, values) =>
+        val row = values.head
+        DynamicProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
+      }.toSeq
+    }
+  }
+
+  case class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue )
+  case class DatePeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue)
 
   implicit val getValidityPeriodRow = new GetResult[ValidityPeriodRow] {
     def apply(r: PositionedResult) = {
@@ -364,6 +385,20 @@ class DynamicLinearAssetDao {
       )
 
       ValidityPeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
+    }
+  }
+
+  implicit val getDatePeriodRow = new GetResult[DatePeriodRow] {
+    def apply(r: PositionedResult) = {
+      val assetId = r.nextLong
+      val publicId = r.nextString
+      val propertyType = r.nextString
+      val required = r.nextBoolean
+      val value =
+        Map("startDate" -> r.nextTimestampOption().map(timestamp => new DateTime(timestamp).toString(DatePropertyFormat)),
+            "endDate" -> r.nextTimestampOption().map(timestamp => new DateTime(timestamp).toString(DatePropertyFormat))
+        )
+      DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
     }
   }
 

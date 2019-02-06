@@ -461,6 +461,10 @@ object Digiroad2Context {
     new LinearHeightLimitService(roadLinkService, eventbus)
   }
 
+  lazy val damagedByThawService: DamagedByThawService = {
+    new DamagedByThawService(roadLinkService, eventbus)
+  }
+
   lazy val userNotificationService: UserNotificationService = {
     new UserNotificationService()
   }

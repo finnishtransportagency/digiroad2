@@ -88,7 +88,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
                    val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
                    val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback,
+                   val damagedByThawService: DamagedByThawService = Digiroad2Context.damagedByThawService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1736,7 +1737,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case DamagedByThaw.typeId | CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -1746,6 +1747,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case BogieWeightLimit.typeId => linearBogieWeightLimitService
       case MassTransitLane.typeId => massTransitLaneService
       case NumberOfLanes.typeId => numberOfLanesService
+      case DamagedByThaw.typeId => damagedByThawService
       case _ => linearAssetService
     }
   }

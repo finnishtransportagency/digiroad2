@@ -250,7 +250,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case Prohibition.typeId => prohibitionService
         case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case DamagedByThaw.typeId | CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
+        case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
         case HeightLimitInfo.typeId => linearHeightLimitService
         case LengthLimit.typeId => linearLengthLimitService
         case WidthLimitInfo.typeId => linearWidthLimitService
@@ -260,6 +260,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case BogieWeightLimit.typeId => linearBogieWeightLimitService
         case MassTransitLane.typeId => massTransitLaneService
         case NumberOfLanes.typeId => numberOfLanesService
+        case DamagedByThaw.typeId => damagedByThawService
         case _ => linearAssetService
       }
     }
