@@ -1,9 +1,9 @@
-create table date_period (
+create table date_period_value (
 	id number primary key,
 	asset_id number references asset not null,
 	property_id references property not null,
-	start_date_time TIMESTAMP not null,
-	end_date_time TIMESTAMP not null
+	start_date TIMESTAMP not null,
+	end_date TIMESTAMP not null
 );
 
 insert into localized_string (id, value_fi, value_sv, created_by, created_date)
