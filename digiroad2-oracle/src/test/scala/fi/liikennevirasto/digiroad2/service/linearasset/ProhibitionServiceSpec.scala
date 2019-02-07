@@ -628,7 +628,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink, Seq()), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (3)
 
@@ -668,7 +668,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue , asset.mValue, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue , asset.mValue, sourceRoadLink, Seq()), false)
       prohibitionIds.length should be(0)
     }
   }
@@ -696,7 +696,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
       val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink), false)
+      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink, Seq()), false)
       val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
       prohibitions.length should be (2)
 

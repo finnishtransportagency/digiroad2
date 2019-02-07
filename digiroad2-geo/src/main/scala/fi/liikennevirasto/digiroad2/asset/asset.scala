@@ -1,6 +1,8 @@
 package fi.liikennevirasto.digiroad2.asset
 
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Sunday
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -264,6 +266,74 @@ object AnimalWarningsType {
   case object MooseFence extends AnimalWarningsType { def value = 2; def typeDescription = "Moose Fence";}
   case object DeerWarningArea extends AnimalWarningsType { def value = 3; def typeDescription = "Deer Warning Area";}
   case object Unknown extends AnimalWarningsType { def value = 99;  def typeDescription = "Unknown";}
+}
+
+sealed trait TimePeriodClass {
+  def value: Int
+
+  val trafficSign: TrafficSignType
+}
+
+object TimePeriodClass {
+  val values = Set(ValidMultiplePeriodTime, ValidSatTime, ValidMonFriTime)
+
+  def apply(value: Int): TimePeriodClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[TimePeriodClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+
+  def toTrafficSign(dayAndTimeValue: Set[ValidityPeriod]): Seq[(TrafficSignType, String)] = {
+    def convertSigns(dayAndTimeValue: Seq[ValidityPeriod], trafficSign: Seq[(TrafficSignType, String)]): Seq[(TrafficSignType, String)] = {
+
+      val groupedDayAndTime: Map[ValidityPeriodDayOfWeek, Seq[ValidityPeriod]] = dayAndTimeValue.groupBy(_.days)
+      if (groupedDayAndTime.keys.size == 3) {
+
+        val result: Seq[(Seq[ValidityPeriod], (String, String))] = values.map { timePeriod =>
+          val day = ValidityPeriodDayOfWeek.fromTimeDomainValue(timePeriod.value)
+          val time: ValidityPeriod = groupedDayAndTime(day).head
+          val existing = groupedDayAndTime(day).diff(Seq(time))
+
+          (existing, (day.toString, if (time.days == Sunday) s"(${time.startHour} - ${time.endHour})" else s"${time.startHour} - ${time.endHour}"))
+        }.toSeq
+
+        val signInfo = result.sortBy(period => period._2._1).reverse.map(_._2._2).mkString(" ")
+        convertSigns(result.flatMap(_._1), Seq((ValidMultiplePeriod, signInfo)) ++ trafficSign)
+      } else
+        dayAndTimeValue.map { validPeriod =>
+          (TimePeriodClass.apply(validPeriod.days.value).trafficSign, if (validPeriod.days == Sunday) s"(${validPeriod.startHour} - ${validPeriod.endHour})" else s"${validPeriod.startHour} - ${validPeriod.endHour}")
+        } ++ trafficSign
+    }
+
+    convertSigns(dayAndTimeValue.toSeq, Seq())
+  }
+
+  case object ValidMultiplePeriodTime extends TimePeriodClass {
+    def value: Int = 1
+
+    override val trafficSign: TrafficSignType = ValidMultiplePeriod
+  }
+
+  case object ValidSatTime extends TimePeriodClass {
+    def value: Int = 7
+
+    override val trafficSign: TrafficSignType = ValidSat
+  }
+
+  case object ValidMonFriTime extends TimePeriodClass {
+    def value: Int = 2
+
+    override val trafficSign: TrafficSignType = ValidMonFri
+  }
+
+  case object Unknown extends TimePeriodClass {
+    def value: Int = 99
+
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+
 }
 
 sealed trait ProhibitionClass {

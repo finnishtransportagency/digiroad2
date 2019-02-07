@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -824,6 +825,17 @@ trait LinearAssetOperations {
 
   def validateAssetValue(value: Option[Value]): Unit = {}
 
+  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
+    if(newTransaction) {
+      withDynTransaction {
+        createLinearAssetFromTrafficSign(trafficSignInfo)
+      }
+    }
+    else
+      createLinearAssetFromTrafficSign(trafficSignInfo)
+  }
+
+  protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 
   def deleteAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")

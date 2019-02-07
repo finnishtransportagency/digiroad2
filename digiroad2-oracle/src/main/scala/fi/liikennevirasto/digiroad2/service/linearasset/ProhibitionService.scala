@@ -277,7 +277,41 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
-  private def createProhibitionFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+  def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel): Set[ValidityPeriod] = {
+    TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
+      val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
+      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
+      val validPeriods = regexMatch.findAllMatchIn(additionalPanel.panelInfo)
+
+      if (validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
+        val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
+        validPeriods.zipWithIndex.map { case (timePeriod, index) =>
+          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
+          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, convertPeriod(index))
+        }.toSet
+
+      } else
+        validPeriods.map { timePeriod =>
+          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
+          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value))
+        }
+    }
+  }
+
+  def createValue(trafficSign: TrafficSignInfo): ProhibitionValue = {
+    val typeId = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(trafficSign.signType))
+    val additionalPanels = trafficSign.additionalPanel.sortBy(_.formPosition)
+
+    val validityPeriods: Set[ValidityPeriod] =
+      additionalPanels.flatMap { additionalPanel =>
+        val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
+        createValidPeriod(trafficSignType, additionalPanel)
+      }.toSet
+
+    ProhibitionValue(typeId.head.value, validityPeriods, Set())
+  }
+
+  override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
     logger.info("Creating prohibition from traffic sign")
     val tsLinkId = trafficSignInfo.linkId
     val tsDirection = trafficSignInfo.validityDirection
@@ -290,14 +324,10 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
 
-    val roadLinks = recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
+    val roadLinks = roadLinkService.recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
     logger.info("End of fetch for adjacents")
 
-    val trafficSignType = TrafficSignType.applyOTHValue(trafficSignInfo.signType)
-
-    val prohibitionValue = ProhibitionClass.fromTrafficSign(trafficSignType).map { prohibition =>
-      ProhibitionValue(prohibition.value, Set.empty, Set.empty)
-    }
+    val prohibitionValue = Seq(createValue(trafficSignInfo))
 
     if (prohibitionValue.nonEmpty) {
       val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
@@ -307,25 +337,17 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           case _ => (0, roadLink.length)
 
         }
-        val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue.toSeq), BothDirections.value, Measures(startMeasure, endMeasure),
+        val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
           "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
+
+        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
 
         logger.info(s"Prohibition created with id: $assetId")
         assetId
       }
-      ids
+      ids.toSeq
     }
     else Seq()
-  }
-
-  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
-    if(newTransaction) {
-      withDynTransaction {
-        createProhibitionFromTrafficSign(trafficSignInfo)
-      }
-    }
-    else
-      createProhibitionFromTrafficSign(trafficSignInfo)
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[TextPropertyValue] = {
@@ -340,25 +362,4 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       headPoint
   }
 
-  private def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Seq[RoadLink] = Seq(), numberOfConnections: Int = 0): Seq[RoadLink] = {
-    val (roadNamePublicId, roadNameSource) =
-      sourceRoadLink.attributes.get("ROADNAME_FI") match {
-        case Some(nameFi) =>
-          ("ROADNAME_FI", nameFi.toString)
-        case _ =>
-          ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
-      }
-
-    val adjacents = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filterNot(_.attributes.getOrElse(roadNamePublicId, "").toString != roadNameSource)
-    if(adjacents.isEmpty)
-      Seq.empty
-    else {
-      val nextAdjacents = roadLinkService.getAdjacent(adjacents.head.linkId, Seq(getOpositePoint(adjacents.head.geometry, point)), newTransaction = false).filter(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)
-      if (adjacents.size == 1 && nextAdjacents.exists(_.attributes.getOrElse(roadNamePublicId, "").toString == roadNameSource)) {
-        recursiveGetAdjacent(adjacents.head, getOpositePoint(adjacents.head.geometry, point), intermediants ++ adjacents, numberOfConnections + 1)
-      } else {
-        intermediants ++ adjacents
-      }
-    }
-  }
 }

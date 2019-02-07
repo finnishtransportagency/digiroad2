@@ -25,6 +25,8 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -99,8 +101,16 @@ object DataFixture {
     new ProhibitionService(roadLinkService, eventbus)
   }
 
+  lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = {
+    new HazmatTransportProhibitionService(roadLinkService, eventbus)
+  }
+
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, userProvider, eventbus)
+  }
+
+  lazy val trafficSignManager: TrafficSignManager = {
+    new TrafficSignManager(manoeuvreService, prohibitionService, hazmatTransportProhibitionService)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -1018,7 +1028,7 @@ object DataFixture {
                 measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, Some("vvh_mtkclass_default"), None, None))
             }.filterNot(a =>
               assets.
-              exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
+                exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
             )
         }
 
@@ -1255,7 +1265,7 @@ object DataFixture {
 
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
-//    Get All Municipalities
+    //    Get All Municipalities
     val municipalities: Seq[Int] =
       OracleDatabase.withDynSession {
         Queries.getMunicipalities
@@ -1282,7 +1292,7 @@ object DataFixture {
           }
           else{
             if(( (asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty)  ||
-                (asset.createdBy.contains("dr1_conversion") && asset.modifiedBy.contains("vvh_generated"))) {
+              (asset.createdBy.contains("dr1_conversion") && asset.modifiedBy.contains("vvh_generated"))) {
               if(!asset.informationSource.contains(MunicipalityMaintenainer)) {
                 if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
                   println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")
@@ -1434,7 +1444,7 @@ object DataFixture {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
+              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, Seq()))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
@@ -1556,8 +1566,8 @@ object DataFixture {
     val assetTypes = Set(DamagedByThaw.typeId, LitRoad.typeId, NumberOfLanes.typeId, TotalWeightLimit.typeId)
     //Get All Municipalities
     val municipalities: Seq[Int] =  OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+      Queries.getMunicipalities
+    }
 
     municipalities.foreach {
       municipality =>
@@ -1590,24 +1600,24 @@ object DataFixture {
   def updatePrivateRoads(): Unit = {
     println("\nStart of update private roads")
     println(DateTime.now())
-      val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
-      //Get All Municipalities
-      val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
-      municipalities.foreach { municipality =>
-        println(s"Obtaining all Road Links for Municipality: $municipality")
-        val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
-          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
-          val linkIds = roadLinks.map(_.linkId)
+    municipalities.foreach { municipality =>
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
+        val linkIds = roadLinks.map(_.linkId)
 
-          val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
-          roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
-        }
-        roadLinksWithAssets.foreach { roadLink =>
-          val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some(""), Some(AdditionalInformation.DeliveredWithRestrictions), Some(""))
-          roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roads_process"), (_, _) => {})
-        }
+        val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
+        roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
       }
+      roadLinksWithAssets.foreach { roadLink =>
+        val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some(""), Some(AdditionalInformation.DeliveredWithRestrictions), Some(""))
+        roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roads_process"), (_, _) => {})
+      }
+    }
   }
 
   private def updateFloatingStopsOnTerminatedRoads(): Unit ={
@@ -1674,7 +1684,7 @@ object DataFixture {
         if(middle.nonEmpty) (middle.get, end) else (start, end)
       }
 
-     val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
+      val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
       val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).filterNot( _ == TrafficSignType.Unknown).map {
         trafficValue =>
           SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(trafficValue.OTHvalue.toString)))}
@@ -1686,10 +1696,10 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-        val municipalities: Seq[Int] =
-          OracleDatabase.withDynSession {
-            Queries.getMunicipalities
-          }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     municipalities.foreach { municipality =>
       println(s"Starting create traffic signs for municipality $municipality")
@@ -1720,10 +1730,10 @@ object DataFixture {
 
           if ( unMatchedAssets.nonEmpty || Math.abs((currentAsset.endMeasure - currentAsset.startMeasure) - roadLink.length) < 0.01 &&
             existingAssets.exists { asset =>
-            filteredAdjacentRoadLink.keySet.contains(asset.linkId) &&
-            asset.value == currentAsset.value &&
-            Math.abs((asset.endMeasure - asset.startMeasure) - filteredAdjacentRoadLink(asset.linkId).head.length) < 0.01
-          })
+              filteredAdjacentRoadLink.keySet.contains(asset.linkId) &&
+                asset.value == currentAsset.value &&
+                Math.abs((asset.endMeasure - asset.startMeasure) - filteredAdjacentRoadLink(asset.linkId).head.length) < 0.01
+            })
             Seq()
           else
             Seq(setTrafficSignInfo(roadLinks(currentAsset.linkId).head, currentAsset, point))
@@ -1741,42 +1751,68 @@ object DataFixture {
     }
   }
 
-  def createProhibitionsUsingTrafficSigns(): Unit = {
-    //Get All Municipalities
-    println(s"Obtaining Municipalities")
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+  def createLinearAssetUsingTrafficSigns(): Unit = {
+    println("\nStarting create Linear Assets using traffic signs")
+    println(DateTime.now())
+    println("")
 
-    municipalities.foreach { municipality =>
+    withDynSession {
+      val lastExecutionDate = oracleLinearAssetDao.getLastExecutionDateOfConnectedAsset.getOrElse(DateTime.now().minusDays(2))
+      println(s"Last Execution Date of the batch: ${lastExecutionDate.toString} ")
+      println("")
 
-      println(s"Obtaining all traffic Signs with restriction for municipality $municipality")
-      //Get All Traffic Signs with traffic restriction
-      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality, trafficSignService.getProhibitionsEnumeratedValues)
+      println(s"Obtaining created/modified/deleted traffic Signs after the date: ${lastExecutionDate.toString}")
+      //Get Traffic Signs
+      val trafficSigns = trafficSignService.getAfterDate(lastExecutionDate)
+      println(s"Number of Traffic Signs to execute: ${trafficSigns.size} ")
 
-      println(s"Obtaining all Road Links for Municipality: $municipality")
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
-      println(s"End of roadLinks fetch for Municipality: $municipality")
-
-      println("Start processing traffic signs, to create prohibition")
-      trafficSigns.foreach(ts =>
-        try {
-          roadLinks.find(_.linkId == ts.linkId) match {
-            case Some(roadLink) =>
-              val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
-              println(s"prohibition created for traffic sign with id: ${ts.id}")
-            case _ =>
-              println(s"No roadLink available to create prohibition")
-              println(s"Asset id ${ts.id} did not generate a prohibition ")
-          }
-        }catch {
-          case ex: ProhibitionCreationException =>
-            println(s"""creation of prohibition on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
+      val trafficSignsToTransform =
+        trafficSigns.filter { ts =>
+          val signType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
+          TrafficSignManager.belongsToProhibition(signType)
         }
-      )
+
+      if (trafficSignsToTransform.nonEmpty) {
+        println("")
+        println(s"Obtaining all Road Links for filtered Traffic Signs")
+        val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(trafficSignsToTransform.map(_.linkId).toSet, false)
+        println(s"End of roadLinks fetch for filtered Traffic Signs")
+
+        println("")
+        println("Start processing traffic signs")
+        trafficSignsToTransform.foreach { t =>
+          val tsCreatedDate = t.createdBy
+          val tsModifiedDate = t.modifiedAt
+
+          if (t.expired) {
+            // Delete actions
+            println("********************************************")
+            println("DETECTED AS A DELETED")
+            println("********************************************")
+
+          } else if (tsCreatedDate.nonEmpty && tsModifiedDate.isEmpty) {
+            //Create actions
+            println(s"Start creating prohibition according the traffic sign with ID: ${t.id}")
+
+            val signType = trafficSignService.getProperty(t, trafficSignService.typePublicId).get.propertyValue.toInt
+            val additionalPanel = trafficSignService.getAllProperties(t, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
+            trafficSignManager.createAssets(TrafficSignInfo(t.id, t.linkId, t.validityDirection, signType, t.mValue, roadLinks.find(_.linkId == t.linkId).head, additionalPanel), false)
+
+            println(s"Prohibition related with traffic sign with ID: ${t.id} created")
+            println("")
+
+          } else {
+            //Modify actions
+            println("********************************************")
+            println("DETECTED AS A MODIFIED")
+            println("********************************************")
+          }
+
+        }
+      }
     }
+    println("")
+    println("Complete at time: " + DateTime.now())
   }
 
   def main(args:Array[String]) : Unit = {
@@ -1881,14 +1917,14 @@ object DataFixture {
         mergeAdditionalPanelsToTrafficSigns()
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
-      case Some("create_prohibitions_using_traffic_signs") =>
-        createProhibitionsUsingTrafficSigns()
       case Some("update_floating_stops_on_terminated_roads") =>
         updateFloatingStopsOnTerminatedRoads()
       case Some("update_private_roads") =>
         updatePrivateRoads()
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
+      case Some("create_linear_asset_using_traffic_signs") =>
+        createLinearAssetUsingTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1899,7 +1935,8 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets")
+        " create_manoeuvres_using_traffic_signs | merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | " +
+        " update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | create_linear_asset_using_traffic_signs")
     }
   }
 }
