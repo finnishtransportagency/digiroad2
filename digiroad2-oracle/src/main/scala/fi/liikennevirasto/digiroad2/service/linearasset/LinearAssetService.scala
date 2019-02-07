@@ -850,7 +850,10 @@ trait LinearAssetOperations {
 
   def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(Int, DateTime, Int)] = {
     withDynTransaction {
-      dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId)
+      val lastCreationDate = dao.getLastExecutionDateOfConnectedAsset()
+      if(lastCreationDate.nonEmpty)
+        dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId, lastCreationDate)
+      else Seq()
     }
   }
 }
