@@ -7,7 +7,7 @@ import java.time.LocalDate
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
