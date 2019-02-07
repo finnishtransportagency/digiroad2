@@ -737,14 +737,19 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         """.execute
     }
 
-    if(trafficSignId.nonEmpty)
-      insertConnectedAsset(id, trafficSignId.get)
-
     id
   }
 
-  def insertConnectedAsset(id: Long, connected_id : Long) : Int = {
-    sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
+  def insertConnectedAsset(linearId: Long, pointId : Long) : Int = {
+    sqlu"""insert into connected_asset(linear_asset_id, point_asset_id) values ($linearId, $pointId)""".first
+  }
+
+  def getLastExecutionDateOfConnectedAsset(): Option[DateTime] = {
+    sql"""select * from (
+            select max(greatest( coalesce(created_date, modified_date , valid_to))) as lastExecutionDate
+              from connected_asset)
+          where lastExecutionDate is not null
+          """.as[DateTime].firstOption
   }
 
   /**
