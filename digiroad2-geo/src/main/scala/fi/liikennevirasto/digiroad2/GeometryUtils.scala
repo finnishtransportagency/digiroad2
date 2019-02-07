@@ -308,8 +308,8 @@ object GeometryUtils {
     val (startPoint, endPoint) =
       (assetMValue, geomLength) match {
         case (Some(mValue), Some(length)) =>
-          val startPointMValue = if (mValue - 5 < 0) mValue else mValue - 5
-          val endPointMValue = if (mValue + 5 > length) mValue else mValue + 5
+          val startPointMValue = if (mValue - 5 < 0) 0 else mValue - 5
+          val endPointMValue = if (mValue + 5 > length) length else mValue + 5
           (calculatePointFromLinearReference(geom, startPointMValue), calculatePointFromLinearReference(geom, endPointMValue)) match {
             case (Some(p1), Some(p2)) =>
               (p1, p2)
