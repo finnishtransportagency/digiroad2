@@ -348,7 +348,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        authorizationPolicy: asset.authorizationPolicy,
        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
-       massLimitation: asset.editControlLabels.massLimitations,
+       massLimitation: asset.editControlLabels.additionalInfo,
        typeId: asset.typeId,
        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed,
        minZoomForContent: asset.minZoomForContent,
@@ -498,7 +498,7 @@
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.massLimitations];
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.additionalInfo];
         return [new LinearAssetBox(asset, legendValues)];
       }
       return [];

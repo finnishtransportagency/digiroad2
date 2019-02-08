@@ -65,7 +65,7 @@
           title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -91,7 +91,7 @@
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -117,7 +117,7 @@
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -142,8 +142,8 @@
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
+          additionalInfo : 'Muut massarajoitukset',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -273,11 +273,13 @@
         editControlLabels: {
           title: 'Kelirikko',
           enabled: 'Kelirikko',
-          disabled: 'Ei kelirikkoa'
+          disabled: 'Ei kelirikkoa',
+          additionalInfo: 'Kelirikolle altis tie'
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
+        style: new RoadDamagedByThawStyle(),
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
