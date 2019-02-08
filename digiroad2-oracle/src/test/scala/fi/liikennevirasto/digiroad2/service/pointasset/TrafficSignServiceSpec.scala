@@ -224,7 +224,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 2, 1611400, properties, validityDirection,  Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
-      val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), "test_user")
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -247,7 +247,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
-      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -270,7 +270,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
       val sign = IncomingTrafficSign(3, 2, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
-      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -294,7 +294,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
     runWithRollback {
-      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -316,7 +316,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, true)
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
-      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val id = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
       val asset = assets.head
@@ -338,7 +338,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
 
-      val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val id = service.createFromCoordinates(sign,  toRoadLink(closestLink), "test_user")
 
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
@@ -606,7 +606,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val validityDirection = service.getValidityDirection(Point(5, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(5, 4, 1611400, properties, validityDirection, bearing)
 
-      val originalTrafficSignId = service.createFromCoordinates(sign, toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val originalTrafficSignId = service.createFromCoordinates(sign, toRoadLink(closestLink), "test_user")
 
       val assetsInRadius = service.getTrafficSignByRadius(Point(5, 4), 10, None)
       assetsInRadius.size should be(1)
@@ -621,7 +621,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, validityDirection, bearing)
 
-      val duplicatedTrafficSignId = service.createFromCoordinates(sign2, toRoadLink(closestLink), vvHRoadlink2, "test_user")
+      val duplicatedTrafficSignId = service.createFromCoordinates(sign2, toRoadLink(closestLink), "test_user")
       val assetsInRadius2 = service.getTrafficSignByRadius(Point(5, 4), 10, None)
       assetsInRadius2.size should be(1)
       val assetD = assetsInRadius2.head
