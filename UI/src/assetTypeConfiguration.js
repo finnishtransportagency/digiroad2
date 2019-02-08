@@ -280,9 +280,9 @@
         label: new RoadDamagedByThawLabel(),
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weight: 1, unit: 'kg'},
-            { publicId: 'spring_thaw_period',  label:'', type: 'date_period', weight: 2},
-            {label: '', type: 'checkbox', publicId: "annual_repetition", values: [{id: 1, label: 'Jokavuotinen'}, {id: 0, label: 'Ei toistu'}], weight: 3 }
+            { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
+            { publicId: 'spring_thaw_period', label: '', type: 'date_period', weight: 2},
+            { publicId: "annual_repetition", label: '', type: 'checkbox', values: [{id: 1, label: 'Jokavuotinen'}, {id: 0, label: 'Ei toistu'}], weight: 3}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,

@@ -605,13 +605,26 @@
     var DatePeriodField = function(assetTypeConfiguration, field, isDisabled) {
         DynamicField.call(this, field, isDisabled);
         var me = this;
+        var className = field.publicId;
+        var addedElement = '';
 
-        var buttons = '<div class="form-group date-time-period-buttons">' +
+        me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
+            var buttons = '<div class="form-group date-time-period-buttons">' +
                 '<button class="btn edit-only editable btn-secondary add-period"' + me.disabled() +' >Uusi lisäkilpi</button>' +
                 '<button class="btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista lisäkilpi</button>'+
                 '</div>';
 
-        me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
+             var handleButton = function() {
+                 var $element = me.element;
+                if ($element.find('.new-date-period').length > 1) {
+                    $element.find('.add-period').css('visibility', 'hidden');
+                    $element.find('.remove-period').css('visibility', 'visible');
+                }else {
+                    $element.find('.add-period').css('visibility', 'visible');
+                    $element.find('.remove-period').css('visibility', 'hidden');
+                }
+            };
+
             me.getPropertyValue = function(){
                 var values = me.getValue();
                 return me.createPropertyValue(values);
@@ -621,8 +634,8 @@
                 var periodElements = me.element.find('.new-date-period');
                 return _.map(periodElements, function (element) {
                     return { value: {
-                            startDate: $(element).find('.date-time-period-start').val(),
-                            endDate: $(element).find('.date-time-period-end').val()
+                            startDate: $(element).find('.'+className+'-start').val(),
+                            endDate: $(element).find('.'+className+'-end').val()
                         }};
                 });
             };
@@ -630,20 +643,14 @@
             var someValue = _.head(fieldValue, function(values) { return values.value ; });
             var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
 
-            var addDatePickers = function (field, html) {
-                // var $dateElement = html.find('#' + field.publicId);
-                // dateutil.addDependentDatePicker($dateElement);
-
-                html.find('.date-time-period-start').each( function() {
-                    dateutil.addDependentDatePicker($(this));
-                });
-                html.find('.date-time-period-end').each( function() {
+            var addDatePickers = function (className, html) {
+                html.find('.'+className).each( function() {
                     dateutil.addDependentDatePicker($(this));
                 });
             };
 
-            var inputLabel = function(type) {
-                return $('<input type="text" ' + me.disabled() + '/>').addClass('form-control ' +  'date-time-period-'+ type)
+            var inputLabel = function(type, value) {
+                return $('<input type="text" ' + me.disabled() + '/>').addClass( className+addedElement + ' form-control ' + className+'-'+type)
                     .attr('required', me.required())
                     .attr('placeholder',"pp.kk.vvvv")
                     .attr('fieldType', fieldValue.type)
@@ -654,7 +661,7 @@
                     if (target.keyCode === 9) {
                         return;
                     }
-                        me.setValue(me.getValue());
+                    me.setValue(me.getValue());
                     me.setSelectedValue(setValue, getValue);
                 }, 500));
             };
@@ -664,81 +671,96 @@
                 me.setSelectedValue(setValue, getValue);
             }
 
+            // var test = {'values':{'value':[{'startDate': '19.2.2019','endDate':'22.2.2019'}, {'startDate': '19.5.2019','endDate':'22.5.2019'}]}};
             var existingDatePeriodElements =
                 _(_.map(fieldValue, function(values) { return values.value ; }))
                     .sortBy('startDate', 'endDate')
                     .map(datePeriodElement)
                     .join('');
-            // me.element.append($('<div class="form-group new-date-period">').append(inputLabel1).append('<span></span>') .append(inputLabel2));
 
             function datePeriodElement(periods) {
-                return '' +
-                    _.map(periods, function(period, index) {
-                        return '' +
-                            '<li><div class="form-group existing-date-period" data-line="' + (index + 1) + '">' +
-                            _.head(inputLabel('start')).outerHTML +
-                            // '  <span class="date-separator"> - </span>' +
-                            // _.head(inputLabel('end')).outerHTML +
-                            '</div></li>';
-                    });
+                return _.map(periods, function (period) {
+                    return createPeriodElement(period)[0].outerHTML;
+                }).join('');
             }
 
-            function newDatePeriodElement() {
-                var $newPeriodDate = $(''+
+            function createPeriodElement(period) {
+               return $(''+
                     '<li class="form-group new-date-period">')
-                    .append(inputLabel('start'))
+                    .append(inputLabel('start', period ? period.startDate : undefined))
                     .append('<span class="date-separator"> - </span>')
-                    .append(inputLabel('end'))
+                    .append(inputLabel('end', period ? period.endDate : undefined))
                     .append(buttons);
-
-                    $newPeriodDate.find('.remove-period').css('visibility','hidden');
-
-                return $newPeriodDate;
             }
 
             var template = _.template('' +
                 '<div class="date-time-period-group">' +
                 '<label class="control-label">' + field.label + '</label>' +
                 ' <ul >' +
-                // '   <%= existingDatePeriodElements %>' +
-                newDatePeriodElement()[0].outerHTML +
-
+                 '   <%= existingDatePeriodElements %>' +
+                (_.isEmpty(existingDatePeriodElements) ? createPeriodElement()[0].outerHTML : '') +
                 ' </ul>'+
                 '</div>');
 
 
             me.element = $(template({existingDatePeriodElements: existingDatePeriodElements}));
+            addDatePickers(className, me.element);
 
             me.element.on('click', '.remove-period', function(event) {
                 $(event.target).parent().parent().remove();
-                me.element.find('.add-period').css('visibility','visible');
-                me.element.find('.remove-period').css('visibility','hidden');
                 me.setSelectedValue(setValue, getValue);
+
+                handleButton();
             });
 
-            me.element.on('change', '.date-time-period-start', '.date-time-period-end', function() {
+            me.element.on('change', '.'+className, function() {
                 me.setSelectedValue(setValue, getValue);
             });
 
             me.element.on('click', '.add-period', function() {
-                var $newDatePeriodElement = newDatePeriodElement();
-                addDatePickers(field, $newDatePeriodElement);
-
-                $(event.target).closest('.date-time-period-group ul').append($newDatePeriodElement);
-
-            if (me.element.find('.new-date-period').length > 1) {
-                me.element.find('.add-period').css('visibility','hidden');
-                me.element.find('.remove-period').css('visibility','visible');
-            }
-
+               addedElement= addedElement + 1;
+               $(event.target).closest('.date-time-period-group ul').append(createPeriodElement()[0].outerHTML);
+                addDatePickers(className+addedElement.toString(), me.element);
+                handleButton();
             });
 
-            me.element.on('change', '.date-time-period-end', function() {
-                me.setSelectedValue(setValue, getValue);
-            });
-
-            addDatePickers(field, me.element);
+            handleButton();
             return me.element;
+        };
+
+        me.isValid = function(){
+            return !me.isRequired() || me.isRequired() && me.hasValue();
+        };
+
+        me.compare = function(propertyValueA, propertyValueB){
+            var isEqual = function(valueA , valueB) {
+                return valueA.startDate === valueB.startDate && valueA.endDate === valueB.endDate;
+            };
+
+            var isRemoved = function(firstProperty, secondProperty) {
+                _.remove(firstProperty.values, function (valuesA) {
+                    return !_.isUndefined(_.find(secondProperty.values, function (valuesB) {
+                        return isEqual(valuesB.value, valuesA.value);
+                    }));
+                });
+                return _.isEmpty(firstProperty.values);
+            };
+            return isRemoved(_.cloneDeep(propertyValueA), _.cloneDeep(propertyValueB)) && isRemoved(_.cloneDeep(propertyValueB), _.cloneDeep(propertyValueA));
+        };
+
+        me.viewModeRender = function (field, currentValue) {
+            var datePeriodTable = _.map(currentValue, function(values) {
+                return _.map(values.value, function(period){ return '' +
+                    '<li>' + period.startDate + " - " + period.endDate + '</li>';}).join('');
+            }).join('');
+
+            return $('' +
+                '<div class="form-group read-only">' +
+                '<label class="control-label">DatePeriod</label>' +
+                '<ul class="form-control-static date-period-group">' +
+                datePeriodTable +
+                '</ul>' +
+                '</div>' );
         };
 
     };
