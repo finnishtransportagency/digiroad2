@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -502,7 +502,8 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
         expiredAssetIds = Set.empty[Long],
         adjustedMValues = Seq.empty[MValueAdjustment],
         adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)),
+        valueAdjustments = Seq.empty[ValueAdjustment])
 
     ServiceWithDao.updateChangeSet(changeSet)
     val expiredAsset = mVLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(id)).head
@@ -573,7 +574,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
         verify(mockEventBus, times(1))
-          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Seq(SideCodeAdjustment(assetId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,SideCode.BothDirections,assetInfo.typeId)), Set.empty[Long]))
+          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Seq(SideCodeAdjustment(assetId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,SideCode.BothDirections,assetInfo.typeId)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
 
         val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
         verify(mockEventBus, times(count)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())

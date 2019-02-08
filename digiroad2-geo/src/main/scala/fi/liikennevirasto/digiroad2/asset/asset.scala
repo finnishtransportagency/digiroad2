@@ -365,6 +365,7 @@ case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
+case class DatePeriod(startDate: Option[DateTime], endDate: Option[DateTime])
 
 object ValidityPeriodValue {
   def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
@@ -424,6 +425,7 @@ object PropertyTypes {
   val IntegerProp = "integer"
   val TimePeriod = "time_period"
   val AdditionalPanelType = "additional_panel_type"
+  val DatePeriodType = "date_period"
 }
 
 object MassTransitStopValidityPeriod {
