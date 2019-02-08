@@ -31,11 +31,9 @@ class DamagedByThawFiller extends AssetFiller {
 
     def toCurrentYear(period: DatePeriod): DatePeriod = {
       val endDate = period.endDate.get
-      val thisYear = today.getYear
-      val endDateYear = endDate.getYear
-      val difference = thisYear - endDateYear
+      val difference = today.getYear - endDate.getYear
       if(difference > 0)
-        DatePeriod(Some(period.startDate.get.plusYears(difference)), Some(period.endDate.get.plusYears(difference)))
+        DatePeriod(Some(period.startDate.get.plusYears(difference)), Some(endDate.plusYears(difference)))
       else
         period
     }
@@ -48,13 +46,17 @@ class DamagedByThawFiller extends AssetFiller {
       val thisYear = today.getYear
       val endDateYear = endDate.getYear
 
-      val monthDay = DateTimeFormat.forPattern("MM-dd")
+//      val monthDay = DateTimeFormat.forPattern("MM-dd")
 
-      val parsedCurrentDate = monthDay.parseDateTime(today.toString(dateFormat))
-      val parsedEndDate = monthDay.parseDateTime(period.endDate.get.toString(dateFormat))
+//      val parsedCurrentDate = monthDay.parseDateTime(today.toString(dateFormat))
+//      val parsedEndDate = monthDay.parseDateTime(period.endDate.get.toString(dateFormat))
 
-      thisYear - endDateYear > 0 || (thisYear - endDateYear >= 0 && parsedEndDate.isAfter(parsedCurrentDate))
+      thisYear - endDateYear > 0 && endDate.isBefore(today)
+//      thisYear - endDateYear > 0|| (thisYear - endDateYear == 0 && parsedEndDate.isAfter(parsedCurrentDate))
     }
+
+
+//    val numberOfyears = Math.min(thisYear - endDateYear,0)
     //    val (toUpdate, unaffected) = segments.partition { asset =>
     //      asset.value.map(_.asInstanceOf[DynamicValue].value.properties).map { propertyData =>
     //        getProperty(Repetition, propertyData).map(x => x.value) match {
@@ -83,16 +85,28 @@ class DamagedByThawFiller extends AssetFiller {
     }
     def needUpdates(properties: Seq[DynamicProperty]): Boolean = {
       isRepeated(getProperty(Repetition, properties)) &&
-        getProperties(ActivePeriod, properties).forall { period =>
+        getProperties(ActivePeriod, properties).exists { period =>
           needsUpdate(period)
         }
     }
 
-    val (noneNeeded, toUpdate) = assets.partition( asset =>
-      asset.value.map(_.asInstanceOf[DynamicValue].value.properties).forall {
-        propertyData => !needUpdates(propertyData)
+    val (toUpdate, noneNeeded) = assets.partition( asset =>
+      asset.value.map(_.asInstanceOf[DynamicValue].value.properties).exists {
+        propertyData => needUpdates(propertyData)
       }
     )
+
+    val adjustedAssets = toUpdate.map { asset =>
+      asset.copy( value = Some(DynamicValue(DynamicAssetValue(asset.value.get.asInstanceOf[DynamicValue].value.properties.map {prop =>
+          if (prop.publicId == ActivePeriod) {
+            val pp = prop.values.map { x =>
+              toCurrentYear(x.value.asInstanceOf[DatePeriod]).asInstanceOf[DynamicPropertyValue]
+            }
+            prop.copy(values = pp)
+          } else prop
+
+      }))))
+    }
 
 //    val tester = assets.map { asset =>
 //      val assetValues = asset.value.map(_.asInstanceOf[DynamicValue].value.properties)
@@ -166,6 +180,6 @@ class DamagedByThawFiller extends AssetFiller {
 
 
 
-    (assets, changeSet)
+    (adjustedAssets ++ noneNeeded, changeSet)
   }
 }
