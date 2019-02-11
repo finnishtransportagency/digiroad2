@@ -383,8 +383,6 @@ object DatePeriodValue {
   }
 }
 
-
-
 object ValidityPeriodValue {
   def fromMap(map: Map[String, Any]): ValidityPeriodValue = {
     ValidityPeriodValue(

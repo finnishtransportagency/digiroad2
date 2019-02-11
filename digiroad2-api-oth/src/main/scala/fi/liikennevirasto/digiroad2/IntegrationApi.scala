@@ -250,7 +250,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case Prohibition.typeId => prohibitionService
         case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
         case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-        case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
+        case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | DamagedByThaw.typeId =>  dynamicLinearAssetService
         case HeightLimitInfo.typeId => linearHeightLimitService
         case LengthLimit.typeId => linearLengthLimitService
         case WidthLimitInfo.typeId => linearWidthLimitService
@@ -315,6 +315,23 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         }))
 
       defaultMultiValueLinearAssetsMap(massTransitLane) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def damagedByThawToApi( municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val roadsDamagedByThaw = getMultiValueLinearAssetByMunicipality(DamagedByThaw.typeId, municipalityNumber)
+
+    roadsDamagedByThaw.map { roadDamagedByThaw =>
+      val roadDamagedByThawProps = roadDamagedByThaw.value.asInstanceOf[DynamicValue].value.properties
+      val dynamicMultiValueLinearAssetsMap =
+        Map("spring_thaw_period" -> roadDamagedByThawProps.find(_.publicId == "spring_thaw_period").map(_.asInstanceOf[Map[String, Any]]).map(DatePeriodValue.fromMap).map {
+          period => Map("startDate" -> period.startDate, "endDate" -> period.endDate )
+        },
+          "annual_repetition" -> roadDamagedByThawProps.find(_.publicId == "annual_repetition").asInstanceOf[Boolean],
+          "value" -> roadDamagedByThawProps.find(_.publicId == "kelirikko").asInstanceOf[String].toInt
+        )
+
+      defaultMultiValueLinearAssetsMap(roadDamagedByThaw) ++ dynamicMultiValueLinearAssetsMap
     }
   }
 
@@ -734,7 +751,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "hazardous_material_transport_prohibitions" => linearAssetsToApi(HazmatTransportProhibition.typeId, municipalityNumber)
         case "number_of_lanes" => linearAssetsToApi(NumberOfLanes.typeId, municipalityNumber)
         case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
-        case "roads_affected_by_thawing" => linearAssetsToApi(DamagedByThaw.typeId, municipalityNumber)
+        case "roads_affected_by_thawing" => damagedByThawToApi(municipalityNumber)
         case "widths" => linearAssetsToApiWithInformationSource(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
         case "paved_roads" => linearAssetsToApiWithInformationSource(pavedRoadService.getByMunicipality(PavedRoad.typeId, municipalityNumber))
         case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
