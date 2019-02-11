@@ -6,8 +6,8 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 class DamagedByThawService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl, eventBusImpl) {
   override def assetFiller: AssetFiller = new DamagedByThawFiller
-  override def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = {
 
+  override def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = {
     val assetIds = persistedLinearAsset.map(_.id)
     if (assetIds.nonEmpty) {
       val properties = dynamicLinearAssetDao.getDatePeriodPropertyValue(assetIds.toSet, persistedLinearAsset.head.typeId)

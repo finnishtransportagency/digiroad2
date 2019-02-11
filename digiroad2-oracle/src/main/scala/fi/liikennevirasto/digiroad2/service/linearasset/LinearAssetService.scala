@@ -701,6 +701,12 @@ trait LinearAssetOperations {
       changeSet.adjustedSideCodes.foreach { adjustment =>
         adjustedSideCode(adjustment)
       }
+
+      if(changeSet.valueAdjustments.nonEmpty)
+        logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
+      changeSet.valueAdjustments.foreach { adjustment =>
+        updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+      }
     }
   }
 

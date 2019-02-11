@@ -335,7 +335,7 @@ object Queries {
   def deleteDatePeriodProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from date_period_value where asset_id = $assetId and property_id = $propertyId"
 
-  def insertDatePeriodProperty(assetId: Long, propertyId: Long, datePeriod: DatePeriod) = {
+  def insertDatePeriodProperty(assetId: Long, propertyId: Long, datePeriod: DatePeriodValue) = {
     sqlu"""
       insert into date_period_value(id, property_id, asset_id, start_date, end_date)
       values (primary_key_seq.nextval, $propertyId, $assetId, ${datePeriod.startDate}, ${datePeriod.endDate})

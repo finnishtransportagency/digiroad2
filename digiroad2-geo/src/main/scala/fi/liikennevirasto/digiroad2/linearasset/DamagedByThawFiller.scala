@@ -1,17 +1,14 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.Asset.DatePropertyFormat
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, ValueAdjustment}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 
 class DamagedByThawFiller extends AssetFiller {
   val ActivePeriod = "spring_thaw_period"
   val Repetition = "annual_repetition"
-  val todayString: String = DateTime.now().toString(DatePropertyFormat)
-  val today = DateTime.now()
-  val dateFormat = "MM-dd"
+  private val today = DateTime.now()
 
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
@@ -22,69 +19,30 @@ class DamagedByThawFiller extends AssetFiller {
       }
     }
 
-    def getProperty(publicId: String, propertyData: Seq[DynamicProperty]): Option[DynamicPropertyValue] = {
-      propertyData.find(p => p.publicId == publicId) match {
-        case Some(props) => props.values.headOption
-        case _ => None
-      }
-    }
-
-    def toCurrentYear(period: DatePeriod): DatePeriod = {
+    def toCurrentYear(period: DatePeriodValue): DatePeriodValue = {
       val endDate = period.endDate.get
       val difference = today.getYear - endDate.getYear
-      if(difference > 0)
-        DatePeriod(Some(period.startDate.get.plusYears(difference)), Some(endDate.plusYears(difference)))
+      if(difference == 0)
+        DatePeriodValue(Some(period.startDate.get.plusYears(1)), Some(endDate.plusYears(1)))
       else
-        period
+        DatePeriodValue(Some(period.startDate.get.plusYears(difference)), Some(endDate.plusYears(difference)))
     }
 
     def needsUpdate(value: DynamicPropertyValue): Boolean = {
-
-      val period = value.value.asInstanceOf[DatePeriod]
-
+      val period = value.value.asInstanceOf[DatePeriodValue]
       val endDate = period.endDate.get
       val thisYear = today.getYear
       val endDateYear = endDate.getYear
 
-//      val monthDay = DateTimeFormat.forPattern("MM-dd")
-
-//      val parsedCurrentDate = monthDay.parseDateTime(today.toString(dateFormat))
-//      val parsedEndDate = monthDay.parseDateTime(period.endDate.get.toString(dateFormat))
-
-      thisYear - endDateYear > 0 && endDate.isBefore(today)
-//      thisYear - endDateYear > 0|| (thisYear - endDateYear == 0 && parsedEndDate.isAfter(parsedCurrentDate))
+      thisYear - endDateYear >= 0 && endDate.isBefore(today)
     }
 
-
-//    val numberOfyears = Math.min(thisYear - endDateYear,0)
-    //    val (toUpdate, unaffected) = segments.partition { asset =>
-    //      asset.value.map(_.asInstanceOf[DynamicValue].value.properties).map { propertyData =>
-    //        getProperty(Repetition, propertyData).map(x => x.value) match {
-    //          case Some(checked) => if (checked.equals("1")) {
-    //            val periods = getProperties(ActivePeriod, propertyData)
-    //            periods.map { period =>
-    //              if (inPeriod(period))
-    //                period.copy(toCurrentYear(period.value.asInstanceOf[DatePeriod]))
-    //              else
-    //                period
-    //            }
-    //          }
-    //          case _ => propertyData
-    //        }
-    //      }
-    //
-    //      true
-    //    }
-
-    //    val box2 = assetValues.find(x => x.find(_.publicId == Repetition))
-    //    val box = assetValues.map(x => x.find(_.publicId == Repetition))
-    //val periodi =
-
-    def isRepeated(checkbox: Option[DynamicPropertyValue]): Boolean = {
+    def isRepeated(checkbox: Seq[DynamicPropertyValue]): Boolean = {
       checkbox.exists(x => x.value.asInstanceOf[String].equals("1"))
     }
+
     def needUpdates(properties: Seq[DynamicProperty]): Boolean = {
-      isRepeated(getProperty(Repetition, properties)) &&
+      isRepeated(getProperties(Repetition, properties)) &&
         getProperties(ActivePeriod, properties).exists { period =>
           needsUpdate(period)
         }
@@ -97,89 +55,18 @@ class DamagedByThawFiller extends AssetFiller {
     )
 
     val adjustedAssets = toUpdate.map { asset =>
-      asset.copy( value = Some(DynamicValue(DynamicAssetValue(asset.value.get.asInstanceOf[DynamicValue].value.properties.map {prop =>
+      asset.copy(value = Some(DynamicValue(DynamicAssetValue(asset.value.get.asInstanceOf[DynamicValue].value.properties.map { prop =>
           if (prop.publicId == ActivePeriod) {
-            val pp = prop.values.map { x =>
-              toCurrentYear(x.value.asInstanceOf[DatePeriod]).asInstanceOf[DynamicPropertyValue]
-            }
-            prop.copy(values = pp)
+            prop.copy(values = prop.values.map { period =>
+              if(needsUpdate(period))
+                DynamicPropertyValue(DatePeriodValue.toMap(period.value.asInstanceOf[DatePeriodValue]))
+              else
+                period
+            })
           } else prop
-
-      }))))
+      }))), modifiedBy = Some(AutoGeneratedValues.annualUpdate))
     }
 
-//    val tester = assets.map { asset =>
-//      val assetValues = asset.value.map(_.asInstanceOf[DynamicValue].value.properties)
-//      val assetProperties = assetValues.map { propertyData =>
-//        getProperty(Repetition, propertyData).map(x => x.value) match {
-//          case Some(checked) => if(checked.equals("1")) {
-//            val periods = getProperties(ActivePeriod, propertyData)
-//            val periods1 = periods.map { period =>
-//              if(inPeriod(period))
-//                period.copy(toCurrentYear(period.value.asInstanceOf[DatePeriod]))
-//              else
-//                period
-//            }
-//            periods1
-//          }
-//          case _ => propertyData
-//        }
-//      }
-//      1
-//    }
-
-
-    //    val tester = segments.map { asset =>
-    //      val assetValues = asset.value.map(_.asInstanceOf[DynamicValue].value.properties)
-    //      val assetProperties = assetValues.map { propertyData =>
-    //        getProperty(Repetition, propertyData).map(x => x.value) match {
-    //          case Some(checked) => if(checked.equals("1")) {
-    //            val periods = getProperties(ActivePeriod, propertyData)
-    //            val adjustedPeriods = periods.map { period =>
-    //              if(inPeriod(period)){
-    //                val newPeriod = period.copy(annualCorrection(period))
-    //                val check = 1
-    //              }
-    //              else
-    //                period
-    //            }
-    //          }
-    //          case _ => assetValues
-    //        }
-    //      }
-    //    }
-
-    //    val tester = segments.map { asset =>
-    //      val assetValues = asset.value.map(_.asInstanceOf[DynamicValue].value.properties)
-    //      val assetProperties = assetValues.map { propertyData =>
-    //        val periods = getProperties(ActivePeriod, propertyData)
-    //        val checkBox = getProperty(Repetition, propertyData).map(x => x.value).get
-    //        val adjustedPeriods = periods.map { period =>
-    //          if(inPeriod(period) && checkBox.equals("1")){
-    //            val newPeriod = period.copy(annualCorrection(period))
-    //            val check = 1
-    //          }
-    //          else
-    //            period
-    //        }
-    //      }
-    //    }
-
-    //    segments.map { asset =>
-    //      asset.copy(value = asset.value.map(_.asInstanceOf[DynamicValue].value.properties).map { prop =>
-    //        getProperties(DatePeriod, prop)} match {
-    //        case Some(properties) => properties.map(x =>
-    //          if(inPeriod(x))
-    //            annualCorrection(x)
-    //        case _ => asset.value
-    //     )
-    //    )
-    //  }
-
-
-
-
-
-    (adjustedAssets ++ noneNeeded, changeSet)
+    (adjustedAssets ++ noneNeeded, changeSet.copy(valueAdjustments = changeSet.valueAdjustments ++ adjustedAssets.map {asset => ValueAdjustment(asset)}))
   }
 }

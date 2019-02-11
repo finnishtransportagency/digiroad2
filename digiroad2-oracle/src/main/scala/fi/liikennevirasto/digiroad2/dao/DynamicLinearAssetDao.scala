@@ -256,9 +256,11 @@ class DynamicLinearAssetDao {
 
         if (propertyValues.nonEmpty) {
           propertyValues.distinct.foreach { propertyValue =>
-            val dates = propertyValue.value.asInstanceOf[Map[String, String]]
-            val datePeriod = DatePeriod(Some(dateFormatter.parseDateTime(dates.head._2)), Some(dateFormatter.parseDateTime(dates.head._2)))
-            insertDatePeriodProperty(assetId, propertyId, datePeriod).execute
+            val dates = propertyValue.value.asInstanceOf[Map[String, Any]]
+            val period = DatePeriodValue.fromMap(dates)
+//            val datePeriod = DatePeriod(Some(dateFormatter.parseDateTime(dates.head._2)), Some(dateFormatter.parseDateTime(dates.head._2)))
+//            val datePeriod: DatePeriodValue = propertyValue.value.asInstanceOf[DatePeriodValue]
+            insertDatePeriodProperty(assetId, propertyId, period).execute
           }
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
@@ -410,8 +412,8 @@ class DynamicLinearAssetDao {
       val publicId = r.nextString
       val propertyType = r.nextString
       val required = r.nextBoolean
-      val value = DatePeriod(r.nextTimestampOption().map(timestamp => new DateTime(timestamp)), r.nextTimestampOption().map(timestamp => new DateTime(timestamp)))
-      DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
+      val value = DatePeriodValue(r.nextTimestampOption().map(timestamp => new DateTime(timestamp)), r.nextTimestampOption().map(timestamp => new DateTime(timestamp)))
+      DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(DatePeriodValue.toMap(value)))
     }
   }
 
