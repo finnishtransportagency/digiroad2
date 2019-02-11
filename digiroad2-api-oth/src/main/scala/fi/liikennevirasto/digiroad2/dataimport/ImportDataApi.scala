@@ -67,7 +67,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
   }
 
-  post("/roadlinks") {
+  post("/roadLinks") {
     if (!user.isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }

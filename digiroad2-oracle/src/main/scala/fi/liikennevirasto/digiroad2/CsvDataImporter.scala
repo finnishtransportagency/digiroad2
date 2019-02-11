@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Mea
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriClientException, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
@@ -23,6 +23,7 @@ import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import java.io.InputStreamReader
+
 import scala.util.Try
 
 sealed trait Status {
@@ -96,9 +97,9 @@ trait CsvDataImporterOperations {
   val logInfo : String
 
   def mappingContent(result: ImportResultData): String  = {
-    val excludedResult = result.excludedRows.map{rows => "<ul>" + rows.affectedRows.mkString(";") ->  rows.csvRow + "</ul>"}
-    val incompleteResult = result.incompleteRows.map{ rows=> "<ul>" + rows.missingParameters.mkString(";") -> rows.csvRow + "</ul>"}
-    val malformedResult = result.malformedRows.map{ rows => "<ul>" + rows.malformedParameters.mkString(";") -> rows.csvRow + "</ul>"}
+    val excludedResult = result.excludedRows.map{rows => "<li>" + rows.affectedRows ->  rows.csvRow + "</li>"}
+    val incompleteResult = result.incompleteRows.map{ rows=> "<li>" + rows.missingParameters.mkString(";") -> rows.csvRow + "</li>"}
+    val malformedResult = result.malformedRows.map{ rows => "<li>" + rows.malformedParameters.mkString(";") -> rows.csvRow + "</li>"}
 
     s"<ul> excludedLinks: ${excludedResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
     s"<ul> incompleteRows: ${incompleteResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
@@ -165,7 +166,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
   case class NotImportedData(reason: String, csvRow: String)
-  case class CsvAssetRowAndRoadLink(properties: CsvAssetRow, roadLink: Seq[VVHRoadlink], enrichedRoadLink: Seq[RoadLink] = Seq())
+  case class CsvAssetRowAndRoadLink(properties: CsvAssetRow, roadLink: Seq[VVHRoadlink])
 
   case class ImportResultTrafficSign(incompleteRows: List[IncompleteRow] = Nil,
                           malformedRows: List[MalformedRow] = Nil,
@@ -269,7 +270,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
         if(roadLinks.isEmpty) {
-          (List(s"Unauthorized Municipality Or nonexistent RoadLind near of Asset"), Seq())
+          (List(s"Unauthorized Municipality or nonexistent RoadLind near the asset"), Seq())
         } else
           (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
       case _ =>
@@ -342,7 +343,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User): Seq[AdditionalPanelInfo] = {
+  def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultTrafficSign ): ImportResultTrafficSign = {
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val properties = trafficSignAttribute.properties
@@ -373,15 +374,15 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.geometry)
 
-      CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.nonEmpty)
+      (properties, CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.nonEmpty))
     }
 
-    val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
+    val (additionalPanelInfo, trafficSignInfo) = signs.partition{ case(_, sign) =>
       TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
 
-    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat)))}.toSet
+    val additionalPanels = additionalPanelInfo.map {case (csvRow, panel) => (csvRow, AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat))))}.toSet
 
-    val usedAdditionalPanels = trafficSignInfo.flatMap { sign =>
+    val usedAdditionalPanels = trafficSignInfo.flatMap { case (csvRow, sign) =>
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(sign.lon, sign.lat), sign.roadLink.geometry)
       val bearing = if(sign.bearing.isEmpty && !sign.isFloating)
         Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue), Some(sign.roadLink.length)))
@@ -389,15 +390,24 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         sign.bearing
 
       val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
-      val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels)
+      val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels.map(_._2))
 
       if (filteredAdditionalPanel.size <= 3) {
         val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
-        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, bearing), sign.roadLink, user.username, sign.isFloating)
-        filteredAdditionalPanel
+        try {
+          trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, bearing), sign.roadLink, user.username, sign.isFloating)
+        } catch {
+          case ex: NoSuchElementException => NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(csvRow.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap))
+        }
+          filteredAdditionalPanel
       } else Seq()
     }
-    additionalPanels.filterNot(usedAdditionalPanels.toSet).toSeq
+
+    val x = additionalPanels.filterNot{ panel => usedAdditionalPanels.contains(panel._2)}.toSeq.map { notImportedAdditionalPanel =>
+      NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(notImportedAdditionalPanel._1.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap))
+    }
+
+    result.copy(notImportedData = x.toList ++ result.notImportedData)
   }
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, municipalitiesToExpire: Seq[Int]) : Unit = {
@@ -409,7 +419,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case ImportResultTrafficSign(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
           val content = mappingContent(result) +
-            s"<ul>notImportedData: </ul> ${result.notImportedData.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}"
+            s"<ul>notImportedData: ${result.notImportedData.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}</ul>"
           update(logId, Status.NotOK, Some(content))
       }
     } catch {
@@ -455,19 +465,12 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
             createdData = parsedRowAndRoadLink match {
               case Nil => result.createdData
               case parameters =>
-                CsvAssetRowAndRoadLink(properties = parameters.head.properties, roadLink = parameters.head.roadLink, enrichedRoadLink = parameters.head.enrichedRoadLink) :: result.createdData
+                CsvAssetRowAndRoadLink(properties = parameters.head.properties, roadLink = parameters.head.roadLink) :: result.createdData
             })
         }
       }
 
-      val notImportedAdditionalPanel = createTrafficSigns(result.createdData, user)
-      val resultWithExcluded  = result.copy(notImportedData = notImportedAdditionalPanel.map{notImported =>
-        NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x: ${notImported.position.get.x}, koordinaatti y: ${notImported.position.get.y}, liikennevirran suunta: ${notImported.validityDirection}, " +
-          s"liikennemerkin tyyppi: ${TrafficSignType.applyOTHValue(trafficSignService.getProperty(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt).TRvalue}, " +
-          s"arvo: ${trafficSignService.getProperty(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}, " +
-          s"lisätieto: ${trafficSignService.getProperty(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
-      }.toList ::: result.notImportedData)
-      resultWithExcluded
+      createTrafficSigns(result.createdData, user, result)
       }
     }
 }
@@ -611,6 +614,8 @@ override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   }
 
   def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
+
+
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
   }
 
@@ -623,7 +628,7 @@ override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
         case ImportResultRoadLink(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
         case _ =>
           val content = mappingContent(result) +
-          s"<ul>nonExistingAssets: </ul> ${result.nonUpdatedLinks.map{ rows => "<li>" + rows.linkId -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}"
+          s"<ul>nonExistingAssets: ${result.nonUpdatedLinks.map{ rows => "<li>" + rows.linkId -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}</ul>"
           update(logId, Status.NotOK, Some(content))
       }
     } catch {
@@ -848,10 +853,12 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
 
     case class NonExistingAsset(externalId: Long, csvRow: String)
+    case class GenericException(reason: String, csvRow: String)
     case class ImportResultMassTransitStop(nonExistingAssets: List[NonExistingAsset] = Nil,
-                            incompleteRows: List[IncompleteRow] = Nil,
-                            malformedRows: List[MalformedRow] = Nil,
-                            excludedRows: List[ExcludedRow] = Nil) extends ImportResult
+                                           incompleteRows: List[IncompleteRow] = Nil,
+                                           malformedRows: List[MalformedRow] = Nil,
+                                           excludedRows: List[ExcludedRow] = Nil,
+                                           genericExceptionRows: List[GenericException] = Nil) extends ImportResult
 
   class AssetNotFoundException(externalId: Long) extends RuntimeException
   case class CsvAssetRow(externalId: Long, properties: Seq[AssetProperty])
@@ -1042,10 +1049,11 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       try {
         val result = processing(inputStream, user, roadTypeLimitations)
         result match {
-          case ImportResultMassTransitStop(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
+          case ImportResultMassTransitStop(Nil, Nil, Nil, Nil, Nil) => update(logId, Status.OK)
           case _ =>
             val content = mappingContent(result) +
-              s"<ul>nonExistingAssets: </ul> ${result.nonExistingAssets.map{ rows => "<li>" + rows.externalId -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}"
+              s"<ul>nonExistingAssets: ${result.nonExistingAssets.map{ rows => "<li>" + rows.externalId -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}</ul>" +
+              s"<ul>clientExceptions: ${result.genericExceptionRows.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}</ul>"
             update(logId, Status.NotOK, Some(content))
         }
       } catch {
@@ -1073,6 +1081,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
           result.copy(excludedRows = excludedRows ::: result.excludedRows)
         } catch {
           case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
+          case ex: Exception => result.copy(genericExceptionRows = GenericException(reason = ex.getMessage(),csvRow = rowToString(row)) :: result.genericExceptionRows)
         }
       } else {
         result.copy(
