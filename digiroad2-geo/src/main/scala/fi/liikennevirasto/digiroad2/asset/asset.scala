@@ -379,7 +379,10 @@ object DatePeriodValue {
   }
 
   def getPropertyValuesByKey(property: String, mapValue: Map[String, Any]): Option[DateTime] = {
-    Some(formatter.parseDateTime(mapValue(property).asInstanceOf[String]))
+    mapValue(property) match {
+      case Some(x) => Some(formatter.parseDateTime(x.toString))
+      case _ => None
+    }
   }
 }
 
