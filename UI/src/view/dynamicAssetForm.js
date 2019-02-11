@@ -606,7 +606,7 @@
         DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = field.publicId;
-        var addedElement = '';
+        var elementNumber = 0;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
             var buttons = '<div class="form-group date-time-period-buttons">' +
@@ -616,7 +616,7 @@
 
              var handleButton = function() {
                  var $element = me.element;
-                if ($element.find('.new-date-period').length > 1) {
+                if ($element.find('.existing-date-period').length > 1) {
                     $element.find('.add-period').css('visibility', 'hidden');
                     $element.find('.remove-period').css('visibility', 'visible');
                 }else {
@@ -631,7 +631,7 @@
             };
 
             me.getValue = function() {
-                var periodElements = me.element.find('.new-date-period');
+                var periodElements = me.element.find('.existing-date-period');
                 return _.map(periodElements, function (element) {
                     return { value: {
                             startDate: $(element).find('.'+className+'-start').val(),
@@ -640,17 +640,16 @@
                 });
             };
 
-            var someValue = _.head(fieldValue, function(values) { return values.value ; });
-            var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
+            var addDatePickers = function (elementNumber) {
+                var $startDate = me.element.find('#datePeriod-start' + elementNumber);
+                var $endDate = me.element.find('#datePeriod-end' + elementNumber);
 
-            var addDatePickers = function (className, html) {
-                html.find('.'+className).each( function() {
-                    dateutil.addDependentDatePicker($(this));
-                });
+                dateutil.addDependentDatePickers($startDate, $endDate);
             };
 
             var inputLabel = function(type, value) {
-                return $('<input type="text" ' + me.disabled() + '/>').addClass( className+addedElement + ' form-control ' + className+'-'+type)
+                return $('<input type="text" ' + me.disabled() + '/>').addClass( className + ' form-control ' + className+'-'+type)
+                    .attr('id', 'datePeriod-'+type+elementNumber)
                     .attr('required', me.required())
                     .attr('placeholder',"pp.kk.vvvv")
                     .attr('fieldType', fieldValue.type)
@@ -685,8 +684,9 @@
             }
 
             function createPeriodElement(period) {
-               return $(''+
-                    '<li class="form-group new-date-period">')
+                elementNumber = elementNumber + 1;
+               return $('' +
+                    '<li class="form-group existing-date-period">')
                     .append(inputLabel('start', period ? period.startDate : undefined))
                     .append('<span class="date-separator"> - </span>')
                     .append(inputLabel('end', period ? period.endDate : undefined))
@@ -704,7 +704,9 @@
 
 
             me.element = $(template({existingDatePeriodElements: existingDatePeriodElements}));
-            addDatePickers(className, me.element);
+            for (var elementNumb = 1; elementNumb <= elementNumber; elementNumb++) {
+                addDatePickers(elementNumb);
+            }
 
             me.element.on('click', '.remove-period', function(event) {
                 $(event.target).parent().parent().remove();
@@ -713,14 +715,13 @@
                 handleButton();
             });
 
-            me.element.on('change', '.'+className, function() {
+            me.element.on('change', '.existing-date-period', function() {
                 me.setSelectedValue(setValue, getValue);
             });
 
             me.element.on('click', '.add-period', function() {
-               addedElement= addedElement + 1;
                $(event.target).closest('.date-time-period-group ul').append(createPeriodElement()[0].outerHTML);
-                addDatePickers(className+addedElement.toString(), me.element);
+                addDatePickers(elementNumber);
                 handleButton();
             });
 

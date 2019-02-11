@@ -73,6 +73,33 @@
     }
   };
 
+  dateutil.addDependentDatePickers = function (fromElement, toElement) {
+    var fromDateString = function (s) {
+      return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
+    };
+    var startDate = fromDateString(fromElement.val());
+    var endDate = fromDateString(toElement.val());
+    var datePickers;
+    var fromCallback = function () {
+      datePickers.endDate.setMinDate(datePickers.startDate.getDate());
+      fromElement.trigger('datechange');
+    };
+    var toCallback = function () {
+      datePickers.startDate.setMaxDate(datePickers.endDate.getDate());
+      toElement.trigger('datechange');
+    };
+    datePickers = {
+      startDate: dateutil.addNullableFinnishDatePicker(fromElement, fromCallback),
+      endDate: dateutil.addNullableFinnishDatePicker(toElement, toCallback)
+    };
+    if (startDate) {
+      datePickers.startDate.setMaxDate(endDate);
+    }
+    if (endDate) {
+      datePickers.endDate.setMinDate(startDate);
+    }
+  };
+
   dateutil.addDependentDatePicker = function (dateElement) {
     var fromDateString = function (s) {
       return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
