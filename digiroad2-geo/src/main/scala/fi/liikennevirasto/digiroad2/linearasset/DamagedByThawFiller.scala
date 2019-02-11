@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, ValueAdjustment}
 import org.joda.time.DateTime
@@ -29,7 +28,7 @@ class DamagedByThawFiller extends AssetFiller {
     }
 
     def needsUpdate(value: DynamicPropertyValue): Boolean = {
-      val period = value.value.asInstanceOf[DatePeriodValue]
+      val period = DatePeriodValue.fromMap(value.value.asInstanceOf[Map[String, Any]])
       val endDate = period.endDate.get
       val thisYear = today.getYear
       val endDateYear = endDate.getYear
@@ -59,7 +58,7 @@ class DamagedByThawFiller extends AssetFiller {
           if (prop.publicId == ActivePeriod) {
             prop.copy(values = prop.values.map { period =>
               if(needsUpdate(period))
-                DynamicPropertyValue(DatePeriodValue.toMap(period.value.asInstanceOf[DatePeriodValue]))
+                DynamicPropertyValue(DatePeriodValue.toMap(toCurrentYear(DatePeriodValue.fromMap(period.value.asInstanceOf[Map[String, Any]]))))
               else
                 period
             })
