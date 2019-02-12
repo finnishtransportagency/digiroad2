@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset
 
+import java.time.LocalDate
+
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
@@ -365,22 +367,22 @@ case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
-case class DatePeriodValue(startDate: Option[DateTime], endDate: Option[DateTime])
+case class DatePeriodValue(startDate: String, endDate: String)
 object DatePeriodValue {
-  val formatter = ISODateTimeFormat.dateOptionalTimeParser()
-  def fromMap(map: Map[String, Any]): DatePeriodValue = {
+  val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+  def fromMap(map: Map[String, String]): DatePeriodValue = {
     DatePeriodValue(
-      getPropertyValuesByKey("startDate", map),
-      getPropertyValuesByKey("endDate", map))
+      getPropertyValuesByKey("startDate", map).get,
+      getPropertyValuesByKey("endDate", map).get)
   }
-  def toMap(period: DatePeriodValue): Map[String, Any] = {
+  def toMap(period: DatePeriodValue): Map[String, String] = {
     Map("startDate" -> period.startDate,
-    "endDate" -> period.endDate)
+        "endDate" -> period.endDate)
   }
 
-  def getPropertyValuesByKey(property: String, mapValue: Map[String, Any]): Option[DateTime] = {
-    mapValue(property) match {
-      case Some(x) => Some(formatter.parseDateTime(x.toString))
+  def getPropertyValuesByKey(property: String, mapValue: Map[String, String]): Option[String] = {
+    mapValue.get(property) match {
+      case Some(x) => Some(x.toString)
       case _ => None
     }
   }

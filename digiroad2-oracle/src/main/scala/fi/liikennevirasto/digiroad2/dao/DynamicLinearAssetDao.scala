@@ -256,11 +256,9 @@ class DynamicLinearAssetDao {
 
         if (propertyValues.nonEmpty) {
           propertyValues.distinct.foreach { propertyValue =>
-            val dates = propertyValue.value.asInstanceOf[Map[String, Any]]
+            val dates = propertyValue.value.asInstanceOf[Map[String, String]]
             val period = DatePeriodValue.fromMap(dates)
-//            val datePeriod = DatePeriod(Some(dateFormatter.parseDateTime(dates.head._2)), Some(dateFormatter.parseDateTime(dates.head._2)))
-//            val datePeriod: DatePeriodValue = propertyValue.value.asInstanceOf[DatePeriodValue]
-            insertDatePeriodProperty(assetId, propertyId, period).execute
+            insertDatePeriodProperty(assetId, propertyId, dateFormatter.parseDateTime(period.startDate), dateFormatter.parseDateTime(period.endDate)).execute
           }
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
@@ -369,7 +367,7 @@ class DynamicLinearAssetDao {
     val assets = MassQuery.withIds (ids) {
       idTableName =>
         sql"""
-          select dp.asset_id, p.public_id, p.property_type, p.required, dp.start_date, dp.end_date
+          select dp.asset_id, p.public_id, p.property_type, p.required, to_char(dp.start_date, 'DD.MM.YYYY'), to_char(dp.end_date, 'DD.MM.YYYY')
           from date_period_value dp
           join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
           join #$idTableName i on i.id = dp.asset_id
@@ -412,7 +410,7 @@ class DynamicLinearAssetDao {
       val publicId = r.nextString
       val propertyType = r.nextString
       val required = r.nextBoolean
-      val value = DatePeriodValue(r.nextTimestampOption().map(timestamp => new DateTime(timestamp)), r.nextTimestampOption().map(timestamp => new DateTime(timestamp)))
+      val value = DatePeriodValue(r.nextString, r.nextString)
       DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(DatePeriodValue.toMap(value)))
     }
   }

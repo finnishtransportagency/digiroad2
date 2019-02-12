@@ -610,8 +610,8 @@
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
             var buttons = '<div class="form-group date-time-period-buttons">' +
-                '<button class="btn edit-only editable btn-secondary add-period"' + me.disabled() +' >Uusi lisäkilpi</button>' +
-                '<button class="btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista lisäkilpi</button>'+
+                '<button class="btn edit-only editable btn-secondary add-period"' + me.disabled() +' >Lisää kausi</button>' +
+                '<button class="btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista kausi</button>'+
                 '</div>';
 
              var handleButton = function() {
@@ -678,9 +678,7 @@
                     .join('');
 
             function datePeriodElement(periods) {
-                return _.map(periods, function (period) {
-                    return createPeriodElement(period)[0].outerHTML;
-                }).join('');
+                return createPeriodElement(periods)[0].outerHTML;
             }
 
             function createPeriodElement(period) {
@@ -751,7 +749,7 @@
 
         me.viewModeRender = function (field, currentValue) {
             var datePeriodTable = _.map(currentValue, function(values) {
-                return _.map(values.value, function(period){ return '' +
+                return _.map(values, function(period){ return '' +
                     '<li>' + period.startDate + " - " + period.endDate + '</li>';}).join('');
             }).join('');
 

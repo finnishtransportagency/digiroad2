@@ -326,13 +326,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       val dynamicMultiValueLinearAssetsMap =
         roadDamagedByThaw.value.map(_.asInstanceOf[DynamicValue]) match {
           case Some(value) => val roadDamagedByThawProps = value.value.properties
-            val first = roadDamagedByThawProps.find(_.publicId == "spring_thaw_period")
-            val second = first.map(x => x.values)
-            Map("spring_thaw_period" -> roadDamagedByThawProps.find(_.publicId == "spring_thaw_period").map(x => x.values.map(y => DatePeriodValue.fromMap(y.value.asInstanceOf[Map[String, Any]])).map {
+            Map("spring_thaw_period" -> roadDamagedByThawProps.find(_.publicId == "spring_thaw_period").map(_.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).map {
               period => Map("startDate" -> period.startDate, "endDate" -> period.endDate )
             }),
-              "annual_repetition" -> roadDamagedByThawProps.find(_.publicId == "annual_repetition").map(x => x.values.map(_.value.toString.toInt)), //funciona
-              "value" -> roadDamagedByThawProps.find(_.publicId == "kelirikko").map(x => x.values.map(_.value.toString.toInt) //funciona
+              "annual_repetition" -> roadDamagedByThawProps.find(_.publicId == "annual_repetition").map(_.values.map(_.value.toString.toInt)),
+              "value" -> roadDamagedByThawProps.find(_.publicId == "kelirikko").map(_.values.map(_.value.toString.toInt)
               ))
           case _ => Map()
         }
@@ -340,21 +338,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-//  def damagedByThawToApi( municipalityNumber: Int): Seq[Map[String, Any]] = {
-//    val roadsDamagedByThaw = getMultiValueLinearAssetByMunicipality(DamagedByThaw.typeId, municipalityNumber)
-//
-//    roadsDamagedByThaw.map { roadDamagedByThaw =>
-//      val dynamicMultiValueLinearAssetsMap =
-//        Map("spring_thaw_period" -> roadDamagedByThawProps.find(_.publicId == "spring_thaw_period").map(_.asInstanceOf[Map[String, Any]]).map(DatePeriodValue.fromMap).map {
-//          period => Map("startDate" -> period.startDate, "endDate" -> period.endDate )
-//        },
-//          "annual_repetition" -> roadDamagedByThawProps.find(_.publicId == "annual_repetition").asInstanceOf[Boolean],
-//          "value" -> roadDamagedByThawProps.find(_.publicId == "kelirikko").asInstanceOf[String].toInt
-//        )
-//
-//      defaultMultiValueLinearAssetsMap(roadDamagedByThaw) ++ dynamicMultiValueLinearAssetsMap
-//    }
-//  }
 
   private def bogieWeightLimitsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val bogieWeightLimits = getMultiValueLinearAssetByMunicipality(BogieWeightLimit.typeId, municipalityNumber)
