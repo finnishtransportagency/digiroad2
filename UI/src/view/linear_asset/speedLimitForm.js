@@ -119,8 +119,11 @@
        }
       else {
         $('ul[class=information-content]').append('' +
-          '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet Lista</button></li>' +
-          '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
+          '   <li class="log-info"><p class="wrong-speed-limits-log-info"> Laatuvirheet</p></li>' +
+          '   <li><button id="work-list-link-municipality" class="wrong-speed-limits-municipality" onclick=location.href="#work-list/speedLimitErrors/municipality">Kunnan Omistama</button></li>' +
+          '   <li><button id="work-list-link-state" class="wrong-speed-limits-state" onclick=location.href="#work-list/speedLimitErrors/state">Valtion Omistama</button></li>'+
+
+          '   <li class="log-info"><p class="unknown-speed-limits-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
           '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan Omistama</button></li>' +
           '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion Omistama</button></li>');
       }

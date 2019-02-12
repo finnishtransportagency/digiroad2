@@ -76,14 +76,17 @@
         color: black;
         width: 100%;
       }
-    }
 
-    .log-info {
-      text-decoration-line: none;
-      color: #a4a4a2;
-      > p {margin: 0;}
+      > p {
+        bottom: 168px;
+        font-size: 13px;
+        z-index: 1011;
+        color: @gray-light;
+        text-decoration-line: none;
+        margin: 0;
+        text-align: left;
+      }
     }
-
   }
 
   .wrapper {
@@ -339,15 +342,7 @@
     text-transform: uppercase;
   }
 
-  p.unknown-speed-limits-state-log-info{
-    position: absolute;
-    right: 10px;
-    bottom: 168px;
-    text-transform: uppercase;
-    font-size: 13px;
-    z-index: 1011;
-    color: @gray-light;
-  }
+
 
   .undefined {
     font-style: italic;

@@ -17,6 +17,7 @@
         var rootElement = $('#feature-attributes');
 
         eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function () {
+            rootElement.find('.information-content').empty();
             if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
                 renderForm(rootElement, selectedAsset, localizedTexts, typeIds, propertiesData, authorizationPolicy);
             }
@@ -46,7 +47,6 @@
         rootElement.find('#feature-attributes-header').html(header);
         rootElement.find('#feature-attributes-form').html('<div class="wrapper">' + form + '</div>');
         rootElement.find('#feature-attributes-footer').html('');
-        rootElement.find('.information-content').empty();
     }
 
     function renderAssetFormElements(selectedAsset, typeId, propertyData) {
