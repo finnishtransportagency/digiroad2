@@ -24,7 +24,7 @@ class DamagedByThawFiller extends AssetFiller {
     }
 
     def dateToString(date: DateTime): String = {
-      new SimpleDateFormat(dateFormat).format(date)
+      date.toString(dateFormat)
     }
 
     def stringToDate(date: String): DateTime = {
