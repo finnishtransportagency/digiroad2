@@ -1065,7 +1065,7 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(roadLink => Seq(Municipality, State).contains(roadLink.administrativeClass)).groupBy(_.linkId)
 
       OracleDatabase.withDynTransaction {
         val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)

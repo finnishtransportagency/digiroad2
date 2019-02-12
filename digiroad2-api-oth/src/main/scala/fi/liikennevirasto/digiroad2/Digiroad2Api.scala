@@ -1293,6 +1293,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/speedLimits/inaccurates") {
+    val adminClass = params.getOrElse("adminClass", halt(BadRequest("Missing mandatory 'adminClass' parameter"))).toString
+    val administrativeClass = if(adminClass == "State") State else Municipality
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
     municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
@@ -1301,7 +1303,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case true =>
         speedLimitService.getInaccurateRecords()
       case false =>
-        speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
+        speedLimitService.getInaccurateRecords(municipalityCode, Set(administrativeClass))
     }
   }
 
