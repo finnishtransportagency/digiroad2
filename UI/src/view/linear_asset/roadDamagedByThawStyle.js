@@ -36,8 +36,8 @@
 
         var diffYear = (!_.isEmpty(annualRepetition) && _.head(annualRepetition).value === 1) ? Math.max((yearNow - yearEndDate), 0) : 0;
         //getMonth() -> January -> 0
-        return  new Date((startDate.getMonth()+1)+'/'+startDate.getDate()+'/'+(startDate.getFullYear()+diffYear))  <= dateNow &&
-            new Date((endDate.getMonth()+1)+'/'+endDate.getDate()+'/'+(yearEndDate+diffYear)) >= dateNow;
+        return  new Date((startDate.getMonth()+1)+'/'+startDate.getDate()+'/'+(startDate.getFullYear()+diffYear)).getTime()  <= new Date(dateNow.setHours(0,0,0,0)) &&
+            new Date((endDate.getMonth()+1)+'/'+endDate.getDate()+'/'+(yearEndDate+diffYear)) >= new Date(dateNow.setHours(0,0,0,0));
       });
     };
 

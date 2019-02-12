@@ -280,11 +280,16 @@
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
         style: new RoadDamagedByThawStyle(),
+        // saveCondition: function (fields) {
+        //   var someDateValue = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'date_period';}), function(dateTime) { return dateTime.hasValue(); });
+        //   var checkBox = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
+        //       return checkBox ? someDateValue : true;
+        // },
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
-            { publicId: 'spring_thaw_period', label: '', type: 'date_period', weight: 2},
-            { publicId: "annual_repetition", label: '', type: 'checkbox', values: [{id: 1, label: 'Jokavuotinen'}, {id: 0, label: 'Ei toistu'}], weight: 3}
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
+            { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 1, label: 'Jokavuotinen'}, {id: 0, label: 'Ei toistu'}], defaultValue: 0, weight: 3}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,

@@ -625,6 +625,7 @@
                 }
             };
 
+
             me.getPropertyValue = function(){
                 var values = me.getValue();
                 return me.createPropertyValue(values);
@@ -639,6 +640,22 @@
                         }};
                 });
             };
+
+            // me.hasValue = function() {
+            //    return _.some(me.getValue(), function (values) {
+            //         var period = values.value;
+            //         return !_.isEmpty(period.startDate) && !_.isEmpty(period.endDate);
+            //     });
+            // };
+            //
+            // me.isValid = function(){
+            //     //both Dates empties or filled
+            //     var bothDates =_.some(me.getValue(), function (values) {
+            //         var period = values.value;
+            //         return !(_.isEmpty(period.startDate) ^ _.isEmpty(period.endDate));
+            //     });
+            //     return bothDates && (!me.isRequired() || me.isRequired() && me.hasValue());
+            // };
 
             var addDatePickers = function (elementNumber) {
                 var $startDate = me.element.find('#datePeriod-start' + elementNumber);
