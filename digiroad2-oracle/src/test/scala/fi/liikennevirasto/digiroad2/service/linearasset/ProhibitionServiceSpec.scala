@@ -26,6 +26,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
+  val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -710,19 +711,77 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  def toRoadLink(l: VVHRoadlink) = {
+    RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
+      l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
+  }
 
-  test("create linear asset according traffic sign without pair on roadlinks with the same name"){
+  test("create linear asset according traffic sign without pair on same road name") {
     runWithRollback {
-      val roadLinkNameA = RoadLink(1000, Seq(Point(10.0, 20.0), Point(30.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(10.0, 20.0), Point(30.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name A"))
+      val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
+        override def withDynTransaction[T](f: => T): T = f
+
+        override def vvhClient: VVHClient = mockVVHClient
+      }
       val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-      val roadLinkNameB2 = RoadLink(1010, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(40.0, 20.0), Point(50.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-      val roadLinkNameB3 = RoadLink(1015, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(50.0, 20.0), Point(60.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
-      val roadLinkNameC = RoadLink(1020, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(60.0, 20.0), Point(70.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name C"))
 
-      val roadLinksSeq = Seq(roadLinkNameA, roadLinkNameB1, roadLinkNameB2, roadLinkNameB3, roadLinkNameC)
+      val vvhRoadLinkNameA = VVHRoadlink(1000, 235, Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
+      val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
+      val vvhRoadLinkNameB2 = VVHRoadlink(1010, 235, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
+      val vvhRoadLinkNameB3 = VVHRoadlink(1015, 235, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
+      val vvhRoadLinkNameC = VVHRoadlink(1020, 235, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name C"))
 
-      val trafficSignId = trafficSignService.create(IncomingTrafficSign(32, 20, 1005, Set(), 2, None), "test_username", roadLinkNameB1)
+      when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkNameB1))
+      when(mockRoadLinkService.fetchVVHRoadlinks(Set("Name B"), "ROADNAME_FI")).thenReturn(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3))
+
+      val properties = Set(
+        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))),
+        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+      val trafficSignId = trafficSignService.create(IncomingTrafficSign(32, 20, 1005, properties, 2, None), "test_username", roadLinkNameB1)
+      val traffiSign = trafficSignService.getById(trafficSignId)
+
+      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(traffiSign.get))
+
+
+      service.createLinearXXXX(traffiSign.get, roadLinkNameB1)
 
     }
+  }
+
+    test("create linear asset according traffic sign with pair on same road name"){
+      runWithRollback{
+        val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
+          override def withDynTransaction[T](f: => T): T = f
+          override def vvhClient: VVHClient = mockVVHClient
+        }
+        val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+
+        val vvhRoadLinkNameA = VVHRoadlink(1000, 235,Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
+        val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map( "ROADNAME_FI" -> "Name B"))
+        val vvhRoadLinkNameB2 = VVHRoadlink(1010, 235, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
+        val vvhRoadLinkNameB3 = VVHRoadlink(1015, 235, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map( "ROADNAME_FI" -> "Name B"))
+        val vvhRoadLinkNameC = VVHRoadlink(1020, 235, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name C"))
+
+        when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkNameB1))
+        when(mockRoadLinkService.fetchVVHRoadlinks(Set("Name B"), "ROADNAME_FI" )).thenReturn(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3))
+
+        val properties = Set(
+          SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))),
+          SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+          SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+        val signId = trafficSignService.create(IncomingTrafficSign(32, 20, 1005, properties, 2, None), "test_username", roadLinkNameB1)
+        val traffiSign = trafficSignService.getById(signId)
+
+        val pairedSignId = trafficSignService.create(IncomingTrafficSign(48, 20, 1015, properties, 1, None), "test_username", roadLinkNameB1)
+        val pairedTrafficSign = trafficSignService.getById(pairedSignId)
+
+        when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(traffiSign.get, pairedTrafficSign.get))
+
+        val result =service.createLinearXXXX(traffiSign.get, roadLinkNameB1 )
+        println(result)
+      }
   }
 }

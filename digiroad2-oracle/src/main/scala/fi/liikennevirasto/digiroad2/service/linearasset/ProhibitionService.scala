@@ -30,21 +30,30 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventBus)
 
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
+
   override def eventBus: DigiroadEventBus = eventBusImpl
+
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+
   override def polygonTools: PolygonTools = new PolygonTools()
+
   override def assetDao: OracleAssetDao = new OracleAssetDao
+
   override def assetFiller: AssetFiller = new ProhibitionFiller
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) : Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
+
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
+
   /**
     * Returns linear assets by asset type and asset ids. Used by Digiroad2Api /linearassets POST and /linearassets DELETE endpoints.
     */
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    if(newTransaction)
+    if (newTransaction)
       withDynTransaction {
         dao.fetchProhibitionsByIds(typeId, ids)
       }
@@ -58,7 +67,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     withDynTransaction {
-          dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
+      dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
     }.filterNot(_.expired)
   }
 
@@ -66,7 +75,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val linkIds = roadLinks.map(_.linkId)
     val mappedChanges = LinearAssetUtils.getMappedChanges(changes)
 
-    val removedLinkIds =  LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(mappedChanges, linkIds.toSet)
 
     val existingAssets =
       withDynTransaction {
@@ -82,10 +91,10 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
-                                  expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
-                                  adjustedMValues = Seq.empty[MValueAdjustment],
-                                  adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+      expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot(_ == 0L),
+      adjustedMValues = Seq.empty[MValueAdjustment],
+      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+      adjustedSideCodes = Seq.empty[SideCodeAdjustment])
 
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
@@ -113,21 +122,21 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     filledTopology
   }
 
-  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
+  override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     if (newLinearAssets.nonEmpty)
       logger.info("Saving projected prohibition assets")
 
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-      if(toUpdate.nonEmpty) {
+      if (toUpdate.nonEmpty) {
         val prohibitions = toUpdate.filter(a => Set(LinearAssetTypes.ProhibitionAssetTypeId).contains(a.typeId))
         val persisted = dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted)
         if (newLinearAssets.nonEmpty)
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
       }
-      toInsert.foreach{ linearAsset =>
+      toInsert.foreach { linearAsset =>
         val id =
           (linearAsset.createdBy, linearAsset.createdDateTime) match {
             case (Some(createdBy), Some(createdDateTime)) =>
@@ -167,12 +176,12 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
+  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
     val assetTypeId = assetDao.getAssetTypeId(ids)
-    val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
+    val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
     ids.flatMap { id =>
       val typeId = assetTypeById(id)
@@ -185,7 +194,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         case prohibitions: Prohibitions =>
           if ((validateMinDistance(newMeasures.startMeasure, oldAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldAsset.endMeasure)) || newSideCode != oldAsset.sideCode) {
             dao.updateExpiration(id)
-            Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), verifiedBy =  getVerifiedBy(username, oldAsset.typeId)))
+            Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), verifiedBy = getVerifiedBy(username, oldAsset.typeId)))
           }
           else {
             dao.updateVerifiedInfo(Set(id), username)
@@ -201,16 +210,16 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     //Get Old Asset
     dao.fetchProhibitionsByIds(assetTypeId, Set(assetId)).headOption.map {
       oldAsset =>
-      if(oldAsset.value.contains(prohibitions)){
-        dao.updateProhibitionValue(assetId, prohibitions, username, measures).head
-      } else {
-        //Expire the old asset
-        dao.updateExpiration(assetId)
-        val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-        //Create New Asset
-        createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
-          measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
-      }
+        if (oldAsset.value.contains(prohibitions)) {
+          dao.updateProhibitionValue(assetId, prohibitions, username, measures).head
+        } else {
+          //Expire the old asset
+          dao.updateExpiration(assetId)
+          val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
+          //Create New Asset
+          createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, prohibitions, sideCode.getOrElse(oldAsset.sideCode),
+            measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime, getVerifiedBy(username, oldAsset.typeId))
+        }
     }
   }
 
@@ -230,9 +239,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
-      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
-      val linearAsset =  dao.fetchProhibitionsByIds(assetTypeById(id), Set(id)).head
+      val linearAsset = dao.fetchProhibitionsByIds(assetTypeById(id), Set(id)).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode, roadLink.administrativeClass)
 
@@ -249,7 +258,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
     withDynTransaction {
       val assetTypeId = assetDao.getAssetTypeId(Seq(id))
-      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId)}
+      val assetTypeById = assetTypeId.foldLeft(Map.empty[Long, Int]) { case (m, (id, typeId)) => m + (id -> typeId) }
 
       val existing = dao.fetchProhibitionsByIds(assetTypeById(id), Set(id)).head
       val roadLink = vvhClient.fetchRoadLinkByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
@@ -257,9 +266,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
       dao.updateExpiration(id, expired = true, username)
 
-      val(newId1, newId2) =
+      val (newId1, newId2) =
         (valueTowardsDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.TowardsDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))),
-          valueAgainstDigitization.map( createWithoutTransaction(existing.typeId, existing.linkId, _,  SideCode.AgainstDigitizing.value,  Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))))
+          valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, Measures(existing.startMeasure, existing.endMeasure), username, existing.vvhTimeStamp, Some(roadLink))))
 
       Seq(newId1, newId2).flatten
     }
@@ -281,7 +290,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).head
 
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
-    expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired =true, newTransaction = false)
+    expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
     createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
 
@@ -306,9 +315,11 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def createValue(trafficSign: TrafficSignInfo): ProhibitionValue = {
-    val typeId = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(trafficSign.signType))
-    val additionalPanels = trafficSign.additionalPanel.sortBy(_.formPosition)
+  def createValue(trafficSign: PersistedTrafficSign): ProhibitionValue = {
+    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+    val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
+    val typeId = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(signType))
+    val additionalPanels = additionalPanel.sortBy(_.formPosition)
 
     val validityPeriods: Set[ValidityPeriod] =
       additionalPanels.flatMap { additionalPanel =>
@@ -319,70 +330,111 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     ProhibitionValue(typeId.head.value, validityPeriods, Set())
   }
 
-  override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Unit = {
+  override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+    Seq()
+  }
+
+  def createLinearXXXX(sign: PersistedTrafficSign, roadLink: RoadLink): Seq[TrafficSignToGenerateLinear] = {
     logger.info("Creating prohibition from traffic sign")
-    val tsLinkId = trafficSignInfo.linkId
-    val tsDirection = trafficSignInfo.validityDirection
-    val tsRoadLink = trafficSignInfo.roadLink
+
+
     val (tsRoadNamePublicId, tsRroadName): (String, String) =
-      tsRoadLink.attributes.get("ROADNAME_FI") match {
+      roadLink.attributes.get("ROADNAME_FI") match {
         case Some(nameFi) =>
           ("ROADNAME_FI", nameFi.toString)
         case _ =>
-          ("ROADNAME_SE", tsRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+          ("ROADNAME_SE", roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
       }
-
-    if (tsLinkId != tsRoadLink.linkId)
-      throw new ProhibitionCreationException(Set("Wrong roadlink"))
-
-    if (SideCode(tsDirection) == SideCode.BothDirections)
-      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
 
     //RoadLink with the same Finnish name
     val roadLinks = roadLinkService.fetchVVHRoadlinks(Set(tsRroadName), tsRoadNamePublicId)
 
-    val trafficSignOnRelatedRoadLinks =
+    val trafficSignsOnRoadLinks =
       trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
         val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
-        TrafficSignManager.belongsToProhibition(signType) && trafficSign.id != trafficSignInfo.id
+        TrafficSignManager.belongsToProhibition(signType)
       }
     logger.info("Fetching Traffic Signs on related road links")
 
-    val (othersRoadLinks, finalRoadLinks) =
-      roadLinks.partition { r =>
-        val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
-        val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
+    val (othersRoadLinks, finalRoadLinks) = roadLinks.partition { r =>
+      val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
+      val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
 
+      roadLinksFiltered.exists { r3 =>
+        val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
+        GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(first, last2)
+      } &&
         roadLinksFiltered.exists { r3 =>
           val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
-          GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(first, last2)
-        } &&
-          roadLinksFiltered.exists { r3 =>
-            val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
-            GeometryUtils.areAdjacent(last, first2) || GeometryUtils.areAdjacent(last, last2)
-          }
-      }
-
-    val linearAssetsToCreate =
-      finalRoadLinks.map { frl =>
-        val signsOnRoadLink = trafficSignOnRelatedRoadLinks.filter(_.linkId == frl.linkId).map{sign =>
-          val (first, last) = GeometryUtils.geometryEndpoints(frl.geometry)
-          val pointOfInterest = trafficSignService.getPointOfInterest(first, last, SideCode(sign.validityDirection))
-          findTrafficSignOnRoadLink(frl, roadLinks, sign, signsOnRoadLink, pointOfInterest)
+          GeometryUtils.areAdjacent(last, first2) || GeometryUtils.areAdjacent(last, last2)
         }
-      }
-
-
-    def findTrafficSignOnRoadLink(actualRoadLink: VVHRoadlink, allRoadLinks: Seq[VVHRoadlink], sign: PersistedTrafficSign,
-                                  allSignsOnRoadLink: Seq[PersistedTrafficSign], pointOfInterest: Seq[Point]): TrafficSignToGenerateLinear = {
-
-      val possibleMatchSigns = allSignsOnRoadLink.filter(s => s.linkId == actualRoadLink.linkId && s.id != sign.id)
-      if (possibleMatchSigns.isEmpty) {
-        TrafficSignToGenerateLinear(actualRoadLink, Seq(), sign.validityDirection, sign.mValue, actualRoadLink.length)
-        val adjacentRoadLink = roadLinkService.getAdjacent(actualRoadLink.linkId, continuationPoint, newTransaction = false)
-      }
     }
 
+    finalRoadLinks.flatMap { frl =>
+      val signsOnRoadLink = trafficSignsOnRoadLinks.filter(_.linkId == frl.linkId)
+      signsOnRoadLink.map { sign =>
+        val (first, last) = GeometryUtils.geometryEndpoints(frl.geometry)
+        val pointOfInterest = trafficSignService.getPointOfInterest(first, last, SideCode(sign.validityDirection)).head
+
+        val pairSign = getPairSign(frl, sign, signsOnRoadLink.filterNot(_.id == sign.id), pointOfInterest)
+        processing(frl, roadLinks.filterNot(_.linkId == frl.linkId), sign, trafficSignsOnRoadLinks, pointOfInterest, Seq(generateLinear(frl, sign, pairSign)))
+      }
+    }.flatten
+  }
+
+  def processing(actualRoadLink: VVHRoadlink, allRoadLinks: Seq[VVHRoadlink], sign: PersistedTrafficSign,
+                 signsOnRoadLink: Seq[PersistedTrafficSign], pointOfInterest: Point, generatedLinear: Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
+
+    val pairSign = getPairSign(actualRoadLink, sign, signsOnRoadLink.filterNot(_.id == sign.id), pointOfInterest)
+    val generated = generateLinear(actualRoadLink, sign, pairSign)
+
+    (if (pairSign.isEmpty) {
+      generatedLinear ++ getAdjacents((pointOfInterest, actualRoadLink), allRoadLinks).flatMap { case (newRoadLink, (_, oppositePoint)) =>
+        processing(newRoadLink, allRoadLinks.filterNot(_.linkId == newRoadLink.linkId), sign, signsOnRoadLink, oppositePoint, generated +: generatedLinear)
+      }
+    } else
+      generated +: generatedLinear).toSet
+  }
+
+  def generateLinear(currentRoadLink: VVHRoadlink, sign: PersistedTrafficSign, pairedSign: Option[PersistedTrafficSign]): TrafficSignToGenerateLinear = {
+    val prohibitionValue = Seq(createValue(sign))
+    pairedSign match {
+      case Some(pair) if pair.linkId == sign.linkId =>
+        val orderedMValue = Seq(sign.mValue, pair.mValue).sorted
+        TrafficSignToGenerateLinear(currentRoadLink, prohibitionValue, sign.validityDirection, orderedMValue.head, orderedMValue.last, sign.id)
+      case Some(pair)=>
+        TrafficSignToGenerateLinear(currentRoadLink, prohibitionValue, sign.validityDirection, 0, pair.mValue, sign.id)
+      case _ =>
+        TrafficSignToGenerateLinear(currentRoadLink, prohibitionValue, sign.validityDirection, sign.mValue, currentRoadLink.length, sign.id)
+    }
+  }
+
+  def getPairSign(actualRoadLink: VVHRoadlink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], pointOfInterest: Point): Option[PersistedTrafficSign] = {
+    val mainSignType = trafficSignService.getProperty(mainSign, trafficSignService.typePublicId).get.propertyValue.toInt
+
+    allSignsRelated.find { relatedSign =>
+      val relatedSignType = trafficSignService.getProperty(relatedSign, trafficSignService.typePublicId).get.propertyValue.toInt
+      val (first, last) = GeometryUtils.geometryEndpoints(actualRoadLink.geometry)
+      val pointOfInterestRelatedSign = trafficSignService.getPointOfInterest(first, last, SideCode(relatedSign.validityDirection)).head
+
+      relatedSign.linkId == actualRoadLink.linkId && relatedSign.id != mainSign.id && relatedSignType == mainSignType && GeometryUtils.areAdjacent(pointOfInterestRelatedSign, pointOfInterest)
+
+
+
+
+    }
+  }
+
+  def getAdjacents(previousInfo: (Point, VVHRoadlink), roadLinks: Seq[VVHRoadlink]): Seq[(VVHRoadlink, (Point, Point))] = {
+    roadLinks.filter {
+      roadLink =>
+        GeometryUtils.areAdjacent(roadLink.geometry, previousInfo._1)
+    }.map { roadLink =>
+      val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+      val points = if (GeometryUtils.areAdjacent(first, previousInfo._1)) (first, last) else (last, first)
+
+      (roadLink, points)
+    }
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[TextPropertyValue] = {
