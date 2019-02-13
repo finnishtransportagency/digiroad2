@@ -1248,7 +1248,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/speedlimits/unknown") {
-    val adminClass = if(params.get("adminClass").map(_.toString).contains("State")) Some(State) else None
+    val adminClass = if(params.get("adminClass").map(_.toString).contains("State")) Some(State) else Some(Municipality)
 
     getUnknowns(adminClass, None)
   }
