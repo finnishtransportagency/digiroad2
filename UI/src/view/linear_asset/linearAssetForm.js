@@ -218,7 +218,7 @@
   };
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</button></li>');
+    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
 
   function validateAccess(selectedLinearAsset, authorizationPolicy){
