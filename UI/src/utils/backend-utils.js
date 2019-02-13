@@ -193,8 +193,8 @@
       });
     };
 
-    this.getSpeedLimitErrors = function () {
-      return $.getJSON('api/speedLimits/inaccurates');
+    this.getSpeedLimitErrors = function (adminClass) {
+      return $.getJSON('api/speedLimits/inaccurates?adminClass=' + (adminClass ? adminClass :""));
     };
 
     this.getInaccurateAssets = function(typeId) {
@@ -405,12 +405,8 @@
       return $.getJSON('api/roadLinks/incomplete');
     };
 
-    this.getUnknownLimits = function() {
-      return $.getJSON('api/speedlimits/unknown');
-    };
-
-    this.getUnknownLimitsState = function() {
-      return $.getJSON('api/speedlimits/unknown/state');
+    this.getUnknownLimits = function(administrativeClass) {
+      return $.getJSON('api/speedlimits/unknown?adminClass='+administrativeClass);
     };
 
     this.getUnknownLimitsMunicipality = function(id) {
