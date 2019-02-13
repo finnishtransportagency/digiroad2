@@ -1,7 +1,7 @@
 
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao._
@@ -510,7 +510,9 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     )))
 
     val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10)))
+      DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10))),
+      DynamicProperty("spring_thaw_period", "numbere", false, Seq()),
+      DynamicProperty("annual_repetition", "numbere", false, Seq())
     )))
 
     val assetsInfo = Seq(

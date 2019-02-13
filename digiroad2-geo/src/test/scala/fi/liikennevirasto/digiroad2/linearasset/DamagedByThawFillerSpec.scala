@@ -1,12 +1,10 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import java.text.SimpleDateFormat
 
-import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.{Point}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}
@@ -36,7 +34,7 @@ class DamagedByThawFillerSpec extends FunSuite with Matchers {
   }
 
   val checkedCheckbox = Seq(DynamicProperty("annual_repetition", "checkbox", false, Seq(DynamicPropertyValue("1"))))
-  val unCheckedCheckbox = Seq(DynamicProperty("annual_repetition", "checkbox", false, Seq(DynamicPropertyValue("1"))))
+  val unCheckedCheckbox = Seq(DynamicProperty("annual_repetition", "checkbox", false, Seq(DynamicPropertyValue("0"))))
 
   private val today = DateTime.now()
   val oneYear = 1
@@ -63,13 +61,26 @@ class DamagedByThawFillerSpec extends FunSuite with Matchers {
     adjustedValue.endDate should be (dateToString(stringToDate(pastPeriod.endDate).plusYears(1)))
   }
 
-  test("ongoing period is not updated") {
-    val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(ongoingPeriod)) ++ checkedCheckbox))
+  test("future period is not updated") {
+    val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(futurePeriod)) ++ checkedCheckbox))
     val linearAssets = Map(1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(assetValue), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
     val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
     getChangeSetValue(changeSet) should be (empty)
   }
 
+  test("past period is not updated without checkbox") {
+    val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(pastPeriod)) ++ unCheckedCheckbox))
+    val linearAssets = Map(1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(assetValue), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+    getChangeSetValue(changeSet) should be (empty)
+  }
 
-
+  test("in case of past period and future period, only one is updated") {
+    val assetValue = DynamicValue(DynamicAssetValue(buildDateValue(Seq(pastPeriod, futurePeriod)) ++ checkedCheckbox))
+    val linearAssets = Map(1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(assetValue), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
+    val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
+    val adjustedValues = getChangeSetValue(changeSet).head.map(_.value.asInstanceOf[Map[String, String]]).map(DatePeriodValue.fromMap)
+    adjustedValues.contains(futurePeriod) should be (true)
+    adjustedValues.contains(pastPeriod) should be (false)
+  }
 }
