@@ -239,7 +239,7 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
 
 class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: TrafficSignInfo => trafficSignManager.createAssets(x)
+    case x: TrafficSignInfo => trafficSignManager.createAssetsByActor(x)
     case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }

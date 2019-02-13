@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.slf4j.LoggerFactory
@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, additionalPanel: Seq[AdditionalPanel])
+case class TrafficSignToGenerateLinear(roadLink: VVHRoadlink, prohibitionValue: Seq[ProhibitionValue], sideCodeToAsset: Int, startMeasure: Double, endMeasure: Double)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
   def eventBus: DigiroadEventBus = eventBusImpl
@@ -389,7 +390,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
 
-  protected def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
+  def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
     sideCode match {
       case SideCode.TowardsDigitizing => Seq(last)
       case SideCode.AgainstDigitizing => Seq(first)

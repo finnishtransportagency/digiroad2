@@ -282,6 +282,17 @@ trait VVHClientOperations {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
 
+  protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+    val filter =
+      if (names.isEmpty) {
+        ""
+      } else {
+        val query = names.mkString("','")
+        s""""where":"$attributeName IN ('$query')","""
+      }
+    filter
+  }
+
   protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
 
     (filter1.isEmpty, filter2.isEmpty) match {
@@ -611,6 +622,31 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     }.toList
   }
 
+  /**
+    * Returns VVH road links related with finnish names.
+    */
+  protected def queryByFinnishNames[T](finnishNames: Set[String],
+                                  fieldSelection: Option[String],
+                                  fetchGeometry: Boolean,
+                                  resultTransition: (Map[String, Any], List[List[Double]]) => T,
+                                  filter: Set[String] => String): Seq[T] = {
+    val batchSize = 1000
+    val nameGroups: List[Set[String]] = finnishNames.grouped(batchSize).toList
+    nameGroups.par.flatMap { names =>
+      val definition = layerDefinition(filter(names), fieldSelection)
+      val url = serviceUrl(definition, queryParameters(fetchGeometry))
+
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map { feature =>
+          val attributes = extractFeatureAttributes(feature)
+          val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
+          resultTransition(attributes, geometry)
+        }
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }.toList
+  }
+
   //Extract attributes methods
   protected override def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val attributes = extractFeatureAttributes(feature)
@@ -718,6 +754,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   protected def withLinkIdFilter(linkIds: Set[Long]): String = {
     withFilter("LINKID", linkIds)
+  }
+
+  protected def withFinNameFilter(roadNameSource: String)(finnishNames: Set[String]): String = {
+    withRoadNameFilter(roadNameSource, finnishNames)
   }
 
   protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
@@ -879,6 +919,14 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
     queryByRoadNumbersAndMunicipality(municipality, roadNumbers)
+  }
+
+  /**
+    * Returns VVH road links by finnish names.
+    * Used by VVHClient.fetchByLinkId,
+    */
+  def fetchByFinnishNames(roadNames: Set[String], roadNamePublicId: String): Seq[VVHRoadlink] = {
+    queryByFinnishNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
   }
 
   /**

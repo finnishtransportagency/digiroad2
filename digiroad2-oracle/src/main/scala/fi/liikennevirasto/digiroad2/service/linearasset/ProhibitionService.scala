@@ -5,14 +5,17 @@ import fi.liikennevirasto.digiroad2.TrafficSignType
 import fi.liikennevirasto.digiroad2.asset.ProhibitionClass._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService, TrafficSignToGenerateLinear}
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.dr2properties
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -21,6 +24,11 @@ import slick.jdbc.StaticQuery.interpolation
 class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
 
 class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
+  lazy val userProvider: UserProvider = {
+    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
+  }
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventBus)
+
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -311,43 +319,70 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     ProhibitionValue(typeId.head.value, validityPeriods, Set())
   }
 
-  override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+  override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Unit = {
     logger.info("Creating prohibition from traffic sign")
     val tsLinkId = trafficSignInfo.linkId
     val tsDirection = trafficSignInfo.validityDirection
+    val tsRoadLink = trafficSignInfo.roadLink
+    val (tsRoadNamePublicId, tsRroadName): (String, String) =
+      tsRoadLink.attributes.get("ROADNAME_FI") match {
+        case Some(nameFi) =>
+          ("ROADNAME_FI", nameFi.toString)
+        case _ =>
+          ("ROADNAME_SE", tsRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+      }
 
-    if (tsLinkId != trafficSignInfo.roadLink.linkId)
+    if (tsLinkId != tsRoadLink.linkId)
       throw new ProhibitionCreationException(Set("Wrong roadlink"))
 
     if (SideCode(tsDirection) == SideCode.BothDirections)
       throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
 
-    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
+    //RoadLink with the same Finnish name
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(Set(tsRroadName), tsRoadNamePublicId)
 
-    val roadLinks = roadLinkService.recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
-    logger.info("End of fetch for adjacents")
-
-    val prohibitionValue = Seq(createValue(trafficSignInfo))
-
-    if (prohibitionValue.nonEmpty) {
-      val ids = (roadLinks ++ Seq(trafficSignInfo.roadLink)).map { roadLink =>
-        val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
-          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
-          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
-          case _ => (0, roadLink.length)
-
-        }
-        val assetId = createWithoutTransaction(Prohibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
-          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
-
-        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
-
-        logger.info(s"Prohibition created with id: $assetId")
-        assetId
+    val trafficSignOnRelatedRoadLinks =
+      trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
+        val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+        TrafficSignManager.belongsToProhibition(signType) && trafficSign.id != trafficSignInfo.id
       }
-      ids.toSeq
+    logger.info("Fetching Traffic Signs on related road links")
+
+    val (othersRoadLinks, finalRoadLinks) =
+      roadLinks.partition { r =>
+        val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
+        val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
+
+        roadLinksFiltered.exists { r3 =>
+          val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
+          GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(first, last2)
+        } &&
+          roadLinksFiltered.exists { r3 =>
+            val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
+            GeometryUtils.areAdjacent(last, first2) || GeometryUtils.areAdjacent(last, last2)
+          }
+      }
+
+    val linearAssetsToCreate =
+      finalRoadLinks.map { frl =>
+        val signsOnRoadLink = trafficSignOnRelatedRoadLinks.filter(_.linkId == frl.linkId).map{sign =>
+          val (first, last) = GeometryUtils.geometryEndpoints(frl.geometry)
+          val pointOfInterest = trafficSignService.getPointOfInterest(first, last, SideCode(sign.validityDirection))
+          findTrafficSignOnRoadLink(frl, roadLinks, sign, signsOnRoadLink, pointOfInterest)
+        }
+      }
+
+
+    def findTrafficSignOnRoadLink(actualRoadLink: VVHRoadlink, allRoadLinks: Seq[VVHRoadlink], sign: PersistedTrafficSign,
+                                  allSignsOnRoadLink: Seq[PersistedTrafficSign], pointOfInterest: Seq[Point]): TrafficSignToGenerateLinear = {
+
+      val possibleMatchSigns = allSignsOnRoadLink.filter(s => s.linkId == actualRoadLink.linkId && s.id != sign.id)
+      if (possibleMatchSigns.isEmpty) {
+        TrafficSignToGenerateLinear(actualRoadLink, Seq(), sign.validityDirection, sign.mValue, actualRoadLink.length)
+        val adjacentRoadLink = roadLinkService.getAdjacent(actualRoadLink.linkId, continuationPoint, newTransaction = false)
+      }
     }
-    else Seq()
+
   }
 
   private def getTrafficSignsProperties(trafficSign: PersistedTrafficSign, property: String): Option[TextPropertyValue] = {

@@ -284,6 +284,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
+  /**
+    * This method returns VVH road links by Finnish or Swedish name.
+    *
+    * @param roadNamePublicIds
+    * @param roadNameSource
+    * @return VVHRoadLinks
+    */
+  def fetchVVHRoadlinks(roadNamePublicIds: Set[String], roadNameSource: String): Seq[VVHRoadlink] = {
+    if (roadNamePublicIds.nonEmpty) {
+      vvhClient.roadLinkData.fetchByFinnishNames(roadNamePublicIds, roadNameSource)
+    } else Seq.empty[VVHRoadlink]
+  }
+
   def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
     RoadLinkDAO.LinkTypeDao.getAllLinkType(linkIds).groupBy(_._1)
   }

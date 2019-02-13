@@ -709,4 +709,20 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       second.endMeasure should be (250)
     }
   }
+
+
+  test("create linear asset according traffic sign without pair on roadlinks with the same name"){
+    runWithRollback {
+      val roadLinkNameA = RoadLink(1000, Seq(Point(10.0, 20.0), Point(30.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(10.0, 20.0), Point(30.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name A"))
+      val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+      val roadLinkNameB2 = RoadLink(1010, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(40.0, 20.0), Point(50.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+      val roadLinkNameB3 = RoadLink(1015, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(50.0, 20.0), Point(60.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+      val roadLinkNameC = RoadLink(1020, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(60.0, 20.0), Point(70.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name C"))
+
+      val roadLinksSeq = Seq(roadLinkNameA, roadLinkNameB1, roadLinkNameB2, roadLinkNameB3, roadLinkNameC)
+
+      val trafficSignId = trafficSignService.create(IncomingTrafficSign(32, 20, 1005, Set(), 2, None), "test_username", roadLinkNameB1)
+
+    }
+  }
 }
