@@ -406,7 +406,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       case Some(pair) if pair.linkId == sign.linkId =>
         val orderedMValue = Seq(sign.mValue, pair.mValue).sorted
         TrafficSignToGenerateLinear(currentRoadLink, prohibitionValue, sign.validityDirection, orderedMValue.head, orderedMValue.last, sign.id)
-      case Some(pair)=>
+      case Some(pair) =>
         TrafficSignToGenerateLinear(currentRoadLink, prohibitionValue, sign.validityDirection, 0, pair.mValue, sign.id)
       case _ =>
         TrafficSignToGenerateLinear(currentRoadLink, prohibitionValue, sign.validityDirection, sign.mValue, currentRoadLink.length, sign.id)
@@ -424,112 +424,175 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       relatedSign.linkId == actualRoadLink.linkId && relatedSign.id != mainSign.id && relatedSignType == mainSignType && GeometryUtils.areAdjacent(pointOfInterestRelatedSign, pointOfInterest)
 
 
-
-
     }
   }
 
   def createLinearAssetAccordingTrafficSigns(roadLinksWithSameRoadName: Seq[VVHRoadlink], futureLinears: Seq[TrafficSignToGenerateLinear]) {
-    //TODO
-    val minLengthToZip = 1.0
+    //    def createNewAsset() {
+    //      val assetId = createWithoutTransaction(Prohibition.typeId, newAsset.roadLink.linkId, Prohibitions(newLinear.prohibitionValue), newLinear.sideCodeToAsset, Measures(newLinear.startMeasure, newLinear.endMeasure),
+    //        "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(newLinear.roadLink), trafficSignId = Some(newLinear.signId))
+    //
+    //      dao.insertConnectedAsset(assetId, newLinear.signId)
+    //      logger.info(s"Prohibition created with id: $assetId")
+    //    }
 
-    roadLinksWithSameRoadName.foreach { roadLink =>
-      val futureLinearsOnRoadLink = futureLinears.filter(_.roadLink.linkId == roadLink.linkId)
-      val segmentsPointsOnFutureLinears = futureLinearsOnRoadLink.flatMap(fl => Seq(fl.startMeasure, fl.endMeasure))
 
-      val oldAssets = getPersistedAssetsByLinkIds(Prohibition.typeId, Seq(roadLink.linkId))
-      val segmentsPointsOnOldAssets = oldAssets.flatMap(oa => Seq(oa.startMeasure, oa.endMeasure))
+    val segmentsPointsOnFutureLinears = futureLinears.map(fl => (fl.roadLink.linkId, fl.startMeasure, fl.endMeasure, fl.prohibitionValue))
 
-      val allSegments = (segmentsPointsOnFutureLinears ++ segmentsPointsOnOldAssets).distinct.sorted
-      val allSegmentsZiped = allSegments.zip(allSegments.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
+    //    val oldAssets = getPersistedAssetsByLinkIds(Prohibition.typeId, roadLinksWithSameRoadName.map(_.linkId))
+    val oldAssets = Seq.empty[PersistedLinearAsset]
+    val segmentsPointsOnOldAssets = oldAssets.map(oa => (oa.linkId, oa.startMeasure, oa.endMeasure, oa.value.map(_.asInstanceOf[Prohibitions])))
 
-      allSegmentsZiped.map { poi =>
-        val startMeasurePOI = poi._1
-        val endMeasurePOI = poi._2
-        val segmentsInsidePOI = (futureLinearsOnRoadLink ++ oldAssets).filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
+    val allSegmentsByLinkId = (segmentsPointsOnFutureLinears ++ segmentsPointsOnOldAssets).groupBy(_._1)
+
+    allSegmentsByLinkId.keys.map { linkId =>
+      val minLengthToZip = 0.01
+      val segmentsPoints = allSegmentsByLinkId(linkId).flatMap(fl => Seq(fl._2, fl._3)).distinct.sorted
+      val segments = segmentsPoints.zip(segmentsPoints.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
+
+      //      segments.map { case (startMeasurePOI, endMeasurePOI) =>
+      //        val assetByLinkIdValidOnPair = allSegmentsByLinkId(linkId).filter(s => s._2 <= startMeasurePOI && s._3 >= endMeasurePOI)
+      //
+      //        assetByLinkIdValidOnPair.map { _._4 }
+      //        }
+
+      val newSegment = segments.flatMap { case (startMeasurePOI, endMeasurePOI) =>
+        allSegmentsByLinkId(linkId).flatMap { case (linkId, startM, endM, value) =>
+          if (startM <= startMeasurePOI && endM >= endMeasurePOI) {
+            Seq((linkId, startMeasurePOI, endMeasurePOI, value))
+          } else
+            Seq()
+        }
       }
+
+
+
+      newSegment
+
+
     }
 
 
+    //      val assetId = createWithoutTransaction(Prohibition.typeId, newAsset.roadLink.linkId, Prohibitions(newLinear.prohibitionValue), newLinear.sideCodeToAsset, Measures(newLinear.startMeasure, newLinear.endMeasure),
+    //        "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(newLinear.roadLink), trafficSignId = Some(newLinear.signId))
+    //
+    //      dao.insertConnectedAsset(assetId, newLinear.signId)
 
 
+    //      val newAssetsInsidePOI =
+    //        segmentsPointsZiped.map { poi =>
+    //          val startMeasurePOI = poi._1
+    //          val endMeasurePOI = poi._2
+    //          futureLinearsOnRoadLink.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
+    //        }
 
 
+    //      allSegmentsByLinkId(linkId).map{}
+    //      values.map { case (linkId, start, end) =>
+    //        linkId ==
+    //
+    //      }
+    //    }
 
 
+    //    val minLengthToZip = 1.0
+    //
+    //
+    //
+    //
+    //
+    //    roadLinksWithSameRoadName.foreach { roadLink =>
+    ////      val futureLinearsOnRoadLink = futureLinears.filter(_.roadLink.linkId == roadLink.linkId)
+    ////      val segmentsPointsOnFutureLinears = futureLinearsOnRoadLink.map(fl => Seq(fl.startMeasure, fl.endMeasure, fl.roadLink.linkId))
+    ////
+    ////      val oldAssets = getPersistedAssetsByLinkIds(Prohibition.typeId, Seq(roadLink.linkId))
+    ////      val segmentsPointsOnOldAssets = oldAssets.map(oa => Seq(oa.startMeasure, oa.endMeasure, oa.linkId))
+    //
+    //      val allSegments = (segmentsPointsOnFutureLinears ++ segmentsPointsOnOldAssets).groupBy()
+    //
+    ////        .distinct.sorted
+    ////      val allSegmentsByLinkId = allSegments.groupBy
+    //
+    //
+    //
+    //
+    //      val allSegmentsZiped = allSegments.zip(allSegments.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
+    //
+    //      allSegmentsZiped.map { poi =>
+    //        val startMeasurePOI = poi._1
+    //        val endMeasurePOI = poi._2
+    //        val segmentsInsidePOI = (futureLinearsOnRoadLink ++ oldAssets).filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
+    //      }
+    //    }
 
 
+    //    roadLinksWithSameRoadName.foreach { roadLink =>
+    //      val minLengthToZip = 1.0
+    //      val futureLinearsOnRoadLink = futureLinears.filter(_.roadLink.linkId == roadLink.linkId)
+    //      val segmentsPoints = futureLinearsOnRoadLink.flatMap(fl => Seq(fl.startMeasure, fl.endMeasure)).distinct.sorted
+    //      val segmentsPointsZiped = segmentsPoints.zip(segmentsPoints.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
+    //
+    //      val newAssetsInsidePOI =
+    //        segmentsPointsZiped.map { poi =>
+    //          val startMeasurePOI = poi._1
+    //          val endMeasurePOI = poi._2
+    //          futureLinearsOnRoadLink.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
+    //        }
+    //
+    ////      val oldAssetsOnRoadLink = getPersistedAssetsByLinkIds(Prohibition.typeId, Seq(roadLink.linkId))
+    //
+    //      newAssetsInsidePOI.foreach { newAsset =>
+    //
+    //        val assetId = createWithoutTransaction(Prohibition.typeId, newAsset.roadLink.linkId, Prohibitions(newLinear.prohibitionValue), newLinear.sideCodeToAsset, Measures(newLinear.startMeasure, newLinear.endMeasure),
+    //          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(newLinear.roadLink), trafficSignId = Some(newLinear.signId))
+    //
+    //        dao.insertConnectedAsset(assetId, newLinear.signId)
+    //        logger.info(s"Prohibition created with id: $assetId")
+    //      }
+    //    }
 
+    //
+    //    val minLengthToZip = 1.0
+    //    val roadLinksWithFurturesLinears = roadLinksWithSameRoadName.filter(_.linkId == futureLinears.map(_.roadLink.linkId))
+    //    val oldAssets = getPersistedAssetsByLinkIds(Prohibition.typeId, roadLinksWithFurturesLinears.map(_.linkId))
+    //
+    //
+    //    val measuresAndRoadLinksToCreate = futureLinears.map(fl => (fl.startMeasure, fl.endMeasure, fl.roadLink))
+    //    val measuresAndRoadLinksOldAssets = oldAssets.map(oa => (oa.startMeasure, oa.endMeasure, roadLinksWithFurturesLinears.filter(_.linkId == oa.linkId)))
+    //
+    //    val measuresAndRoadLinksGrouped = (measuresAndRoadLinksToCreate ++ measuresAndRoadLinksOldAssets).groupBy(_._3)
+    //
+    //    measuresAndRoadLinksGrouped.
+    //
 
-
-
-//    roadLinksWithSameRoadName.foreach { roadLink =>
-//      val minLengthToZip = 1.0
-//      val futureLinearsOnRoadLink = futureLinears.filter(_.roadLink.linkId == roadLink.linkId)
-//      val segmentsPoints = futureLinearsOnRoadLink.flatMap(fl => Seq(fl.startMeasure, fl.endMeasure)).distinct.sorted
-//      val segmentsPointsZiped = segmentsPoints.zip(segmentsPoints.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
-//
-//      val newAssetsInsidePOI =
-//        segmentsPointsZiped.map { poi =>
-//          val startMeasurePOI = poi._1
-//          val endMeasurePOI = poi._2
-//          futureLinearsOnRoadLink.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
-//        }
-//
-////      val oldAssetsOnRoadLink = getPersistedAssetsByLinkIds(Prohibition.typeId, Seq(roadLink.linkId))
-//
-//      newAssetsInsidePOI.foreach { newAsset =>
-//
-//        val assetId = createWithoutTransaction(Prohibition.typeId, newAsset.roadLink.linkId, Prohibitions(newLinear.prohibitionValue), newLinear.sideCodeToAsset, Measures(newLinear.startMeasure, newLinear.endMeasure),
-//          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(newLinear.roadLink), trafficSignId = Some(newLinear.signId))
-//
-//        dao.insertConnectedAsset(assetId, newLinear.signId)
-//        logger.info(s"Prohibition created with id: $assetId")
-//      }
-//    }
-
-//
-//    val minLengthToZip = 1.0
-//    val roadLinksWithFurturesLinears = roadLinksWithSameRoadName.filter(_.linkId == futureLinears.map(_.roadLink.linkId))
-//    val oldAssets = getPersistedAssetsByLinkIds(Prohibition.typeId, roadLinksWithFurturesLinears.map(_.linkId))
-//
-//
-//    val measuresAndRoadLinksToCreate = futureLinears.map(fl => (fl.startMeasure, fl.endMeasure, fl.roadLink))
-//    val measuresAndRoadLinksOldAssets = oldAssets.map(oa => (oa.startMeasure, oa.endMeasure, roadLinksWithFurturesLinears.filter(_.linkId == oa.linkId)))
-//
-//    val measuresAndRoadLinksGrouped = (measuresAndRoadLinksToCreate ++ measuresAndRoadLinksOldAssets).groupBy(_._3)
-//
-//    measuresAndRoadLinksGrouped.
-//
-
-//    measuresAndRoadLinksGrouped.
-//
-//
-//    futureLinears.foreach { newLinear =>
-//      val existOldAsset =
-//        oldAssets.filter { o =>
-//          o.linkId == newLinear.roadLink.linkId &&
-//            (GeometryUtils.liesInBetween(newLinear.startMeasure, (o.startMeasure, o.endMeasure)) || GeometryUtils.liesInBetween(newLinear.endMeasure, (o.startMeasure, o.endMeasure)))
-//        }
-//
-//      if (existOldAsset.isEmpty) {
-//        val assetId = createWithoutTransaction(Prohibition.typeId, newLinear.roadLink.linkId, Prohibitions(newLinear.prohibitionValue), newLinear.sideCodeToAsset, Measures(newLinear.startMeasure, newLinear.endMeasure),
-//          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(newLinear.roadLink), trafficSignId = Some(newLinear.signId))
-//
-//        dao.insertConnectedAsset(assetId, newLinear.signId)
-//        logger.info(s"Prohibition created with id: $assetId")
-//
-//      } else {
-//        val pointsOfInterestOnSegments =
-//          (Seq(newLinear.startMeasure, newLinear.endMeasure) ++ existOldAsset.map(_.startMeasure) ++ existOldAsset.map(_.endMeasure)).distinct.sorted
-//        val pointsOfInterestOnSegmentsZiped =
-//          pointsOfInterestOnSegments.zip(pointsOfInterestOnSegments.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
-//
-//        pointsOfInterestOnSegmentsZiped.foreach { poi =>
-//          poi
-//        }
-//      }
-//    }
+    //    measuresAndRoadLinksGrouped.
+    //
+    //
+    //    futureLinears.foreach { newLinear =>
+    //      val existOldAsset =
+    //        oldAssets.filter { o =>
+    //          o.linkId == newLinear.roadLink.linkId &&
+    //            (GeometryUtils.liesInBetween(newLinear.startMeasure, (o.startMeasure, o.endMeasure)) || GeometryUtils.liesInBetween(newLinear.endMeasure, (o.startMeasure, o.endMeasure)))
+    //        }
+    //
+    //      if (existOldAsset.isEmpty) {
+    //        val assetId = createWithoutTransaction(Prohibition.typeId, newLinear.roadLink.linkId, Prohibitions(newLinear.prohibitionValue), newLinear.sideCodeToAsset, Measures(newLinear.startMeasure, newLinear.endMeasure),
+    //          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(newLinear.roadLink), trafficSignId = Some(newLinear.signId))
+    //
+    //        dao.insertConnectedAsset(assetId, newLinear.signId)
+    //        logger.info(s"Prohibition created with id: $assetId")
+    //
+    //      } else {
+    //        val pointsOfInterestOnSegments =
+    //          (Seq(newLinear.startMeasure, newLinear.endMeasure) ++ existOldAsset.map(_.startMeasure) ++ existOldAsset.map(_.endMeasure)).distinct.sorted
+    //        val pointsOfInterestOnSegmentsZiped =
+    //          pointsOfInterestOnSegments.zip(pointsOfInterestOnSegments.tail).filterNot { piece => (piece._2 - piece._1) < minLengthToZip }
+    //
+    //        pointsOfInterestOnSegmentsZiped.foreach { poi =>
+    //          poi
+    //        }
+    //      }
+    //    }
   }
 
   def getAdjacents(previousInfo: (Point, VVHRoadlink), roadLinks: Seq[VVHRoadlink]): Seq[(VVHRoadlink, (Point, Point))] = {
@@ -550,7 +613,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   private def getOpositePoint(geometry: Seq[Point], point: Point) = {
     val (headPoint, lastPoint) = GeometryUtils.geometryEndpoints(geometry)
-    if(GeometryUtils.areAdjacent(headPoint, point))
+    if (GeometryUtils.areAdjacent(headPoint, point))
       lastPoint
     else
       headPoint
