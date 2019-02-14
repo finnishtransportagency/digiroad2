@@ -367,7 +367,9 @@ class DynamicLinearAssetDao {
     val assets = MassQuery.withIds (ids) {
       idTableName =>
         sql"""
-          select dp.asset_id, p.public_id, p.property_type, p.required, to_char(dp.start_date, 'DD.MM.YYYY'), to_char(dp.end_date, 'DD.MM.YYYY')
+          select dp.asset_id, p.public_id, p.property_type, p.required,
+          case when dp.start_date is not null then to_char(dp.start_date, 'DD.MM.YYYY') else null end as START_DATE,
+          case when dp.end_date is not null then to_char(dp.end_date, 'DD.MM.YYYY') else null end as END_DATE
           from date_period_value dp
           join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
           join #$idTableName i on i.id = dp.asset_id
@@ -410,8 +412,13 @@ class DynamicLinearAssetDao {
       val publicId = r.nextString
       val propertyType = r.nextString
       val required = r.nextBoolean
-      val value = DatePeriodValue(r.nextString, r.nextString)
-      DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(DatePeriodValue.toMap(value)))
+      val optStartDate = r.nextStringOption()
+      val optEndDate = r.nextStringOption()
+      val value = (optStartDate, optEndDate) match {
+        case (Some(startDate), Some(endDate)) => DatePeriodValue.toMap(DatePeriodValue(startDate, endDate))
+        case _ => None
+      }
+      DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
     }
   }
 

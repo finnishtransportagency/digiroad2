@@ -391,6 +391,8 @@
 
             var checked = !!parseInt(_value) ? 'checked' : '';
 
+            var checkBoxElement = "input[name = '" + field.publicId + "']";
+
             me.element = $('' +
                 '<div class="form-group">' +
                 '<label class="control-label">'+ field.label+'</label>' +
@@ -400,13 +402,15 @@
                 '</div>');
 
             me.getValue = function() {
-                return $(me.element).prop('checked') ? 1: 0;
+                return $(checkBoxElement).prop('checked') ? 1: 0;
             };
 
-            me.hasValue = function(){ return true;};
+            me.hasValue = function(){
+                return true;
+            };
 
             me.setValue = function(value) {
-                $(me.element).prop('checked', ~~(value === 0));
+                $(checkBoxElement).prop('checked', !!(value));
             };
 
             if(!isDisabled && (me.hasDefaultValue() || me.isRequired()) && !value) {

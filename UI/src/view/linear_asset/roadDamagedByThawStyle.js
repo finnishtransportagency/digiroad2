@@ -12,10 +12,7 @@
 
       var annualRepetition = _.find(properties, function(prop) {return prop.publicId === "annual_repetition";});
 
-
-
-
-      return _.isEmpty(dateTimeField) ? true : betweenDateValues(dateTimeField.values, annualRepetition.values);
+      return (_.isUndefined(dateTimeField) || _.isEmpty(dateTimeField.values)) ? true : betweenDateValues(dateTimeField.values, annualRepetition.values);
     };
 
     var betweenDateValues = function(dateTimes, annualRepetition) {
