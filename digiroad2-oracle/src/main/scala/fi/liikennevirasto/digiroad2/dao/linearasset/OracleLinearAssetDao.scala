@@ -752,6 +752,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           """.as[DateTime].firstOption
   }
 
+  def getConnectedAssetFromTrafficSign(id: Long): Seq[Long] = {
+    val linearAssetsIds = sql"""select linear_asset_id from connected_asset where (point_asset_id = $id)""".as[(Long)].list
+    linearAssetsIds
+  }
+
   /**
     * Updates number property value. Used by LinearAssetService.updateWithoutTransaction.
     */

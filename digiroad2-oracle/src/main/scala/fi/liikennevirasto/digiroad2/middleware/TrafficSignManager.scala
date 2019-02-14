@@ -6,6 +6,7 @@ import java.security.InvalidParameterException
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, TextPropertyValue, TrafficSignProperty}
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreCreationException, ManoeuvreService, ProhibitionService}
 
@@ -56,6 +57,18 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionSer
 
     if(turnRestrictionSigns.map(_._1).nonEmpty)
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
+  }
+
+  def deleteAssetsRelatedWithLinears(trafficSigns: Seq[PersistedTrafficSign]): Unit = {
+    val username = Some("automatic_trafficSign_deleted")
+
+    trafficSigns.foreach { sign =>
+      val trafficSignType = sign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+
+      if (TrafficSignManager.belongsToProhibition(trafficSignType)) {
+        prohibitionService.deleteOrUpdateAssetBasedOnSign(sign, username)
+      }
+    }
   }
 
   def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo)): Unit = {

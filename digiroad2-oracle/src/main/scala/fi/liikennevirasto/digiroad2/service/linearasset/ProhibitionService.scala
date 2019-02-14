@@ -595,6 +595,41 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     //    }
   }
 
+  def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    val assets = if(withTransaction) {
+      withDynTransaction {
+        val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
+        dao.fetchProhibitionsByIds(Prohibition.typeId, assetIds.toSet)
+      }
+    } else {
+      val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
+      dao.fetchProhibitionsByIds(Prohibition.typeId, assetIds.toSet)
+    }
+    assets
+  }
+
+  def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    logger.info("expiring asset")
+
+    val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
+    val trProhibitionValue = Seq(createValue(trafficSign))
+
+    val (toDelete, toUpdate) = trafficSignRelatedAssets.partition{ asset =>
+      asset.value.get.asInstanceOf[Prohibitions].equals(Prohibitions(trProhibitionValue))
+    }
+
+    if(toDelete.nonEmpty)
+      expire(toDelete.map(_.id), username.getOrElse(""))
+
+    val groupedAssetsToUpdate = toUpdate.map { asset =>
+      (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
+    }.groupBy(_._2)
+
+    groupedAssetsToUpdate.values.map { value =>
+      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
+    }
+  }
+
   def getAdjacents(previousInfo: (Point, VVHRoadlink), roadLinks: Seq[VVHRoadlink]): Seq[(VVHRoadlink, (Point, Point))] = {
     roadLinks.filter {
       roadLink =>
