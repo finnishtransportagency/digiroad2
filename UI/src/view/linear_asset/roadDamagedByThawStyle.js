@@ -21,7 +21,7 @@
         var period = dateTime.value;
 
         if(_.isEmpty(period.startDate) || _.isEmpty(period.endDate))
-        return false;
+        return true;
 
         var dateNow = new Date();
         var yearNow = dateNow.getFullYear();
