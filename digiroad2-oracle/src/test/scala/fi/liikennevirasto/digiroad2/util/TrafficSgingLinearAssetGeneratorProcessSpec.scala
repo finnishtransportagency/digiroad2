@@ -112,12 +112,6 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
     runWithRollback {
       val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
-      val vvhRoadLinkNameA = VVHRoadlink(1000, 235, Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
-      val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameB2 = VVHRoadlink(1010, 235, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameB3 = VVHRoadlink(1015, 235, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameC = VVHRoadlink(1020, 235, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name C"))
-
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkNameB1))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set("Name B"), "ROADNAME_FI")).thenReturn(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3))
 
@@ -128,7 +122,7 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign))
 
-      TrafficSgingLinearAssetGeneratorProcess.createLinearXXXX(trafficSign, roadLinkNameB1, Seq(trafficSign))
+      TrafficSgingLinearAssetGeneratorProcess.createLinearXXXX(trafficSign, roadLinkNameB1)
 
     }
   }
@@ -154,7 +148,7 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign, pairedTrafficSign))
 
-      val result = TrafficSgingLinearAssetGeneratorProcess(trafficSign, roadLinkNameB1 , Seq(trafficSign, pairedTrafficSign))
+      val result = TrafficSgingLinearAssetGeneratorProcess(trafficSign, roadLinkNameB1)
       println(result)
     }
   }
@@ -180,7 +174,7 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign, pairedTrafficSign))
 
-      val result = TrafficSgingLinearAssetGeneratorProcess.createLinearXXXX(trafficSign, roadLinkNameB1 , Seq(trafficSign, pairedTrafficSign))
+      val result = TrafficSgingLinearAssetGeneratorProcess.createLinearXXXX(trafficSign, roadLinkNameB1)
       println(result)
     }
   }

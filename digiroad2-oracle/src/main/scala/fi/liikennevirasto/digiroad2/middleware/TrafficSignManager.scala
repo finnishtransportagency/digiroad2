@@ -65,9 +65,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionSer
     trafficSigns.foreach { sign =>
       val trafficSignType = sign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
-      if (TrafficSignManager.belongsToProhibition(trafficSignType)) {
-        prohibitionService.deleteOrUpdateAssetBasedOnSign(sign, username)
-      }
+//      if (TrafficSignManager.belongsToProhibition(trafficSignType)) {
+//        prohibitionService.deleteOrUpdateAssetBasedOnSign(sign, username)
+//      }
     }
   }
 

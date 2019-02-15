@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase.withDynSession
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
@@ -19,6 +20,7 @@ import org.joda.time.DateTime
 
 
 object TrafficSgingLinearAssetGeneratorProcess {
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   lazy val properties: Properties = {
     val props = new Properties()
@@ -74,7 +76,9 @@ object TrafficSgingLinearAssetGeneratorProcess {
   }
 
 
-  def createLinearXXXX(sign: PersistedTrafficSign, roadLink: RoadLink, trafficSignsTest: Seq[PersistedTrafficSign]): Seq[TrafficSignToGenerateLinear] = {
+  val dao : OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+
+  def createLinearXXXX(sign: PersistedTrafficSign, roadLink: RoadLink): Seq[TrafficSignToGenerateLinear] = {
     val (tsRoadNamePublicId, tsRroadName): (String, String) =
       roadLink.attributes.get("ROADNAME_FI") match {
         case Some(nameFi) =>
@@ -86,9 +90,7 @@ object TrafficSgingLinearAssetGeneratorProcess {
     //RoadLink with the same Finnish name
     val roadLinks = roadLinkService.fetchVVHRoadlinks(Set(tsRroadName), tsRoadNamePublicId)
 
-    val trafficSignsOnRoadLinks =
-    //      trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
-      trafficSignsTest.filter { trafficSign =>
+    val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
         val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
         TrafficSignManager.belongsToProhibition(signType)
       }
