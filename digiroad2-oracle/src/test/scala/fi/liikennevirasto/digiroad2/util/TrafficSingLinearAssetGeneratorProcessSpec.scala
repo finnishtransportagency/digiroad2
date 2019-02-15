@@ -1,63 +1,37 @@
 package fi.liikennevirasto.digiroad2.util
 
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, ProhibitionValue, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo}
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignToGenerateLinear}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatest.{FunSuite, Matchers}
-import org.scalatest.mockito.MockitoSugar
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
-class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers {
-  lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
-    new BoneCPDataSource(cfg)
+class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers {
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
+  val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
+
+  def service : TrafficSingLinearAssetGeneratorProcess = new TrafficSingLinearAssetGeneratorProcess(mockRoadLinkService) {
+    override val oracleLinearAssetDao: OracleLinearAssetDao = mockLinearAssetDao
+    override def withDynTransaction[T](f: => T): T = f
+
+    override lazy val prohibitionService: ProhibitionService = mockProhibitionService
   }
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockPolygonTools = MockitoSugar.mock[PolygonTools]
-
-  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-
-  val roadLinkWithLinkSource = RoadLink(
-    1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-    1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
-
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
-  val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
 
   val vvhRoadLinkNameA = VVHRoadlink(1000, 235, Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
   val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
@@ -122,7 +96,7 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign))
 
-      TrafficSgingLinearAssetGeneratorProcess.createLinearXXXX(trafficSign, roadLinkNameB1)
+      service.createLinearXXXX(trafficSign, roadLinkNameB1)
 
     }
   }
@@ -131,13 +105,6 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
     runWithRollback{
       val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
-      val vvhRoadLinkNameA = VVHRoadlink(1000, 235,Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
-      val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map( "ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameB2 = VVHRoadlink(1010, 235, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameB3 = VVHRoadlink(1015, 235, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map( "ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameC = VVHRoadlink(1020, 235, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name C"))
-
-      //when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkNameB1))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set("Name B"), "ROADNAME_FI" )).thenReturn(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3))
       when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(Seq())
 
@@ -148,7 +115,47 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign, pairedTrafficSign))
 
-      val result = TrafficSgingLinearAssetGeneratorProcess(trafficSign, roadLinkNameB1)
+      val result = service.createLinearXXXX(trafficSign, roadLinkNameB1)
+      println(result)
+    }
+  }
+
+  test("create linear segments"){
+    runWithRollback{
+      val valueA = ProhibitionValue(NoLeftTurn.OTHvalue, Set.empty, Set.empty, null)
+      val valueB = ProhibitionValue(NoPowerDrivenVehicles.OTHvalue, Set.empty, Set.empty, null)
+      val valueC = ProhibitionValue(NoPedestriansCyclesMopeds.OTHvalue, Set.empty, Set.empty, null)
+      val valueD = ProhibitionValue(NoRidersOnHorseback.OTHvalue, Set.empty, Set.empty, null)
+      val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
+
+      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.TowardsDigitizing, 0, 4, Seq(1))
+      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.AgainstDigitizing, 0, 4, Seq(2))
+      val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueC)), SideCode.TowardsDigitizing, 6, 8, Seq(3))
+      val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.TowardsDigitizing, 4, 5, Seq(4))
+      val segment32 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.AgainstDigitizing, 4, 5, Seq(5))
+      val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueE)), SideCode.AgainstDigitizing, 8, 10, Seq(6))
+
+      val oldAsset = PersistedLinearAsset(1, 1005, SideCode.BothDirections.value, Some(Prohibitions(Seq(valueA))), 0, 10, None, None, None, None, false, Prohibition.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)
+      when(mockProhibitionService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(oldAsset))
+
+      val segments = Seq(segment11, segment12, segment21, segment31, segment32, segment42 )
+      val result = service.splitSegments(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3), segments,  Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB3))
+      result.size should be (10)
+      val (seg11, seg12) = result.filter(res => res.startMeasure == 0 && res.endMeasure == 4).partition(_.sideCode == TowardsDigitizing)
+      seg11.exists( seg => Seq(valueA,valueB).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      seg12.exists( seg => Seq(valueA,valueB).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      val (seg21, seg22) = result.filter(res => res.startMeasure == 0 && res.endMeasure == 5).partition(_.sideCode == TowardsDigitizing)
+      seg21.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      seg22.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      val (seg31, seg32) = result.filter(res => res.startMeasure == 5 && res.endMeasure == 6).partition(_.sideCode == TowardsDigitizing)
+      seg31.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      val (seg41, seg42) = result.filter(res => res.startMeasure == 5 && res.endMeasure == 6).partition(_.sideCode == TowardsDigitizing)
+      seg41.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      seg42.exists( seg => Seq(valueA,valueC).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      val (seg51, seg52) = result.filter(res => res.startMeasure == 0 && res.endMeasure == 4).partition(_.sideCode == TowardsDigitizing)
+      seg51.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      seg52.exists( seg => Seq(valueA,valueE).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+
       println(result)
     }
   }
@@ -157,25 +164,31 @@ class TrafficSgingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers
     runWithRollback{
       val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
-      val vvhRoadLinkNameA = VVHRoadlink(1000, 235,Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
-      val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map( "ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameB2 = VVHRoadlink(1010, 235, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameB3 = VVHRoadlink(1015, 235, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map( "ROADNAME_FI" -> "Name B"))
-      val vvhRoadLinkNameC = VVHRoadlink(1020, 235, Seq(Point(60.0, 20.0), Point(70.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name C"))
-
-      //when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkNameB1))
       when(mockRoadLinkService.fetchVVHRoadlinks(Set("Name B"), "ROADNAME_FI" )).thenReturn(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3))
       when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(Seq())
 
-      val properties = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
+      NoPowerDrivenVehicles
 
-      val trafficSign = PersistedTrafficSign(1, 1005, 32, 20, 2, false, 0, 235, properties, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
-      val pairedTrafficSign = PersistedTrafficSign(2, 1015, 58, 20, 8, false, 0, 235, properties, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+      val valueA = ProhibitionValue(4, Set.empty, Set.empty, null)
+      val valueB = ProhibitionValue(14, Set.empty, Set.empty, null)
+      val valueC = ProhibitionValue(25, Set.empty, Set.empty, null)
+      val valueE = ProhibitionValue(26, Set.empty, Set.empty, null)
 
-//      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign, pairedTrafficSign))
 
-      val result = TrafficSgingLinearAssetGeneratorProcess.createLinearXXXX(trafficSign, roadLinkNameB1)
-      println(result)
+
+      val segmentOld = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.BothDirections, 0, 2, Seq())
+      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 2, 4, Seq(1))
+      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
+      val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueC)), SideCode.TowardsDigitizing, 4, 6, Seq(3))
+      val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 4, 6, Seq())
+      val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(ProhibitionValue(25, Set.empty, Set.empty, null))), SideCode.TowardsDigitizing, 8, 10, Seq(4))
+      val segment32 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(ProhibitionValue(25, Set.empty, Set.empty, null))), SideCode.AgainstDigitizing, 6, 8, Seq(5))
+      val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(ProhibitionValue(26, Set.empty, Set.empty, null))), SideCode.AgainstDigitizing, 8, 10, Seq(6))
+
+      val segments = Seq(segmentOld, segment11, segment12, segment21, segment31, segment32, segment42 )
+
+      val result = service.combineSegments(segments)
+      result._1.size should be (3)
     }
   }
 }
