@@ -59,17 +59,6 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionSer
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
   }
 
-  def deleteAssetsRelatedWithLinears(trafficSigns: Seq[PersistedTrafficSign]): Unit = {
-    val username = Some("automatic_trafficSign_deleted")
-
-    trafficSigns.foreach { sign =>
-      val trafficSignType = sign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
-
-//      if (TrafficSignManager.belongsToProhibition(trafficSignType)) {
-//        prohibitionService.deleteOrUpdateAssetBasedOnSign(sign, username)
-//      }
-    }
-  }
 
   def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo)): Unit = {
     val username = Some("automatic_trafficSign_deleted")

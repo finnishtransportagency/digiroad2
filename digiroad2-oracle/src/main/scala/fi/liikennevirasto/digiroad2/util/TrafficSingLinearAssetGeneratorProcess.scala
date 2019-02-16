@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibiti
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
+import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService, TrafficSignToGenerateLinear}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
@@ -44,6 +44,10 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
     new DigiroadEventBus
   }
 
+  lazy val linearAssetService: LinearAssetService = {
+    new LinearAssetService(roadLinkService, new DummyEventBus)
+  }
+
   lazy val manoeuvreService: ManoeuvreService = {
     new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
@@ -66,17 +70,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
   val oracleLinearAssetDao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
 
-  def createLinearXXXX(sign: PersistedTrafficSign, roadLink: RoadLink): Seq[TrafficSignToGenerateLinear] = {
-    val (tsRoadNamePublicId, tsRroadName): (String, String) =
-      roadLink.attributes.get("ROADNAME_FI") match {
-        case Some(nameFi) =>
-          ("ROADNAME_FI", nameFi.toString)
-        case _ =>
-          ("ROADNAME_SE", roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
-      }
-
-    //RoadLink with the same Finnish name
-    val roadLinks = roadLinkService.fetchVVHRoadlinks(Set(tsRroadName), tsRoadNamePublicId)
+  def createLinearXXXX(sign: PersistedTrafficSign, roadLinks: Seq[VVHRoadlink]): Seq[TrafficSignToGenerateLinear] = {
 
     val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
       val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
@@ -200,27 +194,64 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
     }
   }
 
+  def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign, withTransaction: Boolean = true) : Unit = {
+    val username = Some("automatic_trafficSign_deleted")
+    val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
+    val trProhibitionValue = Seq(prohibitionService.createValue(trafficSign))
 
-//  def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    val (toDelete, toUpdate) = trafficSignRelatedAssets.partition{ asset =>
+      asset.value.get.asInstanceOf[Prohibitions].equals(Prohibitions(trProhibitionValue))
+    }
+
+    if(toDelete.nonEmpty)
+      prohibitionService.expire(toDelete.map(_.id), username.getOrElse(""))
+
+    val groupedAssetsToUpdate = toUpdate.map { asset =>
+      (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
+    }.groupBy(_._2)
+
+    groupedAssetsToUpdate.values.map { value =>
+      prohibitionService.update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
+    }
+  }
+
+//  def modifyOrDeleteAssetBasedOnSign(sign: PersistedTrafficSign, roadLinksWithSameName: Seq[VVHRoadlink]) {
+//    // TODO Developing this
+//    val username = "automatic_trafficSign_modified"
+//    val linearAssetResultToUpdate = createLinearXXXX(sign, roadLinksWithSameName)
+//    val oldAssets = linearAssetService.getPersistedAssetsByLinkIds(Prohibition.typeId, linearAssetResultToUpdate.map(_.roadLink.linkId))
 //
+//    roadLinksWithSameName.foreach { roadLink =>
+//      if (oldAssets.exists(_.linkId == roadLink.linkId) && !linearAssetResultToUpdate.exists(_.roadLink.linkId == roadLink.linkId)) {
+//        //in case of after Modification doenst exist asset anymore, needs to be removed
+//        val oldAssetToUpdate = oldAssets.filter(_.linkId == roadLink.linkId)
+//        val deletedAssets = prohibitionService.expire(oldAssetToUpdate.map(_.id), username)
 //
-//    val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
-//    val trProhibitionValue = Seq(prohibitionService.createValue(trafficSign))
+//        deletedAssets.foreach { deletedAsset => dao.expireConnectedAsset(deletedAsset) }
 //
-//    val (toDelete, toUpdate) = trafficSignRelatedAssets.partition{ asset =>
-//      asset.value.get.asInstanceOf[Prohibitions].equals(Prohibitions(trProhibitionValue))
+//        println(s"Prohibition related with traffic sign with ID: ${sign.id} on RoadLink: ${roadLink.linkId} deleted")
+//
+//      } else if (!oldAssets.exists(_.linkId == roadLink.linkId) && linearAssetResultToUpdate.exists(_.roadLink.linkId == roadLink.linkId)) {
+//        //in case of after Modification exist a new asset at road link
+//        val newAssetToUpdate = linearAssetResultToUpdate.filter(_.roadLink.linkId == roadLink.linkId).head
+//
+//        val newAssetId = prohibitionService.createWithoutTransaction(Prohibition.typeId, roadLink.linkId, newAssetToUpdate.value,
+//          newAssetToUpdate.sideCode.value, Measures(newAssetToUpdate.startMeasure, newAssetToUpdate.endMeasure), username,
+//          vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink))
+//
+//        newAssetToUpdate.signId.foreach { signId =>
+//          dao.insertConnectedAsset(newAssetId, signId)
+//        }
+//
+//        println(s"Prohibition related with traffic sign with ID: ${sign.id} on RoadLink: ${roadLink.linkId} created")
+//
+//      } else {
+//        //Geometry or Value modifications
+//        val oldAssetToUpdate = oldAssets.filter(_.linkId == roadLink.linkId)
+//        val newAssetToUpdate = linearAssetResultToUpdate.filter(_.roadLink.linkId == roadLink.linkId).head
+//      }
 //    }
 //
-//    if(toDelete.nonEmpty)
-//      expire(toDelete.map(_.id), username.getOrElse(""))
-//
-//    val groupedAssetsToUpdate = toUpdate.map { asset =>
-//      (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
-//    }.groupBy(_._2)
-//
-//    groupedAssetsToUpdate.values.map { value =>
-//      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
-//    }
 //  }
 
   def getAdjacents(previousInfo: (Point, VVHRoadlink), roadLinks: Seq[VVHRoadlink]): Seq[(VVHRoadlink, (Point, Point))] = {
@@ -334,6 +365,23 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
       headPoint
   }
 
+  private def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[VVHRoadlink] = {
+    val (tsRoadNamePublicId, tsRroadName): (String, String) =
+      signRoadLink.attributes.get("ROADNAME_FI") match {
+        case Some(nameFi) =>
+          ("ROADNAME_FI", nameFi.toString)
+        case _ =>
+          ("ROADNAME_SE", signRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+      }
+
+    //RoadLink with the same Finnish/Swedish name
+    roadLinkService.fetchVVHRoadlinks(Set(tsRroadName), tsRoadNamePublicId)
+  }
+
+  def getOldAssetsToTreat(): Unit = {
+
+  }
+
 
   def createLinearAssetUsingTrafficSigns(): Unit = {
     println("\nStarting create Linear Assets using traffic signs")
@@ -364,32 +412,38 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
         println("")
         println("Start processing traffic signs")
-        trafficSignsToTransform.foreach { t =>
-          val tsCreatedDate = t.createdBy
-          val tsModifiedDate = t.modifiedAt
+        trafficSignsToTransform.foreach { ts =>
+          val tsRoadLink = roadLinks.find(_.linkId == ts.linkId).head
+          val tsCreatedDate = ts.createdBy
+          val tsModifiedDate = ts.modifiedAt
+          val allRoadLinksWithSameName = getAllRoadLinksWithSameName(tsRoadLink)
 
-          if (t.expired) {
+          if (ts.expired) {
             // Delete actions
-            println("********************************************")
-            println("DETECTED AS A DELETED")
-            println("********************************************")
+            println(s"Start deleting prohibitions according the traffic sign with ID: ${ts.id}")
+
+            deleteOrUpdateAssetBasedOnSign(ts)
+
+            println(s"Prohibition related with traffic sign with ID: ${ts.id} deleted")
+            println("")
 
           } else if (tsCreatedDate.nonEmpty && tsModifiedDate.isEmpty) {
             //Create actions
-            println(s"Start creating prohibition according the traffic sign with ID: ${t.id}")
+            println(s"Start creating prohibition according the traffic sign with ID: ${ts.id}")
 
-            val signType = trafficSignService.getProperty(t, trafficSignService.typePublicId).get.propertyValue.toInt
-            val additionalPanel = trafficSignService.getAllProperties(t, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
-            trafficSignManager.createAssets(TrafficSignInfo(t.id, t.linkId, t.validityDirection, signType, t.mValue, roadLinks.find(_.linkId == t.linkId).head, additionalPanel), false)
+//            createLinearXXXX(ts, roadLinks.find(_.linkId == ts.linkId).head)
 
-            println(s"Prohibition related with traffic sign with ID: ${t.id} created")
+            println(s"Prohibition related with traffic sign with ID: ${ts.id} created")
             println("")
 
           } else {
             //Modify actions
-            println("********************************************")
-            println("DETECTED AS A MODIFIED")
-            println("********************************************")
+            println(s"Start modifying prohibition according the traffic sign with ID: ${ts.id}")
+
+//            modifyOrDeleteAssetBasedOnSign(ts, allRoadLinksWithSameName)
+
+            println(s"Prohibition related with traffic sign with ID: ${ts.id} modified")
+            println("")
           }
 
         }
