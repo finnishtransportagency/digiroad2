@@ -179,6 +179,10 @@ object DataFixture {
     new DynamicLinearAssetDao()
   }
 
+  lazy val trafficSignLinearAssetGeneratorProcess: TrafficSingLinearAssetGeneratorProcess = {
+    new TrafficSingLinearAssetGeneratorProcess(roadLinkService)
+  }
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -1751,70 +1755,6 @@ object DataFixture {
     }
   }
 
-  def createLinearAssetUsingTrafficSigns(): Unit = {
-    println("\nStarting create Linear Assets using traffic signs")
-    println(DateTime.now())
-    println("")
-
-    withDynSession {
-      val lastExecutionDate = oracleLinearAssetDao.getLastExecutionDateOfConnectedAsset.getOrElse(DateTime.now().minusDays(2))
-      println(s"Last Execution Date of the batch: ${lastExecutionDate.toString} ")
-      println("")
-
-      println(s"Obtaining created/modified/deleted traffic Signs after the date: ${lastExecutionDate.toString}")
-      //Get Traffic Signs
-      val trafficSigns = trafficSignService.getAfterDate(lastExecutionDate)
-      println(s"Number of Traffic Signs to execute: ${trafficSigns.size} ")
-
-      val trafficSignsToTransform =
-        trafficSigns.filter { ts =>
-          val signType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-          TrafficSignManager.belongsToProhibition(signType)
-        }
-
-      if (trafficSignsToTransform.nonEmpty) {
-        println("")
-        println(s"Obtaining all Road Links for filtered Traffic Signs")
-        val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(trafficSignsToTransform.map(_.linkId).toSet, false)
-        println(s"End of roadLinks fetch for filtered Traffic Signs")
-
-        println("")
-        println("Start processing traffic signs")
-        trafficSignsToTransform.foreach { t =>
-          val tsCreatedDate = t.createdBy
-          val tsModifiedDate = t.modifiedAt
-
-          if (t.expired) {
-            // Delete actions
-            println("********************************************")
-            println("DETECTED AS A DELETED")
-            println("********************************************")
-
-          } else if (tsCreatedDate.nonEmpty && tsModifiedDate.isEmpty) {
-            //Create actions
-            println(s"Start creating prohibition according the traffic sign with ID: ${t.id}")
-
-            val signType = trafficSignService.getProperty(t, trafficSignService.typePublicId).get.propertyValue.toInt
-            val additionalPanel = trafficSignService.getAllProperties(t, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
-            trafficSignManager.createAssets(TrafficSignInfo(t.id, t.linkId, t.validityDirection, signType, t.mValue, roadLinks.find(_.linkId == t.linkId).head, additionalPanel), false)
-
-            println(s"Prohibition related with traffic sign with ID: ${t.id} created")
-            println("")
-
-          } else {
-            //Modify actions
-            println("********************************************")
-            println("DETECTED AS A MODIFIED")
-            println("********************************************")
-          }
-
-        }
-      }
-    }
-    println("")
-    println("Complete at time: " + DateTime.now())
-  }
-
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1924,7 +1864,7 @@ object DataFixture {
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
       case Some("create_linear_asset_using_traffic_signs") =>
-        createLinearAssetUsingTrafficSigns()
+        trafficSignLinearAssetGeneratorProcess.createLinearAssetUsingTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
