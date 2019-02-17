@@ -315,7 +315,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def createValue(trafficSign: PersistedTrafficSign): ProhibitionValue = {
+  def createValue(trafficSign: PersistedTrafficSign): Prohibitions = {
     val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
     val typeId = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(signType))
@@ -327,7 +327,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         createValidPeriod(trafficSignType, additionalPanel)
       }.toSet
 
-    ProhibitionValue(typeId.head.value, validityPeriods, Set())
+    Prohibitions(Seq(ProhibitionValue(typeId.head.value, validityPeriods, Set())))
   }
 
   override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
