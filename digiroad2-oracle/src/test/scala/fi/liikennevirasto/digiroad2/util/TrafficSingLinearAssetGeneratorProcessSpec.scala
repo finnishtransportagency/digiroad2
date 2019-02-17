@@ -32,6 +32,8 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
+  val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+  val roadLinkNameB2 = RoadLink(1010, Seq(Point(40.0, 20.0), Point(50.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(40.0, 20.0), Point(50.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
   val vvhRoadLinkNameA = VVHRoadlink(1000, 235, Seq(Point(10.0, 20.0), Point(30.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name A"))
   val vvhRoadLinkNameB1 = VVHRoadlink(1005, 235, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = Map("ROADNAME_FI" -> "Name B"))
@@ -96,7 +98,7 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign))
 
-      service.createLinearXXXX(trafficSign, roadLinkNameB1)
+      service.createLinearXXXX(trafficSign, Seq(vvhRoadLinkNameB1))
 
     }
   }
@@ -115,80 +117,95 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
 
 //      when(mockTrafficSignService.getTrafficSign(any[Seq[Long]])).thenReturn(Seq(trafficSign, pairedTrafficSign))
 
-      val result = service.createLinearXXXX(trafficSign, roadLinkNameB1)
+      val result = service.createLinearXXXX(trafficSign, Seq(vvhRoadLinkNameB1))
       println(result)
     }
   }
 
   test("create linear segments"){
-    runWithRollback{
       val valueA = ProhibitionValue(NoLeftTurn.OTHvalue, Set.empty, Set.empty, null)
       val valueB = ProhibitionValue(NoPowerDrivenVehicles.OTHvalue, Set.empty, Set.empty, null)
       val valueC = ProhibitionValue(NoPedestriansCyclesMopeds.OTHvalue, Set.empty, Set.empty, null)
       val valueD = ProhibitionValue(NoRidersOnHorseback.OTHvalue, Set.empty, Set.empty, null)
       val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
 
-      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.TowardsDigitizing, 0, 4, Seq(1))
-      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.AgainstDigitizing, 0, 4, Seq(2))
+      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.TowardsDigitizing, 2, 4, Seq(1))
+      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
       val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueC)), SideCode.TowardsDigitizing, 6, 8, Seq(3))
       val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.TowardsDigitizing, 4, 5, Seq(4))
       val segment32 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.AgainstDigitizing, 4, 5, Seq(5))
       val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueE)), SideCode.AgainstDigitizing, 8, 10, Seq(6))
 
-      val oldAsset = PersistedLinearAsset(1, 1005, SideCode.BothDirections.value, Some(Prohibitions(Seq(valueA))), 0, 10, None, None, None, None, false, Prohibition.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)
+      val oldAsset = PersistedLinearAsset(1, 1005, SideCode.BothDirections.value, Some(Prohibitions(Seq(valueA))), 2, 10, None, None, None, None, false, Prohibition.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)
       when(mockProhibitionService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(oldAsset))
 
       val segments = Seq(segment11, segment12, segment21, segment31, segment32, segment42 )
       val result = service.splitSegments(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3), segments,  Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB3))
       result.size should be (10)
-      val (seg11, seg12) = result.filter(res => res.startMeasure == 0 && res.endMeasure == 4).partition(_.sideCode == TowardsDigitizing)
-      seg11.exists( seg => Seq(valueA,valueB).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      seg12.exists( seg => Seq(valueA,valueB).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      val (seg21, seg22) = result.filter(res => res.startMeasure == 0 && res.endMeasure == 5).partition(_.sideCode == TowardsDigitizing)
-      seg21.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      seg22.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
+      val (seg11, seg12) = result.filter(res => res.startMeasure == 2 && res.endMeasure == 4).partition(_.sideCode == TowardsDigitizing)
+      seg11.exists( seg => Seq(valueA,valueB).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      seg12.exists( seg => Seq(valueA,valueB).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      seg11.exists( seg => seg.signId.contains(1)) should be (true)
+      val (seg21, seg22) = result.filter(res => res.startMeasure == 4 && res.endMeasure == 5).partition(_.sideCode == TowardsDigitizing)
+      seg21.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      seg22.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
       val (seg31, seg32) = result.filter(res => res.startMeasure == 5 && res.endMeasure == 6).partition(_.sideCode == TowardsDigitizing)
-      seg31.exists( seg => Seq(valueA,valueD).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      val (seg41, seg42) = result.filter(res => res.startMeasure == 5 && res.endMeasure == 6).partition(_.sideCode == TowardsDigitizing)
-      seg41.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      seg42.exists( seg => Seq(valueA,valueC).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      val (seg51, seg52) = result.filter(res => res.startMeasure == 0 && res.endMeasure == 4).partition(_.sideCode == TowardsDigitizing)
-      seg51.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-      seg52.exists( seg => Seq(valueA,valueE).equals(seg.value.asInstanceOf[Prohibitions].prohibitions))
-
-      println(result)
-    }
+      seg31.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      seg32.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      val (seg41, seg42) = result.filter(res => res.startMeasure == 6 && res.endMeasure == 8).partition(_.sideCode == TowardsDigitizing)
+      seg41.exists( seg => Seq(valueA, valueC).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      seg42.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      val (seg51, seg52) = result.filter(res => res.startMeasure == 8 && res.endMeasure == 10).partition(_.sideCode == TowardsDigitizing)
+      seg51.exists( seg => Seq(valueA).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
+      seg52.exists( seg => Seq(valueA,valueE).equals(seg.value.asInstanceOf[Prohibitions].prohibitions)) should be (true)
   }
 
   test("test combine assets"){
-    runWithRollback{
-      val roadLinkNameB1 = RoadLink(1005, Seq(Point(30.0, 20.0), Point(40.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(30.0, 20.0), Point(40.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
+    val valueA = ProhibitionValue(NoLeftTurn.OTHvalue, Set.empty, Set.empty, null)
+    val valueB = ProhibitionValue(NoPowerDrivenVehicles.OTHvalue, Set.empty, Set.empty, null)
+    val valueC = ProhibitionValue(NoPedestriansCyclesMopeds.OTHvalue, Set.empty, Set.empty, null)
+    val valueD = ProhibitionValue(NoRidersOnHorseback.OTHvalue, Set.empty, Set.empty, null)
+    val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
 
-      when(mockRoadLinkService.fetchVVHRoadlinks(Set("Name B"), "ROADNAME_FI" )).thenReturn(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3))
-      when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(Seq())
+    val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 2, 4, Seq(1))
+    val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
+    val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueD)), SideCode.TowardsDigitizing, 4, 5, Seq(4))
+    val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueD)), SideCode.AgainstDigitizing, 4, 5, Seq(5))
+    val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 5, 6, Seq())
+    val segment41 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueC)), SideCode.TowardsDigitizing, 6, 8, Seq(1))
+    val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.AgainstDigitizing, 6, 8, Seq(2))
+    val segment52 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 8, 10, Seq(4))
 
-      NoPowerDrivenVehicles
+    val segments = Seq(segment11, segment12, segment21, segment22, segment31, segment41, segment42, segment52)
 
-      val valueA = ProhibitionValue(4, Set.empty, Set.empty, null)
-      val valueB = ProhibitionValue(14, Set.empty, Set.empty, null)
-      val valueC = ProhibitionValue(25, Set.empty, Set.empty, null)
-      val valueE = ProhibitionValue(26, Set.empty, Set.empty, null)
-
-
-
-      val segmentOld = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.BothDirections, 0, 2, Seq())
-      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 2, 4, Seq(1))
-      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
-      val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueC)), SideCode.TowardsDigitizing, 4, 6, Seq(3))
-      val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 4, 6, Seq())
-      val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(ProhibitionValue(25, Set.empty, Set.empty, null))), SideCode.TowardsDigitizing, 8, 10, Seq(4))
-      val segment32 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(ProhibitionValue(25, Set.empty, Set.empty, null))), SideCode.AgainstDigitizing, 6, 8, Seq(5))
-      val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(ProhibitionValue(26, Set.empty, Set.empty, null))), SideCode.AgainstDigitizing, 8, 10, Seq(6))
-
-      val segments = Seq(segmentOld, segment11, segment12, segment21, segment31, segment32, segment42 )
-
-      val result = service.combineSegments(segments)
-      result._1.size should be (3)
-    }
+    val (assetForBothSide, oneSide) = service.fuseSegments(segments)
+    assetForBothSide.size should be (4)
+    oneSide.size should be (2)
+    assetForBothSide.exists(seg => seg.startMeasure == 2 && seg.endMeasure == 4) should be (true)
+    assetForBothSide.exists(seg => seg.startMeasure == 4 && seg.endMeasure == 5) should be (true)
+    assetForBothSide.exists(seg => seg.startMeasure == 6 && seg.endMeasure == 8) should be (true)
+    oneSide.count(seg => seg.startMeasure == 5 && seg.endMeasure == 6) should be (1)
+    oneSide.count(seg => seg.startMeasure == 8 && seg.endMeasure == 10) should be (1)
   }
+
+  test("test try convert oneSide segments into bothSide"){
+    val adjRoadLinks = Seq(RoadLink(2000, Seq(Point(50.0, 20.0), Point(60.0, 0.0)), GeometryUtils.geometryLength(Seq(Point(40.0, 20.0), Point(50.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None),
+    RoadLink(3000, Seq(Point(50.0, 20.0), Point(60.0, 20.0)), GeometryUtils.geometryLength(Seq(Point(40.0, 20.0), Point(50.0, 20.0))), Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None))
+
+    val valueA = ProhibitionValue(NoLeftTurn.OTHvalue, Set.empty, Set.empty, null)
+    val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
+
+    val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 0, 10, Seq())
+    val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB2, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 0, 10, Seq(4))
+
+    val segments = Set(segment11, segment22)
+    when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(Seq(roadLinkNameB1))
+    when( mockRoadLinkService.getAdjacent(vvhRoadLinkNameB1.linkId)).thenReturn(Seq(roadLinkNameB2))
+    when( mockRoadLinkService.getAdjacent(vvhRoadLinkNameB2.linkId)).thenReturn(adjRoadLinks)
+
+    val result = service.convertOneSideCode(segments, Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB3))
+    result.size should be (4)
+
+  }
+
 }
