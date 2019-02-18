@@ -521,6 +521,13 @@ root.LinearAssetLayer  = function(params) {
     return vectorSource.removeFeature(feature);
   };
 
+  var geometryAndValuesEqual = function(feature, comparison) {
+    var toCompare = ["linkId", "sideCode", "startMeasure", "endMeasure"];
+    _.each(toCompare, function(value){
+      return feature[value] === comparison[value];
+    });
+  };
+
   this.decorateSelection = function (polygonSelection) {
     if (selectedLinearAsset.exists()) {
 
@@ -530,14 +537,16 @@ root.LinearAssetLayer  = function(params) {
       if(assetLabel){
         if(polygonSelection){
           var selectedLabels = _.filter(vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
-            return layerFeature.values_.geometry instanceof ol.geom.Point && (selectedFeature.values_.linkId === layerFeature.values_.linkId && selectedFeature.values_.sideCode === layerFeature.values_.sideCode); }) ;
+            return layerFeature.values_.geometry instanceof ol.geom.Point && (geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_)); }) ;
           });
           _.each(selectedLabels, removeFeature);
 
           selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
         } else {
-          var currentFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
-            return selectedFeature.values_.linkId === layerFeature.values_.linkId && selectedFeature.values_.sideCode === layerFeature.values_.sideCode; }) ;
+          var currentFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){
+            return _.some(selectedFeatures, function(selectedFeature) {
+              return geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
+            });
           });
 
           _.each(currentFeatures, removeFeature);
