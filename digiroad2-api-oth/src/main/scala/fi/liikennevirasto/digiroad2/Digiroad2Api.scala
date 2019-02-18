@@ -47,7 +47,7 @@ case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Do
 case class NewDynamicLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
-                   val roadAddressService: RoadAddressesService,
+                   val roadAddressService: RoadAddressService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
