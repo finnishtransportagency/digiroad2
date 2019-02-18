@@ -397,7 +397,7 @@
                 '<div class="form-group">' +
                 '<label class="control-label">'+ field.label+'</label>' +
                 '<div class="choice-group"> ' +
-                '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice" name = "' + field.publicId + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
+                '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice-'+sideCode+'" name = "' + field.publicId + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
                 '</div>'+
                 '</div>');
 
@@ -614,8 +614,9 @@
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
             var buttons = '<div class="form-group date-time-period-buttons">' +
-                '<button class="btn edit-only editable btn-secondary add-period"' + me.disabled() +' >Lisää kausi</button>' +
-                '<button class="btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista kausi</button>'+
+                '<button class="form-control btn edit-only editable btn-secondary add-period"' + me.disabled() +' >Lisää kausi</button>' +
+                '<span></span>' +
+                '<button class="form-control btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista kausi</button>'+
                 '</div>';
 
              var handleButton = function() {
@@ -645,21 +646,21 @@
                 });
             };
 
-            // me.hasValue = function() {
-            //    return _.some(me.getValue(), function (values) {
-            //         var period = values.value;
-            //         return !_.isEmpty(period.startDate) && !_.isEmpty(period.endDate);
-            //     });
-            // };
-            //
-            // me.isValid = function(){
-            //     //both Dates empties or filled
-            //     var bothDates =_.some(me.getValue(), function (values) {
-            //         var period = values.value;
-            //         return !(_.isEmpty(period.startDate) ^ _.isEmpty(period.endDate));
-            //     });
-            //     return bothDates && (!me.isRequired() || me.isRequired() && me.hasValue());
-            // };
+            me.hasValue = function() {
+               return _.some(me.getValue(), function (values) {
+                    var period = values.value;
+                    return !_.isEmpty(period.startDate) && !_.isEmpty(period.endDate);
+                });
+            };
+
+            me.isValid = function(){
+                //both Dates empties or filled
+                var bothDates =_.every(me.getValue(), function (values) {
+                    var period = values.value;
+                    return !(_.isEmpty(period.startDate) ^ _.isEmpty(period.endDate));
+                });
+                return bothDates && (!me.isRequired() || me.isRequired() && me.hasValue());
+            };
 
             var addDatePickers = function (elementNumber) {
                 var $startDate = me.element.find('#datePeriod-start' + elementNumber);
@@ -734,7 +735,7 @@
                 handleButton();
             });
 
-            me.element.on('change', '.existing-date-period', function() {
+            me.element.on('datechange', function() {
                 me.setSelectedValue(setValue, getValue);
             });
 
@@ -776,7 +777,7 @@
 
             return $('' +
                 '<div class="form-group read-only">' +
-                '<label class="control-label">DatePeriod</label>' +
+                '<label class="control-label">Kelirikkokausi</label>' +
                 '<ul class="form-control-static date-period-group">' +
                 datePeriodTable +
                 '</ul>' +
@@ -916,7 +917,8 @@
             }
         };
 
-        me.renderFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled) {
+        me.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled) {
+            forms = new AvailableForms();
 
             var fieldGroupElement = $('<div class = "input-unit-combination" >');
             _.each(_.sortBy(formStructure.fields, function(field){ return field.weight; }), function (field) {
@@ -983,7 +985,6 @@
         };
 
         me.renderForm = function (selectedAsset, isDisabled) {
-            forms = new AvailableForms();
             var isReadOnly = _isReadOnly(selectedAsset);
             var asset = selectedAsset.get();
 
@@ -1059,7 +1060,7 @@
 
             toggleElement.find('.radio input').on('change', function(event) {
                 var disabled = $(this).val() === 'disabled';
-                var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+                var input = formGroup.find('.form-control, .form-group, .choice-group .multiChoice-'+sideCode ).not('.edit-control-group.choice-group');
                 input.prop('disabled', disabled);
 
                 if(disabled){
@@ -1068,14 +1069,14 @@
                   _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
                   setValueFn(asset.value || {properties: []} );
-                  formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  formGroup.find('.input-unit-combination').replaceWith(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
                 }
                 eventbus.trigger("radio-trigger-dirty");
             });
 
             formGroup.append(toggleElement);
             body.find('.form').append(formGroup);
-            body.find('.form-editable-' + sideCodeClass).append(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
+            body.find('.form-editable-' + sideCodeClass).append(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
             return body;
         }

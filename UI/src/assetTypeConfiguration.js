@@ -280,11 +280,24 @@
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
         style: new RoadDamagedByThawStyle(),
-        // saveCondition: function (fields) {
-        //   var someDateValue = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'date_period';}), function(dateTime) { return dateTime.hasValue(); });
-        //   var checkBox = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
-        //       return checkBox ? someDateValue : true;
-        // },
+        saveCondition: function (fields) {
+          var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
+
+          var isInDatePeriod = function(date) {
+            var datePeriodValue = date.getPropertyValue().values;
+            var startDate = new Date(_.head(datePeriodValue).value.startDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+            var endDate = new Date(_.head(datePeriodValue).value.endDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+
+            return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
+          };
+
+          var isValidDate =  _.some(datePeriodField, function(date) {
+            return date.hasValue() && isInDatePeriod(date);
+          });
+
+          var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
+          return checkBoxField ? isValidDate : true;
+        },
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
