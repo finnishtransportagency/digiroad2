@@ -281,7 +281,7 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
       when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(Seq(roadLinkNameB1))
 
       val allRoadLinks = Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3)
-      val result = service.segmentsManager(sign1, allRoadLinks, Seq())
+      val result = service.segmentsManager(allRoadLinks,  trafficSigns, Seq())
       result.size should be (1)
     }
   }

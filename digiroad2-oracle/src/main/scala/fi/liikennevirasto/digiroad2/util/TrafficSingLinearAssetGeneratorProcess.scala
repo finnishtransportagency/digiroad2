@@ -5,6 +5,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, Prohibition, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.importer.TrafficSignGeneralWarningSignsTierekisteriImporter
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -16,6 +17,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService, TrafficSignToGenerateLinear}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
+import org.json4s.ParserUtil.Segment
 
 case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkService) {
   def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -71,17 +73,11 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
   val oracleLinearAssetDao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
 
-  def segmentsManager(sign: PersistedTrafficSign, roadLinks: Seq[VVHRoadlink], existingSegments : Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
-    val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
-      val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
-      //TODO next process this should be replace
-      TrafficSignManager.belongsToProhibition(signType)
-    }
-
+  def segmentsManager(roadLinks: Seq[VVHRoadlink], trafficSigns: Seq[PersistedTrafficSign], existingSegments : Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
     val startEndRoadLinks = findStartEndRoadLinkOnChain(roadLinks)
 
     val newSegments = startEndRoadLinks.flatMap { frl =>
-      baseProcess(trafficSignsOnRoadLinks, roadLinks, frl, Seq())
+      baseProcess(trafficSigns, roadLinks, frl, Seq())
     }
     val allSegments = splitSegments(roadLinks, newSegments, existingSegments, startEndRoadLinks)
     val (assetForBothSide, assetOneSide) = fuseSegments(allSegments)
@@ -262,7 +258,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
     }
 
     //TODO this method should be call directly from batch ///existingSegments
-    val assetsToReprocess = segmentsManager(trafficSign, roadLinksWithSameName, Seq())
+    val assetsToReprocess = segmentsManager(roadLinksWithSameName, Seq())
 
     assetsToReprocess.foreach { updatedAsset =>
       val newAssetId = prohibitionService.createWithoutTransaction(Prohibition.typeId, updatedAsset.roadLink.linkId, updatedAsset.value,
@@ -394,7 +390,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 //      headPoint
 //  }
 
-  private def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[VVHRoadlink] = {
+  private def getAllRoadLinksWithSameName(signRoadLink: VVHRoadlink): Seq[VVHRoadlink] = {
     val (tsRoadNamePublicId, tsRroadName): (String, String) =
       signRoadLink.attributes.get("ROADNAME_FI") match {
         case Some(nameFi) =>
@@ -453,7 +449,27 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
           println("")
         }
 
+        def iterativeProcess(roadLinks: Seq[VVHRoadlink], roadLinksssss: Seq[VVHRoadlink], result: Set[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
+          val roadLinkFor = roadLinks.diff(roadLinksssss)
+
+          if(roadLinkFor.nonEmpty)
+          roadLinkFor.flatMap { roadLink =>
+            val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
+            val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
+              val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+              TrafficSignManager.belongsToProhibition(signType)
+            }
+            val existingAssets = prohibitionService.getPersistedAssetsByLinkIds(Prohibition.typeId, allRoadLinksWithSameName.map(_.linkId))
+            val allSegments = segmentsManager(allRoadLinksWithSameName, trafficSignsOnRoadLinks, segmentsConverter(existingAssets, allRoadLinksWithSameName)) ++ result
+            iterativeProcess(roadLinks, allRoadLinksWithSameName, allSegments)
+          }.toSet
+          else
+            result
+        }
+
+
         tsToCreateOrUpdate.foreach { ts2 =>
+
           val tsRoadLink = roadLinks.find(_.linkId == ts2.linkId).head
           val tsCreatedDate = ts2.createdBy
           val tsModifiedDate = ts2.modifiedAt
@@ -462,7 +478,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
             //Create actions
             println(s"Start creating prohibition according the traffic sign with ID: ${ts2.id}")
 
-            //            createLinearXXXX(ts, roadLinks.find(_.linkId == ts.linkId).head)
+            /*createLinearXXXX(ts, roadLinks.find(_.linkId == ts.linkId).head)*/
 
             println(s"Prohibition related with traffic sign with ID: ${ts2.id} created")
             println("")
