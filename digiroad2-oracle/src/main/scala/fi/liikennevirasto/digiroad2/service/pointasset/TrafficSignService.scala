@@ -493,9 +493,15 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     OracleTrafficSignDao.getLastExecutionDate(createdBy, signTypes)
   }
 
-  def getAfterDate(sinceDate: DateTime): Seq[PersistedTrafficSign] = {
-    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
-    val filter = s"where a.asset_type_id = $typeId and floating = 0 and (a.valid_to > $querySinceDate or a.modified_date > $querySinceDate or a.created_date > $querySinceDate)"
+  def getAfterDate(sinceDate: Option[DateTime]): Seq[PersistedTrafficSign] = {
+    val filter =
+      sinceDate match {
+        case Some(date) =>
+          val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(date)}', 'YYYYMMDDHH24MI')"
+          s"where a.asset_type_id = $typeId and floating = 0 and (a.valid_to > $querySinceDate or a.modified_date > $querySinceDate or a.created_date > $querySinceDate)"
+        case _ =>
+          s"where a.asset_type_id = $typeId and floating = 0 and a.valid_to is null"
+      }
 
     fetchPointAssetsWithExpired(withFilter(filter))
   }
