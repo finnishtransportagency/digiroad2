@@ -131,7 +131,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
       Seq(first, last).flatMap { pointOfInterest =>
         getAdjacents(pointOfInterest, roadLinks.filterNot(_.linkId == actualRoadLink.linkId)).map { roadLink =>
-          baseProcess(trafficSigns, roadLinks, roadLink._1, result)
+          baseProcess(trafficSigns, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), roadLink._1, result)
         }
       }
     }).flatten.toSet
@@ -317,7 +317,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
     if (segmentSameRoadLink.nonEmpty) {
      segmentSameRoadLink.flatMap { otherSegment => findNextEndAssets(otherSegment, otherSegments.diff(Seq(otherSegment)), result :+ segment.copy(sideCode = BothDirections))}
     } else {
-      val adjacent = roadLinkService.getAdjacent(segment.roadLink.linkId)
+      val adjacent = roadLinkService.getAdjacentTemp(segment.roadLink.linkId)
       if (adjacent.size == 1) {
         otherSegments.filter(_.roadLink.linkId == adjacent.head.linkId).flatMap { otherSegment =>
           findNextEndAssets(otherSegment, otherSegments.diff(Seq(otherSegment)), result :+ segment.copy(sideCode = BothDirections))}
@@ -391,18 +391,24 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
     if (roadLinkFor.nonEmpty)
       roadLinkFor.foreach { roadLink =>
+        println(s"Working at RoadLink with link id: ${roadLink.linkId}")
+
         val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
         val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
           val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
           TrafficSignManager.belongsToProhibition(signType)
         }
+        println(s"Number of traffic Signs on relevant roadlinks to treat: ${trafficSignsOnRoadLinks.size}")
+
         val existingAssets = prohibitionService.getPersistedAssetsByLinkIds(Prohibition.typeId, allRoadLinksWithSameName.map(_.linkId), false)
         val existingSegments = segmentsConverter(existingAssets, allRoadLinksWithSameName)
         val allSegments = segmentsManager(allRoadLinksWithSameName, trafficSignsOnRoadLinks, existingSegments)
 
+        println(s"Applying : ${trafficSignsOnRoadLinks.size} traffic Signs")
+        println("")
         applyChangesBySegments(allSegments, existingSegments, existingAssets)
 
-        iterativeProcess(roadLinks, allRoadLinksWithSameName)
+        iterativeProcess(roadLinkFor.filterNot(_.linkId == roadLink.linkId), allRoadLinksWithSameName)
       }
   }
 
@@ -423,18 +429,22 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
           if (existingSeg.startMeasure == newSegment.startMeasure && existingSeg.endMeasure == newSegment.endMeasure) {
             //Update value
+            println(s"Applying modifications at asset ID: ${oldAsset.id} ")
             prohibitionService.update(Seq(oldAsset.id), newSegment.value, userUpdate)
+
           }
           else {
             //delete old and create new
             prohibitionService.expireAsset(Prohibition.typeId, oldAsset.id, userUpdate, true, false)
             oracleLinearAssetDao.expireConnectedAsset(oldAsset.id)
 
+            println(s"Applying creation of new data at roadlink: ${existingSeg.roadLink.linkId} ")
             createLinearAssetAccordingSegmentsInfo(existingSeg, userCreate)
           }
         }
         else {
           //create news
+          println(s"Applying creation of new data at roadlink: ${existingSeg.roadLink.linkId} ")
           createLinearAssetAccordingSegmentsInfo(existingSeg, userCreate)
         }
       })
@@ -484,6 +494,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
           println("")
         }
 
+        //create and Modify actions
         iterativeProcess(roadLinks, Seq())
       }
     }
