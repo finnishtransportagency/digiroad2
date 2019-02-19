@@ -656,7 +656,7 @@
         style: new CarryingCapacityStyle(),
         layer: CarryingCapacityLayer,
         saveCondition: function (fields) {
-          return _.some(fields, function (field) {
+          return _.isEmpty(fields) || _.some(fields, function (field) {
             var fieldPropertyType = field.getPropertyValue().propertyType;
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
