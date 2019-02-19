@@ -1,5 +1,7 @@
 (function(root) {
   root.SearchBox = function(instructionsPopup, locationSearch) {
+    var backend = new Backend();
+
     var tooltip ="Hae katuosoitteella, tieosoitteella, koordinaateilla tai kohteen ID:llä (esim. link_ID tai pysäkin valtakunnallinen_ID)";
     var groupDiv = $('<div class="panel-group search-box"/>');
     var coordinatesDiv = $('<div class="panel"/>');
@@ -10,6 +12,8 @@
     var resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
     var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
+
+    var associationNames = backend.getPrivateRoadAssociationNames();
 
     var bindEvents = function() {
       var populateSearchResults = function(results) {

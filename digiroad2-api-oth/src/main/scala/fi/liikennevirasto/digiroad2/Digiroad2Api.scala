@@ -1863,4 +1863,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ => None
     }
   }
+
+  get("/roadAssociationName") {
+    roadLinkService.getAllPrivateRoadAssociationNames()
+  }
 }

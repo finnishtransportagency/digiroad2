@@ -288,6 +288,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     RoadLinkDAO.LinkTypeDao.getAllLinkType(linkIds).groupBy(_._1)
   }
 
+  def getAllPrivateRoadAssociationNames(): Seq[String] = {
+    withDynSession {
+      LinkAttributesDao.getAllExistingDistinctValues(privateRoadAssociationPublicId)
+    }
+  }
+
   def fetchVVHRoadlinksAndComplementary(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) vvhClient.roadLinkData.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[VVHRoadlink]
