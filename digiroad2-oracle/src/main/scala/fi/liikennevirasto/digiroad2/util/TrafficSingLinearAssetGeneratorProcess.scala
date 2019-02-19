@@ -389,8 +389,9 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
   def iterativeProcess(roadLinks: Seq[VVHRoadlink], roadLinksssss: Seq[VVHRoadlink]): Unit = {
     val roadLinkFor = roadLinks.diff(roadLinksssss)
 
-    if (roadLinkFor.nonEmpty)
-      roadLinkFor.foreach { roadLink =>
+    if (roadLinkFor.nonEmpty) {
+      val roadLink = roadLinkFor.head
+        println("")
         println(s"Working at RoadLink with link id: ${roadLink.linkId}")
 
         val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
@@ -398,56 +399,59 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
           val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
           TrafficSignManager.belongsToProhibition(signType)
         }
-        println(s"Number of traffic Signs on relevant roadlinks to treat: ${trafficSignsOnRoadLinks.size}")
 
         val existingAssets = prohibitionService.getPersistedAssetsByLinkIds(Prohibition.typeId, allRoadLinksWithSameName.map(_.linkId), false)
         val existingSegments = segmentsConverter(existingAssets, allRoadLinksWithSameName)
         val allSegments = segmentsManager(allRoadLinksWithSameName, trafficSignsOnRoadLinks, existingSegments)
 
-        println(s"Applying : ${trafficSignsOnRoadLinks.size} traffic Signs")
-        println("")
         applyChangesBySegments(allSegments, existingSegments, existingAssets)
 
         iterativeProcess(roadLinkFor.filterNot(_.linkId == roadLink.linkId), allRoadLinksWithSameName)
-      }
+    }
   }
 
   def applyChangesBySegments(allSegments: Set[TrafficSignToGenerateLinear], existingSegments: Seq[TrafficSignToGenerateLinear], existingAssets: Seq[PersistedLinearAsset]) {
     val userCreate = "automatic_trafficSign_created"
     val userUpdate = "automatic_trafficSign_updated"
+    println(s"Total of segments:  ${allSegments.size} ")
 
-    allSegments.groupBy(_.roadLink.linkId).values.head.foreach(newSegment =>
-      existingSegments.foreach { existingSeg =>
-        if (existingSeg.roadLink.linkId == newSegment.roadLink.linkId && existingSeg.startMeasure == newSegment.startMeasure &&
-          existingSeg.endMeasure == newSegment.endMeasure && existingSeg.value.equals(newSegment.value))
-          None
+    allSegments.groupBy(_.roadLink.linkId).values.foreach(newSegments =>
+      newSegments.foreach { newSegment =>
 
-        else if (existingSeg.roadLink.linkId == newSegment.roadLink.linkId) {
-          val oldAsset = existingAssets.find(asset =>
-            asset.startMeasure == existingSeg.startMeasure && asset.endMeasure == existingSeg.endMeasure &&
-              asset.sideCode == existingSeg.sideCode.value).get
+        if (existingSegments.exists(_.roadLink.linkId == newSegment.roadLink.linkId)) {
+          existingSegments.foreach { existingSeg =>
+            if (existingSeg.startMeasure == newSegment.startMeasure &&
+              existingSeg.endMeasure == newSegment.endMeasure && existingSeg.value.equals(newSegment.value))
+              None
 
-          if (existingSeg.startMeasure == newSegment.startMeasure && existingSeg.endMeasure == newSegment.endMeasure) {
-            //Update value
-            println(s"Applying modifications at asset ID: ${oldAsset.id} ")
-            prohibitionService.update(Seq(oldAsset.id), newSegment.value, userUpdate)
+            else {
+              val oldAsset = existingAssets.find(asset =>
+                asset.startMeasure == existingSeg.startMeasure && asset.endMeasure == existingSeg.endMeasure &&
+                  asset.sideCode == existingSeg.sideCode.value).get
 
-          }
-          else {
-            //delete old and create new
-            prohibitionService.expireAsset(Prohibition.typeId, oldAsset.id, userUpdate, true, false)
-            oracleLinearAssetDao.expireConnectedAsset(oldAsset.id)
+              if (existingSeg.startMeasure == newSegment.startMeasure && existingSeg.endMeasure == newSegment.endMeasure) {
+                //Update value
+                println(s"Applying modifications at asset ID: ${oldAsset.id} ")
+                prohibitionService.update(Seq(oldAsset.id), newSegment.value, userUpdate)
+              }
+              else {
+                //delete old and create new
+                prohibitionService.expireAsset(Prohibition.typeId, oldAsset.id, userUpdate, true, false)
+                oracleLinearAssetDao.expireConnectedAsset(oldAsset.id)
 
-            println(s"Applying creation of new data at roadlink: ${existingSeg.roadLink.linkId} ")
-            createLinearAssetAccordingSegmentsInfo(existingSeg, userCreate)
+                println(s"Applying creation of new data at roadlink: ${existingSeg.roadLink.linkId} ")
+                createLinearAssetAccordingSegmentsInfo(existingSeg, userCreate)
+              }
+            }
           }
         }
         else {
           //create news
-          println(s"Applying creation of new data at roadlink: ${existingSeg.roadLink.linkId} ")
-          createLinearAssetAccordingSegmentsInfo(existingSeg, userCreate)
+          println(s"Applying creation of new data at roadlink: ${newSegment.roadLink.linkId} ")
+          createLinearAssetAccordingSegmentsInfo(newSegment, userCreate)
         }
-      })
+      }
+    )
   }
 
 
@@ -495,6 +499,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         }
 
         //create and Modify actions
+        println("Start creating/modifying prohibitions according the traffic sign")
         iterativeProcess(roadLinks, Seq())
       }
     }

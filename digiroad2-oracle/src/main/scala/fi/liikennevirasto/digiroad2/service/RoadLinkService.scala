@@ -1285,7 +1285,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
       }
 
-    def iterativeProcess(sourceRoadLink: RoadLink, point: Point, intermediants: Set[RoadLink], numberOfConnections: Int = 0, roadNamePublicId: String, roadNameSource: String): Set[RoadLink] = {
+    def recursiveProcess(sourceRoadLink: RoadLink, point: Point, intermediants: Set[RoadLink], numberOfConnections: Int = 0, roadNamePublicId: String, roadNameSource: String): Set[RoadLink] = {
       val adjRoadLink = getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filter(adjLink => adjLink.attributes.getOrElse(roadNamePublicId, "").toString.nonEmpty && adjLink.attributes.getOrElse(roadNamePublicId, "") == roadNameSource)
       val filteredRoadLink = adjRoadLink.filterNot(adj => intermediants.contains(adj))
 
@@ -1293,12 +1293,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         intermediants
       } else {
         filteredRoadLink.flatMap { roadLink =>
-          iterativeProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), intermediants ++ Set(roadLink), numberOfConnections + 1, roadNamePublicId, roadNameSource)
+          recursiveProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), intermediants ++ Set(roadLink), numberOfConnections + 1, roadNamePublicId, roadNameSource)
         }
       }.toSet
     }
 
-    iterativeProcess(sourceRoadLink, point, intermediants, numberOfConnections, roadNamePublicId, roadNameSource)
+    recursiveProcess(sourceRoadLink, point, intermediants, numberOfConnections, roadNamePublicId, roadNameSource)
 
   }
 
