@@ -211,14 +211,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  private def isToCreateUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
-    val roadLinkType : Seq[LinkType] = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess,
-      SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
-
+  def isToCreateUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
+    val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
     val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
 
     !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
-
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false) = {
