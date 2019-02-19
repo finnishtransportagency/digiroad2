@@ -145,15 +145,15 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
       val valueD = ProhibitionValue(NoRidersOnHorseback.OTHvalue, Set.empty, Set.empty, null)
       val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
 
-      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.TowardsDigitizing, 2, 4, Seq(1))
-      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
-      val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueC)), SideCode.TowardsDigitizing, 6, 8, Seq(3))
-      val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.TowardsDigitizing, 4, 5, Seq(4))
-      val segment32 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.AgainstDigitizing, 4, 5, Seq(5))
-      val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueE)), SideCode.AgainstDigitizing, 8, 10, Seq(6))
+      val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.TowardsDigitizing, 2, 4, Set(1))
+      val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueB)), SideCode.AgainstDigitizing, 2, 4, Set(2))
+      val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueC)), SideCode.TowardsDigitizing, 6, 8, Set(3))
+      val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.TowardsDigitizing, 4, 5, Set(4))
+      val segment32 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueD)), SideCode.AgainstDigitizing, 4, 5, Set(5))
+      val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueE)), SideCode.AgainstDigitizing, 8, 10, Set(6))
 
-      val existingSegments = Seq(TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 2, 10, Seq()),
-                                 TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.AgainstDigitizing, 2, 10, Seq()))
+      val existingSegments = Seq(TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 2, 10, Set()),
+                                 TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.AgainstDigitizing, 2, 10, Set()))
 
       val segments = Seq(segment11, segment12, segment21, segment31, segment32, segment42 )
       val result = service.splitSegments(Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB2, vvhRoadLinkNameB3), segments, existingSegments, Seq(vvhRoadLinkNameB1, vvhRoadLinkNameB3))
@@ -183,14 +183,14 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
     val valueD = ProhibitionValue(NoRidersOnHorseback.OTHvalue, Set.empty, Set.empty, null)
     val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
 
-    val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 2, 4, Seq(1))
-    val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
-    val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueD)), SideCode.TowardsDigitizing, 4, 5, Seq(4))
-    val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueD)), SideCode.AgainstDigitizing, 4, 5, Seq(5))
-    val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 5, 6, Seq())
-    val segment41 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueC)), SideCode.TowardsDigitizing, 6, 8, Seq(1))
-    val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.AgainstDigitizing, 6, 8, Seq(2))
-    val segment52 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 8, 10, Seq(4))
+    val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 2, 4, Set(1))
+    val segment12 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Set(2))
+    val segment21 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueD)), SideCode.TowardsDigitizing, 4, 5, Set(4))
+    val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueD)), SideCode.AgainstDigitizing, 4, 5, Set(5))
+    val segment31 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 5, 6, Set())
+    val segment41 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueC)), SideCode.TowardsDigitizing, 6, 8, Set(1))
+    val segment42 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.AgainstDigitizing, 6, 8, Set(2))
+    val segment52 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 8, 10, Set(4))
 
     val segments = Seq(segment11, segment12, segment21, segment22, segment31, segment41, segment42, segment52)
 
@@ -211,8 +211,8 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
     val valueA = ProhibitionValue(NoLeftTurn.OTHvalue, Set.empty, Set.empty, null)
     val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
 
-    val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 0, 10, Seq())
-    val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB2, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 0, 10, Seq(4))
+    val segment11 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA)), SideCode.TowardsDigitizing, 0, 10, Set())
+    val segment22 = TrafficSignToGenerateLinear(vvhRoadLinkNameB2, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 0, 10, Set(4))
 
     val segments = Set(segment11, segment22)
     when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(Seq(roadLinkNameB1))
@@ -230,10 +230,10 @@ class TrafficSingLinearAssetGeneratorProcessSpec extends FunSuite with Matchers 
     val valueB = ProhibitionValue(NoPowerDrivenVehicles.OTHvalue, Set.empty, Set.empty, null)
     val valueE = ProhibitionValue(NoMopeds.OTHvalue, Set.empty, Set.empty, null)
 
-    val segment1 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 0, 2, Seq(2))
-    val segment2 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 4, 10, Seq(4))
-    val segment3 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Seq(2))
-    val segment4 = TrafficSignToGenerateLinear(vvhRoadLinkNameB2, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 0, 10, Seq(2))
+    val segment1 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.TowardsDigitizing, 0, 2, Set(2))
+    val segment2 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueE)), SideCode.AgainstDigitizing, 4, 10, Set(4))
+    val segment3 = TrafficSignToGenerateLinear(vvhRoadLinkNameB1, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 2, 4, Set(2))
+    val segment4 = TrafficSignToGenerateLinear(vvhRoadLinkNameB2, Prohibitions(Seq(valueA, valueB)), SideCode.AgainstDigitizing, 0, 10, Set(2))
 
     val segments = Seq(segment1, segment2, segment3, segment4)
 

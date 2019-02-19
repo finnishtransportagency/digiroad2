@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.sql.SQLIntegrityConstraintViolationException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
@@ -103,15 +104,19 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
   }
 
   def segmentsConverter(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[VVHRoadlink]) : Seq[TrafficSignToGenerateLinear] = {
-   val connectedTrafficSignIds =  oracleLinearAssetDao.getConnectedAssetFromLinearAsset(existingAssets.map(_.id))
+    val connectedTrafficSignIds =
+      if (existingAssets.nonEmpty)
+        oracleLinearAssetDao.getConnectedAssetFromLinearAsset(existingAssets.map(_.id))
+      else
+        Seq()
 
     existingAssets.filter(_.value.isDefined).flatMap { asset =>
-      val trafficSignIds = connectedTrafficSignIds.filter(_._1 == asset.id).map(_._2)
+      val trafficSignIds = connectedTrafficSignIds.filter(_._1 == asset.id).map(_._2).toSet
       if (asset.sideCode == SideCode.BothDirections.value)
-        Seq(TrafficSignToGenerateLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.AgainstDigitizing, asset.startMeasure, asset.endMeasure, trafficSignIds),
-          TrafficSignToGenerateLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.TowardsDigitizing, asset.startMeasure, asset.endMeasure, trafficSignIds))
+        Seq(TrafficSignToGenerateLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.AgainstDigitizing, asset.startMeasure, asset.endMeasure, trafficSignIds, Some(asset.id)),
+          TrafficSignToGenerateLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.TowardsDigitizing, asset.startMeasure, asset.endMeasure, trafficSignIds, Some(asset.id)))
       else
-        Seq(TrafficSignToGenerateLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.apply(asset.sideCode), asset.startMeasure, asset.endMeasure, trafficSignIds))
+        Seq(TrafficSignToGenerateLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.apply(asset.sideCode), asset.startMeasure, asset.endMeasure, trafficSignIds, Some(asset.id)))
     }
   }
 
@@ -161,7 +166,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         if (pair.linkId == sign.linkId) {
           val orderedMValue = Seq(sign.mValue, pair.mValue).sorted
 
-          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), orderedMValue.head, orderedMValue.last, Seq(sign.id))
+          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), orderedMValue.head, orderedMValue.last, Set(sign.id))
         } else {
           val (first, _) = GeometryUtils.geometryEndpoints(currentRoadLink.geometry)
           val (starMeasure, endMeasure) = if (!GeometryUtils.areAdjacent(pointOfInterest, first))
@@ -170,7 +175,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
             val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
             (pair.mValue, length)
           }
-          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), starMeasure, endMeasure, Seq(sign.id))
+          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), starMeasure, endMeasure, Set(sign.id))
         }
       case _ =>
         if (currentRoadLink.linkId == sign.linkId) {
@@ -182,11 +187,11 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
             (sign.mValue, length)
           }
 
-          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), starMeasure, endMeasure, Seq(sign.id))
+          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), starMeasure, endMeasure, Set(sign.id))
         }
         else {
           val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), 0, length, Seq(sign.id))
+          TrafficSignToGenerateLinear(currentRoadLink, value, SideCode.apply(sign.validityDirection), 0, length, Set(sign.id))
         }
     }
   }
@@ -260,6 +265,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(existingSeg.roadLink))
 
     existingSeg.signId.foreach { signId =>
+      println(s"Values to insert: ${newAssetId} // ${signId}")
       oracleLinearAssetDao.insertConnectedAsset(newAssetId, signId)
     }
   }
@@ -281,11 +287,11 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         val (assetToward, assetAgainst) = assetOnRoadLink.filter(asset => asset.startMeasure <= startMeasurePOI && asset.endMeasure >= endMeasurePOI).partition(_.sideCode == SideCode.TowardsDigitizing)
 
        (if (assetToward.nonEmpty)
-          Seq(TrafficSignToGenerateLinear(assetToward.head.roadLink, Prohibitions(assetToward.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions)), assetToward.head.sideCode, startMeasurePOI, endMeasurePOI, assetToward.flatMap(_.signId)))
+          Seq(TrafficSignToGenerateLinear(assetToward.head.roadLink, Prohibitions(assetToward.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions)), assetToward.head.sideCode, startMeasurePOI, endMeasurePOI, assetToward.flatMap(_.signId).toSet, assetToward.head.oldAssetId))
          else
          Seq()) ++
          (if (assetAgainst.nonEmpty)
-           Seq(TrafficSignToGenerateLinear(assetAgainst.head.roadLink, Prohibitions(assetAgainst.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions)), assetAgainst.head.sideCode, startMeasurePOI, endMeasurePOI, assetAgainst.flatMap(_.signId)))
+           Seq(TrafficSignToGenerateLinear(assetAgainst.head.roadLink, Prohibitions(assetAgainst.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions)), assetAgainst.head.sideCode, startMeasurePOI, endMeasurePOI, assetAgainst.flatMap(_.signId).toSet, assetAgainst.head.oldAssetId))
          else
            Seq())
       }
@@ -322,7 +328,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         otherSegments.filter(_.roadLink.linkId == adjacent.head.linkId).flatMap { otherSegment =>
           findNextEndAssets(otherSegment, otherSegments.diff(Seq(otherSegment)), result :+ segment.copy(sideCode = BothDirections))}
       } else
-        segment +: result
+        segment.copy(sideCode = BothDirections) +: result
     }
   }
 
@@ -417,30 +423,47 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
     allSegments.groupBy(_.roadLink.linkId).values.foreach(newSegments =>
       newSegments.foreach { newSegment =>
+        val existingSegOnRoadLink = existingSegments.filter(_.roadLink.linkId == newSegment.roadLink.linkId)
 
-        if (existingSegments.exists(_.roadLink.linkId == newSegment.roadLink.linkId)) {
-          existingSegments.foreach { existingSeg =>
-            if (existingSeg.startMeasure == newSegment.startMeasure &&
-              existingSeg.endMeasure == newSegment.endMeasure && existingSeg.value.equals(newSegment.value))
-              None
+        if (existingSegOnRoadLink.nonEmpty) {
 
-            else {
-              val oldAsset = existingAssets.find(asset =>
-                asset.startMeasure == existingSeg.startMeasure && asset.endMeasure == existingSeg.endMeasure &&
-                  asset.sideCode == existingSeg.sideCode.value).get
+          val existingSeg = existingSegOnRoadLink.filter { existingSeg =>
+            existingSeg.startMeasure == newSegment.startMeasure && existingSeg.endMeasure == newSegment.endMeasure &&
+              newSegment.sideCode == existingSeg.sideCode
+          }
 
-              if (existingSeg.startMeasure == newSegment.startMeasure && existingSeg.endMeasure == newSegment.endMeasure) {
-                //Update value
-                println(s"Applying modifications at asset ID: ${oldAsset.id} ")
-                prohibitionService.update(Seq(oldAsset.id), newSegment.value, userUpdate)
+          if (existingSeg.exists(_.value.equals(newSegment.value))) {
+            if (newSegment.signId.toSeq.diff(existingSeg.flatMap(_.oldAssetId)).isEmpty) {
+              println(s"Changes apply to Connected table ${newSegment.signId.mkString(",")}")
+              newSegment.signId.foreach { signId =>
+                try {
+                  oracleLinearAssetDao.insertConnectedAsset(existingSeg.flatMap(_.oldAssetId).head, signId)
+                } catch {
+                  case ex: SQLIntegrityConstraintViolationException =>
+                    print("duplicate key inserted ")
+                  case e: Exception => print("SQL Exception ")
+                    throw new RuntimeException("SQL exception " + e.getMessage)
+                }
               }
-              else {
-                //delete old and create new
-                prohibitionService.expireAsset(Prohibition.typeId, oldAsset.id, userUpdate, true, false)
-                oracleLinearAssetDao.expireConnectedAsset(oldAsset.id)
+            } else
+              None
+          }
+          else {
+            //same startMeasure, endMeasure amd SideCode, diff values
+            if (existingSeg.nonEmpty) {
+              //Update value
+              println(s"Applying modifications at asset ID: ${existingSeg.flatMap(_.oldAssetId).mkString(",")} ")
+              prohibitionService.updateWithoutTransaction(existingSeg.flatMap(_.oldAssetId), newSegment.value, userUpdate)
+            }
+            else {
+              //delete old and create new
+              existingSeg.foreach { asset =>
+                prohibitionService.expireAsset(Prohibition.typeId, asset.oldAssetId.get, userUpdate, true, false)
+                oracleLinearAssetDao.expireConnectedAsset(asset.oldAssetId.get)
 
-                println(s"Applying creation of new data at roadlink: ${existingSeg.roadLink.linkId} ")
-                createLinearAssetAccordingSegmentsInfo(existingSeg, userCreate)
+                println(s"Applying creation of new data at roadlink: ${newSegment.roadLink.linkId} ")
+                createLinearAssetAccordingSegmentsInfo(newSegment, userUpdate)
+
               }
             }
           }
@@ -460,7 +483,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
     println(DateTime.now())
     println("")
 
-    withDynSession {
+    withDynTransaction {
       val lastExecutionDate = oracleLinearAssetDao.getLastExecutionDateOfConnectedAsset()
       println(s"Last Execution Date of the batch: ${lastExecutionDate.toString} ")
       println("")
@@ -484,9 +507,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
         println("")
         println("Start processing traffic signs")
-        val (tsToDelete, tsToCreateOrUpdate) = trafficSignsToTransform.partition {
-          _.expired
-        }
+        val tsToDelete = trafficSignsToTransform.filter(_.expired)
 
         tsToDelete.foreach { ts =>
           // Delete actions
