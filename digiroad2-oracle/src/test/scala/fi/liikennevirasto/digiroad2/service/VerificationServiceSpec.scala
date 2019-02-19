@@ -131,15 +131,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
     }
   }
 
-//  test("not insert with wrong asset type") {
-//    runWithRollback {
-//      val thrown = intercept[IllegalStateException] {
-//        ServiceWithDao.setAssetTypeVerification(235, Set(150), "testuser")
-//      }
-//      thrown.getMessage should be("Asset type not allowed")
-//    }
-//  }
-
   test("get critical asset types info"){
     runWithRollback {
       val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
