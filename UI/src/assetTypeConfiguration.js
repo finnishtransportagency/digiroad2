@@ -291,7 +291,7 @@
             return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
           };
 
-          var isValidDate =  _.some(datePeriodField, function(date) {
+          var isValidDate =  _.every(datePeriodField, function(date) {
             return date.hasValue() && isInDatePeriod(date);
           });
 
