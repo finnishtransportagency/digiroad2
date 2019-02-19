@@ -4,6 +4,7 @@ import java.util.{NoSuchElementException, Properties}
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, OracleAssetDao}
@@ -201,10 +202,23 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
-    generatedLimits.map { limit =>
+    generatedLimits.flatMap { limit =>
       val roadLink = roadLinksByLinkId(limit.linkId)
-      UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass)
+      if (isToCreateUnknownSpeedLimit(roadLink)) {
+        Some(UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass))
+      } else
+        None
     }
+  }
+
+  private def isToCreateUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
+    val roadLinkType : Seq[LinkType] = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess,
+      SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
+
+    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+
+    !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
+
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false) = {

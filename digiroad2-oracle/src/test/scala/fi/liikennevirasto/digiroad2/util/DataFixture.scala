@@ -1610,7 +1610,7 @@ object DataFixture {
 
         val filterRoadLinks = roadLinks.filter(roadLink => roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)).filter(_.administrativeClass == State)
 
-        if(filterRoadLinks.map(_.linkId).isEmpty) {
+        if(filterRoadLinks.map(_.linkId).nonEmpty) {
           println(s"Deleting presumable linkIds - ${filterRoadLinks.map(_.linkId)}")
           dao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
         }
