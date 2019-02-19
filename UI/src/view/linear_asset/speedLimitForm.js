@@ -53,7 +53,7 @@
 
       if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedSpeedLimit)) {
         message = limitedRights;
-      } else if (!authorizationPolicy.formEditModeAccess(selectedSpeedLimit))
+      } else if (validateAdministrativeClass(selectedSpeedLimit))
         message = noRights;
 
       if(message) {
