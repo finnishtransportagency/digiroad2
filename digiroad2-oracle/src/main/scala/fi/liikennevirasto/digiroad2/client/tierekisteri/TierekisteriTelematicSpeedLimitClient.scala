@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri
 
+import fi.liikennevirasto.digiroad2.{TelematicSpeedLimit, TrafficSignType}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import org.apache.http.impl.client.CloseableHttpClient
 
@@ -22,7 +23,7 @@ class TierekisteriTelematicSpeedLimitClient(trEndPoint: String, trEnable: Boolea
 
     getMandatoryFieldValue(data, trTecPointType) match {
       case Some(tecType) if tecType == trTelematicSpeedLimitAsset =>
-        Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.TelematicSpeedLimit,""))
+        Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TelematicSpeedLimit,""))
       case _ =>
         None
     }

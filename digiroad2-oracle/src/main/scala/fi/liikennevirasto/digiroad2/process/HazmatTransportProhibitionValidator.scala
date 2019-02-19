@@ -1,15 +1,11 @@
 package fi.liikennevirasto.digiroad2.process
 
-import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
-
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, Prohibitions, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType.NoVehiclesWithDangerGoods
 
 class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperations {
   override type AssetType = PersistedLinearAsset
@@ -20,7 +16,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.HazmatProhibitionA, TrafficSignType.HazmatProhibitionB, NoVehiclesWithDangerGoods)
+  val allowedTrafficSign: Set[TrafficSignType] = Set(HazmatProhibitionA, HazmatProhibitionB, NoVehiclesWithDangerGoods)
 
   override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {
     def assetDistance(assets: Seq[AssetType]): (AssetType, Double) =  {
@@ -50,11 +46,11 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
   override def verifyAsset(prohibitions: Seq[PersistedLinearAsset], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     prohibitions.flatMap{ prohibition =>
-      TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt) match {
+      TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
 
-        case TrafficSignType.HazmatProhibitionA => if(!comparingProhibitionValue(prohibition, 24))
+        case HazmatProhibitionA => if(!comparingProhibitionValue(prohibition, 24))
           Seq(Inaccurate(Some(prohibition.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
-        case TrafficSignType.HazmatProhibitionB => if(!comparingProhibitionValue(prohibition, 25))
+        case HazmatProhibitionB => if(!comparingProhibitionValue(prohibition, 25))
           Seq(Inaccurate(Some(prohibition.id), None, roadLink.municipalityCode, roadLink.administrativeClass)) else Seq()
         case NoVehiclesWithDangerGoods => Seq()
         case _ => throw new NumberFormatException("Not supported trafficSign on Prohibition asset")
@@ -81,7 +77,7 @@ class HazmatTransportProhibitionValidator extends AssetServiceValidatorOperation
 
               val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
 

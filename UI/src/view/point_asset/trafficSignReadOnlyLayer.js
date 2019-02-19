@@ -28,6 +28,7 @@
       bogieWeightLimit: false,
       heightLimit: false,
       lengthLimit: false,
+      prohibition: false,
       hazardousMaterialTransportProhibition: false,
       manoeuvre: false
     };

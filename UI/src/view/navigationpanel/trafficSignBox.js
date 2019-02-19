@@ -40,9 +40,6 @@
         '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="additionalPanels" type="checkbox" /> Lisäkilvet</label>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
         '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
