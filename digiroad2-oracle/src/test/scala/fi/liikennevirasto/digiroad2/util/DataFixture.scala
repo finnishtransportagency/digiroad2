@@ -7,7 +7,7 @@ import java.time.LocalDate
 import java.util.{Date, Properties}
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -1589,6 +1589,40 @@ object DataFixture {
     println("\n")
   }
 
+  def removeUnnecessaryUnknownSpeedLimits(): Unit = {
+    val dao = new OracleSpeedLimitDao(null, null)
+
+    println("\nStart delete unknown speedLimits")
+    println(DateTime.now())
+
+    val roadLinkType : Seq[LinkType] = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess,
+      SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
+
+    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Obtaining all Road Links for Municipality: $municipality")
+
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, false)._1
+
+        val filterRoadLinks = roadLinks.filter(roadLink => roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)).filter(_.administrativeClass == State)
+
+        if(filterRoadLinks.map(_.linkId).isEmpty) {
+          println(s"Deleting presumable linkIds - ${filterRoadLinks.map(_.linkId)}")
+          dao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
+        }
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1693,6 +1727,8 @@ object DataFixture {
         updatePrivateRoads()
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
+      case Some("remove_unnecessary_unknown_speedLimits") =>
+        removeUnnecessaryUnknownSpeedLimits()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
