@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 
 class ProhibitionFiller extends OneWayAssetFiller {
-  override protected def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  /*override protected def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
     val segmenstWitoutDuplicates = segments.distinct
 
     if (segmenstWitoutDuplicates.size >= 2 &&
@@ -54,5 +54,5 @@ class ProhibitionFiller extends OneWayAssetFiller {
     } else {
       (segments, changeSet)
     }
-  }
+  }*/
 }
