@@ -260,7 +260,9 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
   }
 
   def createLinearAssetAccordingSegmentsInfo(existingSeg: TrafficSignToGenerateLinear, username: String): Unit = {
-    val newAssetId = prohibitionService.createWithoutTransaction(Prohibition.typeId, existingSeg.roadLink.linkId, existingSeg.value,
+    val distinctValues = existingSeg.value.asInstanceOf[Prohibitions].prohibitions.distinct
+
+    val newAssetId = prohibitionService.createWithoutTransaction(Prohibition.typeId, existingSeg.roadLink.linkId, Prohibitions(distinctValues),
       existingSeg.sideCode.value, Measures(existingSeg.startMeasure, existingSeg.endMeasure), username,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(existingSeg.roadLink))
 
