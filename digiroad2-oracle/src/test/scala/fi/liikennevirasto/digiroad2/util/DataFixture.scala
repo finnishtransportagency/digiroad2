@@ -1457,10 +1457,10 @@ object DataFixture {
     println(DateTime.now())
 
     //Get all municipalities
-    val municipalities: Seq[Int] =/*
+    val municipalities: Seq[Int] =
       OracleDatabase.withDynSession{
         Queries.getMunicipalities
-      }*/Seq(766)
+      }
     OracleDatabase.withDynTransaction {
       val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
         println("")
