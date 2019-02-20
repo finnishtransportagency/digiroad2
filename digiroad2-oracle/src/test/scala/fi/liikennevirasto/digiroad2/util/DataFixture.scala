@@ -1466,7 +1466,8 @@ object DataFixture {
       println("")
       println(s"Fetching Traffic Signs for Municipality: $municipality")
 
-      val existingAssets = trafficSignService.getByMunicipality(municipality).filterNot(_.floating)
+      val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+      val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
       val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
       println("")
@@ -1476,7 +1477,7 @@ object DataFixture {
       OracleDatabase.withDynTransaction {
         filteredAssets.flatMap { sign =>
           println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
-          val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
+          val roadLink = roadLinks.find(_.linkId == sign.linkId).get
           val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
           val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
             AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
