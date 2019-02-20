@@ -1591,27 +1591,28 @@ object DataFixture {
 
   def removeUnnecessaryUnknownSpeedLimits(): Unit = {
     val dao = new OracleSpeedLimitDao(null, null)
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
+
 
     println("\nStart delete unknown speedLimits")
     println(DateTime.now())
 
-    val roadLinkType : Seq[LinkType] = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess,
-      SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
-
-    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
-
     //Get All Municipalities
     val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Obtaining all Road Links for Municipality: $municipality")
 
-        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, false)._1
+        val unknownSpeedLimitByMunicipality = dao.getMunicipalitiesWithUnknown(municipality)
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unknownSpeedLimitByMunicipality.toSet, false)
 
-        val filterRoadLinks = roadLinks.filter(roadLink => roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)).filter(_.administrativeClass == State)
+        val filterRoadLinks = roadLinks.filterNot(roadLink => speedLimitService.isToCreateUnknownSpeedLimit(roadLink))
 
         if(filterRoadLinks.map(_.linkId).nonEmpty) {
-          println(s"Deleting presumable linkIds - ${filterRoadLinks.map(_.linkId)}")
+          println(s"Deleting linkIds - ${filterRoadLinks.map(_.linkId)}")
           dao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
         }
       }

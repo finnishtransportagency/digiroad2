@@ -219,6 +219,17 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
 
+  def getMunicipalitiesWithUnknown(municipality: Int): Seq[Long] = {
+
+    val municipalitiesQuery =
+      s"""
+      select LINK_ID from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
+      """
+
+    Q.queryNA[Long](municipalitiesQuery).list
+  }
+
+
     /**
     * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
     */
