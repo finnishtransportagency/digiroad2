@@ -1473,7 +1473,7 @@ object DataFixture {
       println(s"Number of existing assets: ${filteredAssets.length}")
       println("")
 
-      OracleDatabase.withDynSession {
+      OracleDatabase.withDynTransaction {
         filteredAssets.flatMap { sign =>
           println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
           val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
@@ -1486,7 +1486,8 @@ object DataFixture {
 
           if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
             val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
-            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, additionalPanels, sign.validityDirection, sign.bearing)
+            val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
+            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, propertyData.toSet, sign.validityDirection, sign.bearing)
 
             trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
             additionalPanelsInRadius.map(asset => (asset.id, asset.linkId, trafficSignService.getProperty(asset.propertyData, trafficSignService.typePublicId).get.propertyValue.toInt)).toSeq
@@ -1497,7 +1498,7 @@ object DataFixture {
         }
       }
     }
-    OracleDatabase.withDynSession {
+    OracleDatabase.withDynTransaction {
       additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
         trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
         println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
