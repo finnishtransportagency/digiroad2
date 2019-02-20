@@ -77,29 +77,30 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
   def segmentsManager(roadLinks: Seq[VVHRoadlink], trafficSigns: Seq[PersistedTrafficSign], existingSegments : Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
     val startEndRoadLinks = findStartEndRoadLinkOnChain(roadLinks)
 
-    val newSegments = startEndRoadLinks.flatMap { frl =>
-      baseProcess(trafficSigns, roadLinks, frl, Seq())
+    val newSegments = startEndRoadLinks.flatMap { case (roadLink, pointOfInterest )=>
+      baseProcess(trafficSigns, roadLinks, roadLink, pointOfInterest, Seq())
     }
-    val allSegments = splitSegments(roadLinks, newSegments, existingSegments, startEndRoadLinks)
+    val allSegments = splitSegments(roadLinks, newSegments, existingSegments, startEndRoadLinks.map(_._1))
     val (assetForBothSide, assetOneSide) = fuseSegments(allSegments)
-    val otherSegments = convertOneSideCode(assetOneSide, startEndRoadLinks)
+    val otherSegments = convertOneSideCode(assetOneSide, startEndRoadLinks.map(_._1))
 
     combineSegments((assetForBothSide ++ otherSegments).toSeq)
   }
 
-  def findStartEndRoadLinkOnChain(roadLinks: Seq[VVHRoadlink]) : Seq[VVHRoadlink] = {
-    roadLinks.filterNot { r =>
+  def findStartEndRoadLinkOnChain(roadLinks: Seq[VVHRoadlink]) : Seq[(VVHRoadlink, Point)] = {
+    roadLinks.flatMap { r =>
       val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
       val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
 
-      roadLinksFiltered.exists { r3 =>
+      roadLinksFiltered.flatMap { r3 =>
         val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
-        GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(first, last2)
-      } &&
-        roadLinksFiltered.exists { r3 =>
-          val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
-          GeometryUtils.areAdjacent(last, first2) || GeometryUtils.areAdjacent(last, last2)
-        }
+        if (GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(last, first2)) {
+          Seq((r3, last2))
+        } else if (GeometryUtils.areAdjacent(first, last2) || GeometryUtils.areAdjacent(last, last2)) {
+          Seq((r3, first2))
+        } else
+          Seq()
+      }
     }
   }
 
@@ -120,26 +121,35 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
     }
   }
 
-  def baseProcess(trafficSigns: Seq[PersistedTrafficSign], roadLinks: Seq[VVHRoadlink], actualRoadLink: VVHRoadlink, result: Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
+  def baseProcess(trafficSigns: Seq[PersistedTrafficSign], roadLinks: Seq[VVHRoadlink], actualRoadLink: VVHRoadlink, opositePoint: Point, result: Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
     val signsOnRoadLink = trafficSigns.filter(_.linkId == actualRoadLink.linkId)
     (if (signsOnRoadLink.nonEmpty) {
-      signsOnRoadLink.map { sign =>
+      signsOnRoadLink.flatMap { sign =>
         val (first, last) = GeometryUtils.geometryEndpoints(actualRoadLink.geometry)
         val pointOfInterest = trafficSignService.getPointOfInterest(first, last, SideCode(sign.validityDirection)).head
 
-        createSegmentPieces(actualRoadLink, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), sign, trafficSigns, pointOfInterest, Seq()) ++ result
+        val result1 = createSegmentPieces(actualRoadLink, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), sign, trafficSigns, pointOfInterest, result).toSeq
+
+        getAdjacents(pointOfInterest, roadLinks.filterNot(_.linkId == actualRoadLink.linkId)).flatMap { case (roadLink, (adjPoint, opositePoint)) =>
+          baseProcess(trafficSigns, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), roadLink, opositePoint, result1)
+        }
+
+
+//        createSegmentPieces(actualRoadLink, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), sign, trafficSigns, pointOfInterest, result) ++
+//        getAdjacents(pointOfInterest, roadLinks.filterNot(_.linkId == actualRoadLink.linkId)).flatMap { case (roadLink, (adjPoint, opositePoint)) =>
+//          baseProcess(trafficSigns, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), roadLink, opositePoint, result)
+//        }
+
 //        val pairSign = getPairSign(actualRoadLink, sign, signsOnRoadLink, pointOfInterest)
 //        processing(actualRoadLink, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), sign, signsOnRoadLink, pointOfInterest, Seq(generateSegmentPieces(actualRoadLink, sign, pairSign, pointOfInterest))) ++ result
       }
     } else {
       val (first, last) = GeometryUtils.geometryEndpoints(actualRoadLink.geometry)
 
-      Seq(first, last).flatMap { pointOfInterest =>
-        getAdjacents(pointOfInterest, roadLinks.filterNot(_.linkId == actualRoadLink.linkId)).map { roadLink =>
-          baseProcess(trafficSigns, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), roadLink._1, result)
-        }
+      getAdjacents(opositePoint, roadLinks.filterNot(_.linkId == actualRoadLink.linkId)).flatMap { case (roadLink, (adjPoint, opositePoint)) =>
+        baseProcess(trafficSigns, roadLinks.filterNot(_.linkId == actualRoadLink.linkId), roadLink,opositePoint,  result)
       }
-    }).flatten.toSet
+    }).toSet
   }
 
   def createSegmentPieces(actualRoadLink: VVHRoadlink, allRoadLinks: Seq[VVHRoadlink], sign: PersistedTrafficSign, signs: Seq[PersistedTrafficSign], pointOfInterest: Point, result: Seq[TrafficSignToGenerateLinear]): Set[TrafficSignToGenerateLinear] = {
@@ -149,11 +159,11 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
 
     (if (pairSign.isEmpty) {
       val adjRoadLinks = getAdjacents(pointOfInterest, allRoadLinks.filterNot(_.linkId == actualRoadLink.linkId))
-      if (adjRoadLinks.nonEmpty)
+      if (adjRoadLinks.nonEmpty) {
         adjRoadLinks.flatMap { case (newRoadLink, (_, oppositePoint)) =>
           createSegmentPieces(newRoadLink, allRoadLinks.filterNot(_.linkId == newRoadLink.linkId), sign, signs, oppositePoint, generatedSegmentPieces +: result)
         }
-      else
+      } else
         generatedSegmentPieces +: result
     } else
       generatedSegmentPieces +: result).toSet
@@ -260,9 +270,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
   }
 
   def createLinearAssetAccordingSegmentsInfo(existingSeg: TrafficSignToGenerateLinear, username: String): Unit = {
-    val distinctValues = existingSeg.value.asInstanceOf[Prohibitions].prohibitions.distinct
-
-    val newAssetId = prohibitionService.createWithoutTransaction(Prohibition.typeId, existingSeg.roadLink.linkId, Prohibitions(distinctValues),
+    val newAssetId = prohibitionService.createWithoutTransaction(Prohibition.typeId, existingSeg.roadLink.linkId, existingSeg.value,
       existingSeg.sideCode.value, Measures(existingSeg.startMeasure, existingSeg.endMeasure), username,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(existingSeg.roadLink))
 
@@ -273,8 +281,6 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
   }
 
   def splitSegments(roadLinks: Seq[VVHRoadlink], segments: Seq[TrafficSignToGenerateLinear], existingSegments: Seq[TrafficSignToGenerateLinear], finalRoadLinks: Seq[VVHRoadlink]) : Seq[TrafficSignToGenerateLinear] = {
-    val oldAssets = prohibitionService.getPersistedAssetsByLinkIds(Prohibition.typeId, roadLinks.map(_.linkId), false)
-
     val allSegments : Seq[TrafficSignToGenerateLinear] = segments ++ existingSegments
 
     val allSegmentsByLinkId = allSegments.map(fl => (fl.roadLink.linkId, fl.startMeasure, fl.endMeasure)).groupBy(_._1)
@@ -289,11 +295,11 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         val (assetToward, assetAgainst) = assetOnRoadLink.filter(asset => asset.startMeasure <= startMeasurePOI && asset.endMeasure >= endMeasurePOI).partition(_.sideCode == SideCode.TowardsDigitizing)
 
        (if (assetToward.nonEmpty)
-          Seq(TrafficSignToGenerateLinear(assetToward.head.roadLink, Prohibitions(assetToward.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions)), assetToward.head.sideCode, startMeasurePOI, endMeasurePOI, assetToward.flatMap(_.signId).toSet, assetToward.head.oldAssetId))
+          Seq(TrafficSignToGenerateLinear(assetToward.head.roadLink, Prohibitions(assetToward.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions).distinct), assetToward.head.sideCode, startMeasurePOI, endMeasurePOI, assetToward.flatMap(_.signId).toSet, assetToward.head.oldAssetId))
          else
          Seq()) ++
          (if (assetAgainst.nonEmpty)
-           Seq(TrafficSignToGenerateLinear(assetAgainst.head.roadLink, Prohibitions(assetAgainst.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions)), assetAgainst.head.sideCode, startMeasurePOI, endMeasurePOI, assetAgainst.flatMap(_.signId).toSet, assetAgainst.head.oldAssetId))
+           Seq(TrafficSignToGenerateLinear(assetAgainst.head.roadLink, Prohibitions(assetAgainst.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions).distinct), assetAgainst.head.sideCode, startMeasurePOI, endMeasurePOI, assetAgainst.flatMap(_.signId).toSet, assetAgainst.head.oldAssetId))
          else
            Seq())
       }
@@ -402,7 +408,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         println("")
         println(s"Working at RoadLink with link id: ${roadLink.linkId}")
 
-        val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
+        val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink).filter(rl => Seq(5171087, 5171104, 5171103, 5171220, 5171222).contains(rl.linkId))
         val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
           val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
           TrafficSignManager.belongsToProhibition(signType)
