@@ -1457,24 +1457,23 @@ object DataFixture {
     println(DateTime.now())
 
     //Get all municipalities
-    val municipalities: Seq[Int] =
+    val municipalities: Seq[Int] =/*
       OracleDatabase.withDynSession{
         Queries.getMunicipalities
-      }
+      }*/Seq(766)
+    OracleDatabase.withDynTransaction {
+      val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
+        println("")
+        println(s"Fetching Traffic Signs for Municipality: $municipality")
 
-    val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
-      println("")
-      println(s"Fetching Traffic Signs for Municipality: $municipality")
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+        val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
+        val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
-      val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
-      val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
-      val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+        println("")
+        println(s"Number of existing assets: ${filteredAssets.length}")
+        println("")
 
-      println("")
-      println(s"Number of existing assets: ${filteredAssets.length}")
-      println("")
-
-      OracleDatabase.withDynTransaction {
         filteredAssets.flatMap { sign =>
           println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
           val roadLink = roadLinks.find(_.linkId == sign.linkId).get
@@ -1498,8 +1497,6 @@ object DataFixture {
           }
         }
       }
-    }
-    OracleDatabase.withDynTransaction {
       additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
         trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
         println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
