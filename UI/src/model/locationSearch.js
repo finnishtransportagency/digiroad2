@@ -2,6 +2,12 @@
   root.LocationSearch = function(backend, applicationModel) {
     var selectedLayer;
 
+    this.privateRoadAssociationNames = function() {
+      return backend.getPrivateRoadAssociationNames().then(function(result){
+        eventbus.trigger('associationNames:fetched', result);
+      });
+    };
+
     /**
      * Search by street address
      *

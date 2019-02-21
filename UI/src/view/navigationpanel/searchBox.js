@@ -13,7 +13,8 @@
     var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
-    var associationNames = backend.getPrivateRoadAssociationNames();
+    var associationNames;
+    var associationNamesRegex = /^YT +/g;
 
     var bindEvents = function() {
       var populateSearchResults = function(results) {
@@ -86,9 +87,48 @@
         resultsSection.hide();
         clearSection.hide();
       });
+      locationSearch.privateRoadAssociationNames();
+      eventbus.on('associationNames:fetched', function(result) {
+        associationNames = result;
+
+        coordinatesText.autocomplete({
+          source: function(request, response) {
+            if(request.term.match(associationNamesRegex)){
+              var slicedInput = request.term.slice(3);
+              if(slicedInput.length !== 0) {
+                var filteredResult = new RegExp($.ui.autocomplete.escapeRegex(slicedInput), "i");
+                response($.grep(associationNames, function(value){
+                  return filteredResult.test(value);
+                }) );
+              }
+           }
+          },
+          focus: function(event, ui) {
+            pushSearchValues(coordinatesText, event, ui);
+            return false;
+          },
+          select: function(event, ui) {
+            pushSearchValues(coordinatesText, event, ui);
+            return false;
+          },
+          appendTo: ".search-box > .panel > .panel-header"
+        });
+      });
+    };
+
+    var split = function(value) {
+      return value.split(/ \s*/);
+    };
+
+    var pushSearchValues = function(value, event, ui) {
+      var terms = split(value.val().substring(0, value.selectionStart));
+      terms.splice(1);
+      terms.push(ui.item.value);
+      value.val($.trim(terms.join(" ")));
     };
 
     bindEvents();
     this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection).append(clearSection));
+
   };
 })(this);
