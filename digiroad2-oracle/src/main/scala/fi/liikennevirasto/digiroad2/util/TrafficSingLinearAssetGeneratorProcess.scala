@@ -237,21 +237,17 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
       asset.value.get.asInstanceOf[Prohibitions].equals(trProhibitionValue)
     }
 
-    if (toDelete.nonEmpty) {
-      prohibitionService.expire(toDelete.map(_.id), username)
-
-      toDelete.map { assetToDelete =>
-        oracleLinearAssetDao.expireConnectedAsset(assetToDelete.id)
-      }
+    toDelete.map { asset =>
+      prohibitionService.expireAsset(Prohibition.typeId, asset.id, username, true, false)
+      oracleLinearAssetDao.expireConnectedAsset(asset.id)
     }
-
 
     val groupedAssetsToUpdate = toUpdate.map { asset =>
       (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue.prohibitions))
     }.groupBy(_._2)
 
     groupedAssetsToUpdate.values.map { value =>
-      prohibitionService.update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username)
+      prohibitionService.updateWithoutTransaction(value.map(_._1), Prohibitions(value.flatMap(_._2)), username)
     }
   }
 
@@ -410,7 +406,7 @@ case class TrafficSingLinearAssetGeneratorProcess(roadLinkServiceImpl: RoadLinkS
         println("")
         println(s"Working at RoadLink with link id: ${roadLink.linkId}")
 
-        val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink).filter(rl => Seq(5171087, 5171104, 5171103, 5171220, 5171222).contains(rl.linkId))
+        val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
         val trafficSignsOnRoadLinks = trafficSignService.getTrafficSign(roadLinks.map(_.linkId)).filter { trafficSign =>
           val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
           TrafficSignManager.belongsToProhibition(signType)

@@ -89,7 +89,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validityPeridoStartMinute = r.nextIntOption()
       val validityPeridoEndMinute = r.nextIntOption()
-      val prohibitionAdditionalInfo = r.nextString
+      val prohibitionAdditionalInfo = r.nextStringOption().getOrElse("")
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
