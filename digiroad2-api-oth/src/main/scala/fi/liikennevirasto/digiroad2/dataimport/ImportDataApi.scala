@@ -113,25 +113,28 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   def importTrafficSigns(csvFileItem: FileItem, municipalitiesToExpire: Set[Int]): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
-    if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
-
-    eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user, csvFileInputStream))
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user, csvFileInputStream))
   }
 
   def importRoadLinks(csvFileItem: FileItem ): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
-    if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
-
-    eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, user, csvFileInputStream))
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, user, csvFileInputStream))
   }
 
   def importMaintenanceRoads(csvFileItem: FileItem): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
-    if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
-
-    eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, user, csvFileInputStream))
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, user, csvFileInputStream))
   }
 
   def importMassTransitStop(csvFileItem: FileItem, administrativeClassLimitations: Set[AdministrativeClass]) : Unit = {
