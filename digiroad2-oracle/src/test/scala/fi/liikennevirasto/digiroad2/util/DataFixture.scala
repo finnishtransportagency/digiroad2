@@ -1484,8 +1484,6 @@ object DataFixture {
 
             val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
             try{
-              val tester = None
-              tester.get
               if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
                 val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
                 val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
