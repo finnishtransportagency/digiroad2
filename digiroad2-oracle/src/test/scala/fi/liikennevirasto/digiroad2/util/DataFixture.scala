@@ -1464,6 +1464,7 @@ object DataFixture {
     OracleDatabase.withDynTransaction {
       val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
         println("")
+        println(DateTime.now())
         println(s"Fetching Traffic Signs for Municipality: $municipality")
 
         val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
