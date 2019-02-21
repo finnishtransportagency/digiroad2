@@ -186,9 +186,10 @@ $(function() {
       return '' +
         '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
         '<td headers="date">' + job.createdDate + '</td>' +
-        '<td headers="file" style="width:50%">' + job.fileName + '</td>' +
+        '<td headers="file" id="file">' + job.fileName + '</td>' +
         '<td headers="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-        '<td headers="detail">' + (!(job.status === 1 || job.status === 2) ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+        '<td headers="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+
         '</tr>';
     };
     return table(jobs);
