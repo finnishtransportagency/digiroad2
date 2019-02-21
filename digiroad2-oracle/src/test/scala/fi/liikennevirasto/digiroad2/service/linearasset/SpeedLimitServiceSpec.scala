@@ -1553,28 +1553,4 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     }
   }
-
-
-  test("should create unknown speedLimits") {
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val eventBus = MockitoSugar.mock[DigiroadEventBus]
-    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
-      override def withDynTransaction[T](f: => T): T = f
-    }
-
-    val a = Map( Motorway.value -> true, MultipleCarriageway.value -> true,  SingleCarriageway.value  -> true,  Freeway.value  -> true,  Roundabout.value  -> true,
-    SlipRoad.value  -> true, RestArea.value  -> true, CycleOrPedestrianPath.value  -> false, PedestrianZone.value  -> false, ServiceOrEmergencyRoad.value   -> true,
-    EnclosedTrafficArea.value -> true, TractorRoad.value -> false, MotorwayServiceAccess.value -> false,  SpecialTransportWithoutGate.value -> false,
-    SpecialTransportWithGate.value -> false, CableFerry.value -> false)
-
-    LinkType.values.filterNot(_.value == UnknownLinkType.value).foreach { linkType =>
-      val newRoadLink = RoadLink(1000, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.BothDirections, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-      val result = service.isToCreateUnknownSpeedLimit(newRoadLink)
-      withClue("linkType " + linkType.toString) {
-        result should be(a(linkType.value))
-      }
-    }
-  }
 }

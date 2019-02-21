@@ -202,20 +202,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
   private def createUnknownLimits(speedLimits: Seq[SpeedLimit], roadLinksByLinkId: Map[Long, RoadLink]): Seq[UnknownSpeedLimit] = {
     val generatedLimits = speedLimits.filter(speedLimit => speedLimit.id == 0 && speedLimit.value.isEmpty)
-    generatedLimits.flatMap { limit =>
+    generatedLimits.map { limit =>
       val roadLink = roadLinksByLinkId(limit.linkId)
-      if (isToCreateUnknownSpeedLimit(roadLink)) {
-        Some(UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass))
-      } else
-        None
+      UnknownSpeedLimit(roadLink.linkId, roadLink.municipalityCode, roadLink.administrativeClass)
     }
-  }
-
-  def isToCreateUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
-    val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
-    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
-
-    !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false) = {

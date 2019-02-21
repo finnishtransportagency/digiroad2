@@ -79,7 +79,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
 
-  private def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
+  def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
 
     val queryFilter = "AND (valid_to IS NULL OR valid_to > SYSDATE)"
     fetchByLinkIds(linkIds, queryFilter).map {

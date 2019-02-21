@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, SideCode, SpeedLimitAsset, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 
 object SpeedLimitFiller {
@@ -122,8 +123,16 @@ object SpeedLimitFiller {
     (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
   }
 
+
+  private def isValidUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
+    val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
+    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+
+    !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
+  }
+
   private def generateUnknownSpeedLimitsForLink(roadLink: RoadLink, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
-    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
+    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.filter(seg => isValidUnknownSpeedLimit(roadLink)).map { x => (x.startMeasure, x.endMeasure) }
     val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength}
     remainders.map { segment =>
       val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)

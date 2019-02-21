@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PersistedTrafficSign}
-import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
@@ -1589,12 +1589,18 @@ object DataFixture {
     println("\n")
   }
 
+
+  private def isValidUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
+    val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
+    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+
+    !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
+  }
+
   def removeUnnecessaryUnknownSpeedLimits(): Unit = {
     val dao = new OracleSpeedLimitDao(null, null)
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
-
 
     println("\nStart delete unknown speedLimits")
     println(DateTime.now())
@@ -1609,11 +1615,47 @@ object DataFixture {
         val unknownSpeedLimitByMunicipality = dao.getMunicipalitiesWithUnknown(municipality)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unknownSpeedLimitByMunicipality.toSet, false)
 
-        val filterRoadLinks = roadLinks.filterNot(roadLink => speedLimitService.isToCreateUnknownSpeedLimit(roadLink))
+        val filterRoadLinks = roadLinks.filterNot(isValidUnknownSpeedLimit)
 
         if(filterRoadLinks.map(_.linkId).nonEmpty) {
           println(s"Deleting linkIds - ${filterRoadLinks.map(_.linkId)}")
           dao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
+        }
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks(): Unit = {
+    val dao = new OracleSpeedLimitDao(null, null)
+    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    println("\nStart checking unknown speedLimits on top on wrong links")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    println(s"Municipality_code; AssetId; StartMeasure; EndMeasure; SideCode; Value; linkId, LinkType; AdministrativeClass")
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+
+        val roads = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+        val speedLimits = dao.fetchSpeedLimitsByLinkIds(roads.map(_.linkId))
+
+        val roadLinks = roads.filter(road => speedLimits.exists(speed => speed.linkId == road.linkId))
+        val filterRoadLinks = roadLinks.filterNot(isValidUnknownSpeedLimit)
+
+        if (filterRoadLinks.nonEmpty) {
+          filterRoadLinks.foreach { roadLink =>
+            speedLimits.filter(_.linkId == roadLink.linkId).foreach { speedLimit =>
+              println(s" $municipality ; ${speedLimit.id} ; ${speedLimit.startMeasure}; ${speedLimit.endMeasure}; ${speedLimit.sideCode.toString}; ${speedLimit.value}; ${roadLink.linkId}, ${roadLink.linkType.toString}; ${roadLink.administrativeClass.toString}")
+            }
+          }
         }
       }
     }
@@ -1730,6 +1772,8 @@ object DataFixture {
         addGeometryToLinearAssets()
       case Some("remove_unnecessary_unknown_speedLimits") =>
         removeUnnecessaryUnknownSpeedLimits()
+      case Some("list_incorrect_SpeedLimits_created") =>
+        printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1740,7 +1784,8 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets")
+        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
+        " remove_unnecessary_unknown_speedLimits | list_incorrect_SpeedLimits_created")
     }
   }
 }
