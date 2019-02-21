@@ -134,7 +134,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
           roadLinks.filter { roadLink =>
             val roadLinkTrafficDirection = TrafficDirection.toSideCode(roadLink.trafficDirection).value
             val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
-            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue), Some(roadLink.length))
+            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
 
             if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
               val reverseRoadLinkBearing =
@@ -168,7 +168,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon.toLong, lat.toLong))
         if(roadLinks.isEmpty) {
-          (List(s"Unauthorized Municipality Or nonexistent RoadLind near of Asset"), Seq())
+          (List(s"Unathorized municipality or nonexistent roadlink near asset position"), Seq())
         } else
           (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
       case _ =>
@@ -258,11 +258,10 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
       val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
 
-      val possibleRoadLinks = getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks)
+      val possibleRoadLinks = getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks).filter(_.administrativeClass != State)
 
-      val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
-      val roadLink = if (roadLinks.nonEmpty) {
-        possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+      val roadLink = if (possibleRoadLinks.nonEmpty) {
+        possibleRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
       } else
         closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
 
@@ -272,7 +271,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.geometry)
 
-      CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.nonEmpty)
+      CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (possibleRoadLinks.isEmpty || possibleRoadLinks.size > 1) && assetBearing.nonEmpty)
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
@@ -283,7 +282,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     val usedAdditionalPanels = trafficSignInfo.flatMap { sign =>
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(sign.lon, sign.lat), sign.roadLink.geometry)
       val bearing = if(sign.bearing.isEmpty && !sign.isFloating)
-         Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue), Some(sign.roadLink.length)))
+         Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue)))
       else
           sign.bearing
 
