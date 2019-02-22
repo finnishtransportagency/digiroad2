@@ -10,8 +10,8 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 
 class GeometryTransformSpec extends FunSuite with Matchers {
-  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressService]
-  val transform = new GeometryTransform(mockRoadAddressesService)
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val transform = new GeometryTransform(mockRoadAddressService)
 
   test("Resolve location on left when asset SideCode different than AgainstDigitizing value") {
     val linkId = 1641830
@@ -20,7 +20,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
     val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) =
       transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
@@ -38,7 +38,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
     val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) =
       transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
@@ -57,7 +57,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
     val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
     roadAddress.road should be(921)
@@ -73,7 +73,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
     val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
     roadAddress.road should be(921)
@@ -89,7 +89,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
     val dummyRoadAddress = Some(ViiteRoadAddress(1, 110, 2, Track.Combined, 0, 160, None, None, 1641830, 1, 150.690, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-    when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+    when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
     val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode, road = Option(110))
     roadAddress.road should be(110)

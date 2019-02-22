@@ -425,7 +425,7 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadAddressesService: RoadAddressService = {
+  lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(viiteClient)
   }
 
@@ -497,7 +497,7 @@ object Digiroad2Context {
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressService)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
