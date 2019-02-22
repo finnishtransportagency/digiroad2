@@ -1605,25 +1605,28 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val traffic  = new TestTrafficSignTierekisteriImporter
 
     traffic.converter(MaxTonsOnBogieExceeding, "30t") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30T") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.t") should be ("30000")
     traffic.converter(MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
     traffic.converter(MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
-    traffic.converter(MaxTonsOnBogieExceeding, "30.t") should be ("30000")
-    traffic.converter(MaxTonsOnBogieExceeding, "30T") should be ("30000")
     traffic.converter(MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "some text 30.1 tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "some text 30.1 tn some text") should be ("30100")
 
     traffic.converter(MaxTonsOnBogieExceeding, "30") should be ("30")
-    traffic.converter(MaxTonsOnBogieExceeding, "30tt") should be ("30tt")
-    traffic.converter(NoWidthExceeding, "30tt") should be ("30tt")
 
-    traffic.converter(NoWidthExceeding, "2.2 m") should be ("2.2")
-    traffic.converter(NoWidthExceeding, "2,2 M") should be ("2.2")
+    traffic.converter(NoWidthExceeding, "2.2 m") should be ("220")
+    traffic.converter(NoWidthExceeding, "2,2 M") should be ("220")
     traffic.converter(NoWidthExceeding, "2.2") should be ("2.2")
-    traffic.converter(NoWidthExceeding, "2.2 MM") should be ("2.2 MM")
+    traffic.converter(NoWidthExceeding, "some text 2.2m") should be ("220")
+    traffic.converter(NoWidthExceeding, "some text 2.2m some text") should be ("220")
 
     traffic.converter(SpeedLimitSign, "100km\\h ") should be ("100")
     traffic.converter(SpeedLimitSign, "100km\\h") should be ("100")
     traffic.converter(SpeedLimitSign, "100KM\\H") should be ("100")
     traffic.converter(SpeedLimitSign, "100kmh") should be ("100")
+    traffic.converter(SpeedLimitSign, "some text 100kmh") should be ("100")
+    traffic.converter(SpeedLimitSign, "some text 100kmh some text") should be ("100")
     traffic.converter(SpeedLimitSign, "100") should be ("100")
   }
 }

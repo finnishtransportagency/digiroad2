@@ -7,7 +7,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -254,6 +254,13 @@ class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSig
   }
 }
 
+class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+  def receive = {
+    case x: (Long, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case _ => println("trafficSignUpdateAssets: Received unknown message")
+  }
+}
+
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -335,6 +342,9 @@ object Digiroad2Context {
   val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
   eventbus.subscribe(trafficSignCreate, "trafficSign:create")
 
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
+
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
 
@@ -374,7 +384,7 @@ object Digiroad2Context {
   }
 
   lazy val linearMassLimitationService: LinearMassLimitationService = {
-    new LinearMassLimitationService(roadLinkService, new MassLimitationDao)
+    new LinearMassLimitationService(roadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {

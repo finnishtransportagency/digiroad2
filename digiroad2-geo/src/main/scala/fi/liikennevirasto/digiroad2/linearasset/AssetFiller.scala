@@ -493,7 +493,6 @@ class AssetFiller {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
-      mergeValuesExistingOnSameRoadLink,
       expireOverlappingSegments,
       combine,
       fuse,

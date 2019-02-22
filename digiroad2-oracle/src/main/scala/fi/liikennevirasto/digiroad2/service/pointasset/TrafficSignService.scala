@@ -122,7 +122,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
         eventBus.publish("trafficSign:update", ((newId, roadLink), id))
         newId
       case _ =>
-        OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        val updatedId = OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink)))
+        updatedId
     }
   }
 

@@ -1461,14 +1461,14 @@ object DataFixture {
       OracleDatabase.withDynSession{
         Queries.getMunicipalities
       }
-
-    OracleDatabase.withDynSession {
-
-      val additionalPanelIdToExpire : Seq[Long] = municipalities.flatMap { municipality =>
+    OracleDatabase.withDynTransaction {
+      val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
         println("")
+        println(DateTime.now())
         println(s"Fetching Traffic Signs for Municipality: $municipality")
 
-        val existingAssets = trafficSignService.getByMunicipality(municipality)
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+        val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
         val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
 
         println("")
@@ -1476,28 +1476,40 @@ object DataFixture {
         println("")
 
         filteredAssets.flatMap { sign =>
-          println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
-          val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
-          val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
-          val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
-            AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
-          }.toSet
+          try {
+            val roadLink = roadLinks.find(_.linkId == sign.linkId).get
+            val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
+            val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
+              AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
+            }.toSet
 
-          val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
+            val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
+            try{
+              if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
+                val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
+                val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
+                val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, propertyData.toSet, sign.validityDirection, sign.bearing)
 
-          if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
-            val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
-            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, additionalPanels, sign.validityDirection, sign.bearing)
-
-            trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
-            additionalPanelsInRadius.flatMap(_.id)
-          } else {
-            errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${additionalPanelsInRadius.size}"
-            Seq()
+                trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
+                additionalPanelsInRadius.map(asset => (asset.id, asset.linkId, trafficSignService.getProperty(asset.propertyData, trafficSignService.typePublicId).get.propertyValue.toInt)).toSeq
+              } else {
+                errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${additionalPanelsInRadius.size}"
+                Seq()
+              }
+            } catch {
+              case e: Exception => throw new UnsupportedOperationException(s"panels: ${additionalPanelsInRadius.mkString("/")} with exception: ${e.getMessage}")
+              case _ : Throwable => throw new UnsupportedOperationException(s"panels: ${additionalPanelsInRadius.mkString("/")}")
+            }
+          } catch {
+            case e: Exception => throw new UnsupportedOperationException(s"id: ${sign.id}, linkId: ${sign.linkId} additional info: ${e.getMessage}")
+            case _ : Throwable => throw new UnsupportedOperationException(s"id: ${sign.id}, linkId: ${sign.linkId}")
           }
         }
       }
-      additionalPanelIdToExpire.foreach(id => trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id)), Some("batch_process_panel_merge")))
+      additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
+        trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
+        println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
+      }
     }
     println("")
     errorLogBuffer.foreach(println)

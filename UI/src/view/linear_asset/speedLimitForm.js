@@ -40,6 +40,32 @@
       return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
     };
 
+    var userInformationLog = function() {
+      var hasMunicipality = function (linearAsset) {
+        return _.some(linearAsset.get(), function (asset) {
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var message = '';
+
+      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedSpeedLimit)) {
+        message = limitedRights;
+      } else if (validateAdministrativeClass(selectedSpeedLimit))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
+    };
+
+
     var informationLog = function (date, username) {
       return date ? (date + ' / ' + username) : ' '+ username;
     };
@@ -55,6 +81,7 @@
                '<div class="form-group">' +
                  '<p class="form-control-static asset-log-info">Linkkien lukumäärä:' + selectedSpeedLimit.count() + '</p>' +
                '</div>' +
+               userInformationLog() +
                limitValueButtons() +
                separatorButton() +
              '</div>' +
@@ -87,15 +114,15 @@
 
       if (!authorizationPolicy.workListAccess()) {
         $('ul[class=information-content]').append('' +
-          '<li><a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a></li>' +
-          '<li><a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a></li>');
+          '<li><button id="work-list-link-errors" class="wrong-speed-limits" onclick=location.href="#work-list/speedLimitErrors">Laatuvirhelista</button></li>' +
+          '<li><button id="work-list-link" class="unknown-speed-limits" onclick=location.href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</button></li>');
        }
       else {
         $('ul[class=information-content]').append('' +
-          '   <li><a id="work-list-link-errors" class="wrong-speed-limits operator-user" href="#work-list/speedLimitErrors">Laatuvirheet lista</a></li>' +
+          '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet lista</button></li>' +
           '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
-          '   <li><a id="work-list-link-municipality" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan omistama</a></li>' +
-          '   <li><a id="work-list-link-state" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion omistama</a></li>');
+          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan omistama</button></li>' +
+          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion omistama</button></li>');
       }
   };
 

@@ -73,7 +73,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -99,7 +99,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -125,7 +125,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -151,9 +151,15 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+        fields: [
+            {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
+            {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2}
+          ]
+        })
       },
       {
         typeId: assetType.heightLimit,
@@ -177,7 +183,7 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl
       },
       {
@@ -651,7 +657,7 @@
         style: new CarryingCapacityStyle(),
         layer: CarryingCapacityLayer,
         saveCondition: function (fields) {
-          return _.some(fields, function (field) {
+          return _.isEmpty(fields) || _.some(fields, function (field) {
             var fieldPropertyType = field.getPropertyValue().propertyType;
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
@@ -893,8 +899,8 @@
         formLabels: {
           title: 'Rajoitus',
           showUnit: true,
-          manyFloatingAssetsLabel: 'TR suurin sallitut korkeudet',
-          singleFloatingAssetLabel: 'TR suurin sallittu korkeus'
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
@@ -915,8 +921,8 @@
         formLabels: {
           title: 'Rajoitus',
           showUnit: true,
-          manyFloatingAssetsLabel: 'TR suurin sallitut leveydet',
-          singleFloatingAssetLabel: 'TR suurin sallittu leveys'
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
@@ -938,7 +944,9 @@
         ],
         formLabels: {
           title: 'Painorajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,

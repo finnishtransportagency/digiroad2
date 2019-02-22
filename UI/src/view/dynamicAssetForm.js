@@ -59,12 +59,13 @@
 
         me.viewModeRender = function (field, propertyValues) {
             var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
-            var _value = value ? value.value : '-';
+            var unit = field.unit ? ' ' + field.unit : '';
+            var _value = value ? value.value + unit: '-';
 
             return $('' +
                 '<div class="form-group">' +
                 '   <label class="control-label">' + field.label + '</label>' +
-                '   <p class="form-control-static">' + _value + '</p>' +
+                '   <p class="form-control-static">' + _value  + '</p>' +
                 '</div>'
             );
         };
@@ -138,7 +139,7 @@
         var className = assetTypeConfiguration.className;
 
         me.hasValidValue = function() {
-            return /^\d+$/.test(me.element.find('input').val());
+            return /^(\d+\.)?\d+$/.test(me.element.find('input').val());
         };
 
         me.isValid = function(){
@@ -204,7 +205,7 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
-      var unitClass = _.isUndefined(unit) ? '' : ' unit';
+            var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
             me.element =   $('' +
                 '<div class="form-group">' +
@@ -701,6 +702,8 @@
 
                   if(_assetTypeConfiguration.isVerifiable)
                     renderLinkToWorkList(layer);
+                  if(_assetTypeConfiguration.hasInaccurate)
+                    renderInaccurateWorkList(layer);
                 }
             });
 
@@ -750,7 +753,7 @@
         };
 
         function _isReadOnly(selectedAsset){
-            return checkAuthorizationPolicy(selectedAsset) || applicationModel.isReadOnly();
+            return applicationModel.isReadOnly() || !checkAuthorizationPolicy(selectedAsset);
         }
 
         var createHeaderElement = function(selectedAsset) {
@@ -837,7 +840,7 @@
         function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
             var sideCodeClass = generateClassName(sideCode);
 
-            var unit = _assetTypeConfiguration.unit ? asset.value ? asset.value + ' ' + _assetTypeConfiguration.unit : '-' : asset.value ? 'on' : 'ei ole';
+            var unit = asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
                 '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
@@ -875,15 +878,13 @@
                 input.prop('disabled', disabled);
 
                 if(disabled){
+                  forms.removeFields(sideCode);
                   removeValueFn();
                   _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
-                  if(asset.value)
-                    setValueFn(asset.value);
-                  else
-                    setValueFn({ properties: [] });
+                  setValueFn(asset.value || {properties: []} );
+                  formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
                 }
-                formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
                 eventbus.trigger("radio-trigger-dirty");
             });
 
@@ -896,7 +897,11 @@
 
         function renderLinkToWorkList(layerName) {
             $('ul[class=information-content]').append('' +
-                '<li><a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</a></li>');
+                '<li><button id="unchecked-links" class="unchecked-linear-assets" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
+        }
+
+        function renderInaccurateWorkList(layerName) {
+            $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
         }
 
         function createSideCodeMarker(sideCode) {
@@ -906,10 +911,37 @@
             return '<span class="marker">' + sideCode + '</span>';
         }
 
+        var userInformationLog = function() {
+            var selectedAsset = _assetTypeConfiguration.selectedLinearAsset;
+            var authorizationPolicy = _assetTypeConfiguration.authorizationPolicy;
 
-      var informationLog = function (date, username) {
-        return date ? (date + ' / ' + username) : '-';
-      };
+            var hasMunicipality = function(linearAsset) {
+                return _.some(linearAsset.get(), function(asset){
+                    return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+                });
+            };
+
+            var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+            var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+            var message = '';
+
+            if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedAsset)) {
+                message = limitedRights;
+            } else if(!checkAuthorizationPolicy(selectedAsset))
+                message = noRights;
+
+            if(message) {
+                return '' +
+                    '<div class="form-group user-information">' +
+                    '<p class="form-control-static user-log-info">' + message + '</p>' +
+                    '</div>';
+            } else
+                return '';
+        };
+
+        var informationLog = function (date, username) {
+           return date ? (date + ' / ' + username) : '-';
+        };
 
         function createBodyElement(selectedAsset) {
             var info = {
@@ -940,6 +972,7 @@
                 '     <div class="form-group">' +
                 '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
                 '     </div>' +
+                userInformationLog() +
                 '   </div>' +
                 '</div>');
         }
@@ -955,17 +988,16 @@
 
         function checkAuthorizationPolicy(selectedAsset){
             var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
-
-            var selectedAssets = _.filter(selectedAsset.get(), function (asset) {
-                return auth.formEditModeAccess(asset);
-            });
-            return _.isEmpty(selectedAssets);
+            return auth.validateMultiple(selectedAsset.get());
         }
 
         me.isSplitOrSeparatedAllowed = function(){
             //When both are deleted
             if(_.isEmpty(forms.getAllFields()))
                 return false;
+
+            if(_.isEmpty(forms.getFields('a')) || _.isEmpty(forms.getFields('b')))
+                return true;
 
       return _.some(forms.getFields('a'), function(fieldA){
         var propertyValueA = fieldA.getPropertyValue();

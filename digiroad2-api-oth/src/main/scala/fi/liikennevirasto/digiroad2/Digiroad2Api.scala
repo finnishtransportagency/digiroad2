@@ -82,11 +82,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val dynamicLinearAssetService: DynamicLinearAssetService = Digiroad2Context.dynamicLinearAssetService,
                    val linearTotalWeightLimitService: LinearTotalWeightLimitService = Digiroad2Context.linearTotalWeightLimitService,
                    val linearAxleWeightLimitService: LinearAxleWeightLimitService = Digiroad2Context.linearAxleWeightLimitService,
-                   val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
                    val linearHeightLimitService: LinearHeightLimitService = Digiroad2Context.linearHeightLimitService,
                    val linearLengthLimitService: LinearLengthLimitService = Digiroad2Context.linearLengthLimitService,
                    val linearTrailerTruckWeightLimitService: LinearTrailerTruckWeightLimitService = Digiroad2Context.linearTrailerTruckWeightLimitService,
                    val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
+                   val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
                    val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
                    val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
   extends ScalatraServlet
@@ -810,7 +810,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = getLinearAssetService(typeId)
       zoom >= minVisibleZoom && zoom <= maxZoom match {
-        case true => mapLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
+        case true => mapLightLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
         case false =>
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
@@ -835,7 +835,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = getLinearAssetService(typeId)
       zoom >= minVisibleZoom && zoom <= maxZoom match {
-        case true => mapLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle))
+        case true => mapLightLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle))
         case false =>
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
@@ -974,6 +974,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  def mapLightLinearAssets(assets: Seq[Seq[LightLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
+    assets.map {asset =>
+      asset.map { a =>
+        Map(
+          "value" -> a.value,
+          "points" -> a.geometry,
+          "expired" -> a.expired,
+          "sideCode" -> a.sideCode
+        )
+      }
+    }
+  }
+
   def mapMassLinearAssets(readOnlyAssets: Seq[Seq[MassLimitationAsset]]): Seq[Seq[Map[String, Any]]] = {
     readOnlyAssets.map { links =>
       links.map { link =>
@@ -1033,8 +1046,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
-      //TODO Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | PavedRoad.typeId =>
+      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | PavedRoad.typeId | BogieWeightLimit.typeId =>
         value.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
       case _ =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
@@ -1634,7 +1646,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/municipalities/:municipalityCode/assetTypes") {
     val id = params("municipalityCode").toInt
-    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipalityF(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
         _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
@@ -1642,7 +1654,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
           "verified_by"   -> assetType.verifiedBy.getOrElse(""),
           "verified"   -> assetType.verified,
-          "counter" -> assetType.counter)))
+          "counter" -> assetType.counter,
+          "modified_by" -> assetType.modifiedBy.getOrElse(""),
+          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "type" -> assetType.geometryType)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {
