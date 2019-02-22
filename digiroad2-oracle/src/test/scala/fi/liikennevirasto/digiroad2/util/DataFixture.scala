@@ -1450,7 +1450,7 @@ object DataFixture {
     }
   }
 
-  def mergeAdditionalPanelsToTrafficSigns(): Unit = {
+  def mergeAdditionalPanelsToTrafficSigns(group: TrafficSignTypeGroup): Unit = {
     val errorLogBuffer: ListBuffer[String] = ListBuffer()
 
     println("\nMerging additional panels to nearest traffic signs")
