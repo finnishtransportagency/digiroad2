@@ -1461,7 +1461,6 @@ object DataFixture {
       OracleDatabase.withDynSession{
         Queries.getMunicipalities
       }
-    val signGroup = TrafficSignType.values.filter(_.group == group).map(_.OTHvalue)
 
     OracleDatabase.withDynTransaction {
       val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
@@ -1472,7 +1471,7 @@ object DataFixture {
         val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
         val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
         val (panels, signs) = existingAssets.partition(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
-        val signsByType = signs.filter{sign => signGroup.contains(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt)}
+        val signsByType = signs.filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == group)
 
         println("")
         println(s"Number of existing assets: ${signsByType.length}")
