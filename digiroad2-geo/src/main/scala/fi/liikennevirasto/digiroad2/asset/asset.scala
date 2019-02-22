@@ -391,13 +391,13 @@ object ProhibitionClass {
     def value = 12
     def typeDescription = "Pedestrian"
     def rosatteType = "Pedestrian"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians, NoPedestriansCyclesMopeds)
   }
   case object Bicycle extends ProhibitionClass {
     def value = 11
     def typeDescription = "Bicycle"
     def rosatteType = "Bicycle"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
   }
   case object HorseRiding extends ProhibitionClass {
     def value = 26
@@ -409,7 +409,7 @@ object ProhibitionClass {
     def value = 10
     def typeDescription = "Moped"
     def rosatteType = "Moped"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds, NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
   }
   case object Motorcycle extends ProhibitionClass {
     def value = 9

@@ -544,8 +544,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
-
-
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
@@ -625,13 +623,13 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   /**
     * Returns VVH road links related with finnish names.
     */
-  protected def queryByFinnishNames[T](finnishNames: Set[String],
+  protected def queryByNames[T](names: Set[String],
                                   fieldSelection: Option[String],
                                   fetchGeometry: Boolean,
                                   resultTransition: (Map[String, Any], List[List[Double]]) => T,
                                   filter: Set[String] => String): Seq[T] = {
     val batchSize = 1000
-    val nameGroups: List[Set[String]] = finnishNames.grouped(batchSize).toList
+    val nameGroups: List[Set[String]] = names.grouped(batchSize).toList
     nameGroups.par.flatMap { names =>
       val definition = layerDefinition(filter(names), fieldSelection)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
@@ -844,6 +842,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     Future(fetchByLinkIds(linkIds))
   }
 
+  def fetchByRoadNamesF(roadNamePublicIds: Set[String], roadNameSource: String) = {
+    Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
+  }
+
   /**
     * Returns VVH road link by mml id.
     * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
@@ -925,8 +927,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Returns VVH road links by finnish names.
     * Used by VVHClient.fetchByLinkId,
     */
-  def fetchByFinnishNames(roadNames: Set[String], roadNamePublicId: String): Seq[VVHRoadlink] = {
-    queryByFinnishNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
+  def fetchByRoadNames(roadNames: Set[String], roadNamePublicId: String): Seq[VVHRoadlink] = {
+    queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
   }
 
   /**

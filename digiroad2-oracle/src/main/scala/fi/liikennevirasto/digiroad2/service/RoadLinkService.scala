@@ -292,9 +292,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchVVHRoadlinks(roadNamePublicIds: Set[String], roadNameSource: String): Seq[VVHRoadlink] = {
-    if (roadNamePublicIds.nonEmpty) {
-      vvhClient.roadLinkData.fetchByFinnishNames(roadNamePublicIds, roadNameSource)
-    } else Seq.empty[VVHRoadlink]
+      vvhClient.roadLinkData.fetchByRoadNames(roadNamePublicIds, roadNameSource)
   }
 
   def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
@@ -446,6 +444,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val fut = for{
       f1Result <- vvhClient.complementaryData.fetchByLinkIdsF(linkIds)
       f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(linkIds)
+    } yield (f1Result, f2Result)
+
+    val (complementaryLinks, links) = Await.result(fut, Duration.Inf)
+
+    if(newTransaction){
+      withDynTransaction {
+        enrichRoadLinksFromVVH(links ++ complementaryLinks)
+      }
+    }
+    else enrichRoadLinksFromVVH(links ++ complementaryLinks)
+  }
+
+  def getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds: Set[String], roadNameSource: String, newTransaction: Boolean = true): Seq[RoadLink] = {
+    val fut = for{
+      f1Result <- vvhClient.complementaryData.fetchByRoadNamesF(roadNamePublicIds, roadNameSource)
+      f2Result <- vvhClient.roadLinkData.fetchByRoadNamesF(roadNamePublicIds, roadNameSource)
     } yield (f1Result, f2Result)
 
     val (complementaryLinks, links) = Await.result(fut, Duration.Inf)
@@ -1276,32 +1290,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }).getOrElse(Nil)
   }
 
-  def recursiveGetAdjacent(sourceRoadLink: RoadLink, point: Point, intermediants: Set[RoadLink] = Set(), numberOfConnections: Int = 0): Set[RoadLink] = {
-    val (roadNamePublicId, roadNameSource) =
-      sourceRoadLink.attributes.get("ROADNAME_FI") match {
-        case Some(nameFi) =>
-          ("ROADNAME_FI", nameFi.toString)
-        case _ =>
-          ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
-      }
-
-    def recursiveProcess(sourceRoadLink: RoadLink, point: Point, intermediants: Set[RoadLink], numberOfConnections: Int = 0, roadNamePublicId: String, roadNameSource: String): Set[RoadLink] = {
-      val adjRoadLink = getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filter(adjLink => adjLink.attributes.getOrElse(roadNamePublicId, "").toString.nonEmpty && adjLink.attributes.getOrElse(roadNamePublicId, "") == roadNameSource)
-      val filteredRoadLink = adjRoadLink.filterNot(adj => intermediants.contains(adj))
-
-      if (filteredRoadLink.isEmpty) {
-        intermediants
-      } else {
-        filteredRoadLink.flatMap { roadLink =>
-          recursiveProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), intermediants ++ Set(roadLink), numberOfConnections + 1, roadNamePublicId, roadNameSource)
-        }
-      }.toSet
-    }
-
-    recursiveProcess(sourceRoadLink, point, intermediants, numberOfConnections, roadNamePublicId, roadNameSource)
-
-  }
-
   def pickRightMost(lastLink: RoadLink, candidates: Seq[RoadLink]): RoadLink = {
     val cPoint =  getConnectionPoint(lastLink, candidates)
     val forward = getGeometryLastSegmentVector(cPoint, lastLink)
@@ -1526,8 +1514,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val (roadLinks, changes, complementaries) = getCachedRoadLinks(municipalityCode)
     (roadLinks ++ complementaries, changes)
   }
-
-
 
   protected def readCachedGeometry(geometryFile: File): Seq[RoadLink] = {
     def getFeatureClass(roadLink: RoadLink): Int ={
