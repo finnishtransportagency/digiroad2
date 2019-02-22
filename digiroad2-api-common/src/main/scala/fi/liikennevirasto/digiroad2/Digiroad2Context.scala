@@ -425,8 +425,8 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressesService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val assetService: AssetService = {
@@ -489,7 +489,7 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao

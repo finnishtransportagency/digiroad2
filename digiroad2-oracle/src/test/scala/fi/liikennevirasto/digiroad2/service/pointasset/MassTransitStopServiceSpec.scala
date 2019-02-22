@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoad
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, MunicipalityInfo, Sequences}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util._
@@ -26,7 +26,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressesService]
+  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressService]
   val geometryTransform = new GeometryTransform(mockRoadAddressesService)
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
   val userWithKauniainenAuthorization = User(

@@ -107,12 +107,12 @@ object DataFixture {
     new SpeedLimitValidator(trafficSignService)
   }
 
-  lazy val roadAddressService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
