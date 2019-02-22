@@ -103,7 +103,7 @@ module.exports = function(grunt) {
                 },
                 {
                     context: '/maasto',
-                    host: 'oag.liikennevirasto.fi',
+                    host: 'oag.vayla.fi',
                     https: false,
                     changeOrigin: true,
                     xforward: false

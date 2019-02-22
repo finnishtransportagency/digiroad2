@@ -53,7 +53,7 @@
 
       if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedSpeedLimit)) {
         message = limitedRights;
-      } else if (!authorizationPolicy.formEditModeAccess(selectedSpeedLimit))
+      } else if (validateAdministrativeClass(selectedSpeedLimit))
         message = noRights;
 
       if(message) {
@@ -119,10 +119,10 @@
        }
       else {
         $('ul[class=information-content]').append('' +
-          '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirhelista</button></li>' +
+          '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet lista</button></li>' +
           '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
-          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan Omistama</button></li>' +
-          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion Omistama</button></li>');
+          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan omistama</button></li>' +
+          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion omistama</button></li>');
       }
   };
 

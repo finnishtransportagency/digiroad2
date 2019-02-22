@@ -3,12 +3,12 @@ package fi.liikennevirasto.digiroad2.dao.pointasset
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, Point, TrafficSignType}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -94,7 +94,7 @@ object OracleTrafficSignDao {
   }
 
   def fetchEnumeratedValueIds( tsType: Seq[TrafficSignType]): Seq[Long] = {
-    val values = tsType.map(_.value)
+    val values = tsType.map(_.OTHvalue)
 
     sql"""select distinct ev.id from PROPERTY p
                 join ENUMERATED_VALUE ev on ev.property_id = p.id
@@ -398,6 +398,43 @@ object OracleTrafficSignDao {
     }
   }
 
+  def expire(linkIds: Set[Long], username: String): Unit = {
+    MassQuery.withIds(linkIds) { idTableName =>
+      sqlu"""
+         update asset set valid_to = sysdate - 1/86400 where id in (
+          select a.id
+          from asset a
+          join asset_link al on al.asset_id = a.id
+          join lrm_position lrm on lrm.id = al.position_id
+          join  #$idTableName i on i.id = lrm.link_id
+          where a.asset_type_id = ${TrafficSigns.typeId}
+          AND (a.valid_to IS NULL OR a.valid_to > SYSDATE )
+          AND a.created_by = $username
+         )
+      """.execute
+    }
+  }
+
+  def getTrafficSignType(id: Long): Option[Int]= {
+    sql""" select ev.value
+         from asset a
+         join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'trafficSigns_type'
+         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
+         left join enumerated_value ev on scv.enumerated_value_id = ev.id
+         where a.asset_type_id = ${TrafficSigns.typeId} and a.id = $id
+    """.as[Int].firstOption
+  }
+
+  def expireWithoutTransaction(queryFilter: String => String, username: Option[String]) : Unit = {
+    val modifiedBy = username match {case Some(user) => s", modified_date = sysdate , modified_by = '$user'" case _ => "" }
+    val query = s"""
+          update asset
+          set valid_to = sysdate $modifiedBy
+          where asset_type_id = ${TrafficSigns.typeId}
+          """
+    StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > SYSDATE)").execute
+  }
+
   def expireAssetByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
     val trafficSignType = if(signsType.isEmpty) "" else s"and ev.value in (${signsType.mkString(",")})"
     val filterByUsername = if(username.isEmpty) "" else s"and created_by = $username"
@@ -422,7 +459,6 @@ object OracleTrafficSignDao {
       """.execute
     }
   }
-
 
   def getLastExecutionDate(createdBy: String, signsType: Set[Int]): Option[DateTime] = {
     sql""" select MAX( case when a.modified_date is null then MAX(a.created_date) else MAX(a.modified_date) end ) as lastExecution

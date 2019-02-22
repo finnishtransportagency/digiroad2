@@ -469,30 +469,34 @@
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     return [
       [roadLinkBox]
-        .concat([speedLimitBox])
-        .concat([winterSpeedLimits])
-        .concat(getLinearAsset(assetType.litRoad))
-        .concat([pavedRoadBox])
-        .concat(getLinearAsset(assetType.roadWidth))
-        .concat(getLinearAsset(assetType.numberOfLanes))
-        .concat(getLinearAsset(assetType.massTransitLane))
-        .concat(getLinearAsset(assetType.europeanRoads))
-        .concat(getLinearAsset(assetType.exitNumbers))
-        .concat(getLinearAsset(assetType.trafficVolume))
-        .concat([carryingCapacityBox])
-        .concat(getLinearAsset(assetType.roadDamagedByThaw))
-        .concat([careClassBox])
-        .concat([manoeuvreBox])
-        .concat(getLinearAsset(assetType.prohibition))
-        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
-        .concat(getLinearAsset(assetType.totalWeightLimit))
-        .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
-        .concat(getLinearAsset(assetType.axleWeightLimit))
-        .concat(getLinearAsset(assetType.bogieWeightLimit))
-        .concat(getLinearAsset(assetType.heightLimit))
-        .concat(getLinearAsset(assetType.lengthLimit))
-        .concat(getLinearAsset(assetType.widthLimit))
-        .concat(trSpeedLimitBox)
+          .concat([speedLimitBox])
+          .concat([manoeuvreBox])
+          .concat(getLinearAsset(assetType.prohibition))
+          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
+      []
+          .concat(getLinearAsset(assetType.totalWeightLimit))
+          .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
+          .concat(getLinearAsset(assetType.axleWeightLimit))
+          .concat(getLinearAsset(assetType.bogieWeightLimit))
+          .concat(getLinearAsset(assetType.heightLimit))
+          .concat(getLinearAsset(assetType.lengthLimit))
+          .concat(getLinearAsset(assetType.widthLimit)),
+      []
+          .concat([pavedRoadBox])
+          .concat(getLinearAsset(assetType.roadWidth))
+          .concat(getLinearAsset(assetType.litRoad))
+          .concat([carryingCapacityBox])
+          .concat(getLinearAsset(assetType.roadDamagedByThaw)),
+      []
+          .concat(getLinearAsset(assetType.europeanRoads))
+          .concat(getLinearAsset(assetType.exitNumbers))
+          .concat([careClassBox])
+          .concat(getLinearAsset(assetType.numberOfLanes))
+          .concat(getLinearAsset(assetType.massTransitLane))
+          .concat([winterSpeedLimits])
+          .concat(getLinearAsset(assetType.trafficVolume)),
+      []
+          .concat(trSpeedLimitBox)
     ];
 
     function getLinearAsset(typeId) {

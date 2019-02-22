@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.text.SimpleDateFormat
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{AnimalWarningsType, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
@@ -608,7 +608,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val endAddressMValue = 250L
       val trLaneType = TRLaneArrangementType.apply(5)
 
-      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, trLaneType)
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, trLaneType, RoadSide.Left)
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
@@ -625,6 +625,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       asset.linkId should be (5001)
       asset.value should be (Some(NumericValue(1)))
+      asset.sideCode should be (SideCode.TowardsDigitizing.value)
     }
   }
 
@@ -648,8 +649,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val starSectionHist = 100
       val endSectionHist = 150
 
-      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, laneType)
-      val trHist = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, laneType)
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, laneType, RoadSide.Left)
+      val trHist = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, laneType, RoadSide.Left)
 
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
@@ -826,7 +827,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startSection = 50
       val endSection = 350
 
-      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRLaneArrangementType.apply(1))
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRLaneArrangementType.apply(1), RoadSide.Left)
       testMassTransitLane.filterTierekisteriAssetsTest(tr) should be (false)
     }
   }
@@ -959,7 +960,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 500
     val starAddress = 0
     val endAddress = 500
-    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"))
+    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, SpeedLimitSign, "80"))
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Right)
@@ -989,8 +990,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val starAddress = 0
     val endAddress = 500
     val trAssets = Seq(
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"),
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 70, 70, RoadSide.Right, TRTrafficSignType.SpeedLimit, "90")
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, SpeedLimitSign, "80"),
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 70, 70, RoadSide.Right, SpeedLimitSign, "90")
     )
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
@@ -1027,7 +1028,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val endAddressMValue = 500
     val starAddress = 0
     val endAddress = 500
-    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"))
+    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, SpeedLimitSign, "80"))
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Left)
@@ -1057,8 +1058,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val starAddress = 0
     val endAddress = 500
     val trAssets = Seq(
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"),
-      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 70, 70, RoadSide.Left, TRTrafficSignType.SpeedLimit, "90")
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, SpeedLimitSign, "80"),
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 70, 70, RoadSide.Left, SpeedLimitSign, "90")
     )
     val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
@@ -1353,7 +1354,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       VVHRoadlink(5002, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
 
       val startMValue = 118
-      val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TRTrafficSignType.TelematicSpeedLimit,""))
+      val trAsset =  Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, startMValue, startMValue, RoadSide.Right, TelematicSpeedLimit,""))
       val mappedLinkType: Map[Long, Seq[(Long, LinkType)]] = Map((5001L, Seq((5001L, Motorway))))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(ras)
@@ -1604,29 +1605,29 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   test("traffic sign converter"){
     val traffic  = new TestTrafficSignTierekisteriImporter
 
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30t") should be ("30000")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30T") should be ("30000")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.t") should be ("30000")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "some text 30.1 tn") should be ("30100")
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "some text 30.1 tn some text") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "30t") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30T") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.t") should be ("30000")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.1t") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.1tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "30.1 tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "some text 30.1 tn") should be ("30100")
+    traffic.converter(MaxTonsOnBogieExceeding, "some text 30.1 tn some text") should be ("30100")
 
-    traffic.converter(TRTrafficSignType.MaxTonsOnBogieExceeding, "30") should be ("30")
+    traffic.converter(MaxTonsOnBogieExceeding, "30") should be ("30")
 
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2 m") should be ("220")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2,2 M") should be ("220")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "2.2") should be ("2.2")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "some text 2.2m") should be ("220")
-    traffic.converter(TRTrafficSignType.MaxWidthExceeding, "some text 2.2m some text") should be ("220")
+    traffic.converter(NoWidthExceeding, "2.2 m") should be ("220")
+    traffic.converter(NoWidthExceeding, "2,2 M") should be ("220")
+    traffic.converter(NoWidthExceeding, "2.2") should be ("2.2")
+    traffic.converter(NoWidthExceeding, "some text 2.2m") should be ("220")
+    traffic.converter(NoWidthExceeding, "some text 2.2m some text") should be ("220")
 
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h ") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100km\\h") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100KM\\H") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100kmh") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "some text 100kmh") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "some text 100kmh some text") should be ("100")
-    traffic.converter(TRTrafficSignType.SpeedLimit, "100") should be ("100")
+    traffic.converter(SpeedLimitSign, "100km\\h ") should be ("100")
+    traffic.converter(SpeedLimitSign, "100km\\h") should be ("100")
+    traffic.converter(SpeedLimitSign, "100KM\\H") should be ("100")
+    traffic.converter(SpeedLimitSign, "100kmh") should be ("100")
+    traffic.converter(SpeedLimitSign, "some text 100kmh") should be ("100")
+    traffic.converter(SpeedLimitSign, "some text 100kmh some text") should be ("100")
+    traffic.converter(SpeedLimitSign, "100") should be ("100")
   }
 }

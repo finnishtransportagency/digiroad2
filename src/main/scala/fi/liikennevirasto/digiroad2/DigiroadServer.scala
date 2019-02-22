@@ -80,7 +80,7 @@ class OAGProxyServlet extends ProxyServlet {
   private val logger = LoggerFactory.getLogger(getClass)
 
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    val url = "http://oag.liikennevirasto.fi/rasteripalvelu-mml" +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
+    val url = "http://oag.vayla.fi/rasteripalvelu-mml" +  regex.replaceFirstIn(req.getRequestURI, "/wmts/maasto")
     java.net.URI.create(url)
   }
 

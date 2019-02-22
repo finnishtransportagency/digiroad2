@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import org.mockito.Mockito._
@@ -76,17 +76,17 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val lengthLimitValidator = new TestLengthLimitValidator
 
   val weightLimitAssets = Seq(
-    SevenRestrictionsValidation(TotalWeightLimit.typeId, totalWeightLimitValidator, TrafficSignType.MaxLadenExceeding, "100"),
-    SevenRestrictionsValidation(TrailerTruckWeightLimit.typeId, trailerTruckWeightLimitValidator,TrafficSignType.MaxMassCombineVehiclesExceeding, "100"),
-    SevenRestrictionsValidation(AxleWeightLimit.typeId, axleWeightLimitValidator, TrafficSignType.MaxTonsOneAxleExceeding, "100"),
-    SevenRestrictionsValidation(BogieWeightLimit.typeId, bogieWeightLimitValidator, TrafficSignType.MaxTonsOnBogieExceeding, "100")
+    SevenRestrictionsValidation(TotalWeightLimit.typeId, totalWeightLimitValidator, MaxLadenExceeding, "100"),
+    SevenRestrictionsValidation(TrailerTruckWeightLimit.typeId, trailerTruckWeightLimitValidator,MaxMassCombineVehiclesExceeding, "100"),
+    SevenRestrictionsValidation(AxleWeightLimit.typeId, axleWeightLimitValidator, MaxTonsOneAxleExceeding, "100"),
+    SevenRestrictionsValidation(BogieWeightLimit.typeId, bogieWeightLimitValidator, MaxTonsOnBogieExceeding, "100")
   )
 
   val otherLimitAssets = Seq(
-    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator, TrafficSignType.FreeWidth, "200"),
-    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator,  TrafficSignType.NoWidthExceeding, "100"),
-    SevenRestrictionsValidation(HeightLimit.typeId, heightLimitValidator, TrafficSignType.MaxHeightExceeding, "100"),
-    SevenRestrictionsValidation(LengthLimit.typeId, lengthLimitValidator, TrafficSignType.MaximumLength, "100")
+    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator, FreeWidth, "200"),
+    SevenRestrictionsValidation(WidthLimit.typeId, widthLimitValidator,  NoWidthExceeding, "100"),
+    SevenRestrictionsValidation(HeightLimit.typeId, heightLimitValidator, MaxHeightExceeding, "100"),
+    SevenRestrictionsValidation(LengthLimit.typeId, lengthLimitValidator, MaximumLength, "100")
   )
 
   val sevenRestrictionsAssets = weightLimitAssets ++ otherLimitAssets
@@ -102,7 +102,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
         TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
@@ -123,7 +123,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
         TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
@@ -144,7 +144,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMismatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("300"))),
         TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("300"))))
 
@@ -166,7 +166,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAssetAfter50meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
         TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 
@@ -188,8 +188,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
 
   def massLimitationWithMatchedAssetAfter500meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
+
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.value.toString))),
+        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
         TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
         TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
 

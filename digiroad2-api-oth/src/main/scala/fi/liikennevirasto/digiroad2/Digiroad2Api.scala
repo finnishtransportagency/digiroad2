@@ -1634,6 +1634,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
+
   get("/municipalities/byUser") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -1645,7 +1646,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/municipalities/:municipalityCode/assetTypes") {
     val id = params("municipalityCode").toInt
-    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipalityF(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
         _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
@@ -1653,7 +1654,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
           "verified_by"   -> assetType.verifiedBy.getOrElse(""),
           "verified"   -> assetType.verified,
-          "counter" -> assetType.counter)))
+          "counter" -> assetType.counter,
+          "modified_by" -> assetType.modifiedBy.getOrElse(""),
+          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "type" -> assetType.geometryType)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {

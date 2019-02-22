@@ -503,13 +503,16 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.drawLinearAssets = function(linearAssets) {
-    vectorSource.addFeatures(style.renderFeatures(_.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
+    var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
       return selectedAsset.linkId === asset.linkId && selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
-    })));
+    });
+    vectorSource.addFeatures(style.renderFeatures(allButSelected));
     readOnlyLayer.showLayer();
     highLightReadOnlyLayer();
     if(assetLabel) {
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(linearAssets, 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
+      var splitChangedAssets = _.partition(allButSelected, function(a){ return (a.sideCode !== 1 && _.has(a, 'value'));});
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
