@@ -26,8 +26,8 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
 class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
-  val mockRoadAddressesService = MockitoSugar.mock[RoadAddressService]
-  val geometryTransform = new GeometryTransform(mockRoadAddressesService)
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
+  val geometryTransform = new GeometryTransform(mockRoadAddressService)
   val boundingBoxWithKauniainenAssets = BoundingRectangle(Point(374000,6677000), Point(374800,6677600))
   val userWithKauniainenAuthorization = User(
     id = 1,
@@ -831,7 +831,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-      when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+      when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
       val assetId = 300006
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
@@ -861,7 +861,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
-      when(mockRoadAddressesService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
+      when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
       val assetId = 300006
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption

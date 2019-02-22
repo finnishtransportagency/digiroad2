@@ -1,7 +1,6 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    viitepkg: grunt.file.readJSON('viitepackage.json'),
     properties: {
       app: 'conf/dev/keys.properties'
     },
