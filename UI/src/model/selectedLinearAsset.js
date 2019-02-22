@@ -6,6 +6,7 @@
     var originalLinearAssetValue = null;
     var isSeparated = false;
     var isValid = true;
+    var multipleSelected;
 
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
@@ -29,12 +30,12 @@
       selection = collection.separateLinearAsset(_.head(selection));
       isSeparated = true;
       dirty = true;
-      eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
       eventbus.trigger(singleElementEvent('separated'), self);
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
     this.open = function(linearAsset, singleLinkSelect) {
+      multipleSelected = false;
       self.close();
       selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       originalLinearAssetValue = self.getValue();
@@ -63,6 +64,7 @@
     };
 
     this.openMultiple = function(linearAssets) {
+      multipleSelected = true;
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
       var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
@@ -176,7 +178,6 @@
     };
 
     var cancelCreation = function() {
-      eventbus.trigger(singleElementEvent('unselect'), self);
       if (isSeparated) {
         var originalLinearAsset = _.cloneDeep(selection[0]);
         originalLinearAsset.value = originalLinearAssetValue;
@@ -188,6 +189,7 @@
       dirty = false;
       isSeparated = false;
       collection.cancelCreation();
+      eventbus.trigger(singleElementEvent('unselect'), self);
     };
 
     var cancelExisting = function() {
@@ -283,14 +285,14 @@
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
+        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
       }
     };
 
     this.setMultiValue = function(value) {
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
-        eventbus.trigger(multiElementEvent('valueChanged'), self);
+        eventbus.trigger(multiElementEvent('valueChanged'), self, multipleSelected);
     };
 
     function isValueDifferent(selection){

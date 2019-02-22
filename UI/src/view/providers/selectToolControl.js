@@ -191,7 +191,7 @@
             isRectangleActive = false;
             map.removeInteraction(drawSquare);
             map.removeInteraction(drawInteraction);
-            map.unByKey(mapDoubleClickEventKey);
+            ol.Observable.unByKey(mapDoubleClickEventKey);
 
         };
 

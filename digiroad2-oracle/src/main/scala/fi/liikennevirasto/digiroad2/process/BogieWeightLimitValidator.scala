@@ -13,9 +13,9 @@ class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
   lazy val dynamicAssetDao = new DynamicLinearAssetDao
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
-    TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
+    TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case MaxTonsOnBogieExceeding =>
-        trafficSignService.getTrafficSignsProperties(trafficSign, trafficSignService.valuePublicId).getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, publicId = "bogie_weight_2_axel") &&
+        trafficSignService.getProperty(trafficSign, trafficSignService.valuePublicId).getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, publicId = "bogie_weight_2_axel") &&
           trafficSignService.getAllTrafficSignsProperties(trafficSign, trafficSignService.additionalPublicId).forall { property =>
           val additionalPanelProperties = property.asInstanceOf[AdditionalPanel]
           !is3AxleBogieProperty(additionalPanelProperties) ||

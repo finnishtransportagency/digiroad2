@@ -15,12 +15,11 @@
     };
 
     var renderFeedbackLink = function (enable) {
-      var infoContent = $('ul[class=information-content]');
+      var infoContent = $('.feedback-data');
       if (enable && allowFeedBack() ) {
-        if (!infoContent.find('#feedback-data').length)
-          infoContent.append('<li class="feedback-data"><a id="feedback-data" href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</a></li>');
-      }else {
-        infoContent.find('.feedback-data').remove();
+        infoContent.html('<button id="feedback-data" onclick=location.href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</button>');
+      } else {
+        infoContent.find('#feedback-data').remove();
       }
 
       $('#feedback-data').on('click', function(){
@@ -35,6 +34,12 @@
         bindEvents(selectedData);
         applicationModel.setApplicationkState(applicationState.Feedback);
       }
+    };
+
+    this.closeAssetFeedBack = function() {
+      purge();
+      $('.feedback-data').find('#feedbackData').remove();
+      applicationModel.setApplicationkState(applicationState.Normal);
     };
 
     this.closeFeedback = function(){
@@ -61,7 +66,9 @@
         new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
       });
 
-      eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed closeFeedBackData', me.closeFeedback);
+      eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed', me.closeFeedback);
+
+      eventbus.on('closeFeedBackData', me.closeAssetFeedBack);
 
       eventbus.on('linkProperties:selected linkProperties:cancelled manoeuvres:selectedAvailable speedLimit:selected speedLimit:cancelled asset:modified manoeuvres:selected', me.initFeedback);
 

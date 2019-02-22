@@ -239,18 +239,25 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
 
 class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: TrafficSignInfo => trafficSignManager.trafficSignsCreateAssets(x)
+    case x: TrafficSignInfo => trafficSignManager.createAssets(x)
     case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
 
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: Long => trafficSignService.getTrafficType(x) match {
-      case Some(trafficType) => trafficSignManager.trafficSignsDeleteAssets(x, trafficType)
+    case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq((x, trafficType.propertyData)))
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")
+  }
+}
+
+class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+  def receive = {
+    case x: (Long, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
 
@@ -328,6 +335,15 @@ object Digiroad2Context {
 
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
+
+  val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService, trafficSignManager), name = "trafficSignExpire")
+  eventbus.subscribe(trafficSignExpire, "trafficSign:expire")
+
+  val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
+  eventbus.subscribe(trafficSignCreate, "trafficSign:create")
+
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -409,8 +425,8 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val assetService: AssetService = {
@@ -473,7 +489,7 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -481,7 +497,7 @@ object Digiroad2Context {
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressService)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
@@ -577,6 +593,14 @@ object Digiroad2Context {
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
+
+  lazy val massTransitLaneService: MassTransitLaneService = {
+    new MassTransitLaneService(roadLinkService, eventbus)
+  }
+
+  lazy val numberOfLanesService: NumberOfLanesService = {
+    new NumberOfLanesService(roadLinkService, eventbus)
+  }
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 

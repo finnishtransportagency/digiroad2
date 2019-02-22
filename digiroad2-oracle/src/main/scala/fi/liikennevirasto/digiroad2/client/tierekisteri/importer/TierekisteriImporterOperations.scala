@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -33,7 +33,7 @@ trait TierekisteriImporterOperations {
     Class.forName(getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
-  lazy val roadAddressService : RoadAddressesService = new RoadAddressesService(viiteClient)
+  lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }
   lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
 
@@ -186,7 +186,7 @@ trait TierekisteriImporterOperations {
     }
   }
 
-  def getAssetTypeId : Int = {
+  def getAssetTypeId: Int = {
     typeId
   }
 
@@ -197,6 +197,10 @@ trait TierekisteriImporterOperations {
   def importAssets()
 
   def updateAssets(lastExecution: DateTime)
+
+  def getLastExecutionDate: Option[DateTime] = {
+      assetDao.getLastExecutionDate(typeId, s"batch_process_$assetName")
+  }
 }
 
 trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations {
@@ -264,14 +268,19 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
 
   protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit
 
-  def importAssets(): Unit = {
-    //Expire all asset in state roads in all the municipalities
+
+  def expireAssets() : Unit = {
     val municipalities = getAllMunicipalities
     municipalities.foreach { municipality =>
-      withDynTransaction{
+      withDynTransaction {
         expireAssets(municipality, Some(State))
       }
     }
+  }
+
+  def importAssets(): Unit = {
+    //Expire all asset in state roads in all the municipalities
+    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 

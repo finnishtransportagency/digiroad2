@@ -26,7 +26,8 @@
       { value: 5,  label: 'Rajanylityspaikka' },
       { value: 13, label: 'Autojen lastausterminaali' },
       { value: 14, label: 'Linja- ja kuorma-autojen pysäköintialue' },
-      { value: 17, label: 'Sähköautojen latauspiste'}
+      { value: 17, label: 'Sähköautojen latauspiste'},
+      { value: 18, label: 'E18 rekkaparkki' }
     ];
 
     var commonServiceExtension = [
@@ -40,6 +41,7 @@
       6: commonServiceExtension,
       12: commonServiceExtension,
       14: commonServiceExtension,
+      18: commonServiceExtension,
       11: [
         {value: 5, label: 'Merkittävä rautatieasema'},
         {value: 6, label: 'Vähäisempi rautatieasema'},

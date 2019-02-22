@@ -286,14 +286,14 @@ object ProhibitionClass {
   }
 
   def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
-    (if (prohibitionValue.intersect(NoCyclesOrMopeds.values).size == NoCyclesOrMopeds.values.size) {
-      prohibitionValue --= NoCyclesOrMopeds.values
-      Seq(NoCyclesOrMopeds)
-      } else Seq()
-    )++
-      (if (prohibitionValue.intersect(NoPedestriansCyclesMopeds.values).size == NoPedestriansCyclesMopeds.values.size) {
-        prohibitionValue --= NoPedestriansCyclesMopeds.values
-        Seq(NoPedestriansCyclesMopeds)
+    (if (prohibitionValue.intersect(Seq(Moped.value, Pedestrian.value, Bicycle.value)).size == 3) {
+      prohibitionValue --= Seq(Moped.value, Pedestrian.value, Bicycle.value)
+      Seq(NoPedestriansCyclesMopeds)
+    } else Seq()
+      )++
+      (if (prohibitionValue.intersect(Seq(Moped.value, Bicycle.value)).size == 2) {
+        prohibitionValue --= Seq(Moped.value, Bicycle.value)
+        Seq(NoCyclesOrMopeds)
       } else Seq()
         ) ++ prohibitionValue.flatMap { value =>
       ProhibitionClass.apply(value).trafficSign
@@ -301,14 +301,16 @@ object ProhibitionClass {
   }
 
   case object Vehicle extends ProhibitionClass {
-    def value = 2; def typeDescription = "Vehicle"
+    def value = 2
+    def typeDescription = "Vehicle"
     def rosatteType = "AllVehicle"
-    override val trafficSign = Seq(NoPowerDrivenVehicles)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoPowerDrivenVehicles)
   }
   case object MotorVehicle extends ProhibitionClass {
-    def value = 3; def typeDescription = "MotorVehicle"
+    def value = 3
+    def typeDescription = "MotorVehicle"
     def rosatteType = "AllVehicle"
-    override val trafficSign = Seq(ClosedToAllVehicles)
+    override val trafficSign: Seq[TrafficSignType] = Seq(ClosedToAllVehicles)
   }
   case object PassageThrough extends ProhibitionClass {
     def value = 23
@@ -319,43 +321,43 @@ object ProhibitionClass {
     def value = 12
     def typeDescription = "Pedestrian"
     def rosatteType = "Pedestrian"
-    override val trafficSign = Seq(NoPedestrians, NoPedestriansCyclesMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians)
   }
   case object Bicycle extends ProhibitionClass {
     def value = 11
     def typeDescription = "Bicycle"
     def rosatteType = "Bicycle"
-    override val trafficSign = Seq(NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds)
   }
   case object HorseRiding extends ProhibitionClass {
     def value = 26
     def typeDescription = "HorseRiding"
     def rosatteType = ""
-    override val trafficSign = Seq(NoRidersOnHorseback)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoRidersOnHorseback)
   }
   case object Moped extends ProhibitionClass {
     def value = 10
     def typeDescription = "Moped"
     def rosatteType = "Moped"
-    override val trafficSign = Seq(NoMopeds, NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds)
   }
   case object Motorcycle extends ProhibitionClass {
     def value = 9
     def typeDescription = "Motorcycle"
     def rosatteType = "Motorcycle"
-    override val trafficSign = Seq(NoMotorCycles)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoMotorCycles)
   }
   case object SnowMobile extends ProhibitionClass {
     def value = 27
     def typeDescription = "SnowMobile"
     def rosatteType = ""
-    override val trafficSign = Seq(NoMotorSledges)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoMotorSledges)
   }
   case object Bud extends ProhibitionClass {
     def value = 5
     def typeDescription = "Bud"
     def rosatteType = "PublicBus + PrivateBus"
-    override val trafficSign = Seq(NoBuses)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoBuses)
   }
   case object Taxi extends ProhibitionClass {
     def value = 8
@@ -371,13 +373,13 @@ object ProhibitionClass {
     def value = 6
     def typeDescription = "DeliveryCar"
     def rosatteType = "DeliveryTruck"
-    override val trafficSign = Seq(NoLorriesAndVans)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoLorriesAndVans)
   }
   case object Truck extends ProhibitionClass {
     def value = 4
     def typeDescription = "Truck"
     def rosatteType = "TransportTruck"
-    override val trafficSign = Seq(NoLorriesAndVans)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoLorriesAndVans)
   }
   case object RecreationalVehicle extends ProhibitionClass {
     def value = 15
@@ -393,13 +395,13 @@ object ProhibitionClass {
     def value = 13
     def typeDescription = "ArticulatedVehicle"
     def rosatteType = "CarWithTrailer"
-    override val trafficSign = Seq(NoVehicleCombinations)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoVehicleCombinations)
   }
   case object TractorFarmVehicle extends ProhibitionClass {
     def value = 14
     def typeDescription = "TractorFarmVehicle"
     def rosatteType = "FarmVehicle"
-    override val trafficSign = Seq(NoAgriculturalVehicles)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoAgriculturalVehicles)
   }
   case object OversizedTransport extends ProhibitionClass {
     def value = 28

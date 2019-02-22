@@ -9,11 +9,40 @@ import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+case class serviceRoadApiResponseOnGetExample(`type`: String, geometry: geometryFields, properties: propertiesFields)
+case class geometryFields(`type`: String, coordinates: Seq[Seq[(Double, Double, Double)]])
+case class propertiesFields(
+                             id: Long,
+                             areaId: Int,
+                             linkId: Int,
+                             mmlId: Int,
+                             verticalLevel: Int,
+                             startMeasure: Double,
+                             endMeasure: Double,
+                             modifiedAt: DateTime,
+                             modifiedBy: String,
+                             access: Int,
+                             accessDesc: String,
+                             maintainer: Int,
+                             maintainerDesc: String,
+                             maintainerName: String,
+                             person: String,
+                             address: String,
+                             zipCode: String,
+                             city: String,
+                             phone1: String,
+                             phone2: String,
+                             addInfo: String
+                           )
+
+class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
 
   override def baseAuth: String = "serviceRoad."
   override val realm: String = "Service Road API"
+
+  protected val applicationDescription = "Service Road API "
 
   val MAX_BOUNDING_BOX = 100000000
 
@@ -23,14 +52,40 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     basicAuth
   }
 
-  get("/huoltotiet"){
+  val getServiceRoadByBoundingBox =
+    (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByBoundingBox")
+      tags "Service Road API (Huoltotie API)"
+      summary "Returns all Service Road assets inside bounding box. Can be used to get all assets on the UI map area."
+      parameter queryParam[String]("boundingBox").description("The bounding box is used to search assets inside ít, is defined with coordinates of top left and bottom right corner.")
+      description
+      "Bounding box is defined with coordinates of top left and bottom right corner \n" +
+        "URL: /digiroad/api/livi/huoltotiet/?boundingBox={x1},{y1},{x2},{y2} \n" +
+        "Example: \n https://extranet.liikennevirasto.fi/digiroad/api/livi/huoltotiet?boundingBox=399559.02383961395,6856819.997802734,401097.02383961395,6858507.997802734"
+      )
+
+
+  get("/huoltotiet", operation(getServiceRoadByBoundingBox)){
     contentType = formats("json")
     val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
     createGeoJson(maintenanceService.getAllByBoundingBox(bbox))
   }
 
-  get("/huoltotiet/:areaId"){
+  val getServiceRoadByAreaId =
+    (apiOperation[List[serviceRoadApiResponseOnGetExample]]("getServiceRoadByAreaId")
+      tags "Service Road API (Huoltotie API)"
+      summary "Returns all Huoltotie assets inside service area."
+      parameter pathParam[String]("areaId").description("Area id refers to the area where the search is going to be done.")
+      description
+      "Service areas are a polygonal area defined in OTH. \n" +
+        "ServiceAreaId is an integer between 1-12. \n" +
+        "URL: /digiroad/api/livi/huoltotiet/{serviceAreaId} \n" +
+        "Example: \n https://extranet.liikennevirasto.fi/digiroad/api/livi/huoltotiet/10"
+      )
+
+
+
+  get("/huoltotiet/:areaId", operation(getServiceRoadByAreaId)){
     contentType = formats("json")
     var areaId = params("areaId")
     val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)

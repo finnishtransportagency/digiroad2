@@ -355,8 +355,130 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     trafficSignCsvImporter.importTrafficSigns(invalidCsv, Set()) should equal(trafficSignCsvImporter.ImportResult(
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
-        reason = "Try to create in an unauthorized Municipality",
+        reason = "Unathorized municipality or nonexistent roadlink near asset position",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
+  }
+
+  test("filter road links considering bearing in traffic sign and bearing of the road links, same bearing, validity direction and 10 meter radius of the sign") {
+    val newLinkId1 = 5000
+    val geometryPoints1 = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection1 = TrafficDirection.AgainstDigitizing
+    val newLinkId2 = 5001
+    val geometryPoints2 = List(Point(40.0, 40.0), Point(90.0, 40.0))
+    val trafficDirection2 = TrafficDirection.BothDirections
+    val newLinkId3 = 5002
+    val geometryPoints3 = List(Point(80.0, 10.0), Point(80.0, 30.0))
+    val trafficDirection3 = TrafficDirection.TowardsDigitizing
+
+    val trafficSignBearing = Some(190)
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val attributes = Map("OBJECTID" -> BigInt(99))
+
+    val newVVHRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
+    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
+
+    val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
+    val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
+    val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
+
+    when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(roadLinkSeq)
+    when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vVHRoadLinkSeq)
+
+//    val (roadLinksFilteredByBearing, enrichedRoadLinksFilteredByBearing) =
+//      trafficSignCsvImporter.getRoadLinkByBearing(trafficSignBearing, trafficSignCoordinates)
+//
+//    roadLinksFilteredByBearing.size should be (1)
+//    roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+//
+//    enrichedRoadLinksFilteredByBearing.size should be (1)
+//    enrichedRoadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+//
+//    roadLinksFilteredByBearing.exists { rl => enrichedRoadLinksFilteredByBearing.exists(_.linkId == rl.linkId) } should be(true)
+  }
+
+  test("filter road links considering bearing in traffic sign and bearing of the road links, different bearing in all") {
+    val newLinkId1 = 5000
+    val geometryPoints1 = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection1 = TrafficDirection.TowardsDigitizing
+    val newLinkId2 = 5001
+    val geometryPoints2 = List(Point(40.0, 40.0), Point(90.0, 40.0))
+    val trafficDirection2 = TrafficDirection.TowardsDigitizing
+    val newLinkId3 = 5002
+    val geometryPoints3 = List(Point(80.0, 10.0), Point(80.0, 30.0))
+    val trafficDirection3 = TrafficDirection.TowardsDigitizing
+
+    val trafficSignBearing = Some(20)
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val attributes = Map("OBJECTID" -> BigInt(99))
+
+    val newVVHRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
+    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
+
+    val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
+    val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
+    val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
+
+    when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(roadLinkSeq)
+    when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vVHRoadLinkSeq)
+
+//    val (roadLinksFilteredByBearing, enrichedRoadLinksFilteredByBearing) =
+//      trafficSignCsvImporter.getRightRoadLinkUsingBearing(trafficSignBearing, trafficSignCoordinates)
+//
+//    roadLinksFilteredByBearing should be (vVHRoadLinkSeq)
+//    enrichedRoadLinksFilteredByBearing should be (roadLinkSeq)
+  }
+
+  test("filter road links considering bearing in traffic sign and bearing of the road links, road link with both traffic direction") {
+    val newLinkId1 = 5000
+    val geometryPoints1 = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection1 = TrafficDirection.BothDirections
+    val newLinkId2 = 5001
+    val geometryPoints2 = List(Point(40.0, 40.0), Point(90.0, 40.0))
+    val trafficDirection2 = TrafficDirection.TowardsDigitizing
+    val newLinkId3 = 5002
+    val geometryPoints3 = List(Point(80.0, 10.0), Point(80.0, 30.0))
+    val trafficDirection3 = TrafficDirection.TowardsDigitizing
+
+    val trafficSignBearing = Some(20)
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val attributes = Map("OBJECTID" -> BigInt(99))
+
+
+    val newVVHRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
+    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
+
+    val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
+    val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
+    val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
+
+    when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(vVHRoadLinkSeq)
+    when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(roadLinkSeq)
+
+//    val (roadLinksFilteredByBearing, enrichedRoadLinksFilteredByBearing) =
+//      trafficSignCsvImporter.getRightRoadLinkUsingBearing(trafficSignBearing, trafficSignCoordinates)
+//
+//    roadLinksFilteredByBearing.size should be (1)
+//    roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+//
+//    enrichedRoadLinksFilteredByBearing.size should be (1)
+//    enrichedRoadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+//
+//    roadLinksFilteredByBearing.exists { rl => enrichedRoadLinksFilteredByBearing.exists(_.linkId == rl.linkId) } should be(true)
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())

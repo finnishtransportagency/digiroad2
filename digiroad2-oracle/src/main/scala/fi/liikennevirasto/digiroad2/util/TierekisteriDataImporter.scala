@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.OracleAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -61,6 +61,46 @@ object TierekisteriDataImporter {
 
   lazy val trafficSignTierekisteriImporter: TrafficSignTierekisteriImporter = {
     new TrafficSignTierekisteriImporter()
+  }
+
+  lazy val trafficSignSpeedLimitTierekisteriImporter: TrafficSignSpeedLimitTierekisteriImporter = {
+    new TrafficSignSpeedLimitTierekisteriImporter()
+  }
+
+  lazy val trafficSignRegulatorySignsTierekisteriImporter: TrafficSignRegulatorySignsTierekisteriImporter = {
+    new TrafficSignRegulatorySignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignMaximumRestrictionsTierekisteriImporter: TrafficSignMaximumRestrictionsTierekisteriImporter = {
+    new TrafficSignMaximumRestrictionsTierekisteriImporter()
+  }
+
+  lazy val trafficSignGeneralWarningSignsTierekisteriImporter: TrafficSignGeneralWarningSignsTierekisteriImporter = {
+    new TrafficSignGeneralWarningSignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignProhibitionsAndRestrictionsTierekisteriImporter: TrafficSignProhibitionsAndRestrictionsTierekisteriImporter = {
+    new TrafficSignProhibitionsAndRestrictionsTierekisteriImporter()
+  }
+
+  lazy val trafficSignMandatorySignsTierekisteriImporter: TrafficSignMandatorySignsTierekisteriImporter = {
+    new TrafficSignMandatorySignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignPriorityAndGiveWaySignsTierekisteriImporter: TrafficSignPriorityAndGiveWaySignsTierekisteriImporter = {
+    new TrafficSignPriorityAndGiveWaySignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignInformationSignsTierekisteriImporter: TrafficSignInformationSignsTierekisteriImporter = {
+    new TrafficSignInformationSignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignServiceSignsTierekisteriImporter: TrafficSignServiceSignsTierekisteriImporter = {
+    new TrafficSignServiceSignsTierekisteriImporter()
+  }
+  //TODO remove this code after merge US 1707
+  lazy val trafficSignAdditionalPanelsTierekisteriImporter: TrafficSignAdditionalPanelsTierekisteriImporter = {
+    new TrafficSignAdditionalPanelsTierekisteriImporter()
   }
 
   lazy val pavedRoadImporterOperations: PavedRoadTierekisteriImporter = {
@@ -154,9 +194,7 @@ object TierekisteriDataImporter {
 
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
-      val assetId = tierekisteriAssetImporter.getAssetTypeId
-      val assetName = tierekisteriAssetImporter.getAssetName
-      assetDao.getLastExecutionDate(assetId, s"batch_process_$assetName")
+      tierekisteriAssetImporter.getLastExecutionDate
     }
   }
 
@@ -171,8 +209,8 @@ object TierekisteriDataImporter {
     new SearchViiteClient(dr2properties.getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build())
   }
 
-  lazy val roadAddressService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   //TODO migrate this import asset to TierekisteriImporterOperations
@@ -242,7 +280,7 @@ object TierekisteriDataImporter {
   val tierekisteriDataImporters = Map[String, TierekisteriImporterOperations](
     "litRoad" -> litRoadImporterOperations,
     "roadWidth" -> roadWidthImporterOperations,
-    "trafficSign" -> trafficSignTierekisteriImporter,
+    //"trafficSign" -> trafficSignTierekisteriImporter,
     "pavedRoad" -> pavedRoadImporterOperations,
     "massTransitLane" -> massTransitLaneImporterOperations,
     "damagedByThaw" -> damagedByThawImporterOperations,
@@ -268,6 +306,19 @@ object TierekisteriDataImporter {
     "totalWeightConverterImporter" -> totalWeightLimitImporter,
     "trailerTruckWeightConverterImporter" -> truckWeightLimitImporter,
     "heightLimitConverterImporter" -> heightLimitImporter
+  )
+
+  val trafficSignGroup = Map[String, TierekisteriImporterOperations] (
+    "SpeedLimits" -> trafficSignSpeedLimitTierekisteriImporter,
+    "RegulatorySigns" ->  trafficSignRegulatorySignsTierekisteriImporter,
+    "MaximumRestrictions" ->  trafficSignMaximumRestrictionsTierekisteriImporter,
+    "GeneralWarningSigns" ->  trafficSignGeneralWarningSignsTierekisteriImporter,
+    "ProhibitionsAndRestrictions" ->  trafficSignProhibitionsAndRestrictionsTierekisteriImporter,
+    "MandatorySigns" ->  trafficSignMandatorySignsTierekisteriImporter,
+    "PriorityAndGiveWaySigns" ->  trafficSignPriorityAndGiveWaySignsTierekisteriImporter,
+    "InformationSigns" ->  trafficSignInformationSignsTierekisteriImporter,
+    "ServiceSigns" ->  trafficSignServiceSignsTierekisteriImporter,
+    "AdditionalPanels" -> trafficSignAdditionalPanelsTierekisteriImporter //TODO remove this line after merge US1707
   )
 
   private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {
@@ -313,9 +364,9 @@ object TierekisteriDataImporter {
 
   private def getDateFromArgs(args:Array[String]): Option[DateTime] = {
     if(args.length >= 4)
-      convertStringToDate("yyyy-MM-dd hh:mm:ss", Some(args(2) + " " + args(3)))
+      convertStringToDate("yyyy-MM-dd hh:mm:ss", Some(args(3) + " " + args(4)))
     else if(args.length >= 3)
-      convertStringToDate("yyyy-MM-dd", Some(args(2)))
+      convertStringToDate("yyyy-MM-dd", Some(args(3)))
     else
       None
   }
@@ -343,23 +394,29 @@ object TierekisteriDataImporter {
       val operation = args(0)
       val assetType = args(1)
 
-      val availableAssetTypes = tierekisteriDataImporters.keySet ++ tierekisteriDataConverter.keySet ++ Set("trafficVolume")
+      val availableAssetTypes = tierekisteriDataImporters.keySet ++ tierekisteriDataConverter.keySet ++ Set("trafficVolume", "trafficSign")
 
       if(availableAssetTypes.contains(assetType)){
         operation match {
           case "import" =>
             if(assetType == "trafficVolume")
               importTrafficVolumeAsset(tierekisteriTrafficVolumeAssetClient)
-            else
+            else if (assetType == "trafficSign"){
+             if (args.length == 3 ) args(2) else throw new IllegalArgumentException("Missing Traffic Sign Group")
+              importAssets(trafficSignGroup(args(2)))
+            } else
               importAssets(tierekisteriDataImporters(assetType))
           case "update" =>
             val lastExecutionDate = getDateFromArgs(args)
             if(assetType == "trafficVolume")
               println("The asset type trafficVolume doesn't support update operation.")
-            else
+            else if (assetType == "trafficSign") {
+              if (args.length == 3) args(2) else throw new IllegalArgumentException("Missing Traffic Sign Group")
+                updateAssets(trafficSignGroup(args(2)), lastExecutionDate)
+            }else
               updateAssets(tierekisteriDataImporters(assetType), lastExecutionDate)
           case "converter" =>
-              importAssets(tierekisteriDataConverter(assetType))
+            importAssets(tierekisteriDataConverter(assetType))
         }
       }else{
         println(s"The asset type $assetType is not supported")

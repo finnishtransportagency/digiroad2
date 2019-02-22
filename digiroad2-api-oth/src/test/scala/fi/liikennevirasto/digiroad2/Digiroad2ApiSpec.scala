@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -126,7 +126,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.roadLinkWithRoadAddress(any[Seq[RoadLink]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.linearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[SpeedLimit]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
@@ -162,9 +162,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testProhibitionService = new ProhibitionService(mockRoadLinkService, new DummyEventBus)
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
+  val testNumberOfLanesService = new NumberOfLanesService(mockRoadLinkService, new DummyEventBus)
+  val testMassTransitLaneService = new MassTransitLaneService(mockRoadLinkService, new DummyEventBus)
   
   addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
-    testPavedRoadService, testRoadWidthService, linearTotalWeightLimitService = testLinearTotalWeightLimitService), "/*")
+    testPavedRoadService, testRoadWidthService, linearTotalWeightLimitService = testLinearTotalWeightLimitService, numberOfLanesService = testNumberOfLanesService, massTransitLaneService = testMassTransitLaneService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
 
   test("provide header to indicate session still active", Tag("db")) {
@@ -321,7 +323,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
@@ -331,19 +333,19 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(400)
     }
   }
 
   test("get complementary numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(400)
     }
   }
 
   test("get complementary numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
+    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)

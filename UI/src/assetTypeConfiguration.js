@@ -284,8 +284,7 @@
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.roadWidth,
@@ -348,8 +347,7 @@
           }
         ),
         isMultipleLinkSelectionAllowed: true,
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.trafficVolume,
@@ -371,8 +369,7 @@
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         isVerifiable: true,
-        hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.massTransitLane,
@@ -398,8 +395,7 @@
           fields: [
             {label: "", type: 'time_period', publicId: "public_validity_period", weight: 1}
           ]
-        }),
-        minZoomForContent: oneKmZoomLvl
+        })
       },
       {
         typeId: assetType.winterSpeedLimit,
@@ -423,7 +419,8 @@
         isVerifiable: false,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        label: new WinterSpeedLimitLabel()
       },
       {
         typeId: assetType.prohibition,
@@ -444,7 +441,6 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl,
         readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
@@ -467,7 +463,6 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        minZoomForContent: oneKmZoomLvl,
         readOnlyLayer: TrafficSignReadOnlyLayer
 
       },
@@ -490,8 +485,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
-        isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.exitNumbers,
@@ -512,8 +506,7 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.maintenanceRoad,
@@ -555,12 +548,11 @@
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: true,
+        isVerifiable: false,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
-        isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        isMultipleLinkSelectionAllowed: true
       },
       {
         typeId: assetType.numberOfLanes,
@@ -644,8 +636,7 @@
             authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
             layer: CareClassLayer,
             style: new CareClassStyle(),
-            collection: CareClassCollection,
-            minZoomForContent: oneKmZoomLvl
+            collection: CareClassCollection
       },
       {
         typeId: assetType.carryingCapacity,
@@ -666,7 +657,7 @@
         style: new CarryingCapacityStyle(),
         layer: CarryingCapacityLayer,
         saveCondition: function (fields) {
-          return _.some(fields, function (field) {
+          return _.isEmpty(fields) || _.some(fields, function (field) {
             var fieldPropertyType = field.getPropertyValue().propertyType;
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
@@ -693,8 +684,7 @@
             },
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
-        }),
-        minZoomForContent: oneKmZoomLvl
+        })
       }
     ];
 
@@ -718,8 +708,7 @@
         label: new TRSpeedLimitAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         style: new TRSpeedLimitStyle(),
-        authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        authorizationPolicy: new ReadOnlyAuthorizationPolicy()
       }
     ];
 
@@ -889,7 +878,7 @@
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
             { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
-            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d+$/.test(someValue) ; }}
+            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
@@ -910,8 +899,8 @@
         formLabels: {
           title: 'Rajoitus',
           showUnit: true,
-          manyFloatingAssetsLabel: 'TR suurin sallitut korkeudet',
-          singleFloatingAssetLabel: 'TR suurin sallittu korkeus'
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
@@ -932,8 +921,8 @@
         formLabels: {
           title: 'Rajoitus',
           showUnit: true,
-          manyFloatingAssetsLabel: 'TR suurin sallitut leveydet',
-          singleFloatingAssetLabel: 'TR suurin sallittu leveys'
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
@@ -955,7 +944,9 @@
         ],
         formLabels: {
           title: 'Painorajoitus',
-          showUnit: true
+          showUnit: true,
+          manyFloatingAssetsLabel: 'rajoitus',
+          singleFloatingAssetLabel: 'rajoitukset'
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,

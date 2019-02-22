@@ -79,8 +79,8 @@ root.PointAssetForm = function() {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<span>' + title + '</span>' + me.renderButtons();
-    var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection);
+    var header = '<span>' + title + '</span>';
+    var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
     var footer = me.renderButtons();
 
     rootElement.find("#feature-attributes-header").html(header);
@@ -116,9 +116,32 @@ root.PointAssetForm = function() {
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
   };
 
+  var userInformationLog = function(authorizationPolicy, asset) {
+    var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+    var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+    var message = '';
+
+    if(!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(asset.getMunicipalityCode())) {
+      message = limitedRights;
+    } else if(!authorizationPolicy.formEditModeAccess(asset, me.roadCollection))
+      message = noRights;
+
+    if(message) {
+      return '' +
+          '<div class="form-group user-information">' +
+          '<p class="form-control-static user-log-info">' + message + '</p>' +
+          '</div>';
+    } else
+      return '';
+  };
+
+  var informationLog = function (date, username) {
+    return date ? (date + ' / ' + username) : '-';
+  };
+
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
-  this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection) {
+  this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
     var asset = selectedAsset.get();
 
     if (selectedAsset.isNew()) {
@@ -134,11 +157,12 @@ root.PointAssetForm = function() {
         '  <div class="form form-horizontal form-dark form-pointasset">' +
         renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + (asset.createdBy || '-') + ' ' + (asset.createdAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(asset.createdAt, asset.createdBy) + '</p>' +
         '    </div>' +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
+        userInformationLog(authorizationPolicy, selectedAsset) +
         me.renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
         '      <div class="checkbox" >' +
@@ -163,7 +187,7 @@ root.PointAssetForm = function() {
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
-      '<li><a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a></li>');
+      '<li><button id="point-asset-work-list-link" class="floating-point-assets" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -187,7 +211,7 @@ root.PointAssetForm = function() {
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
     $('ul[class=information-content]').append('' +
-      '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+      '<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
 };
 })(this);

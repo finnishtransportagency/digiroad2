@@ -9,12 +9,23 @@ import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkServi
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import org.joda.time.DateTime
+import org.json4s.JsonAST.JObject
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
+import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 case class NewManoeuvreValues(linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], properties: Seq[ManoeuvreProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
+
+
+case class ExampleItemResponseOnGet(linkId: Long, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], createdAt: DateTime, geometryTimestamp: Int)
+case class ExampleItemResponseOnCreate(linkId: Long, assetType: Int, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], createdAt: DateTime)
+case class ExampleItemRequestOnCreate(linkId: Long, startMeasure: Int, endMeasure: Int, sideCode: Int, properties: List[TypeProperty])
+case class ExampleItemResponseOnUpdate(linkId: Long, assetType: Int, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], geometryTimestamp: Int, createdAt: DateTime,  modifiedAt: DateTime)
+case class ExampleItemRequestOnUpdate(linkId: Long, startMeasure: Int, endMeasure: Int, sideCode: Int, geometryTimestamp: Int, properties: List[TypeProperty])
+case class TypeProperty(name: String, value: Int)
+
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val roadLinkService: RoadLinkService,
@@ -27,11 +38,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val obstacleService: ObstacleService,
                       val pedestrianCrossingService: PedestrianCrossingService,
                       val railwayCrossingService: RailwayCrossingService,
-                      val trafficLightService: TrafficLightService
-                     ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+                      val trafficLightService: TrafficLightService,
+                      val massTransitLaneService: MassTransitLaneService,
+                      val numberOfLanesService: NumberOfLanesService,
+                      implicit val swagger: Swagger
+                     ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
+  protected val applicationDescription = "Municipality API "
 
   val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService
 
@@ -72,9 +87,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
+      case LitRoad.typeId => onOffLinearAssetService
       case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
+      case MassTransitLane.typeId => massTransitLaneService
+      case NumberOfLanes.typeId => numberOfLanesService
       case _ => linearAssetService
     }
   }
@@ -814,7 +831,26 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
   }
 
-  get("/:assetType") {
+  //Description of Api entry point to get assets by municipality
+  val getAssetsByMunicipalityCode =
+    (apiOperation[List[ExampleItemResponseOnGet]]("getAssetsByMunicipalityCode")
+      .parameters(
+        queryParam[Int]("municipalityCode").description("Municipality Code where we will execute the search by specific asset type"),
+        pathParam[String]("assetType").description("Asset type name to get in a specific municipality")
+      )
+      .responseMessages(
+        ResponseMessage(401, "The authentication parameters are missing or are incorrect"),
+        ResponseMessage(403, "The authenticated user doesn't have permissions to do this operation on that municipality."),
+        ResponseMessage(404, "Municipality code or asset type not found.")
+      )
+      tags "Municipality API"
+      summary "Lists all assets of an asset type on the municipality code."
+      authorizations "Contact your service provider for more information"
+      description
+      "Example URL: /api/municipality/lighting?municipalityCode=235"
+      )
+
+  get("/:assetType", operation(getAssetsByMunicipalityCode)) {
     contentType = formats("json")
 
     val municipalityCode = params.get("municipalityCode").getOrElse(halt(BadRequest("Missing municipality code."))).toInt
@@ -844,12 +880,31 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   private def isDynamic(assetId: Int): Boolean = {
-    val dynamicAssetType = Seq(PavedRoad.typeId)
+    val dynamicAssetType = Seq(PavedRoad.typeId, MassTransitLane.typeId)
 
     dynamicAssetType.contains(assetId)
   }
 
-  get("/:assetType/:assetId") {
+  //Description of Api entry point to get assets by id
+  val getAssetById =
+    (apiOperation[ExampleItemResponseOnGet]("getAssetById")
+      .parameters(
+        pathParam[String]("assetId").description("Id of the asset to be fetch"),
+        pathParam[String]("assetType").description("Asset type name to get")
+      )
+      .responseMessages(
+        ResponseMessage(401, "The authentication parameters are missing or are incorrect"),
+        ResponseMessage(403, "The authenticated user doesn't have permissions to do this operation on that municipality."),
+        ResponseMessage(404, "Municipality code or asset type not found.")
+      )
+      tags "Municipality API"
+      summary "Returns information about a single asset ."
+      authorizations "Contact your service provider for more information"
+      description
+      "Example URL: /api/municipality/lighting/400018"
+      )
+
+  get("/:assetType/:assetId", operation(getAssetById)) {
     contentType = formats("json")
     val assetId = params("assetId").toInt
     val assetTypeName = params("assetType")
@@ -874,7 +929,35 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  post("/:assetType") {
+  //Description of Api entry point to create assets on specific municipality
+  val createAssetOnMunicipality =
+    (apiOperation[List[ExampleItemResponseOnCreate]]("createAssetOnMunicipality")
+      .parameters(
+        pathParam[String]("assetType").description("Asset type name"),
+        bodyParam[List[ExampleItemRequestOnCreate]]("NewAsset")
+          .description(
+            "Parameter: linkId / Type: number / Mandatory: yes / Description: The road link identifier\n" +
+              "Parameter: startMeasure / Type: number / Mandatory: yes / Description: The start measure in meters, starting counting from the beginning of the road. \n" +
+              "Parameter: endMeasure / Type: number / Mandatory: no (for point assets), yes (for linear assets) / Description: The end measure in meters, starting counting from the beginning of the road. \n" +
+              "Parameter: sideCode / Type: number / Mandatory: yes / Description: The side code of the asset (see: Side Codes) Note: Side code not allowed on manoeuvre. \n" +
+              "Parameter: name / Type: string / Mandatory: yes / Description: The name that identifies the property (Ex: lighting) \n" +
+              "Parameter: value / Type: Any / Mandatory: yes / Description: The value or values of the specified property. The type depends on the asset."
+          )
+          .required
+      )
+      .responseMessages(
+        ResponseMessage(401, "The authentication parameters are missing or are incorrect"),
+        ResponseMessage(403, "The authenticated user doesn't have permissions to do this operation on that municipality."),
+        ResponseMessage(404, "Municipality code or asset type not found."),
+        ResponseMessage(422, "Some parameters were incorrect.")
+      )
+      tags "Municipality API"
+      summary "Creates an asset of an asset type on the municipality code."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /api/municipality/lighting"
+      )
+
+  post("/:assetType", operation(createAssetOnMunicipality)) {
     contentType = formats("json")
     val assetTypeName = params("assetType")
 
@@ -925,7 +1008,37 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  put("/:assetType/:assetId") {
+  //Description of Api entry point to update assets on specific municipality by Id
+  val updateAssetOnMunicipalityById =
+    (apiOperation[ExampleItemResponseOnUpdate]("updateAssetOnMunicipalityById")
+      .parameters(
+        pathParam[String]("assetId").description("Id of the asset to be updated"),
+        pathParam[String]("assetType").description("Asset type name"),
+        bodyParam[ExampleItemRequestOnUpdate]("UpdateAsset")
+          .description(
+            "Parameter: linkId / Type: number / Mandatory: yes / Description: The road link identifier\n" +
+              "Parameter: startMeasure / Type: number / Mandatory: yes / Description: The start measure in meters, starting counting from the beginning of the road. \n" +
+              "Parameter: endMeasure / Type: number / Mandatory: no (for point assets), yes (ifor linear assets) / Description: The end measure in meters, starting counting from the beginning of the road. \n" +
+              "Parameter: sideCode / Type: number / Mandatory: yes / Description: The side code of the asset (see: Side Codes) Note: Side code not allowed on manoeuvre. \n" +
+              "Parameter: geometryTimestamp / Type: number / Mandatory: yes / Description: The unix time stamp of the road link geometry. \n" +
+              "Parameter: name / Type: string / Mandatory: yes / Description: The name that identifies the property (Ex: lighting) \n" +
+              "Parameter: value / Type: Any / Mandatory: yes / Description: The value or values of the specified property. The type depends on the asset."
+          )
+          .required
+      )
+      .responseMessages(
+        ResponseMessage(401, "The authentication parameters are missing or are incorrect"),
+        ResponseMessage(403, "The authenticated user doesn't have permissions to do this operation on that municipality."),
+        ResponseMessage(404, "Municipality code or asset type not found."),
+        ResponseMessage(422, "Some parameters were incorrect.")
+      )
+      tags "Municipality API"
+      summary "Updates asset by municipality code, asset type and asset id."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /api/municipality/lighting/630280"
+      )
+
+  put("/:assetType/:assetId", operation(updateAssetOnMunicipalityById)) {
     contentType = formats("json")
 
     val assetType = params("assetType")
@@ -966,7 +1079,25 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  delete("/:assetTypeName/:assetId"){
+  //Description of Api entry point to delete assets according asset type name and Id
+  val deleteAssetOnMunicipalityById =
+    (apiOperation[Long]("deleteAssetOnMunicipalityById")
+      .parameters(
+        pathParam[String]("assetId").description("Id of the asset to be deleted"),
+        pathParam[String]("assetTypeName").description("Asset type name")
+      )
+      .responseMessages(
+        ResponseMessage(401, "The authentication parameters are missing or are incorrect"),
+        ResponseMessage(403, "The authenticated user doesn't have permissions to do this operation on that municipality."),
+        ResponseMessage(404, "Municipality code or asset type not found.")
+      )
+      tags "Municipality API"
+      summary "Deletes asset by municipality code, asset type and asset id."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: /api/municipality/lighting/630286"
+      )
+
+  delete("/:assetTypeName/:assetId", operation(deleteAssetOnMunicipalityById)){
 
     val assetTypeName: String = params("assetTypeName")
     val assetTypeId: Int = getAssetTypeId(assetTypeName)

@@ -125,6 +125,10 @@ a {
   background-color: @gray-darker;
   .transition(all 0.2s @easing-swift-out);
 
+  &.sulje {
+    cursor: pointer;
+  }
+
   &:hover, &:focus {
     background-color: @gray-dark-2;
     color: #fff;
@@ -173,7 +177,7 @@ a {
 //## A wrapper used in landing pages such as login, new user, imports etc.
 
 .page {
-  max-width: 600px;
+  max-width: 30%;
   margin: (@line-height-base * 2) auto;
 }
 

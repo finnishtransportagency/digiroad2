@@ -150,7 +150,7 @@
           {signValue: [382], image: 'images/traffic-signs/prohibitions-and-restrictions/AlternativeParkingEvenDays.png'},
           {signValue: [426], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackMotorSledges.png'},
           {signValue: [427], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackRidersHorseback.png'},
-          {signValue: [520], image: 'images/traffic-signs/regulatory-signs/InfartsparkeringParkAndRide.png'},
+          {signValue: [520], image: 'images/traffic-signs/regulatory-signs/parkAndRide.png'},
           {signValue: [816], image: 'images/traffic-signs/additional-panels/DistanceCompulsoryStop.png'},
           {signValue: [823], image: 'images/traffic-signs/additional-panels/HeightElectricLine.png'},
           {signValue: [824], image: 'images/traffic-signs/additional-panels/SignAppliesBothDirections.png'},
@@ -163,7 +163,7 @@
           {signValue: [862], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
           {signValue: [135], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackMotorSledges.png'},
           {signValue: [136], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackRidersHorseback.png'},
-          {signValue: [137], image: 'images/traffic-signs/regulatory-signs/InfartsparkeringParkAndRide.png'},
+          {signValue: [137], image: 'images/traffic-signs/regulatory-signs/parkAndRide.png'},
           {signValue: [138], image: 'images/traffic-signs/additional-panels/DistanceCompulsoryStop.png'},
           {signValue: [139], image: 'images/traffic-signs/additional-panels/HeightElectricLine.png'},
           {signValue: [140], image: 'images/traffic-signs/additional-panels/SignAppliesBothDirections.png'},
@@ -199,7 +199,7 @@
         var output = "";
         var timePeriods = this.additionalInfo ? this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/g) : [];
 
-        while (index < counter && timePeriods.length > index) {
+        while (index < counter && !_.isEmpty(timePeriods) && timePeriods.length > index) {
 
           output = output.concat((index > 0 ? '\n' : ""), timePeriods[index]);
           index++;

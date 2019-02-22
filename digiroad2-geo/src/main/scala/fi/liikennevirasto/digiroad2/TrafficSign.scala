@@ -47,7 +47,7 @@ sealed trait TrafficSignType {
 
 object TrafficSignType {
   val values = Set(PriorityRoad, EndOfPriority, PriorityOverOncomingTraffic, PriorityForOncomingTraffic, GiveWay, Stop, SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea,
-    TelematicSpeedLimit, PedestrianCrossingSign, InfartsparkeringParkAndRide, BusLane, BusLaneEnds, TramLane, BusStopForLocalTraffic, TramStop, TaxiStation, ParkingLot,
+    TelematicSpeedLimit, PedestrianCrossingSign, ParkAndRide, BusLane, BusLaneEnds, TramLane, BusStopForLocalTraffic, TramStop, TaxiStation, ParkingLot,
     OneWayRoad, MotorwaySign, MotorwayEnds, ResidentialZone, EndOfResidentialZone, PedestrianZoneSign, EndOfPedestrianZone, BusStopForLongDistanceTraffic, MaximumLength, NoWidthExceeding,
     MaxHeightExceeding, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, Warning, WRightBend, WLeftBend, WSeveralBendsRight,
     WSeveralBendsLeft, WDangerousDescent, WSteepAscent, WUnevenRoad, WChildren, RoadNarrows, TwoWayTraffic, SwingBridge, RoadWorks, SlipperyRoad, PedestrianCrossingWarningSign,
@@ -71,8 +71,8 @@ object TrafficSignType {
     values.find(_.TRvalue == intValue).getOrElse(Unknown)
   }
 
-  def apply(TrafficSignTypeGroup1: TrafficSignTypeGroup): Set[Int] = {
-    values.filter(_.group == TrafficSignTypeGroup1).map(_.OTHvalue)
+  def apply(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
+    values.filter(_.group == TrafficSignTypeGroup).map(_.OTHvalue)
   }
 
 
@@ -207,7 +207,7 @@ case object PedestrianCrossingSign extends RegulatorySignsType {
   override val TRvalue = 511
 }
 
-case object InfartsparkeringParkAndRide extends RegulatorySignsType { //TODO check that name
+case object ParkAndRide extends RegulatorySignsType { //TODO check that name
   override val OTHvalue = 137
   override val TRvalue = 520
 

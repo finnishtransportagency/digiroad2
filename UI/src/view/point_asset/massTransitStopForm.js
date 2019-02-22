@@ -4,7 +4,6 @@
   var authorizationPolicy;
 
   var rootElement = $("#feature-attributes");
-
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
@@ -182,8 +181,7 @@
         }
         streetViewHandler = getStreetView();
         wrapper.append(streetViewHandler.render())
-          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(getAssetForm()));
-
+          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(userInformationLog()).append(getAssetForm()));
 
         var buttons = function(isTerminalBusStop) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
@@ -202,8 +200,7 @@
           } else {
             header = $('' + '<span>Uusi pys&auml;kki</span>');
           }
-
-          return header.add(buttons(isTerminalBusStop));
+          return header;
         }
 
         rootElement.find("#feature-attributes-header").html(busStopHeader());
@@ -283,11 +280,40 @@
         return label;
       };
 
+      var informationLog = function (propertyVal) {
+        if(_.isEmpty(propertyVal))
+          return propertyVal;
+
+        var info = propertyVal.split(/ (.*)/);
+
+        return info[1] ? (info[1] + ' / ' + info[0]) : '-';
+      };
+
+      var userInformationLog = function() {
+
+        var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+        var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+        var message = '';
+
+        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
+          message = limitedRights;
+        } else if (!authorizationPolicy.assetSpecificAccess())
+          message = noRights;
+
+        if(message) {
+          return '' +
+              '<div class="form-group user-information">' +
+              '<p class="form-control-static user-log-info">' + message + '</p>' +
+              '</div>';
+        } else
+          return '';
+      };
+
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
         if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty_terminaaliin') {
-          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
+          outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
         } else {
           outer.append(createLabelElement(property));
           outer.append($('<p />').addClass('form-control-static').text(propertyVal));
@@ -703,6 +729,9 @@
           case '7': //TerminalChildless
               text = 'Kyseisellä terminaalipysäkillä ei ole yhtään liitettyä pysäkkiä.';
               break;
+          case '8': //EndedRoadBusStop
+            text = 'Kadun tai tien hallinnollinen luokka on muuttunut tai tieosoite on lakkautettu. Tarkista ja korjaa pysäkin sijainti.';
+            break;
           default:
             text = 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.';
         }
@@ -817,10 +846,11 @@
       };
 
       var renderLinktoWorkList = function renderLinktoWorkList() {
+        $('ul[class=information-content]').empty();
         var notRendered = !$('#asset-work-list-link').length;
         if(notRendered) {
           $('ul[class=information-content]').append('' +
-            '<li><a id="asset-work-list-link" class="floating-stops" href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</a></li>');
+            '<li><button id="asset-work-list-link" class="floating-stops" onclick=location.href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</button></li>');
         }
       };
 
