@@ -608,7 +608,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val endAddressMValue = 250L
       val trLaneType = TRLaneArrangementType.apply(5)
 
-      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, trLaneType)
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, trLaneType, RoadSide.Left)
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
@@ -625,6 +625,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       asset.linkId should be (5001)
       asset.value should be (Some(NumericValue(1)))
+      asset.sideCode should be (SideCode.TowardsDigitizing.value)
     }
   }
 
@@ -648,8 +649,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val starSectionHist = 100
       val endSectionHist = 150
 
-      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, laneType)
-      val trHist = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, laneType)
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, laneType, RoadSide.Left)
+      val trHist = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, starSectionHist, endSectionHist, laneType, RoadSide.Left)
 
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
@@ -826,7 +827,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startSection = 50
       val endSection = 350
 
-      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRLaneArrangementType.apply(1))
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRLaneArrangementType.apply(1), RoadSide.Left)
       testMassTransitLane.filterTierekisteriAssetsTest(tr) should be (false)
     }
   }
