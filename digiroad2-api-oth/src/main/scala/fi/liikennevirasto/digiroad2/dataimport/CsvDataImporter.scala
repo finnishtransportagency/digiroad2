@@ -125,36 +125,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def getRoadLinkByBearing(assetBearing: Option[Int], assetValidityDirection: Option[Int], assetCoordinates: Point, roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
-    val toleranceInDegrees = 25
-
-    assetBearing match {
-      case Some(aBearing) =>
-        val filteredEnrichedRoadLinks =
-          roadLinks.filter { roadLink =>
-            val roadLinkTrafficDirection = TrafficDirection.toSideCode(roadLink.trafficDirection).value
-            val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
-            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
-
-            if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
-              val reverseRoadLinkBearing =
-                if (roadLinkBearing - 180 < 0) {
-                  roadLinkBearing + 180
-                } else {
-                  roadLinkBearing - 180
-                }
-
-              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
-            } else {
-              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees && (roadLinkTrafficDirection == assetValidityDirection.get)
-            }
-          }
-        filteredEnrichedRoadLinks
-      case _ =>
-        Seq()
-    }
-  }
-
   def tryToInt(propertyValue: String ) : Option[Int] = {
     Try(propertyValue.toInt).toOption
   }
@@ -258,7 +228,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
       val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
 
-      val possibleRoadLinks = getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks).filter(_.administrativeClass != State)
+      val possibleRoadLinks = roadLinkService.getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks).filter(_.administrativeClass != State)
 
       val roadLink = if (possibleRoadLinks.nonEmpty) {
         possibleRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
