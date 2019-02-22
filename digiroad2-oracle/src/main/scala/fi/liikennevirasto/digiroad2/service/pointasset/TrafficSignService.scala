@@ -201,9 +201,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   def getAssetValidityDirection(bearing: Int): Int = {
-    bearing >= 270 || bearing < 90 match {
-      case true => AgainstDigitizing.value
-      case false => TowardsDigitizing.value
+    bearing > 270 || bearing <= 90 match {
+      case true => TowardsDigitizing.value
+      case false => AgainstDigitizing.value
     }
   }
 
@@ -211,7 +211,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
 
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
     val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
-    val linkBearing = GeometryUtils.calculateBearing(geometry)
+    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
 
     val lonDifference = assetLocation.x - roadLinkPoint.get.x
     val latDifference = assetLocation.y - roadLinkPoint.get.y
@@ -222,25 +222,24 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     }
   }
 
-  def getAssetBearing(validityDirection: Int, geometry: Seq[Point]): Int = {
-    val linkBearing = GeometryUtils.calculateBearing(geometry)
+  def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None): Int = {
+    val linkBearing = GeometryUtils.calculateBearing(geometry, assetMValue)
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
   }
 
-  def createFromCoordinates(trafficSign: IncomingTrafficSign, closestLink: RoadLink, nearbyLinks: Seq[VVHRoadlink]): Long = {
-
-    val (vvhRoad, municipality) = (nearbyLinks.filter(_.administrativeClass != State), closestLink.municipalityCode)
-    if (vvhRoad.isEmpty || vvhRoad.size > 1)
-      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0, bearing = None), userProvider.getCurrentUser().username, municipality)
+  def createFromCoordinates(trafficSign: IncomingTrafficSign, roadLink: RoadLink, isFloating: Boolean = false): Long = {
+    if (isFloating)
+      createFloatingWithoutTransaction(trafficSign.copy(linkId = 0), userProvider.getCurrentUser().username, roadLink.municipalityCode)
     else {
       checkDuplicates(trafficSign) match {
         case Some(existingAsset) =>
-          updateWithoutTransaction(existingAsset.id, trafficSign, closestLink, userProvider.getCurrentUser().username, None, None)
+          updateWithoutTransaction(existingAsset.id, trafficSign, roadLink, userProvider.getCurrentUser().username, None, None)
         case _ =>
-          createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, closestLink)
+          createWithoutTransaction(trafficSign, userProvider.getCurrentUser().username, roadLink)
       }
     }
   }
+
 
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
@@ -423,7 +422,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
   }
 
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
-                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink]) : Set[AdditionalPanelInfo] = {
+                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink] = Seq()) : Set[AdditionalPanelInfo] = {
 
     val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
 
