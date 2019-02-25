@@ -137,7 +137,7 @@
         title: 'Suurin sallittu telimassa',
         newTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
-        unit: 'kg',
+        unit: 'Kg',
         isSeparable: false,
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',

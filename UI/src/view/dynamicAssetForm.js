@@ -904,6 +904,11 @@
             $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
         }
 
+        function renderInaccurateWorkList(layerName) {
+            $('ul[class=information-content]').append('' +
+                '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+        }
+
         function createSideCodeMarker(sideCode) {
             if (_.isUndefined(sideCode) || sideCode === '')
                 return '';
