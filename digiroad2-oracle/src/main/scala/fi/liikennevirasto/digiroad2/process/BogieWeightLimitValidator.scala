@@ -16,7 +16,7 @@ class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case MaxTonsOnBogieExceeding =>
         trafficSignService.getProperty(trafficSign, trafficSignService.valuePublicId).getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, publicId = "bogie_weight_2_axel") &&
-          trafficSignService.getAllTrafficSignsProperties(trafficSign, trafficSignService.additionalPublicId).forall { property =>
+          trafficSignService.getProperty(trafficSign, trafficSignService.additionalPublicId).forall { property =>
           val additionalPanelProperties = property.asInstanceOf[AdditionalPanel]
           !is3AxleBogieProperty(additionalPanelProperties) ||
           is3AxleBogieProperty(additionalPanelProperties) && getAdditionalPanelValue(additionalPanelProperties.panelInfo) == getAssetValue(asset, publicId = "bogie_weight_3_axel" )
@@ -54,7 +54,7 @@ class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
 
               val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
               }.toSet
               val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)
