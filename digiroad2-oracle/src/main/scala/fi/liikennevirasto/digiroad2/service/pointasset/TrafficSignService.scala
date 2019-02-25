@@ -350,6 +350,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
   }
 
+  def getAdditionalPanelProperty(trafficSign: PersistedTrafficSign, property: String): Option[AdditionalPanel] = {
+    trafficSign.propertyData.find(p => p.publicId == property) match {
+      case Some(additionalPanel) =>
+        additionalPanel.values.map(_.asInstanceOf[AdditionalPanel]).headOption
+      case _ => None
+    }
+  }
+
   def getProperty(trafficSign: IncomingTrafficSign, property: String) : Option[TextPropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
   }

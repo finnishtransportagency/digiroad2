@@ -16,8 +16,7 @@ class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case MaxTonsOnBogieExceeding =>
         trafficSignService.getProperty(trafficSign, trafficSignService.valuePublicId).getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, publicId = "bogie_weight_2_axel") &&
-          trafficSignService.getProperty(trafficSign, trafficSignService.additionalPublicId).forall { property =>
-          val additionalPanelProperties = property.asInstanceOf[AdditionalPanel]
+          trafficSignService.getAdditionalPanelProperty(trafficSign, trafficSignService.additionalPublicId).forall { additionalPanelProperties =>
           !is3AxleBogieProperty(additionalPanelProperties) ||
           is3AxleBogieProperty(additionalPanelProperties) && getAdditionalPanelValue(additionalPanelProperties.panelInfo) == getAssetValue(asset, publicId = "bogie_weight_3_axel" )
         }
