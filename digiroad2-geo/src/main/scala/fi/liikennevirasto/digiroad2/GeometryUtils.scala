@@ -302,14 +302,15 @@ object GeometryUtils {
     }
   }
 
-  def calculateBearing(geom: Seq[Point], assetMValue: Option[Double] = None, geomLength: Option[Double] = None): Int = {
+  def calculateBearing(geom: Seq[Point], pointMValue: Option[Double] = None): Int = {
     val points = geometryEndpoints(geom)
+    val roadLength = geometryLength(geom)
 
     val (startPoint, endPoint) =
-      (assetMValue, geomLength) match {
-        case (Some(mValue), Some(length)) =>
-          val startPointMValue = if (mValue - 5 < 0) 0 else mValue - 5
-          val endPointMValue = if (mValue + 5 > length) length else mValue + 5
+      pointMValue match {
+        case Some(mValue) =>
+          val startPointMValue = Math.max(mValue - 5, 0)
+          val endPointMValue = Math.min(mValue + 5, roadLength)
           (calculatePointFromLinearReference(geom, startPointMValue), calculatePointFromLinearReference(geom, endPointMValue)) match {
             case (Some(p1), Some(p2)) =>
               (p1, p2)

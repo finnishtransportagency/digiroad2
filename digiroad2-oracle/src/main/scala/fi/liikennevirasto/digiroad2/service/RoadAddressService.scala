@@ -2,22 +2,16 @@ package fi.liikennevirasto.digiroad2.service
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
-import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.TractorRoad
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
-import org.apache.http.impl.client.HttpClientBuilder
-import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
-//TODO this name can change to RoadAddressService
-class RoadAddressesService(viiteClient: SearchViiteClient ) {
+import org.slf4j.LoggerFactory
+
+class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   val logger = LoggerFactory.getLogger(getClass)
 

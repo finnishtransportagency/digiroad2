@@ -122,7 +122,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         eventBus.publish("trafficSign:update", ((newId, roadLink), id))
         newId
       case _ =>
-        OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        val updatedId = OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink)))
+        updatedId
     }
   }
 
@@ -346,6 +348,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def getProperty(trafficSign: PersistedTrafficSign, property: String) : Option[TextPropertyValue] = {
     trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+  }
+
+  def getAdditionalPanelProperty(trafficSign: PersistedTrafficSign, property: String): Option[AdditionalPanel] = {
+    trafficSign.propertyData.find(p => p.publicId == property) match {
+      case Some(additionalPanel) =>
+        additionalPanel.values.map(_.asInstanceOf[AdditionalPanel]).headOption
+      case _ => None
+    }
   }
 
   def getProperty(trafficSign: IncomingTrafficSign, property: String) : Option[TextPropertyValue] = {

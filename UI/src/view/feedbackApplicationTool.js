@@ -2,7 +2,7 @@
    root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
        var initialize = function(){
-            eventbus.trigger('closeFeedBackData');
+           eventbus.trigger('closeFeedBackData');
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
@@ -69,14 +69,15 @@
            });
        };
 
-       var suggestionText = 'Jättääksesi palautetta aineistosta, valitse haluamasi linkki ja <br /> valitse "Anna palautetta kohteesta" lomakkeen oikeasta alakulmasta';
+       var suggestionText = 'Jättääksesi palautetta aineistosta, valitse haluamasi linkki ja <br /> valitse "Anna palautetta kohteesta" lomakkeen oikeasta yläkulmasta';
 
        var confirmDiv =
            '<div class="modal-overlay confirm-modal" id="feedback">' +
                 '<div class="modal-dialog">' +
-                    '<div class="content">' + options.message + '<a class="header-link sulje"">Sulje</a>' + '</div>' +
-                    '<form class="form form-horizontal" role="form"">' +
-                        '<label class="control-label" id="title">Anna palautetta OTH-sovelluksesta</label>'+
+                    '<div class="content">' + options.message + '<a class="header-link sulje">Sulje</a>' + '</div>' +
+                    '<form class="form form-horizontal" role="form">' +
+                        '<label class="control-label" id="title">Anna palautetta ylläpitosovelluksesta alapuolelle</label>'+
+                        '<label class="control-label" id="suggestion-label">' + suggestionText + '</label>' +
                         '<div class="form-group">' +
                             '<label class="control-label">Palautteen tyyppi</label>' +
                             '<select name="feedbackType"  id="feedbackType" class="form-control">'+
@@ -107,13 +108,8 @@
                         '</div>' +
                     '</form>' +
                     '<div class="actions feedback-actions">' +
-                        '<div class="infoBox">' +
-                            '<label class="control-label" id="suggestion-label">' + suggestionText + '</label>' +
-                        '</div>' +
-                        '<div class="buttons">' +
                             '<button class = "btn btn-primary save" disabled>' + options.saveButton + '</button>' +
                             '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
-                        '</div>' +
                     '</div>' +
                 '</div>' +
            '</div>';

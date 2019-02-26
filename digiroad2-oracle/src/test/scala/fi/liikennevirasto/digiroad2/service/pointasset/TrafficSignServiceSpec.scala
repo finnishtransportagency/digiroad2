@@ -288,7 +288,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.OTHvalue.toString))),
       SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
 
-    val bearing = Some(45)
+    val bearing = Some(225)
     val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
     val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
     val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))
@@ -333,7 +333,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(FreeWidth.OTHvalue.toString))),
         SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Info Test"))))
 
-      val bearing = Some(45)
+      val bearing = Some(225)
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), bearing, false)
       val sign = IncomingTrafficSign(3, 4, 1611400, properties, validityDirection, Some(GeometryUtils.calculateBearing(closestLink.geometry)))

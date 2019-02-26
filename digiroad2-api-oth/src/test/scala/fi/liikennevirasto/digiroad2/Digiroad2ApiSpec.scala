@@ -6,10 +6,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -126,7 +126,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   when(mockRoadAddressService.roadLinkWithRoadAddress(any[Seq[RoadLink]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.linearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[SpeedLimit]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
@@ -156,7 +156,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testLinearTotalWeightLimitService = new LinearTotalWeightLimitService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
-  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao)
+  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
   val testPavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
   val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
   val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)

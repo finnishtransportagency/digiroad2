@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.security.InvalidParameterException
-import java.util.Properties
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.{Date, Properties}
@@ -12,18 +11,17 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleTrafficSignDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, LinkProperties, RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, LinkProperties, RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2.{GeometryUtils, _}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -103,12 +101,12 @@ object DataFixture {
     new SpeedLimitValidator(trafficSignService)
   }
 
-  lazy val roadAddressService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService  = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
@@ -1446,7 +1444,7 @@ object DataFixture {
     }
   }
 
-  def mergeAdditionalPanelsToTrafficSigns(): Unit = {
+  def mergeAdditionalPanelsToTrafficSigns(group: TrafficSignTypeGroup): Unit = {
     val errorLogBuffer: ListBuffer[String] = ListBuffer()
 
     println("\nMerging additional panels to nearest traffic signs")
@@ -1458,42 +1456,56 @@ object DataFixture {
         Queries.getMunicipalities
       }
 
-    OracleDatabase.withDynSession {
-
-      val additionalPanelIdToExpire : Seq[Long] = municipalities.flatMap { municipality =>
+    OracleDatabase.withDynTransaction {
+      val additionalPanelIdToExpire : Seq[(Option[Long], Long, Int)] = municipalities.flatMap { municipality =>
         println("")
+        println(DateTime.now())
         println(s"Fetching Traffic Signs for Municipality: $municipality")
 
-        val existingAssets = trafficSignService.getByMunicipality(municipality)
-        val filteredAssets = existingAssets.filterNot(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+        val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet).filterNot(_.floating)
+        val (panels, signs) = existingAssets.partition(asset => TrafficSignType.applyOTHValue(trafficSignService.getProperty(asset, trafficSignService.typePublicId).get.propertyValue.toInt).group == TrafficSignTypeGroup.AdditionalPanels)
+        val signsByType = signs.filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == group)
 
         println("")
-        println(s"Number of existing assets: ${filteredAssets.length}")
+        println(s"Number of existing assets: ${signsByType.length}")
         println("")
 
-        filteredAssets.flatMap { sign =>
-          println(s"Analyzing Traffic Sign with => ID: ${sign.id}, LinkID: ${sign.linkId}")
-          val roadLink = roadLinkService.getRoadLinkFromVVH(sign.linkId, newTransaction = false).get
-          val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
-          val additionalPanels = trafficSignService.getTrafficSignByRadius(Point(sign.lon, sign.lat), 2, Some(TrafficSignTypeGroup.AdditionalPanels)).map { panel =>
-            AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
-          }.toSet
+        signsByType.flatMap { sign =>
+          try {
+            val roadLink = roadLinks.find(_.linkId == sign.linkId).get
+            val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
+            val additionalPanels = panels.filter(panel => GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(panel.lon, panel.lat))) <= 2).map { panel =>
+              AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
+            }.toSet
 
-          val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
+            val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
+            try{
+              if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
+                val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
+                val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
+                val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, propertyData.toSet, sign.validityDirection, sign.bearing)
 
-          if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
-            val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
-            val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, additionalPanels, sign.validityDirection, sign.bearing)
-
-            trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
-            additionalPanelsInRadius.flatMap(_.id)
-          } else {
-            errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${additionalPanelsInRadius.size}"
-            Seq()
+                trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
+                additionalPanelsInRadius.map(asset => (asset.id, asset.linkId, trafficSignService.getProperty(asset.propertyData, trafficSignService.typePublicId).get.propertyValue.toInt)).toSeq
+              } else {
+                errorLogBuffer += s"Traffic Sign with ID: ${sign.id}, LinkID: ${sign.linkId}, failed to merge additional panels. Number of additional panels detected: ${additionalPanelsInRadius.size}"
+                Seq()
+              }
+            } catch {
+              case e: Exception => throw new UnsupportedOperationException(s"panels: ${additionalPanelsInRadius.mkString("/")} with exception: ${e.getMessage}")
+              case _ : Throwable => throw new UnsupportedOperationException(s"panels: ${additionalPanelsInRadius.mkString("/")}")
+            }
+          } catch {
+            case e: Exception => throw new UnsupportedOperationException(s"id: ${sign.id}, linkId: ${sign.linkId} additional info: ${e.getMessage}")
+            case _ : Throwable => throw new UnsupportedOperationException(s"id: ${sign.id}, linkId: ${sign.linkId}")
           }
         }
       }
-      additionalPanelIdToExpire.foreach(id => trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id)), Some("batch_process_panel_merge")))
+      additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
+//        trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
+        println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
+      }
     }
     println("")
     errorLogBuffer.foreach(println)
@@ -1775,6 +1787,18 @@ object DataFixture {
     }
   }
 
+  private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
+    "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
+    "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
+    "MaximumRestrictions" ->  TrafficSignTypeGroup.MaximumRestrictions,
+    "GeneralWarningSigns" ->  TrafficSignTypeGroup.GeneralWarningSigns,
+    "ProhibitionsAndRestrictions" ->  TrafficSignTypeGroup.ProhibitionsAndRestrictions,
+    "MandatorySigns" ->  TrafficSignTypeGroup.MandatorySigns,
+    "PriorityAndGiveWaySigns" ->  TrafficSignTypeGroup.PriorityAndGiveWaySigns,
+    "InformationSigns" ->  TrafficSignTypeGroup.InformationSigns,
+    "ServiceSigns" ->  TrafficSignTypeGroup.ServiceSigns
+  )
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1874,7 +1898,11 @@ object DataFixture {
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
       case Some("merge_additional_panels_to_trafficSigns") =>
-        mergeAdditionalPanelsToTrafficSigns()
+        args.lastOption match {
+          case Some(group) =>
+            mergeAdditionalPanelsToTrafficSigns(trafficSignGroup(group))
+          case _ => println("Please provide a traffic sign group")
+        }
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
       case Some("create_prohibitions_using_traffic_signs") =>

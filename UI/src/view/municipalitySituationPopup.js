@@ -24,7 +24,7 @@ window.MunicipalitySituationPopup = function (models) {
     };
 
     var purge = function() {
-        $('.confirm-modal').remove();
+        $('.confirm-modal#municipalitySituation').remove();
     };
 
     var renameAssets = function (values) {
@@ -109,14 +109,14 @@ window.MunicipalitySituationPopup = function (models) {
     var renderDialog = function(verificationsInfo, modificationsInfo) {
         $('#work-list').append(me.createMunicipalitySituationPopUp(verificationsInfo, modificationsInfo)).show();
 
-        $('.confirm-modal .cancel').on('click', function() {
+        $('.confirm-modal#municipalitySituation .cancel').on('click', function() {
             options.cancelCallback();
         });
-        $('.confirm-modal .save').on('click', function() {
+        $('.confirm-modal#municipalitySituation .save').on('click', function() {
             options.saveCallback();
         });
 
-        $(' .confirm-modal .sulje').on('click', function() {
+        $(' .confirm-modal#municipalitySituation .sulje').on('click', function() {
             options.closeCallback();
         });
     };

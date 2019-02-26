@@ -55,7 +55,7 @@ root.LinearAssetLayer  = function(params) {
     var self = this;
 
     var clickHandler = function(evt) {
-      if (application.getSelectedTool() === 'Cut') {
+      if (application.getSelectedTool() === 'Cut' && selectableZoomLevel()) {
         if (collection.isDirty()) {
           me.displayConfirmMessage();
         } else {
@@ -182,29 +182,37 @@ root.LinearAssetLayer  = function(params) {
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
+  var selectableZoomLevel = function() {
+    return me.uiState.zoomLevel >= zoomlevels.minZoomForAssets;
+  };
+
   var onSelect = function(evt) {
-    if(evt.selected.length !== 0) {
-      var feature = evt.selected[0];
-      var properties = feature.getProperties();
-      verifyClickEvent(properties, evt);
-    }else{
-      if (selectedLinearAsset.exists()) {
-        selectedLinearAsset.close();
-        readOnlyLayer.showLayer();
-        highLightReadOnlyLayer();
-      }
-    }
+   if(selectableZoomLevel()) {
+     if(evt.selected.length !== 0) {
+       var feature = evt.selected[0];
+       var properties = feature.getProperties();
+       verifyClickEvent(properties, evt);
+     }else{
+       if (selectedLinearAsset.exists()) {
+         selectedLinearAsset.close();
+         readOnlyLayer.showLayer();
+         highLightReadOnlyLayer();
+       }
+     }
+   }
   };
 
   var onMultipleSelect = function(evt) {
-    if(evt.selected.length !== 0) {
-      selectedLinearAsset.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
-    }
-    else{
-      if (selectedLinearAsset.exists()) {
-        selectedLinearAsset.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
-      }
-    }
+   if(selectableZoomLevel()){
+     if(evt.selected.length !== 0) {
+       selectedLinearAsset.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
+     }
+     else{
+       if (selectedLinearAsset.exists()) {
+         selectedLinearAsset.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
+       }
+     }
+   }
   };
 
   var verifyClickEvent = function(properties, evt){
@@ -223,7 +231,8 @@ root.LinearAssetLayer  = function(params) {
     onInteractionEnd: onInteractionEnd,
     onSelect: onSelect,
     onMultipleSelect: onMultipleSelect,
-    onClose: onCloseForm
+    onClose: onCloseForm,
+    enableSelect: selectableZoomLevel
   });
 
   this.getSelectToolControl = function() {
@@ -268,7 +277,7 @@ root.LinearAssetLayer  = function(params) {
     if (selectedLinearAsset.isDirty()) {
         me.displayConfirmMessage();
     } else {
-        if (linearAssets.length > 0) {
+        if (linearAssets.length > 0 && selectableZoomLevel()) {
             selectedLinearAsset.close();
             showDialog(linearAssets);
             onCloseForm();
@@ -494,13 +503,16 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.drawLinearAssets = function(linearAssets) {
-    vectorSource.addFeatures(style.renderFeatures(_.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
+    var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
       return selectedAsset.linkId === asset.linkId && selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
-    })));
+    });
+    vectorSource.addFeatures(style.renderFeatures(allButSelected));
     readOnlyLayer.showLayer();
     highLightReadOnlyLayer();
     if(assetLabel) {
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(linearAssets, 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
+      var splitChangedAssets = _.partition(allButSelected, function(a){ return (a.sideCode !== 1 && _.has(a, 'value'));});
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
@@ -512,6 +524,13 @@ root.LinearAssetLayer  = function(params) {
     return vectorSource.removeFeature(feature);
   };
 
+  var geometryAndValuesEqual = function(feature, comparison) {
+    var toCompare = ["linkId", "sideCode", "startMeasure", "endMeasure"];
+    _.each(toCompare, function(value){
+      return feature[value] === comparison[value];
+    });
+  };
+
   this.decorateSelection = function (polygonSelection) {
     if (selectedLinearAsset.exists()) {
 
@@ -521,14 +540,16 @@ root.LinearAssetLayer  = function(params) {
       if(assetLabel){
         if(polygonSelection){
           var selectedLabels = _.filter(vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
-            return layerFeature.values_.geometry instanceof ol.geom.Point && (selectedFeature.values_.linkId === layerFeature.values_.linkId && selectedFeature.values_.sideCode === layerFeature.values_.sideCode); }) ;
+            return layerFeature.values_.geometry instanceof ol.geom.Point && (geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_)); }) ;
           });
           _.each(selectedLabels, removeFeature);
 
           selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
         } else {
-          var currentFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
-            return selectedFeature.values_.linkId === layerFeature.values_.linkId && selectedFeature.values_.sideCode === layerFeature.values_.sideCode; }) ;
+          var currentFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){
+            return _.some(selectedFeatures, function(selectedFeature) {
+              return geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
+            });
           });
 
           _.each(currentFeatures, removeFeature);

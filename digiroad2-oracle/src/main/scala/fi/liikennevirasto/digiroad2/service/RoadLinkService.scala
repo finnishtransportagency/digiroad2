@@ -978,6 +978,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithoutGate, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithGate, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.CarRoad_IIIa => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case _ => roadLink //similar logic used in roadaddressbuilder
       }
     }
@@ -1182,6 +1183,36 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           Seq(endPoints._1, endPoints._2)
       }
       case _ => Seq(endPoints._1, endPoints._2)
+    }
+  }
+
+  def getRoadLinkByBearing(assetBearing: Option[Int], assetValidityDirection: Option[Int], assetCoordinates: Point, roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    val toleranceInDegrees = 25
+
+    assetBearing match {
+      case Some(aBearing) =>
+        val filteredEnrichedRoadLinks =
+          roadLinks.filter { roadLink =>
+            val roadLinkTrafficDirection = TrafficDirection.toSideCode(roadLink.trafficDirection).value
+            val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
+            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
+
+            if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+              val reverseRoadLinkBearing =
+                if (roadLinkBearing - 180 < 0) {
+                  roadLinkBearing + 180
+                } else {
+                  roadLinkBearing - 180
+                }
+
+              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
+            } else {
+              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees && (roadLinkTrafficDirection == assetValidityDirection.get)
+            }
+          }
+        filteredEnrichedRoadLinks
+      case _ =>
+        Seq()
     }
   }
 

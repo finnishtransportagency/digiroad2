@@ -12,7 +12,7 @@ ScalatraBootstrap extends LifeCycle {
 
   override def init(context: ServletContext) {
     context.mount(new Digiroad2Api(Digiroad2Context.roadLinkService,
-      Digiroad2Context.roadAddressesService,
+      Digiroad2Context.roadAddressService,
       Digiroad2Context.speedLimitService,
       Digiroad2Context.obstacleService,
       Digiroad2Context.railwayCrossingService,

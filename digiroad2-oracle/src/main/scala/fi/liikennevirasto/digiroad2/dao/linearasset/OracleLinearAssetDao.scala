@@ -165,6 +165,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
+  implicit val getLightLinearAssets = new GetResult[LightLinearAsset] {
+    def apply(r: PositionedResult) = {
+      val expired = r.nextBoolean()
+      val value = r.nextInt()
+      val typeId = r.nextInt()
+      val startPoint_x = r.nextDouble()
+      val startPoint_y = r.nextDouble()
+      val endPoint_x = r.nextDouble()
+      val endPoint_y = r.nextDouble()
+      val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
+      val sideCode = r.nextInt()
+      LightLinearAsset(geometry, value, expired, typeId, sideCode)
+    }
+  }
+
   /**
     * Iterates a set of asset ids with a property id and returns linear assets. Used by LinearAssetService.getPersistedAssetsByIds,
     * LinearAssetService.split and LinearAssetService.separate.
@@ -425,29 +440,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, bounds: BoundingRectangle, linkSource: Option[LinkGeomSource] = None): Seq[PieceWiseLinearAsset] = {
+  def fetchLinearAssets(assetTypeId: Int, valuePropertyId: String, bounds: BoundingRectangle, linkSource: Option[LinkGeomSource] = None): Seq[LightLinearAsset] = {
     val linkGeomCondition = linkSource match {
       case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
       case _ => ""
     }
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-
     sql"""
-         select a.id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
-                a.created_by, a.created_date, a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id,
-                pos.adjusted_timestamp, pos.modified_date, pos.link_source, a.verified_by, a.verified_date,
-                a.information_source, t.X, t.Y, t2.X, t2.Y, ad.administrative_class
-           from asset a
-           join asset_link al on a.id = al.asset_id
-           join lrm_position pos on al.position_id = pos.id
-           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t
-           cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t2
-           join property p on p.public_id = 'mittarajoitus'
-           left join administrative_class ad on pos.link_id = ad.link_id
-           left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-           where a.floating = 0 and ad.valid_to is null and a.asset_type_id = #$assetTypeId #$linkGeomCondition and #$boundingBoxFilter"""
-      .as[PieceWiseLinearAsset].list
+         SELECT case when a.valid_to <= sysdate then 1 else 0 end as expired, CASE WHEN a.valid_to IS NULL THEN 1 ELSE NULL END AS value, a.asset_type_id, t.X, t.Y, t2.X, t2.Y, pos.side_code
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t
+          cross join TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t2
+          where a.valid_to is null and a.floating = 0 and a.asset_type_id = #$assetTypeId #$linkGeomCondition and #$boundingBoxFilter"""
+      .as[LightLinearAsset].list
   }
 
 
@@ -682,7 +689,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         NULL,
         MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
         MDSYS.SDO_ORDINATE_ARRAY(${geom.head.x},${geom.head.y},0,0.0,${geom.last.x},${geom.last.y},0,$assetLength))"""
-        "null"
       } else {
         "null"
       }

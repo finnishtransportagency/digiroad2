@@ -2,7 +2,7 @@
   root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
     var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
-    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+    var authorizationPolicy = new LinkPropertyAuthorizationPolicy();
     new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
 
     var localizedAdministrativeClasses = {
@@ -129,6 +129,30 @@
       '<button class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
 
+    var userInformationLog = function() {
+      var hasMunicipality = function (linearAsset) {
+        return _.every(linearAsset.get(), function (asset) {
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var message = '';
+
+      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinkProperty)) {
+        message = limitedRights;
+      } else if (!authorizationPolicy.validateMultiple(selectedLinkProperty.get()))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
+    };
 
     var template = function(options) {
       return _.template('' +
@@ -143,6 +167,7 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Geometrian lähde: <%- linkSource %></p>' +
             '</div>' +
+            userInformationLog() +
             '<div class="form-group editable">' +
               '<label class="control-label">Hallinnollinen luokka</label>' +
               '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
@@ -197,7 +222,7 @@
       if(notRendered) {
         $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
-            '<li><a id="incomplete-links-link" class="incomplete-links" href="#work-list/linkProperty">Korjattavien linkkien lista</a></li>');
+            '<li><button id="incomplete-links-link" class="incomplete-links" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
       }
     };
 
@@ -222,13 +247,6 @@
       }));
       $("#adminClass").prop('disabled', disabled);
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
-    };
-
-    var validateAdministrativeClass = function(selectedLinkProperty, authorizationPolicy){
-      var selectedAssets = _.filter(selectedLinkProperty.get(), function (selected) {
-        return !authorizationPolicy.formEditModeAccess(selected);
-      });
-      return !_.isEmpty(selectedAssets);
     };
 
     var validateSelectedAccessRight = function(selectedLinkProperty){
@@ -350,7 +368,7 @@
           selectedLinkProperty.setAdditionalInfo($(event.currentTarget).find(':selected').attr('value'));
         });
 
-        toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
+        toggleMode(applicationModel.isReadOnly() || !authorizationPolicy.validateMultiple(selectedLinkProperty.get()));
         controlAdministrativeClasses(linkProperty.administrativeClass);
       });
 
@@ -366,7 +384,7 @@
       });
 
       eventbus.on('application:readOnly', function(readOnly){
-        toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
+        toggleMode(!authorizationPolicy.validateMultiple(selectedLinkProperty.get()) || readOnly);
         controlAdministrativeClassesOnToggle(selectedLinkProperty);
       });
 

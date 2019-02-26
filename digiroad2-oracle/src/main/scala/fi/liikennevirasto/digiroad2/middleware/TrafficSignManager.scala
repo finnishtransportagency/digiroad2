@@ -21,9 +21,6 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
           println(s"""creation of manoeuvre on link id ${trafficSignInfo.linkId} from traffic sign ${trafficSignInfo.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
       }
     }
-    else if (TrafficSignType.belongsToProhibition(trafficSignInfo.signType)) {
-      prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
-    }
   }
 
   def deleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
@@ -37,14 +34,15 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
 
     if(turnRestrictionSigns.map(_._1).nonEmpty)
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
+  }
 
-    others.foreach {
-      case (id, propertyData) =>
-        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+  def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo)): Unit = {
+    val username = Some("automatic_trafficSign_deleted")
+    val (expireId, trafficSignInfo) = signInfo
 
-        if (TrafficSignType.belongsToProhibition(trafficSignType)) {
-          prohibitionService.deleteAssetBasedOnSign(prohibitionService.withId(id), username)
-        }
+    if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
+      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username)
+      manoeuvreService.createBasedOnTrafficSign(trafficSignInfo)
     }
   }
 }

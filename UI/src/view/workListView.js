@@ -82,7 +82,7 @@
     this.generateWorkList = function(layerName, listP) {
       var layerInfo = {
         speedLimit: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit'},
-        speedLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'speedLimit'},
+        speedLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'speedLimit'},
         linkProperty: 'Korjattavien linkkien lista',
         massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
         pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',
@@ -93,16 +93,16 @@
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
 
-        hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
-        manoeuvreErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'manoeuvre'},
-        heightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'heightLimit'},
-        bogieWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'bogieWeightLimit'},
-        axleWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'axleWeightLimit'},
-        lengthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'lengthLimit'},
-        totalWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'totalWeightLimit'},
-        trailerTruckWeightLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'trailerTruckWeightLimit'},
-        widthLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'widthLimit'},
-        pedestrianCrossingsErrors: {Title: 'Laatuvirheet Lista', SourceLayer: 'pedestrianCrossings'}
+        hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
+        manoeuvreErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'manoeuvre'},
+        heightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'heightLimit'},
+        bogieWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'bogieWeightLimit'},
+        axleWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'axleWeightLimit'},
+        lengthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'lengthLimit'},
+        totalWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'totalWeightLimit'},
+        trailerTruckWeightLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'trailerTruckWeightLimit'},
+        widthLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'widthLimit'},
+        pedestrianCrossingsErrors: {Title: 'Laatuvirhelista', SourceLayer: 'pedestrianCrossings'}
       };
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;

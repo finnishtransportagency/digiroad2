@@ -656,10 +656,10 @@ trait LinearAssetOperations {
   }
 
 
-  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[PieceWiseLinearAsset]] = {
+  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLinearAsset]] = {
     withDynTransaction {
       val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), boundingRectangle, linkGeomSource)
-      LinearAssetPartitioner.partition(assets)
+      Seq(assets)
     }
   }
 
@@ -860,7 +860,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
 }
 
