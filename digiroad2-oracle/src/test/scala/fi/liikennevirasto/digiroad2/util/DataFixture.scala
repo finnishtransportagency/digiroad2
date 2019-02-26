@@ -70,10 +70,6 @@ object DataFixture {
       HttpClientBuilder.create().build())
   }
 
-  lazy val userProvider: UserProvider = {
-    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
-  }
-
   lazy val eventbus: DigiroadEventBus = {
     new DigiroadEventBus
   }
@@ -98,7 +94,7 @@ object DataFixture {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, eventbus)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {

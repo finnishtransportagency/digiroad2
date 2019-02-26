@@ -42,7 +42,7 @@ object AssetValidatorProcess {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
+    new TrafficSignService(roadLinkService, new DummyEventBus)
   }
 
   lazy val manoeuvreService: ManoeuvreService = {

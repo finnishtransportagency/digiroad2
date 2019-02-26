@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
@@ -1080,5 +1081,110 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("filter road links considering bearing in traffic sign and bearing of the road links, same bearing, validity direction and 10 meter radius of the sign") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+
+    val newLinkId1 = 5000
+    val geometryPoints1 = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection1 = TrafficDirection.AgainstDigitizing
+    val newLinkId2 = 5001
+    val geometryPoints2 = List(Point(40.0, 40.0), Point(90.0, 40.0))
+    val trafficDirection2 = TrafficDirection.BothDirections
+    val newLinkId3 = 5002
+    val geometryPoints3 = List(Point(80.0, 10.0), Point(80.0, 30.0))
+    val trafficDirection3 = TrafficDirection.TowardsDigitizing
+
+    val trafficSignBearing = Some(190)
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val attributes = Map("OBJECTID" -> BigInt(99))
+
+    val newVVHRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
+    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
+
+    val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
+    val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
+    val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
+
+    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+
+    roadLinksFilteredByBearing.size should be (1)
+    roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+  }
+
+  test("filter road links considering bearing in traffic sign and bearing of the road links, different bearing in all") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+    val newLinkId1 = 5000
+    val geometryPoints1 = List(Point(10.0, 25.0), Point(30.0, 15.0), Point(50.0, 10.0), Point(60.0, 15.0), Point(60.0, 35.0))
+    val trafficDirection1 = TrafficDirection.TowardsDigitizing
+    val newLinkId2 = 5001
+    val geometryPoints2 = List(Point(40.0, 40.0), Point(90.0, 40.0))
+    val trafficDirection2 = TrafficDirection.TowardsDigitizing
+    val newLinkId3 = 5002
+    val geometryPoints3 = List(Point(80.0, 10.0), Point(80.0, 30.0))
+    val trafficDirection3 = TrafficDirection.TowardsDigitizing
+
+    val trafficSignBearing = Some(20)
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val attributes = Map("OBJECTID" -> BigInt(99))
+
+    val newVVHRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
+    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
+
+    val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
+    val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
+    val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
+
+    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+
+    roadLinksFilteredByBearing should be (Seq(newRoadLink1, newRoadLink3))
+  }
+
+  test("filter road links considering bearing in traffic sign and bearing of the road links, road link with both traffic direction") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+    val newLinkId1 = 5000
+    val geometryPoints1 = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection1 = TrafficDirection.BothDirections
+    val newLinkId2 = 5001
+    val geometryPoints2 = List(Point(40.0, 40.0), Point(90.0, 40.0))
+    val trafficDirection2 = TrafficDirection.TowardsDigitizing
+    val newLinkId3 = 5002
+    val geometryPoints3 = List(Point(80.0, 10.0), Point(80.0, 30.0))
+    val trafficDirection3 = TrafficDirection.TowardsDigitizing
+
+    val trafficSignBearing = Some(20)
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val attributes = Map("OBJECTID" -> BigInt(99))
+
+
+    val newVVHRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, geometryPoints1, administrativeClass, trafficDirection1, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink2 = VVHRoadlink(newLinkId2, municipalityCode, geometryPoints2, administrativeClass, trafficDirection2, FeatureClass.DrivePath, None, attributes)
+    val newVVHRoadLink3 = VVHRoadlink(newLinkId3, municipalityCode, geometryPoints3, administrativeClass, trafficDirection3, FeatureClass.DrivePath, None, attributes)
+    val vVHRoadLinkSeq = Seq(newVVHRoadLink1, newVVHRoadLink2, newVVHRoadLink3)
+
+    val newRoadLink1 = RoadLink(newLinkId1, geometryPoints1, 0.0, administrativeClass, 1, trafficDirection1, Motorway, None, None)
+    val newRoadLink2 = RoadLink(newLinkId2, geometryPoints2, 0.0, administrativeClass, 1, trafficDirection2, Motorway, None, None)
+    val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
+
+    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+
+    roadLinksFilteredByBearing.size should be (1)
+    roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+  }
 
 }
