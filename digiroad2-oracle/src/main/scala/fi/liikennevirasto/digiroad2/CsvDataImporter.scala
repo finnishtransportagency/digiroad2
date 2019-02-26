@@ -270,7 +270,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
         if(roadLinks.isEmpty) {
-          (List(s"Unauthorized Municipality or nonexistent RoadLind near the asset"), Seq())
+          (List(s"Unathorized municipality or nonexistent roadlink near asset position"), Seq())
         } else
           (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
       case _ =>
@@ -1081,7 +1081,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
           result.copy(excludedRows = excludedRows ::: result.excludedRows)
         } catch {
           case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
-          case ex: Exception => result.copy(genericExceptionRows = GenericException(reason = ex.getMessage(),csvRow = rowToString(row)) :: result.genericExceptionRows)
+          case ex: Exception => result.copy(genericExceptionRows = GenericException(reason = ex.getMessage,csvRow = rowToString(row)) :: result.genericExceptionRows)
         }
       } else {
         result.copy(
