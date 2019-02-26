@@ -514,12 +514,13 @@
                             linkPropertiesModel,
                             selectedSpeedLimit,
                             selectedMassTransitStopModel,
-                            groupedPointAssets
+                            groupedPointAssets,
+                            isExperimental
                             ) {
     var assetType = assetConfiguration.assetTypes;
     var assetGroups = assetConfiguration.assetGroups;
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
-    var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
+    var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}), isExperimental);
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     return [
