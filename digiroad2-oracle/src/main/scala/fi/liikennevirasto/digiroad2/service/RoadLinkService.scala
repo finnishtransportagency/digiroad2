@@ -1197,7 +1197,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       case Some(aBearing) =>
         val filteredEnrichedRoadLinks =
           roadLinks.filter { roadLink =>
-            val roadLinkTrafficDirection = TrafficDirection.toSideCode(roadLink.trafficDirection).value
             val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
             val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
 
@@ -1211,7 +1210,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
               getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
             } else {
-              getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees && (roadLinkTrafficDirection == assetValidityDirection.get)
+              getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees && (TrafficDirection.toSideCode(roadLink.trafficDirection).value == assetValidityDirection.get)
             }
           }
         filteredEnrichedRoadLinks
