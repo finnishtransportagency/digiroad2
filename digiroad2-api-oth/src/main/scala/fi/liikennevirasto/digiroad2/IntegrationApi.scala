@@ -618,7 +618,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           lastModifiedBy(trafficSign.createdBy, trafficSign.modifiedBy),
           "linkSource" -> trafficSign.linkSource.value,
           "value" ->trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
-          "type" -> TrafficSignType.applyTRValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt),
+          "type" -> TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).TRvalue,
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
@@ -629,7 +629,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
     panels.map{panel =>
       Map(
-        "type" -> TrafficSignType.applyTRValue(panel.panelType),
+        "type" -> TrafficSignType.applyOTHValue(panel.panelType).TRvalue,
         "value" -> panel.panelValue,
         "information" -> panel.panelInfo
       )
