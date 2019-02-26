@@ -767,7 +767,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getTrafficSignsToProcess(typeId: Int) : Seq[Long] = {
-    sql""" select asset_id
+    sql""" select traffic_sign_id
            from traffic_sign_manager
            where linear_asset_type_id = $typeId
            """.as[Long].list
@@ -776,7 +776,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def deleteTrafficSignsToProcess(ids: Seq[Long], typeId: Int) : Unit = {
     sqlu"""delete from traffic_sign_manager
            where linear_asset_type_id = $typeId
-           and asset_id in (#${ids.mkString(",")})
+           and traffic_sign_id in (#${ids.mkString(",")})
          """.execute
   }
 
