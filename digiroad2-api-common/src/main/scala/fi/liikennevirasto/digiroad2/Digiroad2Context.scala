@@ -239,7 +239,7 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
 
 class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: TrafficSignInfo => trafficSignManager.createAssetsByActor(x)
+    case x: TrafficSignInfo => trafficSignManager.createAssets(x)
     case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
@@ -247,16 +247,21 @@ class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Ac
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq((x, trafficType.propertyData)))
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")
   }
 }
 
-class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: (Long, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case x: TrafficSignInfoUpdate =>
+       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
+      case _ => println("Nonexistent traffic Sign Type")
+    }
+      trafficSignManager.createAssets(x.newSign)
     case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
@@ -342,7 +347,7 @@ object Digiroad2Context {
   val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
   eventbus.subscribe(trafficSignCreate, "trafficSign:create")
 
-  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
@@ -474,7 +479,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
-    new TrafficSignManager(manoeuvreService, prohibitionService, hazmatTransportProhibitionService)
+    new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
   lazy val userNotificationService: UserNotificationService = {

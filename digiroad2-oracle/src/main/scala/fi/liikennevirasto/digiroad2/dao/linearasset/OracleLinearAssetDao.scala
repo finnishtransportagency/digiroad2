@@ -760,6 +760,26 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           """.as[DateTime].firstOption
   }
 
+  def insertTrafficSignsToProcess(assetId: Long, linearAssetTypeId: Int) : Unit = {
+    sqlu""" insert into traffic_sign_manager (asset_id, linear_asset_type_id)
+           values ($assetId, $linearAssetTypeId)
+           """.execute
+  }
+
+  def getTrafficSignsToProcess(typeId: Int) : Seq[Long] = {
+    sql""" select asset_id
+           from traffic_sign_manager
+           where linear_asset_type_id = $typeId
+           """.as[Long].list
+  }
+
+  def deleteTrafficSignsToProcess(ids: Seq[Long], typeId: Int) : Unit = {
+    sqlu"""delete from traffic_sign_manager
+           where linear_asset_type_id = $typeId
+           and asset_id in (#${ids.mkString(",")})
+         """.execute
+  }
+
   def getConnectedAssetFromTrafficSign(id: Long): Seq[Long] = {
     val linearAssetsIds = sql"""select linear_asset_id from connected_asset where point_asset_id = $id""".as[(Long)].list
     linearAssetsIds

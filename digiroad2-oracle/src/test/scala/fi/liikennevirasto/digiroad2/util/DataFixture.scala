@@ -110,7 +110,7 @@ object DataFixture {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
-    new TrafficSignManager(manoeuvreService, prohibitionService, hazmatTransportProhibitionService)
+    new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {

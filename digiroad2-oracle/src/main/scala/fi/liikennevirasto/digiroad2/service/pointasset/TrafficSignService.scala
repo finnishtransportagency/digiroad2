@@ -16,6 +16,7 @@ import org.joda.time.DateTime
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, additionalPanel: Seq[AdditionalPanel])
+case class TrafficSignInfoUpdate(expireId: Long, newSign: TrafficSignInfo)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
   def eventBus: DigiroadEventBus = eventBusImpl
@@ -113,20 +114,17 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
   }
 
-  //TODO Review eventBus trafficSign:update on this update method, if it's to keep or not
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
-    getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
+    val updatedId = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
-        val newId = OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
-        eventBus.publish("trafficSign:update", ((newId, roadLink), id))
-        newId
+        OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
       case _ =>
-        val updatedId = OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
-        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink, Seq())))
-        updatedId
+        OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
     }
+    eventBus.publish("trafficSign:update", TrafficSignInfoUpdate(updatedId, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink, Seq())))
+   id
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
@@ -492,16 +490,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     OracleTrafficSignDao.getLastExecutionDate(createdBy, signTypes)
   }
 
-  def getAfterDate(sinceDate: Option[DateTime]): Seq[PersistedTrafficSign] = {
-    val filter =
-      sinceDate match {
-        case Some(date) =>
-          val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(date)}', 'YYYYMMDDHH24MI')"
-          s"where a.asset_type_id = $typeId and floating = 0 and (a.valid_to > $querySinceDate or a.modified_date > $querySinceDate or a.created_date > $querySinceDate)"
-        case _ =>
-          s"where a.asset_type_id = $typeId and floating = 0 and a.valid_to is null"
-      }
-
-    fetchPointAssetsWithExpired(withFilter(filter))
-  }
+//  def getAfterDate(sinceDate: Option[DateTime]): Seq[PersistedTrafficSign] = {
+//    val filter =
+//      sinceDate match {
+//        case Some(date) =>
+//          val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(date)}', 'YYYYMMDDHH24MI')"
+//          s"where a.asset_type_id = $typeId and floating = 0 and (a.valid_to > $querySinceDate or a.modified_date > $querySinceDate or a.created_date > $querySinceDate)"
+//        case _ =>
+//          s"where a.asset_type_id = $typeId and floating = 0 and a.valid_to is null"
+//      }
+//
+//    fetchPointAssetsWithExpired(withFilter(filter))
+//  }
 }

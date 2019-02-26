@@ -291,7 +291,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param roadNameSource
     * @return VVHRoadLinks
     */
-  def fetchVVHRoadlinks(roadNamePublicIds: Set[String], roadNameSource: String): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinks(roadNamePublicIds: String, roadNameSource: Set[String]): Seq[VVHRoadlink] = {
       vvhClient.roadLinkData.fetchByRoadNames(roadNamePublicIds, roadNameSource)
   }
 
@@ -456,7 +456,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else enrichRoadLinksFromVVH(links ++ complementaryLinks)
   }
 
-  def getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds: Set[String], roadNameSource: String, newTransaction: Boolean = true): Seq[RoadLink] = {
+  def getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds: String, roadNameSource: Set[String], newTransaction: Boolean = true): Seq[RoadLink] = {
     val fut = for{
       f1Result <- vvhClient.complementaryData.fetchByRoadNamesF(roadNamePublicIds, roadNameSource)
       f2Result <- vvhClient.roadLinkData.fetchByRoadNamesF(roadNamePublicIds, roadNameSource)

@@ -1,14 +1,15 @@
 package fi.liikennevirasto.digiroad2.middleware
 
+import java.sql.SQLIntegrityConstraintViolationException
 
-import java.security.InvalidParameterException
-
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, TextPropertyValue, TrafficSignProperty}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreCreationException, ManoeuvreService, ProhibitionService}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 
 object TrafficSignManager {
   val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
@@ -28,45 +29,57 @@ object TrafficSignManager {
   }
 }
 
-case class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService, hazmatTransportProhibitionService: HazmatTransportProhibitionService) {
+case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  def createAssetsByActor(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
-    if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType)) {
-      manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+  lazy val linearAssetDao: OracleLinearAssetDao = {
+    new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
+  }
+
+    def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
+    trafficSignInfo match {
+      case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
+        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
+
+      case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, Prohibition)
+
+      case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+
+      case _ => None
     }
   }
 
-  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
-    if (TrafficSignManager.belongsToProhibition(trafficSignInfo.signType)) {
-      prohibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
-    }
-    else if (TrafficSignManager.belongsToHazmat(trafficSignInfo.signType)) {
-      hazmatTransportProhibitionService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
-    }
-  }
-
-  def deleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
+  def deleteAssets(trafficSign: Seq[PersistedTrafficSign]): Unit = {
     val username = Some("automatic_trafficSign_deleted")
 
-    val (turnRestrictionSigns, others) = signInfo.partition{
-      case (id, propertyData) =>
-        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
-        TrafficSignManager.belongsToManoeuvre(trafficSignType)
-    }
+    trafficSign.foreach { trSign =>
+      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
-    if(turnRestrictionSigns.map(_._1).nonEmpty)
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
+      trafficSignType match {
+        case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
+          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
+
+        case signType  if TrafficSignManager.belongsToProhibition(signType) =>
+            insertTrafficSignToProcess(trSign.id, Prohibition)
+
+        case signType if TrafficSignManager.belongsToHazmat(signType) =>
+            insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+
+      }
+    }
   }
 
-
-  def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo)): Unit = {
-    val username = Some("automatic_trafficSign_deleted")
-    val (expireId, trafficSignInfo) = signInfo
-
-    if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType)) {
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username)
-      manoeuvreService.createBasedOnTrafficSign(trafficSignInfo)
+  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo) : Unit = {
+    try {
+      withDynTransaction {
+        linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId)
+      }
+    } catch {
+      case ex: SQLIntegrityConstraintViolationException => print("try insert duplicate key")
+      case e: Exception => print("SQL Exception ")
+        throw new RuntimeException("SQL exception " + e.getMessage)
     }
   }
 }

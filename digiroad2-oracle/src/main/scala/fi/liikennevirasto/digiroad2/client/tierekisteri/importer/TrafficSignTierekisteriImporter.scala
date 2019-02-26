@@ -20,7 +20,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
-  lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService, prohibitionService, hazmatTransportProhibitionService)
+  lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService, roadLinkService)
 
   override def typeId: Int = 300
   override def assetName = "trafficSigns"
@@ -125,7 +125,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssetsByActor(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Seq()), false)
+            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Seq()), false)
           }
           newId
       }
@@ -236,7 +236,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
         val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter)
 
         trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
-        trafficSignManager.deleteAssets(trafficSigns.map(tr => (tr.id, tr.propertyData)))
+        trafficSignManager.deleteAssets(trafficSigns)
       }
     }
   }
