@@ -1189,6 +1189,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getRoadLinkByBearing(assetBearing: Option[Int], assetValidityDirection: Option[Int], assetCoordinates: Point, roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     val toleranceInDegrees = 25
 
+    def getAngle(b1: Int, b2: Int): Int = {
+      180 - Math.abs(Math.abs(b1 - b2) - 180)
+    }
+
     assetBearing match {
       case Some(aBearing) =>
         val filteredEnrichedRoadLinks =
@@ -1205,9 +1209,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                   roadLinkBearing - 180
                 }
 
-              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
+              getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
             } else {
-              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees && (roadLinkTrafficDirection == assetValidityDirection.get)
+              getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees && (roadLinkTrafficDirection == assetValidityDirection.get)
             }
           }
         filteredEnrichedRoadLinks

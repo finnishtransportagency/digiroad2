@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriClientException, TierekisteriMassTransitStopClient}
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -74,8 +74,8 @@ trait CsvDataImporterOperations {
     props
   }
 
-  lazy val roadAddressService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
@@ -84,8 +84,8 @@ trait CsvDataImporterOperations {
       HttpClientBuilder.create().build)
   }
 
-  lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressesService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   type MalformedParameters = List[String]
@@ -227,36 +227,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  def getRoadLinkByBearing(assetBearing: Option[Int], assetValidityDirection: Option[Int], assetCoordinates: Point, roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
-    val toleranceInDegrees = 25
-
-    assetBearing match {
-      case Some(aBearing) =>
-        val filteredEnrichedRoadLinks =
-          roadLinks.filter { roadLink =>
-            val roadLinkTrafficDirection = TrafficDirection.toSideCode(roadLink.trafficDirection).value
-            val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
-            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue), Some(roadLink.length))
-
-            if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
-              val reverseRoadLinkBearing =
-                if (roadLinkBearing - 180 < 0) {
-                  roadLinkBearing + 180
-                } else {
-                  roadLinkBearing - 180
-                }
-
-              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
-            } else {
-              Math.abs(aBearing - roadLinkBearing) <= toleranceInDegrees && (roadLinkTrafficDirection == assetValidityDirection.get)
-            }
-          }
-        filteredEnrichedRoadLinks
-      case _ =>
-        Seq()
-    }
-  }
-
   def tryToInt(propertyValue: String ) : Option[Int] = {
     Try(propertyValue.toInt).toOption
   }
@@ -360,7 +330,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
 
-      val possibleRoadLinks = getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks)
+      val possibleRoadLinks = roadLinkService.getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks)
 
       val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
       val roadLink = if (roadLinks.nonEmpty) {
@@ -385,7 +355,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val usedAdditionalPanels = trafficSignInfo.flatMap { case (csvRow, sign) =>
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(sign.lon, sign.lat), sign.roadLink.geometry)
       val bearing = if(sign.bearing.isEmpty && !sign.isFloating)
-        Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue), Some(sign.roadLink.length)))
+        Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue)))
       else
         sign.bearing
 
@@ -868,7 +838,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
   override val logInfo: String = "bus stop import"
   lazy val massTransitStopService: MassTransitStopService = {
-    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = tierekisteriMassTransitStopClient
