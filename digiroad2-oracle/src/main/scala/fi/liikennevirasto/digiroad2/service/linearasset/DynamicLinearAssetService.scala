@@ -271,30 +271,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       throw new MissingMandatoryPropertyException(missingProperties)
   }
 
-  def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = {
-
-    val assetIds = persistedLinearAsset.map(_.id)
-
-    if (assetIds.nonEmpty) {
-      val properties = dynamicLinearAssetDao.getValidityPeriodPropertyValue(assetIds.toSet, persistedLinearAsset.head.typeId)
-      persistedLinearAsset.groupBy(_.id).flatMap {
-        case (id, assets) =>
-          properties.get(id) match {
-            case Some(props) => assets.map(a => a.copy(value = a.value match {
-              case Some(value) =>
-                val multiValue = value.asInstanceOf[DynamicValue]
-                //If exist at least one property to enrich with value all null properties value could be filter out
-                Some(multiValue.copy(value = DynamicAssetValue(multiValue.value.properties.filter(_.values.nonEmpty ) ++ props)))
-              case _ =>
-                Some(DynamicValue(DynamicAssetValue(props)))
-            }))
-            case _ => assets
-          }
-      }.toSeq
-    } else {
-      Seq.empty[PersistedLinearAsset]
-    }
-  }
+  def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = persistedLinearAsset
 
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
         val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction =  false).head

@@ -7,7 +7,7 @@ import java.time.LocalDate
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.Asset._
-import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -88,7 +88,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val linearWidthLimitService: LinearWidthLimitService = Digiroad2Context.linearWidthLimitService,
                    val linearBogieWeightLimitService: LinearBogieWeightLimitService = Digiroad2Context.linearBogieWeightLimitService,
                    val userNotificationService: UserNotificationService = Digiroad2Context.userNotificationService,
-                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback)
+                   val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback,
+                   val damagedByThawService: DamagedByThawService = Digiroad2Context.damagedByThawService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1741,7 +1742,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case DamagedByThaw.typeId | CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -1751,6 +1752,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case BogieWeightLimit.typeId => linearBogieWeightLimitService
       case MassTransitLane.typeId => massTransitLaneService
       case NumberOfLanes.typeId => numberOfLanesService
+      case DamagedByThaw.typeId => damagedByThawService
       case _ => linearAssetService
     }
   }
