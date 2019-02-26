@@ -31,7 +31,6 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
     context.mount(new PingApi, "/api/ping/*")
-//    context.mount(new MassTransitStopImportApi, "/api/import/*")
     context.mount(new ImportDataApi(Digiroad2Context.roadLinkService), "/api/import/*")
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), "/api/integration/*")
