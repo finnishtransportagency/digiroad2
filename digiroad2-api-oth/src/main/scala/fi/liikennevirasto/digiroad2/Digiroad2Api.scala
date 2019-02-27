@@ -1870,17 +1870,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/fetchAssociationNames/:associationName") {
     val associationName = params("associationName").toString
-    Seq(Map("name" -> associationName,
-            "municipality" -> "Helsinki",
-            "roadName" -> "Road number 1",
-            "linkId" -> 29433),
-        Map("name" -> associationName,
-            "municipality" -> "Helsinki",
-            "roadName" -> "Road number 2",
-            "linkId" -> 56151),
-        Map("name" -> associationName,
-          "municipality" -> "Helsinki",
-          "roadName" -> "",
-          "linkId" -> 62777))
+    val privateRoadAssociations = roadLinkService.getPrivateRoadsByAssociationName(associationName)
+    privateRoadAssociations.map { value =>
+      Map("name" -> associationName,
+        "linkId" -> value._1,
+        "roadName" -> value._2,
+        "municipality" -> value._3
+      )
+    }
   }
 }
