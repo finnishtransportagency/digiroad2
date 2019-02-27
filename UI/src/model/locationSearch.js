@@ -209,13 +209,12 @@
       return backend.getPrivateRoadAssociationNamesBySearch(associationRoadName.address)
         .then(function(resultFromAPI) {
           var structuredRoads = function(value) {
-            var roadName = value.roadName.length === 0 ? "tuntematon tienimi" : value.roadName;
-            return { title: value.name, municipality: value.municipality, roadName: roadName, linkId: value.linkId, resultType: "association" };
+            return { title: value.name, municipality: value.municipality, roadName: value.roadName, linkId: value.linkId, resultType: "association" };
           };
           if (resultFromAPI.length > 0)
             return _.map(resultFromAPI, structuredRoads);
           else
-            return $.Deferred().reject('Failed to fetch road associations with that name');
+            return $.Deferred().reject('Failed to fetch road associations with that name.');
         });
     };
 

@@ -30,8 +30,13 @@
       });
 
       locationSearch.privateRoadAssociationNames();
+
       eventbus.on('associationNames:fetched', function(result) {
         enableAutoComplete(coordinatesText,result);
+      });
+
+      eventbus.on('associationNames:reload', function() {
+        locationSearch.privateRoadAssociationNames();
       });
     };
 
