@@ -386,15 +386,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 
-
-  def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): Seq[Point] = {
-    sideCode match {
-      case SideCode.TowardsDigitizing => Seq(last)
-      case SideCode.AgainstDigitizing => Seq(first)
-      case _ => Seq(first, last)
-    }
-  }
-
   def getValidityDirection(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
     if (twoSided)
       BothDirections.value

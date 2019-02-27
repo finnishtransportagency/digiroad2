@@ -761,7 +761,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def insertTrafficSignsToProcess(assetId: Long, linearAssetTypeId: Int) : Unit = {
-    sqlu""" insert into traffic_sign_manager (asset_id, linear_asset_type_id)
+    sqlu""" insert into traffic_sign_manager (traffic_sign_id, linear_asset_type_id)
            values ($assetId, $linearAssetTypeId)
            """.execute
   }
