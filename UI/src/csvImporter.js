@@ -1,5 +1,5 @@
 var municipalities;
-var backend =  new CsvBackend();
+var backend = new CsvBackend();
 var refresh;
 
 $(function() {
