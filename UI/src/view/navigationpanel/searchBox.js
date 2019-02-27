@@ -16,20 +16,21 @@
     var bindEvents = function() {
       coordinatesText.keypress(function(event) {
         if (event.keyCode == 13) {
+          emptyResultSection();
           moveToLocation();
         }
       });
 
       moveButton.on('click', function() {
+        emptyResultSection();
         moveToLocation();
       });
 
       clearButton.on('click', function() {
+        searchResults.empty();
         resultsSection.hide();
         clearSection.hide();
       });
-
-      locationSearch.privateRoadAssociationNames();
 
       eventbus.on('associationNames:fetched', function(result) {
         enableAutoComplete(coordinatesText,result);
@@ -41,6 +42,9 @@
     };
 
     var moveToLocation = function() {
+      resultsSection.show();
+      jQuery('#search-results').append('<div class="spinner-overlay-search"></div>');
+
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
       };
@@ -103,9 +107,15 @@
           });
         }).value();
 
+      jQuery('.spinner-overlay-search').remove();
       searchResults.html(resultItems);
       resultsSection.show();
       clearSection.show();
+    };
+
+    var emptyResultSection = function() {
+      searchResults.empty();
+      clearSection.hide();
     };
 
     var splitBySpaces = function(value) {
@@ -149,6 +159,7 @@
     };
 
     bindEvents();
+    locationSearch.privateRoadAssociationNames();
     this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection).append(clearSection));
 
   };
