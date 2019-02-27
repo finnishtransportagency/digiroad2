@@ -477,6 +477,10 @@ object Digiroad2Context {
     new DamagedByThawService(roadLinkService, eventbus)
   }
 
+  lazy val trafficSignManager: TrafficSignManager = {
+    new TrafficSignManager(manoeuvreService, prohibitionService)
+  }
+
   lazy val userNotificationService: UserNotificationService = {
     new UserNotificationService()
   }
