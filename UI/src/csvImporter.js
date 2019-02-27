@@ -99,22 +99,6 @@ $(function() {
     });
   }
 
-  jQuery(document).ready(function($) {
-    $('#municipalities_search').multiselect({
-      search: {
-        left:
-          '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
-          '<input type="text" id = "left_municipalities" class="form-control" placeholder="Kuntanimi" />',
-        right:
-          '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
-          '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" />'
-      },
-      fireSearch: function(value) {
-        return value.length >= 1;
-      }
-    });
-  });
-
   function getJobs() {
      backend.getJobs().then(function(jobs){
       if(!_.isEmpty(jobs)) {
