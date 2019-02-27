@@ -1787,7 +1787,12 @@ object DataFixture {
     }
   }
 
-  def extractTrafficSigns(group: TrafficSignTypeGroup): Unit = {
+  def extractTrafficSigns(group: Option[String]): Unit = {
+    val signGroup = group match {
+      case Some(x) => trafficSignGroup(x)
+      case _ => throw new UnsupportedOperationException("Please provide a traffic sign group")
+    }
+
     println(s"Starting extract of $group at ${DateTime.now()}")
     println("")
     println("")
@@ -1801,12 +1806,13 @@ object DataFixture {
         val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
         val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet)
                                                                       .filterNot(_.floating)
-                                                                      .filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == group)
+                                                                      .filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == signGroup)
         existingAssets.foreach{sign =>
           val signType = TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).TRvalue
-          val signValue = trafficSignService.getProperty(sign, trafficSignService.valuePublicId).map(_.propertyDisplayValue.getOrElse("")).getOrElse("")
-          val signInfo = trafficSignService.getProperty(sign, trafficSignService.infoPublicId).map(_.propertyDisplayValue.getOrElse("")).getOrElse("")
-          println(s"${sign.linkId};${sign.lon};${sign.lat};$signType;$signValue;$signInfo;${sign.linkSource};${sign.modifiedBy};${sign.id};${SideCode.toTrafficDirection(SideCode(sign.validityDirection))};${sign.mValue}")
+          val signValue = trafficSignService.getProperty(sign, trafficSignService.valuePublicId).flatMap(_.propertyDisplayValue).getOrElse("")
+          val signInfo = trafficSignService.getProperty(sign, trafficSignService.infoPublicId).flatMap(_.propertyDisplayValue).getOrElse("")
+          val lastModified = sign.modifiedBy.getOrElse("")
+          println(s"${sign.linkId};${sign.lon};${sign.lat};$signType;$signValue;$signInfo;${sign.linkSource};$lastModified;${sign.id};${SideCode.toTrafficDirection(SideCode(sign.validityDirection))};${sign.mValue}")
         }
       }
     }
@@ -1939,11 +1945,7 @@ object DataFixture {
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
       case Some("traffic_sign_extract") =>
-        args.lastOption match {
-          case Some(group) =>
-            extractTrafficSigns(trafficSignGroup(group))
-          case _ => println("Please provide a traffic sign group")
-        }
+         extractTrafficSigns(args.lastOption)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
