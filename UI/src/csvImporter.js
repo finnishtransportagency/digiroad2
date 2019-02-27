@@ -1,9 +1,7 @@
-var municipalities;
-var backend = new CsvBackend();
-var refresh;
-
 $(function() {
-
+  var backend = new CsvBackend();
+  var municipalities;
+  var refresh;
   var rootElement = $('.form-box');
 
   var showImporter = function() {
