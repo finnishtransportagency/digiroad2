@@ -16,7 +16,11 @@ case class AdministrativeValues(administrativeClasses: Set[AdministrativeClass])
   override def toJson: Any = administrativeClasses
 }
 
-case class CsvDataImporterInfo(assetTypeName: String, fileName: String, user: User, inputStream: InputStream, additionalImportInfo: Seq[AdditionalImportValue] = Seq())
+case class NumericValues(values: Set[Int]) extends  AdditionalImportValue {
+  override def toJson: Any = values
+}
+
+case class CsvDataImporterInfo(assetTypeName: String, fileName: String, user: User, inputStream: InputStream, additionalImportInfo: Set[AdditionalImportValue] = Set())
 
 class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
 
@@ -29,13 +33,13 @@ class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
 
     dataImporterInfo.assetTypeName match {
       case TrafficSigns.layerName =>
-        trafficSignCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.map(_.toString.toInt))
+        trafficSignCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.flatMap(_.asInstanceOf[NumericValues].values))
       case MaintenanceRoadAsset.layerName =>
         maintenanceRoadCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user.username)
       case "roadLinks" =>
         roadLinkCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user.username)
       case MassTransitStopAsset.layerName =>
-        massTransitStopCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.flatMap(_.asInstanceOf[AdministrativeValues].administrativeClasses).toSet)
+        massTransitStopCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.flatMap(_.asInstanceOf[AdministrativeValues].administrativeClasses))
       case _ =>
     }
   }

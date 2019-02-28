@@ -5,7 +5,7 @@ import java.io.InputStreamReader
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo}
+import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import org.joda.time.DateTime
@@ -116,7 +116,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     if (csvFileInputStream.available() == 0)
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else
-      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user, csvFileInputStream))
+      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user, csvFileInputStream, municipalitiesToExpire.map(_.asInstanceOf[NumericValues])))
   }
 
   def importRoadLinks(csvFileItem: FileItem ): Unit = {
@@ -141,6 +141,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
 
-    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues]).toSeq))
+    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues])))
   }
 }
