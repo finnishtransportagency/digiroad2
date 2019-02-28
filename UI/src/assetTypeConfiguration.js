@@ -302,7 +302,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
-            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', maxNumberOfLines: 2, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
           ]
         }),
@@ -727,7 +727,7 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
-        style: new RoadDamagedByThawStyle(),
+        style: new RoadWorkStyle(),
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'number', weight: 1},

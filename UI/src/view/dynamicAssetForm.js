@@ -610,6 +610,7 @@
         DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = field.publicId;
+        var numberOfLinesAllowed = (_.isUndefined(field.maxNumberOfLines)) ? 1 : field.maxNumberOfLines;
         var elementNumber = 0;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -619,16 +620,22 @@
                 '<button class="form-control btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista kausi</button>'+
                 '</div>';
 
-             var handleButton = function() {
-                 var $element = me.element;
-                if ($element.find('.existing-date-period').length > 1) {
-                    $element.find('.add-period').css('visibility', 'hidden');
-                    $element.find('.remove-period').css('visibility', 'visible');
-                }else {
-                    $element.find('.add-period').css('visibility', 'visible');
-                    $element.find('.remove-period').css('visibility', 'hidden');
-                }
-            };
+          var handleButton = function () {
+            var $element = me.element;
+            if ($element.find('.existing-date-period').length === numberOfLinesAllowed) {
+              $element.find('.add-period').css('visibility', 'hidden');
+
+              if ($element.find('.existing-date-period').length > 1) {
+                $element.find('.remove-period').css('visibility', 'visible');
+              } else {
+                $element.find('.remove-period').css('visibility', 'hidden');
+              }
+
+            } else {
+              $element.find('.add-period').css('visibility', 'visible');
+              $element.find('.remove-period').css('visibility', 'hidden');
+            }
+          };
 
 
             me.getPropertyValue = function(){
