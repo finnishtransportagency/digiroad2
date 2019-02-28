@@ -728,28 +728,10 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new RoadDamagedByThawStyle(),
-        saveCondition: function (fields) {
-          var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
-
-          var isInDatePeriod = function(date) {
-            var datePeriodValue = date.getPropertyValue().values;
-            var startDate = new Date(_.head(datePeriodValue).value.startDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-            var endDate = new Date(_.head(datePeriodValue).value.endDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-
-            return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
-          };
-
-          var isValidDate =  _.every(datePeriodField, function(date) {
-            return date.hasValue() && isInDatePeriod(date);
-          });
-
-          var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
-          return checkBoxField ? isValidDate : true;
-        },
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'number', weight: 1},
-            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', weight: 2}
+            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, weight: 2}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,

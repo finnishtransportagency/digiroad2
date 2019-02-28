@@ -15,7 +15,7 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
     VALUES (primary_key_seq.nextval, 420, 'number', 0, 'db_migration_v197', 'tyon_tunnus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Työn tunnus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-    VALUES (primary_key_seq.nextval, 420, 'date_period', 0, 'db_migration_v197', 'arvioitu_kesto', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Arvioitu kesto'));
+    VALUES (primary_key_seq.nextval, 420, 'date_period', 1, 'db_migration_v197', 'arvioitu_kesto', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Arvioitu kesto'));
 
 
 
