@@ -75,8 +75,8 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">TIETOLAJI</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th>' +
-               '<th id="modifiedBy">Viimeisin päivitys</th> <th id="modifiedDate">Käyttäjä</th></tr></thead>';
+        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
+               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
