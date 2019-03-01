@@ -156,7 +156,7 @@ $(function() {
     };
 
     var tableHeaderRow = function () {
-      return '<thead><th id="date">Päivämäärä</th> <th id="file" style="width:50%">Tiedosto</th> <th id="status">Tila</th> <th id="detail">Raportti</th></tr></thead>';
+      return '<thead><th id="date" class="date">Päivämäärä</th> <th id="file" class="file"">Tiedosto</th> <th id="status" class="status">Tila</th> <th id="detail" class="detail">Raportti</th></tr></thead>';
     };
     var tableBodyRows = function (jobs) {
       return $('<tbody>').append(tableContentRows(jobs));
@@ -169,10 +169,10 @@ $(function() {
     var jobRow = function (job) {
       return '' +
         '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
-        '<td headers="date">' + job.createdDate + '</td>' +
-        '<td headers="file" id="file">' + job.fileName + '</td>' +
-        '<td headers="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-        '<td headers="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+        '<td headers="date" class="date">' + job.createdDate + '</td>' +
+        '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
+        '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
+        '<td headers="detail" class="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
 
         '</tr>';
     };

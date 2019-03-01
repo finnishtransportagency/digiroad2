@@ -30,7 +30,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
 
   lazy val csvDataImporter = new CsvDataImporter(roadLinkService, eventBus)
   private final val threeMegabytes: Long = 3*1024*1024
-  lazy val user = userProvider.getCurrentUser()
 
   before() {
     contentType = formats("json")
@@ -44,7 +43,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   }
 
   post("/maintenanceRoads") {
-    if (!user.isOperator()) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
    importMaintenanceRoads(fileParams("csv-file"))
@@ -56,11 +55,11 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       case municipalities => municipalities.map(_.toInt).toSet
     }
 
-    if (!(user.isOperator() || user.isMunicipalityMaintainer())) {
+    if (!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
       halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
     }
 
-    if (user.isMunicipalityMaintainer() && municipalitiesToExpire.diff(user.configuration.authorizedMunicipalities).nonEmpty) {
+    if (userProvider.getCurrentUser().isMunicipalityMaintainer() && municipalitiesToExpire.diff(userProvider.getCurrentUser().configuration.authorizedMunicipalities).nonEmpty) {
       halt(Forbidden(s"Puuttuvat muokkausoikeukset jossain listalla olevassa kunnassa: ${municipalitiesToExpire.mkString(",")}"))
     }
 
@@ -68,7 +67,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   }
 
   post("/roadLinks") {
-    if (!user.isOperator()) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
 
@@ -76,7 +75,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   }
 
   post("/massTransitStop") {
-    if (!user.isOperator()) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val administrativeClassLimitations: Set[AdministrativeClass] = Set(
@@ -93,7 +92,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   }
 
   get("/log") {
-    csvDataImporter.getByUser(user.username)
+    csvDataImporter.getByUser(userProvider.getCurrentUser().username)
   }
 
   get("/logs/:ids") {
@@ -103,7 +102,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
 
   //TODO check if this exist
   post("/csv") {
-    if (!user.isOperator()) {
+    if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
     val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
@@ -116,7 +115,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     if (csvFileInputStream.available() == 0)
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else
-      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, user, csvFileInputStream, municipalitiesToExpire.map(_.asInstanceOf[NumericValues])))
+      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, municipalitiesToExpire.map(_.asInstanceOf[NumericValues])))
   }
 
   def importRoadLinks(csvFileItem: FileItem ): Unit = {
@@ -125,7 +124,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     if (csvFileInputStream.available() == 0)
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else
-      eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, user, csvFileInputStream))
+      eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, userProvider.getCurrentUser(), csvFileInputStream))
   }
 
   def importMaintenanceRoads(csvFileItem: FileItem): Unit = {
@@ -134,13 +133,13 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     if (csvFileInputStream.available() == 0)
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else
-      eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, user, csvFileInputStream))
+      eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream))
   }
 
   def importMassTransitStop(csvFileItem: FileItem, administrativeClassLimitations: Set[AdministrativeClass]) : Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
 
-    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues])))
+    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues])))
   }
 }
