@@ -579,7 +579,7 @@
       var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
         $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
-          '<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
+          '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
 
       };
 

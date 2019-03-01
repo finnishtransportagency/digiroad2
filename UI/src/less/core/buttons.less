@@ -220,3 +220,22 @@
 	box-shadow: none;
 }
 
+.btn-quaternary {
+	color: black;
+	border-color: darkgoldenrod;
+	background-color: gold;
+	box-shadow: inset 0 1px 0 rgba(red(lightgoldenrodyellow), green(lightgoldenrodyellow), blue(lightgoldenrodyellow), .325), @btn-drop-shadow;
+
+	&:hover,
+	&:focus {
+		color: black;
+		background-color: goldenrod;
+		box-shadow: inset 0 1px 0 rgba(red(palegoldenrod), green(palegoldenrod), blue(palegoldenrod), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(darkgoldenrod), green(darkgoldenrod), blue(darkgoldenrod), .325);
+	}
+}
+
