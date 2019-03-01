@@ -1,17 +1,15 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.TrafficSignType
 import fi.liikennevirasto.digiroad2.asset.ProhibitionClass._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.dr2properties
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
@@ -300,47 +298,5 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     expireAsset(oldAsset.typeId, oldAsset.id, LinearAssetTypes.VvhGenerated, expired = true, newTransaction = false)
     createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, oldAsset.value.get, adjustment.sideCode.value, Measures(oldAsset.startMeasure, oldAsset.endMeasure), LinearAssetTypes.VvhGenerated, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), false, Some(LinearAssetTypes.VvhGenerated), None, oldAsset.verifiedBy, oldAsset.informationSource.map(_.value))
   }
-
-  def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel): Set[ValidityPeriod] = {
-    TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
-      val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
-      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
-      val validPeriods = regexMatch.findAllMatchIn(additionalPanel.panelInfo)
-
-      if (validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
-        val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
-        validPeriods.zipWithIndex.map { case (timePeriod, index) =>
-          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
-          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, convertPeriod(index))
-        }.toSet
-
-      } else
-        validPeriods.map { timePeriod =>
-          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
-          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value))
-        }
-    }
-  }
-
-  def createValue(trafficSign: PersistedTrafficSign): Prohibitions = {
-    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
-    val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
-    val typeId = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(signType))
-    val additionalPanels = additionalPanel.sortBy(_.formPosition)
-
-    val validityPeriods: Set[ValidityPeriod] =
-      additionalPanels.flatMap { additionalPanel =>
-        val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
-        createValidPeriod(trafficSignType, additionalPanel)
-      }.toSet
-
-    Prohibitions(Seq(ProhibitionValue(typeId.head.value, validityPeriods, Set())))
-  }
-
-  override protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
-    Seq()
-  }
-
-
 
 }

@@ -343,7 +343,7 @@ sealed trait ProhibitionClass {
   val trafficSign: Seq[TrafficSignType] = Seq()
 }
 object ProhibitionClass {
-  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bud,
+  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bus,
                    Taxi, PassengerCar, DeliveryCar, Truck, RecreationalVehicle, MilitaryVehicle, ArticulatedVehicle, TractorFarmVehicle,
                    OversizedTransport, DrivingInServicePurpose, DrivingToALot, Unknown)
 
@@ -423,9 +423,9 @@ object ProhibitionClass {
     def rosatteType = ""
     override val trafficSign: Seq[TrafficSignType] = Seq(NoMotorSledges)
   }
-  case object Bud extends ProhibitionClass {
+  case object Bus extends ProhibitionClass {
     def value = 5
-    def typeDescription = "Bud"
+    def typeDescription = "Bus"
     def rosatteType = "PublicBus + PrivateBus"
     override val trafficSign: Seq[TrafficSignType] = Seq(NoBuses)
   }

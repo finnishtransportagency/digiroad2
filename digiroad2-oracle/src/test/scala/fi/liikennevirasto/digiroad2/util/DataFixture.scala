@@ -179,8 +179,8 @@ object DataFixture {
     new DynamicLinearAssetDao()
   }
 
-  lazy val trafficSignLinearAssetGeneratorProcess: TrafficSingLinearAssetGeneratorProcess = {
-    new TrafficSingLinearAssetGeneratorProcess(roadLinkService)
+  lazy val trafficSignProhibitionGenerator: TrafficSignProhibitionGenerator = {
+     new TrafficSignProhibitionGenerator(roadLinkService)
   }
 
   def getProperty(name: String) = {
@@ -1863,8 +1863,8 @@ object DataFixture {
         updatePrivateRoads()
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
-      case Some("create_linear_asset_using_traffic_signs") =>
-        trafficSignLinearAssetGeneratorProcess.createLinearAssetUsingTrafficSigns()
+      case Some("create_prohibition_using_traffic_signs") =>
+        trafficSignProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1876,7 +1876,7 @@ object DataFixture {
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | " +
-        " update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | create_linear_asset_using_traffic_signs")
+        " update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | create_prohibition_using_traffic_signs")
     }
   }
 }
