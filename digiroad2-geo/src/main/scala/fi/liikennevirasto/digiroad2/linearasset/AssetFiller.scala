@@ -4,9 +4,10 @@ import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import org.joda.time.DateTime
 
-object NumericalLimitFiller {
+class AssetFiller {
   val AllowedTolerance = 0.5
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
@@ -208,43 +209,7 @@ object NumericalLimitFiller {
         case _ => Seq()
       }
     }
-    /**
-      * Combine sides together if matching m-values and segment values.
-      * @param segmentPieces Sequence of one or two segment pieces (guaranteed by squash operation)
-      * @param segments All segments on road link
-      * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
-      */
-    def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
-      def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
-        val sl1 = segments.find(_.id == seg1.assetId).get
-        val sl2 = segments.find(_.id == seg2.assetId).get
-        if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
-          val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
-            s.endMeasure - s.startMeasure).head
-          Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
-        } else {
-          segmentPieces
-        }
-      }
 
-      if (segmentPieces.size < 2)
-        return segmentPieces
-
-      val seg1 = segmentPieces.head
-      val seg2 = segmentPieces.last
-      (seg1.value, seg2.value) match {
-        case (Some(v1), Some(v2)) =>
-          if (v1.equals(v2)) {
-            chooseSegment(seg1, seg2)
-          } else
-            segmentPieces
-        case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
-        case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
-        case (None, None) =>
-          chooseSegment(seg1, seg2)
-        case _ => segmentPieces
-      }
-    }
 
     /**
       * Take pieces of segment and combine two of them if they are related to the similar segment and extend each other
@@ -332,6 +297,41 @@ object NumericalLimitFiller {
 
   }
 
+  /**
+    * Combine sides together if matching m-values and segment values.
+    * @param segmentPieces Sequence of one or two segment pieces (guaranteed by squash operation)
+    * @param segments All segments on road link
+    * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
+    */
+  protected def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
+    def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
+      val sl1 = segments.find(_.id == seg1.assetId).get
+      val sl2 = segments.find(_.id == seg2.assetId).get
+      if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
+        val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
+          s.endMeasure - s.startMeasure).head
+        Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
+      } else {
+        segmentPieces
+      }
+    }
+
+    val seg1 = segmentPieces.head
+    val seg2 = segmentPieces.last
+    (seg1.value, seg2.value) match {
+      case (Some(v1), Some(v2)) =>
+        if (v1.equals(v2)) {
+          chooseSegment(seg1, seg2)
+        } else
+          segmentPieces
+      case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
+      case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
+      case (None, None) =>
+        chooseSegment(seg1, seg2)
+      case _ => segmentPieces
+    }
+  }
+
   case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[Value])
 
   private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: RoadLink): Seq[PieceWiseLinearAsset] = {
@@ -350,7 +350,7 @@ object NumericalLimitFiller {
     (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
   }
 
-  private def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
+  protected def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
     assets.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis)
   }
 
@@ -396,58 +396,8 @@ object NumericalLimitFiller {
     }
   }
 
-  private def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val segmenstWitoutDuplicates = segments.distinct
-
-    if (segmenstWitoutDuplicates.size >= 2 &&
-      segmenstWitoutDuplicates.exists(_.createdBy.contains("automatic_process_prohibitions"))) {
-
-      val minLengthToZip = 1.0
-      val pointsOfInterestOnSegments = (Seq(0, roadLink.length) ++ segments.flatMap(s => Seq(s.startMeasure, s.endMeasure))).distinct.sorted
-      val pointsOfInterestOnSegmentsZiped = pointsOfInterestOnSegments.zip(pointsOfInterestOnSegments.tail).filterNot{piece => (piece._2 - piece._1) < minLengthToZip}
-
-      val segmentsInOverlap = pointsOfInterestOnSegmentsZiped.find { poi =>
-        val startMeasurePOI = poi._1
-        val endMeasurePOI = poi._2
-        segmenstWitoutDuplicates.count(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure) > 1
-      }
-
-      val mergeValues =
-        if (segmentsInOverlap.nonEmpty) {
-          pointsOfInterestOnSegmentsZiped.map { poi =>
-            val startMeasurePOI = poi._1
-            val endMeasurePOI = poi._2
-            val segmentsInsidePOI = segmenstWitoutDuplicates.filter(s => startMeasurePOI >= s.startMeasure && endMeasurePOI <= s.endMeasure)
-
-            segmentsInsidePOI.size match {
-              case 0 =>
-                (Seq.empty, Seq.empty, Seq.empty)
-              case 1 =>
-                val segmentToUpdate = segmentsInsidePOI.head.copy(id = 0L, startMeasure = startMeasurePOI, endMeasure = endMeasurePOI)
-                (Seq(segmentToUpdate), segmenstWitoutDuplicates.map(_.id), Seq(AssetAdjustment(segmentToUpdate, segmentsInsidePOI.map(_.id))))
-              case _ =>
-                val values =
-                  segmentsInsidePOI.flatMap { sPOI =>
-                    sPOI.value.get.asInstanceOf[Prohibitions].prohibitions
-                  }.toSet
-                val segmentToCreate =
-                  sortNewestFirst(segmentsInsidePOI).head.copy(id = 0L, startMeasure = startMeasurePOI,
-                    endMeasure = endMeasurePOI, value = Some(Prohibitions(values.toSeq).asInstanceOf[Value]))
-                (Seq(segmentToCreate), segmenstWitoutDuplicates.map(_.id), Seq(AssetAdjustment(segmentToCreate, segmentsInsidePOI.map(_.id))))
-            }
-          }
-        } else {
-          return (segments, changeSet)
-        }
-
-      val newSegments = mergeValues.flatMap(_._1)
-      val segmentsToExpire = mergeValues.flatMap(_._2).toSet
-      val assetsToAdjust = mergeValues.flatMap(_._3)
-
-      (newSegments ++ segments, changeSet.copy(expiredAssetIds = segmentsToExpire, assetAdjustments = assetsToAdjust))
-    } else {
-      (segments, changeSet)
-    }
+  protected def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    (segments, changeSet)
   }
 
   private def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
@@ -543,7 +493,6 @@ object NumericalLimitFiller {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
-//      mergeValuesExistingOnSameRoadLink,
       expireOverlappingSegments,
       combine,
       fuse,

@@ -137,7 +137,7 @@
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
-      } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){
+      } else if (layerName == 'directionalTrafficSigns' || !_.isUndefined(asset.bearing) && layerName == 'trafficSigns'){
         rotation = validitydirections.calculateRotation(asset.bearing, asset.validityDirection);
       }
       return rotation;

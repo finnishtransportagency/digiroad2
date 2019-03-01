@@ -5,13 +5,15 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday, Weekday}
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -26,6 +28,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
+  val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
   when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
@@ -603,175 +606,4 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
-
-  test("create prohibition where traffic sign closed to all vehicles "){
-    runWithRollback{
-      val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
-        override def withDynTransaction[T](f: => T): T = f
-        override def vvhClient: VVHClient = mockVVHClient
-      }
-
-      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink = RoadLink(1001, Seq(Point(0, 100), Point(0, 250)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 250))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink1 =  RoadLink(1002, Seq(Point(0, 250), Point(0, 500)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(ClosedToAllVehicles.OTHvalue.toString))))
-
-      when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100)))
-
-      when(mockRoadLinkService.getAdjacent(1000, Seq(Point(0, 100)), false)).thenReturn(Seq(roadLink))
-      when(mockRoadLinkService.getAdjacent(1001,  Seq(Point(0, 250)), false)).thenReturn(Seq(roadLink1))
-      when(mockRoadLinkService.getAdjacent(1002,  Seq(Point(0, 500)), false)).thenReturn(Seq.empty)
-
-
-      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
-      val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink, Seq()), false)
-      val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
-      prohibitions.length should be (3)
-
-      val first = prohibitions.find(_.linkId == 1000).get
-      first.startMeasure should be (50)
-      first.endMeasure should be (100)
-
-      val second =  prohibitions.find(_.linkId == 1001).get
-      second.startMeasure should be (0)
-      second.endMeasure should be (250)
-
-      val third =  prohibitions.find(_.linkId == 1002).get
-      third.startMeasure should be (0)
-      third.endMeasure should be (500)
-    }
-  }
-
-  test("should not create prohibition because traffic sign is turn left") {
-    runWithRollback {
-      val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
-        override def withDynTransaction[T](f: => T): T = f
-        override def vvhClient: VVHClient = mockVVHClient
-      }
-
-      val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus) {
-        override def withDynTransaction[T](f: => T): T = f
-        override def withDynSession[T](f: => T): T = f
-      }
-
-      val sourceRoadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoLeftTurn.OTHvalue.toString))))
-
-      when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100.0)))
-      when(mockRoadLinkService.getAdjacent(1000, Seq(Point(0, 100)), false)).thenReturn(Seq.empty)
-
-      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
-      val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue , asset.mValue, sourceRoadLink, Seq()), false)
-      prohibitionIds.length should be(0)
-    }
-  }
-
-  test("should just return adjacents with the same road name to create prohibition "){
-    runWithRollback{
-      val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
-        override def withDynTransaction[T](f: => T): T = f
-        override def vvhClient: VVHClient = mockVVHClient
-      }
-
-      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI"->"RoadName_fi"))
-      val roadLink = RoadLink(1001, Seq(Point(0, 100), Point(0, 250)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 250))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI"->"RoadName_fi"))
-      val roadLink1 =  RoadLink(1002, Seq(Point(0, 250), Point(0, 500)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI"->"RoadName"))
-
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue( ClosedToAllVehicles.OTHvalue.toString))))
-
-      when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100)))
-
-      when(mockRoadLinkService.getAdjacent(1000, Seq(Point(0, 100)), false)).thenReturn(Seq(roadLink))
-      when(mockRoadLinkService.getAdjacent(1001,  Seq(Point(0, 250)), false)).thenReturn(Seq(roadLink1))
-      when(mockRoadLinkService.getAdjacent(1002,  Seq(Point(0, 500)), false)).thenReturn(Seq.empty)
-
-      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
-      val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink, Seq()), false)
-      val prohibitions = service.getPersistedAssetsByIds(Prohibition.typeId, prohibitionIds.toSet)
-      prohibitions.length should be (2)
-
-      val first = prohibitions.find(_.linkId == 1000).get
-      first.startMeasure should be (50)
-      first.endMeasure should be (100)
-
-      val second =  prohibitions.find(_.linkId == 1001).get
-      second.startMeasure should be (0)
-      second.endMeasure should be (250)
-    }
-  }
-
-  test("create prohibition where traffic sign NoVehiclesWithDangerGoods vehicles with additional PanelInfo"){
-    runWithRollback{
-      val service = new HazmatTransportProhibitionService(mockRoadLinkService, new DummyEventBus) {
-        override def withDynTransaction[T](f: => T): T = f
-        override def vvhClient: VVHClient = mockVVHClient
-      }
-
-      val sourceRoadLink =  RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), GeometryUtils.geometryLength(Seq(Point(0.0, 0.0), Point(0.0, 100.0))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink = RoadLink(1001, Seq(Point(0, 100), Point(0, 250)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 250))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink1 =  RoadLink(1002, Seq(Point(0, 250), Point(0, 500)), GeometryUtils.geometryLength(Seq(Point(0, 0), Point(0, 500))), Municipality, 6, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))),
-        SimpleTrafficSignProperty("additional_panel", List(AdditionalPanel(HazmatProhibitionA.OTHvalue, "", "", 1), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "9 - 12 (10 - 18) 8 - 14", "", 2), AdditionalPanel(HazmatProhibitionB.OTHvalue, "", "", 3)))
-      )
-
-      when(mockRoadLinkService.getRoadLinkEndDirectionPoints(any[RoadLink], any[Option[Int]])).thenReturn(Seq(Point(0, 100)))
-      when(mockRoadLinkService.recursiveGetAdjacent(sourceRoadLink, Point(0, 100))).thenReturn(Set(roadLink, roadLink1))
-
-      val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), "test_username", sourceRoadLink)
-      val asset = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-      val additionalPanels = trafficSignService.getAllTrafficSignsProperties(asset, "additional_panel").map(_.asInstanceOf[AdditionalPanel])
-      val prohibitionIds = service.createBasedOnTrafficSign(TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, ClosedToAllVehicles.OTHvalue , asset.mValue, sourceRoadLink, additionalPanels), false)
-      val prohibitions = service.getPersistedAssetsByIds(HazmatTransportProhibition.typeId, prohibitionIds.toSet)
-      prohibitions.length should be (3)
-
-      val first = prohibitions.find(_.linkId == 1000).get
-      first.startMeasure should be (50)
-      first.endMeasure should be (100)
-      val hazmatA = first.value.get.asInstanceOf[Prohibitions].prohibitions.find(_.typeId == HazmatTransportProhibitionClass.HazmatProhibitionTypeA.value)
-      hazmatA.size should be (1)
-      hazmatA.head.validityPeriods.size should be (3)
-
-      val weekDayPeriod = hazmatA.head.validityPeriods.find(_.days == Weekday)
-      weekDayPeriod.size should be (1)
-      weekDayPeriod.get.startHour should be (9)
-      weekDayPeriod.get.endHour should be (12)
-
-      val sundayPeriod = hazmatA.head.validityPeriods.find(_.days == Sunday)
-      sundayPeriod.size should be (1)
-      sundayPeriod.get.startHour should be (8)
-      sundayPeriod.get.endHour should be (14)
-
-      val saturdayPeriod = hazmatA.head.validityPeriods.find(_.days == Saturday)
-      saturdayPeriod.size should be (1)
-      saturdayPeriod.get.startHour should be (10)
-      saturdayPeriod.get.endHour should be (18)
-
-
-      val hazmatB = first.value.get.asInstanceOf[Prohibitions].prohibitions.find(_.typeId == HazmatTransportProhibitionClass.HazmatProhibitionTypeB.value)
-      hazmatB.size should be (1)
-      hazmatB.get.validityPeriods.isEmpty should be (true)
-
-
-      val second =  prohibitions.find(_.linkId == 1001).get
-      second.startMeasure should be (0)
-      second.endMeasure should be (250)
-
-      val third =  prohibitions.find(_.linkId == 1002).get
-      third.startMeasure should be (0)
-      third.endMeasure should be (500)
-    }
-  }
-
 }

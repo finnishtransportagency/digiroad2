@@ -7,7 +7,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{AssetAdjustment, ChangeSet}
@@ -246,7 +246,7 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
 
 class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: TrafficSignInfo => trafficSignManager.trafficSignsCreateAssets(x)
+    case x: TrafficSignInfo => trafficSignManager.createAssets(x)
     case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
@@ -254,17 +254,22 @@ class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Ac
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
-      case Some(trafficType) => trafficSignManager.trafficSignsDeleteAssets(Seq((x, trafficType.propertyData)))
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")
   }
 }
 
-class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: (Int, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
-    case _ => println("trafficSignCreateAssets: Received unknown message")
+    case x: TrafficSignInfoUpdate =>
+       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
+      case _ => println("Nonexistent traffic Sign Type")
+    }
+      trafficSignManager.createAssets(x.newSign)
+    case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
 
@@ -343,16 +348,13 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
-  val prohibitionsMerge = system.actorOf(Props(classOf[ProhibitionSaveAssetConnection[AssetAdjustment]], prohibitionService), name = "assetMerge")
-  eventbus.subscribe(prohibitionsMerge, "prohibition:assetMerge")
-
   val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService, trafficSignManager), name = "trafficSignExpire")
   eventbus.subscribe(trafficSignExpire, "trafficSign:expire")
 
   val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
   eventbus.subscribe(trafficSignCreate, "trafficSign:create")
 
-  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
@@ -394,7 +396,7 @@ object Digiroad2Context {
   }
 
   lazy val linearMassLimitationService: LinearMassLimitationService = {
-    new LinearMassLimitationService(roadLinkService, new MassLimitationDao)
+    new LinearMassLimitationService(roadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {
@@ -484,7 +486,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
-    new TrafficSignManager(manoeuvreService, prohibitionService, hazmatTransportProhibitionService)
+    new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
   lazy val userNotificationService: UserNotificationService = {
@@ -603,6 +605,14 @@ object Digiroad2Context {
   }
 
   lazy val servicePointService: ServicePointService = new ServicePointService()
+
+  lazy val massTransitLaneService: MassTransitLaneService = {
+    new MassTransitLaneService(roadLinkService, eventbus)
+  }
+
+  lazy val numberOfLanesService: NumberOfLanesService = {
+    new NumberOfLanesService(roadLinkService, eventbus)
+  }
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 

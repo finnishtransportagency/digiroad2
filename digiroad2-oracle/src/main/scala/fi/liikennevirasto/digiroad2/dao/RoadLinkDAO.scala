@@ -96,6 +96,7 @@ object RoadLinkDAO{
   val LinkType = "link_type"
   val AdministrativeClass = "administrative_class"
   val VVHAdministrativeClass = "vvh_administrative_class"
+  val LinkAttributes = "road_link_attributes"
 
   private def getDao(propertyName: String): RoadLinkDAO = {
     propertyName.toLowerCase match {
@@ -103,6 +104,7 @@ object RoadLinkDAO{
       case TrafficDirection => TrafficDirectionDao
       case LinkType => LinkTypeDao
       case AdministrativeClass => AdministrativeClassDao
+      case LinkAttributes => LinkAttributesDao
     }
   }
 
@@ -292,6 +294,64 @@ object RoadLinkDAO{
 
     override def deleteValues(linkId: Long) = {
       throw new UnsupportedOperationException("Administrative Class keeps history, ins't suppost to be deleted any row from db")
+    }
+  }
+
+  case object LinkAttributesDao extends RoadLinkDAO {
+
+    def table: String = LinkAttributes
+    def column: String = LinkAttributes
+
+    def getExistingValues(linkId: Long) = {
+      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
+    }
+
+
+    def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by )
+             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username
+              from dual""".execute
+    }
+
+    def updateAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
+      sqlu"""
+            update road_link_attributes set
+              value = $value,
+              modified_date = sysdate,
+              modified_by = $username
+            where link_id = ${linkProperty.linkId}
+            	and name = $attributeName
+            	and (valid_to is null or valid_to > sysdate)
+          """.execute
+    }
+
+    def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
+      sqlu"""
+            update road_link_attributes
+            set valid_to = sysdate - 1,
+                modified_by = $username
+            where link_id = ${linkProperty.linkId}
+            	and name = $attributeName
+              and (valid_to is null or valid_to > sysdate)
+          """.execute
+    }
+
+
+    def getValue(linkProperty: LinkProperties): Int = {
+      throw new UnsupportedOperationException("Method getValue is not supported for Link Attributes class")
+    }
+
+    def getVVHValue(vvhRoadLink: VVHRoadlink) = {
+      throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
+    }
+
+    override def expireValues(linkId: Long, username: Option[String]) = {
+      sqlu"""update #$table
+                 set valid_to = SYSDATE - 1,
+                     modified_by = $username
+                 where link_id = $linkId
+                    and (valid_to is null or valid_to > sysdate)
+        """.execute
     }
   }
 }

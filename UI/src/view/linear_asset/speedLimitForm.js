@@ -40,17 +40,48 @@
       return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
     };
 
+    var userInformationLog = function() {
+      var hasMunicipality = function (linearAsset) {
+        return _.some(linearAsset.get(), function (asset) {
+          return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
+        });
+      };
+
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+      var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
+      var message = '';
+
+      if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedSpeedLimit)) {
+        message = limitedRights;
+      } else if (!authorizationPolicy.formEditModeAccess(selectedSpeedLimit))
+        message = noRights;
+
+      if(message) {
+        return '' +
+            '<div class="form-group user-information">' +
+            '<p class="form-control-static user-log-info">' + message + '</p>' +
+            '</div>';
+      } else
+        return '';
+    };
+
+
+    var informationLog = function (date, username) {
+      return date ? (date + ' / ' + username) : ' '+ username;
+    };
+
     return '<div class="wrapper read-only">' +
              '<div class="form form-horizontal form-dark linear-asset">' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + createdBy + createdDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n:' + informationLog(createdDateTime, createdBy)+ '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Muokattu viimeksi: ' + modifiedBy + modifiedDateTime + '</p>' +
+                 '<p class="form-control-static asset-log-info">Muokattu viimeksi:' + informationLog(modifiedDateTime, modifiedBy) + '</p>' +
                '</div>' +
                '<div class="form-group">' +
-                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedSpeedLimit.count() + '</p>' +
+                 '<p class="form-control-static asset-log-info">Linkkien lukumäärä:' + selectedSpeedLimit.count() + '</p>' +
                '</div>' +
+               userInformationLog() +
                limitValueButtons() +
                separatorButton() +
              '</div>' +
@@ -58,21 +89,17 @@
   };
 
   var header = function(selectedSpeedLimit) {
-    var disabled = selectedSpeedLimit.isDirty() ? '' : 'disabled';
-    var buttons = ['<button class="save btn btn-primary" disabled>Tallenna</button>',
-      '<button class="cancel btn btn-secondary" ' + disabled + '>Peruuta</button>'].join('');
-
     var title = function() {
       if (selectedSpeedLimit.isUnknown() || selectedSpeedLimit.isSplit()) {
         return '<span>Uusi nopeusrajoitus</span>';
       } else if (selectedSpeedLimit.count() == 1) {
-        return '<span>Segmentin ID: ' + selectedSpeedLimit.getId() + '</span>';
+        return '<span>Kohteen ID: ' + selectedSpeedLimit.getId() + '</span>';
       } else {
         return '<span>Nopeusrajoitus</span>';
       }
     };
 
-    return title() + '<div class="speed-limit form-controls">' + buttons + '</div>';
+    return title();
   };
 
   var footer = function(selectedSpeedLimit) {
@@ -87,15 +114,15 @@
 
       if (!authorizationPolicy.workListAccess()) {
         $('ul[class=information-content]').append('' +
-          '<li><a id="work-list-link-errors" class="wrong-speed-limits" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a></li>' +
-          '<li><a id="work-list-link" class="unknown-speed-limits" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a></li>');
+          '<li><button id="work-list-link-errors" class="wrong-speed-limits" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet Lista</button></li>' +
+          '<li><button id="work-list-link" class="unknown-speed-limits" onclick=location.href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</button></li>');
        }
       else {
         $('ul[class=information-content]').append('' +
-          '   <li><a id="work-list-link-errors" class="wrong-speed-limits operator-user" href="#work-list/speedLimitErrors">Laatuvirheet Lista</a></li>' +
+          '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet Lista</button></li>' +
           '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
-          '   <li><a id="work-list-link-municipality" class="unknown-speed-limits-municipality" href="#work-list/speedLimit/municipality">Kunnan Omistama</a></li>' +
-          '   <li><a id="work-list-link-state" class="unknown-speed-limits-state" href="#work-list/speedLimit/state">Valtion Omistama</a></li>');
+          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan omistama</button></li>' +
+          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion omistama</button></li>');
       }
   };
 

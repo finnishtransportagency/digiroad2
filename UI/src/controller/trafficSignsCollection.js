@@ -36,9 +36,15 @@
     };
 
     var trafficSignsTurnRestriction = [10, 11, 12];
+    var trafficSignProhibitionRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26];
 
     var isTurningRestriction = function(current) {
       return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
+    };
+
+    var isTrafficSignProhibitionRestriction = function(current) {
+      var propertyValue = _.head(_.find(current.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue;
+      return _.includes(trafficSignProhibitionRestriction, parseInt(propertyValue));
     };
 
     var getValue = function(current) {
@@ -143,6 +149,11 @@
         new GenericConfirmPopup('Huom! Liikennemerkin poisto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
           {type: 'alert'});
       }
+    });
+    eventbus.on('trafficSigns:created', function(current) {
+      if(isTrafficSignProhibitionRestriction(current))
+        new GenericConfirmPopup('Liikennemerkkiin liittyvä rajoitus luodaan seuraavan yön aikana.',
+          {type: 'alert'});
     });
   };
 

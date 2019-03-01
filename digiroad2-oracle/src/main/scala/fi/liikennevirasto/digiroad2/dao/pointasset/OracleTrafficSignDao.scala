@@ -57,8 +57,7 @@ object OracleTrafficSignDao {
                 when tpv.value_fi is not null then tpv.value_fi
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
-               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired
+               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -363,7 +362,7 @@ object OracleTrafficSignDao {
 
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText => {
+      case Text | LongText =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
@@ -372,15 +371,13 @@ object OracleTrafficSignDao {
         } else {
           updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
         }
-      }
-      case SingleChoice => {
+      case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
         } else {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
         }
-      }
       case AdditionalPanelType =>
         if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
         deleteAdditionalPanelProperty(assetId).execute
@@ -436,5 +433,42 @@ object OracleTrafficSignDao {
           where asset_type_id = ${TrafficSigns.typeId}
           """
     StaticQuery.updateNA(queryFilter(query) + " and (valid_to IS NULL OR valid_to > SYSDATE)").execute
+  }
+
+  def expireAssetByLinkId(linkIds: Seq[Long], signsType: Set[Int] = Set(), username: Option[String]) : Unit = {
+    val trafficSignType = if(signsType.isEmpty) "" else s"and ev.value in (${signsType.mkString(",")})"
+    val filterByUsername = if(username.isEmpty) "" else s"and created_by = $username"
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sqlu"""
+         update asset set valid_to = sysdate - 1/86400
+         where id in (
+          select a.id
+          from asset a
+          join asset_link al on al.asset_id = a.id
+          join lrm_position lrm on lrm.id = al.position_id
+          join  #$idTableName i on i.id = lrm.link_id
+          join property p on a.asset_type_id = p.asset_type_id
+          join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice' and public_id = 'trafficSigns_type'
+          join enumerated_value ev on scv.enumerated_value_id = ev.id
+          where a.asset_type_id = #${TrafficSigns.typeId}
+          and (a.valid_to is null or a.valid_to > SYSDATE )
+          and a.floating = 0
+          #$trafficSignType
+          #$filterByUsername
+         )
+      """.execute
+    }
+  }
+
+  def getLastExecutionDate(createdBy: String, signsType: Set[Int]): Option[DateTime] = {
+    sql""" select MAX( case when a.modified_date is null then MAX(a.created_date) else MAX(a.modified_date) end ) as lastExecution
+           from asset a
+           join property p on a.asset_type_id = p.asset_type_id
+           join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice' and public_id = 'trafficSigns_type'
+           join enumerated_value ev on scv.enumerated_value_id = ev.id
+           where a.created_by = $createdBy and ( a.modified_by = $createdBy or a.modified_by is null) and a.asset_type_id = #${TrafficSigns.typeId}
+           and ev.value in (#${signsType.mkString(",")})
+           group by a.modified_date, a.created_date""".as[DateTime].firstOption
+
   }
 }

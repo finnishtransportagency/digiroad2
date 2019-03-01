@@ -280,11 +280,10 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
 
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-//    expireAssets()
-//
-//    val roadNumbers = getAllViiteRoadNumbers
+    expireAssets()
 
-    val roadNumbers = Seq(355, 100, 12, 14003, 11568, 1375)
+    val roadNumbers = getAllViiteRoadNumbers
+
     roadNumbers.foreach {
       roadNumber =>
         //Fetch asset from Tierekisteri and then generates the sections foreach returned asset

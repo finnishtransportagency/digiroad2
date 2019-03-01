@@ -233,7 +233,10 @@
         type: "POST",
         url: "api/" + endPointName,
         data: JSON.stringify({asset: asset}),
-        dataType: "json"
+        dataType: "json",
+        success: function(){
+            eventbus.trigger('trafficSigns:created', asset);
+        }
       });
     };
 
@@ -256,15 +259,15 @@
       });
     }, 1000);
 
-    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
       return {
-        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
       };
     });
 
-    this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
+    this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
       return {
-        url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
+        url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
       };
     });
 
@@ -457,6 +460,10 @@
 
     this.getUnverifiedMunicipalities = function() {
       return $.getJSON('api/municipalities/byUser');
+    };
+
+    this.getCreatedLinearAssets = function(assetId) {
+      return $.getJSON('api/createdLinearAssets/byUser/' + assetId);
     };
 
     this.getMunicipalitiesWithUnknowns = function(){

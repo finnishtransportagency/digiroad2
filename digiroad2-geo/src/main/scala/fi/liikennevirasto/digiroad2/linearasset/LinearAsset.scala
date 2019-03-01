@@ -41,7 +41,7 @@ case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
 }
 
 case class DynamicAssetValue(properties: Seq[DynamicProperty])
-case class DynamicValue(value: DynamicAssetValue) extends Value{
+case class DynamicValue(value: DynamicAssetValue) extends Value {
   override def toJson: Any = value
 
   override def equals(obj: scala.Any): Boolean = {
@@ -172,4 +172,6 @@ case class NewLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime])
 
 case class InaccurateLinearAsset(assetId: Option[Long], municipality: String, administrativeClass: String, linkId: Option[Long])
+
+case class LightLinearAsset(geometry: Seq[Point], value: Int, expired: Boolean, typeId: Int, sideCode: Int)
 

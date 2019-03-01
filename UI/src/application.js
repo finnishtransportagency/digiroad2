@@ -88,8 +88,15 @@
 
     EditModeDisclaimer.initialize(instructionsPopup);
 
-    var assetGroups = groupAssets(assetConfiguration,
+    var linearAssetGroup = groupLinearAssets(assetConfiguration,
         linearAssets,
+        linkPropertiesModel,
+        selectedSpeedLimit,
+        selectedMassTransitStopModel,
+        groupedPointAssets,
+        isExperimental);
+
+    var pointAssetGroup = groupPointAssets(assetConfiguration,
         pointAssets,
         linkPropertiesModel,
         selectedSpeedLimit,
@@ -97,7 +104,9 @@
         groupedPointAssets,
         isExperimental);
 
-    var assetSelectionMenu = AssetSelectionMenu(assetGroups, {
+    var serviceRoadAsset = [new ServiceRoadBox(_.find(linearAssets, {typeId: assetConfiguration.assetTypes.maintenanceRoad}))];
+
+    var assetSelectionMenu = AssetSelectionMenu(linearAssetGroup, pointAssetGroup, serviceRoadAsset, {
       onSelect: function(layerName) {
         window.location.hash = layerName;
       }
@@ -114,7 +123,7 @@
             new LocationSearch(backend, window.applicationModel)
         ),
         new LayerSelectBox(assetSelectionMenu),
-        assetGroups
+        linearAssetGroup.concat(pointAssetGroup).concat(serviceRoadAsset)
     );
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
@@ -123,6 +132,7 @@
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
+    new CreatedLinearAssetWorkList().initialize(backend);
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
@@ -427,6 +437,7 @@
 
   var setupProjections = function() {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+    ol.proj.proj4.register(proj4);
   };
 
   function getSelectedPointAsset(pointAssets, layerName) {
@@ -441,54 +452,38 @@
     return _(groupedPointAssets).find({ layerName: layerName }).selectedPointAsset;
   }
 
-  function groupAssets(assetConfiguration,
+  function groupLinearAssets(assetConfiguration,
                        linearAssets,
-                       pointAssets,
                        linkPropertiesModel,
                        selectedSpeedLimit,
                        selectedMassTransitStopModel,
                        groupedPointAssets,
                        isExperimental) {
     var assetType =  assetConfiguration.assetTypes;
-    var assetGroups = assetConfiguration.assetGroups;
     var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
-    var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var speedLimitBox = new SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
-    var serviceRoadBox = new ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
     var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
-    var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
-    var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
-    var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
-    var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
     return [
-      [roadLinkBox],
-      [].concat(getLinearAsset(assetType.litRoad))
-          .concat(pavedRoadBox)
-          .concat(getLinearAsset(assetType.roadWidth))
-          .concat(getLinearAsset(assetType.numberOfLanes))
-          .concat(getLinearAsset(assetType.massTransitLane))
-          .concat(getLinearAsset(assetType.europeanRoads))
-          .concat(getLinearAsset(assetType.exitNumbers)),
-      [speedLimitBox]
-        .concat([winterSpeedLimits]),
-      [massTransitBox]
-          .concat(getPointAsset(assetType.obstacles))
-          .concat(getPointAsset(assetType.railwayCrossings))
-          .concat(getPointAsset(assetType.directionalTrafficSigns))
-          .concat([pedestrianCrossingBox])
-          .concat(getPointAsset(assetType.trafficLights))
-          .concat([trafficSignBox])
-          .concat(getPointAsset(assetType.servicePoints)),
-      [].concat(getLinearAsset(assetType.trafficVolume))
-          .concat([carryingCapacityBox])
-          .concat(getLinearAsset(assetType.roadDamagedByThaw))
-          .concat([careClassBox]),
-      [manoeuvreBox]
+      [roadLinkBox]
+        .concat([speedLimitBox])
+        .concat([winterSpeedLimits])
+        .concat(getLinearAsset(assetType.litRoad))
+        .concat([pavedRoadBox])
+        .concat(getLinearAsset(assetType.roadWidth))
+        .concat(getLinearAsset(assetType.numberOfLanes))
+        .concat(getLinearAsset(assetType.massTransitLane))
+        .concat(getLinearAsset(assetType.europeanRoads))
+        .concat(getLinearAsset(assetType.exitNumbers))
+        .concat(getLinearAsset(assetType.trafficVolume))
+        .concat([carryingCapacityBox])
+        .concat(getLinearAsset(assetType.roadDamagedByThaw))
+        .concat([careClassBox])
+        .concat([manoeuvreBox])
         .concat(getLinearAsset(assetType.prohibition))
         .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
         .concat(getLinearAsset(assetType.totalWeightLimit))
@@ -497,13 +492,8 @@
         .concat(getLinearAsset(assetType.bogieWeightLimit))
         .concat(getLinearAsset(assetType.heightLimit))
         .concat(getLinearAsset(assetType.lengthLimit))
-        .concat(getLinearAsset(assetType.widthLimit)),
-      [].concat([serviceRoadBox]),
-      [].concat([heightBox])
-        .concat([widthBox])
-        .concat(getGroupedPointAsset(assetGroups.trWeightGroup)),
-      [].concat(trSpeedLimitBox)
-
+        .concat(getLinearAsset(assetType.widthLimit))
+        .concat(trSpeedLimitBox)
     ];
 
     function getLinearAsset(typeId) {
@@ -514,6 +504,35 @@
       }
       return [];
     }
+  }
+
+  function groupPointAssets(assetConfiguration,
+                            pointAssets,
+                            linkPropertiesModel,
+                            selectedSpeedLimit,
+                            selectedMassTransitStopModel,
+                            groupedPointAssets
+                            ) {
+    var assetType = assetConfiguration.assetTypes;
+    var assetGroups = assetConfiguration.assetGroups;
+    var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
+    var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}));
+    var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
+    var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    return [
+      []
+        .concat([massTransitBox])
+        .concat(getPointAsset(assetType.obstacles))
+        .concat(getPointAsset(assetType.railwayCrossings))
+        .concat(getPointAsset(assetType.directionalTrafficSigns))
+        .concat(getPointAsset(assetType.pedestrianCrossings))
+        .concat(getPointAsset(assetType.trafficLights))
+        .concat([trafficSignBox])
+        .concat(getPointAsset(assetType.servicePoints)),
+      [].concat([heightBox])
+        .concat([widthBox])
+        .concat(getGroupedPointAsset(assetGroups.trWeightGroup))
+    ];
 
     function getPointAsset(typeId) {
       var asset = _.find(pointAssets, {typeId: typeId});
@@ -523,14 +542,14 @@
       return [];
     }
 
-  function getGroupedPointAsset(typeIds) {
-    var asset = _.find(groupedPointAssets, {typeIds: typeIds.sort()});
-    if (asset) {
-      return [new WeightLimitationBox(asset)];
+    function getGroupedPointAsset(typeIds) {
+      var asset = _.find(groupedPointAssets, {typeIds: typeIds.sort()});
+      if (asset) {
+        return [new WeightLimitationBox(asset)];
+      }
+      return [];
     }
-    return [];
   }
-}
 
   // Shows modal with message and close button
   function showInformationModal(message) {

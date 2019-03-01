@@ -355,7 +355,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     trafficSignCsvImporter.importTrafficSigns(invalidCsv, Set()) should equal(trafficSignCsvImporter.ImportResult(
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
-        reason = "Try to create in an unauthorized Municipality",
+        reason = "Tried to create in an unauthorized municipality",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 

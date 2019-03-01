@@ -10,18 +10,14 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point}
-import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, ManoeuvreService, Measures, ProhibitionService}
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, Point, TrafficSignType}
-import fi.liikennevirasto.digiroad2.{PriorityAndGiveWaySigns, _}
+import fi.liikennevirasto.digiroad2.{_}
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
-import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.{AdditionalPanels, PriorityAndGiveWaySigns}
-import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.{AdditionalPanels}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
 import slick.util.iter.Empty
 
@@ -57,7 +53,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink)
+  case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, nearbyLinks: Seq[VVHRoadlink])
 
   type MalformedParameters = List[String]
   type ParsedProperties = List[AssetProperty]
@@ -82,9 +78,6 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService
   val roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
-
-  lazy val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService
-  lazy val prohibitionService: ProhibitionService = Digiroad2Context.prohibitionService
 
   private val longValueFieldMappings = Map(
     "koordinaatti x" -> "lon",
@@ -145,7 +138,7 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       case (Some(lon), Some(lat)) =>
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(userProvider.getCurrentUser(), Point(lon.toLong, lat.toLong))
         if(roadLinks.isEmpty) {
-          (List(s"Try to create in an unauthorized Municipality"), Seq())
+          (List(s"Tried to create in an unauthorized municipality"), Seq())
         } else
           (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
       case _ =>
@@ -202,46 +195,41 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
   }
 
   def createTrafficSigns(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink]): Seq[AdditionalPanelInfo] = {
-    val roadLinks = trafficSignAttributes.flatMap(_.roadLink)
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val properties = trafficSignAttribute.properties
-      val roadLinks = trafficSignAttribute.roadLink
+      val nearbyLinks = trafficSignAttribute.roadLink
       val optBearing = tryToInt(getPropertyValue(properties, "bearing").toString)
-      val optTrafficDirection = tryToInt(getPropertyValue(properties, "trafficDirection").toString)
-      val twoSided = getPropertyValue(properties, "twoSided").toString match {
-        case "Kaksipuoleinen" => true
+      val twoSided = getPropertyValue(properties, "twoSided") match {
+        case "1" => true
         case _ => false
       }
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
 
-      val closestLink: VVHRoadlink = roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+      val closestRoadLink = roadLinkService.enrichRoadLinksFromVVH(Seq(nearbyLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry)))).head
+      val validityDirection = trafficSignService.getValidityDirection(Point(lon, lat), closestRoadLink, optBearing, twoSided)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(Seq(closestLink)).head
-      val validityDirection = trafficSignService.getValidityDirection(Point(lon, lat), roadLink, optBearing, twoSided)
-
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLinks.head.geometry)
-      CsvTrafficSign(lon, lat, closestLink.linkId, generateBaseProperties(properties), validityDirection, Some(GeometryUtils.calculateBearing(roadLink.geometry)), mValue, roadLink)
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), closestRoadLink.geometry)
+      CsvTrafficSign(lon, lat, closestRoadLink.linkId, generateBaseProperties(properties), validityDirection, Some(GeometryUtils.calculateBearing(closestRoadLink.geometry)), mValue, closestRoadLink, nearbyLinks)
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ sign =>
       TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
 
-    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.roadLink.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat)))}.toSet
+    val additionalPanels = additionalPanelInfo.map {panel => AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat)))}.toSet
 
     val usedAdditionalPanels = trafficSignInfo.flatMap { sign =>
       val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
-      val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, roadLinks)
+      val filteredAdditionalPanel = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels, sign.nearbyLinks)
 
-     if (filteredAdditionalPanel.size <= 3) {
+      if (filteredAdditionalPanel.size <= 3) {
         val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
-        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, sign.bearing), sign.roadLink, roadLinks)
-       filteredAdditionalPanel
+        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, sign.bearing), sign.roadLink, sign.nearbyLinks)
+        filteredAdditionalPanel
       } else Seq()
     }
-
-    additionalPanels.toSeq.diff(usedAdditionalPanels)
+    additionalPanels.filterNot(usedAdditionalPanels.toSet).toSeq
   }
 
   def importTrafficSigns(inputStream: InputStream, municipalitiesToExpire: Set[Int]): ImportResult = {
@@ -286,13 +274,13 @@ class TrafficSignCsvImporter extends CsvDataImporterOperations {
       }
 
       val notImportedAdditionalPanel = createTrafficSigns(result.createdData)
-      result.copy(notImportedData =  notImportedAdditionalPanel.map{notImported =>
-        NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x:  ${notImported.position.get.x}  koordinaatti y  ${notImported.position.get.y} liikennevirran suunta ${notImported.validityDirection} " +
-          s" liikennemerkin tyyppi ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt} " +
-          s" arvo ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}}" +
-          s" lisatieto ${trafficSignService.getTrafficSignsProperties(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
+      val resultWithExcluded  = result.copy(notImportedData = notImportedAdditionalPanel.map{notImported =>
+        NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = s"koordinaatti x: ${notImported.position.get.x}, koordinaatti y: ${notImported.position.get.y}, liikennevirran suunta: ${notImported.validityDirection}, " +
+          s"liikennemerkin tyyppi: ${TrafficSignType.applyOTHValue(trafficSignService.getProperty(notImported.propertyData, typePublicId).get.propertyValue.toString.toInt).TRvalue}, " +
+          s"arvo: ${trafficSignService.getProperty(notImported.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue}, " +
+          s"lisätieto: ${trafficSignService.getProperty(notImported.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue}")
       }.toList ::: result.notImportedData)
-      result
+      resultWithExcluded
       }
     }
 }

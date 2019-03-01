@@ -63,6 +63,46 @@ object TierekisteriDataImporter {
     new TrafficSignTierekisteriImporter()
   }
 
+  lazy val trafficSignSpeedLimitTierekisteriImporter: TrafficSignSpeedLimitTierekisteriImporter = {
+    new TrafficSignSpeedLimitTierekisteriImporter()
+  }
+
+  lazy val trafficSignRegulatorySignsTierekisteriImporter: TrafficSignRegulatorySignsTierekisteriImporter = {
+    new TrafficSignRegulatorySignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignMaximumRestrictionsTierekisteriImporter: TrafficSignMaximumRestrictionsTierekisteriImporter = {
+    new TrafficSignMaximumRestrictionsTierekisteriImporter()
+  }
+
+  lazy val trafficSignGeneralWarningSignsTierekisteriImporter: TrafficSignGeneralWarningSignsTierekisteriImporter = {
+    new TrafficSignGeneralWarningSignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignProhibitionsAndRestrictionsTierekisteriImporter: TrafficSignProhibitionsAndRestrictionsTierekisteriImporter = {
+    new TrafficSignProhibitionsAndRestrictionsTierekisteriImporter()
+  }
+
+  lazy val trafficSignMandatorySignsTierekisteriImporter: TrafficSignMandatorySignsTierekisteriImporter = {
+    new TrafficSignMandatorySignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignPriorityAndGiveWaySignsTierekisteriImporter: TrafficSignPriorityAndGiveWaySignsTierekisteriImporter = {
+    new TrafficSignPriorityAndGiveWaySignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignInformationSignsTierekisteriImporter: TrafficSignInformationSignsTierekisteriImporter = {
+    new TrafficSignInformationSignsTierekisteriImporter()
+  }
+
+  lazy val trafficSignServiceSignsTierekisteriImporter: TrafficSignServiceSignsTierekisteriImporter = {
+    new TrafficSignServiceSignsTierekisteriImporter()
+  }
+  //TODO remove this code after merge US 1707
+  lazy val trafficSignAdditionalPanelsTierekisteriImporter: TrafficSignAdditionalPanelsTierekisteriImporter = {
+    new TrafficSignAdditionalPanelsTierekisteriImporter()
+  }
+
   lazy val pavedRoadImporterOperations: PavedRoadTierekisteriImporter = {
     new PavedRoadTierekisteriImporter()
   }
@@ -132,11 +172,29 @@ object TierekisteriDataImporter {
     new AnimalWarningsTierekisteriImporter()
   }
 
+  lazy val bogieWeightLimitImporter: BogieWeightLimitImporter = {
+    new BogieWeightLimitImporter()
+  }
+
+  lazy val axleWeightLimitImporter: AxleWeightLimitImporter = {
+    new AxleWeightLimitImporter()
+  }
+
+  lazy val truckWeightLimitImporter: TruckWeightLimitImporter = {
+    new TruckWeightLimitImporter()
+  }
+
+  lazy val totalWeightLimitImporter: TotalWeightLimitImporter = {
+    new TotalWeightLimitImporter()
+  }
+
+  lazy val heightLimitImporter: HeightLimitImporter = {
+    new HeightLimitImporter()
+  }
+
   def getLastExecutionDate(tierekisteriAssetImporter: TierekisteriImporterOperations): Option[DateTime] = {
     OracleDatabase.withDynSession{
-      val assetId = tierekisteriAssetImporter.getAssetTypeId
-      val assetName = tierekisteriAssetImporter.getAssetName
-      assetDao.getLastExecutionDate(assetId, s"batch_process_$assetName")
+      tierekisteriAssetImporter.getLastExecutionDate
     }
   }
 
@@ -172,7 +230,7 @@ object TierekisteriDataImporter {
     roadNumbers.foreach(ra => println(ra))
 
     roadNumbers.foreach {
-      case roadNumber =>
+      roadNumber =>
         println("\nFetch Traffic Volume by Road Number " + roadNumber)
         val trTrafficVolume = tierekisteriTrafficVolumeAsset.fetchActiveAssetData(roadNumber)
 
@@ -222,7 +280,7 @@ object TierekisteriDataImporter {
   val tierekisteriDataImporters = Map[String, TierekisteriImporterOperations](
     "litRoad" -> litRoadImporterOperations,
     "roadWidth" -> roadWidthImporterOperations,
-    "trafficSign" -> trafficSignTierekisteriImporter,
+    //"trafficSign" -> trafficSignTierekisteriImporter,
     "pavedRoad" -> pavedRoadImporterOperations,
     "massTransitLane" -> massTransitLaneImporterOperations,
     "damagedByThaw" -> damagedByThawImporterOperations,
@@ -240,6 +298,27 @@ object TierekisteriDataImporter {
     "carryingCapacity" -> carryingCapacityTierekisteriImporter,
     "pedestrianCrossing" -> pedestrianCrossingTierekisteriImporter,
     "animalWarnings" -> animalWarningsTierekisteriImporter
+  )
+
+  val tierekisteriDataConverter = Map[String, TierekisteriImporterOperations](
+    "bogieWeightConverterImporter" -> bogieWeightLimitImporter,
+    "axleWeightConverterImporter" -> axleWeightLimitImporter,
+    "totalWeightConverterImporter" -> totalWeightLimitImporter,
+    "trailerTruckWeightConverterImporter" -> truckWeightLimitImporter,
+    "heightLimitConverterImporter" -> heightLimitImporter
+  )
+
+  val trafficSignGroup = Map[String, TierekisteriImporterOperations] (
+    "SpeedLimits" -> trafficSignSpeedLimitTierekisteriImporter,
+    "RegulatorySigns" ->  trafficSignRegulatorySignsTierekisteriImporter,
+    "MaximumRestrictions" ->  trafficSignMaximumRestrictionsTierekisteriImporter,
+    "GeneralWarningSigns" ->  trafficSignGeneralWarningSignsTierekisteriImporter,
+    "ProhibitionsAndRestrictions" ->  trafficSignProhibitionsAndRestrictionsTierekisteriImporter,
+    "MandatorySigns" ->  trafficSignMandatorySignsTierekisteriImporter,
+    "PriorityAndGiveWaySigns" ->  trafficSignPriorityAndGiveWaySignsTierekisteriImporter,
+    "InformationSigns" ->  trafficSignInformationSignsTierekisteriImporter,
+    "ServiceSigns" ->  trafficSignServiceSignsTierekisteriImporter,
+    "AdditionalPanels" -> trafficSignAdditionalPanelsTierekisteriImporter //TODO remove this line after merge US1707
   )
 
   private def importAssets(tierekisteriAssetImporter: TierekisteriImporterOperations): Unit = {
@@ -284,10 +363,10 @@ object TierekisteriDataImporter {
   }
 
   private def getDateFromArgs(args:Array[String]): Option[DateTime] = {
-    if(args.size >= 4)
-      convertStringToDate("yyyy-MM-dd hh:mm:ss", Some(args(2) + " " + args(3)))
-    else if(args.size >= 3)
-      convertStringToDate("yyyy-MM-dd", Some(args(2)))
+    if(args.length >= 4)
+      convertStringToDate("yyyy-MM-dd hh:mm:ss", Some(args(3) + " " + args(4)))
+    else if(args.length >= 3)
+      convertStringToDate("yyyy-MM-dd", Some(args(3)))
     else
       None
   }
@@ -309,27 +388,35 @@ object TierekisteriDataImporter {
       }
     }
 
-    if(args.size < 2){
+    if(args.length < 2){
       println("Usage: TierekisteriDataImporter <operation> <assetType> [<args>]")
     }else{
       val operation = args(0)
       val assetType = args(1)
 
-      val availableAssetTypes = tierekisteriDataImporters.keySet ++ Set("trafficVolume")
+      val availableAssetTypes = tierekisteriDataImporters.keySet ++ tierekisteriDataConverter.keySet ++ Set("trafficVolume", "trafficSign")
 
       if(availableAssetTypes.contains(assetType)){
         operation match {
           case "import" =>
             if(assetType == "trafficVolume")
               importTrafficVolumeAsset(tierekisteriTrafficVolumeAssetClient)
-            else
-              importAssets(tierekisteriDataImporters.get(assetType).get)
+            else if (assetType == "trafficSign"){
+             if (args.length == 3 ) args(2) else throw new IllegalArgumentException("Missing Traffic Sign Group")
+              importAssets(trafficSignGroup(args(2)))
+            } else
+              importAssets(tierekisteriDataImporters(assetType))
           case "update" =>
             val lastExecutionDate = getDateFromArgs(args)
             if(assetType == "trafficVolume")
               println("The asset type trafficVolume doesn't support update operation.")
-            else
-              updateAssets(tierekisteriDataImporters.get(assetType).get, lastExecutionDate)
+            else if (assetType == "trafficSign") {
+              if (args.length == 3) args(2) else throw new IllegalArgumentException("Missing Traffic Sign Group")
+                updateAssets(trafficSignGroup(args(2)), lastExecutionDate)
+            }else
+              updateAssets(tierekisteriDataImporters(assetType), lastExecutionDate)
+          case "converter" =>
+            importAssets(tierekisteriDataConverter(assetType))
         }
       }else{
         println(s"The asset type $assetType is not supported")

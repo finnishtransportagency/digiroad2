@@ -42,10 +42,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     new ManoeuvreService(roadLinkService, eventbus)
   }
 
-  lazy val prohibitionService: ProhibitionService = {
-    new ProhibitionService(roadLinkService, eventbus)
-  }
-
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, userProvider, eventbus)
   }

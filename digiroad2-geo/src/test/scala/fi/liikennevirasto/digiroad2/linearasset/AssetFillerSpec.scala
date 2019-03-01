@@ -10,13 +10,16 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import org.scalatest._
 
-class NumericalLimitFillerSpec extends FunSuite with Matchers {
+class AssetFillerSpec extends FunSuite with Matchers {
+
+  object assetFiller extends AssetFiller
+
   test("create non-existent linear assets on empty road links") {
     val topology = Seq(
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map.empty[Long, Seq[PersistedLinearAsset]]
-    val (filledTopology, _) = NumericalLimitFiller.fillTopology(topology, linearAssets, 30)
+    val (filledTopology, _) = assetFiller.fillTopology(topology, linearAssets, 30)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.map(_.value) should be(Seq(None))
@@ -32,7 +35,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 10.0, 15.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
@@ -52,7 +55,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(
       1l -> Seq(PersistedLinearAsset(1l, 1l, 1, Some(NumericValue(1)), 0.0, 15.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(BothDirections))
@@ -82,21 +85,14 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       )
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
-    filledTopology should have size 4
+    filledTopology should have size 2
+
+    filledTopology.filter(_.linkId == 2l).map(_.sideCode) should be(Seq(BothDirections))
 
     filledTopology.filter(_.id == 1l).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 1l).map(_.linkId) should be(Seq(1l))
-
-    filledTopology.filter(_.id == 2l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 2l).map(_.linkId) should be(Seq(2l))
-
-    filledTopology.filter(_.id == 3l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 3l).map(_.linkId) should be(Seq(2l))
-
-    filledTopology.filter(_.id == 4l).map(_.sideCode) should be(Seq(BothDirections))
-    filledTopology.filter(_.id == 4l).map(_.linkId) should be(Seq(2l))
 
     changeSet.adjustedSideCodes should be(Seq(
       SideCodeAdjustment(1l, SideCode.BothDirections, PavedRoad.typeId),
@@ -156,25 +152,22 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     changeSet.adjustedSideCodes should be(Seq())
   }
 
-  test("generate one-sided asset when two-way road link is half-covered") {
+  test("generate two-sided asset when two-way road link is half-covered") {
     val topology = Seq(
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
         1, TrafficDirection.BothDirections, Motorway, None, None))
     val linearAssets = Map(
       1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(NumericValue(1)), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, 110)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, 110)
 
-    filledTopology should have size 2
-    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(TowardsDigitizing))
+    filledTopology should have size 1
+
+    filledTopology.filter(_.id == 1).map(_.sideCode) should be(Seq(BothDirections))
     filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
-    filledTopology.filter(_.id == 0).map(_.sideCode) should be(Seq(AgainstDigitizing))
-    filledTopology.filter(_.id == 0).map(_.value) should be(Seq(None))
-    filledTopology.filter(_.id == 0).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-
-    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(1,BothDirections,110)), Set.empty[Long]))
   }
 
   test("project road lights to new geometry") {
@@ -193,7 +186,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     )
 
     val output = changes map { change =>
-      NumericalLimitFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
+      assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
 
@@ -224,7 +217,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     )
 
     val output = changes map { change =>
-      NumericalLimitFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
+      assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
     output.head._1.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -235,7 +228,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     output.last._1.endMeasure should be(3.0)
 
     val output2 = changes map { change =>
-      NumericalLimitFiller.projectLinearAsset(assets.last, linkmap.get(change.newId.get).get,
+      assetFiller.projectLinearAsset(assets.last, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
         ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
     output2.length should be(3)
@@ -265,7 +258,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
     val output = changes flatMap { change =>
       assets.map(
-        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
+        assetFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
           ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
@@ -288,7 +281,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
     filledTopology should have size 2
     filledTopology.map(_.id).sorted should be (Seq(0,2))
     changeSet.droppedAssetIds should have size 1
@@ -303,7 +296,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
     filledTopology should have size 1
     filledTopology.map(_.id) should be (Seq(1))
     changeSet.droppedAssetIds should have size 0
@@ -329,7 +322,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
 
     val output = changes flatMap { change =>
       assets.map(
-        NumericalLimitFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
+        assetFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
           ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
@@ -354,7 +347,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface,None, None, None)
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
@@ -377,7 +370,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
         Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(roadLinks, Map(1L -> assets), 140)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, Map(1L -> assets), 140)
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be(Seq(SideCode.BothDirections))
     filledTopology.map(_.value) should be(Seq(Some(NumericValue(2))))
@@ -403,7 +396,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(3, 1, SideCode.BothDirections.value, None, 9.0, 15.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 160)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 160)
     filledTopology.length should be (1)
     filledTopology.head.id should be (1)
     filledTopology.head.endMeasure should be (15.0)
@@ -425,7 +418,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(3, 1, SideCode.BothDirections.value, Some(NumericValue(10)), 9.0, 15.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 160)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 160)
     filledTopology.length should be (1)
     filledTopology.head.id should be (1)
     filledTopology.head.endMeasure should be (15.0)
@@ -449,7 +442,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(4, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(20)), 4.0, 10.0, Some("guy"),
         Some(DateTime.now().minusDays(4)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
     filledTopology.length should be (2)
     filledTopology.head.startMeasure should be (0.0)
     filledTopology.head.endMeasure should be (10.00)
@@ -471,7 +464,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(3, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(10)), 0.0, 10.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
     filledTopology.length should be (1)
     filledTopology.head.startMeasure should be (0.0)
     filledTopology.head.endMeasure should be (10.00)
@@ -486,7 +479,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(3, 1, SideCode.TowardsDigitizing.value, None, 0.0, 10.0, Some("guy"),
         Some(DateTime.now().minusDays(1)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface, None, None, None)
     )
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
     filledTopology.length should be (1)
     filledTopology.head.startMeasure should be (0.0)
     filledTopology.head.endMeasure should be (10.00)
@@ -827,7 +820,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     val linearAssets = assets.map( a =>
       PersistedLinearAsset(a._1, a._2, a._3, a._4, a._5, a._6, Option("k123"), None, Option("k345"), Option(DateTime.parse(a._8.dropRight(6), Asset.DateTimePropertyFormatMs)), expired=false, 100, a._7, None, linkSource = NormalLinkInterface, None, None, None)
     )
-    val (outputAssets, changeSet) = NumericalLimitFiller.fillTopology(Seq(rl), linearAssets.groupBy(_.linkId), 110)
+    val (outputAssets, changeSet) = assetFiller.fillTopology(Seq(rl), linearAssets.groupBy(_.linkId), 110)
     changeSet.adjustedMValues.size == 1 should be (true)
     outputAssets.size should be (1)
     changeSet.expiredAssetIds should have size 317

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, Queries}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -22,6 +22,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.asset.HazmatTransportProhibitionClass.HazmatProhibitionTypeA
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 
@@ -416,7 +417,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val id1 = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties1, 1, None), testUser.username, roadLink)
 
-      val assets = service.getTrafficSigns(235, service.getRestrictionsEnumeratedValues(TrafficSignManager.manoeuvreRelatedSigns))
+      val assets = service.getTrafficSignsWithTrafficRestrictions(235, service.getRestrictionsEnumeratedValues)
 
       assets.find(_.id == id).size should be(0)
       assets.find(_.id == id1).size should be(1)
@@ -441,7 +442,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, Seq()))
+      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink))
     }
   }
 
@@ -698,8 +699,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
     val result = service.getByMunicipalityAndGroup(235, TrafficSignTypeGroup.GeneralWarningSigns)
 
-    result.exists(_.id == id) should be (true)
-    result.exists(_.id == id1) should be (true)
+    result.map(_.id).forall(resultId => Seq(id, id1).contains(resultId)) should be (true)
     }
   }
 
