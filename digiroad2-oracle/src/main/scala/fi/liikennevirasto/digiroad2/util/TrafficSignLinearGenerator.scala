@@ -57,10 +57,6 @@ trait TrafficSignLinearGenerator {
     new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
-  lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = {
-    new HazmatTransportProhibitionService(roadLinkService, eventbus)
-  }
-
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, userProvider, eventbus)
   }
@@ -88,6 +84,27 @@ trait TrafficSignLinearGenerator {
       case SideCode.TowardsDigitizing => (None, Some(last), Some(sideCode.value))
       case SideCode.AgainstDigitizing => (Some(first), None, Some(sideCode.value))
       case _ => (Some(first), Some(last), Some(sideCode.value))
+    }
+  }
+
+  def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel): Set[ValidityPeriod] = {
+    TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
+      val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
+      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
+      val validPeriods = regexMatch.findAllMatchIn(additionalPanel.panelInfo)
+
+      if (validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
+        val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
+        validPeriods.zipWithIndex.map { case (timePeriod, index) =>
+          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
+          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, convertPeriod(index))
+        }.toSet
+
+      } else
+        validPeriods.map { timePeriod =>
+          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
+          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value))
+        }
     }
   }
 
@@ -544,10 +561,9 @@ trait TrafficSignLinearGenerator {
   }
 }
 
-//Prohibition
-case class TrafficSignProhibitionGenerator(RoadLinkServiceImpl: RoadLinkService) extends TrafficSignLinearGenerator  {
-  override def roadLinkService: RoadLinkService = RoadLinkServiceImpl
-  override def vvhClient: VVHClient = RoadLinkServiceImpl.vvhClient
+class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignLinearGenerator  {
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
 
   override type AssetValue = Prohibitions
   override val assetType : Int = Prohibition.typeId
@@ -571,27 +587,6 @@ case class TrafficSignProhibitionGenerator(RoadLinkServiceImpl: RoadLinkService)
     Prohibitions(types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set())).toSeq)
   }
 
-  def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel): Set[ValidityPeriod] = {
-    TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
-      val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
-      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
-      val validPeriods = regexMatch.findAllMatchIn(additionalPanel.panelInfo)
-
-      if (validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
-        val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
-        validPeriods.zipWithIndex.map { case (timePeriod, index) =>
-          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
-          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, convertPeriod(index))
-        }.toSet
-
-      } else
-        validPeriods.map { timePeriod =>
-          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
-          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value))
-        }
-    }
-  }
-
   def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
     if (withTransaction) {
       withDynTransaction {
@@ -605,7 +600,7 @@ case class TrafficSignProhibitionGenerator(RoadLinkServiceImpl: RoadLinkService)
   }
 
   override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[TrafficSignToLinear] = {
-    val existingAssets = prohibitionService.getPersistedAssetsByLinkIds(Prohibition.typeId, roadLinks.map(_.linkId), false)
+    val existingAssets = prohibitionService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
     segmentsConverter(existingAssets, roadLinks)
   }
 
@@ -619,7 +614,7 @@ case class TrafficSignProhibitionGenerator(RoadLinkServiceImpl: RoadLinkService)
   }
 
   override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
-    prohibitionService.createWithoutTransaction(Prohibition.typeId, newSegment.roadLink.linkId, newSegment.value,
+    prohibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
@@ -639,3 +634,45 @@ case class TrafficSignProhibitionGenerator(RoadLinkServiceImpl: RoadLinkService)
     Prohibitions(segment.flatMap(_.value.asInstanceOf[Prohibitions].prohibitions).distinct)
   }
 }
+
+class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)  {
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+  override val assetType : Int = Prohibition.typeId
+
+  lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = {
+    new HazmatTransportProhibitionService(roadLinkService, eventbus)
+  }
+
+  override def createValue(trafficSign: PersistedTrafficSign): Prohibitions = {
+    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+    val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
+    val types = HazmatTransportProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(signType))
+    val additionalPanels = additionalPanel.sortBy(_.formPosition)
+
+    val validityPeriods: Set[ValidityPeriod] =
+      additionalPanels.flatMap { additionalPanel =>
+        val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
+        createValidPeriod(trafficSignType, additionalPanel)
+      }.toSet
+
+    Prohibitions(types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set())).toSeq)
+  }
+
+  override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
+    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+    TrafficSignManager.belongsToHazmat(signType)
+  }
+
+  //TODO check if it necessary to call actor for validator process update method
+  override def updateLinearAsset(newSegment: TrafficSignToLinear, username: String): Seq[Long] = {
+    hazmatTransportProhibitionService.updateWithoutTransaction(Seq(newSegment.oldAssetId.get), newSegment.value, username)
+  }
+
+  //TODO check if it necessary to call actor for validator process create method
+  override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
+    hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
+      newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
+      vvhClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
+  }
+}
+

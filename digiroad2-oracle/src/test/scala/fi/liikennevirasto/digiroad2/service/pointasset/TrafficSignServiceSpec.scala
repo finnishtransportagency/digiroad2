@@ -417,7 +417,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val id1 = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties1, 1, None), testUser.username, roadLink)
 
-      val assets = service.getTrafficSignsWithTrafficRestrictions(235, service.getRestrictionsEnumeratedValues)
+      val assets = service.getTrafficSigns(235, service.getRestrictionsEnumeratedValues(Seq(NoLeftTurn, NoRightTurn, NoUTurn)))
 
       assets.find(_.id == id).size should be(0)
       assets.find(_.id == id1).size should be(1)
@@ -442,7 +442,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink))
+      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, Seq()))
     }
   }
 

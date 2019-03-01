@@ -333,7 +333,38 @@ object TimePeriodClass {
 
     override val trafficSign: TrafficSignType = TrafficSignType.Unknown
   }
+}
 
+sealed trait HazmatTransportProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object HazmatTransportProhibitionClass {
+  val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[HazmatTransportProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): HazmatTransportProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    HazmatTransportProhibitionClass.apply(prohibitionValue).trafficSign
+
+  case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = HazmatProhibitionA
+  }
+
+  case object HazmatProhibitionTypeB extends HazmatTransportProhibitionClass {
+    def value: Int = 25
+    override val trafficSign: TrafficSignType = HazmatProhibitionB
+  }
+
+  case object Unknown extends HazmatTransportProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
 }
 
 sealed trait ProhibitionClass {

@@ -16,7 +16,7 @@ import org.joda.time.DateTime
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, additionalPanel: Seq[AdditionalPanel])
-//case class TrafficSignInfoUpdate(expireId: Long, newSign: TrafficSignInfo)
+case class TrafficSignInfoUpdate(expireId: Long, newSign: TrafficSignInfo)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
   def eventBus: DigiroadEventBus = eventBusImpl
@@ -272,39 +272,24 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
     OracleTrafficSignDao.fetchByLinkId(linkIds)
   }
 
-  def getTrafficSignsWithTrafficRestrictions( municipality: Int, enumeratedValueIds: Boolean => Seq[Long], newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
+  def getTrafficSigns( municipality: Int, enumeratedValueIds: Boolean => Seq[Long], newTransaction: Boolean = true): Seq[PersistedTrafficSign] = {
     val enumeratedValues = enumeratedValueIds(newTransaction)
     if(newTransaction)
         withDynSession {
-          OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValues, municipality)
+          OracleTrafficSignDao.fetchByTypeValues(enumeratedValues, municipality)
         }
     else {
-      OracleTrafficSignDao.fetchByTurningRestrictions(enumeratedValues, municipality)
+      OracleTrafficSignDao.fetchByTypeValues(enumeratedValues, municipality)
     }
   }
 
-
-  def getRestrictionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
+  def getRestrictionsEnumeratedValues(trafficType: Seq[TrafficSignType])( newTransaction: Boolean = true): Seq[Long] = {
     if(newTransaction)
       withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(NoLeftTurn, NoRightTurn, NoUTurn))
+        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficType)
       }
     else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(Seq(NoLeftTurn, NoRightTurn, NoUTurn))
-    }
-  }
-
-  def getProhibitionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
-    val trafficSignValues = Seq(ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations,
-      NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoBuses, NoMopeds,
-      NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback)
-
-    if(newTransaction)
-      withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-      }
-    else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
+      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficType)
     }
   }
 
@@ -334,12 +319,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
       OracleTrafficSignDao.expire(linkIds, username)
     } else
       OracleTrafficSignDao.expire(linkIds, username)
-  }
-
-  def getTrafficType(id: Long) : Option[Int] = {
-    withDynSession {
-      OracleTrafficSignDao.getTrafficSignType(id)
-    }
   }
 
   def getLatestModifiedAsset(trafficSigns: Seq[PersistedTrafficSign]): PersistedTrafficSign = {

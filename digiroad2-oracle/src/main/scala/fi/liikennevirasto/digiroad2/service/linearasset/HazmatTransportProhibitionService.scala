@@ -1,16 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{HazmatTransportProhibitionClass, TimePeriodClass, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
-import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao, OracleUserProvider}
+import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
 class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -21,9 +18,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
-
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  lazy val trafficSignService = new TrafficSignService(roadLinkService, new OracleUserProvider, eventBus)
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
     if (newLinearAssets.nonEmpty)
@@ -94,156 +89,57 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         }
     }
   }
-
-  def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel) : Set[ValidityPeriod] = {
-    TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
-      val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
-      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
-      val validPeriods =  regexMatch.findAllMatchIn(additionalPanel.panelInfo)
-
-      if(validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
-        val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
-        validPeriods.zipWithIndex.map { case (timePeriod, index) =>
-          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
-          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, convertPeriod(index))
-        }.toSet
-
-      }else
-        validPeriods.map { timePeriod =>
-          val splitTime = timePeriod.toString.replaceAll("[\\(\\)]|\\s", "").split("-")
-          ValidityPeriod(splitTime.head.toInt, splitTime.last.toInt, ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value))
-        }
-    }
-  }
-
-
-  def createValue(additionalPanels: Seq[AdditionalPanel]) :Seq[ProhibitionValue] = {
-    additionalPanels.foldLeft(Seq.empty[ProhibitionValue]) { case (result, additionalPanel) =>
-      val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
-
-      val typeId = HazmatTransportProhibitionClass.fromTrafficSign(trafficSignType)
-
-      if (typeId.nonEmpty) {
-        result ++ Seq(ProhibitionValue(typeId.head.value, Set(), Set()))
-      }else {
-        val validityPeriod: Set[ValidityPeriod] = createValidPeriod(trafficSignType, additionalPanel)
-        result.init :+ result.last.copy(validityPeriods = validityPeriod)
-      }
-    }
-  }
-
-  override def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
-    logger.info("Creating prohibition from traffic sign")
-    val tsLinkId = trafficSignInfo.linkId
-    val tsDirection = trafficSignInfo.validityDirection
-
-    if (tsLinkId != trafficSignInfo.roadLink.linkId)
-      throw new ProhibitionCreationException(Set("Wrong roadlink"))
-
-    if (SideCode(tsDirection) == SideCode.BothDirections)
-      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
-
-    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
-
-    val roadLinks = roadLinkService.recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
-    logger.info("End of fetch for adjacents")
-
-    val orderedPanel = trafficSignInfo.additionalPanel.sortBy(_.formPosition)
-
-    val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
-
-    if (prohibitionValue.nonEmpty) {
-      val ids = (roadLinks ++ Set(trafficSignInfo.roadLink)).map { roadLink =>
-        val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
-          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
-          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
-          case _ => (0, roadLink.length)
-
-        }
-        val assetId = createWithoutTransaction(HazmatTransportProhibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
-          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
-
-        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
-
-        logger.info(s"HazmatTransportProhibition created with id: $assetId")
-        assetId
-      }
-      ids.toSeq
-    }
-    else Seq()
-  }
-
-  def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    val assets = if(withTransaction) {
-      withDynTransaction {
-        val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
-        dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
-      }
-    } else {
-      val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
-      dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
-    }
-    assets
-  }
-
-  override def deleteOrUpdateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-    logger.info("expiring asset")
-
-    val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(id)
-    val orderedPanel = additionalPanel.sortBy(_.formPosition)
-    val trProhibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
-
-    val (toDelete, toUpdate) = trafficSignRelatedAssets.partition{ asset =>
-      asset.value.get.asInstanceOf[Prohibitions].equals(Prohibitions(trProhibitionValue))
-    }
-
-    if(toDelete.nonEmpty)
-      expire(toDelete.map(_.id), username.getOrElse(""))
-
-    val groupedAssetsToUpdate = toUpdate.map { asset =>
-      (asset.id, asset.value.get.asInstanceOf[Prohibitions].prohibitions.diff(trProhibitionValue))
-    }.groupBy(_._2)
-
-    groupedAssetsToUpdate.values.map { value =>
-      update(value.map(_._1), Prohibitions(value.flatMap(_._2)), username.getOrElse(""))
-    }
-  }
-
-
-
-//  def recursiveGetAdjacentLimited(sourceRoadLink: RoadLink, point: Point, trSignByMunicipality: Map[Int, Seq[IncomingPointAsset]]): Set[RoadLink] = {
+//  override def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+//    logger.info("Creating prohibition from traffic sign")
+//    val tsLinkId = trafficSignInfo.linkId
+//    val tsDirection = trafficSignInfo.validityDirection
 //
-//    def iterativeProcess(sourceRoadLink: RoadLink, point: Point, trSignByMunicipality: Map[Int, Seq[IncomingPointAsset]], intermediates: Set[RoadLink], roadNamePublicId: String, roadNameSource: String): Set[RoadLink] = {
-//      val adjRoadLink = roadLinkService.getAdjacent(sourceRoadLink.linkId, Seq(point), newTransaction = false).filter(adjLink => adjLink.attributes.getOrElse(roadNamePublicId, "").toString.nonEmpty && adjLink.attributes.getOrElse(roadNamePublicId, "") == roadNameSource)
-//      val filteredRoadLink = adjRoadLink.filterNot(adj => intermediates.contains(adj))
+//    if (tsLinkId != trafficSignInfo.roadLink.linkId)
+//      throw new ProhibitionCreationException(Set("Wrong roadlink"))
 //
-//      if(filteredRoadLink.isEmpty) {
-//        intermediates
-//      } else {
-//        filteredRoadLink.flatMap { roadLink =>
-//          if(trSignByMunicipality(roadLink.municipalityCode).isEmpty) {
-//            //get trafficSign on database by roadLink and type if some result
-//            Seq()
-//          } else if (trSignByMunicipality(roadLink.municipalityCode).exists(_.linkId == roadLink.linkId)) {
-//            intermediates
-//          } else {
-//            iterativeProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), trSignByMunicipality: Map[Int, Seq[IncomingPointAsset]], intermediates ++ Set(roadLink), roadNamePublicId, roadNameSource)
-//          }
+//    if (SideCode(tsDirection) == SideCode.BothDirections)
+//      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
+//
+//    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
+//
+//    val roadLinks = roadLinkService.recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
+//    logger.info("End of fetch for adjacents")
+//
+//    val orderedPanel = trafficSignInfo.additionalPanel.sortBy(_.formPosition)
+//
+//    val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
+//
+//    if (prohibitionValue.nonEmpty) {
+//      val ids = (roadLinks ++ Set(trafficSignInfo.roadLink)).map { roadLink =>
+//        val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
+//          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
+//          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
+//          case _ => (0, roadLink.length)
+//
 //        }
-//      }.toSet
-//    }
+//        val assetId = createWithoutTransaction(HazmatTransportProhibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
+//          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
 //
-//    val (roadNamePublicId, roadNameSource) =
-//      sourceRoadLink.attributes.get("ROADNAME_FI") match {
-//        case Some(nameFi) =>
-//          ("ROADNAME_FI", nameFi.toString)
-//        case _ =>
-//          ("ROADNAME_SE", sourceRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString)
+//        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
+//
+//        logger.info(s"HazmatTransportProhibition created with id: $assetId")
+//        assetId
 //      }
-//
-//    iterativeProcess(sourceRoadLink, point, trSignByMunicipality, Set(), roadNamePublicId, roadNameSource)
-//
+//      ids.toSeq
+//    }
+//    else Seq()
 //  }
 
-
+//  def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+//    val assets = if(withTransaction) {
+//      withDynTransaction {
+//        val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
+//        dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
+//      }
+//    } else {
+//      val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
+//      dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
+//    }
+//    assets
+//  }
 }

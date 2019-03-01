@@ -109,7 +109,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       PersistedLinearAsset(2l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(25, Set(), Set())))), 0.0, 8.0, None, None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None))
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
 
     filledTopology should have size 2
 
@@ -125,7 +125,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
         PersistedLinearAsset(2l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(25, Set(), Set())))), 0.0, 10.0, None, None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None))
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
 
     filledTopology should have size 1
 
@@ -145,7 +145,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
           Set())))), 2.0, 10.0, None, None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None))
     )
 
-    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
+    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
 
     filledTopology should have size 3
 
