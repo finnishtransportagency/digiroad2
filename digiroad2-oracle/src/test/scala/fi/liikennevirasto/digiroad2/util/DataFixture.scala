@@ -1800,6 +1800,7 @@ object DataFixture {
     println(DateTime.now())
 
     val actualYear = DateTime.now().getYear
+    val username = "batch_to_expire_roadworks_on_previous_year"
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -1838,7 +1839,7 @@ object DataFixture {
 
 
         existingAssetsOnLastYear.foreach { asset =>
-          roadWorkService.expireAsset(RoadWorksAsset.typeId, asset.id, "", true, false)
+          roadWorkService.expireAsset(RoadWorksAsset.typeId, asset.id, username, true, false)
           println(s"Asset id ${asset.id} expired. ")
         }
       }
