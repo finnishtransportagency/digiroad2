@@ -740,16 +740,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     id
   }
 
-  def insertConnectedAsset(linearId: Long, pointId : Long) : Int = {
-    sqlu"""insert into connected_asset(linear_asset_id, point_asset_id) values ($linearId, $pointId)""".first
-  }
+  def insertConnectedAsset(linearId: Long, pointId : Long) : Unit =
+    sqlu"""insert into connected_asset(linear_asset_id, point_asset_id) values ($linearId, $pointId)""".execute
 
-  def expireConnectedByLinearAsset(id: Long) : Unit = {
-    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and linear_asset_id = $id""".first
-  }
+
+  def expireConnectedByLinearAsset(id: Long) : Unit =
+    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and linear_asset_id = $id""".execute
+
 
   def expireConnectedByPointAsset(id: Long) : Unit = {
-    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and point_asset_id = $id""".first
+    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and point_asset_id = $id""".execute
   }
 
   def getLastExecutionDateOfConnectedAsset(): Option[DateTime] = {
