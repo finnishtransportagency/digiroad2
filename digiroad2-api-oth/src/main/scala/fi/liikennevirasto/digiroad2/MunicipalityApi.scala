@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._

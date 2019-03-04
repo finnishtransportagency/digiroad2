@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
@@ -442,11 +442,20 @@ trait FloatingAsset {
 }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 
-object Asset {
+object DateParser {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   val DatePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
   val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
+
+  def dateToString(date: DateTime, dateFormatter: DateTimeFormatter): String = {
+    date.toString(dateFormatter)
+  }
+
+  def stringToDate(date: String, formatter: DateTimeFormatter): DateTime = {
+    formatter.parseDateTime(date)
+  }
+
 }
 
 abstract class AbstractProperty {
