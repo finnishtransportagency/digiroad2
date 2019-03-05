@@ -515,10 +515,16 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       DynamicProperty("annual_repetition", "numbere", false, Seq())
     )))
 
+    val roadWorksValue = DynamicValue(DynamicAssetValue(Seq(
+      DynamicProperty("tyon_tunnus", "number", false, Seq(DynamicPropertyValue(99))),
+      DynamicProperty("arvioitu_kesto", "date", false, Seq(DynamicPropertyValue(Map(("startDate", "11.9.2018"), ("endDate", "21.9.2018")))))
+    )))
+
     val assetsInfo = Seq(
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, careClassValue, SideCode.AgainstDigitizing.value, 0, None), CareClass.typeId),
       TestAssetInfo(NewLinearAsset(5000l, 0, 150, carryingCapacityValue, SideCode.AgainstDigitizing.value, 0, None), CarryingCapacity.typeId),
-      TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId)
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, damagedByThawValue, SideCode.AgainstDigitizing.value, 0, None), DamagedByThaw.typeId),
+      TestAssetInfo(NewLinearAsset(5000l, 0, 150, roadWorksValue, SideCode.AgainstDigitizing.value, 0, None), RoadWorksAsset.typeId)
         )
 
       assetsInfo.zipWithIndex.foreach(adjustProjectedAssetWithCreation)
