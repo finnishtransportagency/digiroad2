@@ -1108,6 +1108,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities.toSet)
   }
 
+  get("/pointAssets/unverified"){
+    val user = userProvider.getCurrentUser()
+    val includedMunicipalities = if(user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    val layerName = params.getOrElse("layerName", halt(BadRequest("Missing mandatory 'layerName' parameter")))
+    val usedService = getPointAssetService(layerName)
+    Map("Teste1" -> "link12121")
+  }
+
   get("/linearassets/midpoint"){
     val typeId = params("typeId").toInt
     val service = getLinearAssetService(typeId)
@@ -1758,6 +1767,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getPointAssetService(assetType: String): PointAssetOperations = {
     assetType match {
       case MassTransitStopAsset.layerName => massTransitStopService
+      case DirectionalTrafficSigns.layerName => directionalTrafficSignService
       case _ => throw new UnsupportedOperationException("Asset type not supported")
     }
   }

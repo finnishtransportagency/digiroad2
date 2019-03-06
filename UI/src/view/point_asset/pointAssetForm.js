@@ -70,7 +70,7 @@ root.PointAssetForm = function() {
     eventbus.on('layer:selected', function(layer) {
       if (layer === layerName) {
         $('ul[class=information-content]').empty();
-        me.renderLinktoWorkList(layer, localizedTexts);
+        me.renderLinktoWorkList(layer, isVerifiable, localizedTexts);
         if(parameters.pointAsset.hasInaccurate){
           renderInaccurateWorkList(layer);
         }
@@ -191,9 +191,15 @@ root.PointAssetForm = function() {
       '</div>';
   };
 
-  this.renderLinktoWorkList = function(layerName, localizedTexts) {
+  this.renderLinktoWorkList = function(layerName, isVerifiable, localizedTexts) {
     $('ul[class=information-content]').append('' +
-      '<li>' + renderAutomaticCreatedWorkList(layerName) + '<button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
+      renderAutomaticCreatedWorkList(layerName, isVerifiable) + '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
+  };
+
+  var renderAutomaticCreatedWorkList = function(layerName, isVerifiable) {
+    return isVerifiable ?
+      '<li><button id="unverified-point-asset-work-list-link" class="imported-point-assets btn btn-tertiary" onclick=location.href="#work-list/unverifiedPointAssets/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>'
+      : '';
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -202,14 +208,6 @@ root.PointAssetForm = function() {
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
-  };
-
-  var renderAutomaticCreatedWorkList = function(layerName) {
-    if(layerName === "directionalTrafficSigns") {
-      return '<button id="point-asset-work-list-link" class="imported-point-assets btn btn-tertiary" onclick=location.href="#work-list/automaticImportedAssets">Automatic created work list</button>';
-    } else {
-      return '';
-    }
   };
 
   var renderFloatingNotification = function(floating, localizedTexts) {

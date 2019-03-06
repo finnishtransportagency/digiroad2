@@ -229,10 +229,9 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
+        'work-list/unverifiedPointAssets/:layerName': 'unverifiedPointSigns',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
-        ':layerName/linkId/:linkId': 'mapMoving',
-
-        'work-list/automaticImportedAssets': 'importedAssetsWorkList'
+        ':layerName/linkId/:linkId': 'mapMoving'
       },
 
       massTransitStop: function (id) {
@@ -607,8 +606,8 @@
         eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
       },
 
-      importedAssetsWorkList: function() {
-        eventbus.trigger('importedAssetsWorkList:select');
+      unverifiedPointSigns: function(layerName) {
+        eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedPointAssets(layerName));
       }
     });
 
