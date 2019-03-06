@@ -374,14 +374,6 @@
       $.get('api/massTransitStop/' + id, callback);
     };
 
-    this.getPrivateRoadAssociationNames = function() {
-      return $.get('api/roadAssociationName');
-    };
-
-    this.getPrivateRoadAssociationNamesBySearch = function(value) {
-      return $.get('api/fetchAssociationNames/' + value);
-    };
-
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

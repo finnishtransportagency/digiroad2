@@ -60,12 +60,6 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
       .toOption
   }
 
-  def roadNameIdentifier: Option[String] = {
-    Try(getStringAttribute("ROADNAME_FI"))
-      .orElse(Try(getStringAttribute("ROADNAME_SE")))
-      .orElse(Try(getStringAttribute("ROADNAME_SM"))).toOption
-  }
-
   def isCarTrafficRoad = {
     val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
     val disallowedLinkTypes = Set(UnknownLinkType.value, CycleOrPedestrianPath.value, PedestrianZone.value, CableFerry.value)

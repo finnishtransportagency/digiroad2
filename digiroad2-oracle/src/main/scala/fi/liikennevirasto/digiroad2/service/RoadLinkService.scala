@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadLinkDAO}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
@@ -79,17 +79,12 @@ object AdditionalInformation{
   * @param vvhSerializer
   */
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
-  val municipalityDao = new MunicipalityDao
-
   val logger = LoggerFactory.getLogger(getClass)
 
   //Attributes names used on table "road_link_attributes"
   val privateRoadAssociationPublicId = "PRIVATE_ROAD_ASSOCIATION"
   val additionalInfoPublicId = "ADDITIONAL_INFO"
   val accessRightIDPublicId = "ACCESS_RIGHT_ID"
-
-  //No road name found
-  val roadWithoutName = "tuntematon tienimi"
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -291,50 +286,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getAllLinkType(linkIds: Seq[Long]): Map[Long, Seq[(Long, LinkType)]] = {
     RoadLinkDAO.LinkTypeDao.getAllLinkType(linkIds).groupBy(_._1)
-  }
-
-  def getAllPrivateRoadAssociationNames(newTransaction: Boolean = true): Seq[String] = {
-    if(newTransaction) {
-      withDynSession {
-        LinkAttributesDao.getAllExistingDistinctValues(privateRoadAssociationPublicId)
-      }
-    } else
-      LinkAttributesDao.getAllExistingDistinctValues(privateRoadAssociationPublicId)
-  }
-
-  def getPrivateRoadsByAssociationName(roadAssociationName: String, newTransaction: Boolean = true): Seq[(Long, String, String)] = {
-    val linkIds = getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId, newTransaction).map(_._2)
-    val roadLinks = getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds.toSet, newTransaction)
-
-    val municipalityCodes = roadLinks.map(_.municipalityCode).toSet
-    val municipalitiesInfo = getMunicipalitiesInfo(municipalityCodes, newTransaction)
-    val groupedByNameRoadLinks = roadLinks.groupBy(_.municipalityCode).values.map(_.groupBy(_.roadNameIdentifier))
-
-    groupedByNameRoadLinks.flatMap { municipalityRoadLinks =>
-      municipalityRoadLinks.map { roadLinkAssociation =>
-        val roadName = if(roadLinkAssociation._1.getOrElse(" ").trim.isEmpty) roadWithoutName else roadLinkAssociation._1.get
-        val maxLengthRoadLink = roadLinkAssociation._2.maxBy(_.length)
-       (maxLengthRoadLink.linkId, roadName, municipalitiesInfo.find(_.id == maxLengthRoadLink.municipalityCode).head.name)
-      }
-    }.toSeq
-  }
-
-  def getMunicipalitiesInfo(municipalityCodes: Set[Int], newTransaction: Boolean = true) = {
-    if(newTransaction)
-      withDynSession {
-        municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
-      }
-    else
-      municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
-  }
-
-  def getValuesByRoadAssociationName(roadAssociationName: String, roadAssociationPublicId: String, newTransaction: Boolean = true): List[(String, Long)] = {
-    if(newTransaction)
-      withDynSession {
-        LinkAttributesDao.getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId)
-      }
-    else
-      LinkAttributesDao.getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId)
   }
 
   def fetchVVHRoadlinksAndComplementary(linkIds: Set[Long]): Seq[VVHRoadlink] = {
