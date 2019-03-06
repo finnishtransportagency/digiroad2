@@ -11,156 +11,80 @@
     var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
-    var associationNamesRegex = /^YT +/g;
-
     var bindEvents = function() {
-      coordinatesText.keypress(function(event) {
-        if (event.keyCode == 13) {
-          emptyResultSection();
-          moveToLocation();
-        }
-      });
-
-      moveButton.on('click', function() {
-        emptyResultSection();
-        moveToLocation();
-      });
-
-      clearButton.on('click', function() {
-        searchResults.empty();
-        resultsSection.hide();
-        clearSection.hide();
-      });
-
-      eventbus.on('associationNames:fetched', function(result) {
-        enableAutoComplete(coordinatesText,result);
-      });
-
-      eventbus.on('associationNames:reload', function() {
-        locationSearch.privateRoadAssociationNames();
-      });
-    };
-
-    var moveToLocation = function() {
-      resultsSection.show();
-      jQuery('#search-results').append('<div class="spinner-overlay-search"></div>');
-
-      var showDialog = function(message) {
-        instructionsPopup.show(message, 3000);
-      };
-      locationSearch.search(coordinatesText.val()).then(function(results) {
-        populateSearchResults(results);
-        if (results.length === 1) {
-          var result = results[0];
-          if (result.resultType.indexOf("Mtstop")>-1) {
-            window.location.hash = "#massTransitStop/";
-            window.location.hash="#massTransitStop/"+result.nationalId;
-          }
-          else if (result.resultType.indexOf("Link-id")>-1) {
-            window.location.hash = "#linkProperty/";
-            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
-            window.location.hash = "#linkProperty/" + coordinatesText.val();
-          } else if (result.resultType.indexOf("SpeedLimit")>-1) {
-            eventbus.once('layer:speedLimit:moved', function() {
-              eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+      var populateSearchResults = function(results) {
+        var resultItems = _.chain(results)
+          .sortBy('distance')
+          .map(function(result) {
+            return $('<li></li>').text(result.title).on('click', function() {
+              if (result.resultType.indexOf("Link-id")>-1){
+                window.location.hash = "#linkProperty/";
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+                window.location.hash = "#linkProperty/" + coordinatesText.val();
+              } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+                eventbus.once('layer:speedLimit:moved', function() {
+                  eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+                });
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              } else if (result.resultType.indexOf("Mtstop")>-1) {
+                window.location.hash = "#massTransitStop/";
+                window.location.hash="#massTransitStop/"+result.nationalId;
+              }
+              else
+              {
+                eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              }
             });
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-          }
-          else {
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-          }
-        }
-      }).fail(showDialog);
-    };
+          }).value();
 
-    var populateSearchResults = function(results) {
-      var resultItems = _.chain(results)
-        .sortBy('distance')
-        .map(function(result) {
-
-          var shownText = function(value){
-            if(value.resultType.indexOf("association")>-1)
-              return value.title + ", " + value.municipality + ", " + value.roadName;
-            else
-              return value.title;
-          };
-
-          return $('<li></li>').text(shownText(result)).on('click', function() {
-            if (result.resultType.indexOf("Link-id")>-1){
+        searchResults.html(resultItems);
+        resultsSection.show();
+        clearSection.show();
+      };
+      var moveToLocation = function() {
+        var showDialog = function(message) {
+          instructionsPopup.show(message, 3000);
+        };
+        locationSearch.search(coordinatesText.val()).then(function(results) {
+          populateSearchResults(results);
+          if (results.length === 1) {
+            var result = results[0];
+            if (result.resultType.indexOf("Mtstop")>-1) {
+              window.location.hash = "#massTransitStop/";
+              window.location.hash="#massTransitStop/"+result.nationalId;
+            }
+            else if (result.resultType.indexOf("Link-id")>-1) {
               window.location.hash = "#linkProperty/";
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+              eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
               window.location.hash = "#linkProperty/" + coordinatesText.val();
             } else if (result.resultType.indexOf("SpeedLimit")>-1) {
               eventbus.once('layer:speedLimit:moved', function() {
                 eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
               });
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-            } else if (result.resultType.indexOf("Mtstop")>-1) {
-              window.location.hash = "#massTransitStop/";
-              window.location.hash="#massTransitStop/"+result.nationalId;
-            } else if (result.resultType.indexOf("association")>-1) {
-              window.location.hash = "#linkProperty/";
-              window.location.hash = "#linkProperty/" + result.linkId;
-            } else {
+            }
+            else {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
             }
-          });
-        }).value();
+          }
+        }).fail(showDialog);
+      };
 
-      jQuery('.spinner-overlay-search').remove();
-      searchResults.html(resultItems);
-      resultsSection.show();
-      clearSection.show();
-    };
-
-    var emptyResultSection = function() {
-      searchResults.empty();
-      clearSection.hide();
-    };
-
-    var splitBySpaces = function(value) {
-      return value.split(/ \s*/);
-    };
-
-    var pushSearchValues = function(value, event, ui) {
-      var terms = splitBySpaces(value.val().substring(0, value.selectionStart));
-      terms.splice(1);
-      terms.push(ui.item.value);
-      value.val($.trim(terms.join(" ")));
-    };
-
-    var loadAutocompleteValues = function(request, response, values, regex) {
-      if(request.term.match(regex)){
-        var slicedInput = request.term.slice(3);
-        if(slicedInput.length !== 0) {
-          var filteredResult = new RegExp($.ui.autocomplete.escapeRegex(slicedInput), "i");
-          response($.grep(values, function(value){
-            return filteredResult.test(value);
-          }) );
+      coordinatesText.keypress(function(event) {
+        if (event.keyCode == 13) {
+          moveToLocation();
         }
-      }
-    };
-
-    var enableAutoComplete = function(element, values) {
-      element.autocomplete({
-        source: function(request, response) {
-          return loadAutocompleteValues(request, response, values, associationNamesRegex);
-        },
-        focus: function(event, ui) {
-          pushSearchValues(coordinatesText, event, ui);
-          return false;
-        },
-        select: function(event, ui) {
-          pushSearchValues(coordinatesText, event, ui);
-          return false;
-        },
-        appendTo: ".search-box > .panel > .panel-header"
+      });
+      moveButton.on('click', function() {
+        moveToLocation();
+      });
+      clearButton.on('click', function() {
+        resultsSection.hide();
+        clearSection.hide();
       });
     };
 
     bindEvents();
-    locationSearch.privateRoadAssociationNames();
     this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection).append(clearSection));
-
   };
 })(this);

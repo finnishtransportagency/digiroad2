@@ -306,14 +306,6 @@ object RoadLinkDAO{
       sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
     }
 
-    def getAllExistingDistinctValues(attributeName: String) : List[String] = {
-      sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > sysdate)""".as[String].list
-    }
-
-    def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
-      sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > sysdate) and value = $roadAssociationName""".as[(String, Long)].list
-    }
 
     def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
       sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by )
