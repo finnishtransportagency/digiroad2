@@ -466,9 +466,9 @@ trait TrafficSignLinearGenerator {
 
   private def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[RoadLink] = {
     val tsRoadNameInfo =
-      if (signRoadLink.attributes("ROADNAME_FI").toString.trim.nonEmpty) {
+      if (signRoadLink.attributes.get("ROADNAME_FI").map(_.toString.trim).nonEmpty) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_FI").toString)
-      } else if (signRoadLink.attributes("ROADNAME_SE").toString.trim.nonEmpty) {
+      } else if (signRoadLink.attributes.get("ROADNAME_SE").map(_.toString.trim).nonEmpty) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_SE").toString)
       } else
         None
@@ -476,7 +476,7 @@ trait TrafficSignLinearGenerator {
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
       roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
-    }.head
+    }.getOrElse(Seq())
   }
 
   def applyChangesBySegments(allSegments: Set[TrafficSignToLinear], existingSegments: Seq[TrafficSignToLinear]) {
@@ -532,22 +532,25 @@ trait TrafficSignLinearGenerator {
       val roadLink = roadLinkToBeProcessed.head
       val allRoadLinksWithSameName = withDynTransaction {
         val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
-        val trafficSigns = trafficSignService.getTrafficSign(allRoadLinksWithSameName.map(_.linkId))
-        val filteredTrafficSigns = trafficSigns.filter(signBelongTo)
+        if(allRoadLinksWithSameName.nonEmpty){
+          val trafficSigns = trafficSignService.getTrafficSign(allRoadLinksWithSameName.map(_.linkId))
+          val filteredTrafficSigns = trafficSigns.filter(signBelongTo)
 
-        val existingAssets = getExistingSegments(allRoadLinksWithSameName)
-        val existingSegments = segmentsConverter(existingAssets, roadLinks)
-        println(s"Processing: ${filteredTrafficSigns.size}")
+          val existingAssets = getExistingSegments(allRoadLinksWithSameName)
+          val existingSegments = segmentsConverter(existingAssets, allRoadLinksWithSameName)
+          println(s"Processing: ${filteredTrafficSigns.size}")
 
-        //create and Modify actions
-        println(s"Start creating/modifying ${AssetTypeInfo.apply(assetType).layerName} according the traffic sign")
-        val allSegments = segmentsManager(allRoadLinksWithSameName, filteredTrafficSigns, existingSegments)
-        applyChangesBySegments(allSegments, existingSegments)
+          //create and Modify actions
+          println(s"Start creating/modifying ${AssetTypeInfo.apply(assetType).layerName} according the traffic sign")
+          val allSegments = segmentsManager(allRoadLinksWithSameName, filteredTrafficSigns, existingSegments)
+          applyChangesBySegments(allSegments, existingSegments)
 
-        if (trafficSigns.nonEmpty)
-          oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSigns.map(_.id), assetType)
+          if (trafficSigns.nonEmpty)
+            oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSigns.map(_.id), assetType)
 
-        allRoadLinksWithSameName
+          allRoadLinksWithSameName
+        } else
+          Seq()
       }
       iterativeProcess(roadLinkToBeProcessed.filterNot(_.linkId == roadLink.linkId), allRoadLinksWithSameName)
     }
