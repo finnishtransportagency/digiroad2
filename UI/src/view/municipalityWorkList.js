@@ -49,7 +49,7 @@
     this.createVerificationForm = function(municipality) {
       $('#tableData').hide();
       $('.filter-box').hide();
-      if (showFormBtnVisible) $('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
+      if (showFormBtnVisible) $('.page').attr('class', 'page-content-box').find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
           me.generateWorkList(municipalityList);
         })
       );
@@ -75,7 +75,8 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">TIETOLAJI</th> <th id="count">KOHTEIDEN MÄÄRÄ</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th></tr></thead>';
+        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
+               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
@@ -133,16 +134,18 @@
           '<tr>' +
           '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
           '<td headers="name">' + asset.assetName + '</td>' +
-          '<td headers="count">' + (asset.counter ? asset.counter : '' ) + '</td>' +
+          '<td headers="count">' + (asset.type === 'point' ? (asset.counter ? asset.counter : '' ) : (asset.counter ? 'Kyllä' : '' )) + '</td>' +
           '<td headers="date" >' + asset.verified_date + '</td>' +
           '<td headers="verifier">' + asset.verified_by + '</td>' +
+          '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
+          '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
         return '' +
           '<tr>' +
           '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
-          '<td headers="name">' + asset.assetName + '<img src="images/oldAsset.png" title="Tarkistus Vanhentumassa"' + '</td>' +
+          '<td headers="name">' + asset.assetName + '<img src="images/error-icon-small.png" title="Tarkistus Vanhentumassa"' + '</td>' +
           '<td style="color:red" headers="count">' + (asset.counter ? asset.counter : '' )  + '</td>' +
           '<td style="color:red" headers="date">' + asset.verified_date + '</td>' +
           '<td style="color:red" headers="verifier">' + asset.verified_by + '</td>' +

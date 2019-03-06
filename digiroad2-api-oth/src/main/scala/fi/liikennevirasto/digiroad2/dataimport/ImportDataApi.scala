@@ -1,139 +1,145 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import java.io.InputStream
+import java.io.InputStreamReader
 
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{Digiroad2ServerOriginatedResponseHeader, userProvider}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.oracle.ImportLogService
-import org.json4s.{DefaultFormats, Extraction, Formats}
+import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues}
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
+import org.joda.time.DateTime
+import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
-import org.scalatra.servlet.FileUploadSupport
+import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 import org.scalatra.json.JacksonJsonSupport
+import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
-class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJsonSupport with RequestHeaderAuthentication {
+class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProvider = Digiroad2Context.userProvider, val eventBus: DigiroadEventBus = Digiroad2Context.eventbus)
+  extends ScalatraServlet with FileUploadSupport with JacksonJsonSupport with RequestHeaderAuthentication {
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
+    case _ => throw new NotImplementedError("DateTime deserialization")
+  }, {
+    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
-  private val ROAD_LINK_LOG = "road link import"
-  private val TRAFFIC_SIGN_LOG = "traffic sign import"
-  private val DELETE_TRAFFIC_SIGN_LOG = "traffic sign delete"
-  private val MAINTENANCE_ROAD_LOG = "maintenance import"
-  private val roadLinkCsvImporter = new RoadLinkCsvImporter
-  private val trafficSignCsvImporter = new TrafficSignCsvImporter
-  private val maintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter
 
-  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream): CsvDataImporterOperations = {
-    val user = userProvider.getCurrentUser()
-    assetType match {
-      case "trafficsigns" =>
-        val municipalitiesToExpire = request.getParameterValues("municipalityNumbers") match {
-          case null => Set.empty[Int]
-          case municipalities => municipalities.map(_.toInt).toSet
-        }
-
-        if (!(user.isOperator() || user.isMunicipalityMaintainer())) {
-          halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
-        }
-
-        if (user.isMunicipalityMaintainer() && municipalitiesToExpire.diff(user.configuration.authorizedMunicipalities).nonEmpty) {
-          halt(Forbidden(s"Puuttuvat muokkausoikeukset jossain listalla olevassa kunnassa: ${municipalitiesToExpire.mkString(",")}"))
-        }
-
-        importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
-      case "maintenanceRoads" =>
-        if (!user.isOperator()) {
-          halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-        }
-        importMaintenanceRoads(csvFileInputStream)
-      case _ =>
-        if (!user.isOperator()) {
-          halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-        }
-        importRoadLinks(csvFileInputStream)
-    }
-  }
+  lazy val csvDataImporter = new CsvDataImporter(roadLinkService, eventBus)
+  private final val threeMegabytes: Long = 3*1024*1024
 
   before() {
     contentType = formats("json")
+    configureMultipartHandling(MultipartConfig(maxFileSize = Some(threeMegabytes)))
     try {
       authenticateForApi(request)(userProvider)
     } catch {
       case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
-    response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
+    response.setHeader("Digiroad2-Server-Originated-Response", "true")
   }
 
-  def importTrafficSigns(csvFileInputStream: InputStream, municipalitiesToExpire: Set[Int]): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", TRAFFIC_SIGN_LOG)
-    try {
-      val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream, municipalitiesToExpire)
-      val response = result match {
-        case trafficSignCsvImporter.ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
-        case _ => pretty(Extraction.decompose(result))
-      }
-      ImportLogService.save(id, response, TRAFFIC_SIGN_LOG)
-    } catch {
-      case e: Exception =>
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString, TRAFFIC_SIGN_LOG) //error when saving log
-        throw e
-    } finally {
-      csvFileInputStream.close()
+  post("/maintenanceRoads") {
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
-    redirect(url("/log/" + id + "/" + TRAFFIC_SIGN_LOG))
+   importMaintenanceRoads(fileParams("csv-file"))
   }
 
-  def importRoadLinks(csvFileInputStream: InputStream): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", ROAD_LINK_LOG)
-    try {
-      val result = roadLinkCsvImporter.importLinkAttribute(csvFileInputStream)
-      val response = result match {
-        case roadLinkCsvImporter.ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case roadLinkCsvImporter.ImportResult(Nil, Nil, Nil, excludedLinks) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
-        case _ => pretty(Extraction.decompose(result))
-      }
-      ImportLogService.save(id, response, ROAD_LINK_LOG)
-    } catch {
-      case e: Exception => {
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), ROAD_LINK_LOG) //error when saving log
-        throw e
-      }
-    } finally {
-      csvFileInputStream.close()
+  post("/trafficSigns") {
+    val municipalitiesToExpire = request.getParameterValues("municipalityNumbers") match {
+      case null => Set.empty[Int]
+      case municipalities => municipalities.map(_.toInt).toSet
     }
-    redirect(url("/log/" + id + "/" + ROAD_LINK_LOG))
-  }
 
-  def importMaintenanceRoads(csvFileInputStream: InputStream): Nothing = {
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", MAINTENANCE_ROAD_LOG)
-    try {
-      val result = maintenanceRoadCsvImporter.importMaintenanceRoads(csvFileInputStream)
-      val response = result match {
-        case maintenanceRoadCsvImporter.ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case maintenanceRoadCsvImporter.ImportResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
-        case _ => pretty(Extraction.decompose(result))
-      }
-      ImportLogService.save(id, response, MAINTENANCE_ROAD_LOG)
-    } catch {
-      case e: Exception => {
-        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), MAINTENANCE_ROAD_LOG) //error when saving log
-        throw e
-      }
-    } finally {
-      csvFileInputStream.close()
+    if (!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
+      halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
     }
-    redirect(url("/log/" + id + "/" + MAINTENANCE_ROAD_LOG))
+
+    if (userProvider.getCurrentUser().isMunicipalityMaintainer() && municipalitiesToExpire.diff(userProvider.getCurrentUser().configuration.authorizedMunicipalities).nonEmpty) {
+      halt(Forbidden(s"Puuttuvat muokkausoikeukset jossain listalla olevassa kunnassa: ${municipalitiesToExpire.mkString(",")}"))
+    }
+
+   importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
   }
 
-  get("/log/:id/:assetTypeLog") {
-    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, params("assetTypeLog"))).getOrElse("Logia ei löytynyt.")
+  post("/roadLinks") {
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    }
+
+    importRoadLinks(fileParams("csv-file"))
   }
 
+  post("/massTransitStop") {
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    }
+    val administrativeClassLimitations: Set[AdministrativeClass] = Set(
+      params.get("limit-import-to-roads").map(_ => State),
+      params.get("limit-import-to-streets").map(_ => Municipality),
+      params.get("limit-import-to-private-roads").map(_ => Private)
+    ).flatten
+
+    importMassTransitStop(fileParams("csv-file"), administrativeClassLimitations)
+  }
+
+  get("/log/:id") {
+    params.getAs[Long]("id").flatMap(id =>  csvDataImporter.getById(id)).getOrElse("Logia ei löytynyt.")
+  }
+
+  get("/log") {
+    csvDataImporter.getByUser(userProvider.getCurrentUser().username)
+  }
+
+  get("/logs/:ids") {
+    val ids = params("ids").split(',').map(_.toLong).toSet
+    csvDataImporter.getByIds(ids)
+  }
+
+  //TODO check if this exist
   post("/csv") {
-    val csvFileInputStream = fileParams("csv-file").getInputStream
-    if (csvFileInputStream.available() == 0) halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan.")) else None
-    val assetType = params.getOrElse("asset-type", halt(BadRequest("Import not supported for selected asset type")))
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    }
+    val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
+    new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
+  }
 
-    verifyServiceToUse(assetType, csvFileInputStream)
+  def importTrafficSigns(csvFileItem: FileItem, municipalitiesToExpire: Set[Int]): Unit = {
+    val csvFileInputStream = csvFileItem.getInputStream
+    val fileName = csvFileItem.getName
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, municipalitiesToExpire.map(_.asInstanceOf[NumericValues])))
+  }
+
+  def importRoadLinks(csvFileItem: FileItem ): Unit = {
+    val csvFileInputStream = csvFileItem.getInputStream
+    val fileName = csvFileItem.getName
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, userProvider.getCurrentUser(), csvFileInputStream))
+  }
+
+  def importMaintenanceRoads(csvFileItem: FileItem): Unit = {
+    val csvFileInputStream = csvFileItem.getInputStream
+    val fileName = csvFileItem.getName
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream))
+  }
+
+  def importMassTransitStop(csvFileItem: FileItem, administrativeClassLimitations: Set[AdministrativeClass]) : Unit = {
+    val csvFileInputStream = csvFileItem.getInputStream
+    val fileName = csvFileItem.getName
+
+    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues])))
   }
 }

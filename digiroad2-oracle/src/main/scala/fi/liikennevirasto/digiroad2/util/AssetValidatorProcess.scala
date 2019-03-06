@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{AssetServiceValidator, _}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
@@ -41,7 +42,11 @@ object AssetValidatorProcess {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
+    new TrafficSignService(roadLinkService, new DummyEventBus)
+  }
+
+  lazy val manoeuvreService: ManoeuvreService = {
+    new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
 
   lazy val manoeuvreServiceValidator: ManoeuvreValidator = {
@@ -170,7 +175,7 @@ object AssetValidatorProcess {
         if(assetName == "speedLimit")
           verifyInaccurateSpeedLimits()
         else
-          validateAssets(validatorProcessAssets.get(assetName).get)
+          validateAssets(validatorProcessAssets(assetName))
       }else{
         println(s"The asset with name $assetName is not supported")
         println()

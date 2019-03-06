@@ -30,7 +30,6 @@
       selection = collection.separateLinearAsset(_.head(selection));
       isSeparated = true;
       dirty = true;
-      eventbus.trigger(multiElementEvent('fetched'), collection.getAll());
       eventbus.trigger(singleElementEvent('separated'), self);
       eventbus.trigger(singleElementEvent('selected'), self);
     };
@@ -179,7 +178,6 @@
     };
 
     var cancelCreation = function() {
-      eventbus.trigger(singleElementEvent('unselect'), self);
       if (isSeparated) {
         var originalLinearAsset = _.cloneDeep(selection[0]);
         originalLinearAsset.value = originalLinearAssetValue;
@@ -191,6 +189,7 @@
       dirty = false;
       isSeparated = false;
       collection.cancelCreation();
+      eventbus.trigger(singleElementEvent('unselect'), self);
     };
 
     var cancelExisting = function() {

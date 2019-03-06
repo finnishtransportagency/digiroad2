@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignService, TrafficSignType}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
@@ -40,7 +40,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val roadLink2 = RoadLink(1002l, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink3 = RoadLink(1003l, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val propNoLeftTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
+      val propNoLeftTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoLeftTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1003l, 10, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
       when(mockTrafficSignService.getTrafficSign(Seq(1003l))).thenReturn(Seq(trafficSign))
@@ -69,7 +69,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
 
-      val propNoLeftTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoLeftTurn.value.toString))))
+      val propNoLeftTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoLeftTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 10, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1004l))).thenReturn(Seq(roadLink3, roadLink4))
@@ -95,7 +95,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
 
-      val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoRightTurn.value.toString))))
+      val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1004l))).thenReturn(Seq(roadLink3, roadLink4))
@@ -123,7 +123,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       val manoeuvre =  Manoeuvre(1l, Seq(start, intermediate, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
 
-      val propNoUTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoUTurn.value.toString))))
+      val propNoUTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoUTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propNoUTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1004l, 1005l))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
@@ -151,7 +151,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
 
-      val propNoUTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoUTurn.value.toString))))
+      val propNoUTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoUTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propNoUTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1004l, 1005l))).thenReturn(Seq(roadLink3, roadLink4, roadLink5))
@@ -180,7 +180,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
 
-      val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoRightTurn.value.toString))))
+      val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 10, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1004l))).thenReturn(Seq(roadLink3, roadLink4))
@@ -209,7 +209,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
 
       val manoeuvre = Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "")
 
-      val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(TrafficSignType.NoRightTurn.value.toString))))
+      val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 10, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(1003l, 1004l))).thenReturn(Seq(roadLink3, roadLink4))

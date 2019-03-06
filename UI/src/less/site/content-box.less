@@ -21,6 +21,47 @@
 	}
 }
 
+.job-content-box {
+	width: 70%;
+	margin: 40px auto;
+	border-radius: @border-radius-base;
+	background-color: @white;
+	box-shadow: 0px 2px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+
+	header {
+		padding: @line-height-modifier * 2;
+		border-bottom: 1px solid @gray-darkest;
+		border-top-left-radius: @border-radius-base;
+		border-top-right-radius: @border-radius-base;
+		font-size: @font-size-xl;
+		color: #fff;
+		background-color: @gray-darker-2;
+	}
+
+	.body {
+		padding: @line-height-modifier * 2;
+	}
+
+	.error-list {
+		overflow-y: auto;
+		max-height: 950px;
+		font-size: 14px;
+		padding-left: 3px;
+		padding-right: 3px;
+
+		li {
+          display: block;
+          margin-left: 25px;
+		}
+	}
+
+}
+
+.page-content-box {
+	width: 45%;
+	margin: 40px auto;
+}
+
 .municipality-content-box {
 	.content-box;
 	padding-bottom: 50px;

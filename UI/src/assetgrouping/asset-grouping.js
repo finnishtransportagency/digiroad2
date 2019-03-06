@@ -3,8 +3,14 @@
     var doGroupingByDistance = function(items, zoomLevel) {
       var result = [];
       var item;
-      var findProximityStops = function(x) {
-        return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < assetGroupingDistance;
+      var findProximityStops = function (x) {
+        if (x.id === item.id) {
+          return true;
+        } else if (x.floating || item.floating) {
+          return false;
+        } else {
+          return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < assetGroupingDistance;
+        }
       };
       while (_.isEmpty(items) === false) {
         item = _.head(items);
