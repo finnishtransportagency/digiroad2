@@ -6,6 +6,7 @@ root.PointAssetForm = function() {
   me.roadCollection = null;
   me.applicationModel = null;
   me.backend= null;
+  me.isVerifiable = null;
   me.saveCondition= null;
   me.feedbackCollection= null;
 
@@ -25,6 +26,7 @@ root.PointAssetForm = function() {
     var selectedAsset = parameters.pointAsset.selectedPointAsset;
     var collection  = parameters.pointAsset.collection;
     var layerName = parameters.pointAsset.layerName;
+    var isVerifiable = parameters.pointAsset.isVerifiable;
     var localizedTexts = parameters.pointAsset.formLabels;
     var authorizationPolicy = parameters.pointAsset.authorizationPolicy;
     new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
@@ -42,18 +44,21 @@ root.PointAssetForm = function() {
       }
     });
 
-    eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
+    eventbus.on(layerName + ':selected ' + layerName + ':cancelled' /*roadLinks:fetched'*/, function() {
       if (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection);
+        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection, isVerifiable);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
         rootElement.find('button#cancel-button').prop('disabled', false);
+        rootElement.find('button#verify-button').prop('disabled', false);
       }
     });
 
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
+      var needsCheck = rootElement.find('#directional-traffic-sign-checkbox').length > 0 ? !rootElement.find('#directional-traffic-sign-checkbox').is(":checked") : false;
+      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)) || needsCheck);
       rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
+      rootElement.find('button#verify-button').prop('disabled', !(selectedAsset.isDirty()));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -75,13 +80,13 @@ root.PointAssetForm = function() {
 
   this.renderValueElement = function(asset, collection) { return ''; };
 
-  this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+  this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection, isVerifiable) {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
     var header = '<span>' + title + '</span>';
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
-    var footer = me.renderButtons();
+    var footer = me.renderButtons(selectedAsset, isVerifiable);
 
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
@@ -177,9 +182,10 @@ root.PointAssetForm = function() {
 
   this.renderValueElement = function(asset, collection) { return ''; };
 
-  this.renderButtons = function() {
+  this.renderButtons = function(selectedLinearAsset, isVerifiable) {
+    var verifyButton = (isVerifiable && !_.isNull(selectedLinearAsset.getId())) ? '<button id="verify-button" class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '';
     return '' +
-      '<div class="pointasset form-controls">' +
+      '<div class="pointasset form-controls">' + verifyButton +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
@@ -187,7 +193,7 @@ root.PointAssetForm = function() {
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
-      '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
+      '<li>' + renderAutomaticCreatedWorkList(layerName) + '<button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -196,6 +202,14 @@ root.PointAssetForm = function() {
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
+  };
+
+  var renderAutomaticCreatedWorkList = function(layerName) {
+    if(layerName === "directionalTrafficSigns") {
+      return '<button id="point-asset-work-list-link" class="imported-point-assets btn btn-tertiary" onclick=location.href="#work-list/automaticImportedAssets">Automatic created work list</button>';
+    } else {
+      return '';
+    }
   };
 
   var renderFloatingNotification = function(floating, localizedTexts) {

@@ -230,7 +230,9 @@
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
-        ':layerName/linkId/:linkId': 'mapMoving'
+        ':layerName/linkId/:linkId': 'mapMoving',
+
+        'work-list/automaticImportedAssets': 'importedAssetsWorkList'
       },
 
       massTransitStop: function (id) {
@@ -603,6 +605,10 @@
       unverifiedLinearAssetWorkList: function(layerName) {
         var typeId = _.find(models.linearAssets, function(assetSpec) { return assetSpec.layerName == layerName; }).typeId;
         eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
+      },
+
+      importedAssetsWorkList: function() {
+        eventbus.trigger('importedAssetsWorkList:select');
       }
     });
 

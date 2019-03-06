@@ -729,6 +729,7 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
+        isVerifiable: false,
         hasInaccurate: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy()
@@ -752,6 +753,7 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
         hasMunicipalityValidation: true,
+        isVerifiable: false,
         roadCollection: ObstaclesRoadCollection
       },
       {
@@ -775,7 +777,8 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: RailwayCrossingForm,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isVerifiable: false
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -794,7 +797,8 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: DirectionalTrafficSignForm,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isVerifiable: true
       },
       {
         typeId: assetType.servicePoints,
@@ -830,7 +834,8 @@
         label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        isVerifiable: false
       },
       {
         typeId: assetType.trafficLights,
@@ -848,6 +853,7 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
+        isVerifiable: false,
         authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
@@ -874,6 +880,7 @@
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
+        isVerifiable: false,
         saveCondition: function (selectedAsset) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
@@ -905,6 +912,7 @@
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
+        isVerifiable: false,
         form: HeightLimitForm,
         label: new HeightLimitLabel(Math.pow(5, 2))
       },
@@ -927,6 +935,7 @@
         },
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
+        isVerifiable: false,
         form: WidthLimitForm,
         label: new WidthLimitLabel(Math.pow(5, 2))
       }
