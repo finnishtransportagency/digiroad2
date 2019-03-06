@@ -2,6 +2,12 @@
   root.LocationSearch = function(backend, applicationModel) {
     var selectedLayer;
 
+    this.privateRoadAssociationNames = function() {
+      return backend.getPrivateRoadAssociationNames().then(function(result){
+        eventbus.trigger('associationNames:fetched', result);
+      });
+    };
+
     /**
      * Search by street address
      *
@@ -195,6 +201,24 @@
     };
 
     /**
+     * Search private road association names.
+     *
+     * @param associationRoadName
+     */
+    var getAssociationRoadNamesByName = function(associationRoadName) {
+      return backend.getPrivateRoadAssociationNamesBySearch(associationRoadName.address)
+        .then(function(resultFromAPI) {
+          var structuredRoads = function(value) {
+            return { title: value.name, municipality: value.municipality, roadName: value.roadName, linkId: value.linkId, resultType: "association" };
+          };
+          if (resultFromAPI.length > 0)
+            return _.map(resultFromAPI, structuredRoads);
+          else
+            return $.Deferred().reject('Failed to fetch road associations with that name.');
+        });
+    };
+
+    /**
      * Search by coordinates
      *
      * @param coordinates
@@ -236,6 +260,7 @@
         idOrRoadNumber: idOrRoadNumber,
         liviId: massTransitStopLiviIdSearch,
         passengerId:  massTransitStopPassengerIdSearch,
+        roadAssociationName: getAssociationRoadNamesByName,
         invalid: function() { return $.Deferred().reject('Syötteestä ei voitu päätellä koordinaatteja, katuosoitetta tai tieosoitetta'); }
       };
 
