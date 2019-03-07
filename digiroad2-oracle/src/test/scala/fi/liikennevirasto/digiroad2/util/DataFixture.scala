@@ -21,7 +21,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, LinkProperties, RoadAddressesService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingObstacle, ObstacleService, TrafficSignService, TrafficSignTypeGroup}
+import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -1589,6 +1589,51 @@ object DataFixture {
     println("\n")
   }
 
+  def extractTrafficSigns(group: Option[String]): Unit = {
+    val signGroup = group match {
+      case Some(x) => trafficSignGroup(x)
+      case _ => throw new UnsupportedOperationException("Please provide a traffic sign group")
+    }
+
+    val currentGroup = trafficSignService.getTrafficSignTypeByGroup(signGroup)
+
+    println(s"Starting extract of $group at ${DateTime.now()}")
+    println("")
+    println("")
+    println("linkId;koordinaatti_x;koordinaatti_y;type;value;additionalInformation;linkSource;muokattu_viimeksi;id;trafficDirection;m_value")
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession{
+        Queries.getMunicipalities
+      }
+    withDynTransaction{
+      municipalities.foreach{ municipality =>
+        val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
+        val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet)
+          .filterNot(_.floating)
+          .filter(sign => currentGroup.contains(trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
+        existingAssets.foreach{sign =>
+          val signType = TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
+          val signValue = trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_value").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse(""))
+          val signInfo = trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_info").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse(""))
+          val lastModified = sign.modifiedBy.getOrElse("")
+          println(s"${sign.linkId};${sign.lon};${sign.lat};$signType;$signValue;$signInfo;${sign.linkSource};$lastModified;${sign.id};${SideCode.toTrafficDirection(SideCode(sign.validityDirection))};${sign.mValue}")
+        }
+      }
+    }
+  }
+
+  private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
+    "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
+    "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
+    "MaximumRestrictions" ->  TrafficSignTypeGroup.MaximumRestrictions,
+    "GeneralWarningSigns" ->  TrafficSignTypeGroup.GeneralWarningSigns,
+    "ProhibitionsAndRestrictions" ->  TrafficSignTypeGroup.ProhibitionsAndRestrictions,
+    "MandatorySigns" ->  TrafficSignTypeGroup.MandatorySigns,
+    "PriorityAndGiveWaySigns" ->  TrafficSignTypeGroup.PriorityAndGiveWaySigns,
+    "InformationSigns" ->  TrafficSignTypeGroup.InformationSigns,
+    "ServiceSigns" ->  TrafficSignTypeGroup.ServiceSigns
+  )
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1693,6 +1738,8 @@ object DataFixture {
         updatePrivateRoads()
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
+      case Some("traffic_sign_extract") =>
+         extractTrafficSigns(args.lastOption)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
