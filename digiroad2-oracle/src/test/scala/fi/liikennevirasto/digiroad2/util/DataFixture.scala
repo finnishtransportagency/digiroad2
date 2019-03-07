@@ -1613,8 +1613,8 @@ object DataFixture {
           .filter(sign => currentGroup.contains(trafficSignService.getTrafficSignsProperties(sign, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
         existingAssets.foreach{sign =>
           val signType = TRTrafficSignType.apply(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt))
-          val signValue = trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_value").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse(""))
-          val signInfo = trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_info").map(_.asInstanceOf[TextPropertyValue].propertyDisplayValue.getOrElse(""))
+          val signValue = trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_value").map(_.asInstanceOf[TextPropertyValue]).flatMap(_.propertyDisplayValue).getOrElse("")
+          val signInfo = trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_info").map(_.asInstanceOf[TextPropertyValue]).flatMap(_.propertyDisplayValue).getOrElse("")
           val lastModified = sign.modifiedBy.getOrElse("")
           println(s"${sign.linkId};${sign.lon};${sign.lat};$signType;$signValue;$signInfo;${sign.linkSource};$lastModified;${sign.id};${SideCode.toTrafficDirection(SideCode(sign.validityDirection))};${sign.mValue}")
         }
