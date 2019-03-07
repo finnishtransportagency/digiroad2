@@ -1,0 +1,134 @@
+import java.net.URI
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'DB', choices: ['-',
+                                     'dr2dev1',
+                                     'dr2dev2',
+                                     'dr2dev3',
+                                     'dr2dev4',
+                                     'dr2dev5',
+                                     'dr2dev7',
+                                     'dr2dev8',
+                                     'dr2dev9',
+                                     'dr2dev10',
+                                     'dr2dev11',
+                                     'dr2dev12',
+                                     'dr2dev13',
+                                     'dr2dev14',
+                                     'dr2dev15',
+                                     'dr2dev16',
+                                     'dr2dev17',
+                                     'dr2dev18'])
+        string(name: 'BRANCH', defaultValue: 'master')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+            steps {
+                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
+                    script {
+
+                        def ojdbc = 'ojdbc6'
+                        def ojdbc_version = '11.2.0.3.0'
+                        def version = '11.2.0'
+                        def sdoapl = 'sdoapl'
+                        def sdoutl = 'sdoutl'
+                        def sbt_proxy = new URI(http_proxy)
+
+                        def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
+                        ].join(" ")
+
+                        STAGE_SETUP_ORACLE = [
+                            "mkdir tmp",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
+                            "mkdir digiroad2-oracle/conf/",
+                            "mkdir digiroad2-oracle/conf/lib/",
+                            "cp -r tmp/ digiroad2-oracle/conf/lib/",
+                            "mkdir digiroad2-oracle/conf/dev/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
+                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                        ].join(" && ")
+
+                        STAGE_FIXTURE_RESET = [
+                            "./sbt",
+                            "$java_opts",
+                            "-Ddigiroad2.env=dev",
+                            "\'project digiroad2\'",
+                            "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture test\'"
+                        ].join(" ")
+                    }
+                }
+            }
+        }
+
+        stage("Prepare") {
+            steps {
+                script {
+
+                    echo "Running publish... (skipped for now) "
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                        "oth-backend-sbt",
+                        "${build_args} -f ci/Dockerfile.sbt ci"
+                    )
+                }
+            }
+        }
+
+        stage("Checkout Branch") {
+            steps {
+                checkout(
+                    [$class: 'GitSCM',
+                     branches: [[name: '*/${BRANCH}']],
+                     doGenerateSubmoduleConfigurations: false,
+                     extensions: [[$class: 'LocalBranch', localBranch: '${BRANCH}']],
+                     submoduleCfg: [],
+                     userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
+                    ]
+                )
+            }
+
+        }
+
+        stage("Fixture Reset") {
+            agent {
+                docker {
+                    image "oth-backend-sbt"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_SETUP_ORACLE
+                sh STAGE_FIXTURE_RESET
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}

@@ -1,0 +1,11 @@
+FROM maven:alpine
+ARG JENKINS_UID=1000
+RUN adduser -D -S -u ${JENKINS_UID} jenkins
+RUN mkdir /home/jenkins/.m2
+#    apk update && apk upgrade && \
+#    apk add openssh-client && \
+#    apk add git
+COPY config/settings.xml /home/jenkins/.m2/settings.xml
+RUN chown -R jenkins /home/jenkins
+#USER jenkins
+#RUN git config --global user.name "CI Jenkins" && git config --global user.email "no-reply@livibuild04.vally.local"

@@ -1,0 +1,10 @@
+FROM node:alpine
+RUN apk --update add openjdk7-jre
+ARG JENKINS_UID=10000
+RUN adduser -D -S -u $JENKINS_UID jenkins
+RUN mkdir /home/jenkins/package && \
+    mkdir /home/jenkins/package/oth-UI && \
+    mkdir /home/jenkins/package/oth-backend
+RUN npm install grunt -g
+RUN chown -R jenkins /home/jenkins
+#USER jenkins
