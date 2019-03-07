@@ -1589,15 +1589,15 @@ object DataFixture {
     println("\n")
   }
 
-  def extractTrafficSigns(group: Option[String]): Unit = {
-    val signGroup = group match {
-      case Some(x) => trafficSignGroup(x)
-      case _ => throw new UnsupportedOperationException("Please provide a traffic sign group")
-    }
+  def extractTrafficSigns(): Unit = {
+//    val signGroup = group match {
+//      case Some(x) => trafficSignGroup(x)
+//      case _ => throw new UnsupportedOperationException("Please provide a traffic sign group")
+//    }
 
-    val currentGroup = trafficSignService.getTrafficSignTypeByGroup(signGroup)
+    val currentGroup = trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.SpeedLimits) //hard coded for single usage on production before deployment of 1707. see DROTH-1874
 
-    println(s"Starting extract of $group at ${DateTime.now()}")
+    println(s"Starting extract of ${TrafficSignTypeGroup.SpeedLimits} at ${DateTime.now()}")
     println("")
     println("")
     println("linkId;koordinaatti_x;koordinaatti_y;type;value;additionalInformation;linkSource;muokattu_viimeksi;id;trafficDirection;m_value")
@@ -1739,7 +1739,7 @@ object DataFixture {
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
       case Some("traffic_sign_extract") =>
-         extractTrafficSigns(args.lastOption)
+         extractTrafficSigns()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
