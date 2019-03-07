@@ -90,7 +90,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     var areaId = params("areaId")
     val maintenanceAssets = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)
     val linkIdMap = maintenanceAssets.groupBy(_.linkId).mapValues(_.map(_.id))
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdMap.keySet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(linkIdMap.keySet)
 
     createGeoJson(maintenanceAssets.flatMap{
        maintenanceAsset =>
