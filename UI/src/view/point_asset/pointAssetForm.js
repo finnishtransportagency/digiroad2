@@ -51,6 +51,7 @@ root.PointAssetForm = function() {
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
         rootElement.find('button#cancel-button').prop('disabled', false);
         rootElement.find('button#verify-button').prop('disabled', false);
+        rootElement.find('button#verify-button').on('click', function() { selectedAsset.verify(layerName, selectedAsset.getId()); });
       }
     });
 
@@ -70,9 +71,12 @@ root.PointAssetForm = function() {
     eventbus.on('layer:selected', function(layer) {
       if (layer === layerName) {
         $('ul[class=information-content]').empty();
-        me.renderLinktoWorkList(layer, isVerifiable, localizedTexts);
+        me.renderLinktoWorkList(layer, localizedTexts);
         if(parameters.pointAsset.hasInaccurate){
           renderInaccurateWorkList(layer);
+        }
+        if(parameters.pointAsset.isVerifiable) {
+          renderUnverifiedWorkList(layer);
         }
       }
     });
@@ -191,15 +195,9 @@ root.PointAssetForm = function() {
       '</div>';
   };
 
-  this.renderLinktoWorkList = function(layerName, isVerifiable, localizedTexts) {
+  this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
-      renderAutomaticCreatedWorkList(layerName, isVerifiable) + '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
-  };
-
-  var renderAutomaticCreatedWorkList = function(layerName, isVerifiable) {
-    return isVerifiable ?
-      '<li><button id="unverified-point-asset-work-list-link" class="imported-point-assets btn btn-tertiary" onclick=location.href="#work-list/unverifiedPointAssets/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>'
-      : '';
+      '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -224,6 +222,12 @@ root.PointAssetForm = function() {
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
     $('ul[class=information-content]').append('' +
       '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
+  };
+
+
+  var renderUnverifiedWorkList = function(layerName) {
+    $('ul[class=information-content]').append('' +
+      '<li><button id="unverified-point-asset-work-list-link" class="imported-point-assets btn btn-tertiary" onclick=location.href="#work-list/unverifiedPointAssets/' + layerName + '">Unverified Point Assets</button></li>');
   };
 };
 })(this);

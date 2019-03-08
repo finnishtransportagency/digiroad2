@@ -119,6 +119,8 @@ trait PointAssetOperations {
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
+  def updateVerifiedInfo(assetId: Long, user: String): Long = {throw new UnsupportedOperationException()}
+  def getUnverifiedPointAssets(municipalities: Set[Int]): List[(Long, Int)] = {throw new UnsupportedOperationException()}
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)

@@ -354,6 +354,18 @@
       });
     };
 
+    this.verifyPointAssets = function(layerName, assetId, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/pointassets/verified?layerName=" + layerName + "&assetId=" + assetId,
+        data: JSON.stringify({layerName: layerName, assetId: assetId}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.deleteAllMassTransitStopData = function(assetId,success, failure){
       $.ajax({
         contentType: "application/json",
@@ -449,8 +461,8 @@
       return $.getJSON('api/linearassets/unverified?typeId=' + typeId);
     };
 
-    this.getUnverifiedPointAssets = function(layerName) {
-      return $.getJSON('api/pointAssets/unverified?layerName=' + layerName);
+    this.getUnverifiedPointAssets = function(layerName, typeId) {
+      return $.getJSON('api/pointAssets/unverified?layerName=' + layerName + '&typeId=' + typeId);
     };
 
     this.getLinearAssetMidPoint = latestResponseRequestor(function(typeId, id){

@@ -60,8 +60,21 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     }
   }
 
+  override def getUnverifiedPointAssets(municipalities: Set[Int]): List[(Long, Int)] = {
+    withDynSession {
+      val unverifiedAssets = OracleDirectionalTrafficSignDao.getUnverifiedAssets(typeId)
+      val filteredByUserAssets = if(municipalities.nonEmpty) unverifiedAssets.filter(asset => municipalities.contains(asset._2)) else unverifiedAssets
+      filteredByUserAssets
+    }
+  }
+
   override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
+  override def updateVerifiedInfo(assetId: Long, user: String): Long = {
+    withDynSession {
+      OracleDirectionalTrafficSignDao.updateVerifiedInfo(assetId, user)
+    }
+  }
 }
 
 

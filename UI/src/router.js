@@ -607,7 +607,8 @@
       },
 
       unverifiedPointSigns: function(layerName) {
-        eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedPointAssets(layerName));
+        var typeId = _.find(models.pointAssets, function(assetSpec) { return assetSpec.layerName === layerName; }).typeId;
+        eventbus.trigger('pointWorkList:select', layerName, backend.getUnverifiedPointAssets(layerName, typeId));
       }
     });
 

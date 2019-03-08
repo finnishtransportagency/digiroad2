@@ -1099,6 +1099,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     usedService.updateVerifiedInfo(ids, user.username, typeId)
   }
 
+  put("/pointassets/verified") {
+    val user = userProvider.getCurrentUser()
+
+    val layerName = params.getOrElse("layerName", halt(BadRequest("Missing mandatory 'layerName' parameter")))
+    val assetId = params.getOrElse("assetId", halt(BadRequest("Missing mandatory 'assetId' parameter"))).toInt
+
+    val usedService = getPointAssetService(layerName)
+
+    usedService.updateVerifiedInfo(assetId, user.username)
+  }
+
   get("/linearassets/unverified"){
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -1113,8 +1124,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val includedMunicipalities = if(user.isOperator()) Set() else user.configuration.authorizedMunicipalities
 
     val layerName = params.getOrElse("layerName", halt(BadRequest("Missing mandatory 'layerName' parameter")))
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter")))
+
     val usedService = getPointAssetService(layerName)
-    Map("Teste1" -> "link12121")
+
+    val result = usedService.getUnverifiedPointAssets(includedMunicipalities.toSet).groupBy(_._2)
+
+    result.flatMap { asset =>
+      Map("Municipality" -> asset._1,
+          "Assets" -> asset._2)
+    }
+//    Map("Some Municipality" -> Map(
+//      "Some data" -> "other data",
+//      "Some data" -> "other data",
+//      "Some data" -> "other data",
+//      "Some data" -> "other data"
+//    ),
+//    "Another Municipality" -> Map(
+//      "Another data" -> "More data"
+//    ))
   }
 
   get("/linearassets/midpoint"){

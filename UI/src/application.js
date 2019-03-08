@@ -213,7 +213,7 @@
     });
 
     var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched userNotification:fetched municipality:verified dashBoardInfoAssets:fetched' + fetchedEventNames, function() {
+    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched userNotification:fetched municipality:verified dashBoardInfoAssets:fetched pointAsset:verified ' + fetchedEventNames, function() {
       jQuery('.spinner-overlay').remove();
     });
 
