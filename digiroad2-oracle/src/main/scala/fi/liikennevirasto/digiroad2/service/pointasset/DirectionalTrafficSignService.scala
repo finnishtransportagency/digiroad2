@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, OracleDirectionalTrafficSignDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -60,11 +61,12 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     }
   }
 
-  override def getUnverifiedPointAssets(municipalities: Set[Int]): List[(Long, Int)] = {
+  override def getUnverifiedPointAssets(municipalities: Set[Int]): Map[String, List[(Long, String)]] = {
     withDynSession {
+      val municipalityDao = new MunicipalityDao
       val unverifiedAssets = OracleDirectionalTrafficSignDao.getUnverifiedAssets(typeId)
       val filteredByUserAssets = if(municipalities.nonEmpty) unverifiedAssets.filter(asset => municipalities.contains(asset._2)) else unverifiedAssets
-      filteredByUserAssets
+      filteredByUserAssets.map(asset => (asset._1, municipalityDao.getMunicipalityNameByCode(asset._2))).groupBy(_._2)
     }
   }
 

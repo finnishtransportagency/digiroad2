@@ -608,7 +608,7 @@
 
       unverifiedPointSigns: function(layerName) {
         var typeId = _.find(models.pointAssets, function(assetSpec) { return assetSpec.layerName === layerName; }).typeId;
-        eventbus.trigger('pointWorkList:select', layerName, backend.getUnverifiedPointAssets(layerName, typeId));
+        eventbus.trigger('unverifiedPointWorkList:select', layerName, backend.getUnverifiedPointAssets(layerName, typeId));
       }
     });
 

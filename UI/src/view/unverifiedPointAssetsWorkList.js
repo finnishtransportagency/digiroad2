@@ -1,111 +1,56 @@
 (function (root) {
-  root.CreatedLinearAssetWorkList = function() {
+  root.UnverifiedPointAssetsWorkList = function() {
     WorkListView.call(this);
     var me = this;
-    // this.hrefDir = "#work-list/unverifiedPointAssets/layer";
-    this.title = 'Unverified Linear Assets';
-    var backend;
-    var showFormBtnVisible = true;
+    this.title = 'Tarkistamattomien opastustaulujen lista';
     var assetsList;
-    var assetTypeName;
-    var authorizationPolicy = new AuthorizationPolicy();
-    var assetConfig = new AssetTypeConfiguration();
 
-    this.initialize = function(mapBackend) {
-      backend = mapBackend;
+    this.initialize = function() {
       me.bindEvents();
     };
 
     this.bindEvents = function () {
-      eventbus.on('pointWorkList:select', function(unverifiedAssets) {
+      eventbus.on('unverifiedPointWorkList:select', function(layerName, unverifiedAssets) {
         $('.container').hide();
         $('#work-list').show();
         $('body').addClass('scrollable');
         assetsList = unverifiedAssets;
-        me.generateWorkList(unverifiedAssets);
+        me.generateWorkList(layerName, unverifiedAssets);
       });
     };
 
-    this.createVerificationForm = function(assetType) {
-      $('#tableData').hide();
-      $('.filter-box').hide();
-      if (showFormBtnVisible) $('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
-          me.generateWorkList(assetsList);
-        })
-      );
-      assetTypeName = renameAssetLink(assetType);
-      me.reloadForm(assetType);
-    };
-
-    this.assetTypesTable = function(assetTypes)  {
-      var tableContentRows = function(assetTypes) {
-        return _.map(assetTypes, function(assetType) {
-          return $('<tr/>').append($('<td/>').append(assetLink(assetType)));
-        });
-      };
-
-      var assetLink = function(assetType) {
-        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(renameAsset(assetType.typeId)).click(function(){
-          me.createVerificationForm(assetType);
-        });
-      };
-
-      return $('<table id="tableData"><tbody>').append(tableContentRows(assetTypes)).append('</tbody></table>');
-    };
-
-    this.assetHeader = function(assetName) {
-      return $('<h2/>').html(renameAsset(assetName));
-    };
-
-    this.generatedLinearAssetsTable = function(assetContent, assetTypeId) {
+    this.workListItemTable = function(layerName, workListItems) {
 
       var municipalityHeader = function(municipalityName) {
-        return $('<h3/>').html(municipalityName);
+        return $('<h2/>').html(municipalityName);
       };
-
-      var tableBodyRows = function(values) {
-        return $('<tbody>').append(tableContentRows(values));
+      var tableHeaderRow = function(headerName) {
+        return $('<caption/>').html(headerName);
       };
-
-      var tableContentRows = function(ids) {
-        return _.map(ids, function(id) {
-          return $('<tr/>').append($('<td/>').append(assetLink(id)));
+      var tableContentRows = function(assetIds) {
+        return _.map(assetIds, function(item) {
+          return $('<tr/>').append($('<td/>').append(idLink(item)));
         });
       };
-
-      var assetLink = function(id) {
-        var link = '#' + renameAssetLink(assetTypeId) + '/' + id;
-        var workListItem = $('<a class="work-list-item"/>').attr('href', link).html(link);
-        return workListItem;
+      var idLink = function(item) {
+        var href =  '#' + layerName + '/' + item;
+        var link =  '#' + layerName + '/' + item;
+        return $('<a class="work-list-item"/>').attr('href', href).html(link);
       };
+
 
       var tableForGroupingValues = function(assetIds) {
-        return $('<table/>').addClass('table')
-          .append(tableBodyRows(assetIds));
+        if (!assetIds || assetIds.length === 0) return '';
+        return $('<table><tbody>').addClass('table')
+          .append(tableContentRows(assetIds))
+          .append('</tbody></table>');
       };
 
-      return $('<div/>').append(municipalityHeader(assetContent.municipality))
-        .append(tableForGroupingValues(assetContent.asset_ids));
-
+      return $('<div/>').append(municipalityHeader(workListItems.municipality))
+        .append(tableForGroupingValues(workListItems.assets));
     };
 
-    this.reloadForm = function(asset){
-      $('#formTable').remove();
-      $('#work-list .work-list').html(this.assetHeader(asset.typeId).append(_.map(asset.municipalities, function(assetContent) { return me.generatedLinearAssetsTable(assetContent, asset.typeId);})));
-    };
-
-    var renameAsset = function(assetTypeId) {
-      return _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  assetTypeId; }).title ;
-    };
-
-    var renameAssetLink = function(assetTypeId) {
-      return _.find(assetConfig.linearAssetsConfig, function(config){ return config.typeId ===  assetTypeId; }).singleElementEventCategory ;
-    };
-
-    this.generateWorkList = function(assetsList) {
-      // var searchbox = $('<div class="filter-box">' +
-      //   '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
-
+    this.generateWorkList = function(layerName, assetsList) {
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +
@@ -119,21 +64,10 @@
         '</div>'
       );
 
-      // assetsList.then(function(createdLinearAssets){
-      //   var element = $('#work-list .work-list');
-      //   element.html($('<div class="linear-asset-list">').append(me.assetTypesTable(createdLinearAssets)));
-      //
-      //   // if (authorizationPolicy.workListAccess())
-      //   //   searchbox.insertBefore('#tableData');
-      //   //
-      //   // $('#searchBox').on('keyup', function (event) {
-      //   //   var currentInput = event.currentTarget.value;
-      //   //
-      //   //   var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, currentInput]))();
-      //   //   $('#tableData tbody').html(unknownLimits);
-      //   // });
-      //
-      // });
+      assetsList.then(function(unverifiedAssets){
+        var unknownLimits = _.map(unverifiedAssets, _.partial(me.workListItemTable, layerName));
+        $('#work-list .work-list').html(unknownLimits);
+      });
     };
 
   };

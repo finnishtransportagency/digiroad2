@@ -133,6 +133,7 @@
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
     new MunicipalityWorkList().initialize(backend);
+    new UnverifiedPointAssetsWorkList().initialize();
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();

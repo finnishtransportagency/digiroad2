@@ -128,7 +128,7 @@ object OracleDirectionalTrafficSignDao {
             and a.modified_date is null
             and a.created_by = 'silari'
             and a.asset_type_id = $assetTypeId
-            and a.created_date > (select m.VERIFIED_DATE from municipality_verification m where m.asset_type_id = $assetTypeId AND valid_to is null)""".as[(Long, Int)].list
+            and a.created_date > (select m.VERIFIED_DATE from municipality_verification m where m.asset_type_id = $assetTypeId and m.municipality_id = a.municipality_code and valid_to is null)""".as[(Long, Int)].list
   }
 
   def updateVerifiedInfo(assetId: Long, user: String): Long = {

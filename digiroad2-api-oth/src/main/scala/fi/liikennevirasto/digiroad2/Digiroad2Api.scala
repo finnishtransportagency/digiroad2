@@ -1128,21 +1128,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val usedService = getPointAssetService(layerName)
 
-    val result = usedService.getUnverifiedPointAssets(includedMunicipalities.toSet).groupBy(_._2)
+    val result = usedService.getUnverifiedPointAssets(includedMunicipalities.toSet)
 
-    result.flatMap { asset =>
-      Map("Municipality" -> asset._1,
-          "Assets" -> asset._2)
+    result.map { asset =>
+      Map("municipality" -> asset._1,
+          "assets" -> asset._2.map(_._1))
     }
-//    Map("Some Municipality" -> Map(
-//      "Some data" -> "other data",
-//      "Some data" -> "other data",
-//      "Some data" -> "other data",
-//      "Some data" -> "other data"
-//    ),
-//    "Another Municipality" -> Map(
-//      "Another data" -> "More data"
-//    ))
   }
 
   get("/linearassets/midpoint"){
