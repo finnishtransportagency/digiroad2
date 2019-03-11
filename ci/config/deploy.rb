@@ -27,6 +27,8 @@ namespace :deploy do
       execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp conversion.bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp authentication.properties #{release_path}/conf/#{fetch(:stage)}/."
+      execute "cd #{deploy_path} && cp digiroad2.properties #{release_path}/conf/#{fetch(:stage)}/."
+      execute "cd #{deploy_path} && cp smtp.properties #{release_path}/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp keys.properties #{release_path}/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp keys.properties #{release_path}/digiroad2-oracle/src/test/resources/."
       execute "cd #{release_path} && cp revision.properties #{release_path}/conf/#{fetch(:stage)}/. || echo 'SKIP: No revision information available'"
