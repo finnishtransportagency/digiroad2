@@ -62,10 +62,9 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
       val lastModification = ServiceWithDao.getLastModificationLinearAssets(90)
 
-      lastModification should have size 3
+      lastModification should have size 2
       lastModification.find(_.assetTypeCode == 190).get.modifiedBy should be(Some("testuser_new"))
       lastModification.find(_.assetTypeCode == 100).get.modifiedBy should be(Some("testuser"))
-      lastModification.exists(_.assetTypeCode == 210) should be (true)
     }
   }
 
