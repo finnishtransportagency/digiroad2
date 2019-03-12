@@ -27,7 +27,6 @@ namespace :deploy do
       execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp conversion.bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp authentication.properties #{release_path}/conf/#{fetch(:stage)}/."
-      execute "cd #{deploy_path} && cp digiroad2.properties #{release_path}/conf/staging/."
       execute "cd #{deploy_path} && cp smtp.properties #{release_path}/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp keys.properties #{release_path}/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp keys.properties #{release_path}/digiroad2-oracle/src/test/resources/."
