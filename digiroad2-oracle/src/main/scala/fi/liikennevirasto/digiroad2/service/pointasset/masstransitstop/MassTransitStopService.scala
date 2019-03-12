@@ -234,7 +234,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, newTransaction: Boolean = true): Long = {
     val (persistedAsset, publishInfo, strategy) = withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)
