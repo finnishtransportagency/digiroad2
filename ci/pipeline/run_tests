@@ -65,7 +65,7 @@ pipeline {
                         STAGE_RUN_TESTS = [
                             "java",
                             "$java_opts",
-                            "-Ddigiroad2.env=dev",
+                            "-Ddigiroad2.env=staging",
                             "-jar",
                             "sbt-launch.jar",
                             "test"
