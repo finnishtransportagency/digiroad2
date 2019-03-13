@@ -41,10 +41,14 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
       }
   }
 
-  override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val pedestrianId =
-      withDynTransaction {
+      if(newTransaction) {
+        withDynTransaction {
+          dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+        }
+      } else {
         dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
       }
     pedestrianCrossingValidatorActor(Set(pedestrianId))

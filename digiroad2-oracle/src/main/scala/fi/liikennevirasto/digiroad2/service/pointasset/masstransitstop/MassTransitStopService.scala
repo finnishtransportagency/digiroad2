@@ -234,16 +234,27 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, newTransaction: Boolean = true): Long = {
-    val (persistedAsset, publishInfo, strategy) = withDynTransaction {
-      val point = Point(asset.lon, asset.lat)
-      val strategy = getStrategy(asset.properties.toSet, roadLink)
-      val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
-      val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
-      withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
+  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    val (persistedAsset, publishInfo, strategy) =
+      if(newTransaction) {
+        withDynTransaction {
+          val point = Point(asset.lon, asset.lat)
+          val strategy = getStrategy(asset.properties.toSet, roadLink)
+          val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
+          val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
+          withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
 
-      (persistedAsset, publishInfo, strategy)
-    }
+          (persistedAsset, publishInfo, strategy)
+        }
+      } else {
+        val point = Point(asset.lon, asset.lat)
+        val strategy = getStrategy(asset.properties.toSet, roadLink)
+        val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
+        val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
+        withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
+
+        (persistedAsset, publishInfo, strategy)
+      }
     strategy.publishSaveEvent(publishInfo)
     persistedAsset.id
   }

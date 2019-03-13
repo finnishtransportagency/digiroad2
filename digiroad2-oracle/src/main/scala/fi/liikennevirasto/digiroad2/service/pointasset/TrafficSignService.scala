@@ -61,8 +61,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
-    withDynTransaction {
+  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    if(newTransaction) {
+      withDynTransaction {
+        createWithoutTransaction(asset, username, roadLink)
+      }
+    } else {
       createWithoutTransaction(asset, username, roadLink)
     }
   }

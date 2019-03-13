@@ -37,9 +37,13 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
+    if(newTransaction) {
+      withDynTransaction {
+        OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username)
+      }
+    } else {
       OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username)
     }
   }

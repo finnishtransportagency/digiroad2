@@ -29,6 +29,8 @@ class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
   lazy val massTransitStopCsvImporter: MassTransitStopCsvImporter = new MassTransitStopCsvImporter(roadLinkService, eventBus)
   lazy val roadLinkCsvImporter: RoadLinkCsvImporter = new RoadLinkCsvImporter(roadLinkService, eventBus)
   lazy val obstaclesCsvImporter: ObstaclesCsvImporter = new ObstaclesCsvImporter(roadLinkService, eventBus)
+  lazy val trafficLightsCsvImporter: TrafficLightsCsvImporter = new TrafficLightsCsvImporter(roadLinkService, eventBus)
+  lazy val pedestrianCrossingCsvImporter: PedestrianCrossingCsvImporter = new PedestrianCrossingCsvImporter(roadLinkService, eventBus)
 
   def importer(dataImporterInfo: CsvDataImporterInfo) {
 
@@ -44,13 +46,13 @@ class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
       case Obstacles.layerName =>
         obstaclesCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
       case TrafficLights.layerName =>
-        ???
+        trafficLightsCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
       case RailwayCrossings.layerName =>
         ???
       case DirectionalTrafficSigns.layerName =>
         ???
       case PedestrianCrossings.layerName =>
-        ???
+        pedestrianCrossingCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
       case ServicePoints.layerName =>
         ???
       case _ =>

@@ -1249,23 +1249,21 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
   lazy val obstaclesService: ObstacleService = new ObstacleService(roadLinkService)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
-    val obstaclesAssets = pointAssetAttributes.map { obstacleAttribute =>
+    val incomingObstacles = pointAssetAttributes.map { obstacleAttribute =>
       val properties = obstacleAttribute.properties
       val nearbyLinks = obstacleAttribute.roadLink
 
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
-
       val obstacleType = getPropertyValue(properties, "type").asInstanceOf[String].toInt
 
-      val road = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
 
-      val roadLink = road.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
-
-      CsvBasePointAsset(IncomingObstacle(lon, lat, roadLink.linkId, obstacleType), roadLink)
+      CsvBasePointAsset(IncomingObstacle(lon, lat, nearestRoadLink.linkId, obstacleType), nearestRoadLink)
     }
 
-    obstaclesAssets.foreach { asset =>
+    incomingObstacles.foreach { asset =>
       obstaclesService.create(asset.incomingPointAsset.asInstanceOf[IncomingObstacle], user.username, asset.roadLink, false)
     }
 
@@ -1274,11 +1272,63 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
 }
 
 class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
-  override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = ???
+  override val longValueFieldsMapping = commonFieldsMapping
+  override val mandatoryFieldsMapping = commonFieldsMapping
+
+  override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+
+  lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
+
+  override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
+    val incomingTrafficLights = pointAssetAttributes.map { obstacleAttribute =>
+      val properties = obstacleAttribute.properties
+      val nearbyLinks = obstacleAttribute.roadLink
+
+      val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
+      val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
+
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+
+      CsvBasePointAsset(IncomingTrafficLight(lon, lat, nearestRoadLink.linkId), nearestRoadLink)
+    }
+
+    incomingTrafficLights.foreach { asset =>
+      trafficLightsService.create(asset.incomingPointAsset.asInstanceOf[IncomingTrafficLight], user.username, asset.roadLink, false)
+    }
+
+    result
+  }
 }
 
 class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
-  override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = ???
+  override val longValueFieldsMapping = commonFieldsMapping
+  override val mandatoryFieldsMapping = commonFieldsMapping
+
+  override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+
+  lazy val pedestrianCrossingService: PedestrianCrossingService = new PedestrianCrossingService(roadLinkService, eventBusImpl)
+
+  override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
+    val incomingPedestrianCrossings = pointAssetAttributes.map { obstacleAttribute =>
+      val properties = obstacleAttribute.properties
+      val nearbyLinks = obstacleAttribute.roadLink
+
+      val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
+      val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
+
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+
+      CsvBasePointAsset(IncomingPedestrianCrossing(lon, lat, nearestRoadLink.linkId), nearestRoadLink)
+    }
+
+    incomingPedestrianCrossings.foreach { asset =>
+      pedestrianCrossingService.create(asset.incomingPointAsset.asInstanceOf[IncomingPedestrianCrossing], user.username, asset.roadLink, false)
+    }
+
+    result
+  }
 }
 
 class CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporterOperations {
