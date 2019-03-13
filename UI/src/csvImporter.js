@@ -193,7 +193,7 @@ var getStatusIcon = function(status, description) {
 };
 
 var spinnerOn = function() {
-  $('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+  $('.content-box').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
 };
 
 var spinnerOff = function() {
