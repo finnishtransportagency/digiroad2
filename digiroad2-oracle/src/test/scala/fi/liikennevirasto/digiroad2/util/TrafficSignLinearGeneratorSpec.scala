@@ -376,8 +376,8 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
   test("segment change: value added to existing segment") {
     object TestGenerator extends TestTrafficSignProhibitionGenerator {
-      override def expire(id: Long, username: String): Unit = {
-        throw new GeneratorTestException(s"$id")
+      override def updateLinearAsset(newSegment: TrafficSignToLinear, username: String): Seq[Long] = {
+        throw new GeneratorTestException(s"${newSegment.value}")
       }
     }
 
@@ -386,18 +386,19 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
       val signId2 = 2
       val signId3 = 3
       val signId4 = 4
+
       val oldId = 1000
-      val newId = 2000
-      val value1 = Prohibitions(Seq(ProhibitionValue(22, Set(), Set())))
+
+      val value1 = Prohibitions(Seq(ProhibitionValue(1, Set(), Set())))
       val value22 = Prohibitions(Seq(ProhibitionValue(22, Set(), Set())))
-      val segment1 = TrafficSignToLinear(roadLinkNameB2, value22, SideCode.BothDirections, 0, 10, Set(signId1, signId3), Some(oldId))
-      val segment2 = TrafficSignToLinear(roadLinkNameB1, value22, SideCode.BothDirections, 5, 10, Set(signId2, signId3), Some(newId))
-      val newSegment = TrafficSignToLinear(roadLinkNameB2, value1, SideCode.BothDirections, 0, 10, Set(signId1, signId4), Some(newId))
+
+      val oldSegment = TrafficSignToLinear(roadLinkNameB2, value22, SideCode.BothDirections, 0, 10, Set(signId1, signId2), Some(oldId))
+      val newSegment = TrafficSignToLinear(roadLinkNameB2, value1, SideCode.BothDirections, 0, 10, Set(signId3, signId4))
 
       val testInfo = intercept[GeneratorTestException] {
-        TestGenerator.applyChangesBySegments(Set(segment1, newSegment), Seq(segment1))
+        TestGenerator.applyChangesBySegments(Set(oldSegment, newSegment), Seq(oldSegment))
       }
-      assert(testInfo.getMessage.contentEquals(s"${segment1.oldAssetId}"))
+      assert(testInfo.getMessage.contentEquals(s"${newSegment.value}"))
     }
   }
 
