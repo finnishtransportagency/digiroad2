@@ -1111,7 +1111,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
     val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
 
-    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+    val roadLinksFilteredByBearing = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
 
     roadLinksFilteredByBearing.size should be (1)
     roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
@@ -1146,7 +1146,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
     val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
 
-    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+    val roadLinksFilteredByBearing = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
 
     roadLinksFilteredByBearing should be (Seq(newRoadLink1, newRoadLink3))
   }
@@ -1181,10 +1181,30 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
     val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
 
-    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+    val roadLinksFilteredByBearing = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
 
     roadLinksFilteredByBearing.size should be (1)
     roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
+  }
+
+  test("filter road links when bearing info not sended") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+    val newLinkId = 5000
+    val geometryPoints = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection = TrafficDirection.BothDirections
+
+    val trafficSignBearing = None
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val administrativeClass = Municipality
+
+    val newRoadLink = RoadLink(newLinkId, geometryPoints, 0.0, administrativeClass, 1, trafficDirection, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink)
+
+    val roadLinksFiltered = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection).value), trafficSignCoordinates, roadLinkSeq)
+
+    roadLinksFiltered.size should be (1)
+    roadLinksFiltered.head.linkId should be (newLinkId)
   }
 
 }
