@@ -1100,8 +1100,10 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
   )
 
   val longValueFieldsMapping: Map[String, String] = Map()
+  val codeValueFieldsMapping: Map[String, String] = Map()
 
   val mandatoryFieldsMapping: Map[String, String] = Map()
+  val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
 
   val mandatoryFields: Set[String] = Set()
@@ -1117,6 +1119,14 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
   def verifyDoubleType(parameterName: String, parameterValue: String): ParsedRow = {
     if (parameterValue.matches("[0-9.]*")) {
       (Nil, List(AssetProperty(columnName = longValueFieldsMapping(parameterName), value = BigDecimal(parameterValue))))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
+  def verifyIntegerType(parameterName: String, parameterValue: String): ParsedRow = {
+    if (parameterValue.matches("^[0-9]{1}$")) {
+      (Nil, List(AssetProperty(columnName = mandatoryFieldsMapping(parameterName), value = parameterValue)))
     } else {
       (List(parameterName), Nil)
     }
@@ -1161,6 +1171,10 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
         } else {
           if (longValueFieldsMapping.contains(key)) {
             val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          }
+          else if (codeValueFieldsMapping.contains(key)) {
+            val (malformedParameters, properties) = verifyIntegerType(key, value.toString)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
           }
           else if(mandatoryFieldsMapping.contains(key))
@@ -1241,8 +1255,9 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
 }
 
 class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
-  override val longValueFieldsMapping = commonFieldsMapping
-  override val mandatoryFieldsMapping = commonFieldsMapping ++ Map("esterakennelman tyyppi" -> "type")
+  override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
+  override val codeValueFieldsMapping: Map[String, String] = Map("esterakennelman tyyppi" -> "type")
+  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ codeValueFieldsMapping
 
   override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
 
@@ -1275,14 +1290,14 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   override val longValueFieldsMapping = commonFieldsMapping
   override val mandatoryFieldsMapping = commonFieldsMapping
 
-  override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+  override val mandatoryFields = mandatoryFieldsMapping.keySet
 
   lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
-    val incomingTrafficLights = pointAssetAttributes.map { obstacleAttribute =>
-      val properties = obstacleAttribute.properties
-      val nearbyLinks = obstacleAttribute.roadLink
+    val incomingTrafficLights = pointAssetAttributes.map { trafficLightAttribute =>
+      val properties = trafficLightAttribute.properties
+      val nearbyLinks = trafficLightAttribute.roadLink
 
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
@@ -1302,17 +1317,17 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
 }
 
 class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
-  override val longValueFieldsMapping = commonFieldsMapping
-  override val mandatoryFieldsMapping = commonFieldsMapping
+  override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
+  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping
 
   override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = new PedestrianCrossingService(roadLinkService, eventBusImpl)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
-    val incomingPedestrianCrossings = pointAssetAttributes.map { obstacleAttribute =>
-      val properties = obstacleAttribute.properties
-      val nearbyLinks = obstacleAttribute.roadLink
+    val incomingPedestrianCrossings = pointAssetAttributes.map { pedestrianCrossingAttribute =>
+      val properties = pedestrianCrossingAttribute.properties
+      val nearbyLinks = pedestrianCrossingAttribute.roadLink
 
       val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
@@ -1325,6 +1340,43 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
 
     incomingPedestrianCrossings.foreach { asset =>
       pedestrianCrossingService.create(asset.incomingPointAsset.asInstanceOf[IncomingPedestrianCrossing], user.username, asset.roadLink, false)
+    }
+
+    result
+  }
+}
+
+class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
+  override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
+  override val codeValueFieldsMapping: Map[String, String] = Map("turvavarustus" -> "safety equipment")
+  override val specificFieldsMapping: Map[String, String] = Map("tasoristeystunnus" -> "id")
+  override val nonMandatoryFieldsMapping: Map[String, String] = Map("nimi" -> "name")
+  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ codeValueFieldsMapping ++ specificFieldsMapping
+
+  override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+
+  lazy val railwayCrossingService: RailwayCrossingService = new RailwayCrossingService(roadLinkService)
+
+  override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
+    val incomingRailwayCrossing = pointAssetAttributes.map { railwayCrossingAttribute =>
+      val properties = railwayCrossingAttribute.properties
+      val nearbyLinks = railwayCrossingAttribute.roadLink
+
+      val lon = getPropertyValue(properties, "lon").asInstanceOf[BigDecimal].toLong
+      val lat = getPropertyValue(properties, "lat").asInstanceOf[BigDecimal].toLong
+
+      val code = getPropertyValue(properties, "id").asInstanceOf[String]
+      val safetyEquipment = getPropertyValue(properties, "safety equipment").asInstanceOf[String].toInt
+      val name = getPropertyValueOption(properties, "name").asInstanceOf[Option[String]]
+
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+
+      CsvBasePointAsset(IncomingRailwayCrossing(lon, lat, nearestRoadLink.linkId, safetyEquipment, name, code), nearestRoadLink)
+    }
+
+    incomingRailwayCrossing.foreach { asset =>
+      railwayCrossingService.create(asset.incomingPointAsset.asInstanceOf[IncomingRailwayCrossing], user.username, asset.roadLink, false)
     }
 
     result
