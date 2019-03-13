@@ -30,6 +30,9 @@ trait TrafficSignLinearGenerator {
 //  type AssetValue <: Value
   val assetType : Int
 
+  final val userCreate = "automatic_trafficSign_created"
+  final val userUpdate = "automatic_trafficSign_updated"
+
   lazy val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
@@ -311,13 +314,20 @@ trait TrafficSignLinearGenerator {
     }
   }
 
-  def createAssetRelation(linearAssetId: Long, trafficSignId: Long) : Unit = {
+  protected def createAssetRelation(linearAssetId: Long, trafficSignId: Long) : Unit = {
     try {
       oracleLinearAssetDao.insertConnectedAsset(linearAssetId, trafficSignId)
     } catch {
       case ex: SQLIntegrityConstraintViolationException => print("") //the key already exist with a valid date
       case e: Exception => print("SQL Exception ")
         throw new RuntimeException("SQL exception " + e.getMessage)
+    }
+  }
+
+  def deleteLinearAssets(existingSeg: Seq[TrafficSignToLinear]): Unit = {
+    existingSeg.foreach { asset =>
+      linearAssetService.expireAsset(assetType, asset.oldAssetId.get, userUpdate, true, false)
+      oracleLinearAssetDao.expireConnectedByLinearAsset(asset.oldAssetId.get)
     }
   }
 
@@ -444,8 +454,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def applyChangesBySegments(allSegments: Set[TrafficSignToLinear], existingSegments: Seq[TrafficSignToLinear]) {
-    val userCreate = "automatic_trafficSign_created"
-    val userUpdate = "automatic_trafficSign_updated"
+
     println(s"Total of segments:  ${allSegments.size} ")
 
     allSegments.groupBy(_.roadLink.linkId).values.foreach(newSegments =>
@@ -473,10 +482,7 @@ trait TrafficSignLinearGenerator {
             } else {
               //delete old and create new
               println("delete old")
-              existingSeg.foreach { asset =>
-                linearAssetService.expireAsset(assetType, asset.oldAssetId.get, userUpdate, true, false)
-                oracleLinearAssetDao.expireConnectedByLinearAsset(asset.oldAssetId.get)
-              }
+              deleteLinearAssets(existingSeg)
               println("create asset")
               createLinearAssetAccordingSegmentsInfo(newSegment, userUpdate)
             }
@@ -673,4 +679,3 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
   }
 }
-

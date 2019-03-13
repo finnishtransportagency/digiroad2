@@ -8,7 +8,7 @@ import org.mockito.Mockito._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.{Value, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -40,9 +40,51 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
     override lazy val prohibitionService = mockProhibitionService
 
+    var createAssetRelationObject: Seq[(Long, Long)] = Seq()
+
     override def createAssetRelation(linearAssetId: Long, trafficSignId: Long): Unit = {
-      System.out.println(s"linearAssetId : $linearAssetId and trafficSignId : $trafficSignId")
+      createAssetRelationObject = List.concat(createAssetRelationObject , Seq((linearAssetId, trafficSignId)))
     }
+
+    def getCreateAssetRelationInfo: Seq[(Long, Long)] = {
+      createAssetRelationObject
+    }
+
+    var createAssetObject: Seq[(Long, Value, Int,  Measures, String, Option[RoadLinkLike])] = Seq()
+
+    override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
+      createAssetObject = List.concat(createAssetObject , Seq((newSegment.roadLink.linkId, newSegment.value, newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username, Some(newSegment.roadLink))))
+     0L
+    }
+
+    def getCreateInfo: Seq[(Long, Value, Int,  Measures, String, Option[RoadLinkLike])] = {
+      createAssetObject
+    }
+
+    var updateAssetObject: Seq[(Seq[Long], Value, String)] = Seq()
+
+    override def updateLinearAsset(newSegment: TrafficSignToLinear, username: String) : Seq[Long] = {
+    updateAssetObject = List.concat(updateAssetObject , Seq((Seq(newSegment.oldAssetId.get),  newSegment.value, username)))
+      Seq(newSegment.oldAssetId.get)
+    }
+
+    def getUpdateInfo: Seq[(Seq[Long], Value, String)] = {
+      updateAssetObject
+    }
+
+    var deleteAssetObject: Seq[(Seq[Long])] = Seq()
+
+    override def deleteLinearAssets(existingSeg: Seq[TrafficSignToLinear]) : Unit = {
+      deleteAssetObject = List.concat(deleteAssetObject , Seq(existingSeg.flatMap(_.oldAssetId)))
+    }
+
+    def getDeleteInfo: Seq[(Seq[Long])] = {
+      deleteAssetObject
+    }
+
+
+
+
   }
 
   val prohibitionGenerator : TrafficSignProhibitionGenerator = new TestTrafficSignProhibitionGenerator
