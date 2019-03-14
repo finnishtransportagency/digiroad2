@@ -386,25 +386,25 @@ object ProhibitionClass {
     values.filter(_.trafficSign.contains(trafficSign)).toSet
   }
 
-  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
-    (if (prohibitionValue.intersect(Seq(Moped.value, Pedestrian.value, Bicycle.value)).size == 3) {
-      prohibitionValue --= Seq(Moped.value, Pedestrian.value, Bicycle.value)
-      Seq(NoPedestriansCyclesMopeds)
-    } else Seq()
-      )++
-      (if (prohibitionValue.intersect(Seq(Moped.value, Bicycle.value)).size == 2) {
-        prohibitionValue --= Seq(Moped.value, Bicycle.value)
-        Seq(NoCyclesOrMopeds)
-      } else Seq()
-    )++
-      (if (prohibitionValue.intersect(Seq(Pedestrian, Bicycle)).size == 2) {
-        prohibitionValue --= NoCyclesOrMopeds.values
-        Seq(NoCyclesOrMopeds)
-      } else Seq()
-        ) ++ prohibitionValue.flatMap { value =>
-      ProhibitionClass.apply(value).trafficSign
-    }
-  }
+//  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
+//    (if (prohibitionValue.intersect(Seq(Moped.value, Pedestrian.value, Bicycle.value)).size == 3) {
+//      prohibitionValue --= Seq(Moped.value, Pedestrian.value, Bicycle.value)
+//      Seq(NoPedestriansCyclesMopeds)
+//    } else Seq()
+//      )++
+//      (if (prohibitionValue.intersect(Seq(Moped.value, Bicycle.value)).size == 2) {
+//        prohibitionValue --= Seq(Moped.value, Bicycle.value)
+//        Seq(NoCyclesOrMopeds)
+//      } else Seq()
+//    )++
+//      (if (prohibitionValue.intersect(Seq(Pedestrian, Bicycle)).size == 2) {
+//        prohibitionValue --= NoCyclesOrMopeds.values
+//        Seq(NoCyclesOrMopeds)
+//      } else Seq()
+//        ) ++ prohibitionValue.flatMap { value =>
+//      ProhibitionClass.apply(value).trafficSign
+//    }
+//  }
 
   case object Vehicle extends ProhibitionClass {
     def value = 2
