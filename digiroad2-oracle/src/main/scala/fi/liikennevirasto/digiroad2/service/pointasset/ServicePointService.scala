@@ -8,8 +8,13 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 class ServicePointService {
   val typeId: Int = 250
 
-  def create(asset: IncomingServicePoint, municipalityCode: Int, username: String) = {
-    withDynTransaction {
+  def create(asset: IncomingServicePoint, municipalityCode: Int, username: String, newTransaction: Boolean = true) = {
+    if(newTransaction) {
+      withDynTransaction {
+        checkAuthorityData(asset)
+        OracleServicePointDao.create(asset, municipalityCode, username)
+      }
+    } else {
       checkAuthorityData(asset)
       OracleServicePointDao.create(asset, municipalityCode, username)
     }
