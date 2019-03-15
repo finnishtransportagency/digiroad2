@@ -1,5 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset
 
+import java.text.Normalizer
+
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -220,6 +222,8 @@ object PavementClass {
 sealed trait ServicePointsClass {
   def value: Int
   def isAuthorityData: Boolean
+  val labelName: String
+  val subTypeName: Map[String, Int] = Map.empty
 }
 object ServicePointsClass {
   val values = Set(Customs, BorderCrossing, RestArea, Airport, FerryTerminal, RailwayStation, ParkingArea, TerminalForLoadingCars,
@@ -229,20 +233,44 @@ object ServicePointsClass {
     values.find(_.value == value).getOrElse(Unknown).isAuthorityData
   }
 
-  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true;}
-  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true;}
-  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true;}
-  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true;}
-  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true;}
-  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true;}
-  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true;}
-  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true;}
-  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true;}
-  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true;}
-  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true;}
-  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false;}
-  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false;}
-  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true;}
+  def apply(value: String): Int = {
+    values.find { servicePoint =>
+      val name = Normalizer.normalize(servicePoint.labelName, Normalizer.Form.NFD)
+                  .replaceAll("[^\\p{ASCII}]", "")
+                  .replaceAll("/-|\\s/g", "").toLowerCase
+      name == value
+    }.getOrElse(Unknown).value
+  }
+
+  def getTypeExtensionValue(value: String): Int = {
+    val normalizedValue = Normalizer.normalize(value, Normalizer.Form.NFD)
+      .replaceAll("[^\\p{ASCII}]", "")
+      .replaceAll("/-|\\s/g", "").toLowerCase
+
+    values.flatMap { servicePoint =>
+      val normalizedSubTypes = servicePoint.subTypeName.map{ subType =>
+        (Normalizer.normalize(subType._1, Normalizer.Form.NFD)
+        .replaceAll("[^\\p{ASCII}]", "")
+        .replaceAll("/-|\\s/g", "").toLowerCase, subType._2)}
+      normalizedSubTypes.get(normalizedValue)
+    }
+    1
+  }
+
+  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true; val labelName = "Tulli";}
+  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true; val labelName = "Rajanylityspaikka";}
+  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true; val labelName = "Lepoalue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true; val labelName = "Lentokenttä";}
+  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true; val labelName = "Laivaterminaali";}
+  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true; val labelName = "Rautatieasema"; override val subTypeName = Map("Merkittävä rautatieasema" -> 5,"Vähäisempi rautatieasema" -> 6, "Maanalainen/metroasema" -> 7)}
+  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true; val labelName = "Pysäköintialue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true; val labelName = "Autojen lastausterminaali";}
+  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true; val labelName = "Linja- ja kuorma-autojen pysäköintialue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true; val labelName = "Pysäköintitalo";}
+  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true; val labelName = "Linja-autoasema";}
+  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false; val labelName = "Taksiasema";}
+  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false; val labelName = "Sähköautojen latauspiste";}
+  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true; val labelName = "Unknown";}
 }
 
 

@@ -24,7 +24,9 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import java.io.InputStreamReader
 import java.net.FileNameMap
+import java.text.Normalizer
 
+import fi.liikennevirasto.digiroad2.asset.ServicePointsClass.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
 
 import scala.util.Try
@@ -1421,41 +1423,61 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
 class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
   override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
-  override val codeValueFieldsMapping: Map[String, String] = Map("palvelun tyyppi" -> "type")
+  override val stringValueFieldsMapping: Map[String, String] = Map("palvelun tyyppi" -> "type")
   override val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "tarkenne" -> "type extension",
     "palvelun nimi" -> "name",
     "palvelun lisätieto" -> "additional info",
-    "viranomaisdataa " -> "is authority data",
-    "pysäköintipaikkojen lukumäärä" -> "parking place count"
+    "viranomaisdataa" -> "is authority data",
+    "pysäkköintipaikkojen lukumäärä" -> "parking place count"
   )
-  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ codeValueFieldsMapping
+  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ stringValueFieldsMapping
 
   override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
 
   lazy val servicePointService: ServicePointService = new ServicePointService
 
+  case class NewIncomingService(position: Point, incomingService: IncomingService)
+
+  private def serviceTypeConverter(serviceType: String): Int = {
+    val value = Normalizer.normalize(serviceType, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").replaceAll("/-|\\s/g", "").toLowerCase
+    ServicePointsClass.apply(value)
+  }
+
+  private def authorityDataConverter(value: String): Boolean = {
+    val authorityDataValue = Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toLowerCase
+    authorityDataValue match {
+      case "kylla" => true
+      case _ => false
+    }
+  }
+
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
     val incomingServicePoint = pointAssetAttributes.map { servicePointAttribute =>
       val csvProperties = servicePointAttribute.properties
-      val nearbyLinks = servicePointAttribute.roadLink
+//      val nearbyLinks = servicePointAttribute.roadLink
 
       val lon = getPropertyValue(csvProperties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(csvProperties, "lat").asInstanceOf[BigDecimal].toLong
 
       val serviceType = getPropertyValue(csvProperties, "type").asInstanceOf[String]
-
-      val typeExtension = getPropertyValueOption(csvProperties, "type extension").asInstanceOf[String]
+      val typeExtension = getPropertyValueOption(csvProperties, "type extension").asInstanceOf[Option[String]]
       val name = getPropertyValueOption(csvProperties, "name").asInstanceOf[Option[String]]
       val additionalInfo = getPropertyValueOption(csvProperties, "additional info").asInstanceOf[Option[String]]
-      val isAuthorityData = getPropertyValueOption(csvProperties, "is authority data").asInstanceOf[Option[String]]
-      val parkingPlaceCount = getPropertyValueOption(csvProperties, "parking place count").asInstanceOf[Option[String]]
+      val isAuthorityData = getPropertyValue(csvProperties, "is authority data").asInstanceOf[String]
+      val parkingPlaceCount = getPropertyValueOption(csvProperties, "parking place count").asInstanceOf[Option[Int]]
 
-      1000
-//      val incomingService = IncomingService(serviceType, name, additionalInfo, typeExtension, parkingPlaceCount)
-//
-//      CsvBasePointAsset(IncomingServicePoint(lon, lat, ))
+      val validatedServiceType = serviceTypeConverter(serviceType)
+      val validatedTypeExtension = Some(ServicePointsClass.getTypeExtensionValue(typeExtension.get))
+      val validatedAuthorityData = authorityDataConverter(isAuthorityData)
+
+      val position = Point(lon, lat)
+      val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData)
+
+      NewIncomingService(position, incomingService)
     }
+
+    val groupedServicePoints = incomingServicePoint.groupBy(_.position)
 
     result
   }
