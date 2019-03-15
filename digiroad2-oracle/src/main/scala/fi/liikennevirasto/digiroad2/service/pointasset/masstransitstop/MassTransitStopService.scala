@@ -599,6 +599,10 @@ trait MassTransitStopService extends PointAssetOperations {
   private def excludeProperties(properties: Seq[SimpleProperty]): Set[SimpleProperty] = {
     properties.filterNot(prop => AssetPropertyConfiguration.ExcludedProperties.contains(prop.publicId)).toSet
   }
+
+  def saveIdPrintedOnValluLog(id: Long): Unit = {
+    massTransitStopDao.insertValluXmlIds(id)
+  }
 }
 
 class MassTransitStopException(string: String) extends RuntimeException {

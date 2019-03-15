@@ -42,6 +42,7 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
       val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
+      massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
     }
   }
 }
@@ -55,12 +56,13 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
 
   def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
     withDynSession {
-    val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset++terminalPublishInfo.detachAsset).toSet)
+      val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset ++ terminalPublishInfo.detachAsset).toSet)
 
-    persistedStop.foreach { busStop =>
+      persistedStop.foreach { busStop =>
         val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
         val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
         ValluSender.postToVallu(massTransitStop)
+        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
     }
   }
