@@ -70,7 +70,7 @@ trait TrafficSignLinearGenerator {
 
   lazy val oracleLinearAssetDao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
 
-  def createValue(trafficSign: PersistedTrafficSign): Option[Value]
+  def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Value]
 
   def getExistingSegments(roadLinks: Seq[RoadLink]): Seq[PersistedLinearAsset]
 
@@ -87,6 +87,8 @@ trait TrafficSignLinearGenerator {
   def mappingValue(segment: Seq[TrafficSignToLinear]): Value
 
   def compareValue(value1: Value, value2: Value): Boolean
+
+  def withdraw(value1: Value, value2: Value): Value
 
   def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): (Option[Point], Option[Point], Option[Int]) = {
     sideCode match {
@@ -174,17 +176,33 @@ trait TrafficSignLinearGenerator {
     }
   }
 
-  def segmentsConverter(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Seq[TrafficSignToLinear] = {
+  def segmentsConverter(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign]): (Seq[TrafficSignToLinear], Seq[TrafficSignToLinear])= {
     val connectedTrafficSignIds =
       if (existingAssets.nonEmpty)
         oracleLinearAssetDao.getConnectedAssetFromLinearAsset(existingAssets.map(_.id))
       else
         Seq()
 
-    existingAssets.filter(_.value.isDefined).map { asset =>
+    val signIdsGroupedByAssetId = connectedTrafficSignIds.groupBy(_._1)
+    val existingWithoutSignsRelation = existingAssets.filter(_.value.isDefined).flatMap { asset =>
+      val relevantSigns = trafficSigns.filter(sign => signIdsGroupedByAssetId(asset.id).map(_._2).contains(sign.id))
+
+      val createdValue = createValue(relevantSigns)
+      if (createdValue.isEmpty)
+        Some(TrafficSignToLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.apply(asset.sideCode), asset.startMeasure, asset.endMeasure, relevantSigns.map(_.id).toSet, Some(asset.id)))
+      else
+        if (!compareValue(asset.value.get, createdValue.get))
+          Some(TrafficSignToLinear(roadLinks.find(_.linkId == asset.linkId).get, withdraw(asset.value.get, createdValue.get), SideCode.apply(asset.sideCode), asset.startMeasure, asset.endMeasure, relevantSigns.map(_.id).toSet, Some(asset.id)))
+      else
+        None
+    }
+
+    val allExistingSegments = existingAssets.filter(_.value.isDefined).map { asset =>
       val trafficSignIds = connectedTrafficSignIds.filter(_._1 == asset.id).map(_._2).toSet
       TrafficSignToLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.apply(asset.sideCode), asset.startMeasure, asset.endMeasure, trafficSignIds, Some(asset.id))
     }
+
+    (existingWithoutSignsRelation, allExistingSegments)
   }
 
   def baseProcess(trafficSigns: Seq[PersistedTrafficSign], roadLinks: Seq[RoadLink], actualRoadLink: RoadLink, previousInfo: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
@@ -207,7 +225,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def createSegmentPieces(actualRoadLink: RoadLink, allRoadLinks: Seq[RoadLink], sign: PersistedTrafficSign, signs: Seq[PersistedTrafficSign], pointOfInterest: (Option[Point], Option[Point], Option[Int]), result: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
-    createValue(sign) match {
+    createValue(Seq(sign)) match {
       case Some(value) =>
         val pairSign = getPairSign(actualRoadLink, sign, signs.filter(_.linkId == actualRoadLink.linkId), pointOfInterest._3.get)
         val generatedSegmentPieces = generateSegmentPieces(actualRoadLink, sign, value, pairSign, pointOfInterest._3.get)
@@ -274,10 +292,10 @@ trait TrafficSignLinearGenerator {
   def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign): Unit = {
     val username = "automatic_trafficSign_deleted"
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
-    val createdValue = createValue(trafficSign)
+    val createdValue = createValue(Seq(trafficSign))
 
     val (toDelete, toUpdate) = trafficSignRelatedAssets.partition { asset =>
-      if(createdValue.isEmpty) true else asset.value.get.equals(createdValue.get)
+      if(createdValue.isEmpty) true else compareValue(asset.value.get, createdValue.get)
     }
 
     toDelete.foreach { asset =>
@@ -441,9 +459,9 @@ trait TrafficSignLinearGenerator {
 
   private def getAllRoadLinksWithSameName(signRoadLink: RoadLink): Seq[RoadLink] = {
     val tsRoadNameInfo =
-      if (signRoadLink.attributes.get("ROADNAME_FI").map(_.toString.trim).nonEmpty) {
+      if (signRoadLink.attributes.get("ROADNAME_FI").exists(_.toString.trim.nonEmpty)) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_FI").toString)
-      } else if (signRoadLink.attributes.get("ROADNAME_SE").map(_.toString.trim).nonEmpty) {
+      } else if (signRoadLink.attributes.get("ROADNAME_SE").exists(_.toString.trim.nonEmpty)) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_SE").toString)
       } else
         None
@@ -486,6 +504,8 @@ trait TrafficSignLinearGenerator {
         }
       }
     )
+    //delete all old segments without a pair linkId
+    deleteLinearAssets(existingSegments.filter(seg => allSegments.map(_.roadLink).contains(seg.roadLink)))
   }
 
   def iterativeProcess(roadLinks: Seq[RoadLink], processedRoadLinks: Seq[RoadLink]): Unit = {
@@ -493,6 +513,7 @@ trait TrafficSignLinearGenerator {
 
     if (roadLinkToBeProcessed.nonEmpty) {
       val roadLink = roadLinkToBeProcessed.head
+      println(s"Processing roadLink linkId ${roadLink.linkId}")
       val allRoadLinksWithSameName = withDynTransaction {
         val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
         if(allRoadLinksWithSameName.nonEmpty){
@@ -500,11 +521,11 @@ trait TrafficSignLinearGenerator {
           val filteredTrafficSigns = trafficSigns.filter(signBelongTo)
 
           val existingAssets = getExistingSegments(allRoadLinksWithSameName)
-          val existingSegments = segmentsConverter(existingAssets, allRoadLinksWithSameName)
+          val (relevantExistingSegments , existingSegments) = segmentsConverter(existingAssets, allRoadLinksWithSameName, trafficSigns)
           println(s"Processing: ${filteredTrafficSigns.size}")
 
           //create and Modify actions
-          val allSegments = segmentsManager(allRoadLinksWithSameName, filteredTrafficSigns, existingSegments)
+          val allSegments = segmentsManager(allRoadLinksWithSameName, filteredTrafficSigns, relevantExistingSegments)
           applyChangesBySegments(allSegments, existingSegments)
 
           if (trafficSigns.nonEmpty)
@@ -535,7 +556,8 @@ trait TrafficSignLinearGenerator {
       val trafficSignsToTransform = trafficSigns.filter(asset => roadLinks.exists(_.linkId == asset.linkId))
 
       println(s"Total of trafficSign to process: ${trafficSigns.size}")
-      trafficSigns.foreach { ts =>
+      val tsToDelete = trafficSigns.filter(_.expired)
+      tsToDelete.foreach { ts =>
         // Delete actions
         deleteOrUpdateAssetBasedOnSign(ts)
       }
@@ -566,22 +588,22 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     new ProhibitionService(roadLinkService, eventbus)
   }
 
-  override def createValue(trafficSign: PersistedTrafficSign): Option[Prohibitions] = {
-    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
-    val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
-    val types = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(signType))
-    val additionalPanels = additionalPanel.sortBy(_.formPosition)
+  override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Prohibitions] = {
+    val value = trafficSigns.flatMap { trafficSign =>
+      val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+      val additionalPanel = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
+      val types = ProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(signType))
+      val additionalPanels = additionalPanel.sortBy(_.formPosition)
 
-    val validityPeriods: Set[ValidityPeriod] =
-      additionalPanels.flatMap { additionalPanel =>
-        val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
-        createValidPeriod(trafficSignType, additionalPanel)
-      }.toSet
+      val validityPeriods: Set[ValidityPeriod] =
+        additionalPanels.flatMap { additionalPanel =>
+          val trafficSignType = TrafficSignType.applyOTHValue(additionalPanel.panelType)
+          createValidPeriod(trafficSignType, additionalPanel)
+        }.toSet
 
-    if(types.nonEmpty)
-      Some(Prohibitions(types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set())).toSeq))
-    else
-      None
+        types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set()))
+    }
+    if(value.nonEmpty) Some(Prohibitions(value)) else None
   }
 
   def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
@@ -633,6 +655,10 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
   override def compareValue(value1: Value, value2: Value) : Boolean = {
     value1.asInstanceOf[Prohibitions].equals(value2.asInstanceOf[Prohibitions])
   }
+
+  override def withdraw(value1: Value, value2: Value): Value = {
+     Prohibitions(value1.asInstanceOf[Prohibitions].prohibitions.diff(value2.asInstanceOf[Prohibitions].prohibitions))
+  }
 }
 
 class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLinkService) extends TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)  {
@@ -643,10 +669,11 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
     new HazmatTransportProhibitionService(roadLinkService, eventbus)
   }
 
-  override def createValue(trafficSign: PersistedTrafficSign): Option[Prohibitions] = {
-    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+  override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Prohibitions] = {
+    val values = trafficSigns.flatMap{ trafficSign =>
+    //val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     val additionalPanels = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
-    val sortedAdditionalPanels = additionalPanels.sortBy(_.formPosition)
+    //val sortedAdditionalPanels = additionalPanels.sortBy(_.formPosition)
     val types = additionalPanels.flatMap{ additionalPanel =>
       HazmatTransportProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(additionalPanel.panelType))
     }
@@ -657,10 +684,9 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
         createValidPeriod(trafficSignType, additionalPanel)
       }.toSet
 
-    if (types.nonEmpty)
-      Some(Prohibitions(types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set())).toSeq))
-    else
-      None
+      types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set()))
+    }
+    if(values.nonEmpty) Some(Prohibitions(values)) else None
   }
 
   override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {

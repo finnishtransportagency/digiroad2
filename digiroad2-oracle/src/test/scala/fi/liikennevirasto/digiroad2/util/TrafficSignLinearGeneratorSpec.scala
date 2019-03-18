@@ -223,7 +223,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
       val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
       val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, Set(), Set())})
-      val prohibitionsResult = prohibitionGenerator.createValue(trafficSign)
+      val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
       withClue("trafficSign sign " + sign) {
         Some(prohibitions) should be (prohibitionsResult)
       }
@@ -240,7 +240,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
       val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, prohibitionPeriod, Set())})
 
-      val prohibitionsResult = prohibitionGenerator.createValue(trafficSign)
+      val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
       withClue("trafficSign sign " + sign) {
         Some(prohibitions) should be (prohibitionsResult)
       }
@@ -257,7 +257,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
       val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
       val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, prohibitionPeriod, Set())})
 
-      val prohibitionsResult = prohibitionGenerator.createValue(trafficSign)
+      val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
       withClue("trafficSign sign " + sign) {
         Some(prohibitions) should be (prohibitionsResult)
       }
@@ -399,18 +399,18 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
       TrafficSignProperty(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionA.OTHvalue, "", "", 1))))
     val trafficSignA = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signPropA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
     val hazmatValueA = Prohibitions(Seq(ProhibitionValue(HazmatProhibitionTypeA.value, Set(), Set())))
-    val hazmatResultA = hazmatTransportProhibitionGenerator.createValue(trafficSignA)
+    val hazmatResultA = hazmatTransportProhibitionGenerator.createValue(Seq(trafficSignA))
     hazmatResultA should be (Some(hazmatValueA))
 
     val signPropB = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))),
       TrafficSignProperty(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionB.OTHvalue, "", "", 1))))
     val trafficSignB = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signPropB, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
     val hazmatValueB = Prohibitions(Seq(ProhibitionValue(HazmatProhibitionTypeB.value, Set(), Set())))
-    val hazmatResultB = hazmatTransportProhibitionGenerator.createValue(trafficSignB)
+    val hazmatResultB = hazmatTransportProhibitionGenerator.createValue(Seq(trafficSignB))
     hazmatResultB should be (Some(hazmatValueB))
 
     val signProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))))
     val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
-    hazmatTransportProhibitionGenerator.createValue(trafficSign).isEmpty should be (true)
+    hazmatTransportProhibitionGenerator.createValue(Seq(trafficSign)).isEmpty should be (true)
   }
 }
