@@ -242,19 +242,20 @@ object ServicePointsClass {
     }.getOrElse(Unknown).value
   }
 
-  def getTypeExtensionValue(value: String): Int = {
-    val normalizedValue = Normalizer.normalize(value, Normalizer.Form.NFD)
-      .replaceAll("[^\\p{ASCII}]", "")
-      .replaceAll("/-|\\s/g", "").toLowerCase
+  def getTypeExtensionValue(typeExtention: String, serviceType: Int): Option[Int] = {
+    val serviceTypeClass = values.find(_.value == serviceType)
 
-    values.flatMap { servicePoint =>
-      val normalizedSubTypes = servicePoint.subTypeName.map{ subType =>
-        (Normalizer.normalize(subType._1, Normalizer.Form.NFD)
+    val normalizedValue = Normalizer.normalize(typeExtention, Normalizer.Form.NFD)
+      .replaceAll("[^\\p{ASCII}]", "")
+      .replaceAll("-|\\s", "").toLowerCase
+
+    val normalizedSubTypes = serviceTypeClass.get.subTypeName.map { subType =>
+      (Normalizer.normalize(subType._1, Normalizer.Form.NFD)
         .replaceAll("[^\\p{ASCII}]", "")
-        .replaceAll("/-|\\s/g", "").toLowerCase, subType._2)}
-      normalizedSubTypes.get(normalizedValue)
+        .replaceAll("-|\\s", "").toLowerCase, subType._2)
     }
-    1
+
+    normalizedSubTypes.get(normalizedValue)
   }
 
   case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true; val labelName = "Tulli";}

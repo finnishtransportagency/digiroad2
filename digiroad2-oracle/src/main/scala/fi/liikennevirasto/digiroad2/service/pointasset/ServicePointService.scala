@@ -82,7 +82,7 @@ class ServicePointService {
     incomingServicePoint.services.foreach { service =>
       val shouldBe = ServicePointsClass.apply(service.serviceType)
       if(shouldBe != service.isAuthorityData)
-        throw new ServicePointException(s"the authority data is not matching for type ${service.serviceType}")
+        throw new ServicePointException(s"The authority data is not matching for type ${service.serviceType}")
     }
   }
 }

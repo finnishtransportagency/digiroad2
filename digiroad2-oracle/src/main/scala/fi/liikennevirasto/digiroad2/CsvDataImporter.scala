@@ -1150,7 +1150,8 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
   }
 
   def getPropertyValueOption(pointAssetAttributes: CsvPointAssetRow, propertyName: String): Option[Any] = {
-    pointAssetAttributes.properties.find(prop => prop.columnName == propertyName).map(_.value)
+    val property = pointAssetAttributes.properties.find(prop => prop.columnName == propertyName)
+    if(property.exists(prop => prop.value.toString.trim.nonEmpty)) property.map(_.value) else None
   }
 
   def verifyData(parsedRow: CsvPointAssetRow, user: User): ParsedCsv = {
@@ -1422,6 +1423,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 }
 
 class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
   override val stringValueFieldsMapping: Map[String, String] = Map("palvelun tyyppi" -> "type")
   override val nonMandatoryFieldsMapping: Map[String, String] = Map(
@@ -1437,15 +1439,15 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
 
   lazy val servicePointService: ServicePointService = new ServicePointService
 
-  case class NewIncomingService(position: Point, incomingService: IncomingService)
+  case class PossibleServicePoint(position: Point, incomingService: IncomingService, roadLink: RoadLink, importInformation: Seq[NotImportedData] = Seq.empty)
 
   private def serviceTypeConverter(serviceType: String): Int = {
-    val value = Normalizer.normalize(serviceType, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").replaceAll("/-|\\s/g", "").toLowerCase
+    val value = Normalizer.normalize(serviceType, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").replaceAll("-|\\s", "").toLowerCase
     ServicePointsClass.apply(value)
   }
 
   private def authorityDataConverter(value: String): Boolean = {
-    val authorityDataValue = Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toLowerCase
+    val authorityDataValue = Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").replaceAll("-|\\s", "").toLowerCase
     authorityDataValue match {
       case "kylla" => true
       case _ => false
@@ -1455,31 +1457,54 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
     val incomingServicePoint = pointAssetAttributes.map { servicePointAttribute =>
       val csvProperties = servicePointAttribute.properties
-//      val nearbyLinks = servicePointAttribute.roadLink
+      val nearbyLinks = servicePointAttribute.roadLink
 
       val lon = getPropertyValue(csvProperties, "lon").asInstanceOf[BigDecimal].toLong
       val lat = getPropertyValue(csvProperties, "lat").asInstanceOf[BigDecimal].toLong
 
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
+
       val serviceType = getPropertyValue(csvProperties, "type").asInstanceOf[String]
-      val typeExtension = getPropertyValueOption(csvProperties, "type extension").asInstanceOf[Option[String]]
-      val name = getPropertyValueOption(csvProperties, "name").asInstanceOf[Option[String]]
-      val additionalInfo = getPropertyValueOption(csvProperties, "additional info").asInstanceOf[Option[String]]
+      val typeExtension = getPropertyValueOption(csvProperties, "type extension").map(_.toString)
+      val name = getPropertyValueOption(csvProperties, "name").map(_.toString)
+      val additionalInfo = getPropertyValueOption(csvProperties, "additional info").map(_.toString)
       val isAuthorityData = getPropertyValue(csvProperties, "is authority data").asInstanceOf[String]
-      val parkingPlaceCount = getPropertyValueOption(csvProperties, "parking place count").asInstanceOf[Option[Int]]
+      val parkingPlaceCount = getPropertyValueOption(csvProperties, "parking place count").map(_.toString.toInt)
 
       val validatedServiceType = serviceTypeConverter(serviceType)
-      val validatedTypeExtension = Some(ServicePointsClass.getTypeExtensionValue(typeExtension.get))
+      val validatedTypeExtension = ServicePointsClass.getTypeExtensionValue(typeExtension.get, validatedServiceType)
       val validatedAuthorityData = authorityDataConverter(isAuthorityData)
 
       val position = Point(lon, lat)
       val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData)
 
-      NewIncomingService(position, incomingService)
+      val servicePointInfo =
+        if(validatedServiceType == ServicePointsClass.Unknown.value)
+          Seq(NotImportedData(reason = s"Service Point type ${serviceType} does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+        else
+          Seq()
+
+      PossibleServicePoint(position, incomingService, nearestRoadLink, servicePointInfo)
     }
 
-    val groupedServicePoints = incomingServicePoint.groupBy(_.position)
+    val (validServicePoints, nonValidServicePoints) = incomingServicePoint.partition(servicePoint => servicePoint.importInformation.isEmpty)
+    val notImportedInfo = nonValidServicePoints.flatMap(_.importInformation)
+    val groupedServicePoints = validServicePoints.groupBy(_.position)
 
-    result
+    val incomingServicePoints = groupedServicePoints.map { servicePoint =>
+      (IncomingServicePoint(servicePoint._1.x, servicePoint._1.y, servicePoint._2.map(_.incomingService).toSet), servicePoint._2.map(_.roadLink).head.municipalityCode)
+    }
+
+    incomingServicePoints.foreach { incomingAsset =>
+      try {
+        servicePointService.create(incomingAsset._1, incomingAsset._2, user.username, false)
+      } catch {
+        case e: ServicePointException => result.copy(notImportedData = List(NotImportedData(reason = e.getMessage, csvRow = "")) ++ result.notImportedData)
+      }
+    }
+
+    result.copy(notImportedData = notImportedInfo.toList ++ result.notImportedData)
   }
 }
 
