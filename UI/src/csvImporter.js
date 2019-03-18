@@ -23,6 +23,7 @@ $(function() {
   });
 
   rootElement.find('#asset-selection').on('change', function () {
+    clear();
     $('.btn.btn-primary.btn-lg').prop('disabled', !$(this).val());
     $('#deleteCheckbox').prop('disabled', !$(this).val());
     $('#csvImportPoistaCheckbox').toggle($(this).val() === 'trafficSigns');
@@ -42,6 +43,7 @@ $(function() {
   $('#csvImport').on('submit', (function(e) {
     e.preventDefault();
     var formData = new FormData(this);
+    formData.delete('municipalityNumbers');
     var assetType = $('#asset-selection').find(":selected").val();
     function uploadFile() {
       backend.uploadFile(formData, assetType,
@@ -61,7 +63,7 @@ $(function() {
         successCallback: function () {
           var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
           _.each(optionValues, function (opt) {
-            opt.selected = true;
+            formData.append('municipalityNumbers', opt.value);
           });
           uploadFile();
           spinnerOn();
@@ -72,6 +74,14 @@ $(function() {
       spinnerOn();
     }
   }));
+
+  function clear() {
+    var municipalityBox = $(".municipalities");
+    $('input[type=checkbox]').prop('checked',false);
+    municipalityBox.hide();
+    municipalityBox.find("#municipalities_search, select[name*='municipalityNumbers']").find('option').remove();
+    getMunicipalities();
+  }
 
   function getMunicipalities() {
     if (_.isEmpty($('.municipalities').find("#municipalities_search").find('option'))) {
