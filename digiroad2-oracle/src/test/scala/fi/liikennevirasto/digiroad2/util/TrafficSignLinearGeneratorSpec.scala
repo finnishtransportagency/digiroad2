@@ -8,48 +8,64 @@ import org.mockito.Mockito._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.{Value, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
-import slick.driver.JdbcDriver.backend.Database
-import Database.dynamicSession
-import com.vividsolutions.jts.util.Assert
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures, ProhibitionService}
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import org.mockito.ArgumentMatchers.any
-
-class GeneratorTestException(response: String) extends Exception(response)
+import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 
 class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
-  val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
 
   class TestTrafficSignProhibitionGenerator extends TrafficSignProhibitionGenerator(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-
     override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-
     override lazy val oracleLinearAssetDao: OracleLinearAssetDao = linearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
-    override lazy val trafficSignService: TrafficSignService = mockTrafficSignService
     override lazy val prohibitionService = mockProhibitionService
 
-    override def createAssetRelation(linearAssetId: Long, trafficSignId: Long): Unit = {
-      System.out.println(s"linearAssetId : $linearAssetId and trafficSignId : $trafficSignId")
-    }
-  }
+    case class createdObjectTest(id: Long, linkId: Long, value: Value, sideCode: Int, startMeasure: Double, endMeasure: Double, roadLink: RoadLink)
+    var createAssetRelationObject: Seq[(Long, Long)] = Seq()
 
-  val prohibitionGenerator : TrafficSignProhibitionGenerator = new TestTrafficSignProhibitionGenerator
+    override def createAssetRelation(linearAssetId: Long, trafficSignId: Long): Unit = {
+      createAssetRelationObject = List.concat(createAssetRelationObject , Seq((linearAssetId, trafficSignId)))
+    }
+
+    def getCreateAssetRelationInfo: Seq[(Long, Long)] = createAssetRelationObject
+
+    var createAssetObject: Seq[createdObjectTest] = Seq()
+
+    override def createLinearAsset(newSegment: TrafficSignToLinear, username: String) : Long = {
+      val id = if (createAssetObject.nonEmpty) createAssetObject.maxBy(_.id).id + 100 else 100
+      createAssetObject = List.concat(createAssetObject , Seq(createdObjectTest(id, newSegment.roadLink.linkId, newSegment.value, newSegment.sideCode.value, newSegment.startMeasure, newSegment.endMeasure, newSegment.roadLink)))
+      id
+    }
+
+    def getCreatedInfo: Seq[createdObjectTest] = createAssetObject
+
+    var updateAssetObject: Seq[(Long, Value)] = Seq()
+
+    override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String) : Seq[Long] = {
+    updateAssetObject = List.concat(updateAssetObject , Seq((oldAssetId, newValue)))
+      Seq(oldAssetId)
+    }
+
+    def getUpdatedInfo: Seq[(Long, Value)] = updateAssetObject
+
+    var deleteAssetObject: Seq[Long] = Seq()
+
+    override def deleteLinearAssets(existingSeg: Seq[TrafficSignToLinear]) : Unit = {
+      deleteAssetObject = List.concat(deleteAssetObject , existingSeg.flatMap(_.oldAssetId))
+    }
+
+    def getDeletedInfo: Seq[Long] = deleteAssetObject
+  }
 
   val roadLinkNameB1 = RoadLink(1005, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
   val roadLinkNameB2 = RoadLink(1010, Seq(Point(10.0, 0.0), Point(20.0, 0.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
@@ -57,10 +73,10 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   val roadLinkNameA = RoadLink(1000, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("ROADNAME_FI" -> "Name A"))
   val roadLinkNameC = RoadLink(1020, Seq(Point(40.0, 0.0), Point(0.0, 20.0)), 0,  Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("ROADNAME_FI" -> "Name C"))
 
-
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("generate segments pieces pair sign"){
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val roadLinkNameB1 = RoadLink(1005, Seq(Point(0.0, 0.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
     val roadLinkNameB2 = RoadLink(1010, Seq(Point(20.0, 0.0), Point(25.0, 10.0), Point(0.0, 10.0)), 0, Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "ROADNAME_FI" -> "Name B"))
 
@@ -69,8 +85,8 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val pairedTrafficSign = PersistedTrafficSign(2, 1010, 20, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
-    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB1))
-    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB1))
 
     val result= prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign), Seq()).toSeq.sortBy(_.roadLink.linkId)
     result.size should be (2)
@@ -85,7 +101,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces pair and unpair"){
-
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val propertiesB = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoLorriesAndVans.OTHvalue.toString)))) //value 6
     val trafficSign = PersistedTrafficSign(1, 1005, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -126,8 +142,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces 2 pair signs"){
-    val roadLinkNameC = RoadLink(1020, Seq(Point(40.0, 0.0), Point(0.0, 20.0)), 0,  Municipality, 6, TrafficDirection.BothDirections, Motorway, None, None, Map("ROADNAME_FI" -> "Name C"))
-
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val propertiesB = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoLorriesAndVans.OTHvalue.toString))))
     val trafficSign1 = PersistedTrafficSign(1, 1005, 0, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -164,6 +179,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   }
 
   test("generate segments pieces on a endRoadLink BothDirections"){
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val propertiesA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoPowerDrivenVehicles.OTHvalue.toString))))
     val trafficSign = PersistedTrafficSign(1, 1005, 5, 0, 5, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -200,207 +216,171 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   )
 
   test("create prohibitions values based on trafficSigns"){
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))))
 
       val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
       val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, Set(), Set())})
-      val prohibitionsResult = prohibitionGenerator.createValue(trafficSign)
+      val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
       withClue("trafficSign sign " + sign) {
-        prohibitions should be (prohibitionsResult)
+        Some(prohibitions) should be (prohibitionsResult)
       }
     }
   }
 
   test("create prohibitions values based on trafficSigns with additional Panels") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
     val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
       ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
-
-
       val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
-
       val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, prohibitionPeriod, Set())})
-      val prohibitionsResult = prohibitionGenerator.createValue(trafficSign)
+
+      val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
       withClue("trafficSign sign " + sign) {
-        prohibitions should be (prohibitionsResult)
+        Some(prohibitions) should be (prohibitionsResult)
       }
     }
   }
 
   test("insert values  on trafficSigns with additional Panels") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
     val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
       ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
-
-
       val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
-
       val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, prohibitionPeriod, Set())})
-      val prohibitionsResult = prohibitionGenerator.createValue(trafficSign)
+
+      val prohibitionsResult = prohibitionGenerator.createValue(Seq(trafficSign))
       withClue("trafficSign sign " + sign) {
-        prohibitions should be (prohibitionsResult)
+        Some(prohibitions) should be (prohibitionsResult)
       }
     }
   }
 
-  test("test with old segments") {
-//    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
-//    val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
-//      ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
-//    relationSignProhibition.foreach { case (sign, prohibitionsType) =>
-//      val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
-//
-//
-//      val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, simpleProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
-//
-//      val prohibitions = Prohibitions(prohibitionsType.map { prohibitionType => ProhibitionValue(prohibitionType.value, prohibitionPeriod, Set())})
-//      val prohibitionsResult = service.createValue(trafficSign)
-//      withClue("trafficSign sign " + sign) {
-//        prohibitions should be (prohibitionsResult)
-//      }
-//    }
+  test("test value change old segments") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    //when a linear asset already exist and a trafficSign was added with different value
+    val existingValue = Seq(ProhibitionValue(3, Set(), Set()))
+    val existingSegments = Seq(TrafficSignToLinear(roadLinkNameB1, Prohibitions(existingValue), SideCode.BothDirections, 0, 10, Set(), Some(100)))
+    val value = Seq(ProhibitionValue(23, Set(), Set()))
+    val segments = Set(TrafficSignToLinear(roadLinkNameB1, Prohibitions(value ++ existingValue), SideCode.BothDirections, 0, 10, Set(1), Some(100)))
+
+    prohibitionGenerator.applyChangesBySegments(segments, existingSegments)
+    val updatedInfo = prohibitionGenerator.getUpdatedInfo
+    updatedInfo.size should be(1)
+    updatedInfo.head._1 should be (roadLinkNameB1)
+    updatedInfo.head._2 should be(Prohibitions(value ++ existingValue))
+
+    val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo
+    relationInfo.head._1 should be(100)
+    relationInfo.head._2 should be(1)
+    prohibitionGenerator.getCreatedInfo.isEmpty should be (true)
+    prohibitionGenerator.getDeletedInfo.isEmpty should be (true)
   }
 
-//  test("test change with geometry change with old segments") {
-  ////    //    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
-  ////    //    val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
-  ////    //      ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
-  ////    //    relationSignProhibition.foreach { case (sign, prohibitionsType) =>
-  ////    //      val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
-  ////
-  ////  }
+  test("test relation change old segments") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    //when a linear asset already exist and trafficSign was added with exactly same value
+    val value = Prohibitions(Seq(ProhibitionValue(3, Set(), Set())))
+    val existingSegments = Seq(TrafficSignToLinear(roadLinkNameB1, value, SideCode.BothDirections, 0, 10, Set(), Some(100)))
+    val segments = Set(TrafficSignToLinear(roadLinkNameB1, value, SideCode.BothDirections, 0, 10, Set(1), Some(100)))
 
-  test("test delete with old segments") {
-    runWithRollback {
-      val value = Prohibitions(Seq(ProhibitionValue(2, Set(), Set())))
-      val existingAsset = PersistedLinearAsset(1, 1005l, 1, Some(value), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)
-      when(mockRoadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(any[String], any[Set[String]], any[Boolean])).thenReturn(Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3))
-      when(mockProhibitionService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean])).thenReturn(Seq(existingAsset))
-      when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB2, roadLinkNameA))
-      when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB1, roadLinkNameB3))
-      when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
+    prohibitionGenerator.applyChangesBySegments(segments, existingSegments)
 
-      val roadLinks = Seq(roadLinkNameB1)
-      val result = prohibitionGenerator.iterativeProcess(roadLinks, Seq())
+    val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo.sortBy(_._1)
+    relationInfo.size should be(1)
+    relationInfo.head._1 should be(100)
+    relationInfo.head._2 should be(1)
 
-    }
+    prohibitionGenerator.getUpdatedInfo.isEmpty should be (true)
+    prohibitionGenerator.getCreatedInfo.isEmpty should be (true)
+    prohibitionGenerator.getDeletedInfo.isEmpty should be (true)
+  }
 
+  test("test new traffic sign measures doesn't match with old segments (shortness)") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    val existingValue = Seq(ProhibitionValue(3, Set(), Set()))
+    val existingSegments = Seq(TrafficSignToLinear(roadLinkNameB1, Prohibitions(existingValue), SideCode.BothDirections, 0, 10, Set(), Some(500)))
 
-    //    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
-    //    val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
-    //      ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
-    //    relationSignProhibition.foreach { case (sign, prohibitionsType) =>
-    //      val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
+    val newValue = Seq(ProhibitionValue(23, Set(), Set()))
+    val segments = Set(TrafficSignToLinear(roadLinkNameB1, Prohibitions(newValue ++ existingValue), SideCode.BothDirections, 0, 5, Set(1), Some(500)),
+      TrafficSignToLinear(roadLinkNameB2, Prohibitions(existingValue), SideCode.BothDirections, 5, 10, Set(1), Some(500)))
 
+    prohibitionGenerator.applyChangesBySegments(segments, existingSegments)
+    val createdInfo = prohibitionGenerator.getCreatedInfo
+    createdInfo.size should be (2)
+    createdInfo.exists(_.id == 100) should be (true)
+    createdInfo.exists(_.id == 200) should be (true)
+    val sorted = createdInfo.sortBy(_.startMeasure)
+    sorted.head.startMeasure should be (0)
+    sorted.head.endMeasure should be (5)
+    sorted.last.startMeasure should be (5)
+    sorted.last.endMeasure should be (10)
+
+    val deletedInfo = prohibitionGenerator.getDeletedInfo
+    deletedInfo.size should be (1)
+    deletedInfo.head should be (500)
+
+    val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo.sortBy(_._1)
+    relationInfo.size should be(2)
+    relationInfo.head._1 should be(100)
+    relationInfo.head._2 should be(1)
+    relationInfo.last._1 should be(200)
+    relationInfo.last._2 should be(1)
+
+    prohibitionGenerator.getUpdatedInfo.isEmpty should be (true)
+  }
+
+  test("test new traffic sign measures doesn't match with old segments (extends)") {
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    val existingValue = Seq(ProhibitionValue(3, Set(), Set()))
+    val existingSegments = Seq(TrafficSignToLinear(roadLinkNameB1, Prohibitions(existingValue), SideCode.BothDirections, 5, 10, Set(), Some(500)))
+
+    val newValue = Seq(ProhibitionValue(23, Set(), Set()))
+    val segments = Set(TrafficSignToLinear(roadLinkNameB1, Prohibitions(newValue ++ existingValue), SideCode.BothDirections, 0, 10, Set(1), Some(500)))
+
+    prohibitionGenerator.applyChangesBySegments(segments, existingSegments)
+    val createdInfo = prohibitionGenerator.getCreatedInfo
+    createdInfo.size should be (1)
+    createdInfo.head.startMeasure should be (0)
+    createdInfo.head.endMeasure should be (10)
+
+    val deletedInfo = prohibitionGenerator.getDeletedInfo
+    deletedInfo.size should be (1)
+    deletedInfo.head should be (500)
+
+    val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo.sortBy(_._1)
+    relationInfo.size should be(1)
+    relationInfo.head._1 should be(100)
+    relationInfo.head._2 should be(1)
+
+    prohibitionGenerator.getUpdatedInfo.isEmpty should be (true)
   }
 
   test("test create without old segments") {
-    //    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
-    //    val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
-    //      ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
-    //    relationSignProhibition.foreach { case (sign, prohibitionsType) =>
-    //      val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
+    val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
+    val value = Seq(ProhibitionValue(23, Set(), Set()))
+    val segments = Set(TrafficSignToLinear(roadLinkNameB1, Prohibitions(value), SideCode.BothDirections, 0, 10, Set(1), Some(500)))
 
+    prohibitionGenerator.applyChangesBySegments(segments, Seq())
+    val createdInfo = prohibitionGenerator.getCreatedInfo
+    createdInfo.size should be (1)
+    createdInfo.head.startMeasure should be (0)
+    createdInfo.head.endMeasure should be (10)
+
+    val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo.sortBy(_._1)
+    relationInfo.size should be(1)
+    relationInfo.head._1 should be(100)
+    relationInfo.head._2 should be(1)
+
+    prohibitionGenerator.getUpdatedInfo.isEmpty should be (true)
+    prohibitionGenerator.getDeletedInfo.isEmpty should be (true)
   }
-
-  test("test update without old segments") {
-    //    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
-    //    val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
-    //      ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
-    //    relationSignProhibition.foreach { case (sign, prohibitionsType) =>
-    //      val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
-
   }
-
-  test("test change with geometry change without old segments") {
-    //    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
-    //    val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
-    //      ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
-    //    relationSignProhibition.foreach { case (sign, prohibitionsType) =>
-    //      val simpleProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sign.OTHvalue.toString))) , TrafficSignProperty(0, "additional_panel", "", false, additionalPanel))
-
-  }
-
-  test("segment change: extension") {
-
-    object TestGenerator extends TestTrafficSignProhibitionGenerator {
-      override def createLinearAssetAccordingSegmentsInfo(newSegment: TrafficSignToLinear, username: String): Unit = {
-        throw new GeneratorTestException(s"${newSegment.startMeasure},${newSegment.endMeasure},${newSegment.roadLink.linkId}")
-      }
-    }
-
-    runWithRollback {
-      val signId1 = 1
-      val signId2 = 2
-      val oldId = 1000
-      val newId = 2000
-      val value22 = Prohibitions(Seq(ProhibitionValue(22, Set(), Set())))
-      val existingSegment = TrafficSignToLinear(roadLinkNameB2, value22, SideCode.BothDirections, 0, 10, Set(signId1), Some(oldId))
-      val newSegment = TrafficSignToLinear(roadLinkNameB1, value22, SideCode.BothDirections, 5, 10, Set(signId2), Some(newId))
-
-      val testInfo = intercept[GeneratorTestException] {
-        TestGenerator.applyChangesBySegments(Set(existingSegment, newSegment), Seq(existingSegment))
-      }
-      assert(testInfo.getMessage.contentEquals(s"${newSegment.startMeasure},${newSegment.endMeasure},${newSegment.roadLink.linkId}"))
-    }
-  }
-
-  test("segment change: shortened") {
-    object TestGenerator extends TestTrafficSignProhibitionGenerator {
-      override def expire(id: Long, username: String): Unit = {
-        throw new GeneratorTestException(s"$id")
-      }
-    }
-
-    runWithRollback {
-      val signId1 = 1
-      val signId2 = 2
-      val signId3 = 3
-      val oldId = 1000
-      val newId = 2000
-      val value22 = Prohibitions(Seq(ProhibitionValue(22, Set(), Set())))
-      val extendedSegment = TrafficSignToLinear(roadLinkNameB2, value22, SideCode.BothDirections, 0, 10, Set(signId1, signId3), Some(oldId))
-      val baseSegment = TrafficSignToLinear(roadLinkNameB1, value22, SideCode.BothDirections, 5, 10, Set(signId2, signId3), Some(newId))
-
-      val testInfo = intercept[GeneratorTestException] {
-        TestGenerator.applyChangesBySegments(Set(baseSegment), Seq(baseSegment, extendedSegment))
-      }
-      assert(testInfo.getMessage.contentEquals(s"${baseSegment.oldAssetId}"))
-    }
-  }
-
-  test("segment change: value added to existing segment") {
-    object TestGenerator extends TestTrafficSignProhibitionGenerator {
-      override def updateLinearAsset(newSegment: TrafficSignToLinear, username: String): Seq[Long] = {
-        throw new GeneratorTestException(s"${newSegment.value}")
-      }
-    }
-
-    runWithRollback {
-      val signId1 = 1
-      val signId2 = 2
-      val signId3 = 3
-      val signId4 = 4
-
-      val oldId = 1000
-
-      val value1 = Prohibitions(Seq(ProhibitionValue(1, Set(), Set())))
-      val value22 = Prohibitions(Seq(ProhibitionValue(22, Set(), Set())))
-
-      val oldSegment = TrafficSignToLinear(roadLinkNameB2, value22, SideCode.BothDirections, 0, 10, Set(signId1, signId2), Some(oldId))
-      val newSegment = TrafficSignToLinear(roadLinkNameB2, value1, SideCode.BothDirections, 0, 10, Set(signId3, signId4))
-
-      val testInfo = intercept[GeneratorTestException] {
-        TestGenerator.applyChangesBySegments(Set(oldSegment, newSegment), Seq(oldSegment))
-      }
-      assert(testInfo.getMessage.contentEquals(s"${newSegment.value}"))
-    }
-  }
-
-}
 

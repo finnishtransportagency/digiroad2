@@ -39,7 +39,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def assetDao: OracleAssetDao = new OracleAssetDao
 
-  override def assetFiller: AssetFiller = new ProhibitionFiller
+  override def assetFiller: AssetFiller = new OneWayAssetFiller
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
@@ -90,7 +90,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val timing = System.currentTimeMillis
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
-
+    val myval = roadLinks.sortBy(_.linkId).headOption
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
