@@ -60,6 +60,7 @@ $(function() {
     }
     if ($('#deleteCheckbox').is(':checked')) {
       new GenericConfirmPopup('Haluatko varmasti poistaa kaikki jo aiemmin kunnan alueelle lisätyt liikennemerkit?', {
+        container: '.csv-content',
         successCallback: function () {
           var optionValues = $('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option');
           _.each(optionValues, function (opt) {
