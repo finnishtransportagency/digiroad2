@@ -121,8 +121,8 @@
         $('ul[class=information-content]').append('' +
           '   <li><button id="work-list-link-errors" class="wrong-speed-limits operator-user" onclick=location.href="#work-list/speedLimitErrors">Laatuvirheet Lista</button></li>' +
           '   <li class="log-info"><p class="unknown-speed-limits-state-log-info">Tuntemattomat nopeusrajoitukset</p></li>' +
-          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan Omistama</button></li>' +
-          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion Omistama</button></li>');
+          '   <li><button id="work-list-link-municipality" class="unknown-speed-limits-municipality" onclick=location.href="#work-list/speedLimit/municipality">Kunnan omistama</button></li>' +
+          '   <li><button id="work-list-link-state" class="unknown-speed-limits-state" onclick=location.href="#work-list/speedLimit/state">Valtion omistama</button></li>');
       }
   };
 

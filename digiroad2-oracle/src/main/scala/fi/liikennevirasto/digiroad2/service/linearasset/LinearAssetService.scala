@@ -9,10 +9,12 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -429,10 +431,13 @@ trait LinearAssetOperations {
       dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
   }
 
-  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
+  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
+      }
+    else
       dao.fetchLinearAssetsByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
-    }
   }
 
   /**
@@ -655,10 +660,10 @@ trait LinearAssetOperations {
   }
 
 
-  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[PieceWiseLinearAsset]] = {
+  def getByZoomLevel(typeId: Int, boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLinearAsset]] = {
     withDynTransaction {
       val assets = dao.fetchLinearAssets(typeId, LinearAssetTypes.getValuePropertyId(typeId), boundingRectangle, linkGeomSource)
-      LinearAssetPartitioner.partition(assets)
+      Seq(assets)
     }
   }
 
@@ -815,6 +820,48 @@ trait LinearAssetOperations {
   }
 
   def validateAssetValue(value: Option[Value]): Unit = {}
+
+//  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
+//    if(newTransaction) {
+//      withDynTransaction {
+//        createLinearAssetFromTrafficSign(trafficSignInfo)
+//      }
+//    }
+//    else
+//      createLinearAssetFromTrafficSign(trafficSignInfo)
+//  }
+
+  protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
+
+  def deleteOrUpdateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+    logger.info("expiring asset")
+    if (withTransaction) {
+      withDynTransaction {
+        dao.deleteByTrafficSign(withId(id), username)
+      }
+    }
+  }
+
+  def withId(id: Long)(query: String): String = {
+    query + s" and a.id = $id"
+  }
+
+  def withIds(ids: Set[Long])(query: String): String = {
+    query + s" and a.id in (${ids.mkString(",")})"
+  }
+
+  def withMunicipalities(municipalities: Set[Int])(query: String): String = {
+    query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
+  }
+
+  def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(Int, DateTime, Int)] = {
+    withDynTransaction {
+      val lastCreationDate = dao.getLastExecutionDateOfConnectedAsset()
+      if(lastCreationDate.nonEmpty)
+        dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId, lastCreationDate)
+      else Seq()
+    }
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

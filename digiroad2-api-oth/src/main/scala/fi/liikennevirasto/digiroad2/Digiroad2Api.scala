@@ -811,7 +811,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = getLinearAssetService(typeId)
       zoom >= minVisibleZoom && zoom <= maxZoom match {
-        case true => mapLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
+        case true => mapLightLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
         case false =>
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
@@ -836,7 +836,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = getLinearAssetService(typeId)
       zoom >= minVisibleZoom && zoom <= maxZoom match {
-        case true => mapLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle))
+        case true => mapLightLinearAssets(usedService.getByZoomLevel(typeId, boundingRectangle))
         case false =>
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
@@ -970,6 +970,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
           "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
           "administrativeClass" -> link.administrativeClass.value
+        )
+      }
+    }
+  }
+
+  def mapLightLinearAssets(assets: Seq[Seq[LightLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
+    assets.map {asset =>
+      asset.map { a =>
+        Map(
+          "value" -> a.value,
+          "points" -> a.geometry,
+          "expired" -> a.expired,
+          "sideCode" -> a.sideCode
         )
       }
     }
@@ -1623,12 +1636,29 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
+
   get("/municipalities/byUser") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,
         "name" -> municipality.name)
+    }
+  }
+
+  get("/createdLinearAssets/byUser/:assetTypeId") {
+    val assetTypeId = params("assetTypeId").toInt
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if(user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    val createdAssets = linearAssetService.getAutomaticGeneratedAssets(municipalities, assetTypeId)
+
+    createdAssets.groupBy(_._3).map{ asset =>
+      Map(
+        "municipality" -> municipalityService.getMunicipalitiesNameAndIdByCode(Set(asset._1)).map(_.name).head,
+        "created_assets" -> asset._2
+      )
     }
   }
 

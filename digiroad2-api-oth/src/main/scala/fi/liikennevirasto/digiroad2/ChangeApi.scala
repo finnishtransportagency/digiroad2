@@ -6,16 +6,13 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.DynamicValue
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import fi.liikennevirasto.digiroad2.dao.pointasset.PedestrianCrossing
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, Prohibitions, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
@@ -65,7 +62,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until), pointAssetGenericProperties)
       case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until), pointAssetGenericProperties)
       case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetWarningSignsGroupProperties)
-      case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(TrafficSignType.Stop.value), since, until), pointAssetStopSignProperties)
+      case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(Stop.OTHvalue), since, until), pointAssetStopSignProperties)
     }
   }
 
@@ -308,7 +305,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     val point = pointAsset.asInstanceOf[PersistedTrafficSign]
     pointAssetGenericProperties(pointAsset, since) ++
     Map(
-      "typeValue" -> trafficSignService.getTrafficSignsProperties(point, trafficSignService.typePublicId).get.asInstanceOf[TextPropertyValue].propertyValue.toInt,
+      "typeValue" -> trafficSignService.getProperty(point, trafficSignService.typePublicId).get.propertyValue.toInt,
       "sideCode" -> point.validityDirection
     )
   }

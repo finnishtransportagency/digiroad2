@@ -441,7 +441,8 @@
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,

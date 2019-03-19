@@ -6,7 +6,9 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignType
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PedestrianCrossingSign, Point, TrafficSignType}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PedestrianCrossings, Private, SideCode}
 
 class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
   override type AssetType = PedestrianCrossing
@@ -15,7 +17,7 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
 
   lazy val dao: OraclePedestrianCrossingDao = new OraclePedestrianCrossingDao()
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-  val allowedTrafficSign: Set[TrafficSignType] = Set(TrafficSignType.PedestrianCrossing)
+  val allowedTrafficSign: Set[TrafficSignType] = Set(PedestrianCrossingSign)
 
   override def filteredAsset(roadLink: RoadLink, assets: Seq[AssetType], pointOfInterest: Point, distance: Double, trafficSign: Option[PersistedTrafficSign] = None): Seq[AssetType] = {
     def assetDistance(assets: Seq[AssetType]): Option[(AssetType, Double)] = {
@@ -78,7 +80,7 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
             case Some(roadLink) =>
                 val trafficSingsByRadius: Set[PersistedTrafficSign] =
                 splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(Point(asset.lon, asset.lat), radiusDistance) ++ trafficSignService.getTrafficSign(Seq(roadLink.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.apply(trafficSignService.getTrafficSignsProperties(sign, "trafficSigns_type").get.asInstanceOf[TextPropertyValue].propertyValue.toInt)))
+                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, "trafficSigns_type").get.propertyValue.toInt)))
                   .filterNot(_.floating)
 
               val allLinkIds = assetInfo.newLinkIds ++ trafficSingsByRadius.map(_.linkId)

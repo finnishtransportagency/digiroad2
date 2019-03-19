@@ -4,7 +4,7 @@ import java.net.ConnectException
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TRTrafficSignType._
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.importer.{LitRoadTierekisteriImporter, RoadWidthTierekisteriImporter}
 import fi.liikennevirasto.digiroad2.util._
@@ -690,7 +690,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   test("When in 'wrong' side of the road (LIIKVAST = 1), don't map SpeedLimit, SpeedLimitZone and UrbanArea") {
-    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLIIKVAST = "1"))
+    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimitSign, fldLIIKVAST = "1"))
     val assetsTypeSpeedLimitZone = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimitZone, fldLIIKVAST = "1"))
     val assetsTypeUrbanArea = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(UrbanArea, fldLIIKVAST = "1"))
     val assetsTypeEndSpeedLimitZone = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(EndSpeedLimitZone, fldLIIKVAST = "1"))
@@ -701,13 +701,13 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   test("when 'LMTEKSTI' is null, get NOPRA506 info") {
-    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldNOPRA506 = "80"))
+    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimitSign, fldNOPRA506 = "80"))
     assetsTypeSpeedLimit.size should be (1)
     assetsTypeSpeedLimit.map(_.assetValue).head should be ("80")
   }
 
   test("when 'LMTEKSTI' has value, don't get NOPRA506 info") {
-    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLMTEKSTI= "100", fldNOPRA506 = "80"))
+    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimitSign, fldLMTEKSTI= "100", fldNOPRA506 = "80"))
     assetsTypeSpeedLimit.size should be (1)
     assetsTypeSpeedLimit.map(_.assetValue).head should be ("100")
   }
@@ -727,20 +727,20 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   test("Switch side code of signs with LIIKVAST = 1") {
-    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimit, fldLIIKVAST = "0"))
+    val assetsTypeSpeedLimit = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(SpeedLimitSign, fldLIIKVAST = "0"))
     val assetsTypeEndSpeedLimitZone = tierekisteriSpeedLimitTrafficSignAsset.mapFields(trSpeedLimitDataTest(EndSpeedLimitZone, fldLIIKVAST = "1"))
 
     assetsTypeSpeedLimit.get.roadSide should be (RoadSide.Right)
     assetsTypeEndSpeedLimitZone.get.roadSide should be (RoadSide.Right)
   }
 
-  def trSpeedLimitDataTest(speedLimitType: TRTrafficSignType, fldLIIKVAST: String = null, fldNOPRA506: String = null, fldLMTEKSTI: String = null ) = {
+  def trSpeedLimitDataTest(speedLimitType: TrafficSignType, fldLIIKVAST: String = null, fldNOPRA506: String = null, fldLMTEKSTI: String = null ) = {
     Map("PUOLI" -> "1",
         "OSA" -> "1",
         "LIIKVAST" -> fldLIIKVAST,
         "NOPRA506" -> fldNOPRA506,
         "AJORATA" -> "0",
-        "LMNUMERO" -> speedLimitType.value,
+        "LMNUMERO" -> speedLimitType.TRvalue,
         "TIE" -> "11008",
         "ETAISYYS" -> "15",
         "LMTEKSTI" -> fldLMTEKSTI

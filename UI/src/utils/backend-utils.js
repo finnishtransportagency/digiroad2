@@ -233,7 +233,10 @@
         type: "POST",
         url: "api/" + endPointName,
         data: JSON.stringify({asset: asset}),
-        dataType: "json"
+        dataType: "json",
+        success: function(){
+            eventbus.trigger('trafficSigns:created', asset);
+        }
       });
     };
 
@@ -457,6 +460,10 @@
 
     this.getUnverifiedMunicipalities = function() {
       return $.getJSON('api/municipalities/byUser');
+    };
+
+    this.getCreatedLinearAssets = function(assetId) {
+      return $.getJSON('api/createdLinearAssets/byUser/' + assetId);
     };
 
     this.getMunicipalitiesWithUnknowns = function(){

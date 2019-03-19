@@ -17,7 +17,7 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
-  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 
@@ -412,4 +412,12 @@ object GeometryUtils {
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
+
+  def getOpositePoint(geometry: Seq[Point], point: Point) : Point = {
+    val (headPoint, lastPoint) = geometryEndpoints(geometry)
+    if(areAdjacent(headPoint, point))
+      lastPoint
+    else
+      headPoint
+  }
 }
