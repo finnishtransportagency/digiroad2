@@ -50,14 +50,14 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
     def getCreatedInfo: Seq[createdObjectTest] = createAssetObject
 
-    var updateAssetObject: Seq[(RoadLink, Long, Value)] = Seq()
+    var updateAssetObject: Seq[(Long, Value)] = Seq()
 
-    override def updateLinearAsset(segment: TrafficSignToLinear, username: String) : Seq[Long] = {
-    updateAssetObject = List.concat(updateAssetObject , Seq((segment.roadLink, segment.oldAssetId.get,  segment.value)))
-      Seq(segment.oldAssetId.get)
+    override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String) : Seq[Long] = {
+    updateAssetObject = List.concat(updateAssetObject , Seq((oldAssetId, newValue)))
+      Seq(oldAssetId)
     }
 
-    def getUpdatedInfo: Seq[(RoadLink, Long, Value)] = updateAssetObject
+    def getUpdatedInfo: Seq[(Long, Value)] = updateAssetObject
 
     var deleteAssetObject: Seq[Long] = Seq()
 
@@ -86,8 +86,8 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val pairedTrafficSign = PersistedTrafficSign(2, 1010, 20, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
-    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB1))
-    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB1))
 
     val result= prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign), Seq()).toSeq.sortBy(_.roadLink.linkId)
     result.size should be (2)
@@ -276,7 +276,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val updatedInfo = prohibitionGenerator.getUpdatedInfo
     updatedInfo.size should be(1)
     updatedInfo.head._1 should be (roadLinkNameB1)
-    updatedInfo.head._3 should be(Prohibitions(value ++ existingValue))
+    updatedInfo.head._2 should be(Prohibitions(value ++ existingValue))
 
     val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo
     relationInfo.head._1 should be(100)
