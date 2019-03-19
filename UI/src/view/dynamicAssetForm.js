@@ -692,7 +692,6 @@
                 me.setSelectedValue(setValue, getValue);
             }
 
-            // var test = {'values':{'value':[{'startDate': '19.2.2019','endDate':'22.2.2019'}, {'startDate': '19.5.2019','endDate':'22.5.2019'}]}};
             var existingDatePeriodElements =
                 _(_.map(fieldValue, function(values) { return values.value ; }))
                     .sortBy('startDate', 'endDate')

@@ -41,7 +41,7 @@ class DamagedByThawFiller extends AssetFiller {
         DatePeriodValue(dateToString(startDate.plusYears(difference)), dateToString(endDate.plusYears(difference)))
     }
 
-    def needsUpdate(value: DynamicPropertyValue): Boolean = {
+    def outsidePeriod(value: DynamicPropertyValue): Boolean = {
       val period = DatePeriodValue.fromMap(value.value.asInstanceOf[Map[String, String]])
       val endDate = stringToDate(period.endDate)
       val thisYear = today.getYear
@@ -57,7 +57,7 @@ class DamagedByThawFiller extends AssetFiller {
     def needUpdates(properties: Seq[DynamicProperty]): Boolean = {
       isRepeated(getProperties(Repetition, properties)) &&
         getProperties(ActivePeriod, properties).exists { period =>
-          needsUpdate(period)
+          outsidePeriod(period)
         }
     }
 
@@ -71,7 +71,7 @@ class DamagedByThawFiller extends AssetFiller {
       asset.copy(value = Some(DynamicValue(DynamicAssetValue(asset.value.get.asInstanceOf[DynamicValue].value.properties.map { prop =>
           if (prop.publicId == ActivePeriod) {
             prop.copy(values = prop.values.map { period =>
-              if(needsUpdate(period))
+              if(outsidePeriod(period))
                 DynamicPropertyValue(DatePeriodValue.toMap(toCurrentYear(DatePeriodValue.fromMap(period.value.asInstanceOf[Map[String, String]]))))
               else
                 period

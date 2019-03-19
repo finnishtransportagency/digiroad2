@@ -510,9 +510,9 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     )))
 
     val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
-      DynamicProperty("kelirikko", "numbere", false, Seq(DynamicPropertyValue(10))),
-      DynamicProperty("spring_thaw_period", "numbere", false, Seq()),
-      DynamicProperty("annual_repetition", "numbere", false, Seq())
+      DynamicProperty("kelirikko", "number", false, Seq(DynamicPropertyValue(10))),
+      DynamicProperty("spring_thaw_period", "number", false, Seq()),
+      DynamicProperty("annual_repetition", "number", false, Seq())
     )))
 
     val assetsInfo = Seq(
