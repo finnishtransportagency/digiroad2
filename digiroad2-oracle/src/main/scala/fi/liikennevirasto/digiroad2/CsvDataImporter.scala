@@ -27,6 +27,7 @@ import java.net.FileNameMap
 import java.text.Normalizer
 
 import fi.liikennevirasto.digiroad2.asset.ServicePointsClass.{Unknown => _, _}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
 
 import scala.util.Try
@@ -1396,7 +1397,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
       val code = getPropertyValue(csvProperties, "id").asInstanceOf[String]
       val safetyEquipment = getPropertyValue(csvProperties, "safety equipment").asInstanceOf[String].toInt
-      val name = getPropertyValueOption(csvProperties, "name").asInstanceOf[Option[String]]
+      val name = getPropertyValueOption(csvProperties, "name").map(_.toString)
 
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
@@ -1423,7 +1424,6 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 }
 
 class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
   override val stringValueFieldsMapping: Map[String, String] = Map("palvelun tyyppi" -> "type")
   override val nonMandatoryFieldsMapping: Map[String, String] = Map(
@@ -1505,6 +1505,90 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     }
 
     result.copy(notImportedData = notImportedInfo.toList ++ result.notImportedData)
+  }
+}
+
+class DirectionalTrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter(roadLinkServiceImpl, eventBusImpl) {
+  override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
+  override val codeValueFieldsMapping: Map[String, String] = Map("suuntima" -> "bearing")
+  override val nonMandatoryFieldsMapping: Map[String, String] = Map(
+    "tekstikentta" -> "text field"
+  )
+  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ stringValueFieldsMapping
+
+  override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+
+  lazy val directionTrafficSignService: DirectionalTrafficSignService = new DirectionalTrafficSignService(roadLinkServiceImpl)
+
+  case class DirectionalTrafficSignInfo(directionalTrafficSign: IncomingDirectionalTrafficSign, roadLink: RoadLink)
+
+  private def getValidityDirectionByRoadLink(assetLocation: Point, roadLinkGeometry: Seq[Point]): Int = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), roadLinkGeometry)
+    val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(roadLinkGeometry, mValue)
+    val roadLinkBearing = GeometryUtils.calculateBearing(roadLinkGeometry, Some(mValue))
+
+    val lonDifference = assetLocation.x - roadLinkPoint.get.x
+    val latDifference = assetLocation.y - roadLinkPoint.get.y
+
+    (latDifference <= 0 && roadLinkBearing <= 90) || (latDifference >= 0 && roadLinkBearing > 270) match {
+      case true => TowardsDigitizing.value
+      case false => AgainstDigitizing.value
+    }
+  }
+
+  private def getValidityDirectionByBearing(bearing: Int): Int = {
+    bearing > 270 || bearing <= 90 match {
+      case true => TowardsDigitizing.value
+      case false => AgainstDigitizing.value
+    }
+  }
+
+  private def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {
+    bearing match {
+      case Some(bearing) =>
+        val validityDirection = getValidityDirectionByBearing(bearing)
+        val readjustedBearing = if(validityDirection == SideCode.AgainstDigitizing.value) {
+          if(bearing > 90 && bearing < 180)
+            bearing + 180
+          else
+            Math.abs(bearing - 180)
+        } else bearing
+
+        (Some(readjustedBearing), Some(validityDirection))
+      case _ =>
+        (None, None)
+    }
+  }
+
+  override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
+    val incomingDirectionalSigns = pointAssetAttributes.map { directionalSignAttribute =>
+      val csvProperties = directionalSignAttribute.properties
+      val nearbyLinks = directionalSignAttribute.roadLink
+
+      val lon = getPropertyValue(csvProperties, "lon").asInstanceOf[BigDecimal].toLong
+      val lat = getPropertyValue(csvProperties, "lat").asInstanceOf[BigDecimal].toLong
+
+      val textFieldValue = getPropertyValueOption(csvProperties, "text field").map(_.toString)
+      val bearing = getPropertyValueOption(csvProperties, "bearing").map(_.toString.toInt)
+
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
+
+      val (assetBearing, assetValidityDirection) = recalculateBearing(bearing)
+
+      val validityDirection = if(assetBearing.isEmpty) {
+          getValidityDirectionByRoadLink(Point(lon, lat), nearestRoadLink.geometry)
+        } else assetValidityDirection.get
+
+      DirectionalTrafficSignInfo(IncomingDirectionalTrafficSign(lon, lat, nearestRoadLink.linkId, validityDirection, textFieldValue, assetBearing), nearestRoadLink)
+    }
+
+
+    incomingDirectionalSigns.foreach { asset =>
+      directionTrafficSignService.create(asset.directionalTrafficSign, user.username, asset.roadLink, false)
+    }
+
+    result
   }
 }
 
