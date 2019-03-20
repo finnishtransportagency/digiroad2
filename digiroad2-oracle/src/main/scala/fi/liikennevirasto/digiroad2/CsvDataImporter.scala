@@ -330,7 +330,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
 
-      val possibleRoadLinks = roadLinkService.getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks)
+      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks)
 
       val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
       val roadLink = if (roadLinks.nonEmpty) {
@@ -344,7 +344,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.geometry)
 
-      (properties, CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.nonEmpty))
+      (properties, CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ case(_, sign) =>
