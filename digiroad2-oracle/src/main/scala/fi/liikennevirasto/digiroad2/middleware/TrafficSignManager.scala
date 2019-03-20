@@ -27,6 +27,11 @@ object TrafficSignManager {
   def belongsToHazmat(intValue: Int) : Boolean = {
     hazmatRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
   }
+
+  val parkingRelatedSigns : Seq[TrafficSignType] = Seq(StandingAndParkingProhibited, ParkingProhibited)
+  def belongsToParking(intValue: Int) : Boolean = {
+    parkingRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
 }
 
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
@@ -46,6 +51,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
 
       case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
         insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+
+      case trSign if TrafficSignManager.belongsToParking(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, ParkingProhibition)
 
       case _ => None
     }
@@ -67,6 +75,8 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
         case signType if TrafficSignManager.belongsToHazmat(signType) =>
             insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
 
+        case signType if TrafficSignManager.belongsToParking(signType) =>
+          insertTrafficSignToProcess(trSign.id, ParkingProhibition)
       }
     }
   }

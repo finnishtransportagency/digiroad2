@@ -645,7 +645,6 @@ case object StandingAndParkingProhibited extends ProhibitionsAndRestrictionsType
 
 case object ParkingProhibited extends ProhibitionsAndRestrictionsType {
   override val OTHvalue = 101
-
   override val TRvalue = 372
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
