@@ -205,16 +205,17 @@
      *
      * @param associationRoadName
      */
-    var getAssociationRoadNamesByName = function(associationRoadName) {
-      return backend.getPrivateRoadAssociationNamesBySearch(associationRoadName.address)
+    var getAssociationRoadNamesByName = function(associationRoad) {
+      return backend.getPrivateRoadAssociationNamesBySearch(associationRoad.name)
         .then(function(resultFromAPI) {
           var structuredRoads = function(value) {
-            return { title: value.name, municipality: value.municipality, roadName: value.roadName, linkId: value.linkId, resultType: "association" };
+            var title = value.name + ", " + value.municipality + ", " + value.roadName;
+            return { title: title, linkId: value.linkId, resultType: "association" };
           };
           if (resultFromAPI.length > 0)
             return _.map(resultFromAPI, structuredRoads);
           else
-            return $.Deferred().reject('Failed to fetch road associations with that name.');
+            return $.Deferred().reject('Hakusanalla ei löydetty sopivaa tiekuntanimeä.');
         });
     };
 

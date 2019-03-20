@@ -24,7 +24,7 @@
       return parseCoordinates(matchedCoordinates);
     } else if (matchedStreet) {
         if(matchedAssociationRoadIdRegex)
-          return {type: 'roadAssociationName', address: input.slice(3)};
+          return {type: 'roadAssociationName', name: input.slice(3)};
         else
           return {type: 'street', address: input};
     } else if (matchedIdOrRoad) {

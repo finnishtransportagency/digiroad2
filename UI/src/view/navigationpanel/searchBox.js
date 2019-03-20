@@ -77,17 +77,8 @@
       var resultItems = _.chain(results)
         .sortBy('distance')
         .map(function(result) {
-
-          var shownText = function(value){
-            if(value.resultType.indexOf("association")>-1)
-              return value.title + ", " + value.municipality + ", " + value.roadName;
-            else
-              return value.title;
-          };
-
-          return $('<li></li>').text(shownText(result)).on('click', function() {
+          return $('<li></li>').text(result.title).on('click', function() {
             if (result.resultType.indexOf("Link-id")>-1){
-              window.location.hash = "#linkProperty/";
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
               window.location.hash = "#linkProperty/" + coordinatesText.val();
             } else if (result.resultType.indexOf("SpeedLimit")>-1) {
@@ -96,10 +87,8 @@
               });
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
             } else if (result.resultType.indexOf("Mtstop")>-1) {
-              window.location.hash = "#massTransitStop/";
               window.location.hash="#massTransitStop/"+result.nationalId;
             } else if (result.resultType.indexOf("association")>-1) {
-              window.location.hash = "#linkProperty/";
               window.location.hash = "#linkProperty/" + result.linkId;
             } else {
               eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
