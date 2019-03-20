@@ -151,11 +151,12 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
+            var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
       me.element = $('' +
           '<div class="form-group">' +
           '   <label class="control-label">' + field.label + '</label>' +
-          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
+          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control' + unitClass + '" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
           unit +
           '</div>');
 
@@ -621,13 +622,9 @@
 
              var handleButton = function() {
                  var $element = me.element;
-                if ($element.find('.existing-date-period').length > 1) {
-                    $element.find('.add-period').css('visibility', 'hidden');
-                    $element.find('.remove-period').css('visibility', 'visible');
-                }else {
-                    $element.find('.add-period').css('visibility', 'visible');
-                    $element.find('.remove-period').css('visibility', 'hidden');
-                }
+                 var removeAllowed = me.element.find('.existing-date-period').length > 1;
+                 $element.find('.add-period').toggle(!removeAllowed);
+                 $element.find('.remove-period').toggle(removeAllowed);
             };
 
 
@@ -709,11 +706,11 @@
                     .append(inputLabel('start', period ? period.startDate : undefined))
                     .append('<span class="date-separator"> - </span>')
                     .append(inputLabel('end', period ? period.endDate : undefined))
-                    .append(buttons);
+                    .append(me.disabled() ? '' : buttons);
             }
 
             var template = _.template('' +
-                '<div class="date-time-period-group">' +
+                '<div class="form-group date-time-period-group">' +
                 '<label class="control-label">' + field.label + '</label>' +
                 ' <ul >' +
                  '   <%= existingDatePeriodElements %>' +

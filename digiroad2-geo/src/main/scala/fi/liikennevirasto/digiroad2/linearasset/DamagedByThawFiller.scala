@@ -10,9 +10,17 @@ import org.joda.time.format.DateTimeFormat
 class DamagedByThawFiller extends AssetFiller {
   val ActivePeriod = "spring_thaw_period"
   val Repetition = "annual_repetition"
-  private val dateFormat = "dd.MM.yyyy"
-  private val formatter = DateTimeFormat.forPattern(dateFormat)
-  private val today = DateTime.now()
+  val dateFormat = "dd.MM.yyyy"
+  val formatter = DateTimeFormat.forPattern(dateFormat)
+  val today: DateTime = DateTime.now()
+
+  def dateToString(date: DateTime): String = {
+    date.toString(dateFormat)
+  }
+
+  def stringToDate(date: String): DateTime = {
+    formatter.parseDateTime(date)
+  }
 
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
@@ -21,14 +29,6 @@ class DamagedByThawFiller extends AssetFiller {
         case Some(props) => props.values
         case _ => Seq()
       }
-    }
-
-    def dateToString(date: DateTime): String = {
-      date.toString(dateFormat)
-    }
-
-    def stringToDate(date: String): DateTime = {
-      formatter.parseDateTime(date)
     }
 
     def toCurrentYear(period: DatePeriodValue): DatePeriodValue = {
