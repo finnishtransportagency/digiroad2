@@ -36,6 +36,7 @@ case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[D
 case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection,
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
                           accessRightID: Option[String] = None)
+case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: Long)
 
 sealed trait RoadLinkType {
   def value: Int
@@ -79,7 +80,7 @@ object AdditionalInformation{
   * @param vvhSerializer
   */
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
-  val municipalityDao = new MunicipalityDao
+  lazy val municipalityService = new MunicipalityService(eventbus, RoadLinkService.this)
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -293,39 +294,28 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     RoadLinkDAO.LinkTypeDao.getAllLinkType(linkIds).groupBy(_._1)
   }
 
-  def getAllPrivateRoadAssociationNames(newTransaction: Boolean = true): Seq[String] = {
-    if(newTransaction) {
-      withDynSession {
-        LinkAttributesDao.getAllExistingDistinctValues(privateRoadAssociationPublicId)
-      }
-    } else
+  def getAllPrivateRoadAssociationNames(): Seq[String] = {
+    withDynSession {
       LinkAttributesDao.getAllExistingDistinctValues(privateRoadAssociationPublicId)
+    }
   }
 
-  def getPrivateRoadsByAssociationName(roadAssociationName: String, newTransaction: Boolean = true): Seq[(Long, String, String)] = {
+  def getPrivateRoadsByAssociationName(roadAssociationName: String, newTransaction: Boolean = true): Seq[PrivateRoadAssociation] = {
     val linkIds = getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId, newTransaction).map(_._2)
     val roadLinks = getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds.toSet, newTransaction)
 
     val municipalityCodes = roadLinks.map(_.municipalityCode).toSet
-    val municipalitiesInfo = getMunicipalitiesInfo(municipalityCodes, newTransaction)
+    val municipalitiesInfo = municipalityService.getMunicipalitiesNameAndIdByCode(municipalityCodes, newTransaction)
     val groupedByNameRoadLinks = roadLinks.groupBy(_.municipalityCode).values.map(_.groupBy(_.roadNameIdentifier))
 
     groupedByNameRoadLinks.flatMap { municipalityRoadLinks =>
       municipalityRoadLinks.map { roadLinkAssociation =>
         val roadName = if(roadLinkAssociation._1.getOrElse(" ").trim.isEmpty) roadWithoutName else roadLinkAssociation._1.get
         val maxLengthRoadLink = roadLinkAssociation._2.maxBy(_.length)
-       (maxLengthRoadLink.linkId, roadName, municipalitiesInfo.find(_.id == maxLengthRoadLink.municipalityCode).head.name)
+        val municipalityName = municipalitiesInfo.find(_.id == maxLengthRoadLink.municipalityCode).head.name
+        PrivateRoadAssociation(roadAssociationName, roadName, municipalityName, maxLengthRoadLink.linkId)
       }
     }.toSeq
-  }
-
-  def getMunicipalitiesInfo(municipalityCodes: Set[Int], newTransaction: Boolean = true) = {
-    if(newTransaction)
-      withDynSession {
-        municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
-      }
-    else
-      municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
   }
 
   def getValuesByRoadAssociationName(roadAssociationName: String, roadAssociationPublicId: String, newTransaction: Boolean = true): List[(String, Long)] = {

@@ -208,12 +208,11 @@
     var getAssociationRoadNamesByName = function(associationRoad) {
       return backend.getPrivateRoadAssociationNamesBySearch(associationRoad.name)
         .then(function(resultFromAPI) {
-          var structuredRoads = function(value) {
-            var title = value.name + ", " + value.municipality + ", " + value.roadName;
-            return { title: title, linkId: value.linkId, resultType: "association" };
-          };
           if (resultFromAPI.length > 0)
-            return _.map(resultFromAPI, structuredRoads);
+            return _.map(resultFromAPI, function(value) {
+              var title = value.name + ", " + value.municipality + ", " + value.roadName;
+              return { title: title, linkId: value.linkId, resultType: "association" };
+            });
           else
             return $.Deferred().reject('Hakusanalla ei löydetty sopivaa tiekuntanimeä.');
         });

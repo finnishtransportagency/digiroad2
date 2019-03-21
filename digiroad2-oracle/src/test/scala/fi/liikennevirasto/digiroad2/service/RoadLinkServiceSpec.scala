@@ -1243,9 +1243,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       result.length should be (3)
 
-      result.map(_._2).contains(attributesRoad1("ROADNAME_FI")) should be(true)
-      result.map(_._2).contains(attributesRoad2("ROADNAME_FI")) should be(true)
-      result.map(_._2).contains(attributesRoad3("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad1("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad2("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(true)
 
       dynamicSession.rollback()
     }
@@ -1288,9 +1288,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       result.length should be (2)
 
-      result.map(_._2).contains(attributesRoad1("ROADNAME_FI")) should be(true)
-      result.map(_._2).contains(attributesRoad3("ROADNAME_FI")) should be(false)
-      result.map(_._2).contains(noRoadName) should be(true)
+      result.map(_.roadName).contains(attributesRoad1("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(false)
+      result.map(_.roadName).contains(noRoadName) should be(true)
 
       dynamicSession.rollback()
     }
