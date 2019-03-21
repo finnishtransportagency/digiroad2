@@ -623,10 +623,9 @@
              var handleButton = function() {
                  var $element = me.element;
                  var removeAllowed = me.element.find('.existing-date-period').length > 1;
-                 $element.find('.add-period').toggle(!removeAllowed);
-                 $element.find('.remove-period').toggle(removeAllowed);
-            };
-
+                 $element.find('.add-period').showElement(!removeAllowed);
+                 $element.find('.remove-period').showElement(removeAllowed);
+             };
 
             me.getPropertyValue = function(){
                 var values = me.getValue();
@@ -1271,5 +1270,10 @@
                 element: element
             };
         };
+
+      jQuery.fn.showElement = function(visible) {
+        var toggle = visible ? 'visible' : 'hidden';
+        return this.css('visibility', toggle);
+      };
     };
 })(this);
