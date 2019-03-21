@@ -47,7 +47,7 @@ case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Do
 case class NewDynamicLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
 
 class Digiroad2Api(val roadLinkService: RoadLinkService,
-                   val roadAddressService: RoadAddressesService,
+                   val roadAddressService: RoadAddressService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
                    val railwayCrossingService: RailwayCrossingService = Digiroad2Context.railwayCrossingService,
@@ -1047,6 +1047,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
+      //Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
       case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | PavedRoad.typeId | BogieWeightLimit.typeId =>
         value.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
       case _ =>
@@ -1635,6 +1636,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
+
   get("/municipalities/byUser") {
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
@@ -1646,7 +1648,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/municipalities/:municipalityCode/assetTypes") {
     val id = params("municipalityCode").toInt
-    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipality(id)
+    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipalityF(id)
     verifiedAssetTypes.groupBy(_.municipalityName)
       .mapValues(
         _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
@@ -1654,7 +1656,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
           "verified_by"   -> assetType.verifiedBy.getOrElse(""),
           "verified"   -> assetType.verified,
-          "counter" -> assetType.counter)))
+          "counter" -> assetType.counter,
+          "modified_by" -> assetType.modifiedBy.getOrElse(""),
+          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "type" -> assetType.geometryType)))
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {

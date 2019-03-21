@@ -9,9 +9,10 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePointMassLimitationDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -76,6 +77,12 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
+class DataImporter(dataImportManager: DataImportManager) extends Actor {
+  def receive = {
+    case x: CsvDataImporterInfo => dataImportManager.importer(x)
+    case _ => println("DataImporter: Received unknown message")
+  }
+}
 
 class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extends Actor {
   def receive = {
@@ -237,23 +244,29 @@ class PedestrianCrossingValidation(pedestrianCrossingValidation: PedestrianCross
   }
 }
 
-case class ManoeuvreUpdater[A, B](manoeuvreProvider: ManoeuvreService) extends Actor {
-
-  val logger = LoggerFactory.getLogger(getClass)
-
+class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: Long => manoeuvreProvider.deleteManoeuvreFromSign(x.asInstanceOf[Long])
-    case x: ManoeuvreProvider =>
-      try {
-        manoeuvreProvider.createManoeuvreBasedOnTrafficSign(x.asInstanceOf[ManoeuvreProvider])
-      }catch {
-        case e: ManoeuvreCreationException =>
-          logger.error("Manoeuvre creation error: " + e.response.mkString(" "))
-      }
-    case _ => println("Manoeuvre not created")
+    case x: TrafficSignInfo => trafficSignManager.createAssets(x)
+    case _ => println("trafficSignCreateAssets: Received unknown message")
   }
 }
 
+class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
+  def receive = {
+    case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq((x, trafficType.propertyData)))
+      case _ => println("Nonexistent traffic Sign Type")
+    }
+    case _ => println("trafficSignExpireAssets: Received unknown message")
+  }
+}
+
+class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+  def receive = {
+    case x: (Long, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case _ => println("trafficSignUpdateAssets: Received unknown message")
+  }
+}
 
 object Digiroad2Context {
   val logger = LoggerFactory.getLogger(getClass)
@@ -266,11 +279,12 @@ object Digiroad2Context {
   }
   lazy val revisionInfo: Properties = {
     val props = new Properties()
-      props.load(getClass.getResourceAsStream("/revision.properties"))
+    props.load(getClass.getResourceAsStream("/revision.properties"))
     props
   }
 
   val system = ActorSystem("Digiroad2")
+
   import system.dispatcher
 
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES), FiniteDuration(1, TimeUnit.MINUTES)) {
@@ -287,6 +301,9 @@ object Digiroad2Context {
 
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
   eventbus.subscribe(valluTerminal, "terminal:saved")
+
+  val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
+  eventbus.subscribe(importCSVDataUpdater, "importCSVData")
 
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
@@ -329,9 +346,14 @@ object Digiroad2Context {
   val prohibitionSaveProjected = system.actorOf(Props(classOf[ProhibitionSaveProjected[PersistedLinearAsset]], prohibitionService), name = "prohibitionSaveProjected")
   eventbus.subscribe(prohibitionSaveProjected, "prohibition:saveProjectedProhibition")
 
-  val manoeuvreUpdater = system.actorOf(Props(classOf[ManoeuvreUpdater[Int, ManoeuvreProvider]], manoeuvreService), name ="manoeuvreUpdater" )
-  eventbus.subscribe(manoeuvreUpdater, "manoeuvre:expire")
-  eventbus.subscribe(manoeuvreUpdater,"manoeuvre:create")
+  val trafficSignExpire = system.actorOf(Props(classOf[TrafficSignExpireAssets], trafficSignService, trafficSignManager), name = "trafficSignExpire")
+  eventbus.subscribe(trafficSignExpire, "trafficSign:expire")
+
+  val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
+  eventbus.subscribe(trafficSignCreate, "trafficSign:create")
+
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
   eventbus.subscribe(hazmatTransportProhibitionVerifier, "hazmatTransportProhibition:Validator")
@@ -413,8 +435,8 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val assetService: AssetService = {
@@ -461,6 +483,10 @@ object Digiroad2Context {
     new LinearHeightLimitService(roadLinkService, eventbus)
   }
 
+  lazy val trafficSignManager: TrafficSignManager = {
+    new TrafficSignManager(manoeuvreService, prohibitionService)
+  }
+
   lazy val damagedByThawService: DamagedByThawService = {
     new DamagedByThawService(roadLinkService, eventbus)
   }
@@ -477,7 +503,7 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -485,7 +511,11 @@ object Digiroad2Context {
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressService)
+  }
+
+  lazy val dataImportManager: DataImportManager = {
+    new DataImportManager(roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
@@ -545,7 +575,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, eventbus)
   }
 
   lazy val manoeuvreService = {

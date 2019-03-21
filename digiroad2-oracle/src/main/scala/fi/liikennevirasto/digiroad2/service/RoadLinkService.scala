@@ -1186,6 +1186,39 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def filterRoadLinkByBearing(assetBearing: Option[Int], assetValidityDirection: Option[Int], assetCoordinates: Point, roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    val toleranceInDegrees = 25
+
+    def getAngle(b1: Int, b2: Int): Int = {
+      180 - Math.abs(Math.abs(b1 - b2) - 180)
+    }
+
+    assetBearing match {
+      case Some(aBearing) =>
+        val filteredEnrichedRoadLinks =
+          roadLinks.filter { roadLink =>
+            val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetCoordinates, roadLink.geometry)
+            val roadLinkBearing = GeometryUtils.calculateBearing(roadLink.geometry, Some(mValue))
+
+            if (roadLink.trafficDirection == TrafficDirection.BothDirections) {
+              val reverseRoadLinkBearing =
+                if (roadLinkBearing - 180 < 0) {
+                  roadLinkBearing + 180
+                } else {
+                  roadLinkBearing - 180
+                }
+
+              getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees || Math.abs(aBearing - reverseRoadLinkBearing) <= toleranceInDegrees
+            } else {
+              getAngle(aBearing, roadLinkBearing) <= toleranceInDegrees && (TrafficDirection.toSideCode(roadLink.trafficDirection).value == assetValidityDirection.get)
+            }
+          }
+        filteredEnrichedRoadLinks
+      case _ =>
+        roadLinks
+    }
+  }
+
   /**
     * Returns adjacent road links by link id. Used by Digiroad2Api /roadlinks/adjacent/:id GET endpoint and CsvGenerator.generateDroppedManoeuvres.
     */

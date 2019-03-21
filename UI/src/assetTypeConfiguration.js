@@ -137,7 +137,7 @@
         title: 'Suurin sallittu telimassa',
         newTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
-        unit: 'kg',
+        unit: 'Kg',
         isSeparable: false,
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',
@@ -462,7 +462,8 @@
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -678,7 +679,7 @@
         style: new CarryingCapacityStyle(),
         layer: CarryingCapacityLayer,
         saveCondition: function (fields) {
-          return _.some(fields, function (field) {
+          return _.isEmpty(fields) || _.some(fields, function (field) {
             var fieldPropertyType = field.getPropertyValue().propertyType;
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
@@ -904,7 +905,8 @@
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
-        }
+        },
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.trHeightLimits,

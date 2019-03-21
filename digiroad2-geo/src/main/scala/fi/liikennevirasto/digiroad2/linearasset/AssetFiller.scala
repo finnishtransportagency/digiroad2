@@ -352,8 +352,12 @@ class AssetFiller {
     (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
   }
 
-  private def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
+  protected def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
     assets.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis)
+  }
+
+  private def sortByStartMeasure(assets: Seq[PersistedLinearAsset]) = {
+    assets.sortBy(s => (s.startMeasure,s.endMeasure))
   }
 
   /**
@@ -392,6 +396,10 @@ class AssetFiller {
     } else {
       result
     }
+  }
+
+  protected def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    (segments, changeSet)
   }
 
   private def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {

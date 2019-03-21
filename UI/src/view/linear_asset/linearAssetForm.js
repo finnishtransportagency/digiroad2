@@ -158,7 +158,7 @@
         });
       };
 
-      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var message = '';
 
@@ -214,11 +214,11 @@
       default:
         textName = "Vanhentuneiden kohteiden lista";
     }
-    $('ul[class=information-content]').append('<li><button id="unchecked-links" class="unchecked-linear-assets" onclick=location.href="#work-list/' + layerName + '">' + textName + '</button></li>');
+    $('ul[class=information-content]').append('<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">' + textName + '</button></li>');
   };
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</button></li>');
+    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
 
   function validateAccess(selectedLinearAsset, authorizationPolicy){

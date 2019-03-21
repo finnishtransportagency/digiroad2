@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
+import fi.liikennevirasto.digiroad2.{_}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -68,20 +68,20 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
       }
     }
     val trAsset = assetInfo.trAsset.asInstanceOf[TierekisteriAssetData]
-    trAsset.assetType.trafficSignType match {
-      case TrafficSignType.SpeedLimit  =>
+    trAsset.assetType match {
+      case SpeedLimitSign  =>
         toInt(trAsset.assetValue)
-      case TrafficSignType.EndSpeedLimit =>
+      case EndSpeedLimit =>
         Some(defaultSpeedLimit)
-      case TrafficSignType.SpeedLimitZone  =>
+      case SpeedLimitZone  =>
         toInt(trAsset.assetValue)
-      case TrafficSignType.EndSpeedLimitZone =>
+      case EndSpeedLimitZone =>
         Some(defaultSpeedLimit)
-      case TrafficSignType.UrbanArea =>
+      case UrbanArea =>
         Some(urbanAreaSpeedLimit)
-      case TrafficSignType.EndUrbanArea =>
+      case EndUrbanArea =>
         Some(defaultSpeedLimit)
-      case TrafficSignType.TelematicSpeedLimit =>
+      case TelematicSpeedLimit =>
         getSpeedLimitValueByLinkType(linkType) match {
           case None => getSpeedLimitValueByLinkType(assetInfo.linkType)
           case value => value
@@ -92,7 +92,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   }
 
   private def filterSectionTrafficSigns(trafficSigns: Seq[TierekisteriAssetData], roadAddress: ViiteRoadAddress, roadSide: RoadSide): Seq[TierekisteriAssetData] ={
-    val signs = trafficSigns.filter(trSign => trSign.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits &&
+    val signs = trafficSigns.filter(trSign => trSign.assetType.group == TrafficSignTypeGroup.SpeedLimits &&
       trSign.endRoadPartNumber == roadAddress.roadPartNumber && trSign.startAddressMValue >= roadAddress.startAddrMValue &&
       trSign.startAddressMValue <= roadAddress.endAddrMValue && (trSign.roadSide == RoadSide.Left || trSign.roadSide == RoadSide.Right))
 
@@ -123,13 +123,13 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
 
     if (trAsset.assetValue == notUrbanArea) {
       Seq(
-        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, startAddress, startAddress, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString),
-        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, endAddress, endAddress, roadSide, TRTrafficSignType.EndSpeedLimit, defaultSpeedLimit.toString)
+        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, startAddress, startAddress, roadSide, EndUrbanArea, defaultSpeedLimit.toString),
+        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, endAddress, endAddress, roadSide, EndSpeedLimit, defaultSpeedLimit.toString)
       )
     } else {
       Seq(
-        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, startAddress, startAddress, roadSide, TRTrafficSignType.UrbanArea, urbanAreaSpeedLimit.toString),
-        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, endAddress, endAddress, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString)
+        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, startAddress, startAddress, roadSide, UrbanArea, urbanAreaSpeedLimit.toString),
+        TierekisteriTrafficSignData(trAsset.roadNumber, trAsset.startRoadPartNumber, trAsset.endRoadPartNumber, trAsset.track, endAddress, endAddress, roadSide, EndUrbanArea, defaultSpeedLimit.toString)
       )
     }
   }
@@ -140,7 +140,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
                                        roadSide: RoadSide): Option[TrAssetInfo] = {
 
     def getDefaultTrTrafficSign(addressSection: AddressSection, roadLink: Option[VVHRoadlink]): Option[TrAssetInfo] ={
-      Some(TrAssetInfo(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString), roadLink))
+      Some(TrAssetInfo(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, EndUrbanArea, defaultSpeedLimit.toString), roadLink))
     }
 
     val trUrbanAssets = trUrbanAreaAssets.filter( ua => ua.startRoadPartNumber == addressSection.roadPartNumber && ( ua.track == addressSection.track || ua.track == Track.Combined))
@@ -270,7 +270,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
           val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
           //Get all TelematicSpeedLimit
           val trTelematicSpeedLimitAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
-          val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits) ++ trTelematicSpeedLimitAssets
+          val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.assetType.group == TrafficSignTypeGroup.SpeedLimits) ++ trTelematicSpeedLimitAssets
           //Get all the existing road address for the road number
           val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
           //Generate all speed limits of the right side of the road
