@@ -163,6 +163,10 @@ object DataFixture {
     new DynamicLinearAssetDao()
   }
 
+  lazy val speedLimitDao: OracleSpeedLimitDao = {
+    new OracleSpeedLimitDao(null, null)
+  }
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -1589,19 +1593,7 @@ object DataFixture {
     println("\n")
   }
 
-
-  private def isValidUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
-    val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
-    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
-
-    !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
-  }
-
   def removeUnnecessaryUnknownSpeedLimits(): Unit = {
-    val dao = new OracleSpeedLimitDao(null, null)
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-
     println("\nStart delete unknown speedLimits")
     println(DateTime.now())
 
@@ -1612,14 +1604,14 @@ object DataFixture {
       municipalities.foreach { municipality =>
         println(s"Obtaining all Road Links for Municipality: $municipality")
 
-        val unknownSpeedLimitByMunicipality = dao.getMunicipalitiesWithUnknown(municipality)
+        val unknownSpeedLimitByMunicipality = speedLimitDao.getMunicipalitiesWithUnknown(municipality)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unknownSpeedLimitByMunicipality.toSet, false)
 
-        val filterRoadLinks = roadLinks.filterNot(isValidUnknownSpeedLimit)
+        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad)
 
-        if(filterRoadLinks.map(_.linkId).nonEmpty) {
+        if(filterRoadLinks.nonEmpty) {
           println(s"Deleting linkIds - ${filterRoadLinks.map(_.linkId)}")
-          dao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
+          speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
         }
       }
     }
@@ -1631,10 +1623,6 @@ object DataFixture {
   }
 
   def printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks(): Unit = {
-    val dao = new OracleSpeedLimitDao(null, null)
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-
     println("\nStart checking unknown speedLimits on top on wrong links")
     println(DateTime.now())
 
@@ -1645,10 +1633,10 @@ object DataFixture {
       municipalities.foreach { municipality =>
 
         val roads = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
-        val speedLimits = dao.fetchSpeedLimitsByLinkIds(roads.map(_.linkId))
+        val speedLimits = speedLimitDao.fetchSpeedLimitsByLinkIds(roads.map(_.linkId))
 
         val roadLinks = roads.filter(road => speedLimits.exists(speed => speed.linkId == road.linkId))
-        val filterRoadLinks = roadLinks.filterNot(isValidUnknownSpeedLimit)
+        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad)
 
         if (filterRoadLinks.nonEmpty) {
           filterRoadLinks.foreach { roadLink =>

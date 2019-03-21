@@ -124,20 +124,17 @@ object SpeedLimitFiller {
   }
 
 
-  private def isValidUnknownSpeedLimit(roadLink: RoadLink): Boolean = {
-    val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
-    val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
-
-    !((roadLinkType.contains(roadLink.linkType) || constructionType.contains(roadLink.constructionType)) && roadLink.administrativeClass == State)
-  }
-
   private def generateUnknownSpeedLimitsForLink(roadLink: RoadLink, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
-    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.filter(seg => isValidUnknownSpeedLimit(roadLink)).map { x => (x.startMeasure, x.endMeasure) }
-    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength}
-    remainders.map { segment =>
-      val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None, linkSource = roadLink.linkSource)
-    }
+    val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
+
+    if(roadLink.isSimpleCarTrafficRoad) {
+      val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength }
+      remainders.map { segment =>
+        val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
+        SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None, linkSource = roadLink.linkSource)
+      }
+    } else
+      Seq()
   }
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
