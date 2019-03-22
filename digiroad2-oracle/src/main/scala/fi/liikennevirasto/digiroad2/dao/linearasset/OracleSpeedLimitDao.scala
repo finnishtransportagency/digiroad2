@@ -79,7 +79,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
 
-  private def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
+  def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
 
     val queryFilter = "AND (valid_to IS NULL OR valid_to > SYSDATE)"
     fetchByLinkIds(linkIds, queryFilter).map {
@@ -216,6 +216,17 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       """
 
     Q.queryNA[(Long, String)](municipalitiesQuery).list
+  }
+
+
+  def getMunicipalitiesWithUnknown(municipality: Int): Seq[Long] = {
+
+    val municipalitiesQuery =
+      s"""
+      select LINK_ID from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
+      """
+
+    Q.queryNA[Long](municipalitiesQuery).list
   }
 
 
@@ -506,6 +517,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
       sqlu"""delete from unknown_speed_limit where link_id = $linkId""".execute
     }
+  }
+
+  /**
+    * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
+    */
+  def deleteUnknownSpeedLimits(linkIds: Seq[Long]): Unit = {
+    sqlu"""delete from unknown_speed_limit where link_id in (#${linkIds.mkString(",")})""".execute
   }
 
   private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {

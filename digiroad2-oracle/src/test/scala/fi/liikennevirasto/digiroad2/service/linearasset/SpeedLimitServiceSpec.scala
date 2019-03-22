@@ -40,14 +40,17 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
 
   when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(362964704l, 362955345l, 362955339l)))
-    .thenReturn(Seq(VVHRoadlink(362964704l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(362955345l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(362955339l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+    .thenReturn(Seq(VVHRoadlink(362964704l, 91, List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(362955345l, 91, List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+      VVHRoadlink(362955339l, 91, List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   def passingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {}
-  def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = { throw new IllegalArgumentException }
+
+  def failingMunicipalityValidation(code: Int, administrativeClass: AdministrativeClass): Unit = {
+    throw new IllegalArgumentException
+  }
 
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
@@ -83,8 +86,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     expectedEndPoints._1.distance2DTo(limitEndPoints._1) should be(0.0 +- 0.01)
     expectedEndPoints._2.distance2DTo(limitEndPoints._2) should be(0.0 +- 0.01)
   }
-
-
 
   test("create new speed limit") {
     runWithRollback {
@@ -382,8 +383,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 //      after.foreach(println)
 
       after.length should be(6)
-      after.flatten.forall(sl => sl.sideCode != SideCode.BothDirections) should be (true)
-      after.flatten.forall(sl => sl.vvhTimeStamp == 144000000L) should be (true)
+      after.flatten.forall(sl => sl.sideCode != SideCode.BothDirections) should be(true)
+      after.flatten.forall(sl => sl.vvhTimeStamp == 144000000L) should be(true)
       val towards = after.flatten.filter(sl => sl.sideCode == SideCode.TowardsDigitizing)
       val against = after.flatten.filter(sl => sl.sideCode == SideCode.AgainstDigitizing)
 
@@ -1000,8 +1001,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18040876',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 40 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'), null from dual""".execute
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18040879',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 40 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'), null from dual""".execute
 
-
-
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
 
       val after = service.get(boundingBox, Set(municipalityCode)).toList
@@ -1275,7 +1274,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   /**
     * Raw SQL table columns for asset (some removed), raw sql table columns for lrm position added with asset id
- *
+    *
     * @param speed
     * @param data
     */

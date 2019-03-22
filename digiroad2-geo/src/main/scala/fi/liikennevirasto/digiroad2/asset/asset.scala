@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.asset
 
 
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
