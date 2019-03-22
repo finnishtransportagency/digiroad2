@@ -1040,55 +1040,6 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
-  //TODO: duplicate method, exists on AssetValidatorProcess. Delete by 14.03.2019 if no use for this has been found
-  //  def verifyInaccurateSpeedLimits(): Unit = {
-//    println("Start inaccurate SpeedLimit verification\n")
-//    println(DateTime.now())
-//    println("")
-//
-//    val polygonTools: PolygonTools = new PolygonTools()
-//    val dao = new OracleSpeedLimitDao(null, null)
-//
-//    //Expire all inaccuratedAssets
-//    OracleDatabase.withDynTransaction {
-//      inaccurateAssetDAO.deleteAllInaccurateAssets(SpeedLimitAsset.typeId)
-//    }
-//
-//    //Get All Municipalities
-//    val municipalities: Seq[Int] =
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
-//
-//    municipalities.foreach { municipality =>
-//      println("Working on... municipality -> " + municipality)
-//      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).filter(roadLink => Seq(Municipality, State).contains(roadLink.administrativeClass)).groupBy(_.linkId)
-//
-//      OracleDatabase.withDynTransaction {
-//        val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)
-//
-//        val inaccurateAssets = speedLimitsByLinkId.flatMap {
-//          case (linkId, speedLimits) =>
-//            val trafficSigns = trafficSignService.getPersistedAssetsByLinkIdWithoutTransaction(linkId)
-//            val roadLink = roadLinks(linkId).head
-//            speedLimitValidator.checkSpeedLimitUsingTrafficSign(trafficSigns, roadLink, speedLimits).map {
-//              inaccurateAsset =>
-//                println(s"Inaccurate asset ${inaccurateAsset.id} found ")
-//                (inaccurateAsset, roadLink.administrativeClass)
-//            }
-//        }
-//
-//        inaccurateAssets.foreach { case (speedLimit, administrativeClass) =>
-//          inaccurateAssetDAO.createInaccurateAsset(speedLimit.id, SpeedLimitAsset.typeId, municipality, administrativeClass)
-//        }
-//      }
-//    }
-//
-//    println("")
-//    println("Ended inaccurate SpeedLimit verification\n")
-//    println(DateTime.now())
-//  }
-
   def updateAreasOnAsset(): Unit = {
     println("\nStart Update areas on Asset at time ")
     println(DateTime.now())

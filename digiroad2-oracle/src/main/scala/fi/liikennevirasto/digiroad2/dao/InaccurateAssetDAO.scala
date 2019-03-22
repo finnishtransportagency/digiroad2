@@ -25,10 +25,6 @@ class InaccurateAssetDAO {
     sql"""select asset_id from inaccurate_asset where asset_id= $assetId""".as[Long].firstOption
   }
 
-//  def existsOnInaccurateWithLinkId(linkId: Long): Option[Long] = {
-//    sql"""select linkId from inaccurate_asset where link_id= $linkId""".as[Long].firstOption
-//  }
-
   def getInaccurateAsset(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Seq[InaccurateLinearAsset] = {
 
     val withAuthorizedMunicipalities =
