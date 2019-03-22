@@ -673,7 +673,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq(), trafficSignId: Option[Long] = None): Long = {
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
@@ -736,15 +736,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       select * from dual
         """.execute
     }
-
-    if(trafficSignId.nonEmpty)
-      insertConnectedAsset(id, trafficSignId.get)
-
     id
-  }
-
-  def insertConnectedAsset(id: Long, connected_id : Long) : Int = {
-    sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
   }
 
   /**
