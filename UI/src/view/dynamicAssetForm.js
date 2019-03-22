@@ -151,11 +151,12 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
+            var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
       me.element = $('' +
           '<div class="form-group">' +
           '   <label class="control-label">' + field.label + '</label>' +
-          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
+          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control' + unitClass + '" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
           unit +
           '</div>');
 
@@ -391,22 +392,26 @@
 
             var checked = !!parseInt(_value) ? 'checked' : '';
 
+            var checkBoxElement = "input[name = '" + field.publicId + '-' + sideCode + "']";
+
             me.element = $('' +
                 '<div class="form-group">' +
                 '<label class="control-label">'+ field.label+'</label>' +
                 '<div class="choice-group"> ' +
-                '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice" name = "' + field.publicId + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
+                '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice-' + sideCode + '" name = "' + field.publicId + '-' + sideCode + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
                 '</div>'+
                 '</div>');
 
             me.getValue = function() {
-                return $(me.element).prop('checked') ? 1: 0;
+                return $(checkBoxElement).prop('checked') ? 1: 0;
             };
 
-            me.hasValue = function(){ return true;};
+            me.hasValue = function(){
+                return true;
+            };
 
             me.setValue = function(value) {
-                $(me.element).prop('checked', ~~(value === 0));
+                $(checkBoxElement).prop('checked', !!(value));
             };
 
             if(!isDisabled && (me.hasDefaultValue() || me.isRequired()) && !value) {
@@ -601,6 +606,181 @@
                 '</div>' );
         };
     };
+
+    var DatePeriodField = function(assetTypeConfiguration, field, isDisabled) {
+        DynamicField.call(this, field, isDisabled);
+        var me = this;
+        var className = field.publicId;
+        var elementNumber = 0;
+
+        me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
+            var buttons = '<div class="form-group date-time-period-buttons">' +
+                '<button class="form-control btn edit-only editable btn-secondary add-period"' + me.disabled() +' >Lisää kausi</button>' +
+                '<span></span>' +
+                '<button class="form-control btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista kausi</button>'+
+                '</div>';
+
+             var handleButton = function() {
+                 var $element = me.element;
+                 var removeAllowed = me.element.find('.existing-date-period').length > 1;
+                 $element.find('.add-period').showElement(!removeAllowed);
+                 $element.find('.remove-period').showElement(removeAllowed);
+             };
+
+            me.getPropertyValue = function(){
+                var values = me.getValue();
+                return me.createPropertyValue(values);
+            };
+
+            me.getValue = function() {
+                var periodElements = me.element.find('.existing-date-period');
+                return _.map(periodElements, function (element) {
+                    return { value: {
+                            startDate: $(element).find('.'+className+'-start').val(),
+                            endDate: $(element).find('.'+className+'-end').val()
+                        }};
+                });
+            };
+
+            me.hasValue = function() {
+               return _.some(me.getValue(), function (values) {
+                    var period = values.value;
+                    return !_.isEmpty(period.startDate) && !_.isEmpty(period.endDate);
+                });
+            };
+
+            me.isValid = function(){
+                //both Dates empties or filled
+                var bothDates =_.every(me.getValue(), function (values) {
+                    var period = values.value;
+                    return !(_.isEmpty(period.startDate) ^ _.isEmpty(period.endDate));
+                });
+                return bothDates && (!me.isRequired() || me.isRequired() && me.hasValue());
+            };
+
+            var addDatePickers = function (elementNumber) {
+                var $startDate = me.element.find('#datePeriod-start' + elementNumber);
+                var $endDate = me.element.find('#datePeriod-end' + elementNumber);
+
+                dateutil.addDependentDatePickers($startDate, $endDate);
+            };
+
+            var inputLabel = function(type, value) {
+                return $('<input type="text" ' + me.disabled() + '/>').addClass( className + ' form-control ' + className+'-'+type)
+                    .attr('id', 'datePeriod-'+type+elementNumber)
+                    .attr('required', me.required())
+                    .attr('placeholder',"pp.kk.vvvv")
+                    .attr('fieldType', fieldValue.type)
+                    .attr('value', value )
+                    .attr('autocomplete',"off")
+                    .attr('name', field.publicId).on('keyup datechange', _.debounce(function (target) {
+                    // tab press
+                    if (target.keyCode === 9) {
+                        return;
+                    }
+                    me.setValue(me.getValue());
+                    me.setSelectedValue(setValue, getValue);
+                }, 500));
+            };
+
+            if (!isDisabled && me.hasDefaultValue() && !value) {
+                me.setValue(me.getValue());
+                me.setSelectedValue(setValue, getValue);
+            }
+
+            var existingDatePeriodElements =
+                _(_.map(fieldValue, function(values) { return values.value ; }))
+                    .sortBy('startDate', 'endDate')
+                    .map(datePeriodElement)
+                    .join('');
+
+            function datePeriodElement(periods) {
+                return createPeriodElement(periods)[0].outerHTML;
+            }
+
+            function createPeriodElement(period) {
+                elementNumber = elementNumber + 1;
+               return $('' +
+                    '<li class="form-group existing-date-period">')
+                    .append(inputLabel('start', period ? period.startDate : undefined))
+                    .append('<span class="date-separator"> - </span>')
+                    .append(inputLabel('end', period ? period.endDate : undefined))
+                    .append(me.disabled() ? '' : buttons);
+            }
+
+            var template = _.template('' +
+                '<div class="form-group date-time-period-group">' +
+                '<label class="control-label">' + field.label + '</label>' +
+                ' <ul >' +
+                 '   <%= existingDatePeriodElements %>' +
+                (_.isEmpty(existingDatePeriodElements) ? createPeriodElement()[0].outerHTML : '') +
+                ' </ul>'+
+                '</div>');
+
+
+            me.element = $(template({existingDatePeriodElements: existingDatePeriodElements}));
+            for (var elementNumb = 1; elementNumb <= elementNumber; elementNumb++) {
+                addDatePickers(elementNumb);
+            }
+
+            me.element.on('click', '.remove-period', function(event) {
+                $(event.target).parent().parent().remove();
+                me.setSelectedValue(setValue, getValue);
+
+                handleButton();
+            });
+
+            me.element.on('datechange', function() {
+                me.setSelectedValue(setValue, getValue);
+            });
+
+            me.element.on('click', '.add-period', function() {
+               $(event.target).closest('.date-time-period-group ul').append(createPeriodElement()[0].outerHTML);
+                addDatePickers(elementNumber);
+                handleButton();
+            });
+
+            handleButton();
+            return me.element;
+        };
+
+        me.isValid = function(){
+            return !me.isRequired() || me.isRequired() && me.hasValue();
+        };
+
+        me.compare = function(propertyValueA, propertyValueB){
+            var isEqual = function(valueA , valueB) {
+                return valueA.startDate === valueB.startDate && valueA.endDate === valueB.endDate;
+            };
+
+            var isRemoved = function(firstProperty, secondProperty) {
+                _.remove(firstProperty.values, function (valuesA) {
+                    return !_.isUndefined(_.find(secondProperty.values, function (valuesB) {
+                        return isEqual(valuesB.value, valuesA.value);
+                    }));
+                });
+                return _.isEmpty(firstProperty.values);
+            };
+            return isRemoved(_.cloneDeep(propertyValueA), _.cloneDeep(propertyValueB)) && isRemoved(_.cloneDeep(propertyValueB), _.cloneDeep(propertyValueA));
+        };
+
+        me.viewModeRender = function (field, currentValue) {
+            var datePeriodTable = _.map(currentValue, function(values) {
+                return _.map(values, function(period){ return '' +
+                    '<li>' + period.startDate + " - " + period.endDate + '</li>';}).join('');
+            }).join('');
+
+            return $('' +
+                '<div class="form-group read-only">' +
+                '<label class="control-label">Kelirikkokausi</label>' +
+                '<ul class="form-control-static date-period-group">' +
+                datePeriodTable +
+                '</ul>' +
+                '</div>' );
+        };
+
+    };
+
     //hides field when in edit mode, show in view mode
     var HiddenReadOnlyFields = function(assetTypeConfiguration){
         DynamicField.call(this, assetTypeConfiguration);
@@ -634,6 +814,7 @@
         {name: 'read_only_number', fieldType: ReadOnlyFields},
         {name: 'read_only_text', fieldType: ReadOnlyFields},
         {name: 'time_period', fieldType: TimePeriodField},
+        {name: 'date_period', fieldType: DatePeriodField},
         {name: 'hidden_read_only_number', fieldType: HiddenReadOnlyFields}
     ];
 
@@ -731,8 +912,9 @@
             }
         };
 
-        me.renderFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled) {
-
+        me.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled, alreadyRendered) {
+            if(alreadyRendered)
+              forms.removeFields(sideCode);
             var fieldGroupElement = $('<div class = "input-unit-combination" >');
             _.each(_.sortBy(formStructure.fields, function(field){ return field.weight; }), function (field) {
                 var fieldValues = [];
@@ -874,7 +1056,7 @@
 
             toggleElement.find('.radio input').on('change', function(event) {
                 var disabled = $(this).val() === 'disabled';
-                var input = formGroup.find('.form-control, .choice-group .multiChoice-'+sideCode).not('.edit-control-group.choice-group');
+                var input = formGroup.find('.form-control, .form-group, .choice-group .multiChoice-'+sideCode ).not('.edit-control-group.choice-group');
                 input.prop('disabled', disabled);
 
                 if(disabled){
@@ -883,14 +1065,14 @@
                   _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
                   setValueFn(asset.value || {properties: []} );
-                  formGroup.find('.input-unit-combination').replaceWith(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled));
+                  formGroup.find('.input-unit-combination').replaceWith(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled, true));
                 }
                 eventbus.trigger("radio-trigger-dirty");
             });
 
             formGroup.append(toggleElement);
             body.find('.form').append(formGroup);
-            body.find('.form-editable-' + sideCodeClass).append(me.renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
+            body.find('.form-editable-' + sideCodeClass).append(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
             return body;
         }
@@ -1007,13 +1189,11 @@
       });
     };
 
-    me.isSaveable = function(){
+    me.isSaveable = function(field){
         var otherSaveCondition = function () {
-            if (_.isUndefined(_assetTypeConfiguration.saveCondition)) {
-                return true;
-            } else {
-                return _assetTypeConfiguration.saveCondition(forms.getAllFields());
-            }
+            if(_assetTypeConfiguration.saveCondition)
+                return _assetTypeConfiguration.saveCondition(field);
+            return true;
         };
         return _.every(forms.getAllFields(), function(field){
           return field.isValid();
@@ -1032,9 +1212,9 @@
 
             var updateStatus = function(element) {
                 if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-                    element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
+                    element.prop('disabled', !(me.isSaveable(forms.getFields('a')) && me.isSaveable(forms.getFields('b')) && me.isSplitOrSeparatedAllowed()));
                 } else
-                    element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty()));
+                    element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && assetTypeConfiguration.selectedLinearAsset.isDirty()));
             };
 
             updateStatus(element);
@@ -1089,5 +1269,10 @@
                 element: element
             };
         };
+
+      jQuery.fn.showElement = function(visible) {
+        var toggle = visible ? 'visible' : 'hidden';
+        return this.css('visibility', toggle);
+      };
     };
 })(this);

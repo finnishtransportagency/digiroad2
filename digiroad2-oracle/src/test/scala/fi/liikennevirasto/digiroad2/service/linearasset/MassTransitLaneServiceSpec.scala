@@ -45,6 +45,35 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
 
   }
 
+  test("Create new linear asset with validity period property") {
+    runWithRollback {
+      val typeId = 160
+      val value = Seq(DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(0), "endHour" -> BigInt(0), "startMinute" -> BigInt(24), "endMinute" -> BigInt(0), "periodType" -> None)))
+      val propertyData  = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("public_validity_period", "time_period", false, value))))
+
+      val newAssets = mtlServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
+      newAssets.length should be(1)
+      val asset = mtlServiceWithDao.getPersistedAssetsByIds(typeId, newAssets.toSet).head
+      asset.value.get.equals(propertyData) should be (true)
+    }
+  }
+
+  test("Create new linear asset with validity periods property values") {
+    runWithRollback {
+      val typeId = 160
+      val value = Seq(DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(10), "endHour" -> BigInt(14), "startMinute" -> BigInt(0), "endMinute" -> BigInt(0), "periodType" -> None)),
+        DynamicPropertyValue(Map("days" -> BigInt(1), "startHour" -> BigInt(16), "endHour" -> BigInt(20), "startMinute" -> BigInt(30), "endMinute" -> BigInt(30), "periodType" -> None)))
+
+      val propertyData  = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("public_validity_period", "time_period", false, value))))
+
+      val newAssets = mtlServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 40, propertyData, 1, 0, None)), typeId, "testuser")
+      newAssets.length should be(1)
+      val asset = mtlServiceWithDao.getPersistedAssetsByIds(typeId, newAssets.toSet).head
+      asset.value.get.equals(propertyData) should be (true)
+    }
+  }
+
+
   def adjustProjectedAssetWithCreation(assetInfoCount: TestAssetInfo) : Unit = {
     val assetInfo = assetInfoCount
     val oldLinkId = 5000
@@ -68,7 +97,7 @@ class MassTransitLaneServiceSpec extends DynamicLinearTestSupporter {
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
         verify(mockEventBus, times(1))
-          .publish("dynamicAsset:update", ChangeSet(Set(),List(),List(),List(),Set()))
+          .publish("dynamicAsset:update", ChangeSet(Set(),List(),List(),List(),Set(), Nil))
 
         val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
         verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())

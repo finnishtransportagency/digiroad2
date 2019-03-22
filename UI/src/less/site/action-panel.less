@@ -584,6 +584,17 @@
   }
 }
 
+.roadDamagedByThaw {
+  &:extend(.legend-entry);
+
+  .legend-entry {
+    .limit-2 {
+      .linear-asset-color(@linear-asset-5) !important;
+    }
+  }
+
+}
+
 .dotted-manoeuvre-limit(@color) {
   background-image: linear-gradient(to right, @color 50%, transparent 0%);
   background-position: -5px top;

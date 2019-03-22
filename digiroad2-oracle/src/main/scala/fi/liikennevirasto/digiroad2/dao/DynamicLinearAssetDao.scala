@@ -12,6 +12,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.Asset.DatePropertyFormat
 
 
 case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
@@ -21,6 +22,7 @@ case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: Dynamic
 
 class DynamicLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
+  val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
@@ -223,7 +225,6 @@ class DynamicLinearAssetDao {
         }
 
       case Date =>
-        val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteDateProperty(assetId, propertyId).execute
@@ -240,7 +241,7 @@ class DynamicLinearAssetDao {
 
         if (propertyValues.nonEmpty) {
           propertyValues.distinct.foreach { propertyValue =>
-                var validityPeriodValue = propertyValue.value.asInstanceOf[Map[String, Any]]
+                val validityPeriodValue = propertyValue.value.asInstanceOf[Map[String, Any]]
                 insertValidityPeriodProperty(assetId, propertyId, ValidityPeriodValue.fromMap(validityPeriodValue)).execute
             }
           }
@@ -248,6 +249,18 @@ class DynamicLinearAssetDao {
       case ReadOnly | ReadOnlyNumber | ReadOnlyText =>
         logger.debug("Ignoring read only property in update: " + propertyPublicId)
 
+      case DatePeriodType =>
+        if(datePeriodPropertyValueExists(assetId: Long, propertyId: Long)){
+          deleteDatePeriodProperty(assetId, propertyId).execute
+        }
+
+        if (propertyValues.nonEmpty) {
+          propertyValues.distinct.foreach { propertyValue =>
+            val dates = propertyValue.value.asInstanceOf[Map[String, String]]
+            val period = DatePeriodValue.fromMap(dates)
+            insertDatePeriodProperty(assetId, propertyId, dateFormatter.parseDateTime(period.startDate), dateFormatter.parseDateTime(period.endDate)).execute
+          }
+        }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
   }
@@ -262,6 +275,10 @@ class DynamicLinearAssetDao {
 
   private def validityPeriodPropertyValueExist(assetId: Long, propertyId: Long) = {
     Q.query[(Long, Long), Long](existsValidityPeriodProperty).apply((assetId, propertyId)).firstOption.nonEmpty
+  }
+
+  private def datePeriodPropertyValueExists(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsDatePeriodProperty).apply((assetId, propertyId)).firstOption.nonEmpty
   }
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
@@ -346,7 +363,29 @@ class DynamicLinearAssetDao {
     }
   }
 
-  case  class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue )
+  def getDatePeriodPropertyValue(ids: Set[Long], typeId: Int) : Map[Long, Seq[DynamicProperty]] = {
+    val assets = MassQuery.withIds (ids) {
+      idTableName =>
+        sql"""
+          select dp.asset_id, p.public_id, p.property_type, p.required,
+          case when dp.start_date is not null then to_char(dp.start_date, 'DD.MM.YYYY') else null end as START_DATE,
+          case when dp.end_date is not null then to_char(dp.end_date, 'DD.MM.YYYY') else null end as END_DATE
+          from date_period_value dp
+          join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
+          join #$idTableName i on i.id = dp.asset_id
+          where dp.property_id = p.id
+        """.as[DatePeriodRow].list
+    }
+    assets.groupBy(_.assetId).mapValues{ assetGroup =>
+      assetGroup.groupBy(_.publicId).map { case (_, values) =>
+        val row = values.head
+        DynamicProperty(row.publicId, row.propertyType, row.required, values.map(_.value))
+      }.toSeq
+    }
+  }
+
+  case class ValidityPeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue )
+  case class DatePeriodRow(assetId: Long, publicId: String, propertyType: String, required: Boolean, value: DynamicPropertyValue)
 
   implicit val getValidityPeriodRow = new GetResult[ValidityPeriodRow] {
     def apply(r: PositionedResult) = {
@@ -364,6 +403,22 @@ class DynamicLinearAssetDao {
       )
 
       ValidityPeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
+    }
+  }
+
+  implicit val getDatePeriodRow = new GetResult[DatePeriodRow] {
+    def apply(r: PositionedResult) = {
+      val assetId = r.nextLong
+      val publicId = r.nextString
+      val propertyType = r.nextString
+      val required = r.nextBoolean
+      val optStartDate = r.nextStringOption()
+      val optEndDate = r.nextStringOption()
+      val value = (optStartDate, optEndDate) match {
+        case (Some(startDate), Some(endDate)) => DatePeriodValue.toMap(DatePeriodValue(startDate, endDate))
+        case _ => None
+      }
+      DatePeriodRow(assetId, publicId, propertyType, required, DynamicPropertyValue(value))
     }
   }
 

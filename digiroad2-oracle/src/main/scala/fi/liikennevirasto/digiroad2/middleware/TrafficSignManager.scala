@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.TrafficSignType
 import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, TextPropertyValue, TrafficSignProperty}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreService, ProhibitionService}
 
-class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService: ProhibitionService) {
+class TrafficSignManager(manoeuvreService: ManoeuvreService) {
 
   def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true ): Unit = {
     if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
