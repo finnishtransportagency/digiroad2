@@ -1873,4 +1873,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ => None
     }
   }
+
+  get("/roadAssociationName") {
+    roadLinkService.getAllPrivateRoadAssociationNames()
+  }
+
+  get("/fetchAssociationNames/:associationName") {
+    val associationName = params("associationName").toString
+    val privateRoadAssociations = roadLinkService.getPrivateRoadsByAssociationName(associationName)
+    privateRoadAssociations.map { value =>
+      Map("name" -> value.name,
+        "linkId" -> value.linkId,
+        "roadName" -> value.roadName,
+        "municipality" -> value.municipality
+      )
+    }
+  }
 }

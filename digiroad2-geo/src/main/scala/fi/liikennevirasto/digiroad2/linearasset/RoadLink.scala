@@ -75,6 +75,12 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
       !((roadLinkType.contains(linkType) || constructionType.contains(constructionType)) && administrativeClass == State)
   }
 
+  def roadNameIdentifier: Option[String] = {
+    Try(getStringAttribute("ROADNAME_FI"))
+      .orElse(Try(getStringAttribute("ROADNAME_SE")))
+      .orElse(Try(getStringAttribute("ROADNAME_SM"))).toOption
+  }
+
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
 }
 

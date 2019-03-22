@@ -117,9 +117,15 @@
       var linkIds = _.map(current, function(selected) { return selected.getId(); });
       var modifications = _.map(current, function(c) { return c.getData(); });
 
+      var roadAssociationNames = _.map(modifications, function(modification){ return modification.privateRoadAssociation; });
+
       backend.updateLinkProperties(linkIds, modifications, function() {
         dirty = false;
         eventbus.trigger('linkProperties:saved');
+
+        if(roadAssociationNames.length > 0)
+          eventbus.trigger('associationNames:reload');
+
       }, function() {
         eventbus.trigger('linkProperties:updateFailed');
       });
