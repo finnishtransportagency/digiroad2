@@ -823,30 +823,6 @@ trait LinearAssetOperations {
   }
 
   def validateAssetValue(value: Option[Value]): Unit = {}
-
-
-  def deleteAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-    logger.info("expiring asset")
-    if (withTransaction) {
-      withDynTransaction {
-        dao.deleteByTrafficSign(filter, username)
-      }
-    }
-    else
-      dao.deleteByTrafficSign(filter, username)
-  }
-
-  def withId(id: Long)(query: String): String = {
-    query + s" and a.id = $id"
-  }
-
-  def withIds(ids: Set[Long])(query: String): String = {
-    query + s" and a.id in (${ids.mkString(",")})"
-  }
-
-  def withMunicipalities(municipalities: Set[Int])(query: String): String = {
-    query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
-  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

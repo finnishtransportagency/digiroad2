@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
+import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
@@ -18,8 +18,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
-  lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
-  lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService, prohibitionService)
+  lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService)
 
   override def typeId: Int = 300
   override def assetName = "trafficSigns"
@@ -137,7 +136,6 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     if(trafficSignsIds.nonEmpty) {
       trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds), withTransaction = false)
     }
   }
 
