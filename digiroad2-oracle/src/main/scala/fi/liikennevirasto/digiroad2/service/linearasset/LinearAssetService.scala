@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, Orac
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -254,7 +255,8 @@ trait LinearAssetOperations {
                                expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
                                adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                               adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                               adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+                               valueAdjustments = Seq.empty[ValueAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
@@ -702,11 +704,10 @@ trait LinearAssetOperations {
         adjustedSideCode(adjustment)
       }
 
-      if (changeSet.adjustedValues.nonEmpty)
-        logger.info("Saving values adjustments for asset/link ids=" + changeSet.adjustedValues.map(a => "" + a.assetId).mkString(", "))
-
-      changeSet.adjustedValues.foreach { adjustment =>
-        updateWithoutTransaction(Seq(adjustment.assetId), adjustment.value, LinearAssetTypes.VvhGenerated)
+      if(changeSet.valueAdjustments.nonEmpty)
+        logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
+      changeSet.valueAdjustments.foreach { adjustment =>
+        updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
       }
     }
   }
@@ -762,7 +763,7 @@ trait LinearAssetOperations {
 
   protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
-                                       createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None, trafficSignId: Option[Long] = None): Long = {
+                                       createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource, geometry = getGeometry(roadLink))
     value match {

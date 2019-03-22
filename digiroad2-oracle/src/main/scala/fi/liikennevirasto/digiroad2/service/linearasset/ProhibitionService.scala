@@ -77,7 +77,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
                                   expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                   adjustedMValues = Seq.empty[MValueAdjustment],
                                   adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+                                    valueAdjustments = Seq.empty[ValueAdjustment])
 
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
@@ -201,9 +202,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                                   createdByFromUpdate: Option[String] = Some(""),
-                                                  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None, trafficSignId: Option[Long] = None): Long = {
+                                                  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, trafficSignId = trafficSignId)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
     value match {
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, prohibitions)

@@ -794,7 +794,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       provider.get(boundingBox, Set(municipalityCode))
 
-      verify(mockEventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), List(), Set()))
+      verify(mockEventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), List(), Set(), List()))
       verify(mockEventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", List())
       verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
@@ -1052,7 +1052,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val after = service.get(boundingBox, Set(municipalityCode)).toList
       provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
 
-      verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), Seq(), Seq(), Seq(), Set()))
+      verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), Seq(), Seq(), Seq(), Set(), Seq()))
       dynamicSession.rollback()
     }
 
@@ -1543,7 +1543,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val apeedLimits = service.get(boundingBox, Set(municipalityCode)).toList
 
 
-      verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset)))
+      verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset), Seq()))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
       verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())

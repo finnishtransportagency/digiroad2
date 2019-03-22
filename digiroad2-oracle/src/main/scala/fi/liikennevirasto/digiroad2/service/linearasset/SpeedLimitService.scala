@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
@@ -224,7 +224,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
                                   expiredAssetIds = oldSpeedLimits.map(_.id).toSet,
                                   adjustedMValues = Seq.empty[MValueAdjustment],
                                   adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+      valueAdjustments = Seq.empty[ValueAdjustment])
 
 
     val (newSpeedLimits, projectedChangeSet) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks,

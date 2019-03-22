@@ -75,11 +75,11 @@
       } else {
         me.editModeToggle.toggleEditMode(applicationModel.isReadOnly());
       }
-      element.show();
+      me.getElement().show();
     }
 
     function hide() {
-      element.hide();
+      me.getElement().hide();
     }
 
     this.getElement = function () {
