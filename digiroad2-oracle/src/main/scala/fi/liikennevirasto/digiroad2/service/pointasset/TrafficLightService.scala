@@ -45,6 +45,39 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     }
   }
 
+  def createFromCoordinates(incomingTrafficLight: IncomingTrafficLight, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
+    if(isFloating)
+      createFloatingWithoutTransaction(incomingTrafficLight.copy(linkId = 0), username, roadLink)
+    else {
+      checkDuplicates(incomingTrafficLight) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, incomingTrafficLight, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+        case _ =>
+          create(incomingTrafficLight, username, roadLink, false)
+      }
+    }
+  }
+
+  def checkDuplicates(incomingTrafficLight: IncomingTrafficLight): Option[TrafficLight] = {
+    val signsInRadius = getDirectionalSignsByRadius(Point(incomingTrafficLight.lon, incomingTrafficLight.lat), 2)
+    if(signsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(signsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(signs: Seq[TrafficLight]): TrafficLight = {
+    signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
+  }
+
+  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[TrafficLight] = {
+    OracleTrafficLightDao.fetchByRadius(position, meters)
+  }
+
+  def createFloatingWithoutTransaction(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
+    OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+  }
+
   override def setFloating(persistedAsset: TrafficLight, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
   }

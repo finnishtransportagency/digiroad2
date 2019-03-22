@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{PersistedPoint, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PedestrianCrossings}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, PedestrianCrossings}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 
@@ -13,6 +13,7 @@ import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,
@@ -75,6 +76,15 @@ class OraclePedestrianCrossingDao() {
     updateAssetGeometry(id, Point(crossing.lon, crossing.lat))
 
     id
+  }
+
+  def fetchByRadius(position : Point, meters: Int): Seq[PedestrianCrossing] = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val filter = s"Where a.asset_type_id = 200 and $boundingBoxFilter"
+    fetchByFilter(query => query + filter).
+      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
   }
 
   def create(crossing: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource,

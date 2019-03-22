@@ -41,6 +41,39 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
       }
   }
 
+  def createFromCoordinates(incomingPedestrianCrossing: IncomingPedestrianCrossing, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
+    if(isFloating)
+      createFloatingWithoutTransaction(incomingPedestrianCrossing.copy(linkId = 0), username, roadLink)
+    else {
+      checkDuplicates(incomingPedestrianCrossing) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, incomingPedestrianCrossing, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+        case _ =>
+          create(incomingPedestrianCrossing, username, roadLink, false)
+      }
+    }
+  }
+
+  def checkDuplicates(incomingPedestrianCrossing: IncomingPedestrianCrossing): Option[PedestrianCrossing] = {
+    val signsInRadius = getDirectionalSignsByRadius(Point(incomingPedestrianCrossing.lon, incomingPedestrianCrossing.lat), 2)
+    if(signsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(signsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(signs: Seq[PedestrianCrossing]): PedestrianCrossing = {
+    signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
+  }
+
+  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[PedestrianCrossing] = {
+    dao.fetchByRadius(position, meters)
+  }
+
+  def createFloatingWithoutTransaction(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
+    dao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+  }
+
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
     val pedestrianId =

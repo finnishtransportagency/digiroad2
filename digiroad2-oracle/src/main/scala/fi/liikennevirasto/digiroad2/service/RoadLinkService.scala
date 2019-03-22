@@ -1215,7 +1215,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           }
         filteredEnrichedRoadLinks
       case _ =>
-        Seq()
+        roadLinks
     }
   }
 

@@ -1092,12 +1092,14 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
                                     notImportedData: List[NotImportedData] = Nil,
                                     createdData: List[CsvAssetRowAndRoadLink] = Nil) extends ImportResult
 
-  case class CsvBasePointAsset(incomingPointAsset: IncomingPointAsset, roadLink: RoadLink, notImportedData: Seq[NotImportedData])
+  case class CsvBasePointAsset(incomingPointAsset: IncomingPointAsset, roadLink: RoadLink, notImportedData: Seq[NotImportedData], isFloating: Boolean)
 
   type ImportResultData = ImportResultPointAsset
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
 
   override val logInfo = "point asset import"
+
+  final val MinimumDistanceFromRoadLink: Double = 3.0
 
   final val commonFieldsMapping = Map(
     "koordinaatti x" -> "lon",
@@ -1113,6 +1115,10 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
 
   val mandatoryFields: Set[String] = Set()
+
+  def checkMinimumDistanceFromRoadLink(pointPosition: Point, linkGeometry: Seq[Point]): Boolean = {
+    GeometryUtils.minimumDistance(pointPosition, linkGeometry) <= MinimumDistanceFromRoadLink
+  }
 
   def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
     mandatoryFields.diff(csvRoadWithHeaders.keys.toSet).toList
@@ -1293,19 +1299,21 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
 
+      val floating = checkMinimumDistanceFromRoadLink(Point(lon, lat), nearestRoadLink.geometry)
+
       val validData =
         if(!allowedTypeValues.contains(obstacleType))
           Seq(NotImportedData(reason = s"Obstacle type ${obstacleType} does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 
-      CsvBasePointAsset(IncomingObstacle(lon, lat, nearestRoadLink.linkId, obstacleType), nearestRoadLink, validData)
+      CsvBasePointAsset(IncomingObstacle(lon, lat, nearestRoadLink.linkId, obstacleType), nearestRoadLink, validData, floating)
     }
 
     val (validIncomingObstacles, nonValidIncomingObstacles) = incomingObstacles.partition(_.notImportedData.isEmpty)
 
     validIncomingObstacles.foreach { asset =>
-      obstaclesService.create(asset.incomingPointAsset.asInstanceOf[IncomingObstacle], user.username, asset.roadLink, false)
+      obstaclesService.createFromCoordinates(asset.incomingPointAsset.asInstanceOf[IncomingObstacle], asset.roadLink, user.username, asset.isFloating)
     }
 
     val notImportedInfo = nonValidIncomingObstacles.flatMap(_.notImportedData)
@@ -1333,11 +1341,13 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
 
-      CsvBasePointAsset(IncomingTrafficLight(lon, lat, nearestRoadLink.linkId), nearestRoadLink, Seq())
+      val floating = checkMinimumDistanceFromRoadLink(Point(lon, lat), nearestRoadLink.geometry)
+
+      CsvBasePointAsset(IncomingTrafficLight(lon, lat, nearestRoadLink.linkId), nearestRoadLink, Seq(), floating)
     }
 
     incomingTrafficLights.foreach { asset =>
-      trafficLightsService.create(asset.incomingPointAsset.asInstanceOf[IncomingTrafficLight], user.username, asset.roadLink, false)
+      trafficLightsService.createFromCoordinates(asset.incomingPointAsset.asInstanceOf[IncomingTrafficLight], asset.roadLink, user.username, asset.isFloating)
     }
 
     result
@@ -1363,11 +1373,13 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
 
-      CsvBasePointAsset(IncomingPedestrianCrossing(lon, lat, nearestRoadLink.linkId), nearestRoadLink, Seq())
+      val floating = checkMinimumDistanceFromRoadLink(Point(lon, lat), nearestRoadLink.geometry)
+
+      CsvBasePointAsset(IncomingPedestrianCrossing(lon, lat, nearestRoadLink.linkId), nearestRoadLink, Seq(), floating)
     }
 
     incomingPedestrianCrossings.foreach { asset =>
-      pedestrianCrossingService.create(asset.incomingPointAsset.asInstanceOf[IncomingPedestrianCrossing], user.username, asset.roadLink, false)
+      pedestrianCrossingService.createFromCoordinates(asset.incomingPointAsset.asInstanceOf[IncomingPedestrianCrossing], asset.roadLink, user.username, asset.isFloating)
     }
 
     result
@@ -1402,19 +1414,21 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
 
+      val floating = checkMinimumDistanceFromRoadLink(Point(lon, lat), nearestRoadLink.geometry)
+
       val validData =
         if(!allowedSafetyEquipmentValues.contains(safetyEquipment))
           Seq(NotImportedData(reason = s"Railway Crossing safety equipment type ${safetyEquipment} does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 
-      CsvBasePointAsset(IncomingRailwayCrossing(lon, lat, nearestRoadLink.linkId, safetyEquipment, name, code), nearestRoadLink, validData)
+      CsvBasePointAsset(IncomingRailwayCrossing(lon, lat, nearestRoadLink.linkId, safetyEquipment, name, code), nearestRoadLink, validData, floating)
     }
 
     val (validIncomingObstacles, nonValidIncomingObstacles) = incomingRailwayCrossing.partition(_.notImportedData.isEmpty)
 
     validIncomingObstacles.foreach { asset =>
-      railwayCrossingService.create(asset.incomingPointAsset.asInstanceOf[IncomingRailwayCrossing], user.username, asset.roadLink, false)
+      railwayCrossingService.createFromCoordinates(asset.incomingPointAsset.asInstanceOf[IncomingRailwayCrossing], asset.roadLink, user.username, asset.isFloating)
     }
 
     val notImportedInfo = nonValidIncomingObstacles.flatMap(_.notImportedData)
@@ -1439,7 +1453,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
 
   lazy val servicePointService: ServicePointService = new ServicePointService
 
-  case class PossibleServicePoint(position: Point, incomingService: IncomingService, roadLink: RoadLink, importInformation: Seq[NotImportedData] = Seq.empty)
+  case class CsvServicePoint(position: Point, incomingService: IncomingService, roadLink: RoadLink, importInformation: Seq[NotImportedData] = Seq.empty)
 
   private def serviceTypeConverter(serviceType: String): Int = {
     val value = Normalizer.normalize(serviceType, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").replaceAll("-|\\s", "").toLowerCase
@@ -1485,7 +1499,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
         else
           Seq()
 
-      PossibleServicePoint(position, incomingService, nearestRoadLink, servicePointInfo)
+      CsvServicePoint(position, incomingService, nearestRoadLink, servicePointInfo)
     }
 
     val (validServicePoints, nonValidServicePoints) = incomingServicePoint.partition(servicePoint => servicePoint.importInformation.isEmpty)
@@ -1520,7 +1534,7 @@ class DirectionalTrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, ev
 
   lazy val directionTrafficSignService: DirectionalTrafficSignService = new DirectionalTrafficSignService(roadLinkServiceImpl)
 
-  case class DirectionalTrafficSignInfo(directionalTrafficSign: IncomingDirectionalTrafficSign, roadLink: RoadLink)
+  case class CsvDirectionalTrafficSign(directionalTrafficSign: IncomingDirectionalTrafficSign, roadLink: RoadLink, isFloating: Boolean)
 
   private def getValidityDirectionByRoadLink(assetLocation: Point, roadLinkGeometry: Seq[Point]): Int = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), roadLinkGeometry)
@@ -1571,21 +1585,27 @@ class DirectionalTrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, ev
       val textFieldValue = getPropertyValueOption(csvProperties, "text field").map(_.toString)
       val bearing = getPropertyValueOption(csvProperties, "bearing").map(_.toString.toInt)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
-
       val (assetBearing, assetValidityDirection) = recalculateBearing(bearing)
+
+      val roadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+
+      val possibleRoadLinks = roadLinkService.getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), roadLinks)
+
+      val nearestRoadLink = if(possibleRoadLinks.nonEmpty) {
+        possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+      } else {
+        roadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
+      }
 
       val validityDirection = if(assetBearing.isEmpty) {
           getValidityDirectionByRoadLink(Point(lon, lat), nearestRoadLink.geometry)
         } else assetValidityDirection.get
 
-      DirectionalTrafficSignInfo(IncomingDirectionalTrafficSign(lon, lat, nearestRoadLink.linkId, validityDirection, textFieldValue, assetBearing), nearestRoadLink)
+      CsvDirectionalTrafficSign(IncomingDirectionalTrafficSign(lon, lat, nearestRoadLink.linkId, validityDirection, textFieldValue, assetBearing), nearestRoadLink, (possibleRoadLinks.isEmpty || possibleRoadLinks.size > 1) && assetBearing.isEmpty)
     }
 
-
     incomingDirectionalSigns.foreach { asset =>
-      directionTrafficSignService.create(asset.directionalTrafficSign, user.username, asset.roadLink, false)
+      directionTrafficSignService.createFromCoordinates(asset.directionalTrafficSign,  asset.roadLink, user.username, asset.isFloating)
     }
 
     result

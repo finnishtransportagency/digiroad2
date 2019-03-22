@@ -16,6 +16,8 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
@@ -119,8 +121,10 @@ trait PointAssetOperations {
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
-  def updateVerifiedInfo(assetId: Long, user: String): Long = {throw new UnsupportedOperationException()}
-  def getUnverifiedPointAssets(municipalities: Set[Int]): Map[String, List[(Long, String)]] = {throw new UnsupportedOperationException()}
+  def updateVerifiedInfo(assetId: Long, user: String): Long = { throw new UnsupportedOperationException() }
+  def getUnverifiedPointAssets(municipalities: Set[Int]): Map[String, Set[(Long, String)]] = { throw new UnsupportedOperationException() }
+//  def createFromCoordinates(incomingPointAsset: IncomingPointAsset, roadLink: RoadLink, username: String, isFloating: Boolean = false): Long = { throw new UnsupportedOperationException() }
+//  def checkDuplicates(incomingPointAsset: IncomingPointAsset): Option[PersistedPointAsset] = { throw new UnsupportedOperationException() }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)

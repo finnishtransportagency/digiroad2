@@ -1,16 +1,17 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingDirectionalTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   lon: Double, lat: Double,
@@ -65,14 +66,23 @@ object OracleDirectionalTrafficSignDao {
     }
   }
 
-  def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String): Long = {
+  def fetchByRadius(position : Point, meters: Int): Seq[DirectionalTrafficSign] = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val filter = s"Where a.asset_type_id = 240 and $boundingBoxFilter"
+    fetchByFilter(query => query + filter).
+      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+  }
+
+  def create(sign: IncomingDirectionalTrafficSign, mValue: Double,  municipality: Int, username: String, floating: Boolean): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
 
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
-        values ($id, 240, $username, sysdate, $municipality, ${sign.bearing})
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, floating)
+        values ($id, 240, $username, sysdate, $municipality, ${sign.bearing}, $floating)
         into lrm_position(id, start_measure, end_measure, link_id, side_code)
         values ($lrmPositionId, $mValue, $mValue, ${sign.linkId}, ${sign.validityDirection})
         into asset_link(asset_id, position_id)
@@ -128,7 +138,9 @@ object OracleDirectionalTrafficSignDao {
             and a.modified_date is null
             and a.created_by = 'silari'
             and a.asset_type_id = $assetTypeId
-            and a.created_date > (select m.VERIFIED_DATE from municipality_verification m where m.asset_type_id = $assetTypeId and m.municipality_id = a.municipality_code and valid_to is null)""".as[(Long, Int)].list
+            and a.verified_date is null
+           	or exists (select m.verified_date from municipality_verification m where m.asset_type_id = $assetTypeId
+           	and m.municipality_id = a.municipality_code and valid_to is null and a.verified_date > m.verified_date)""".as[(Long, Int)].list
   }
 
   def updateVerifiedInfo(assetId: Long, user: String): Long = {
