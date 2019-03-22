@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import org.joda.time.DateTime
@@ -350,8 +350,12 @@ class AssetFiller {
     (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
   }
 
-  private def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
+  protected def sortNewestFirst(assets: Seq[PersistedLinearAsset]) = {
     assets.sortBy(s => 0L-s.modifiedDateTime.getOrElse(s.createdDateTime.getOrElse(DateTime.now())).getMillis)
+  }
+
+  private def sortByStartMeasure(assets: Seq[PersistedLinearAsset]) = {
+    assets.sortBy(s => (s.startMeasure,s.endMeasure))
   }
 
   /**
@@ -390,6 +394,10 @@ class AssetFiller {
     } else {
       result
     }
+  }
+
+  protected def mergeValuesExistingOnSameRoadLink(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    (segments, changeSet)
   }
 
   private def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {

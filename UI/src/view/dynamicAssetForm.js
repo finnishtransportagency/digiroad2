@@ -897,12 +897,11 @@
 
         function renderLinkToWorkList(layerName) {
             $('ul[class=information-content]').append('' +
-                '<li><button id="unchecked-links" class="unchecked-linear-assets" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
+                '<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
         }
 
         function renderInaccurateWorkList(layerName) {
-            $('ul[class=information-content]').append('' +
-                '<li><a id="work-list-link-errors" class="wrong-linear-assets" href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</a></li>');
+            $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
         }
 
         function createSideCodeMarker(sideCode) {

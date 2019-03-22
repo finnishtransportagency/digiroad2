@@ -1,7 +1,6 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    viitepkg: grunt.file.readJSON('viitepackage.json'),
     properties: {
       app: 'conf/dev/keys.properties'
     },
@@ -103,7 +102,7 @@ module.exports = function(grunt) {
                 },
                 {
                     context: '/maasto',
-                    host: 'oag.liikennevirasto.fi',
+                    host: 'oag.vayla.fi',
                     https: false,
                     changeOrigin: true,
                     xforward: false

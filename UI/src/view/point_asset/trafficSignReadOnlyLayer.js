@@ -28,8 +28,10 @@
       bogieWeightLimit: false,
       heightLimit: false,
       lengthLimit: false,
+      prohibition: false,
       hazardousMaterialTransportProhibition: false,
-      manoeuvre: false
+      manoeuvre: false,
+      trafficSigns: false //remove after batch to merge additional panels (1707) is completed. part of experimental feature
     };
 
     var setLayerToShow = function(layerName, isShowing){
