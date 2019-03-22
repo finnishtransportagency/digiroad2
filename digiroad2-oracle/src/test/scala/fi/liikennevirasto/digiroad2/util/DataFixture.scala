@@ -1654,101 +1654,6 @@ object DataFixture {
     println("\n")
   }
 
-  def createTrafficSignsUsingLinearAssets(): Unit = {
-    val username = "batch_traffic_based_on_linerAsset"
-
-    def getPointOfInterest(first: Point, last: Point, trafficDirection: TrafficDirection, assetSideCode: SideCode): Seq[Point] = {
-      assetSideCode match {
-        case SideCode.TowardsDigitizing => Seq(first)
-        case SideCode.AgainstDigitizing => Seq(last)
-        case _ => trafficDirection match {
-          case TrafficDirection.TowardsDigitizing => Seq(first)
-          case TrafficDirection.AgainstDigitizing => Seq(last)
-          case _ => Seq(first, last)
-        }}
-    }
-
-    def setTrafficSignInfo(roadLink: RoadLink, asset: PersistedLinearAsset, oppositePoint: Point): (Set[IncomingTrafficSign], RoadLink) = {
-      val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-      val (mValue, validityDirection) = if (oppositePoint == start) (asset.startMeasure, SideCode.TowardsDigitizing.value) else (asset.endMeasure, SideCode.AgainstDigitizing.value)
-      val assetValue: Seq[Int] = asset.value.get.asInstanceOf[Prohibitions].prohibitions.map(_.typeId)
-      val position = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).head
-
-      val (first, last) = if (oppositePoint == start) {
-        val middle = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, 20)
-        if(middle.nonEmpty) (start, middle.get) else (start, end)
-      } else {
-        val middle = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry.reverse, 20)
-        if(middle.nonEmpty) (middle.get, end) else (start, end)
-      }
-
-     val angle = 180 + Math.atan2(first.x - last.x, first.y - last.y) * (180 / Math.PI)
-      val propertiesData = ProhibitionClass.toTrafficSign(assetValue.to[ListBuffer]).filterNot( _ == TrafficSignType.Unknown).map {
-        trafficValue =>
-          SimpleTrafficSignProperty(trafficSignService.typePublicId, Seq(TextPropertyValue(trafficValue.OTHvalue.toString)))}
-
-      (propertiesData.map { propertyData => IncomingTrafficSign(position.x, position.y, asset.linkId, Set(propertyData), validityDirection, Some(angle.toInt))}.toSet, roadLink)
-    }
-
-    println("\nStarting create traffic signs using Linear Asset")
-    println(DateTime.now())
-
-    //Get All Municipalities
-        val municipalities: Seq[Int] =
-          OracleDatabase.withDynSession {
-            Queries.getMunicipalities
-          }
-
-    municipalities.foreach { municipality =>
-      println(s"Starting create traffic signs for municipality $municipality")
-      val roadLinks: Map[Long, Seq[RoadLink]] = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality).groupBy(_.linkId)
-
-      val existingAssets = withDynTransaction {
-        println(s"Expiring asset on municipaity $municipality")
-        trafficSignService.expire(roadLinks.keySet, username, false)
-        println(s"Getting asset on municipaity $municipality")
-        oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, roadLinks.keySet.toSeq, false)
-      }
-
-      val trafficSignsToCreate = existingAssets.flatMap { currentAsset =>
-        val roadLink = roadLinks(currentAsset.linkId).head
-        val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-        val pointOfInterest = getPointOfInterest(start, end, roadLink.trafficDirection, SideCode.apply(currentAsset.sideCode))
-        val adjacentRoadLink = roadLinkService.getAdjacent(currentAsset.linkId)
-
-        pointOfInterest.map { point =>
-          val filteredAdjacentRoadLink = adjacentRoadLink.filter(link => GeometryUtils.areAdjacent(link.geometry, point)).groupBy(_.linkId)
-
-          val unMatchedLinkId = filteredAdjacentRoadLink.keySet.diff(roadLinks.keySet)
-          val unMatchedAssets = if (unMatchedLinkId.nonEmpty) {
-            withDynTransaction {
-              oracleLinearAssetDao.fetchProhibitionsByLinkIds(Prohibition.typeId, unMatchedLinkId.toSeq, false)
-            }
-          } else Seq()
-
-          if ( unMatchedAssets.nonEmpty || Math.abs((currentAsset.endMeasure - currentAsset.startMeasure) - roadLink.length) < 0.01 &&
-            existingAssets.exists { asset =>
-            filteredAdjacentRoadLink.keySet.contains(asset.linkId) &&
-            asset.value == currentAsset.value &&
-            Math.abs((asset.endMeasure - asset.startMeasure) - filteredAdjacentRoadLink(asset.linkId).head.length) < 0.01
-          })
-            Seq()
-          else
-            Seq(setTrafficSignInfo(roadLinks(currentAsset.linkId).head, currentAsset, point))
-        }
-      }.flatten
-
-      trafficSignsToCreate.foreach { case (trafficSigns, roadLink) =>
-        trafficSigns.map {trafficSign =>
-          println("traffic ->  type: " + trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId) + " linkId: " + trafficSign.linkId + " position: " + trafficSign.lon + ", " + trafficSign.lat)
-          trafficSignService.create(trafficSign, username, roadLink)
-        }
-      }
-      println("")
-      println("Complete at time: " + DateTime.now())
-    }
-  }
-
   def extractTrafficSigns(group: Option[String]): Unit = {
     val signGroup = group match {
       case Some(x) => trafficSignGroup(x)
@@ -1896,8 +1801,6 @@ object DataFixture {
             mergeAdditionalPanelsToTrafficSigns(trafficSignGroup(group))
           case _ => println("Please provide a traffic sign group")
         }
-      case Some("create_traffic_signs_using_linear_assets") =>
-        createTrafficSignsUsingLinearAssets()
       case Some("update_floating_stops_on_terminated_roads") =>
         updateFloatingStopsOnTerminatedRoads()
       case Some("update_private_roads") =>
