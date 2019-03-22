@@ -1749,44 +1749,6 @@ object DataFixture {
     }
   }
 
-  def createProhibitionsUsingTrafficSigns(): Unit = {
-    //Get All Municipalities
-    println(s"Obtaining Municipalities")
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
-
-    municipalities.foreach { municipality =>
-
-      println(s"Obtaining all traffic Signs with restriction for municipality $municipality")
-      //Get All Traffic Signs with traffic restriction
-      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality, trafficSignService.getProhibitionsEnumeratedValues)
-
-      println(s"Obtaining all Road Links for Municipality: $municipality")
-      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
-      println(s"End of roadLinks fetch for Municipality: $municipality")
-
-      println("Start processing traffic signs, to create prohibition")
-      trafficSigns.foreach(ts =>
-        try {
-          roadLinks.find(_.linkId == ts.linkId) match {
-            case Some(roadLink) =>
-              val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              prohibitionService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
-              println(s"prohibition created for traffic sign with id: ${ts.id}")
-            case _ =>
-              println(s"No roadLink available to create prohibition")
-              println(s"Asset id ${ts.id} did not generate a prohibition ")
-          }
-        }catch {
-          case ex: ProhibitionCreationException =>
-            println(s"""creation of prohibition on link id ${ts.linkId} from traffic sign ${ts.id} failed with the following exception ${ex.getMessage}""")
-        }
-      )
-    }
-  }
-
   def extractTrafficSigns(group: Option[String]): Unit = {
     val signGroup = group match {
       case Some(x) => trafficSignGroup(x)
@@ -1936,8 +1898,6 @@ object DataFixture {
         }
       case Some("create_traffic_signs_using_linear_assets") =>
         createTrafficSignsUsingLinearAssets()
-      case Some("create_prohibitions_using_traffic_signs") =>
-        createProhibitionsUsingTrafficSigns()
       case Some("update_floating_stops_on_terminated_roads") =>
         updateFloatingStopsOnTerminatedRoads()
       case Some("update_private_roads") =>
