@@ -1249,9 +1249,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/speedlimits/unknown") (getUnknowns(None, None))
+  get("/speedlimits/unknown") {
+    val adminClass = if(params.get("adminClass").map(_.toString).contains("State")) Some(State) else Some(Municipality)
 
-  get("/speedlimits/unknown/state") (getUnknowns(Some(State), None))
+    getUnknowns(adminClass, None)
+  }
+
 
   get("/speedlimits/unknown/municipality") {
     val municipality = params.get("id").getOrElse(halt(BadRequest("Missing municipality id"))).toInt
@@ -1289,22 +1292,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(municipalityId) => Set(municipalityId)
       case _ => municipalities
     }
-
     speedLimitService.getUnknown(includedMunicipalities, administrativeClass)
   }
-
 
   get("/speedLimits/inaccurates") {
     val user = userProvider.getCurrentUser()
     val municipalityCode = user.configuration.authorizedMunicipalities
     municipalityCode.foreach(validateUserMunicipalityAccessByMunicipality(user))
 
-    user.isOperator() match {
-      case true =>
-        speedLimitService.getInaccurateRecords()
-      case false =>
-        speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
-    }
+    if(user.isOperator()) {
+      val adminClass = params.get("adminClass").getOrElse(halt(BadRequest("Missing administrativeClass"))).toString match {
+        case "State" => State
+        case _ => Municipality
+      }
+      speedLimitService.getInaccurateRecords(adminClass = Set(adminClass))
+    } else
+      speedLimitService.getInaccurateRecords(municipalityCode, Set(Municipality))
   }
 
   get("/manoeuvre/inaccurates") {
