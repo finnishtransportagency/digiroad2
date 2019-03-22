@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLi
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Mockito._
@@ -24,15 +25,16 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
+  val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
+  val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
 
-  object testTrafficSignService extends TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus){
+  object testTrafficSignService extends TrafficSignService(mockRoadLinkService, new DummyEventBus){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }

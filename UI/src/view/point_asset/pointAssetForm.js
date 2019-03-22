@@ -187,7 +187,7 @@ root.PointAssetForm = function() {
 
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
-      '<li><button id="point-asset-work-list-link" class="floating-point-assets" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
+      '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -211,7 +211,7 @@ root.PointAssetForm = function() {
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
     $('ul[class=information-content]').append('' +
-      '<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
+      '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
 };
 })(this);

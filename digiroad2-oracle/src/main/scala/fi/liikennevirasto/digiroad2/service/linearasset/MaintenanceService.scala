@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, MaintenanceRoadAsset, SideCode, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleMaintenanceDao}
@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
@@ -161,7 +161,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                         createdByFromUpdate: Option[String] = Some(""),
-                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
+                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None, trafficSignId: Option[Long] = None): Long = {
 
     val area = getAssetArea(roadLink, measures)
     val id = maintenanceDAO.createLinearAsset(MaintenanceRoadAsset.typeId, linkId, expired = false, sideCode, measures, username,
@@ -226,7 +226,8 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
                                   expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                   adjustedMValues = Seq.empty[MValueAdjustment],
                                   adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+                                  valueAdjustments = Seq.empty[ValueAdjustment])
 
     val (newAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
@@ -269,14 +270,14 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def getByZoomLevel :Seq[Seq[PieceWiseLinearAsset]] = {
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
-    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty)))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
   def getWithComplementaryByZoomLevel :Seq[Seq[PieceWiseLinearAsset]]= {
     val linearAssets  = getPotencialServiceAssets
     val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(linearAssets.map(_.linkId).toSet)
-    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty)))
+    val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, linearAssets.groupBy(_.linkId),MaintenanceRoadAsset.typeId , Some(ChangeSet(Set.empty, Nil,Nil, Nil,Set.empty, Nil)))
     LinearAssetPartitioner.partition(filledTopology.filter(_.value.isDefined), roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 

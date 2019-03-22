@@ -1,14 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Saturday
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.ArgumentMatchers._
@@ -24,7 +23,6 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   private def vvhRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point] = Seq(Point(0, 0), Point(10, 0))) = {
     RoadLink(linkId, geometry, 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None)
   }
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
   val testUser = User(
     id = 1,
     username = "Hannu",
@@ -42,7 +40,9 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-  val trafficSignService = new TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus) {
+  val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
+
+  val trafficSignService = new TrafficSignService(mockRoadLinkService, new DummyEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }
@@ -304,7 +304,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink), false).get
+      val manoeuvreId = manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(assets.id, assets.linkId, assets.validityDirection, NoLeftTurn.OTHvalue, assets.mValue, sourceRoadLink), false).head
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)
@@ -326,7 +326,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 3, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink), false).get
+        manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(assets.id, assets.linkId, assets.validityDirection, NoLeftTurn.OTHvalue, assets.mValue, sourceRoadLink), false).head
       }
     }
   }
@@ -343,7 +343,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
         val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 1, None), testUser.username, sourceRoadLink)
         val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
-        manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink), false).get
+        manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(assets.id, assets.linkId, assets.validityDirection, NoLeftTurn.OTHvalue, assets.mValue, sourceRoadLink), false).head
       }
     }
   }
@@ -368,7 +368,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val id = trafficSignService.create(IncomingTrafficSign(0, 50, 1000, properties, 2, None), testUser.username, sourceRoadLink)
       val assets = trafficSignService.getPersistedAssetsByIds(Set(id)).head
 
-      val manoeuvreId = manoeuvreService.createManoeuvreBasedOnTrafficSign(ManoeuvreProvider(assets, sourceRoadLink), false).get
+      val manoeuvreId = manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(assets.id, assets.linkId, assets.validityDirection, NoRightTurn.OTHvalue, assets.mValue, sourceRoadLink), false).head
       val manoeuvre = manoeuvreService.find(manoeuvreId).get
 
       manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).get.sourceLinkId should equal(1000)

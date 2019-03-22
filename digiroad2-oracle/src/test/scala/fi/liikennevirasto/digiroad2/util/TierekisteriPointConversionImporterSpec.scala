@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -16,7 +16,7 @@ import org.scalatest.{FunSuite, Matchers}
 class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriWeightLimitAssetClient = MockitoSugar.mock[TierekisteriWeightLimitAssetClient]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -32,7 +32,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     override type TierekisteriClientType = TierekisteriAssetDataClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriAssetDataClient = mockTierekisteriAssetDataClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -62,7 +62,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriWeightLimitAssetClient = mockTierekisteriWeightLimitAssetClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient

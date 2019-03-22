@@ -310,10 +310,22 @@ trait PointAssetOperations {
     }
   }
 
+  def getPersistedAssetsByIdsWithExpire(ids: Set[Long]): Seq[PersistedAsset] = {
+    withDynSession {
+      getPersistedAssetsByIdsWithExpireWithoutTransaction(ids)
+    }
+  }
+
   def getPersistedAssetsByIdsWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
+  }
+
+  def getPersistedAssetsByIdsWithExpireWithoutTransaction(ids: Set[Long]): Seq[PersistedAsset] = {
+      val idsStr = ids.toSeq.mkString(",")
+      val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
+    fetchPointAssetsWithExpired(withFilter(filter))
   }
 
   def getPersistedAssetsByLinkId(linkId: Long): Seq[PersistedAsset] = {
@@ -332,11 +344,6 @@ trait PointAssetOperations {
       val filter = s"join $idTableName i on i.id = lp.link_id where a.asset_type_id = $typeId"
       fetchPointAssets(withFilter(filter))
     }
-  }
-
-  def expireAssetsByMunicipalities(municipalityCodes: Set[Int]) = {
-    if(municipalityCodes.nonEmpty)
-      sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId and municipality_code in (#${municipalityCodes.mkString(",")})".execute
   }
 
   def expire(id: Long, username: String): Long = {

@@ -65,7 +65,7 @@
           title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -91,7 +91,7 @@
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -117,7 +117,7 @@
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -137,13 +137,13 @@
         title: 'Suurin sallittu telimassa',
         newTitle: 'Uusi suurin sallittu telimassa',
         className: 'bogie-weight-limit',
-        unit: 'kg',
+        unit: 'Kg',
         isSeparable: false,
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
+          additionalInfo : 'Muut massarajoitukset',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -273,14 +273,36 @@
         editControlLabels: {
           title: 'Kelirikko',
           enabled: 'Kelirikko',
-          disabled: 'Ei kelirikkoa'
+          disabled: 'Ei kelirikkoa',
+          additionalInfo: 'Kelirikolle altis tie'
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
+        style: new RoadDamagedByThawStyle(),
+        saveCondition: function (fields) {
+          var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
+
+          var isInDatePeriod = function(date) {
+            var datePeriodValue = date.getPropertyValue().values;
+            var startDate = new Date(_.head(datePeriodValue).value.startDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+            var endDate = new Date(_.head(datePeriodValue).value.endDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+
+            return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
+          };
+
+          var isValidDate =  _.every(datePeriodField, function(date) {
+            return date.hasValue() && isInDatePeriod(date);
+          });
+
+          var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
+          return checkBoxField ? isValidDate : true;
+        },
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weight: 1, unit: 'kg' }
+            { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
+            { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -440,7 +462,8 @@
         isVerifiable: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -656,7 +679,7 @@
         style: new CarryingCapacityStyle(),
         layer: CarryingCapacityLayer,
         saveCondition: function (fields) {
-          return _.some(fields, function (field) {
+          return _.isEmpty(fields) || _.some(fields, function (field) {
             var fieldPropertyType = field.getPropertyValue().propertyType;
             return field.hasValue() && (fieldPropertyType === "integer" || fieldPropertyType === "single_choice" && field.getValue() !== '999');
           });
@@ -882,7 +905,8 @@
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
-        }
+        },
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.trHeightLimits,

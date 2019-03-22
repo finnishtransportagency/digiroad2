@@ -399,7 +399,7 @@ object SpeedLimitFiller {
       }
     }
     val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set()))
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set(), Nil))
     (geometrySegments.toSeq,
       newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ geometryAdjustments.adjustedMValues))
   }
@@ -473,7 +473,8 @@ object SpeedLimitFiller {
         expiredAssetIds = Set.empty[Long],
         adjustedMValues = Seq.empty[MValueAdjustment],
         adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
     }
 
     roadLinks.foldLeft(Seq.empty[SpeedLimit], changeSet) { case (acc, roadLink) =>

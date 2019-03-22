@@ -17,7 +17,7 @@
     var renderFeedbackLink = function (enable) {
       var infoContent = $('.feedback-data');
       if (enable && allowFeedBack() ) {
-        infoContent.html('<button id="feedback-data" onclick=location.href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</button>');
+        infoContent.html('<button id="feedback-data" class="feedback-data-link btn btn-quaternary" onclick=location.href="javascript:void(0)" >Anna palautetta kohteesta</button>');
       } else {
         infoContent.find('#feedback-data').remove();
       }

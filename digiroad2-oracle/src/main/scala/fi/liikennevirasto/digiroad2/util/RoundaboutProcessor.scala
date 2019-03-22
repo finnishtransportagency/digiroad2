@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset.{Roundabout, State, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.ImportLogService.getClass
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.slf4j.LoggerFactory
 

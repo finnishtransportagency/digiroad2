@@ -329,6 +329,19 @@ object Queries {
     """.as[Int].list
   }
 
+  def existsDatePeriodProperty =
+    "select id from date_period_value where asset_id = ? and property_id = ?"
+
+  def deleteDatePeriodProperty(assetId: Long, propertyId: Long) =
+    sqlu"delete from date_period_value where asset_id = $assetId and property_id = $propertyId"
+
+  def insertDatePeriodProperty(assetId: Long, propertyId: Long, startDate: DateTime, endDate: DateTime) = {
+    sqlu"""
+      insert into date_period_value(id, property_id, asset_id, start_date, end_date)
+      values (primary_key_seq.nextval, $propertyId, $assetId, ${startDate}, ${endDate})
+    """
+  }
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }

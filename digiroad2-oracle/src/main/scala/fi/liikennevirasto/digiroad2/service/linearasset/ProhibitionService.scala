@@ -1,18 +1,24 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
+import fi.liikennevirasto.digiroad2.TrafficSignType
 import fi.liikennevirasto.digiroad2.asset.ProhibitionClass._
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+
+class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
 
 class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -71,7 +77,8 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
                                   expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                   adjustedMValues = Seq.empty[MValueAdjustment],
                                   adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                                  adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+                                    valueAdjustments = Seq.empty[ValueAdjustment])
 
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
@@ -83,6 +90,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
     val groupedAssets = (existingAssets.filterNot(a => newAssets.exists(_.linkId == a.linkId)) ++ newAssets ++ assetsWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = assetFiller.fillTopology(roadLinks, groupedAssets, typeId, Some(changedSet))
+
     //Remove the asset ids adjusted in the "prohibition:saveProjectedProhibition" otherwise if the "prohibition:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
     eventBus.publish("prohibition:update", changeSet)
@@ -243,7 +251,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-
   override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
     val excludedTypes = Seq(PassageThrough, HorseRiding, SnowMobile, RecreationalVehicle, OversizedTransport)
     val prohibitions = withDynTransaction {
@@ -253,7 +260,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     mapPersistedAssetChanges(prohibitions, roadLinks)
 
   }
-
 
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction = false).head

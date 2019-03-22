@@ -154,7 +154,7 @@ class LinearSevenRestrictionsServiceSpec extends FunSuite with Matchers {
     linearAssets.map(_.linkId) should be(Seq(1))
     linearAssets.map(_.value) should be(Seq(Some(NumericValue(40000))))
     verify(mockEventBus, times(1))
-      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Nil, Set.empty[Long]))
+      .publish("linearAssets:update", ChangeSet(Set.empty[Long], Seq(MValueAdjustment(1, 1, 0.0, 10.0)), Nil, Nil, Set.empty[Long], Nil))
   }
   test("Update verified info") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]

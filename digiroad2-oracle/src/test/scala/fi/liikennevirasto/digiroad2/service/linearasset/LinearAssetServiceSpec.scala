@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -611,7 +611,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) {
+      val changeSet = projectedLinearAssets.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) {
         case (acc, proj) =>
           acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode), original.typeId)))
       }
@@ -663,7 +663,8 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
         expiredAssetIds = Set.empty[Long],
         adjustedMValues = Seq.empty[MValueAdjustment],
         adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)))
+        adjustedSideCodes = Seq(SideCodeAdjustment(id, SideCode.BothDirections, original.typeId)),
+        valueAdjustments = Seq.empty[ValueAdjustment])
 
     when(mockAssetDao.getAssetTypeId(Seq(id))).thenReturn(Seq((id, assetInfo.typeId)))
 
@@ -922,7 +923,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())

@@ -1,5 +1,5 @@
 (function (root) {
-  root.TrafficSignBox = function (assetConfig) {
+  root.TrafficSignBox = function (assetConfig, isExperimental) {
     PointAssetBox.call(this, assetConfig);
     var me = this;
 
@@ -40,9 +40,6 @@
         '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="additionalPanels" type="checkbox" /> Lisäkilvet</label>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
         '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
@@ -58,6 +55,25 @@
     };
 
     var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');
+
+    this.checkboxPanel = function () {
+
+      var trafficSignsCheckbox = isExperimental && assetConfig.readOnlyLayer ? [
+        '<div class="check-box-container">' +
+        '   <input id="trafficSignsCheckbox" type="checkbox" /> ' +
+        '   <lable>Näytä liikennemerkit</lable>' + //remove after batch to merge additional panels (1707) is completed. part of experimental feature
+        '</div>'
+      ].join('') : '';
+
+      var complementaryLinkCheckBox =  assetConfig.allowComplementaryLinks ? [
+        '<div class="panel-section">' +
+        '  <div class="check-box-container">' +
+        '     <input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '   </div>'+
+        '</div>'].join('') : '';
+
+      return trafficSignsCheckbox.concat(complementaryLinkCheckBox);
+    };
 
     function show() {
       me.getShow();

@@ -2,15 +2,16 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.asset.{Municipality, _}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Sequences}
+import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -46,6 +47,13 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
+  val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
+
+
+  val trafficSignService = new TrafficSignService(mockRoadLinkService, new DummyEventBus) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
+  }
 
   object ServiceWithDao extends ProhibitionService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -374,7 +382,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
-      val changeSet = projectedProhibitions.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) {
+      val changeSet = projectedProhibitions.foldLeft(ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) {
         case (acc, proj) =>
           acc.copy(adjustedMValues = acc.adjustedMValues ++ Seq(MValueAdjustment(proj.id, proj.linkId, proj.startMeasure, proj.endMeasure)), adjustedVVHChanges=acc.adjustedVVHChanges, adjustedSideCodes = acc.adjustedSideCodes ++ Seq(SideCodeAdjustment(proj.id, SideCode.apply(proj.sideCode), original.typeId)))
       }
@@ -531,7 +539,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       service.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long]))
+        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("prohibition:saveProjectedProhibition"), captor.capture())
@@ -594,5 +602,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
+
 
 }
