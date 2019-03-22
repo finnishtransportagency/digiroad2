@@ -123,8 +123,6 @@ trait PointAssetOperations {
   def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = {throw new UnsupportedOperationException()}
   def updateVerifiedInfo(assetId: Long, user: String): Long = { throw new UnsupportedOperationException() }
   def getUnverifiedPointAssets(municipalities: Set[Int]): Map[String, Set[(Long, String)]] = { throw new UnsupportedOperationException() }
-//  def createFromCoordinates(incomingPointAsset: IncomingPointAsset, roadLink: RoadLink, username: String, isFloating: Boolean = false): Long = { throw new UnsupportedOperationException() }
-//  def checkDuplicates(incomingPointAsset: IncomingPointAsset): Option[PersistedPointAsset] = { throw new UnsupportedOperationException() }
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
