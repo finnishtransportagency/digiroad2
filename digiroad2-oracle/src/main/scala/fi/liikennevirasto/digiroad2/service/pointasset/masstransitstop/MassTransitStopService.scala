@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -602,6 +603,26 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def saveIdPrintedOnValluLog(id: Long): Unit = {
     massTransitStopDao.insertValluXmlIds(id)
+  }
+
+  def getPublishedOnXml(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
+    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
+
+    val filter = s"join vallu_xml_ids vxi on vxi.asset_id = a.id " +
+      s"where a.asset_type_id = $typeId and floating = 0 and (" +
+      s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
+      s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or " +
+      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
+
+    val assets = withDynSession {
+      fetchPointAssets(withFilter(filter))
+    }
+
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+
+    assets.map { asset =>
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
   }
 }
 

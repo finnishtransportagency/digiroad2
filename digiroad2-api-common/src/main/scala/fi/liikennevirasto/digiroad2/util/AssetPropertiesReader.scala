@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, PropertyValue, Property}
+import fi.liikennevirasto.digiroad2.asset.{Property, PropertyTypes, PropertyValue}
 import scala.language.reflectiveCalls
 
 trait AssetPropertiesReader {
@@ -17,14 +17,23 @@ trait AssetPropertiesReader {
     }
   }
 
-  protected def extractPropertyValueOption(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
+  def propertyIsDefined(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Boolean = {
+    extractPropertyValueOption(asset, propertyPublicId).isDefined
+  }
+
+  def extractPropertyValueOption(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
     asset.propertyData
       .find(property => property.publicId == propertyPublicId)
       .flatMap(property => property.values.headOption)
       .map(value => value.propertyValue)
   }
 
-  protected def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {
+  def extractPropertyDisplayValue(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
+    asset.propertyData.find(property => property.publicId == propertyPublicId)
+      .head.values.head.propertyDisplayValue
+  }
+
+  def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {
     try {
       val property = properties.find(x => x.publicId == name).get
       sanitizedPropertyValues(property.propertyType, property.values)

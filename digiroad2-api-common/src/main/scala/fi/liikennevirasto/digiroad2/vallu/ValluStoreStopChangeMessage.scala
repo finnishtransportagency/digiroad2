@@ -76,11 +76,7 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
     propertyIsDefined(asset, "nimi_suomeksi") || propertyIsDefined(asset, "nimi_ruotsiksi")
   }
 
-  private def propertyIsDefined(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Boolean = {
-    extractPropertyValueOption(asset, propertyPublicId).isDefined
-  }
-
-  private def propertyIsEmpty(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Boolean = {
+  def propertyIsEmpty(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Boolean = {
     propertyIsDefined(asset, propertyPublicId) && extractPropertyValue(asset, propertyPublicId).isEmpty
   }
 

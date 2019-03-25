@@ -611,10 +611,6 @@ class MassTransitStopDao {
     query + s" where a.external_id in (${nationalIds.mkString(",")})"
   }
 
-  def withIdOnValluXmlTable()(query: String): String = {
-    query + s" join vallu_xml_ids vxi on vxi.asset_id = a.id"
-  }
-
   def countTerminalChildBusStops(assetId: Long): Int = {
     sql"""
         select count(*)
@@ -663,7 +659,4 @@ class MassTransitStopDao {
       """.execute
   }
 
-  def getAllOnValluXml(): Seq[PersistedMassTransitStop] = {
-    fetchPointAssets(withIdOnValluXmlTable())
-  }
 }
