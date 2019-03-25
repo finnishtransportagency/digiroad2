@@ -934,7 +934,8 @@
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
-        }
+        },
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.trHeightLimits,

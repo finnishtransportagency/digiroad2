@@ -41,8 +41,15 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService, prohibitionService:
     val (expireId, trafficSignInfo) = signInfo
 
     if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username)
-      manoeuvreService.createBasedOnTrafficSign(trafficSignInfo)
+      try{
+        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username)
+        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo)
+      }catch{
+        case ex: ManoeuvreCreationException =>
+          println(s"""creation of manoeuvre on link id ${trafficSignInfo.linkId} from traffic sign ${trafficSignInfo.id} failed with the following exception ${ex.getMessage}""")
+        case ex: InvalidParameterException =>
+          println(s"""creation of manoeuvre on link id ${trafficSignInfo.linkId} from traffic sign ${trafficSignInfo.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
+      }
     }
   }
 }

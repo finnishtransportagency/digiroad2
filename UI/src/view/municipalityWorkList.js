@@ -11,6 +11,13 @@
     var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
 
+    var addSpinner = function () {
+      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    };
+
+    var removeSpinner = function(){
+      $('.spinner-overlay').remove();
+    };
 
     this.initialize = function(mapBackend){
       backend = mapBackend;
@@ -59,8 +66,10 @@
 
     this.reloadForm = function(municipalityId){
       $('#formTable').remove();
+      addSpinner();
       backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
         $('#work-list .work-list').html(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
+        removeSpinner();
       });
     };
 
@@ -75,8 +84,8 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">TIETOLAJI</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">TARKISTETTU</th> <th id="verifier">TARKISTAJA</th>' +
-               '<th id="modifiedBy">Viimeisin päivitys</th> <th id="modifiedDate">Käyttäjä</th></tr></thead>';
+        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
+               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
@@ -145,7 +154,7 @@
         return '' +
           '<tr>' +
           '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
-          '<td headers="name">' + asset.assetName + '<img src="images/oldAsset.png" title="Tarkistus Vanhentumassa"' + '</td>' +
+          '<td headers="name">' + asset.assetName + '<img src="images/error-icon-small.png" title="Tarkistus Vanhentumassa"' + '</td>' +
           '<td style="color:red" headers="count">' + (asset.counter ? asset.counter : '' )  + '</td>' +
           '<td style="color:red" headers="date">' + asset.verified_date + '</td>' +
           '<td style="color:red" headers="verifier">' + asset.verified_by + '</td>' +

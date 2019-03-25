@@ -42,7 +42,7 @@ class VerificationDao {
       sql"""
         select typeId, modified_date, modified_by
         from  (
-          select atype.id AS typeId, atype.GEOMETRY_TYPE as geomType, a.modified_date, a.modified_by,
+          select /*+ PARALLEL */ atype.id AS typeId, atype.GEOMETRY_TYPE as geomType, a.modified_date, a.modified_by,
           ROW_NUMBER () OVER (PARTITION BY a.asset_type_id ORDER BY a.modified_date desc nulls last) AS rownumber
           from asset_type atype
           JOIN asset a ON a.ASSET_TYPE_ID = atype.ID  AND a.VALID_TO IS NULL
@@ -62,7 +62,7 @@ class VerificationDao {
       sql"""
       select typeId, modified_date, modified_by
       from (
-        SELECT a.asset_type_id AS typeId, a.modified_date, a.modified_by,
+        SELECT /*+ PARALLEL */ a.asset_type_id AS typeId, a.modified_date, a.modified_by,
         ROW_NUMBER () OVER (PARTITION BY a.asset_type_id ORDER BY a.modified_date desc nulls last) AS rownumber
         from asset a
         join asset_link al on a.id = al.asset_id

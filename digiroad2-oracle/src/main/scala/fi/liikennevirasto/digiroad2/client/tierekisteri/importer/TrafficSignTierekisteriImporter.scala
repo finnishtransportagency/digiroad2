@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriTrafficSign
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService, prohibitionService)

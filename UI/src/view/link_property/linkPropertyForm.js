@@ -222,7 +222,7 @@
       if(notRendered) {
         $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
-            '<li><button id="incomplete-links-link" class="incomplete-links" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
+            '<li><button id="incomplete-links-link" class="incomplete-links btn btn-tertiary" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
       }
     };
 
