@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 
 import scala.util.Try
@@ -60,11 +61,24 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
       .toOption
   }
 
-  def isCarTrafficRoad = {
+  def isCarTrafficRoad : Boolean = {
     val allowedFunctionalClasses = Set(1, 2, 3, 4, 5, 6)
     val disallowedLinkTypes = Set(UnknownLinkType.value, CycleOrPedestrianPath.value, PedestrianZone.value, CableFerry.value)
 
     allowedFunctionalClasses.contains(functionalClass % 10) && !disallowedLinkTypes.contains(linkType.value)
+  }
+
+  def isSimpleCarTrafficRoad : Boolean = {
+      val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
+      val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+
+      !((roadLinkType.contains(linkType) || constructionType.contains(constructionType)) && administrativeClass == State)
+  }
+
+  def roadNameIdentifier: Option[String] = {
+    Try(getStringAttribute("ROADNAME_FI"))
+      .orElse(Try(getStringAttribute("ROADNAME_SE")))
+      .orElse(Try(getStringAttribute("ROADNAME_SM"))).toOption
   }
 
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]

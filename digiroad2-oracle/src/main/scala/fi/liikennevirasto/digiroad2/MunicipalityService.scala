@@ -16,8 +16,12 @@ class MunicipalityService (eventbus: DigiroadEventBus, roadLinkService: RoadLink
     }
   }
 
-  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {
-    withDynSession {
+  def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int], newTransaction: Boolean = true): List[MunicipalityInfo] = {
+    if(newTransaction) {
+      withDynSession {
+        municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
+      }
+    } else {
       municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
   }

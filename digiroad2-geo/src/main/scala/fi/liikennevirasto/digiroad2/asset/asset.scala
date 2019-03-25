@@ -1,10 +1,9 @@
 package fi.liikennevirasto.digiroad2.asset
 
-import java.time.LocalDate
-
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
+import org.joda.time.format.DateTimeFormat
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try

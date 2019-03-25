@@ -151,11 +151,12 @@
             var _value = value ? value.value : field.defaultValue ? field.defaultValue : '';
 
             var unit = _.isUndefined(field.unit) ? '' :  '<span class="input-group-addon ' + className + '">' + field.unit + '</span>';
+            var unitClass = _.isUndefined(unit) ? '' : ' unit';
 
       me.element = $('' +
           '<div class="form-group">' +
           '   <label class="control-label">' + field.label + '</label>' +
-          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
+          '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control' + unitClass + '" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
           unit +
           '</div>');
 
@@ -620,23 +621,12 @@
                 '<button class="form-control btn edit-only btn-secondary remove-period"' + me.disabled() +'>Poista kausi</button>'+
                 '</div>';
 
-          var handleButton = function () {
-            var $element = me.element;
-            if ($element.find('.existing-date-period').length === numberOfLinesAllowed) {
-              $element.find('.add-period').css('visibility', 'hidden');
-
-              if ($element.find('.existing-date-period').length > 1) {
-                $element.find('.remove-period').css('visibility', 'visible');
-              } else {
-                $element.find('.remove-period').css('visibility', 'hidden');
-              }
-
-            } else {
-              $element.find('.add-period').css('visibility', 'visible');
-              $element.find('.remove-period').css('visibility', 'hidden');
-            }
-          };
-
+             var handleButton = function() {
+                 var $element = me.element;
+                 var removeAllowed = me.element.find('.existing-date-period').length > 1;
+                 $element.find('.add-period').showElement(!removeAllowed);
+                 $element.find('.remove-period').showElement(removeAllowed);
+             };
 
             me.getPropertyValue = function(){
                 var values = me.getValue();
@@ -699,7 +689,6 @@
                 me.setSelectedValue(setValue, getValue);
             }
 
-            // var test = {'values':{'value':[{'startDate': '19.2.2019','endDate':'22.2.2019'}, {'startDate': '19.5.2019','endDate':'22.5.2019'}]}};
             var existingDatePeriodElements =
                 _(_.map(fieldValue, function(values) { return values.value ; }))
                     .sortBy('startDate', 'endDate')
@@ -717,11 +706,11 @@
                     .append(inputLabel('start', period ? period.startDate : undefined))
                     .append('<span class="date-separator"> - </span>')
                     .append(inputLabel('end', period ? period.endDate : undefined))
-                    .append(buttons);
+                    .append(me.disabled() ? '' : buttons);
             }
 
             var template = _.template('' +
-                '<div class="date-time-period-group">' +
+                '<div class="form-group date-time-period-group">' +
                 '<label class="control-label">' + field.label + '</label>' +
                 ' <ul >' +
                  '   <%= existingDatePeriodElements %>' +
@@ -1281,5 +1270,10 @@
                 element: element
             };
         };
+
+      jQuery.fn.showElement = function(visible) {
+        var toggle = visible ? 'visible' : 'hidden';
+        return this.css('visibility', toggle);
+      };
     };
 })(this);

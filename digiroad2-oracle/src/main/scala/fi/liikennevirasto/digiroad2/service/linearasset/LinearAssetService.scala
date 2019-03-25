@@ -9,6 +9,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -761,7 +763,7 @@ trait LinearAssetOperations {
 
   protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
-                                       createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None, trafficSignId: Option[Long] = None): Long = {
+                                       createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource, geometry = getGeometry(roadLink))
     value match {
@@ -822,30 +824,6 @@ trait LinearAssetOperations {
   }
 
   def validateAssetValue(value: Option[Value]): Unit = {}
-
-
-  def deleteAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
-    logger.info("expiring asset")
-    if (withTransaction) {
-      withDynTransaction {
-        dao.deleteByTrafficSign(filter, username)
-      }
-    }
-    else
-      dao.deleteByTrafficSign(filter, username)
-  }
-
-  def withId(id: Long)(query: String): String = {
-    query + s" and a.id = $id"
-  }
-
-  def withIds(ids: Set[Long])(query: String): String = {
-    query + s" and a.id in (${ids.mkString(",")})"
-  }
-
-  def withMunicipalities(municipalities: Set[Int])(query: String): String = {
-    query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
-  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {

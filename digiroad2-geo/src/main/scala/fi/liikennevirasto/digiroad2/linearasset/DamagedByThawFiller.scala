@@ -8,7 +8,17 @@ import org.joda.time.format.DateTimeFormat
 class DamagedByThawFiller extends AssetFiller {
   val ActivePeriod = "spring_thaw_period"
   val Repetition = "annual_repetition"
-  private val today = DateTime.now()
+  val dateFormat = "dd.MM.yyyy"
+  val formatter = DateTimeFormat.forPattern(dateFormat)
+  val today: DateTime = DateTime.now()
+
+  def dateToString(date: DateTime): String = {
+    date.toString(dateFormat)
+  }
+
+  def stringToDate(date: String): DateTime = {
+    formatter.parseDateTime(date)
+  }
 
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
@@ -29,7 +39,7 @@ class DamagedByThawFiller extends AssetFiller {
         DatePeriodValue(DateParser.dateToString(startDate.plusYears(difference), DateParser.DatePropertyFormat), DateParser.dateToString(endDate.plusYears(difference), DateParser.DatePropertyFormat))
     }
 
-    def needsUpdate(value: DynamicPropertyValue): Boolean = {
+    def outsidePeriod(value: DynamicPropertyValue): Boolean = {
       val period = DatePeriodValue.fromMap(value.value.asInstanceOf[Map[String, String]])
       val endDate = DateParser.stringToDate(period.endDate, DateParser.DatePropertyFormat)
       val thisYear = today.getYear
@@ -45,7 +55,7 @@ class DamagedByThawFiller extends AssetFiller {
     def needUpdates(properties: Seq[DynamicProperty]): Boolean = {
       isRepeated(getProperties(Repetition, properties)) &&
         getProperties(ActivePeriod, properties).exists { period =>
-          needsUpdate(period)
+          outsidePeriod(period)
         }
     }
 
@@ -59,7 +69,7 @@ class DamagedByThawFiller extends AssetFiller {
       asset.copy(value = Some(DynamicValue(DynamicAssetValue(asset.value.get.asInstanceOf[DynamicValue].value.properties.map { prop =>
           if (prop.publicId == ActivePeriod) {
             prop.copy(values = prop.values.map { period =>
-              if(needsUpdate(period))
+              if(outsidePeriod(period))
                 DynamicPropertyValue(DatePeriodValue.toMap(toCurrentYear(DatePeriodValue.fromMap(period.value.asInstanceOf[Map[String, String]]))))
               else
                 period
