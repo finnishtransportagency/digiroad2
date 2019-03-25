@@ -13,7 +13,7 @@ import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
 import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 import org.scalatra.json.JacksonJsonSupport
-import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 
 class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProvider = Digiroad2Context.userProvider, val eventBus: DigiroadEventBus = Digiroad2Context.eventbus)

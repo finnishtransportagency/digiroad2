@@ -274,6 +274,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = persistedLinearAsset
 
   def enrichWithProperties(properties: Map[Long, Seq[DynamicProperty]], persistedLinearAsset: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+    val x =
     persistedLinearAsset.groupBy(_.id).flatMap {
       case (id, assets) =>
         properties.get(id) match {
@@ -288,6 +289,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
           case _ => assets
         }
     }.toSeq
+    x
   }
 
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {

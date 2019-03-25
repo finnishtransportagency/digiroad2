@@ -20,4 +20,9 @@ class RoadWorkService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiro
     }
   }
 
+  override def publish(eventBus: DigiroadEventBus, changeSet: LinearAssetFiller.ChangeSet, projectedAssets: Seq[PersistedLinearAsset]): Unit = {
+    eventBus.publish("roadWorks:update", changeSet)
+    eventBus.publish("dynamicAsset:saveProjectedAssets", projectedAssets.filter(_.id == 0L))
+  }
+
 }
