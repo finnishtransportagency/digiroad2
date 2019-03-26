@@ -1437,9 +1437,10 @@ object DataFixture {
             }.toSet
 
             val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
+            val uniquePanels = trafficSignService.distinctPanels(additionalPanelsInRadius)
             try{
-              if (additionalPanelsInRadius.size <= 3 && additionalPanelsInRadius.nonEmpty) {
-                val additionalPanels = trafficSignService.additionalPanelProperties(additionalPanelsInRadius)
+              if (uniquePanels.size <= 3 && additionalPanelsInRadius.nonEmpty) {
+                val additionalPanels = trafficSignService.additionalPanelProperties(uniquePanels)
                 val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
                 val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, propertyData.toSet, sign.validityDirection, sign.bearing)
 
