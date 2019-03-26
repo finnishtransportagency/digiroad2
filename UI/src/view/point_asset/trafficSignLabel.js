@@ -174,8 +174,8 @@
           {signValue: [145], image: 'images/traffic-signs/additional-panels/ValidMultiplePeriod.png'},
           {signValue: [146], image: 'images/traffic-signs/additional-panels/DirectionOfPriorityRoad.png'},
           {signValue: [147], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
-          {signValue: [148], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png'},
-          {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png'}
+          {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png', validation: validateAdditionalInfo, maxLabelLength: 10, additionalInfo: showPeriodDayAdditionalInfo, unit: me.addMeters},
+          {signValue: [148], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png', validation: validateAdditionalInfo, maxLabelLength: 10, additionalInfo: showPeriodDayAdditionalInfo, unit: me.addMeters}
         ];
       };
 

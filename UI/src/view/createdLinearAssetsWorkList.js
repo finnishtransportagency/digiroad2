@@ -8,7 +8,7 @@
     var showFormBtnVisible = true;
     var assetConfig = new AssetTypeConfiguration();
 
-    var availableAssetsTypeId = [190];
+    var availableAssetsTypeId = [190, 210, 420];
 
     this.initialize = function(mapBackend) {
       backend = mapBackend;
@@ -67,8 +67,7 @@
 
       var assetLink = function(id) {
         var link = '#' + renameAssetLink(assetTypeId) + '/' + id;
-        var workListItem = $('<a class="work-list-item"/>').attr('href', link).html(link);
-        return workListItem;
+        return $('<a class="work-list-item"/>').attr('href', link).html(link);
       };
 
       var tableForGroupingValues = function(assetIds) {

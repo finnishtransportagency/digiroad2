@@ -36,7 +36,7 @@
     };
 
     var trafficSignsTurnRestriction = [10, 11, 12];
-    var trafficSignRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 20];
+    var trafficSignRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 20, 100, 101];
 
     var isTurningRestriction = function(current) {
       return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
@@ -150,7 +150,7 @@
           {type: 'alert'});
       }
     });
-    eventbus.on('trafficSigns:created', function(current) {
+    eventbus.on('trafficSigns:created trafficSigns:updated trafficSigns:deleted', function(current) {
       if(isTrafficSignRestriction(current))
         new GenericConfirmPopup('Liikennemerkkiin liittyvä rajoitus luodaan seuraavan yön aikana.',
           {type: 'alert'});
