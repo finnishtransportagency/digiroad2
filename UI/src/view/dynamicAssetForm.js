@@ -611,7 +611,6 @@
         DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = field.publicId;
-        var numberOfLinesAllowed = (_.isUndefined(field.maxNumberOfLines)) ? 1 : field.maxNumberOfLines;
         var elementNumber = 0;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -706,7 +705,7 @@
                     .append(inputLabel('start', period ? period.startDate : undefined))
                     .append('<span class="date-separator"> - </span>')
                     .append(inputLabel('end', period ? period.endDate : undefined))
-                    .append(me.disabled() ? '' : buttons);
+                    .append(me.disabled() ? '' : fieldValue.multiElement ? buttons : '');
             }
 
             var template = _.template('' +
@@ -980,7 +979,7 @@
           return footer;
         };
 
-        me.renderForm = function (selectedAsset, isDisabled) {
+        me.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
             forms = new AvailableForms();
             var isReadOnly = _isReadOnly(selectedAsset);
             var asset = selectedAsset.get();
@@ -999,15 +998,15 @@
             }
 
             //Render separate button if is separable asset type
-            renderSeparateButtonElement(selectedAsset, body);
+            renderSeparateButtonElement(selectedAsset, body, isMassUpdate);
 
             //Hide or show elements depending on the readonly mode
             toggleBodyElements(body, isReadOnly);
             return body;
         };
 
-        function renderSeparateButtonElement(selectedAsset, body){
-            if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset)){
+        function renderSeparateButtonElement(selectedAsset, body, isMassUpdate){
+            if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset) && !isMassUpdate){
                 var separateElement = $(''+
                     '<div class="form-group editable">' +
                     '  <label class="control-label"></label>' +

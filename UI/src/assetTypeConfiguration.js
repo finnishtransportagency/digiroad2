@@ -302,7 +302,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
-            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', maxNumberOfLines: 2, weight: 2},
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', multiElement: true, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
           ]
         }),
@@ -731,7 +731,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'number', weight: 1},
-            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, weight: 2}
+            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, multiElement: false, weight: 2}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
