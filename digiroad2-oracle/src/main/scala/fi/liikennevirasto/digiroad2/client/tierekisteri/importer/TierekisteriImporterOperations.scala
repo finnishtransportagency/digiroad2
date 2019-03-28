@@ -201,6 +201,13 @@ trait TierekisteriImporterOperations {
   def getLastExecutionDate: Option[DateTime] = {
       assetDao.getLastExecutionDate(typeId, s"batch_process_$assetName")
   }
+
+  def getRoadLinks(linkIds: Set[Long], administrativeClassFilter: Option[AdministrativeClass] = Some(State)): Seq[VVHRoadlink] = {
+    administrativeClassFilter match {
+      case Some(adminClass) => roadLinkService.fetchVVHRoadlinks(linkIds).filter(_.administrativeClass == adminClass)
+      case _ => roadLinkService.fetchVVHRoadlinks(linkIds)
+    }
+  }
 }
 
 trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations {
@@ -297,7 +304,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet)
 
         //For each section creates a new OTH asset
         trAddressSections.foreach {
@@ -330,7 +337,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
             //Expire all the sections that have changes in tierekisteri
             expireAssets(changedRoadAddresses.map(_.linkId))
             val mappedChangedRoadAddresses = changedRoadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-            val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(changedRoadAddresses.map(ra => ra.linkId).toSet)
+            val mappedRoadLinks = getRoadLinks(changedRoadAddresses.map(ra => ra.linkId).toSet)
             //Creates the assets on top of the expired sections
             changedRoadParts.foreach{
               roadPart =>
