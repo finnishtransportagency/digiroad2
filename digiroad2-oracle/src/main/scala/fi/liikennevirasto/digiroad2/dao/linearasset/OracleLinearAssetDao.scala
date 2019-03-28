@@ -965,7 +965,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          join connected_asset ca on a.id = ca.linear_asset_id
          join asset a1 on ca.point_asset_id = a1.id and a1.asset_type_id = ${TrafficSigns.typeId}
          where  (a.valid_to is null or a.valid_to > sysdate)
-         and a.created_by = 'automatic_process'
+         and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
          and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1)
          #$municipalityFilter""".as[(Int, DateTime, Int)].list
