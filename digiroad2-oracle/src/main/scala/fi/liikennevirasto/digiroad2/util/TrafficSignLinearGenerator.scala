@@ -5,7 +5,8 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -13,11 +14,14 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{Value, _}
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
+import org.json4s
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject, JString}
+import org.json4s.jackson.Json
 
 case class TrafficSignToLinear(roadLink: RoadLink, value: Value, sideCode: SideCode, startMeasure: Double, endMeasure: Double, signId: Set[Long], oldAssetId: Option[Long] = None)
 
@@ -32,6 +36,30 @@ trait TrafficSignLinearGenerator {
 
   //  type AssetValue <: Value
   val assetType: Int
+  case object TrafficSignSerializer extends CustomSerializer[TrafficSignProperty](format =>
+    ({
+      case jsonObj: JObject =>
+        val id = (jsonObj \ "id").extract[Long]
+        val publicId = (jsonObj \ "publicId").extract[String]
+        val propertyType = (jsonObj \ "propertyType").extract[String]
+        val values: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+        val required = (jsonObj \ "required").extract[Boolean]
+        val numCharacterMax = (jsonObj \ "numCharacterMax").extractOpt[Int]
+
+        TrafficSignProperty(id, publicId, propertyType, required, values, numCharacterMax)
+    },
+      {
+        case tv : TrafficSignProperty =>
+          Extraction.decompose(tv)
+      }))
+
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+  }, {
+    case lg: LinkGeomSource => JInt(lg.value)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + TrafficSignSerializer + LinkGeomSourceSerializer
 
   final val userCreate = "automatic_trafficSign_created"
   final val userUpdate = "automatic_trafficSign_updated"
@@ -190,13 +218,14 @@ trait TrafficSignLinearGenerator {
 
     val signIdsGroupedByAssetId = connectedTrafficSignIds.groupBy(_._1)
     val trafficSigns = if (connectedTrafficSignIds.nonEmpty)
-      trafficSignService.fetchPointAssetsWithExpired(withFilter(s"Where a.id in (${connectedTrafficSignIds.map(_._2).toSet.mkString(",")}) "))
+      oracleLinearAssetDao.getTrafficSignsToProcessById(connectedTrafficSignIds.map(_._2))
     else Seq()
 
     val existingWithoutSignsRelation = existingAssets.filter(_.value.isDefined).flatMap { asset =>
-      val relevantSigns = trafficSigns.filter(sign => signIdsGroupedByAssetId(asset.id).map(_._2).contains(sign.id))
+      val relevantSigns = trafficSigns.filter(sign => signIdsGroupedByAssetId(asset.id).map(_._2).contains(sign._1))
 
-      val createdValue = createValue(relevantSigns)
+      val persistedTrafficSign = relevantSigns.map{case (id, value) => Json(jsonFormats).read[PersistedTrafficSign](value)}
+      val createdValue = createValue(persistedTrafficSign)
       if (createdValue.isEmpty)
         Some(TrafficSignToLinear(roadLinks.find(_.linkId == asset.linkId).get, asset.value.get, SideCode.apply(asset.sideCode), asset.startMeasure, asset.endMeasure, Set(), None))
       else if (!compareValue(asset.value.get, createdValue.get))

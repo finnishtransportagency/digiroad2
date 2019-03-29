@@ -265,7 +265,7 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
   def receive = {
     case x: TrafficSignInfoUpdate =>
        trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
+      case Some(trafficType) => trafficSignManager.updateAssets(Seq(trafficType))
                                 trafficSignManager.createAssets(x.newSign)
       case _ => println("Nonexistent traffic Sign Type")
     }

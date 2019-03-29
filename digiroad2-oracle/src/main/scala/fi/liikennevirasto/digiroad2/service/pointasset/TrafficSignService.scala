@@ -124,7 +124,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider:
         OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
     }
     eventBus.publish("trafficSign:update", TrafficSignInfoUpdate(updatedId, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink, updatedAsset.propertyData)))
-   id
+    updatedId
   }
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {

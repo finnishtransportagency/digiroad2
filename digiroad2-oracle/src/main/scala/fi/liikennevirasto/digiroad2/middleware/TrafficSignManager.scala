@@ -5,15 +5,18 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 import fi.liikennevirasto.digiroad2.user.UserProvider
+import org.joda.time.DateTime
+import org.json4s
 import org.json4s.jackson.Json
-import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JObject, JString}
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject, JString}
 
 object TrafficSignManager {
   val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
@@ -36,44 +39,40 @@ object TrafficSignManager {
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  case object TrafficSignSerializer extends CustomSerializer[SimpleTrafficSignProperty](format =>
+  case object TrafficSignSerializer extends CustomSerializer[TrafficSignProperty](format =>
     ({
       case jsonObj: JObject =>
+        val id = (jsonObj \ "id").extract[Long]
         val publicId = (jsonObj \ "publicId").extract[String]
-        val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+        val propertyType = (jsonObj \ "propertyType").extract[String]
+        val values: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+        val required = (jsonObj \ "required").extract[Boolean]
+        val numCharacterMax = (jsonObj \ "numCharacterMax").extractOpt[Int]
 
-        SimpleTrafficSignProperty(publicId, propertyValue)
+        TrafficSignProperty(id, publicId, propertyType, required, values, numCharacterMax)
     },
       {
-        case tv : SimpleTrafficSignProperty =>
-          Extraction.decompose(tv)
+        case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
+
       }))
 
-  case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
-    case JString(additionalInfo) => AdditionalInformation(additionalInfo)
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
   }, {
-    case ai: AdditionalInformation => JString(ai.toString)
+    case lg: LinkGeomSource => JInt(lg.value)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
+    case _ => throw new NotImplementedError("DateTime deserialization")
+  }, {
+    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + TrafficSignSerializer + LinkGeomSourceSerializer + DateTimeSerializer
 
   lazy val linearAssetDao: OracleLinearAssetDao = {
     new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
-  lazy val properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  lazy val userProvider: UserProvider = {
-    Class.forName(properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
-  }
-
-  lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
-  }
-
 
     def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
     trafficSignInfo match {
@@ -81,10 +80,10 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
         manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
 
       case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, Prohibition, trSign.propertyData)
+        insertTrafficSignToProcess(trSign.id, Prohibition)
 
       case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, trafficSignInfo.propertyData)
+        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
 
       case _ => None
     }
@@ -101,21 +100,40 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
           manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
 
         case signType  if TrafficSignManager.belongsToProhibition(signType) =>
-            insertTrafficSignToProcess(trSign.id, Prohibition, trSign.propertyData.map(_.asInstanceOf[SimpleTrafficSignProperty]).toSet)
+            insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
 
         case signType if TrafficSignManager.belongsToHazmat(signType) =>
-            insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, trSign.propertyData.map(_.asInstanceOf[SimpleTrafficSignProperty]).toSet)
-
+            insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
       }
     }
   }
 
-  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo, properties: Set[SimpleTrafficSignProperty]) : Unit = {
-    val persist = trafficSignService.getById(id)
+  def updateAssets(trafficSign: Seq[PersistedTrafficSign]): Unit = {
+    val username = Some("automatic_trafficSign_deleted")
+
+    trafficSign.foreach { trSign =>
+      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+
+      trafficSignType match {
+        case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
+          println("--" + TrafficSignManager.belongsToManoeuvre(signType))
+          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
+
+        case signType  if TrafficSignManager.belongsToProhibition(signType) =>
+          insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
+
+        case signType if TrafficSignManager.belongsToHazmat(signType) =>
+          insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
+
+        case _ =>
+      }
+    }
+  }
+
+  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo, persistedTrafficSign: Option[PersistedTrafficSign] = None) : Unit = {
     try {
       withDynTransaction {
-
-        linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId, Json(jsonFormats).write(properties))
+        linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId, Json(jsonFormats).write(persistedTrafficSign.getOrElse("")))
       }
     } catch {
       case ex: SQLIntegrityConstraintViolationException => print("try insert duplicate key")
