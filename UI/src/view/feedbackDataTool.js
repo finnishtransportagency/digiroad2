@@ -17,7 +17,7 @@
     var renderFeedbackLink = function (enable) {
       var infoContent = $('.feedback-data');
       if (enable && allowFeedBack() ) {
-        infoContent.html('<button id="feedback-data" onclick=location.href="javascript:void(0)" class="feedback-data-link" >Anna palautetta kohteesta</button>');
+        infoContent.html('<button id="feedback-data" class="feedback-data-link btn btn-quaternary" onclick=location.href="javascript:void(0)" >Anna palautetta kohteesta</button>');
       } else {
         infoContent.find('#feedback-data').remove();
       }
@@ -34,6 +34,12 @@
         bindEvents(selectedData);
         applicationModel.setApplicationkState(applicationState.Feedback);
       }
+    };
+
+    this.closeAssetFeedBack = function() {
+      purge();
+      $('.feedback-data').find('#feedbackData').remove();
+      applicationModel.setApplicationkState(applicationState.Normal);
     };
 
     this.closeFeedback = function(){
@@ -60,7 +66,9 @@
         new GenericConfirmPopup("Palautteen lähetyksessä esiintyi virhe. Yritys toistuu automaattisesti hetken päästä.", {type: 'alert'});
       });
 
-      eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed closeFeedBackData', me.closeFeedback);
+      eventbus.on('linkProperties:unselected manoeuvres:unselected speedLimit:unselect asset:closed', me.closeFeedback);
+
+      eventbus.on('closeFeedBackData', me.closeAssetFeedBack);
 
       eventbus.on('linkProperties:selected linkProperties:cancelled manoeuvres:selectedAvailable speedLimit:selected speedLimit:cancelled asset:modified manoeuvres:selected', me.initFeedback);
 

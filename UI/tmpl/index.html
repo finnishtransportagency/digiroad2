@@ -5,6 +5,7 @@
   <link rel="stylesheet" type="text/css" href="node_modules/pikaday/css/pikaday.css">
   <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
   <link rel="stylesheet" type="text/css" href="components/ol-dist/ol.css">
+  <link rel="stylesheet" type="text/css" href="node_modules/jquery-ui-dist/jquery-ui.min.css">
   <script type="text/javascript" src="components/ol-dist/ol.js"></script>
 
     <!-- Google Analytics loaded asynchronously -->
@@ -73,6 +74,7 @@
 <div id="feedbackData" class="feedback-modal"></div>
 
 <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script type="text/javascript" src="node_modules/jquery-migrate/dist/jquery-migrate.min.js"></script>
 <script type="text/javascript" src="node_modules/jquery-validation/dist/jquery.validate.min.js"></script>
 <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
@@ -92,6 +94,7 @@
 <script type="text/javascript" src="src/utils/zoom-levels.js"></script>
 <script type="text/javascript" src="src/utils/validity-directions.js"></script>
 <script type="text/javascript" src="src/utils/roadAddressInfoPopup.js"></script>
+<script type="text/javascript" src="src/utils/data-import-backend.js"></script>
 <script type="text/javascript" src="src/authorizationpolicies/authorizationPolicy.js"></script>
 <script type="text/javascript" src="src/authorizationpolicies/readOnlyAuthorizationPolicy.js"></script>
 <script type="text/javascript" src="src/authorizationpolicies/massTransitStopAuthorizationPolicy.js"></script>
@@ -104,6 +107,7 @@
 <script type="text/javascript" src="src/authorizationpolicies/speedLimitAuthorizationPolicy.js"></script>
 <script type="text/javascript" src="src/authorizationpolicies/pointStateRoadAuthorizationPolicy.js"></script>
 <script type="text/javascript" src="src/authorizationpolicies/linearStateRoadAuthorizationPolicy.js"></script>
+<script type="text/javascript" src="src/authorizationpolicies/linkPropertyAuthorizationPolicy.js"></script>
 <script type="text/javascript" src="src/view/tileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/providers/layer.js"></script>
 <script type="text/javascript" src="src/view/providers/roadLayer.js"></script>
@@ -132,6 +136,7 @@
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/pavedRoadStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/carryingCapacityStyle.js"></script>
+<script type="text/javascript" src="src/view/linear_asset/roadDamagedByThawStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/speedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/manoeuvreStyle.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/parkingProhibitionStyle.js"></script>
@@ -139,6 +144,7 @@
 <script type="text/javascript" src="src/view/providers/assetLabel.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/linearAssetLabel.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadLabel.js"></script>
+<script type="text/javascript" src="src/view/linear_asset/roadDamagedByThawLabel.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/linearAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/serviceRoadLayer.js"></script>
 <script type="text/javascript" src="src/view/linear_asset/carryingCapacityLayer.js"></script>
@@ -260,7 +266,7 @@
 <script type="text/javascript" src="components/ol-dist/ol.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'PRODUCTION' -->
-<script type="text/javascript" src="components/ol3.js"></script>
+<script type="text/javascript" src="components/ol-dist/ol.js"></script>
 <script type="text/javascript" src="js/digiroad2.min.js"></script>
 <!-- @endif -->
 </body>

@@ -2,7 +2,7 @@
   root.LinkPropertyForm = function(selectedLinkProperty, feedbackCollection) {
     var layer;
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
-    var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+    var authorizationPolicy = new LinkPropertyAuthorizationPolicy();
     new FeedbackDataTool(feedbackCollection, 'linkProperty', authorizationPolicy);
 
     var localizedAdministrativeClasses = {
@@ -131,18 +131,18 @@
 
     var userInformationLog = function() {
       var hasMunicipality = function (linearAsset) {
-        return _.some(linearAsset.get(), function (asset) {
+        return _.every(linearAsset.get(), function (asset) {
           return authorizationPolicy.hasRightsInMunicipality(asset.municipalityCode);
         });
       };
 
-      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var message = '';
 
-      if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinkProperty)) {
+      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinkProperty)) {
         message = limitedRights;
-      } else if (!authorizationPolicy.formEditModeAccess(selectedLinkProperty))
+      } else if (!authorizationPolicy.validateMultiple(selectedLinkProperty.get()))
         message = noRights;
 
       if(message) {
@@ -222,7 +222,7 @@
       if(notRendered) {
         $('ul[class=information-content]').empty();
         $('ul[class=information-content]').append('' +
-            '<li><button id="incomplete-links-link" class="incomplete-links" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
+            '<li><button id="incomplete-links-link" class="incomplete-links btn btn-tertiary" onclick=location.href="#work-list/linkProperty">Korjattavien linkkien lista</button></li>');
       }
     };
 
@@ -247,13 +247,6 @@
       }));
       $("#adminClass").prop('disabled', disabled);
       $("#adminClass").find("option[value = State ]").prop('disabled', true);
-    };
-
-    var validateAdministrativeClass = function(selectedLinkProperty, authorizationPolicy){
-      var selectedAssets = _.filter(selectedLinkProperty.get(), function (selected) {
-        return !authorizationPolicy.formEditModeAccess(selected);
-      });
-      return !_.isEmpty(selectedAssets);
     };
 
     var validateSelectedAccessRight = function(selectedLinkProperty){
@@ -375,7 +368,7 @@
           selectedLinkProperty.setAdditionalInfo($(event.currentTarget).find(':selected').attr('value'));
         });
 
-        toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || applicationModel.isReadOnly());
+        toggleMode(applicationModel.isReadOnly() || !authorizationPolicy.validateMultiple(selectedLinkProperty.get()));
         controlAdministrativeClasses(linkProperty.administrativeClass);
       });
 
@@ -391,7 +384,7 @@
       });
 
       eventbus.on('application:readOnly', function(readOnly){
-        toggleMode(validateAdministrativeClass(selectedLinkProperty, authorizationPolicy) || readOnly);
+        toggleMode(!authorizationPolicy.validateMultiple(selectedLinkProperty.get()) || readOnly);
         controlAdministrativeClassesOnToggle(selectedLinkProperty);
       });
 
