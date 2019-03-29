@@ -795,6 +795,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
         case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
         case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
+        case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
