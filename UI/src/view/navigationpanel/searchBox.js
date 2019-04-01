@@ -11,7 +11,7 @@
     var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
-    var associationNamesRegex = /^YT +/g;
+    var associationNamesRegex = /^YT +/i;
 
     var bindEvents = function() {
       coordinatesText.keypress(function(event) {
@@ -47,6 +47,8 @@
 
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
+        jQuery('.spinner-overlay-search').remove();
+        jQuery('#search-results').parent().hide();
       };
       locationSearch.search(coordinatesText.val()).then(function(results) {
         populateSearchResults(results);
@@ -55,8 +57,7 @@
           if (result.resultType.indexOf("Mtstop")>-1) {
             window.location.hash = "#massTransitStop/";
             window.location.hash="#massTransitStop/"+result.nationalId;
-          }
-          else if (result.resultType.indexOf("Link-id")>-1) {
+          } else if (result.resultType.indexOf("Link-id")>-1) {
             window.location.hash = "#linkProperty/";
             eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
             window.location.hash = "#linkProperty/" + coordinatesText.val();
@@ -65,8 +66,9 @@
               eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
             });
             eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-          }
-          else {
+          } else if (result.resultType.indexOf("association")>-1) {
+            window.location.hash = "#linkProperty/" + result.linkId;
+          } else {
             eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
           }
         }
