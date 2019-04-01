@@ -47,6 +47,7 @@
 
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
+        jQuery('.spinner-overlay-search').remove();
         jQuery('#search-results').parent().hide();
       };
       locationSearch.search(coordinatesText.val()).then(function(results) {
