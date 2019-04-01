@@ -73,7 +73,7 @@
     }
   };
 
-  dateutil.addDependentDatePickers = function (fromElement, toElement) {
+  dateutil.addTwoDependentDatePickers = function (fromElement, toElement) {
     var fromDateString = function (s) {
       return s ? moment(s, dateutil.FINNISH_DATE_FORMAT) : null;
     };
