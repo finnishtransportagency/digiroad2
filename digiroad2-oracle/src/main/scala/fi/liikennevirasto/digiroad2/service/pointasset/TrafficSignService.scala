@@ -450,8 +450,18 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         } else if (adjacentRoadLinkInfo.size == 1) {
           allowedAdditionalPanels.filter(additionalSign => additionalSign.validityDirection == validityDirection && additionalSign.linkId == linkId) ++
             allowedAdditionalPanels.filter { additionalSign =>
-              val additionalPanelDistance = if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._1).head, point)) additionalSign.mValue else GeometryUtils.geometryLength(adjacentRoadLinkInfo.map(_._4).head) - additionalSign.mValue
-              additionalSign.validityDirection == validityDirection && additionalSign.linkId == adjacentRoadLinkInfo.map(_._3).head && (additionalPanelDistance + signDistance) <= AdditionalPanelDistance
+
+              val (additionalPanelDistance, direction) =
+                if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._1).head, first))
+                   (additionalSign.mValue, SideCode.switch(SideCode.apply(additionalSign.validityDirection)))
+                else if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._2).head, last))
+                   (GeometryUtils.geometryLength(adjacentRoadLinkInfo.map(_._4).head) - additionalSign.mValue, SideCode.switch(SideCode.apply(additionalSign.validityDirection)))
+                else if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._1).head, last))
+                  (additionalSign.mValue, additionalSign.validityDirection)
+                else
+                   (GeometryUtils.geometryLength(adjacentRoadLinkInfo.map(_._4).head) - additionalSign.mValue, additionalSign.validityDirection)
+
+              direction == validityDirection && additionalSign.linkId == adjacentRoadLinkInfo.map(_._3).head && (additionalPanelDistance + signDistance) <= AdditionalPanelDistance
             }
         } else
           Seq()
@@ -482,5 +492,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def getLastExecutionDate(createdBy: String, signTypes: Set[Int]) : Option[DateTime] = {
     OracleTrafficSignDao.getLastExecutionDate(createdBy, signTypes)
+  }
+
+  def distinctPanels(panels: Set[AdditionalPanelInfo]): Set[AdditionalPanelInfo] = {
+    panels.groupBy{ panel =>
+      val props = panel.propertyData
+      (getProperty(props, typePublicId), getProperty(props, valuePublicId), getProperty(props, infoPublicId))
+    }.map(_._2.head).toSet
   }
 }
