@@ -435,22 +435,24 @@ trait TrafficSignLinearGenerator {
 
   def findNextEndAssets(segments: Seq[TrafficSignToLinear], baseSegment: TrafficSignToLinear, result: Seq[TrafficSignToLinear] = Seq(), numberOfAdjacent: Int = 0): Seq[TrafficSignToLinear] = {
     val adjacent = roadLinkService.getAdjacentTemp(baseSegment.roadLink.linkId)
-    val (start, _) = GeometryUtils.geometryEndpoints(baseSegment.roadLink.geometry)
+    val (start, end) = GeometryUtils.geometryEndpoints(baseSegment.roadLink.geometry)
     val allInSameSide = adjacent.forall { adj =>
       val (first, last) = GeometryUtils.geometryEndpoints(adj.geometry)
       GeometryUtils.areAdjacent(start, first) || GeometryUtils.areAdjacent(start, last)
     }
-    if (numberOfAdjacent == 1 && adjacent.size > 1) {
-      segments.filter(_ == baseSegment).map(_.copy(sideCode = SideCode.BothDirections)) ++ result
-    } else {
-      val newBaseSegments = segments.filterNot(_.roadLink == baseSegment.roadLink)
-      val newResult = segments.filter(_.roadLink == baseSegment.roadLink).map(_.copy(sideCode = SideCode.BothDirections)) ++ result
 
-      if ((adjacent.size == 1 || allInSameSide) && newBaseSegments.nonEmpty) {
-        newBaseSegments.filter(newSeg => adjacent.map(_.linkId).contains(newSeg.roadLink.linkId)).flatMap{ baseSegment => findNextEndAssets(newBaseSegments, baseSegment, newResult, adjacent.size)}
-      } else
+    if (adjacent.size == 1 || (numberOfAdjacent == 1 && adjacent.size > 1)) {
+      val newResult = segments.filter(_ == baseSegment).map(_.copy(sideCode = SideCode.BothDirections)) ++ result
+      val newBaseSegment = segments.filter{seg => seg.roadLink == adjacent.head && compareValue(seg.value, baseSegment.value)}
+
+      if(newBaseSegment.nonEmpty)
+        findNextEndAssets(segments.filterNot(_ == baseSegment), newBaseSegment.head, newResult, adjacent.size)
+      else
         newResult
-    }
+    } else if(adjacent.size > 1 && allInSameSide) {
+      segments.filter(_ == baseSegment).map(_.copy(sideCode = SideCode.BothDirections)) ++ result
+    } else
+      result :+ baseSegment
   }
 
   def convertEndRoadSegments(segments: Seq[TrafficSignToLinear], endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]): Seq[TrafficSignToLinear] = {

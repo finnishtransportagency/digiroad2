@@ -75,18 +75,15 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
   }
 
     def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
-    trafficSignInfo match {
-      case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
-        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
 
-      case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, Prohibition)
+      if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType))
+        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
 
-      case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+      else if (TrafficSignManager.belongsToProhibition(trafficSignInfo.signType))
+        insertTrafficSignToProcess(trafficSignInfo.id, Prohibition)
 
-      case _ => None
-    }
+      else if (TrafficSignManager.belongsToHazmat(trafficSignInfo.signType))
+        insertTrafficSignToProcess(trafficSignInfo.id, HazmatTransportProhibition)
   }
 
   def deleteAssets(trafficSign: Seq[PersistedTrafficSign]): Unit = {
@@ -95,38 +92,15 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     trafficSign.foreach { trSign =>
       val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
-      trafficSignType match {
-        case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
-          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
+      if (TrafficSignManager.belongsToManoeuvre(trafficSignType))
+        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
 
-        case signType  if TrafficSignManager.belongsToProhibition(signType) =>
-            insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
+       else if (TrafficSignManager.belongsToProhibition(trafficSignType))
+        insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
 
-        case signType if TrafficSignManager.belongsToHazmat(signType) =>
-            insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
-      }
-    }
-  }
+      else if(TrafficSignManager.belongsToHazmat(trafficSignType))
+        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
 
-  def updateAssets(trafficSign: Seq[PersistedTrafficSign]): Unit = {
-    val username = Some("automatic_trafficSign_deleted")
-
-    trafficSign.foreach { trSign =>
-      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
-
-      trafficSignType match {
-        case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
-          println("--" + TrafficSignManager.belongsToManoeuvre(signType))
-          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
-
-        case signType  if TrafficSignManager.belongsToProhibition(signType) =>
-          insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
-
-        case signType if TrafficSignManager.belongsToHazmat(signType) =>
-          insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
-
-        case _ =>
-      }
     }
   }
 
