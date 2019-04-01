@@ -178,7 +178,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks  = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
 
         val additionalProperties = getAdditionalPanels(trProperties, mappedRoadAddresses, mappedRoadLinks)
 
