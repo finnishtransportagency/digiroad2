@@ -844,7 +844,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
     if (debbuger) println("createSegmentPieces")
     createValue(Seq(sign)) match {
       case Some(value) =>
-        val stopCondition = getStopCondition(actualRoadLink, sign, signs.filter(_.linkId == actualRoadLink.linkId), pointOfInterest._3.get, result)
+        val stopCondition = getStopCondition(actualRoadLink, sign, signs, pointOfInterest._3.get, result)
         val generatedSegmentPieces = generateSegmentPiece(actualRoadLink, sign, value, stopCondition, pointOfInterest._3.get)
 
         (if (stopCondition.isEmpty) {
@@ -867,19 +867,24 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
     //in same direction exist a different type
     //in same direction exist a same type with a arrow down
     val mainSignRoadLink = (result.map(_.roadLink) :+ actualRoadLink).find(_.linkId == mainSign.linkId).get
-    val (start, end) = GeometryUtils.geometryEndpoints((result.map(_.roadLink) :+ actualRoadLink).find(_.linkId == mainSign.linkId).get.geometry)
+    val (start, end) = GeometryUtils.geometryEndpoints(mainSignRoadLink.geometry)
     val x = getPointOfInterest(start, end, SideCode.apply(mainSign.validityDirection))
-    val distance = if(x._2.nonEmpty) mainSign.mValue else  GeometryUtils.geometryLength(mainSignRoadLink.geometry) +
-      result.filterNot(_.roadLink.linkId == mainSign.linkId).map(res => Math.abs(res.endMeasure - res.startMeasure)).sum
+    val distance = if(mainSign.linkId == actualRoadLink.linkId) 0 else (if(x._2.nonEmpty) mainSign.mValue else GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue) +
+        result.filterNot(_.roadLink.linkId == mainSign.linkId).map(res => Math.abs(res.endMeasure - res.startMeasure)).sum
 
     val length = GeometryUtils.geometryLength(actualRoadLink.geometry)
+    val distanceLeft = if(mainSign.linkId == actualRoadLink.linkId) if(x._2.nonEmpty) GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue else mainSign.mValue else length
 
     val mainType = trafficSignService.getProperty(mainSign, trafficSignService.typePublicId).get.propertyValue
     val exceedDistance = trafficSignService.getAllProperties(mainSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel]).find(_.panelType == DistanceWhichSignApplies.OTHvalue).
-      filter(distancePanel =>Try(distancePanel.panelValue.toDouble < (distance + length)).getOrElse(false)).map( panel => if(actualRoadLink.linkId == mainSign.linkId) panel.panelValue.toDouble + distance else panel.panelValue.toDouble - distance)
+      filter(distancePanel =>Try(distancePanel.panelValue.toDouble < distance + distanceLeft).getOrElse(false)).map( panel =>
+      if(actualRoadLink.linkId == mainSign.linkId)
+        if(x._1.nonEmpty) mainSign.mValue - panel.panelValue.toDouble else mainSign.mValue + panel.panelValue.toDouble
+      else
+        panel.panelValue.toDouble - distance)
 
     val existingSigns = allSignsRelated.filterNot(_.id == mainSign.id).filter(_.linkId == actualRoadLink.linkId).filter { sign =>
-      trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue != mainType && sign.validityDirection == direction ||
+      trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue != mainType && sign.validityDirection == direction && (if(direction == TowardsDigitizing.value) mainSign.mValue <= sign.mValue else mainSign.mValue >= sign.mValue)||
         (trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue == mainType &&
           trafficSignService.getAllProperties(sign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel]).exists(_.panelType == RegulationEndsToTheSign.OTHvalue) && sign.validityDirection == direction)
     }.map(_.mValue)
