@@ -16,6 +16,12 @@ class MunicipalityService (eventbus: DigiroadEventBus, roadLinkService: RoadLink
     }
   }
 
+  def getMunicipalityNameByCode(municipalityId: Int): String = {
+    withDynSession {
+      municipalityDao.getMunicipalityNameByCode(municipalityId)
+    }
+  }
+
   def getMunicipalitiesNameAndIdByCode(municipalityCodes: Set[Int]): List[MunicipalityInfo] = {
     withDynSession {
       municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)

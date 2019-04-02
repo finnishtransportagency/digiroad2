@@ -28,7 +28,7 @@ trait AssetPropertiesReader {
       .map(value => value.propertyValue)
   }
 
-  def extractPropertyDisplayValue(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
+  def extractOptionalPropertyDisplayValue(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
     asset.propertyData.find(property => property.publicId == propertyPublicId)
       .head.values.head.propertyDisplayValue
   }

@@ -578,12 +578,6 @@ trait MassTransitStopService extends PointAssetOperations {
     (previousStrategy, currentStrategy)
   }
 
-  private def publishSaveEvent(persistedStop: PersistedAsset, roadLinkByLinkId: Long => Option[RoadLinkLike]): MassTransitStopWithProperties = {
-    val municipalityName = municipalityDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
-    eventbus.publish("asset:saved", eventBusMassTransitStop(persistedStop, municipalityName))
-    withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkByLinkId))(persistedStop)
-  }
-
   /**
     * Update asset ajusted geometry
     *

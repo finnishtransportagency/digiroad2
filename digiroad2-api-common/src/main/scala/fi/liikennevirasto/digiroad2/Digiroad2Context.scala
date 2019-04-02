@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration.FiniteDuration
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
@@ -39,7 +40,7 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
     withDynSession {
-      val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
       massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
@@ -48,6 +49,7 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 }
 
 class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case x: AbstractPublishInfo => persistedAssetChanges(x.asInstanceOf[TerminalPublishInfo])
@@ -59,7 +61,7 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
       val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset ++ terminalPublishInfo.detachAsset).toSet)
 
       persistedStop.foreach { busStop =>
-        val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
         val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
         ValluSender.postToVallu(massTransitStop)
         massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
