@@ -350,7 +350,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.geometry)
 
-      (properties, CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.nonEmpty))
+      (properties, CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(properties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ case(_, sign) =>
@@ -1117,7 +1117,7 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
   val mandatoryFields: Set[String] = Set()
 
   def checkMinimumDistanceFromRoadLink(pointPosition: Point, linkGeometry: Seq[Point]): Boolean = {
-    GeometryUtils.minimumDistance(pointPosition, linkGeometry) <= MinimumDistanceFromRoadLink
+    GeometryUtils.minimumDistance(pointPosition, linkGeometry) >= MinimumDistanceFromRoadLink
   }
 
   def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
@@ -1587,21 +1587,23 @@ class DirectionalTrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, ev
 
       val (assetBearing, assetValidityDirection) = recalculateBearing(bearing)
 
-      val roadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      val allLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
 
-      val possibleRoadLinks = roadLinkService.getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), roadLinks)
+      val possibleRoadLinks = roadLinkService.getRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), allLinks)
 
-      val nearestRoadLink = if(possibleRoadLinks.nonEmpty) {
-        possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+      val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
+
+      val nearestRoadLink = if(roadLinks.nonEmpty) {
+        roadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
       } else {
-        roadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
+        allLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry))
       }
 
       val validityDirection = if(assetBearing.isEmpty) {
           getValidityDirectionByRoadLink(Point(lon, lat), nearestRoadLink.geometry)
         } else assetValidityDirection.get
 
-      CsvDirectionalTrafficSign(IncomingDirectionalTrafficSign(lon, lat, nearestRoadLink.linkId, validityDirection, textFieldValue, assetBearing), nearestRoadLink, (possibleRoadLinks.isEmpty || possibleRoadLinks.size > 1) && assetBearing.isEmpty)
+      CsvDirectionalTrafficSign(IncomingDirectionalTrafficSign(lon, lat, nearestRoadLink.linkId, validityDirection, textFieldValue, assetBearing), nearestRoadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty)
     }
 
     incomingDirectionalSigns.foreach { asset =>
