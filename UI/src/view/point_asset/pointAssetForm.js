@@ -223,11 +223,5 @@ root.PointAssetForm = function() {
     $('ul[class=information-content]').append('' +
       '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
-
-
-  var renderUnverifiedWorkList = function(layerName) {
-    $('ul[class=information-content]').append('' +
-      '<li><button id="unverified-point-asset-work-list-link" class="imported-point-assets btn btn-tertiary" onclick=location.href="#work-list/unverifiedPointAssets/' + layerName + '">Tarkistamattomien opastustaulujen lista</button></li>');
-  };
 };
 })(this);

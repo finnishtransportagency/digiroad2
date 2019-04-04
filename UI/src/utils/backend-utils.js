@@ -461,10 +461,6 @@
       return $.getJSON('api/linearassets/unverified?typeId=' + typeId);
     };
 
-    this.getUnverifiedPointAssets = function(layerName, typeId) {
-      return $.getJSON('api/pointAssets/unverified?layerName=' + layerName + '&typeId=' + typeId);
-    };
-
     this.getLinearAssetMidPoint = latestResponseRequestor(function(typeId, id){
       return {
         url: 'api/linearassets/midpoint?typeId=' + typeId + '&id=' + id

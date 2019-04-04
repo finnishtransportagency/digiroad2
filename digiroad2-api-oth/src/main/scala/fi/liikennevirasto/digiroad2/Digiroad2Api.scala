@@ -1119,23 +1119,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     usedService.getUnverifiedLinearAssets(typeId, includedMunicipalities.toSet)
   }
 
-  get("/pointAssets/unverified"){
-    val user = userProvider.getCurrentUser()
-    val includedMunicipalities = if(user.isOperator()) Set() else user.configuration.authorizedMunicipalities
-
-    val layerName = params.getOrElse("layerName", halt(BadRequest("Missing mandatory 'layerName' parameter")))
-    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter")))
-
-    val usedService = getPointAssetService(layerName)
-
-    val result = usedService.getUnverifiedPointAssets(includedMunicipalities.toSet)
-
-    result.map { asset =>
-      Map("municipality" -> asset._1,
-          "assets" -> asset._2.map(_._1))
-    }
-  }
-
   get("/linearassets/midpoint"){
     val typeId = params("typeId").toInt
     val service = getLinearAssetService(typeId)

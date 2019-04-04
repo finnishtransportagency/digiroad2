@@ -229,7 +229,6 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
-        'work-list/unverifiedPointAssets/:layerName': 'unverifiedPointSigns',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
         ':layerName/linkId/:linkId': 'mapMoving'
       },
@@ -605,11 +604,6 @@
         var typeId = _.find(models.linearAssets, function(assetSpec) { return assetSpec.layerName == layerName; }).typeId;
         eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
       },
-
-      unverifiedPointSigns: function(layerName) {
-        var typeId = _.find(models.pointAssets, function(assetSpec) { return assetSpec.layerName === layerName; }).typeId;
-        eventbus.trigger('unverifiedPointWorkList:select', layerName, backend.getUnverifiedPointAssets(layerName, typeId));
-      }
     });
 
     var router = new Router();

@@ -797,8 +797,7 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: DirectionalTrafficSignForm,
-        hasMunicipalityValidation: true,
-        isVerifiable: true
+        hasMunicipalityValidation: true
       },
       {
         typeId: assetType.servicePoints,

@@ -80,12 +80,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     validateOperation()
     importPointAssets(fileParams("csv-file"), "railwayCrossings")
   }
-
-  post("/directionalTrafficSigns") {
-    validateOperation()
-    importPointAssets(fileParams("csv-file"), "directionalTrafficSigns")
-  }
-
+  
   post("/pedestrianCrossings") {
     validateOperation()
     importPointAssets(fileParams("csv-file"), "pedestrianCrossings")
