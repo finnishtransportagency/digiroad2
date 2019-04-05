@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWeightLimitA
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleAxleWeightLimitDao, OracleBogieWeightLimitDao, OracleTrailerTruckWeightLimitDao, OracleWeightLimitDao}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxleWeightLimit, IncomingBogieWeightLimit, IncomingTrailerTruckWeightLimit, IncomingWeightLimit}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -30,7 +31,7 @@ class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
     tierekisteriAssetData.totalWeight.isDefined
   }
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val weightLimit = IncomingWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.totalWeight.get*1000, //convert Ton to Kg
@@ -50,7 +51,7 @@ class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekister
     tierekisteriAssetData.trailerTruckWeight.isDefined
   }
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val trailerTruckWeightLimit = IncomingTrailerTruckWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.trailerTruckWeight.get*1000, //convert Ton to Kg
@@ -70,7 +71,7 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
     tierekisteriAssetData.axleWeight.isDefined
   }
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val axleWeightLimit = IncomingAxleWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.axleWeight.get*1000, //convert Ton to Kg
@@ -90,7 +91,7 @@ class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
     tierekisteriAssetData.bogieWeight.isDefined
   }
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val bogieWeightLimit = IncomingBogieWeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.bogieWeight.get*1000, //convert Ton to Kg

@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriPedestrianCr
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePedestrianCrossingDao
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 import org.apache.http.impl.client.HttpClientBuilder
@@ -25,7 +26,7 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
     HttpClientBuilder.create().build())
 
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
 
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>

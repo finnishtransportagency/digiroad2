@@ -10,6 +10,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 
 class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -24,7 +25,7 @@ class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporter
 
   val animalWarningPropertyId = "hirvivaro"
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), informationSource = Some(RoadRegistry.value))
 

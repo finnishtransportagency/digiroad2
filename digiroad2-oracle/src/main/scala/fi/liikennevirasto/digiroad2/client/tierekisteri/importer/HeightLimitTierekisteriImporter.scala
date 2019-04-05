@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriHeightLimitA
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleHeightLimitDao
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingHeightLimit
 import org.apache.http.impl.client.HttpClientBuilder
@@ -22,7 +23,7 @@ class HeightLimitTierekisteriImporter extends PointAssetTierekisteriImporterOper
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
         val widthLimit = IncomingHeightLimit(point.x, point.y, vvhRoadlink.linkId, trAssetData.height,

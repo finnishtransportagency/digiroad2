@@ -11,6 +11,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 
 class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -27,7 +28,7 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val assetId = service.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value, measures, "batch_process_" + assetName,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
