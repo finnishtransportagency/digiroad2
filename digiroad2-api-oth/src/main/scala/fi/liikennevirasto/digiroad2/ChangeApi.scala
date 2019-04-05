@@ -371,7 +371,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             "geometry" ->
               Map(
                 "type" -> "MassTransitStop",
-                "coordinates" -> Seq(massTransitStop.lon, massTransitStop.lat, 0.0)
+                "coordinates" -> Seq(massTransitStop.lon, massTransitStop.lat)
               ),
             "properties" ->
               Map(
