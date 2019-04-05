@@ -217,7 +217,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
     val projectableTargetRoadLinks = roads.filter(
-      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad())
 
     val timing = System.currentTimeMillis
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))

@@ -70,7 +70,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
 
     val projectableTargetRoadLinks = roadLinks.filter(
-      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
+      rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad())
 
 
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],

@@ -207,8 +207,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       (sourceRoadLinkOption, destRoadLinkOption) match {
         case (Some(sourceRoadLink), Some(destRoadLink)) =>
           GeometryUtils.areAdjacent(sourceRoadLink.geometry, destRoadLink.geometry) &&
-            sourceRoadLink.isCarTrafficRoad &&
-            destRoadLink.isCarTrafficRoad
+            sourceRoadLink.isCarTrafficRoad() &&
+            destRoadLink.isCarTrafficRoad()
         case _ => false
       }
     }

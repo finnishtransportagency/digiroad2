@@ -256,8 +256,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Returns only car traffic roads as a topology and speed limits that match these road links.
     * Used by SpeedLimitService.get (by bounding box and a list of municipalities) and SpeedLimitService.get (by municipality)
     */
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[SpeedLimit], Seq[RoadLink]) = {
-    val topology = roadLinks.filter(_.isCarTrafficRoad)
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false, isIntegrationImport: Boolean = false): (Seq[SpeedLimit], Seq[RoadLink]) = {
+    val topology = roadLinks.filter(_.isCarTrafficRoad(isIntegrationImport))
     var speedLimitLinks: Seq[SpeedLimit] = Seq()
     if (showSpeedLimitsHistory) {
       speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))

@@ -1272,7 +1272,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
       val roadLinks = getRoadLinksFromVVH(bounds, bounds2)
       roadLinks.filterNot(_.linkId == linkId)
-        .filter(roadLink => roadLink.isCarTrafficRoad)
+        .filter(roadLink => roadLink.isCarTrafficRoad())
         .filter(roadLink => {
           val targetLinkGeometry = roadLink.geometry
           GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
@@ -1296,7 +1296,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
       val roadLinks = getRoadLinksFromVVHByBounds(bounds, bounds2, newTransaction)
       roadLinks.filterNot(_.linkId == linkId)
-        .filter(roadLink => roadLink.isCarTrafficRoad)
+        .filter(roadLink => roadLink.isCarTrafficRoad())
         .filter(roadLink => {
           val targetLinkGeometry = roadLink.geometry
           GeometryUtils.areAdjacent(sourceLinkGeometry, targetLinkGeometry)
@@ -1375,7 +1375,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val sourceLinkGeometryMap = roadLinks.map(rl => rl -> rl.geometry).toMap
     val delta: Vector3d = Vector3d(0.1, 0.1, 0)
     val sourceLinkBoundingBox = geometryToBoundingBox(sourceLinkGeometryMap.values.flatten.toSeq, delta)
-    val sourceLinks = getRoadLinksFromVVH(sourceLinkBoundingBox, Set[Int]()).filter(roadLink => roadLink.isCarTrafficRoad)
+    val sourceLinks = getRoadLinksFromVVH(sourceLinkBoundingBox, Set[Int]()).filter(roadLink => roadLink.isCarTrafficRoad())
 
     val mapped = sourceLinks.map(rl => rl.linkId -> getRoadLinkPoints(rl)).toMap
     val reverse = sourceLinks.map(rl => rl -> getRoadLinkPoints(rl)).flatMap {

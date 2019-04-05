@@ -34,7 +34,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val roadLinksByLinkId = roadLinksWithProperties.groupBy(_.linkId).mapValues(_.head)
     val roadLinkIds = roadLinksWithProperties.map(_.linkId).toSet
     val (manoeuvresWithIntactLinks, manoeuvresWithDroppedLinks) = groupedManoeuvres.partition { case (id, rows) => rows.forall(row => roadLinkIds.contains(row._4)) }
-    val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByLinkId(row._4).isCarTrafficRoad }}
+    val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByLinkId(row._4).isCarTrafficRoad() }}
     val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
       val source = rows.find(_._5 == Source).get
       val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4)
