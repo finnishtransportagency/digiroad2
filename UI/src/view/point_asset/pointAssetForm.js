@@ -26,7 +26,6 @@ root.PointAssetForm = function() {
     var selectedAsset = parameters.pointAsset.selectedPointAsset;
     var collection  = parameters.pointAsset.collection;
     var layerName = parameters.pointAsset.layerName;
-    var isVerifiable = parameters.pointAsset.isVerifiable;
     var localizedTexts = parameters.pointAsset.formLabels;
     var authorizationPolicy = parameters.pointAsset.authorizationPolicy;
     new FeedbackDataTool(parameters.feedbackCollection, layerName, authorizationPolicy);
@@ -44,22 +43,17 @@ root.PointAssetForm = function() {
       }
     });
 
-    eventbus.on(layerName + ':selected ' + layerName + ':cancelled' /*roadLinks:fetched'*/, function() {
+    eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection, isVerifiable);
+        me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
         rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
         rootElement.find('button#cancel-button').prop('disabled', false);
-        rootElement.find('button#verify-button').prop('disabled', false);
-        rootElement.find('button#verify-button').on('click', function() { selectedAsset.verify(layerName, selectedAsset.getId()); });
       }
     });
 
     eventbus.on(layerName + ':changed', function() {
-      var needsCheck = rootElement.find('#directional-traffic-sign-checkbox').length > 0 ? !rootElement.find('#directional-traffic-sign-checkbox').is(":checked") : false;
-      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)) || needsCheck);
       rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
-      rootElement.find('button#verify-button').prop('disabled', !(selectedAsset.isDirty()));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {
@@ -75,22 +69,19 @@ root.PointAssetForm = function() {
         if(parameters.pointAsset.hasInaccurate){
           renderInaccurateWorkList(layer);
         }
-        if(parameters.pointAsset.isVerifiable) {
-          renderUnverifiedWorkList(layer);
-        }
       }
     });
   };
 
   this.renderValueElement = function(asset, collection) { return ''; };
 
-  this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection, isVerifiable) {
+  this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
     var header = '<span>' + title + '</span>';
     var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
-    var footer = me.renderButtons(selectedAsset, isVerifiable);
+    var footer = me.renderButtons();
 
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
@@ -186,10 +177,9 @@ root.PointAssetForm = function() {
 
   this.renderValueElement = function(asset, collection) { return ''; };
 
-  this.renderButtons = function(selectedLinearAsset, isVerifiable) {
-    var verifyButton = (isVerifiable && !_.isNull(selectedLinearAsset.getId())) ? '<button id="verify-button" class="verify btn btn-primary">Merkitse tarkistetuksi</button>' : '';
+  this.renderButtons = function() {
     return '' +
-      '<div class="pointasset form-controls">' + verifyButton +
+      '<div class="pointasset form-controls">' +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';

@@ -354,18 +354,6 @@
       });
     };
 
-    this.verifyPointAssets = function(layerName, assetId, success, failure) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/pointassets/verified?layerName=" + layerName + "&assetId=" + assetId,
-        data: JSON.stringify({layerName: layerName, assetId: assetId}),
-        dataType: "json",
-        success: success,
-        error: failure
-      });
-    };
-
     this.deleteAllMassTransitStopData = function(assetId,success, failure){
       $.ajax({
         contentType: "application/json",

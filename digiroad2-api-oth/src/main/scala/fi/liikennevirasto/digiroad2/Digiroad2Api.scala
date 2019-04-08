@@ -1099,17 +1099,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     usedService.updateVerifiedInfo(ids, user.username, typeId)
   }
 
-  put("/pointassets/verified") {
-    val user = userProvider.getCurrentUser()
-
-    val layerName = params.getOrElse("layerName", halt(BadRequest("Missing mandatory 'layerName' parameter")))
-    val assetId = params.getOrElse("assetId", halt(BadRequest("Missing mandatory 'assetId' parameter"))).toInt
-
-    val usedService = getPointAssetService(layerName)
-
-    usedService.updateVerifiedInfo(assetId, user.username)
-  }
-
   get("/linearassets/unverified"){
     val user = userProvider.getCurrentUser()
     val includedMunicipalities = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities

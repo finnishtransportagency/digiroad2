@@ -13,7 +13,6 @@
       save: save,
       isDirty: isDirty,
       isNew: isNew,
-      verify: verify,
       cancel: cancel,
       close: close,
       exists: exists,
@@ -82,16 +81,6 @@
 
     function isNew() {
       return getId() === 0;
-    }
-
-    function verify(layerName, assetId) {
-      eventbus.trigger('asset:saving');
-      backend.verifyPointAssets(layerName, assetId, function () {
-        eventbus.trigger('pointAsset:verified');
-      }, function () {
-        eventbus.trigger('asset:verificationFailed');
-      });
-      dirty = false;
     }
 
     function save() {
