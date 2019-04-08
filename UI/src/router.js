@@ -603,7 +603,7 @@
       unverifiedLinearAssetWorkList: function(layerName) {
         var typeId = _.find(models.linearAssets, function(assetSpec) { return assetSpec.layerName == layerName; }).typeId;
         eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
-      },
+      }
     });
 
     var router = new Router();
