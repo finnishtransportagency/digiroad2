@@ -256,15 +256,14 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Returns only car traffic roads as a topology and speed limits that match these road links.
     * Used by SpeedLimitService.get (by bounding box and a list of municipalities) and SpeedLimitService.get (by municipality)
     */
-  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false, isIntegrationImport: Boolean = false): (Seq[SpeedLimit], Seq[RoadLink]) = {
-    val topology = roadLinks.filter(_.isCarTrafficRoad(isIntegrationImport))
+  def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[SpeedLimit], Seq[RoadLink]) = {
     var speedLimitLinks: Seq[SpeedLimit] = Seq()
     if (showSpeedLimitsHistory) {
-      speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+      speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     } else {
-      speedLimitLinks = fetchSpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+      speedLimitLinks = fetchSpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     }
-    (speedLimitLinks, topology)
+    (speedLimitLinks, roadLinks)
   }
 
   def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedSpeedLimit] = {
