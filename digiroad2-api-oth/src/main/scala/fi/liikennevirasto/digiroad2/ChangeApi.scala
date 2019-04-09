@@ -358,7 +358,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               municipalityService.getMunicipalitiesNameAndIdByCode(Set(stop.pointAsset.municipalityCode))
             }
           val massTransitStop = pointAsset.asInstanceOf[PersistedMassTransitStop]
-          val busStopTypes = getPropertyValuesByPublicId("pysakin_tyyppi", massTransitStop.propertyData).map(x => x.propertyValue.toLong)
+          val busStopTypes = getPropertyValuesByPublicId("pysakin_tyyppi", massTransitStop.propertyData).map(x => x.propertyValue.toLong).toSet
           val modificationInfo = massTransitStop.modified.modificationTime match {
             case Some(_) => massTransitStop.modified
             case _ => massTransitStop.created

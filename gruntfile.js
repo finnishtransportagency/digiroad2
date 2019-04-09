@@ -90,22 +90,14 @@ module.exports = function(grunt) {
                     xforward: false
                 },
                 {
-                    context: '/digiroad/api-docs',
-                    host: '127.0.0.1',
+                    context: '/maasto',
+                    host: '172.17.204.46',
+                    // host: '172.17.206.180',
                     port: '8080',
                     https: false,
                     changeOrigin: true,
                     xforward: false,
-                    rewrite: {
-                      '^/digiroad/api-docs': '/api-docs'
-                    }
-                },
-                {
-                    context: '/maasto',
-                    host: 'oag.vayla.fi',
-                    https: false,
-                    changeOrigin: true,
-                    xforward: false
+                    rewrite: {'^/maasto': '/digiroad/maasto'}
                 },
                 {
                     context: '/vionice',
@@ -159,46 +151,46 @@ module.exports = function(grunt) {
       }
     },
     mocha: {
-        unit: {
-            options: {
-                // mocha options
-                mocha: {
-                    ignoreLeaks: false
-                },
-
-                // URLs passed through as options
-                urls: ['http://127.0.0.1:9001/test/test-runner.html'],
-
-                // Indicates whether 'mocha.run()' should be executed in
-                // 'bridge.js'
-                timeout: 50000,
-                run: false,
-                log: true,
-                reporter: 'Spec'
-            }
-        },
-        integration: {
-            options: {
-                mocha: {ignoreLeaks: true},
-                urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
-                run: false,
-                log: true,
-                timeout: 50000,
-                reporter: 'Spec'
-            }
-        },
+      unit: {
         options: {
-            growlOnSuccess: false
+          // mocha options
+          mocha: {
+            ignoreLeaks: false
+          },
+
+          // URLs passed through as options
+          urls: ['http://127.0.0.1:9001/test/test-runner.html'],
+
+          // Indicates whether 'mocha.run()' should be executed in
+          // 'bridge.js'
+          timeout: 50000,
+          run: false,
+          log: true,
+          reporter: 'Spec'
         }
+      },
+      integration: {
+        options: {
+          mocha: {ignoreLeaks: true},
+          urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
+          run: false,
+          log: true,
+          timeout: 50000,
+          reporter: 'Spec'
+        }
+      },
+      options: {
+        growlOnSuccess: false
+      }
     },
     watch: {
-        oth: {
-            files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-            tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
-            options: {
-                livereload: true
-            }
+      oth: {
+        files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
+        tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
+        options: {
+          livereload: true
         }
+      }
     },
     execute: {
       vallu_local_test: {
@@ -209,50 +201,58 @@ module.exports = function(grunt) {
       }
     },
     exec: {
+      prepare_openlayers: {
+        cmd: 'npm install',
+        cwd: './node_modules/openlayers/'
+      },
+      oth_build_openlayers: {
+        cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
+        cwd: './node_modules/openlayers/'
+      }
     }
   });
 
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-mocha');
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.loadNpmTasks('grunt-contrib-less');
-    grunt.loadNpmTasks('grunt-contrib-connect');
-    grunt.loadNpmTasks('grunt-contrib-clean');
-    grunt.loadNpmTasks('grunt-connect-proxy');
-    grunt.loadNpmTasks('grunt-execute');
-    grunt.loadNpmTasks('grunt-cache-breaker');
-    grunt.loadNpmTasks('grunt-env');
-    grunt.loadNpmTasks('grunt-preprocess');
-    grunt.loadNpmTasks('grunt-exec');
-    grunt.loadNpmTasks('grunt-properties-reader');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-mocha');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-less');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-clean');
+  grunt.loadNpmTasks('grunt-connect-proxy');
+  grunt.loadNpmTasks('grunt-execute');
+  grunt.loadNpmTasks('grunt-cache-breaker');
+  grunt.loadNpmTasks('grunt-env');
+  grunt.loadNpmTasks('grunt-preprocess');
+  grunt.loadNpmTasks('grunt-exec');
+  grunt.loadNpmTasks('grunt-properties-reader');
 
-    var target = grunt.option('target') || 'production';
+  var target = grunt.option('target') || 'production';
 
-    grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
+  grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
 
-    grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-    grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-    grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
-    grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
+  grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
-    grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
+  grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
-    grunt.registerTask('test-concat', ['concat']);
+  grunt.registerTask('test-concat', ['concat']);
 
-    grunt.registerTask('save_deploy_info',
-        function () {
-            var options = this.options({
-                file: 'revision.properties'
-            });
+  grunt.registerTask('save_deploy_info',
+    function () {
+      var options = this.options({
+        file: 'revision.properties'
+      });
 
-            var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
-            grunt.file.write(options.file, data);
+      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+      grunt.file.write(options.file, data);
 
-        }
-    );
+    }
+  );
 };
