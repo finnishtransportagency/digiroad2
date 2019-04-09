@@ -62,65 +62,73 @@ module.exports = function(grunt) {
     },
     clean: ['dist'],
     connect: {
-        oth: {
-            options: {
-                port: 9001,
-                base: ['dist', '.', 'UI'],
-                middleware: function(connect, opts) {
-                    var config = [
-                        // Serve static files.
-                        connect.static(opts.base[0]),
-                        connect.static(opts.base[1]),
-                        connect.static(opts.base[2]),
-                        // Make empty directories browsable.
-                        connect.directory(opts.base[2])
-                    ];
-                    var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
-                    config.unshift(proxy);
-                    return config;
-                }
+      oth: {
+        options: {
+          port: 9001,
+          base: ['dist', '.', 'UI'],
+          middleware: function(connect, opts) {
+            var config = [
+              // Serve static files.
+              connect.static(opts.base[0]),
+              connect.static(opts.base[1]),
+              connect.static(opts.base[2]),
+              // Make empty directories browsable.
+              connect.directory(opts.base[2])
+            ];
+            var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
+            config.unshift(proxy);
+            return config;
+          }
+        },
+        proxies: [
+          {
+            context: '/api',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          },
+          {
+            context: '/digiroad/api-docs',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+              '^/digiroad/api-docs': '/api-docs'
+            }
+          },
+          {
+            context: '/maasto',
+            host: 'oag.vayla.fi',
+            https: false,
+            changeOrigin: true,
+            xforward: false
+          },
+          {
+            context: '/vionice',
+            port: '443',
+            host: 'map.vionice.io',
+            https: true,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+              '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
             },
-            proxies: [
-                {
-                    context: '/api',
-                    host: '127.0.0.1',
-                    port: '8080',
-                    https: false,
-                    changeOrigin: false,
-                    xforward: false
-                },
-                {
-                    context: '/maasto',
-                    host: '172.17.204.46',
-                    // host: '172.17.206.180',
-                    port: '8080',
-                    https: false,
-                    changeOrigin: true,
-                    xforward: false,
-                    rewrite: {'^/maasto': '/digiroad/maasto'}
-                },
-                {
-                    context: '/vionice',
-                    port: '443',
-                    host: 'map.vionice.io',
-                    https: true,
-                    changeOrigin: true,
-                    xforward: false,
-                    rewrite: {
-                        '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
-                    },
-                    headers: {Host: 'map.vionice.io:443'}
-                },
-                {
-                    context: '/vkm',
-                    host: 'localhost',
-                    port: '8997',
-                    https: false,
-                    changeOrigin: false,
-                    xforward: false
-                }
-            ]
-        }
+            headers: {Host: 'map.vionice.io:443'}
+          },
+          {
+            context: '/vkm',
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          }
+        ]
+      }
     },
     less: {
       development: {
@@ -201,14 +209,6 @@ module.exports = function(grunt) {
       }
     },
     exec: {
-      prepare_openlayers: {
-        cmd: 'npm install',
-        cwd: './node_modules/openlayers/'
-      },
-      oth_build_openlayers: {
-        cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './node_modules/openlayers/'
-      }
     }
   });
 
@@ -234,9 +234,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:' + target, 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
