@@ -56,16 +56,16 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/",
                             "mkdir digiroad2-oracle/conf/lib/",
                             "cp -r tmp/ digiroad2-oracle/conf/lib/",
-                            "mkdir digiroad2-oracle/conf/dev/",
-                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                            "mkdir digiroad2-oracle/conf/ci-vahti/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
                         ].join(" && ")
 
                         STAGE_RUN_TESTS = [
                             "java",
                             "$java_opts",
-                            "-Ddigiroad2.env=dev",
+                            "-Ddigiroad2.env=ci-vahti",
                             "-jar",
                             "sbt-launch.jar",
                             "test"
@@ -92,7 +92,7 @@ pipeline {
 
                     docker.build(
                         "oth-backend-sbt",
-                        "${build_args} -f ci/Dockerfile.sbt ci"
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                 }
             }

@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pkill -f 'java.*digiroad2'
+pkill -f 'java.*ci-test'

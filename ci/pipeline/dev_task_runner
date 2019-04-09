@@ -20,7 +20,35 @@ pipeline {
                                      'dr2dev16',
                                      'dr2dev17',
                                      'dr2dev18'])
+
         string(name: 'BRANCH', defaultValue: 'master')
+
+        choice(name: 'TASK', choices: [
+                                       'import_road_addresses',
+                                       'recalculate_addresses',
+                                       'update_unaddressed',
+                                       'find_floating_road_addresses',
+                                       'import_complementary_road_address',
+                                       'update_road_addresses_geometry_no_complementary',
+                                       'update_road_addresses_geometry',
+                                       'update_project_link_SDO_GEOMETRY',
+                                       'import_road_address_change_test_data',
+                                       'apply_change_information_to_road_address_links',
+                                       'update_road_address_link_source',
+                                       'update_road_addresses_ely_and_road_type',
+                                       'import_road_address_history',
+                                       'fuse_multi_segment_road_addresses',
+                                       'check_road_network',
+                                       'check_lrm_position',
+                                       'fuse_road_address_with_history',
+                                       'import_road_names',
+                                       'test_integration_api_all_municipalities'
+                                       ])
+
+        choice(name: 'IMPORT_TABLE', choices: [
+                                       'VVH_TIEOSOITE_JOULUKUU2018',
+                                       'VVH_TIEOSOITE_SYYSKUU2018'
+                                       ])
     }
 
     options {
@@ -31,7 +59,9 @@ pipeline {
     stages {
         stage("Setup") {
             steps {
-                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
+                withCredentials([
+                                string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
+                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
                     script {
 
                         def ojdbc = 'ojdbc6'
@@ -56,18 +86,18 @@ pipeline {
                             "mkdir digiroad2-oracle/conf/",
                             "mkdir digiroad2-oracle/conf/lib/",
                             "cp -r tmp/ digiroad2-oracle/conf/lib/",
-                            "mkdir digiroad2-oracle/conf/dev/",
-                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/dev/bonecp.properties",
-                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/dev/bonecp.properties"
+                            "mkdir digiroad2-oracle/conf/ci-vahti/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
                         ].join(" && ")
 
-                        STAGE_FIXTURE_RESET = [
+                        STAGE_RUN_TASK = [
                             "./sbt",
                             "$java_opts",
-                            "-Ddigiroad2.env=dev",
+                            "-Ddigiroad2.env=ci-vahti",
                             "\'project digiroad2-oracle\'",
-                            "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture test\'"
+                            "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture $TASK $IMPORT_TABLE\'"
                         ].join(" ")
                     }
                 }
@@ -77,8 +107,6 @@ pipeline {
         stage("Prepare") {
             steps {
                 script {
-
-                    echo "Running publish... (skipped for now) "
 
                     def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
 
@@ -112,7 +140,7 @@ pipeline {
 
         }
 
-        stage("Fixture Reset") {
+        stage("Run Task") {
             agent {
                 docker {
                     image "oth-backend-sbt"
@@ -121,7 +149,11 @@ pipeline {
             }
             steps {
                 sh STAGE_SETUP_ORACLE
-                sh STAGE_FIXTURE_RESET
+                withCredentials([file(credentialsId: 'CONV_DATABASE', variable: 'CONV_DATABASE')]) {
+                    sh "cp ${CONV_DATABASE} digiroad2-oracle/conf/ci-vahti/"
+                }
+
+                sh STAGE_RUN_TASK
             }
         }
     }

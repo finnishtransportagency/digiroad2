@@ -1,0 +1,287 @@
+def get_environment() {
+    return "production"
+}
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'REVISION', defaultValue: 'master')
+    }
+
+    environment {
+        NOTIFY_SLACK_SUBJECT = "${JOB_NAME} - <${RUN_DISPLAY_URL}|${BUILD_DISPLAY_NAME}>"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+            when {
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                script {
+
+                       def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
+                        ].join(" ")
+
+                        STAGE_FRONTEND_BUILD_CMD = [
+                            "npm install",
+                            "grunt deploy --target=${get_environment()?.trim()}",
+                            "cp -r ${WORKSPACE}/dist ~/package/UI/",
+                            "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
+                            "cd ~/package/UI"
+                        ].join(" && ")
+
+                        STAGE_BACKEND_BUILD_CMD = [
+                            "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                            "cp -r ${WORKSPACE}/target/scala-2.11/oth-assembly-0.1.0-SNAPSHOT.jar ~/package/"
+                        ].join(" && ")
+
+                        STAGE_PACKAGE_CMD = [
+                            "cd ~/package/",
+                            "jar -cvf oth-assembly-0.1.0.war *"
+                        ].join(" && ")
+
+                        STAGE_PUBLISH_CMD = [
+                            "mvn deploy:deploy-file",
+                            "-DgroupId=fi.liikennevirasto.digiroad2",
+                            "-DartifactId=oth-${get_environment()?.trim()}",
+                            "-Dversion=1.0.0-${BUILD_ID}",
+                            "-DgeneratePom=true",
+                            "-Dpackaging=war",
+                            "-DrepositoryId=nexus3",
+                            "-Durl=http://livibuild04.vally.local/nexus/repository/oth/",
+                            "-Dfile=/home/jenkins/package/oth-assembly-0.1.0.war",
+                            "-q",
+                            "--batch-mode"
+                        ].join(" ")
+
+                        STAGE_DEPLOY_NODE1_CMD = [
+                            "cd ~/",
+                            "bundle exec cap production deploy"
+                        ].join(" && ")
+
+                        STAGE_DEPLOY_NODE2_CMD = [
+                            "cd ~/",
+                            "bundle exec cap production2 deploy"
+                        ].join(" && ")
+                }
+            }
+        }
+        stage("Prepare") {
+            when {
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                sh "cp /data1/ci/maven/* ci/config/"
+                script {
+
+                    echo "Running publish... (skipped for now) "
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+                    docker.build(
+                        "oth-frontend",
+                        "${build_args} -f ci/docker/Dockerfile.node ci"
+                    )
+                    docker.build(
+                        "oth-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
+                    )
+                    docker.build(
+                        "oth-maven-publish",
+                        "${build_args} -f ci/docker/Dockerfile.maven ci"
+                    )
+                    docker.build(
+                        "oth-cap",
+                        "${build_args} -f ci/docker/Dockerfile.ruby ci"
+                     )
+                }
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+        stage("Build: Frontend") {
+            agent {
+                docker {
+                    image "oth-frontend"
+                    reuseNode true
+                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                sh STAGE_FRONTEND_BUILD_CMD
+                echo "Running frontend build... (skipped for now)"
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+		stage("Build: Backend") {
+            agent {
+                docker {
+                    image "oth-backend-sbt"
+                    reuseNode true
+                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                echo "Build and run backend tests"
+                sh STAGE_SETUP_ORACLE
+                sh STAGE_BACKEND_BUILD_CMD
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+        stage("Package & Publish") {
+            agent {
+                docker {
+                    image "oth-maven-publish"
+                    reuseNode true
+                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                echo "Packaging and publishing release to Nexus"
+                sh STAGE_PACKAGE_CMD
+                sh STAGE_PUBLISH_CMD
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+       stage("Deploy Node 1") {
+
+            agent {
+                docker {
+                    image "oth-cap"
+                    reuseNode true
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_DEPLOY_NODE1_CMD
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+       stage("Deploy Node 2") {
+
+            agent {
+                docker {
+                    image "oth-cap"
+                    reuseNode true
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_DEPLOY_NODE2_CMD
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+
+    }
+    post {
+        always {
+            //slackSend(
+            //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+            //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            //)
+            deleteDir()
+        }
+    }
+}

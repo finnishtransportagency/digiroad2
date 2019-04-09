@@ -9,11 +9,17 @@ RUN adduser -D -S -u ${JENKINS_UID} jenkins
 #Create scala sbt folders
 RUN mkdir /home/jenkins/.m2 && \
     mkdir /home/jenkins/.ivy && \
-    mkdir /home/jenkins/.sbt
+    mkdir /home/jenkins/.sbt  && \
+    mkdir /home/jenkins/package && \
+    mkdir /home/jenkins/package/UI
+
+#Sbt repositories config
+COPY config/repositories /home/jenkins/.sbt/repositories
 
 #Updates and bash
 RUN apk update && apk upgrade && \
-    apk add bash
+    apk add bash && \
+    apk add curl
 
 #Install java
 RUN apk add openjdk8-jre
@@ -23,12 +29,12 @@ RUN curl -L https://downloads.typesafe.com/scala/$SCALA_VERSION/scala-$SCALA_VER
     tar xzf "scala-$SCALA_VERSION.tgz" -C /home/jenkins/
 
 #Install sbt
-RUN wget --no-verbose https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz && \
+RUN curl -L https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz --output sbt-$SBT_VERSION.tgz && \
     tar xzf "sbt-$SBT_VERSION.tgz" -C /home/jenkins/
 
 ENV PATH "/home/jenkins/sbt/bin:$PATH"
 ENV PATH "/home/jenkins/scala-$SCALA_VERSION/bin:$PATH"
 
 COPY config/repositories /home/jenkins/.sbt/repositories
-RUN chown -R jenkins /home/jenkins && \
-    chmod 777 /home/jenkins
+RUN chown -R jenkins /home/jenkins
+USER jenkins

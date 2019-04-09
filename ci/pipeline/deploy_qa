@@ -1,16 +1,14 @@
-import java.net.URI
 def get_environment() {
-    //if (env.BRANCH_NAME.startsWith("master")) { return "Staging" }
-    return "staging"
-}
-
-def get_pollSCM_trigger() {
-    if (env.BRANCH_NAME.equals("master")) { return "* * * * *" }
-    return ""
+    return "testing"
 }
 
 pipeline {
     agent any
+
+    parameters {
+        string(name: 'REVISION', defaultValue: 'master')
+    }
+
     environment {
         NOTIFY_SLACK_SUBJECT = "${JOB_NAME} - <${RUN_DISPLAY_URL}|${BUILD_DISPLAY_NAME}>"
     }
@@ -18,9 +16,7 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: "25"))
         disableConcurrentBuilds()
     }
-    triggers {
-        pollSCM(get_pollSCM_trigger())
-    }
+
     stages {
         stage("Setup") {
             when {
@@ -29,47 +25,38 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'), file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS')]) {
-                    script {
+                script {
 
-                        STAGE_FRONTEND_BUILD_CMD = [
-                            "mkdir tmp",
-                            "npm install",
-                            "export TMPDIR=/home/jenkins/tmp",
-                            "yarn install",
-                            "grunt deploy --target=${get_environment()?.trim()}",
-                            "cp -r /data1/jenkins/workspace/oth/Deploy-Staging/dist /home/jenkins/package/oth-UI/",
-                            "cp -r /data1/jenkins/workspace/oth/Deploy-Staging/node_modules /home/jenkins/package/oth-UI/",
-                            "cd /home/jenkins/package/oth-UI"
-                        ].join(" && ")
-
-                        STAGE_FRONTEND_TEST_CMD = [
-                            "grunt test"
-                        ].join(" && ")
-                        def sbt_proxy = new URI(http_proxy)
-
-                        def java_opts = [
+                       def java_opts = [
                             "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
                             "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
                             "-Dhttp.nonProxyHosts=*.vally.local",
                             "-DproxySet=true"
                         ].join(" ")
 
+                        STAGE_FRONTEND_BUILD_CMD = [
+                            "npm install",
+                            "grunt deploy --target=${get_environment()?.trim()}",
+                            "cp -r ${WORKSPACE}/dist ~/package/UI/",
+                            "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
+                            "cd ~/package/UI"
+                        ].join(" && ")
+
                         STAGE_BACKEND_BUILD_CMD = [
-                            "./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                            "cp -r /data1/jenkins/workspace/oth/Deploy-Staging/target/scala-2.11/oth-assembly-0.1.0-SNAPSHOT.jar /home/jenkins/package/"
+                            "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                            "cp -r ${WORKSPACE}/target/scala-2.11/oth-assembly-0.1.0-SNAPSHOT.jar ~/package/"
                         ].join(" && ")
 
                         STAGE_PACKAGE_CMD = [
-                            "cd /home/jenkins/package/",
+                            "cd ~/package/",
                             "jar -cvf oth-assembly-0.1.0.war *"
                         ].join(" && ")
 
                         STAGE_PUBLISH_CMD = [
                             "mvn deploy:deploy-file",
-                            "-DgroupId=fi.liikennevirasto.oth",
-                            "-DartifactId=oth-staging",
-                            "-Dversion=1.0.0",
+                            "-DgroupId=fi.liikennevirasto.digiroad2",
+                            "-DartifactId=oth-${get_environment()?.trim()}",
+                            "-Dversion=1.0.0-${BUILD_ID}",
                             "-DgeneratePom=true",
                             "-Dpackaging=war",
                             "-DrepositoryId=nexus3",
@@ -79,18 +66,15 @@ pipeline {
                             "--batch-mode"
                         ].join(" ")
 
-                        STAGE_DEPLOY_CMD = [
-                            "cd /data1/jenkins/workspace/oth/Deploy-Staging@tmp/",
-                            "ls -l",
-                            "cd /data1/jenkins/workspace/oth/Deploy-Staging@tmp/secretFiles/",
-                            "ls -l",
-                            "cd /home/jenkins/",
-                            "mkdir /home/jenkins/.ssh/",
-                            "cp ${SSH_CONFIG} /home/jenkins/.ssh/",
-                            "cp ${KNOWN_HOSTS} /home/jenkins/.ssh/",
-                            "bundle exec cap staging deploy"
+                        STAGE_DEPLOY_NODE1_CMD = [
+                            "cd ~/",
+                            "bundle exec cap testing deploy"
                         ].join(" && ")
-                    }
+
+                        STAGE_DEPLOY_NODE2_CMD = [
+                            "cd ~/",
+                            "bundle exec cap testing2 deploy"
+                        ].join(" && ")
                 }
             }
         }
@@ -114,20 +98,20 @@ pipeline {
                         "--build-arg JENKINS_UID=${jenkins_uid}"
                     ].join(" ")
                     docker.build(
-                        "oth-frontend-node",
-                        "${build_args} -f ci/Dockerfile.node ci"
+                        "oth-frontend",
+                        "${build_args} -f ci/docker/Dockerfile.node ci"
                     )
                     docker.build(
                         "oth-backend-sbt",
-                        "${build_args} -f ci/Dockerfile.sbt ci"
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                     docker.build(
                         "oth-maven-publish",
-                        "${build_args} -f ci/Dockerfile.maven ci"
+                        "${build_args} -f ci/docker/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "oth-capistrano",
-                        "${build_args} -f ci/Dockerfile.ruby ci"
+                        "oth-cap",
+                        "${build_args} -f ci/docker/Dockerfile.ruby ci"
                      )
                 }
             }
@@ -143,7 +127,7 @@ pipeline {
         stage("Build: Frontend") {
             agent {
                 docker {
-                    image "oth-frontend-node"
+                    image "oth-frontend"
                     reuseNode true
                     args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
@@ -156,7 +140,7 @@ pipeline {
             }
             steps {
                 sh STAGE_FRONTEND_BUILD_CMD
-                //echo "Running frontend build... (skipped for now)"
+                echo "Running frontend build... (skipped for now)"
             }
             //post {
             //    failure {
@@ -182,6 +166,8 @@ pipeline {
                 }
             }
             steps {
+                echo "Build and run backend tests"
+                sh STAGE_SETUP_ORACLE
                 sh STAGE_BACKEND_BUILD_CMD
             }
             //post {
@@ -208,9 +194,9 @@ pipeline {
                 }
             }
             steps {
+                echo "Packaging and publishing release to Nexus"
                 sh STAGE_PACKAGE_CMD
                 sh STAGE_PUBLISH_CMD
-				//echo "Running publish... (skipped for now)"
             }
             //post {
             //    failure {
@@ -221,12 +207,12 @@ pipeline {
             //    }
             //}
         }
-       stage("Deploy") {
+       stage("Deploy Node 1") {
+
             agent {
                 docker {
-                    image "oth-capistrano"
+                    image "oth-cap"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -236,14 +222,14 @@ pipeline {
                 }
             }
             steps {
-                //withCredentials([sshUserPrivateKey(credentialsId: 'gateway', keyFileVariable: 'gateway', passphraseVariable: '', usernameVariable: '')]) {
-                //    sh '''
-                //        ifconfig
-                //    '''
-                    sh STAGE_DEPLOY_CMD
-                //}
-				//echo "Running deploy... (skipped for now)"
-				//sh "ssh 172.17.204.46"
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_DEPLOY_NODE1_CMD
             }
             //post {
             //    failure {
@@ -254,6 +240,40 @@ pipeline {
             //    }
             //}
         }
+       stage("Deploy Node 2") {
+
+            agent {
+                docker {
+                    image "oth-cap"
+                    reuseNode true
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_DEPLOY_NODE2_CMD
+            }
+            //post {
+            //    failure {
+                    //slackSend(
+                    //    color: "danger",
+                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    //)
+            //    }
+            //}
+        }
+
     }
     post {
         always {

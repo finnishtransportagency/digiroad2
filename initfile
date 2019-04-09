@@ -7,12 +7,12 @@ SKIP_VALLU=${SKIP_VALLU:-0}
 case "$1" in
   start)
     runuser web -lc $"
-      cd /home/web/digiroad2/current
+      cd /home/web/ci-test/current
 	    ./start.sh
 	    [[ $SKIP_VALLU -gt 0 ]] || nohup grunt vallu-test-server >> ./src/main/webapp/vallu-server.log &"
 	;;
   stop)
-    cd /home/web/digiroad2/current
+    cd /home/web/ci-test/current
     ./stop.sh
     pkill -f vallu_test_server.js || true
 	;;
