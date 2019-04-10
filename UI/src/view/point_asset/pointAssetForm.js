@@ -139,6 +139,27 @@ root.PointAssetForm = function() {
     return date ? (date + ' / ' + username) : '-';
   };
 
+  /*_.has(asset, 'propertyData')*/
+
+  var suggestedAssetElement = function(checked) {
+    var checkedValue = checked ? 'checked' : '';
+    return '<div class="form-group editable form-obstacle">' +
+            '<label class="control-label">VIHJETIETO</label>' +
+            '<div class="checkbox" >' +
+              '<input type="checkbox"' + checkedValue + '>' +
+            '</div>' +
+          '</div>';
+  };
+
+  var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
+    if(authorizationPolicy.canSuggestAsset(selectedAsset))
+      return suggestedAssetElement(false);
+    else if(authorizationPolicy.canEditSuggestedAsset(selectedAsset))
+      return suggestedAssetElement(true);
+    else
+      return '';
+  };
+
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
   this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
@@ -149,6 +170,7 @@ root.PointAssetForm = function() {
         '<div class="wrapper">' +
         '  <div class="form form-horizontal form-dark form-pointasset">' +
         me.renderValueElement(asset, collection) +
+        suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
         '  </div>' +
         '</div>';
     } else {
@@ -163,7 +185,8 @@ root.PointAssetForm = function() {
         '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
         userInformationLog(authorizationPolicy, selectedAsset) +
-        me.renderValueElement(asset, collection) +
+        me.renderValueElement(asset, collection, authorizationPolicy) +
+        suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
         '    <div class="form-group form-group delete">' +
         '      <div class="checkbox" >' +
         '        <input type="checkbox">' +
@@ -195,6 +218,7 @@ root.PointAssetForm = function() {
     rootElement.find('.form-controls').toggle(!readOnly);
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
+    rootElement.find('.editable .checkbox').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
   };
 
