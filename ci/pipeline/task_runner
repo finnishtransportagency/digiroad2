@@ -18,26 +18,59 @@ pipeline {
                                      ])
 
         choice(name: 'TASK', choices: [
-                                       'import_road_addresses',
-                                       'recalculate_addresses',
-                                       'update_unaddressed',
-                                       'find_floating_road_addresses',
-                                       'import_complementary_road_address',
-                                       'update_road_addresses_geometry_no_complementary',
-                                       'update_road_addresses_geometry',
-                                       'update_project_link_SDO_GEOMETRY',
-                                       'import_road_address_change_test_data',
-                                       'apply_change_information_to_road_address_links',
-                                       'update_road_address_link_source',
-                                       'update_road_addresses_ely_and_road_type',
-                                       'import_road_address_history',
-                                       'fuse_multi_segment_road_addresses',
-                                       'check_road_network',
-                                       'check_lrm_position',
-                                       'fuse_road_address_with_history',
-                                       'import_road_names',
-                                       'test_integration_api_all_municipalities'
-                                       ])
+                                        'check_TR_bus_stops_without_OTH_LiviId',
+    								    'set_TR_bus_stops_without_OTH_LiviId',
+        							    'fill_lane_amounts_in_missing_road_links',
+        								'check_bus_stop_matching_between_OTH_TR',
+        								'import_all_trafficVolume_from_TR_to_OTH',
+        								'import_all_litRoad_from_TR_to_OTH',
+        								'import_all_trafficSigns_from_TR_to_OTH',
+        								'import_all_roadWidth_from_TR_to_OTH',
+        								'update_roadWidth_from_TR_to_OTH',
+        								'update_litRoad_from_TR_to_OTH',
+        								'import_all_speedLimits_from_TR_to_OTH',
+        								'import_all_pavedRoad_from_TR_to_OTH',
+        								'import_all_massTransitLane_from_TR_to_OTH',
+        								'import_all_damagedByThaw_from_TR_to_OTH',
+        								'import_all_europeanRoad_from_TR_to_OTH',
+        								'update_pavedRoad_from_TR_to_OTH',
+        								'update_massTransitLane_from_TR_to_OTH',
+        								'update_damagedByThaw_from_TR_to_OTH',
+        								'update_europeanRoad_from_TR_to_OTH',
+        								'update_areas_on_asset',
+        								'update_OTH_BS_with_TR_info',
+        								'import_speed_limit_asset_from_TR_to_OTH',
+        								'fill_roadWidth_in_road_links',
+        								'verify_inaccurate_speed_limit_assets',
+        								'update_traffic_direction_on_roundabouts',
+        								'update_information_source_on_existing_assets',
+        								'import_municipality_codes',
+        								'update_municipalities',
+        								'update_information_source_on_paved_road_assets',
+        								'remove_existing_trafficSigns_duplicates',
+        								'create_manoeuvres_using_traffic_signs',
+        								'update_floating_stops_on_terminated_roads',
+        								'update_private_roads',
+        								'add_geometry_to_linear_assets',
+        								'merge_additional_panels_to_trafficSigns',
+        								'traffic_sign_extract',
+        								'remove_unnecessary_unknown_speedLimits',
+        								'list_incorrect_SpeedLimits_created'
+                                        ])
+
+        choice(name: 'TRAFFICSIGNGROUP', choices: [
+                                        '',
+    								    'SpeedLimits',
+        							    'RegulatorySigns',
+        								'MaximumRestrictions',
+        								'GeneralWarningSigns',
+        								'ProhibitionsAndRestrictions',
+        								'MandatorySigns',
+        								'PriorityAndGiveWaySigns',
+        								'InformationSigns',
+        								'ServiceSigns',
+        								'AdditionalPanels'
+                                        ])
 
     }
 
@@ -49,23 +82,19 @@ pipeline {
     stages {
         stage("Setup") {
 
-
             steps {
 
                     //get_server()
                     script {
-                        def execution_target = get_server(params.TARGET)
-
+                        def EXECUTION_TARGET = get_server(params.TARGET)
                         def IMPORT_TABLE = 'VVH_TIEOSOITE_JOULUKUU2018'
 
-                        //def EXECUTION_TAGET = get_server(${params.TARGET})
-
                         STAGE_RUN_TASK = [
-                            "ssh $execution_target cd /home/web/oth/current && echo YES |",
+                            "ssh $EXECUTION_TARGET \'cd /home/web/oth/current && echo YES |",
                              "/home/web/oth/current/./sbt",
                              "-Ddigiroad2.env=${TARGET}",
-                             "\'project digiroad2-oracle\'",
-                             "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${IMPORT_TABLE}\'"
+                             "\"project digiroad2-oracle\"",
+                             "\"test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${IMPORT_TABLE}\"\'"
                         ].join(" ")
 
                     }

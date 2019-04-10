@@ -4,8 +4,7 @@ def get_environment() {
 }
 
 def get_pollSCM_trigger() {
-    if (env.BRANCH_NAME.equals("master")) { return "* * * * *" }
-    return ""
+    return "* * * * *"
 }
 
 pipeline {
@@ -28,7 +27,9 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'), string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
+                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
+                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE'),
+                                string(credentialsId: 'JENKINS_DB', variable: 'JENKINS_DB')]) {
                     script {
 
                         def ojdbc = 'ojdbc6'
@@ -38,11 +39,11 @@ pipeline {
                         def sdoutl = 'sdoutl'
                         def sbt_proxy = new URI(http_proxy)
 
-                         def java_opts = [
-                                         "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
-                                         "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
-                                         "-Dhttp.nonProxyHosts=*.vally.local",
-                                         "-DproxySet=true"
+                        def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
                         ].join(" ")
 
                         STAGE_SETUP_ORACLE = [
@@ -53,9 +54,10 @@ pipeline {
                             "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoapl}.jar",
                             "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoutl}.jar",
                             "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
-                            "echo 'bonecp.username=dr2dev13' >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
-                            "echo 'bonecp.password=dr2dev13' >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
+                            "echo 'bonecp.username='${JENKINS_DB} >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='${JENKINS_DB} >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
                          ].join(" && ")
+
 
                         STAGE_FRONTEND_BUILD_CMD = [
                             "npm install",
@@ -137,14 +139,14 @@ pipeline {
                      )
                 }
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
         stage("Build: Frontend") {
             agent {
@@ -164,14 +166,14 @@ pipeline {
                 sh STAGE_FRONTEND_BUILD_CMD
                 echo "Running frontend build... (skipped for now)"
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
 		stage("Build: Backend") {
             agent {
@@ -192,14 +194,14 @@ pipeline {
                 sh STAGE_SETUP_ORACLE
                 sh STAGE_BACKEND_BUILD_CMD
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
         stage("Package & Publish") {
             agent {
@@ -220,16 +222,17 @@ pipeline {
                 sh STAGE_PACKAGE_CMD
                 sh STAGE_PUBLISH_CMD
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
        stage("Deploy") {
+
             agent {
                 docker {
                     image "oth-cap"
@@ -245,31 +248,29 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
-                                                    file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
-                                                    file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
-                   sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
-                   sh "cp ${ID_RSA} ~/.ssh/"
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
                 }
                 sh STAGE_DEPLOY_CMD
-				//echo "Running deploy... (skipped for now)"
-				//sh "ssh 172.17.204.46"
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
     }
     post {
         always {
-            //slackSend(
-            //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
-            //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
-            //)
+            slackSend(
+                color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+                message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            )
             deleteDir()
         }
     }

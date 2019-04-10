@@ -115,14 +115,14 @@ pipeline {
                      )
                 }
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
         stage("Build: Frontend") {
             agent {
@@ -142,14 +142,14 @@ pipeline {
                 sh STAGE_FRONTEND_BUILD_CMD
                 echo "Running frontend build... (skipped for now)"
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
 		stage("Build: Backend") {
             agent {
@@ -170,14 +170,14 @@ pipeline {
                 sh STAGE_SETUP_ORACLE
                 sh STAGE_BACKEND_BUILD_CMD
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
         stage("Package & Publish") {
             agent {
@@ -198,14 +198,14 @@ pipeline {
                 sh STAGE_PACKAGE_CMD
                 sh STAGE_PUBLISH_CMD
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
        stage("Deploy Node 1") {
 
@@ -231,14 +231,14 @@ pipeline {
                 }
                 sh STAGE_DEPLOY_NODE1_CMD
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
        stage("Deploy Node 2") {
 
@@ -264,23 +264,23 @@ pipeline {
                 }
                 sh STAGE_DEPLOY_NODE2_CMD
             }
-            //post {
-            //    failure {
-                    //slackSend(
-                    //    color: "danger",
-                    //    message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
-                    //)
-            //    }
-            //}
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
         }
 
     }
     post {
         always {
-            //slackSend(
-            //    color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
-            //    message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
-            //)
+            slackSend(
+                color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+                message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            )
             deleteDir()
         }
     }
