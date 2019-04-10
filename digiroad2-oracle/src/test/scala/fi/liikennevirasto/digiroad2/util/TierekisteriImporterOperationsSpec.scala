@@ -1630,4 +1630,39 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     traffic.converter(SpeedLimitSign, "some text 100kmh some text") should be ("100")
     traffic.converter(SpeedLimitSign, "100") should be ("100")
   }
+
+  test("Only state roads are valid targets for TR assets") {
+    TestTransactions.runWithRollback() {
+
+      val testLitRoad = new TestLitRoadOperations
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val startAddressMValue = 0L
+      val endAddressMValue = 250L
+
+      val tr = TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra2 = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5002, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val ra3 = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5003, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val vvhRoadLink2 = VVHRoadlink(5002, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val vvhRoadLink3 = VVHRoadlink(5003, 235, Nil, Private, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+
+      when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra, ra2, ra3))
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink, vvhRoadLink2, vvhRoadLink3))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink, vvhRoadLink2, vvhRoadLink3))
+
+      testLitRoad.importAssets()
+      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001, 5002, 5003), LinearAssetTypes.numericValuePropertyId)
+
+      asset.size should be (1)
+
+    }
+  }
 }

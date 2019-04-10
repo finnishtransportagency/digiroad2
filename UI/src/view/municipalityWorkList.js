@@ -11,6 +11,13 @@
     var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
 
+    var addSpinner = function () {
+      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    };
+
+    var removeSpinner = function(){
+      $('.spinner-overlay').remove();
+    };
 
     this.initialize = function(mapBackend){
       backend = mapBackend;
@@ -49,7 +56,9 @@
     this.createVerificationForm = function(municipality) {
       $('#tableData').hide();
       $('.filter-box').hide();
-      if (showFormBtnVisible) $('.page').attr('class', 'page-content-box').find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
+      var page = $('.page');
+      page.attr('class', 'page-content-box');
+      if (showFormBtnVisible) page.find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
           me.generateWorkList(municipalityList);
         })
       );
@@ -59,8 +68,10 @@
 
     this.reloadForm = function(municipalityId){
       $('#formTable').remove();
+      addSpinner();
       backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
         $('#work-list .work-list').html(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
+        removeSpinner();
       });
     };
 

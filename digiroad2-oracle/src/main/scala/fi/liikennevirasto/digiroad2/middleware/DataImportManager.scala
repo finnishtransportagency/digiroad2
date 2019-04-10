@@ -12,11 +12,11 @@ sealed trait AdditionalImportValue {
   def toJson: Any
 }
 
-case class AdministrativeValues(administrativeClasses: Set[AdministrativeClass]) extends AdditionalImportValue {
+case class AdministrativeValues(administrativeClasses: AdministrativeClass) extends AdditionalImportValue {
   override def toJson: Any = administrativeClasses
 }
 
-case class NumericValues(values: Set[Int]) extends  AdditionalImportValue {
+case class NumericValues(values: Int) extends  AdditionalImportValue {
   override def toJson: Any = values
 }
 
@@ -33,13 +33,13 @@ class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
 
     dataImporterInfo.assetTypeName match {
       case TrafficSigns.layerName =>
-        trafficSignCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.flatMap(_.asInstanceOf[NumericValues].values))
+        trafficSignCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.map(_.asInstanceOf[NumericValues].values))
       case MaintenanceRoadAsset.layerName =>
         maintenanceRoadCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user.username)
       case "roadLinks" =>
         roadLinkCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user.username)
       case MassTransitStopAsset.layerName =>
-        massTransitStopCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.flatMap(_.asInstanceOf[AdministrativeValues].administrativeClasses))
+        massTransitStopCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.map(_.asInstanceOf[AdministrativeValues].administrativeClasses))
       case _ =>
     }
   }
