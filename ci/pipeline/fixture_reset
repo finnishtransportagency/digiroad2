@@ -20,7 +20,7 @@ pipeline {
                                      'dr2dev16',
                                      'dr2dev17',
                                      'dr2dev18'],
-                                     description: 'Choose your database. Do not reset other developers' databases unless asked to.')
+                                     description: 'Choose your database. Do not reset other developers databases unless asked to.')
         string(name: 'BRANCH', defaultValue: 'master', description: 'Choose branch where fixture is loaded from (uses branch HEAD) or an individual commit hash (abcdef0badc0de...)')
     }
 
