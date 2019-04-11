@@ -149,8 +149,8 @@ root.PointAssetForm = function() {
       var checkedValue = selectedAsset.get().isSuggested ? 'checked' : '';
       return '<div class="form-group editable form-obstacle">' +
               '<label class="control-label">VIHJETIETO</label>' +
-              '<div class="checkbox" id="suggested-asset">' +
-                '<input type="checkbox"' + checkedValue + '>' +
+              '<div class="checkbox">' +
+                '<input type="checkbox" id="suggested-asset"' + checkedValue + '>' +
               '</div>' +
             '</div>';
     } else {
@@ -186,8 +186,8 @@ root.PointAssetForm = function() {
         me.renderValueElement(asset, collection, authorizationPolicy) +
         suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
         '    <div class="form-group form-group delete">' +
-        '      <div class="checkbox" id="delete-checkbox" >' +
-        '        <input type="checkbox">' +
+        '      <div class="checkbox">' +
+        '        <input type="checkbox" id="delete-checkbox">' +
         '      </div>' +
         '      <p class="form-control-static">Poista</p>' +
         '    </div>' +
