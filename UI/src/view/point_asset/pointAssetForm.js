@@ -87,9 +87,14 @@ root.PointAssetForm = function() {
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
 
-    rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
+    rootElement.find('#delete-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
+    });
+
+    rootElement.find('#suggested-asset').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({isSuggested: eventTarget.prop('checked')});
     });
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
@@ -139,25 +144,18 @@ root.PointAssetForm = function() {
     return date ? (date + ' / ' + username) : '-';
   };
 
-  /*_.has(asset, 'propertyData')*/
-
-  var suggestedAssetElement = function(checked) {
-    var checkedValue = checked ? 'checked' : '';
-    return '<div class="form-group editable form-obstacle">' +
-            '<label class="control-label">VIHJETIETO</label>' +
-            '<div class="checkbox" >' +
-              '<input type="checkbox"' + checkedValue + '>' +
-            '</div>' +
-          '</div>';
-  };
-
   var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
-    if(authorizationPolicy.canSuggestAsset(selectedAsset))
-      return suggestedAssetElement(false);
-    else if(authorizationPolicy.canEditSuggestedAsset(selectedAsset))
-      return suggestedAssetElement(true);
-    else
+    if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
+      var checkedValue = selectedAsset.get().isSuggested ? 'checked' : '';
+      return '<div class="form-group editable form-obstacle">' +
+              '<label class="control-label">VIHJETIETO</label>' +
+              '<div class="checkbox" id="suggested-asset">' +
+                '<input type="checkbox"' + checkedValue + '>' +
+              '</div>' +
+            '</div>';
+    } else {
       return '';
+    }
   };
 
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
@@ -188,7 +186,7 @@ root.PointAssetForm = function() {
         me.renderValueElement(asset, collection, authorizationPolicy) +
         suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
         '    <div class="form-group form-group delete">' +
-        '      <div class="checkbox" >' +
+        '      <div class="checkbox" id="delete-checkbox" >' +
         '        <input type="checkbox">' +
         '      </div>' +
         '      <p class="form-control-static">Poista</p>' +

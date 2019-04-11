@@ -73,13 +73,8 @@
       });
     };
 
-    this.canSuggestAsset = function(selectedAsset) {
-      return selectedAsset.isNew() && me.isOperator();
-    };
-
-    this.canEditSuggestedAsset = function(selectedAsset) {
-      var isSuggestedAsset = selectedAsset.get();
-      return !selectedAsset.isNew() && (me.isOperator() || me.isMunicipalityMaintainer());
+    this.handleSuggestedAsset = function(selectedAsset) {
+      return (selectedAsset.isNew() && me.isOperator()) || (selectedAsset.get().isSuggested && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
 
   };
