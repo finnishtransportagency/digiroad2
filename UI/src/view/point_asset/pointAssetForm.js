@@ -147,11 +147,9 @@ root.PointAssetForm = function() {
   var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
     if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
       var checkedValue = selectedAsset.get().isSuggested ? 'checked' : '';
-      return '<div class="form-group editable form-obstacle">' +
-              '<label class="control-label">VIHJETIETO</label>' +
-              '<div class="checkbox">' +
-                '<input type="checkbox" id="suggested-asset"' + checkedValue + '>' +
-              '</div>' +
+      return '<div class="form-group editable form-' + me.pointAsset.layerName + '">' +
+              '<label class="control-label">Vihjetieto</label>' +
+              '<input type="checkbox" class="suggested-checkbox" id="suggested-asset"' + checkedValue + '>' +
             '</div>';
     } else {
       return '';
