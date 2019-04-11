@@ -106,7 +106,6 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
 
     withDynTransaction {
-      //TODO remove that get to use the new info
       dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
     }
   }

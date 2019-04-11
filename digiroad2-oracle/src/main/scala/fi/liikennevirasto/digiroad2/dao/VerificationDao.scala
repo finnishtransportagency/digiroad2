@@ -88,23 +88,16 @@ class VerificationDao {
   def getAssetVerification(municipalityCode: Int, assetTypeCode: Int): Seq[VerificationInfo] = {
     val verifiedAssetType =
       sql"""
-       SELECT tableResult.id, tableResult.name_fi, tableResult.verified_by, tableResult.verified_date, tableResult.assetId, tableResult.assetName,
-              tableResult.verified, tableResult.geometry_type, tableResult.counting
-         FROM
-         (SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
+          SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName,
                 (CASE
                     WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears
                       THEN 1
                       ELSE 0
-                END) AS verified, atype.GEOMETRY_TYPE, number_of_assets AS counting
+                END) AS verified, atype.GEOMETRY_TYPE, mv.number_of_assets AS counting
                 FROM municipality m
                 JOIN asset_type atype ON atype.id = $assetTypeCode
-                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id and (mv.valid_to is null or mv.valid_to > sysdate) AND mv.asset_type_id = atype.id
+                LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id and mv.valid_to is null AND mv.asset_type_id = atype.id
                 WHERE  m.id = $municipalityCode
-                GROUP BY m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id, atype.name,
-                      (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
-                      (CASE WHEN MONTHS_BETWEEN(sysdate, mv.verified_date) < $TwoYears THEN 1 ELSE 0 END),
-                      atype.GEOMETRY_TYPE ) tableResult
         """.as[(Int, String, Option[String], Option[DateTime], Int, String, Boolean, String, Int)].list
 
     verifiedAssetType.map { case (municipality, municipalityName, verifiedBy, verifiedDate, assetType, assetTypeName, verified, geometryType, counter) =>
@@ -117,25 +110,14 @@ class VerificationDao {
       sql"""
           SELECT m.id, m.name_fi, mv.verified_by, mv.verified_date, atype.id AS assetId, atype.name AS assetName, atype.geometry_type, mv.number_of_assets, mv.refresh_date
           FROM municipality m
-          JOIN asset_type atype ON atype.verifiable = 1 AND
+          JOIN asset_type atype ON atype.verifiable = 1
           LEFT JOIN municipality_verification mv ON mv.municipality_id = m.id AND mv.asset_type_id = atype.id AND mv.valid_to IS NULL
           WHERE m.id = $municipalityId
-          AND mv.asset_type_id IN (#${assetTypeCodes.mkString(",")})""".as[(Int, String, Option[String], Option[DateTime], Int, String, String, Int, Option[DateTime])].list
+          AND atype.id IN (#${assetTypeCodes.mkString(",")})""".as[(Int, String, Option[String], Option[DateTime], Int, String, String, Int, Option[DateTime])].list
     criticalAssetTypes.map { case ( municipalityCode, municipalityName, verifiedBy, verifiedDate, assetTypeCode, assetTypeName, geometryType, counter, refreshDate) =>
       VerificationInfo(municipalityCode, municipalityName, assetTypeCode, assetTypeName, verifiedBy, verifiedDate, geometryType, counter, refreshDate = refreshDate)
     }
   }
-
-//  def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, username: String): Long = {
-//    val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
-//    sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by, last_user_modification, last_date_modification, number_of_assets, refresh_date)
-//           select $id, municipality_id, asset_type_id, sysdate, $username, last_user_modification, last_date_modification, number_of_assets, refresh_date
-//           from municipality_verification mv
-//           where mv.municipality_id = $municipalityId
-//           and mv.valid_to = max(mv.valid_to)
-//      """.execute
-//    id
-//  }
 
   def getVerificationInfo(municipalityId: Int, assetTypeIds: Set[Int]): Seq[(Int, Int, Option[String], Option[DateTime], Int, Option[DateTime])] = {
     val filterByType = if(assetTypeIds.nonEmpty) s"and asset_type_id in (${assetTypeIds.mkString(",")})" else ""
