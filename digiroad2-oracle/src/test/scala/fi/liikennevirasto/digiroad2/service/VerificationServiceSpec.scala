@@ -60,7 +60,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 4, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 4), $lrmPositionId + 4)""".execute
 
-      val lastModification = ServiceWithDao.getLastModificationLinearAssets(90)
+      val lastModification = ServiceWithDao.getLastModificationLinearAssets(tinyRoadLinkMunicipality90.map(_.linkId))
 
       lastModification should have size 3
       lastModification.find(_.assetTypeCode == 190).get.modifiedBy should be(Some("testuser_new"))
@@ -85,30 +85,6 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       lastModification.find(_.assetTypeCode == 230).get.modifiedBy should be(Some("testuser"))
     }
   }
-//Commented to be resolved parallel to deploy to staging
-//  test("get verification asset types info"){
-//    runWithRollback {
-//      val tinyRoadLinkMunicipality90 = Seq(TinyRoadLink(1100), TinyRoadLink(3100), TinyRoadLink(5100))
-//      when(mockRoadLinkService.getTinyRoadLinkFromVVH(90)).thenReturn(tinyRoadLinkMunicipality90)
-//
-//      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id, 90, 30, (sysdate - interval '1' year), 'testuser')""".execute
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id+1, 90, 40, add_months(sysdate, -23), 'testuser')""".execute
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id+2, 90, 50, (sysdate - interval '2' year), 'testuser')""".execute
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id+3, 90, 60, sysdate, 'testuser')""".execute
-//
-//      val verificationInfo = ServiceWithDao.getAssetTypesByMunicipalityF(90)
-//      verificationInfo should have size 25
-//      verificationInfo.filter(_.municipalityCode == 90) should have size 25
-//      verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
-//      verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
-//      verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)
-//      verificationInfo.find(_.assetTypeCode == 50).map(_.verified).head should be (false)
-//      verificationInfo.find(_.assetTypeCode == 60).map(_.verified).head should be (true)
-//      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 4
-//      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
-//    }
-//  }
 
   test("set verify an unverified asset type") {
     runWithRollback {
