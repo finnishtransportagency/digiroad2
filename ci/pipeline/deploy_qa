@@ -44,12 +44,12 @@ pipeline {
 
                         STAGE_BACKEND_BUILD_CMD = [
                             "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
-                            "cp -r ${WORKSPACE}/target/scala-2.11/oth-assembly-0.1.0-SNAPSHOT.jar ~/package/"
+                            "cp -r ${WORKSPACE}/target/scala-2.11/digiroad2-assembly-0.1.0-SNAPSHOT.jar ~/package/"
                         ].join(" && ")
 
                         STAGE_PACKAGE_CMD = [
                             "cd ~/package/",
-                            "jar -cvf oth-assembly-0.1.0.war *"
+                            "jar -cvf digiroad2-assembly-0.1.0.war *"
                         ].join(" && ")
 
                         STAGE_PUBLISH_CMD = [
@@ -61,7 +61,7 @@ pipeline {
                             "-Dpackaging=war",
                             "-DrepositoryId=nexus3",
                             "-Durl=http://livibuild04.vally.local/nexus/repository/oth/",
-                            "-Dfile=/home/jenkins/package/oth-assembly-0.1.0.war",
+                            "-Dfile=/home/jenkins/package/digiroad2-assembly-0.1.0.war",
                             "-q",
                             "--batch-mode"
                         ].join(" ")
