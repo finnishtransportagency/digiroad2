@@ -88,7 +88,7 @@
       });
 
       eventbus.on(layerName + ':changed', function() {
-        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
       });
 
@@ -143,7 +143,7 @@
         selectedAsset.set({services: services});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
-        rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         if(services.length < 2){
           rootElement.find('button.delete').hide();
         }
@@ -158,7 +158,7 @@
         selectedAsset.set({services: newServices});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
-        rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         if(newServices.length < 2){
           rootElement.find('button.delete').hide();
         }

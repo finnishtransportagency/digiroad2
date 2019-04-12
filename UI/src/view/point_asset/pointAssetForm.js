@@ -46,13 +46,13 @@ root.PointAssetForm = function() {
       if (!_.isEmpty(me.roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection, collection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());
-        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
+        rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
         rootElement.find('button#cancel-button').prop('disabled', false);
       }
     });
 
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
+      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset, authorizationPolicy)));
       rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
     });
 
@@ -145,11 +145,12 @@ root.PointAssetForm = function() {
   };
 
   var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
-    if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
+    if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
       var checkedValue = selectedAsset.get().isSuggested ? 'checked' : '';
       return '<div class="form-group editable form-' + me.pointAsset.layerName + '">' +
               '<label class="control-label">Vihjetieto</label>' +
-              '<input type="checkbox" class="suggested-checkbox" id="suggested-asset"' + checkedValue + '>' +
+              '<p class="form-control-static">' + 'Kylla' + '</p>' +
+              '<input type="checkbox" class="form-control suggested-checkbox" id="suggested-asset"' + checkedValue + '>' +
             '</div>';
     } else {
       return '';
@@ -214,7 +215,6 @@ root.PointAssetForm = function() {
     rootElement.find('.form-controls').toggle(!readOnly);
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
-    rootElement.find('.editable .checkbox').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
   };
 

@@ -75,6 +75,7 @@
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
+        isSuggestedAsset: true,
         minZoomForContent: oneKmZoomLvl
       },
       {
@@ -99,6 +100,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
@@ -124,6 +126,7 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
+        isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
@@ -151,6 +154,7 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
@@ -183,6 +187,7 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
+        isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl
       },
@@ -206,6 +211,7 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
+        isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -232,6 +238,7 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
+        isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -256,6 +263,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl
       },
@@ -463,6 +471,7 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
         readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
@@ -485,6 +494,7 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
         readOnlyLayer: TrafficSignReadOnlyLayer
 
       },
@@ -571,6 +581,7 @@
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
         isVerifiable: false,
+        isSuggestedAsset: true,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
@@ -600,22 +611,22 @@
         minZoomForContent: oneKmZoomLvl
       },
       {
-            typeId: assetType.careClass,
-            singleElementEventCategory: 'careClass',
-            multiElementEventCategory: 'careClasses',
-            layerName: 'careClass',
-            title: 'Hoitoluokat',
-            newTitle: 'Uusi hoitoluokka',
-            className: 'careClass',
-            isSeparable: false,
-            unit: '',
-            allowComplementaryLinks: true,
-            editControlLabels: {
+        typeId: assetType.careClass,
+        singleElementEventCategory: 'careClass',
+        multiElementEventCategory: 'careClasses',
+        layerName: 'careClass',
+        title: 'Hoitoluokat',
+        newTitle: 'Uusi hoitoluokka',
+        className: 'careClass',
+        isSeparable: false,
+        unit: '',
+        allowComplementaryLinks: true,
+        editControlLabels: {
                 title: 'Hoitoluokka',
                 enabled: 'Hoitoluokka',
                 disabled: 'Ei hoitoluokkaa'
             },
-            form: new DynamicAssetForm({
+        form: new DynamicAssetForm({
                     fields : [
                         {
                             label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "20",
@@ -652,13 +663,12 @@
                                 {id: 8, label: '(Y) Ympäristötekijä'}]
                         }
                     ]
-                }
-            ),
-            isVerifiable: false,
-            authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-            layer: CareClassLayer,
-            style: new CareClassStyle(),
-            collection: CareClassCollection
+                }),
+        isVerifiable: false,
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        layer: CareClassLayer,
+        style: new CareClassStyle(),
+        collection: CareClassCollection
       },
       {
         typeId: assetType.carryingCapacity,
@@ -751,6 +761,11 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
+        saveCondition: function(selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+        },
         hasInaccurate: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy()
@@ -773,7 +788,12 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
+        saveCondition: function(selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+        },
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
         roadCollection: ObstaclesRoadCollection
       },
       {
@@ -791,12 +811,13 @@
           manyFloatingAssetsLabel: 'tasoristeykset',
           newAssetLabel: 'tasoristeys'
         },
-        saveCondition: function(selectedAsset) {
-            var selected = selectedAsset .get();
-          return selected.code ? selected.code !== '' : false;
+        saveCondition: function(selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return (selected.code ? selected.code !== '' : false) && (!(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator());
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: RailwayCrossingForm,
+        isSuggestedAsset: true,
         hasMunicipalityValidation: true
       },
       {
@@ -816,6 +837,11 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: DirectionalTrafficSignForm,
+        isSuggestedAsset: true,
+        saveCondition: function(selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+        },
         hasMunicipalityValidation: true
       },
       {
@@ -852,6 +878,11 @@
         label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
+        saveCondition: function(selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+        },
+        isSuggestedAsset: true,
         hasMunicipalityValidation: true
       },
       {
@@ -870,6 +901,11 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
+        isSuggestedAsset: true,
+        saveCondition: function(selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+        },
         authorizationPolicy: new PointAssetAuthorizationPolicy()
       },
       {
@@ -896,7 +932,8 @@
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
-        saveCondition: function (selectedAsset) {
+        isSuggestedAsset: true,
+        saveCondition: function (selectedAsset, authorizationPolicy) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
             { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
@@ -904,7 +941,8 @@
           ];
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
-          return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
+          var suggestedAssetCondition = !(selectedAsset.get().isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          return (functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true) && suggestedAssetCondition;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer
       },
