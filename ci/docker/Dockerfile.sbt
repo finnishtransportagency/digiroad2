@@ -19,7 +19,10 @@ COPY config/repositories /home/jenkins/.sbt/repositories
 #Updates and bash
 RUN apk update && apk upgrade && \
     apk add bash && \
-    apk add curl
+    apk add curl && \
+    apk add tzdata && \
+    cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime && \
+    echo "Europe/Helsinki" > /etc/timezone
 
 #Install java
 RUN apk add openjdk8-jre
@@ -35,6 +38,5 @@ RUN curl -L https://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT
 ENV PATH "/home/jenkins/sbt/bin:$PATH"
 ENV PATH "/home/jenkins/scala-$SCALA_VERSION/bin:$PATH"
 
-COPY config/repositories /home/jenkins/.sbt/repositories
 RUN chown -R jenkins /home/jenkins
 USER jenkins
