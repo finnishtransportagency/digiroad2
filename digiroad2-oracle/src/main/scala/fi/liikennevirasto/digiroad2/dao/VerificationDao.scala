@@ -134,6 +134,8 @@ class VerificationDao {
   }
 
   def expireAssetTypeVerification(municipalityCode: Int, assetTypeCode: Int, userName: String) = {
+    println("Print 23: " + DateTime.now().toString())
+
     sqlu"""update municipality_verification mv
            set valid_to = sysdate, modified_by = $userName
            where mv.municipality_id = $municipalityCode

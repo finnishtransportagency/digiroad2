@@ -390,6 +390,8 @@ object OracleTrafficSignDao {
 
   def expireAssetsByMunicipality(municipalities: Set[Int]) : Unit = {
     if (municipalities.nonEmpty) {
+      println("Print 11: " + DateTime.now().toString())
+
       sqlu"""
         update asset set valid_to = sysdate - 1/86400
         where asset_type_id = ${TrafficSigns.typeId}
@@ -399,6 +401,8 @@ object OracleTrafficSignDao {
   }
 
   def expire(linkIds: Set[Long], username: String): Unit = {
+    println("Print 12: " + DateTime.now().toString())
+
     MassQuery.withIds(linkIds) { idTableName =>
       sqlu"""
          update asset set valid_to = sysdate - 1/86400 where id in (

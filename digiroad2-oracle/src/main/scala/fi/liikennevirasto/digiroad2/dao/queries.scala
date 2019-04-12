@@ -102,6 +102,7 @@ object Queries {
     """
 
   def expireAsset(id: Long, username: String): Unit = {
+    println("Print 8: " + DateTime.now().toString())
     sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
   }
 

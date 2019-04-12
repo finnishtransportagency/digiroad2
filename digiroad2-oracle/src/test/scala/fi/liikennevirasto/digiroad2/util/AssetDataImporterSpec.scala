@@ -709,6 +709,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     """.execute
 
     if (expired) {
+      println("Print 26: " + DateTime.now().toString())
       sqlu"""
         update asset set valid_to = sysdate where id = $speedLimitId
       """.execute

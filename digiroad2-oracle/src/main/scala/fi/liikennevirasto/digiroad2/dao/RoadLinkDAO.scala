@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao.{column, table}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -76,6 +77,7 @@ sealed trait RoadLinkDAO{
 
 
   def expireValues(linkId: Long, username: Option[String]) = {
+    println("Print 22: " + DateTime.now().toString())
     sqlu"""update #$table
                  set valid_to = SYSDATE - 1,
                      modified_by = $username
@@ -334,6 +336,7 @@ object RoadLinkDAO{
     }
 
     def expireAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String): Unit = {
+      println("Print 21: " + DateTime.now().toString())
       sqlu"""
             update road_link_attributes
             set valid_to = sysdate - 1,
@@ -354,6 +357,8 @@ object RoadLinkDAO{
     }
 
     override def expireValues(linkId: Long, username: Option[String]) = {
+      println("Print 20: " + DateTime.now().toString())
+
       sqlu"""update #$table
                  set valid_to = SYSDATE - 1,
                      modified_by = $username

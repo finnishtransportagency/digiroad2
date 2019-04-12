@@ -359,15 +359,18 @@ trait PointAssetOperations {
   }
 
   def expireWithoutTransaction(id: Long) = {
+    println("Print 1: " + DateTime.now().toString())
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
   def expireWithoutTransaction(id: Long, username: String) = {
+    println("Print 2: " + DateTime.now().toString())
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
   def expireWithoutTransaction(ids: Seq[Long], username: String) = {
+    println("Print 3: " + DateTime.now().toString())
     val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = sysdate, modified_by = ? where id = ?")
 
     ids.foreach { id =>

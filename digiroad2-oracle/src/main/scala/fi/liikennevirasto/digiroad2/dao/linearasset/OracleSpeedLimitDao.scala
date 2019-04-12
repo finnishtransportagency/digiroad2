@@ -475,6 +475,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def updateExpiration(id: Long, expired: Boolean, username: String) = {
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = if (expired) {
+      println("Print 25: " + DateTime.now().toString())
       sqlu"update asset set valid_to = sysdate where id = $id".first
     } else {
       sqlu"update asset set valid_to = null where id = $id".first
@@ -489,6 +490,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Updates validity of asset in db.
     */
   def updateExpiration(id: Long) = {
+
+    println("Print 24: " + DateTime.now().toString())
     val propertiesUpdated =
       sqlu"update asset set valid_to = sysdate where id = $id".first
 
