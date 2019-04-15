@@ -40,7 +40,7 @@ case class ExistingLinearAsset(id: Long, linkId: Long)
 case class NewNumericValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
 case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
 
-case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[ProhibitionValue], sideCode: Int)
+case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
 
 case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
@@ -942,6 +942,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  def mappingValues(x : Option[Value]) = {
+    x match {
+      case Some(Prohibitions(isSuggested, prohibitions)) =>
+        Map(
+          "isSuggested" -> isSuggested,
+          "prohibitions" -> prohibitions
+        )
+      case _ => x.map(_.toJson)
+    }
+  }
+
   def mapLinearAssets(assets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
     assets.map { links =>
       links.map { link =>
@@ -950,7 +961,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "linkId" -> link.linkId,
           "sideCode" -> link.sideCode,
           "trafficDirection" -> link.trafficDirection,
-          "value" -> link.value.map(_.toJson),
+          "value" -> mappingValues(link.value),
           "points" -> link.geometry,
           "expired" -> link.expired,
           "startMeasure" -> link.startMeasure,
@@ -1045,7 +1056,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case LinearAssetTypes.ExitNumberAssetTypeId | LinearAssetTypes.EuropeanRoadAssetTypeId =>
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(false, x.value), x.sideCode, 0, None))
+        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, x.value, x.sideCode, 0, None))
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       //Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset

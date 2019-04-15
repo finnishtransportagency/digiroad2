@@ -20,13 +20,15 @@
       }
 
       function singleValueElement(asset, sideCode) {
+        var prohibitions = _.isObject(asset) ? asset.prohibitions : asset;
+        var isSuggested = _.isObject(asset) ? asset.isSuggested : asset;
         return '' +
           '<div class="form-group editable ' + generateClassName(sideCode) + '">' +
           '<label class="asset-label">' + editControlLabels.title + '</label>' +
           sideCodeMarker(sideCode) +
-          assetDisplayElement(asset) +
-          assetEditElement(asset) +
-          suggestionElement(asset) +
+          assetDisplayElement(prohibitions) +
+          assetEditElement(prohibitions) +
+          suggestionElement(isSuggested) +
           '</div>';
       }
 
@@ -48,13 +50,22 @@
           '</ul>';
       }
 
-      function suggestionElement() {
+      function suggestionElement(isSuggested) {
         if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
-          var checkedValue = selectedAsset.isSuggested ? 'checked' : '';
-          return '<div class="form-group editable ' + className + '"">' +
-              '<label class="control-label">Vihjetieto</label>' +
-              '<input type="checkbox" class="suggestionCheckBox" ' + checkedValue + '>' +
-              '</div>';
+          var checkedValue = isSuggested ? 'checked' : '';
+          var readOnlySuggestedLabel = function() {
+            return isSuggested ?
+                ( '<div class="form-control-static">' +
+                    '<label class="control-label">Vihjetieto</label>' +
+                    '<p class="form-control-static"> kyllä </p>' +
+                '</div>') : '';
+          };
+
+          return readOnlySuggestedLabel() +
+              '<div class="edit-control-group">' +
+                  '<label class="control-label">Vihjetieto</label>' +
+                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
+                '</div>';
         } else
           return '';
       }
