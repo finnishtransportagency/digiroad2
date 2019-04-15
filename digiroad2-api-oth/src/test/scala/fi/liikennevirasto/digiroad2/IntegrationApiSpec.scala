@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, Manoeuvre, ManoeuvreElement}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import org.json4s.{DefaultFormats, Formats}
@@ -14,6 +15,8 @@ import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
 import org.slf4j.LoggerFactory
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
@@ -59,11 +62,14 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Get speed_limits requires municipality number") {
-    getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
-      status should equal(400)
-    }
-    getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
-      status should equal(200)
+    OracleDatabase.withDynTransaction {
+      getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
+        status should equal(400)
+      }
+      getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
+        status should equal(200)
+      }
+      dynamicSession.rollback()
     }
   }
 
