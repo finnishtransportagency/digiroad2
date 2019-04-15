@@ -86,8 +86,6 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
-  println("Inicio dos Testes do TrafficSignServiceSpec: " + DateTime.now().toString())
-
   test("Can fetch by bounding box") {
     when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
 

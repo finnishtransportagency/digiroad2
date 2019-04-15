@@ -44,7 +44,6 @@ class OracleAssetDao {
     * @param id Represets the id of the asset
     */
   def expireAssetsById (id: Long): Unit = {
-    println("Print 5: " + DateTime.now().toString())
     sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
   }
 
@@ -56,8 +55,6 @@ class OracleAssetDao {
     * @param linkIds Represets the link id of the road
     */
   def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[Long]): Unit = {
-    println("Print 6: " + DateTime.now().toString())
-
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       sqlu"""
          update asset set valid_to = sysdate - 1/86400 where id in (
@@ -128,7 +125,6 @@ class OracleAssetDao {
 
 
   def expireWithoutTransaction(id: Long, username: String) = {
-    println("Print 7: " + DateTime.now().toString())
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }

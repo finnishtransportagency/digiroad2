@@ -696,8 +696,6 @@ class AssetDataImporter {
       val assetsIdsToExpire = linearAssetLinks.map(_._1).toSet
       if (assetsIdsToExpire.size > 0) {
         val assetsIdsToExpireString = assetsIdsToExpire.mkString(",")
-        println("Print 9: " + DateTime.now().toString())
-
         sqlu"""update asset
                set modified_by = 'expired_splitted_linearasset', modified_date = sysdate, valid_to = sysdate
                where id in (#$assetsIdsToExpireString)""".execute

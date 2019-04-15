@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
-import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -53,8 +52,6 @@ object RoadLinkServiceDAO {
   }
 
   def expireExistingLinkPropertyRow(table: String, linkId: Long, username: Option[String]) = {
-    println("Print 9: " + DateTime.now().toString())
-
     sqlu"""update #$table
                  set valid_to = SYSDATE - 1,
                      modified_by = $username

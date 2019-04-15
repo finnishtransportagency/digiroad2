@@ -22,8 +22,6 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     roadLink(linkId, geometry).copy(trafficDirection = trafficDirection)
   }
 
-  println("Inicio dos Testes ao SpeedLimitFillerSpec: " + DateTime.now().toString())
-
   test("drop speedlimit segments less than 2 meters"){
     val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())

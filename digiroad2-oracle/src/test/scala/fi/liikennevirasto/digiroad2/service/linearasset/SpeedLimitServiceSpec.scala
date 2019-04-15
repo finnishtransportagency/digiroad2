@@ -169,7 +169,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
   test("request unknown speed limit persist in bounding box fetch") {
-    OracleDatabase.withDynTransaction {
+    runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
@@ -178,12 +178,11 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
 
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
-      dynamicSession.rollback()
     }
   }
 
   test("request unknown speed limit persist in municipality fetch") {
-    OracleDatabase.withDynTransaction {
+    runWithRollback {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
@@ -192,7 +191,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       provider.get(235)
 
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
-      dynamicSession.rollback()
     }
   }
 
@@ -784,7 +782,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val municipalityCode = 235
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
 
-    OracleDatabase.withDynTransaction {
+    runWithRollback {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -802,7 +800,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
 
-      dynamicSession.rollback()
     }
   }
 

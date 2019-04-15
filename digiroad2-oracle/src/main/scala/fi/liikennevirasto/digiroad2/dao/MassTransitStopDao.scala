@@ -415,7 +415,6 @@ class MassTransitStopDao {
   }
 
   def expireMassTransitStop(username: String, id: Long) = {
-    println("Print 4: " + DateTime.now().toString())
     sqlu"""
              update asset
              set valid_to = sysdate -1, modified_date = sysdate, modified_by = $username

@@ -16,7 +16,6 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VV
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
 class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
@@ -56,8 +55,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     sqlu"""delete from temp_id""".execute
     result
   }
-
-  println("Inicio dos Testes do OracleSpeedLimitDaoSpec: " + DateTime.now().toString())
 
   test("filter out floating speed limits") {
     runWithRollback {

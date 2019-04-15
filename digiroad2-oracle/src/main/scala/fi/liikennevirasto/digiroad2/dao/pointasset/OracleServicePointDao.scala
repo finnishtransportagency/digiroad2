@@ -79,7 +79,6 @@ object OracleServicePointDao {
   }
 
   def expire(id: Long, username: String) = {
-    println("Print 10: " + DateTime.now().toString())
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
