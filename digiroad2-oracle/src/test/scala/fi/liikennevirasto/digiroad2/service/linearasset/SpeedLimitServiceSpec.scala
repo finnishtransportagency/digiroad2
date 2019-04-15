@@ -169,7 +169,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
   test("request unknown speed limit persist in bounding box fetch") {
-    runWithRollback {
+    OracleDatabase.withDynTransaction {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
@@ -178,11 +178,12 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
 
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
+      dynamicSession.rollback()
     }
   }
 
   test("request unknown speed limit persist in municipality fetch") {
-    runWithRollback {
+    OracleDatabase.withDynTransaction {
       val eventBus = MockitoSugar.mock[DigiroadEventBus]
       val provider = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
         override def withDynTransaction[T](f: => T): T = f
@@ -191,6 +192,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       provider.get(235)
 
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq(UnknownSpeedLimit(1, 235, Municipality)))
+      dynamicSession.rollback()
     }
   }
 
