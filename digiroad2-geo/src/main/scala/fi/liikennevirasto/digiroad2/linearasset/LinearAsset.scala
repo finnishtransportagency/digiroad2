@@ -25,7 +25,7 @@ case class TextualValue(value: String) extends Value {
 case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
   override def toJson: Any = properties
 }
-case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
+case class Prohibitions(isSuggested: Boolean, prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 
   override def equals(obj: scala.Any): Boolean = {

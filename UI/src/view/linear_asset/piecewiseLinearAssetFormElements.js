@@ -7,22 +7,22 @@
     DefaultFormElements: DefaultFormElements
   };
 
-  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function DefaultFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
     var formElem = inputFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
     var formElem = dropDownFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function TextualValueFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function TextualValueFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
     var formElem = textAreaFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function MaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function MaintenanceRoadFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
    var formElem = maintenanceRoadFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }

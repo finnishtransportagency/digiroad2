@@ -236,7 +236,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   private def mapValue(optValue: Option[Value]): Option[Any] = {
     optValue match {
-      case Some(Prohibitions(prohibitions)) => Some(prohibitions.map { prohibitionValue =>
+      case Some(Prohibitions(false, prohibitions)) => Some(prohibitions.map { prohibitionValue =>
         Map("typeId" -> prohibitionValue.typeId,
           "exceptions" -> prohibitionValue.exceptions,
           "validityPeriod" ->

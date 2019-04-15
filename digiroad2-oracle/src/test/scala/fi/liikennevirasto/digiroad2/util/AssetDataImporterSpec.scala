@@ -192,6 +192,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Two prohibition segments on the same link produces one asset with two prohibition values") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val segment2 = prohibitionSegment(id = 2l, value = 4)
     val prohibitionSegments = Seq(segment1, segment2)
@@ -200,11 +201,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Seq[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil)
 
-    val expectedValue = Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty))))
+    val expectedValue = Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty))))
     result should be(Seq(Right(PersistedLinearAsset(0l, 1l, 1, expectedValue, 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))))
   }
 
   test("Two prohibition segments on the same link with different side codes produces two assets with one prohibition value") {
+    val isSuggested = false
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
@@ -213,12 +215,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Two-sided prohibition segment and one-sided prohibition segment produces two assets with combined prohibitions on one side") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
@@ -227,8 +230,8 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty), ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
@@ -255,6 +258,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   }
 
   test("Adjust segment measurements to road link") {
+    val isSuggested = false
     val segment1 = prohibitionSegment(endMeasure = 0.5)
     val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -262,11 +266,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1))
   }
 
   test("Include exception in prohibition value") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -275,11 +280,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1))
   }
 
   test("Exceptions that do not relate to prohibition are not included") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -288,12 +294,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     val conversionResult2 = Left("No prohibition found on mml id 2. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Filter out exceptions that allow all traffic") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -302,12 +309,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Filter out exceptions with exception codes not supported") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -316,12 +324,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     val conversionResult2 = Left("Invalid exception. Dropped exception 1.")
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Exception affects prohibition with same side code") {
+    val isSuggested = false
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
@@ -331,12 +340,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("One sided exception splits two sided prohibition") {
+    val isSuggested = false
     val segment1 = prohibitionSegment()
     val prohibitionSegments = Seq(segment1)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -345,12 +355,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(9))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set(9))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Two sided exceptions affect one sided prohibitions") {
+    val isSuggested = false
     val segment1 = prohibitionSegment(sideCode = 2)
     val segment2 = prohibitionSegment(id = 2l, value = 4, sideCode = 3)
     val prohibitionSegments = Seq(segment1, segment2)
@@ -360,12 +371,13 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, exceptions).toSet
 
-    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
-    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult1 = Right(PersistedLinearAsset(0l, 1l, 2, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val conversionResult2 = Right(PersistedLinearAsset(0l, 1l, 3, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set(8))))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(conversionResult1, conversionResult2))
   }
 
   test("Parse validity period into prohibition") {
+    val isSuggested = false
     val segment = prohibitionSegment(validityPeriod = Some("[[(h8){h7}]*[(t2){d5}]]"))
     val prohibitionSegments = Seq(segment)
     val roadLink = VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(1.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers, attributes = CommonAttributes)
@@ -374,7 +386,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     val result: Set[Either[String, PersistedLinearAsset]] = assetDataImporter.convertToProhibitions(prohibitionSegments, roadLinks, Nil).toSet
 
     val expectedValidityPeriods = Set(ValidityPeriod(8, 15, ValidityPeriodDayOfWeek.Weekday))
-    val expectedConversionResult = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
+    val expectedConversionResult = Right(PersistedLinearAsset(0l, 1l, 1, Some(Prohibitions(isSuggested, Seq(ProhibitionValue(2, expectedValidityPeriods, Set.empty)))), 0.0, 1.0, None, None, None, None, false, 190, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None))
     result should be(Set(expectedConversionResult))
   }
 

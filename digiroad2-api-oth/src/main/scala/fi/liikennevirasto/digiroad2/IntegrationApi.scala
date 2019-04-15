@@ -222,7 +222,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def valueToApi(value: Option[Value]) = {
     value match {
-      case Some(Prohibitions(x)) => x.map { prohibitionValue =>
+      case Some(Prohibitions(false, x)) => x.map { prohibitionValue =>
         val exceptions = prohibitionValue.exceptions.toList match {
           case Nil => Map()
           case items => Map("exceptions" -> items)

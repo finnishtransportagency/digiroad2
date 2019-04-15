@@ -1006,17 +1006,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
-    val prohibitionParameter: Option[Seq[ProhibitionValue]] = value.extractOpt[Seq[ProhibitionValue]]
+    val prohibitionParameter: Option[Prohibitions] = value.extractOpt[Prohibitions]
     val maintenanceRoadParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
     val textualParameter = value.extractOpt[String]
     val dynamicValueParameter: Option[DynamicAssetValue] = value.extractOpt[DynamicAssetValue]
 
     val prohibition = prohibitionParameter match {
-      case Some(Nil) => None
+      case Some(Prohibitions(false, Nil)) => None
       case None => None
-      case Some(x) => Some(Prohibitions(x))
+      case Some(x) => Some(Prohibitions(x.isSuggested, x.prohibitions))
     }
 
     val maintenanceRoad = maintenanceRoadParameter match {
@@ -1044,7 +1045,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case LinearAssetTypes.ExitNumberAssetTypeId | LinearAssetTypes.EuropeanRoadAssetTypeId =>
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
-        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(x.value), x.sideCode, 0, None))
+        value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, Prohibitions(false, x.value), x.sideCode, 0, None))
       case MaintenanceRoadAsset.typeId =>
         value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
       //Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset

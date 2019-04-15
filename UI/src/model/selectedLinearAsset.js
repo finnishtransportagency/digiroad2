@@ -453,5 +453,11 @@
     this.setValidValues = function (valid) {
       isValid = valid;
     };
+
+
+    this.isSuggested = function() {
+        var  suggestedProp = getProperty('isSuggested');
+      return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp);
+    };
   };
 })(this);

@@ -538,6 +538,7 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        isSuggestedAsset: true,
         isMultipleLinkSelectionAllowed: true
       },
       {

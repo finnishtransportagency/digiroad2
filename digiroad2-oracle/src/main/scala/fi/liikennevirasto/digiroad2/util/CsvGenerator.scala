@@ -122,7 +122,7 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
       droppedProhibition.value.get match {
-        case Prohibitions(prohibitionValues) =>
+        case Prohibitions(false, prohibitionValues) =>
           prohibitionValues.map { prohibitionValue =>
             val value = generateValueString(prohibitionValue)
             (droppedProhibition.linkId, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)

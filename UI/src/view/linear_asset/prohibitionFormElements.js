@@ -2,7 +2,7 @@
   root.ProhibitionFormElements = function(prohibitionValues, exceptionValues) {
     return elements;
 
-    function elements(unit, editControlLabels, className) {
+    function elements(unit, editControlLabels, className, authorizationPolicy, selectedAsset) {
       var dayLabels = {
         Weekday: "Ma–Pe",
         Saturday: "La",
@@ -26,6 +26,7 @@
           sideCodeMarker(sideCode) +
           assetDisplayElement(asset) +
           assetEditElement(asset) +
+          suggestionElement(asset) +
           '</div>';
       }
 
@@ -45,6 +46,17 @@
           items +
           newProhibitionElement() +
           '</ul>';
+      }
+
+      function suggestionElement() {
+        if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
+          var checkedValue = selectedAsset.isSuggested ? 'checked' : '';
+          return '<div class="form-group editable ' + className + '"">' +
+              '<label class="control-label">Vihjetieto</label>' +
+              '<input type="checkbox" class="suggestionCheckBox" ' + checkedValue + '>' +
+              '</div>';
+        } else
+          return '';
       }
 
       function sideCodeMarker(sideCode) {
@@ -378,6 +390,11 @@
           setValue(extractValue(rootElement, className));
         });
 
+        $(rootElement).on('change', className + ' .suggestionCheckBox', function () {
+          $(rootElement).find('.form-group' + className + ' .edit-control-group');
+          setValue(extractValue(rootElement, className));
+        });
+
         $(rootElement).on('click', className + ' button.delete', function (evt) {
           var existingProhibitionElement = $(evt.target).closest('.existing-prohibition');
           $(evt.target).parent().parent().remove();
@@ -400,8 +417,10 @@
       }
 
       function extractValue(rootElement, className) {
+        var suggestionBox =  $(rootElement).find('.suggestionCheckBox');
+        var suggestionValue = !_.isUndefined(suggestionBox) ?  suggestionBox.prop('checked') : false;
         var prohibitionElements = $(rootElement).find(className).find('.edit-control-group .existing-prohibition');
-        return _.map(prohibitionElements, extractExistingProhibition);
+        return {isSuggested: suggestionValue, prohibitions: _.map(prohibitionElements, extractExistingProhibition)};
       }
 
       function extractExistingProhibition(element) {
