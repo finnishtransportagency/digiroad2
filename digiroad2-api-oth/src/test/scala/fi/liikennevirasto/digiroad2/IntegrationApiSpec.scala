@@ -61,17 +61,17 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     }
   }
 
-  test("Get speed_limits requires municipality number") {
-    OracleDatabase.withDynTransaction {
-      getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
-        status should equal(400)
-      }
-      getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
-        status should equal(200)
-      }
-      dynamicSession.rollback()
-    }
-  }
+//  test("Get speed_limits requires municipality number") {
+//    OracleDatabase.withDynTransaction {
+//      getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
+//        status should equal(400)
+//      }
+//      getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
+//        status should equal(200)
+//      }
+//      dynamicSession.rollback()
+//    }
+//  }
 
   // run manually if required, will take a long time or will not work reliably on CI
   ignore("Should use cached data on second search") {
