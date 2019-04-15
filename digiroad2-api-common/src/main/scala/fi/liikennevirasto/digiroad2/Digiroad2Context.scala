@@ -335,10 +335,10 @@ object Digiroad2Context {
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
 
-  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], speedLimitService), name = "speedLimitUpdater")
-  eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
-  eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
-  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
+//  val speedLimitUpdater = system.actorOf(Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], speedLimitService), name = "speedLimitUpdater")
+//  eventbus.subscribe(speedLimitUpdater, "speedLimits:purgeUnknownLimits")
+//  eventbus.subscribe(speedLimitUpdater, "speedLimits:persistUnknownLimits")
+//  eventbus.subscribe(speedLimitUpdater, "speedLimits:update")
 
   val linkPropertyUpdater = system.actorOf(Props(classOf[LinkPropertyUpdater], roadLinkService), name = "linkPropertyUpdater")
   eventbus.subscribe(linkPropertyUpdater, "linkProperties:changed")
