@@ -557,28 +557,31 @@
           enabled: 'Huoltotie',
           disabled: 'Ei huoltotietä'
         },
-        possibleValues: [
-          {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus",
-                  value: [
-                          {typeId: 1, title: 'Tieoikeus'},
-                          {typeId: 2, title: 'Tiekunnan osakkuus'},
-                          {typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},
-                          {typeId: 4, title: 'Kevyen liikenteen väylä'},
-                          {typeId: 6, title: 'Muu sopimus'},
-                          {typeId: 9, title: 'Potentiaalinen käyttöoikeus'},
-                          {typeId: 99, title: 'Tuntematon'}
-                          ]},
-          {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
-          {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
-          {'name': "Yhteyshenkilö", 'propType': 'header' },
-          {'name': "Nimi", 'propType': 'text', 'id': "huoltotie_nimi" },
-          {'name': "Osoite", 'propType': 'text', 'id': "huoltotie_osoite"},
-          {'name': "Postinumero", 'propType': 'text', 'id': "huoltotie_postinumero"},
-          {'name': "Postitoimipaikka", 'propType': 'text', 'id': "huoltotie_postitoimipaikka"},
-          {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
-          {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
-          {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
-          {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
+          form: new DynamicAssetForm({
+              fields : [{
+              label: 'Käyttöoikeus', type: 'single_choice', publicId: "huoltotie_kayttooikeus", defaultValue: "99",
+                  values: [
+                          {id: 1, label: 'Tieoikeus'},
+                          {id: 2, label: 'Tiekunnan osakkuus'},
+                          {id: 3, label: 'LiVin hallinnoimalla maa-alueella'},
+                          {id: 4, label: 'Kevyen liikenteen väylä'},
+                          {id: 6, label: 'Muu sopimus'},
+                          {id: 9, label: 'Potentiaalinen käyttöoikeus'},
+                          {id: 99, label: 'Tuntematon'}
+                          ], weight: 1},
+          {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
+          {label: "Tiehoitokunta", type: 'text', publicId: "huoltotie_tiehoitokunta", weight: 3},
+          {label: "Yhteyshenkilö", type: 'header', header: 2, weight: 3},
+          {label: "Nimi", type: 'text', publicId: "huoltotie_nimi", weight: 4},
+          {label: "Osoite", type: 'text', publicId: "huoltotie_osoite", weight: 5},
+          {label: "Postinumero", type: 'text', publicId: "huoltotie_postinumero", weight: 6},
+          {label: "Postitoimipaikka", type: 'text', publicId: "huoltotie_postitoimipaikka", weight: 7},
+          {label: "Puhelin 1", type: 'text', publicId: "huoltotie_puh1", weight: 8},
+          {label: "Puhelin 2", type: 'text', publicId: "huoltotie_puh2", weight: 9},
+          {label: "Lisätietoa", type: 'text', publicId: "huoltotie_lisatieto", weight: 10},
+          {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 11},
+          {label: "Vihjetieto", type: 'checkbox', publicId: "huoltotie_vihjetieto", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12}]
+        }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
         isVerifiable: false,

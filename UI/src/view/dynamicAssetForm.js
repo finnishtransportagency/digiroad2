@@ -187,6 +187,18 @@
         };
     };
 
+    var HeaderFields = function(assetTypeConfiguration, field, isDisabled){
+        DynamicField.call(this, field, isDisabled);
+        var me = this;
+        me.editModeRender = function () {
+            return $('' +
+                '<div class="form-group">' +
+                '   <h' + field.header + ' class="control-label">' + field.label + '</h' + field.header + '>' +
+                '</div>'
+            );
+        };
+    };
+
     var IntegerField = function(assetTypeConfiguration, field, isDisabled){
         DynamicField.call(this, field, isDisabled);
         var me = this;
@@ -815,7 +827,8 @@
         {name: 'read_only_text', fieldType: ReadOnlyFields},
         {name: 'time_period', fieldType: TimePeriodField},
         {name: 'date_period', fieldType: DatePeriodField},
-        {name: 'hidden_read_only_number', fieldType: HiddenReadOnlyFields}
+        {name: 'hidden_read_only_number', fieldType: HiddenReadOnlyFields},
+        {name: 'header', fieldType: HeaderFields }
     ];
 
     root.DynamicAssetForm = function (formStructure) {
