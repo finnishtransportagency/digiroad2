@@ -782,7 +782,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val municipalityCode = 235
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
 
-    runWithRollback {
+    OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
       val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -800,6 +800,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
 
+      dynamicSession.rollback()
     }
   }
 
