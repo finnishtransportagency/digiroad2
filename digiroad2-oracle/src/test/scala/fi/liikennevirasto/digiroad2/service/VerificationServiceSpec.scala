@@ -88,6 +88,7 @@ class VerificationServiceSpec extends FunSuite with Matchers {
 
   test("set verify an unverified asset type") {
     runWithRollback {
+      ServiceWithDao.insertAssetTypeVerification(20, 120, None, None, None, 0, None)
       val oldVerification = ServiceWithDao.getAssetVerification(20, 120)
       ServiceWithDao.verifyAssetType(20, Set(120), "testuser")
       val newVerification = ServiceWithDao.getAssetVerification(20, 120)
