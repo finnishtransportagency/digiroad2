@@ -13,7 +13,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, linkId: Long,
-                       startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point],
+                       startMValue: Double, endMValue: Double, sideCode: SideCode, geom: Seq[Point],
                        expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime]) {
   def addressMValueToLRM(addrMValue: Long): Option[Double] = {
     if (addrMValue < startAddrMValue || addrMValue > endAddrMValue)

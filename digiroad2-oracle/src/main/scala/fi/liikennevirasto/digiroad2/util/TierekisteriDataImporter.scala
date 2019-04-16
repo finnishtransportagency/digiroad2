@@ -251,7 +251,7 @@ object TierekisteriDataImporter {
                 (tr.startAddressMValue >= ra.startAddrMValue && tr.startAddressMValue < ra.endAddrMValue) ||
                 (tr.endAddressMValue > ra.startAddrMValue && tr.endAddressMValue <= ra.endAddrMValue)
               ) &&
-              ra.roadNumber == roadNumber && ra.roadPartNumber == tr.startRoadPartNumber && ra.floating == false
+              ra.roadNumber == roadNumber && ra.roadPartNumber == tr.startRoadPartNumber
             )
 
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
