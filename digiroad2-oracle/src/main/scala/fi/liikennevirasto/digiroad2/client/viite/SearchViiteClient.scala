@@ -86,9 +86,8 @@ class SearchViiteClient(vvhRestApiEndPoint: String, httpClient: CloseableHttpCli
     val startMValue = convertToDouble(getMandatoryFieldValue(data, "startMValue")).get
     val sideCode = convertToInt(getMandatoryFieldValue(data, "sideCode")).get
     val endMValue = convertToDouble(getMandatoryFieldValue(data, "endMValue")).get
-    val floating = convertToBoolean(getMandatoryFieldValue(data, "floating")).get
 
-    Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.apply(sideCode), floating, Seq(), false, None, None, None ))
+    Some(RoadAddress(id, roadNumber, roadPartNumber, trackCode, startAddrM, endAddrM, None, None, linkId, startMValue, endMValue, SideCode.apply(sideCode), Seq(), false, None, None, None ))
   }
 
 }
