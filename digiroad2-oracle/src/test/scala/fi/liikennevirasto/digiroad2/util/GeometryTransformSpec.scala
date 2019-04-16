@@ -18,7 +18,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val mValue = 60
     val sideCode = 1
 
-    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
     when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
@@ -36,7 +36,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val mValue = 60
     val sideCode = 3
 
-    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.Combined, 0, 299, None, None, 1641830, 10, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
     when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
@@ -55,7 +55,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val mValue = 60
     val sideCode = 1
 
-    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
     when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
@@ -71,7 +71,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val mValue = 60
     val sideCode = 2
 
-    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
     when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
@@ -87,7 +87,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     val mValue = 11
     val sideCode = 0
 
-    val dummyRoadAddress = Some(ViiteRoadAddress(1, 110, 2, Track.Combined, 0, 160, None, None, 1641830, 1, 150.690, SideCode.TowardsDigitizing, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+    val dummyRoadAddress = Some(ViiteRoadAddress(1, 110, 2, Track.Combined, 0, 160, None, None, 1641830, 1, 150.690, SideCode.TowardsDigitizing, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
     when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
