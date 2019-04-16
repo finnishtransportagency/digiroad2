@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -53,7 +53,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
@@ -70,7 +70,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -93,7 +93,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -115,7 +115,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -139,9 +139,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 90, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-          SpeedLimit(2, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(80)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(2, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,80)), Seq(Point(0.0, 0.0)),
             90, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -166,7 +166,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -191,7 +191,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -215,7 +215,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -240,7 +240,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,40)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -265,7 +265,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,40)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -290,7 +290,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -314,7 +314,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -338,7 +338,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(false,70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 

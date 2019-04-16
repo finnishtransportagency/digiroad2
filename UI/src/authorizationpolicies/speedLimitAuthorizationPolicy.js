@@ -8,5 +8,9 @@
       return (me.isMunicipalityMaintainer() && !me.isState(selectedAsset) && me.hasRightsInMunicipality(selectedAsset.municipalityCode)) || (me.isElyMaintainer() && me.hasRightsInMunicipality(selectedAsset.municipalityCode)) || me.isOperator();
     };
 
+    this.handleSuggestedAsset = function(selectedAsset) {
+      return (_.isEmpty(selectedAsset.getId()) && me.isOperator()) || (selectedAsset.get().isSuggested && (me.isOperator() || me.isMunicipalityMaintainer()));
+    };
+
   };
 })(this);

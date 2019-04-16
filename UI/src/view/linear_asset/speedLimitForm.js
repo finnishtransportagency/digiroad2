@@ -33,12 +33,33 @@
             '<label class="control-label">Rajoitus</label>' +
             '<p class="form-control-static">' + ((selectedSpeedLimit.getValue() + ' ' + unit) || 'Tuntematon') + '</p>' +
             '<select class="form-control <%- speedLimitClass %>" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
-          '</div>');
+            suggestionElement() +
+            '</div>');
         return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
       };
       var separateValueElement = singleValueElement("a") + singleValueElement("b");
-      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
+      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : (singleValueElement());
     };
+
+      function suggestionElement() {
+          if(authorizationPolicy.handleSuggestedAsset(selectedSpeedLimit)) {
+              var isSuggested = selectedSpeedLimit.isSuggested();
+              var checkedValue = isSuggested ? 'checked' : '';
+              var readOnlySuggestedLabel = isSuggested ?
+                ( '<div class="form-control-static suggestionCheckBox">' +
+                    '<label class="control-label">Vihjetieto</label>' +
+                    '<p class="form-control-static"> kyllä </p>' +
+                    '</div>') : '';
+
+                return '' +
+                   readOnlySuggestedLabel +
+                  '<div class="form-control suggestionCheckBox" style="display: none">' +
+                    '<label class="control-label">Vihjetieto</label>' +
+                    '<input type="checkbox" id="suggestionCheckBox"'  + checkedValue + '>' +
+                  '</div>';
+          } else
+              return '';
+      }
 
     var userInformationLog = function() {
       var hasMunicipality = function (linearAsset) {
@@ -151,8 +172,15 @@
       };
 
       rootElement.find('select.speed-limit').change(function(event) {
-        selectedSpeedLimit.setValue(extractValue(event));
+        var checkBoxValue = rootElement.find('#suggestionCheckBox').prop('checked');
+        var speedLimitValue = extractValue(event);
+        selectedSpeedLimit.setValue({isSuggested: checkBoxValue, value: speedLimitValue});
       });
+
+      rootElement.find('#suggestionCheckBox').change(function(event) {
+        selectedSpeedLimit.setValue({isSuggested: $(event.currentTarget).prop('checked')});
+      });
+
       rootElement.find('select.speed-limit-a').change(function(event) {
         selectedSpeedLimit.setAValue(extractValue(event));
       });

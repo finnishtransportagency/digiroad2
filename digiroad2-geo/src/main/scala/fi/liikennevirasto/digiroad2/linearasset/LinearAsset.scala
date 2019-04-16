@@ -16,6 +16,11 @@ trait LinearAsset extends PolyLine {
 sealed trait Value {
   def toJson: Any
 }
+
+case class SpeedLimitValue(isSuggested: Boolean, value: Int) extends Value {
+  override def toJson: Any = value
+}
+
 case class NumericValue(value: Int) extends Value {
   override def toJson: Any = value
 }

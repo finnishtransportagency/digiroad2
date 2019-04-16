@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TextPropertyValue, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
@@ -25,7 +25,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(NumericValue(speedLimitValue)) =>
+              case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue) if trafficSignValue.asInstanceOf[TextPropertyValue].propertyValue == speedLimitValue.toString => true
                   case _ => false
@@ -47,7 +47,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(NumericValue(speedLimitValue)) =>
+              case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 if (speedLimitValue == startUrbanAreaSpeedLimit) true else false
               case _ => false
             }
@@ -66,7 +66,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(NumericValue(speedLimitValue)) =>
+              case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue)
                     if trafficSignValue.asInstanceOf[TextPropertyValue].propertyValue.toInt == speedLimitValue
@@ -90,7 +90,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(NumericValue(speedLimitValue)) =>
+              case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 if (speedLimitValue != endUrbanAreaSpeedLimit) true else false
               case _ => false
             }

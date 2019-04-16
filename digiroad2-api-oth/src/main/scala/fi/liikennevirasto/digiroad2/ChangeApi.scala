@@ -80,7 +80,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             ),
             "properties" ->
               Map(
-                "value" -> speedLimit.value.map(_.toJson),
+                "value" -> speedLimit.value.map(_.value),
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,

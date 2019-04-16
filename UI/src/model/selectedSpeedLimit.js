@@ -280,7 +280,7 @@
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
         if (this.isSplitOrSeparated() && valuesDiffer()) return true;
-        else if (!this.isSplitOrSeparated()) return true;
+        else if (!this.isSplitOrSeparated()) return !_.isUndefined(selection[0].value.value);
       }
       return false;
     };
@@ -288,6 +288,11 @@
     var isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+    };
+
+    this.isSuggested = function() {
+      var  suggestedProp = getProperty('isSuggested');
+      return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp);
     };
   };
 })(this);

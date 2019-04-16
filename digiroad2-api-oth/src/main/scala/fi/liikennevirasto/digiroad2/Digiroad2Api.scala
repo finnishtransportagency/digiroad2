@@ -1245,7 +1245,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "linkId" -> link.linkId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value.map(_.value),
+            "value" -> link.value.map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
             "points" -> link.geometry,
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
@@ -1356,8 +1356,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
       case Some(value) =>
+        //TODO needs to be changed
         val updatedIds = speedLimitService.updateValues(ids, value, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
-        val createdIds = speedLimitService.create(newLimits, value, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
+        val createdIds = speedLimitService.create(newLimits, (true, value), user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
         speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
@@ -1388,8 +1389,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "startMeasure").extract[Double],
       (parsedBody \ "endMeasure").extract[Double])
 
+    //TODO extract probably doesn't work
     speedLimitService.create(Seq(newLimit),
-      (parsedBody \ "value").extract[Int],
+      (parsedBody \ "value").extract[(Boolean, Int)],
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId))).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
