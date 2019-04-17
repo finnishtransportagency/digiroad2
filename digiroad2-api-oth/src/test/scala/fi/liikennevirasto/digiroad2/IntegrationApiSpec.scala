@@ -62,7 +62,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     getWithBasicUserAuth("/speed_limits", "kalpa", "kalpa") {
       status should equal(400)
     }
-    getWithBasicUserAuth("/speed_limits?municipality=235", "kalpa", "kalpa") {
+    getWithBasicUserAuth("/speed_limits?municipality=588", "kalpa", "kalpa") {
       status should equal(200)
     }
   }
