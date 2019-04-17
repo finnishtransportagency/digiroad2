@@ -177,10 +177,6 @@ pipeline {
             }
             steps {
                 sh STAGE_SETUP_ORACLE
-                withCredentials([file(credentialsId: 'CONV_DATABASE', variable: 'CONV_DATABASE')]) {
-                    sh "cp ${CONV_DATABASE} digiroad2-oracle/conf/ci-vahti/"
-                }
-
                 sh STAGE_RUN_TASK
             }
         }
