@@ -124,8 +124,8 @@ pipeline {
                             "./sbt",
                             "$java_opts",
                             "-Ddigiroad2.env=ci-vahti",
-                            "\"project digiroad2-oracle\"",
-                            "\"test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${TRAFFICSIGNGROUP}\"\'"
+                            "\'project digiroad2-oracle\'",
+                            "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture $TASK $TRAFFICSIGNGROUP\'"
                         ].join(" ")
                     }
                 }
