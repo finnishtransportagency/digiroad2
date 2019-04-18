@@ -1034,6 +1034,11 @@ case object AdvanceDirectionSignAboveSmall extends InformationSignsType {
   override val TRvalue = 632
 }
 
+case object OverpassOrUnderpassWithoutSteps extends InformationSignsType {
+  override val OTHvalue = 192
+  override val TRvalue = 686
+}
+
 trait ServiceSignsType extends TrafficSignType  {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
 
