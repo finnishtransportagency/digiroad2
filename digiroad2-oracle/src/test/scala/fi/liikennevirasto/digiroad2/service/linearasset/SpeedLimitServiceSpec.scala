@@ -93,7 +93,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1l))).thenReturn(Seq(roadLink))
 
-      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), (false, 30), "test", (_, _) => Unit)
+      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), SpeedLimitValue(false, 30), "test", (_, _) => Unit)
 
       val createdLimit = provider.getSpeedLimitById(id.head).get
       createdLimit.value should equal(Some(NumericValue(30)))

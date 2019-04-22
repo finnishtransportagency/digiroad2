@@ -122,6 +122,12 @@ object Queries {
       values (primary_key_seq.nextval, $propertyId, $assetId,
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE)
     """
+  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
+    sqlu"""
+     update multiple_choice_value set enumerated_value_id =
+       (select id from enumerated_value where value = $propertyValue and property_id = $propertyId)
+       where asset_id = $assetId and property_id = $propertyId
+   """
 
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""

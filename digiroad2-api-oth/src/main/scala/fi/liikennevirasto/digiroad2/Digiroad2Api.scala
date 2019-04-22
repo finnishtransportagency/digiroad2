@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
-import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.{pointasset, _}
 import fi.liikennevirasto.digiroad2.service.linearasset._
@@ -1207,7 +1207,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "linkId" -> link.linkId,
             "sideCode" -> link.sideCode,
             "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value.map(_.value),
+            "value" -> link.value.map(x => Map("isSuggested" -> x.isSuggested, "value" -> x.value)),
             "points" -> link.geometry,
             "startMeasure" -> link.startMeasure,
             "endMeasure" -> link.endMeasure,
@@ -1348,17 +1348,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   put("/speedlimits") {
     val user = userProvider.getCurrentUser()
-    val optionalValue = (parsedBody \ "value").extractOpt[Int]
+    val optionalValue = (parsedBody \ "value").extractOpt[SpeedLimitValue]
     val ids = (parsedBody \ "ids").extract[Seq[Long]]
     val newLimits = (parsedBody \ "newLimits").extract[Seq[NewLimit]]
     optionalValue match {
-      case Some(value) =>
-        //TODO needs to be changed
-        val updatedIds = speedLimitService.updateValues(ids, value, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
-        val createdIds = speedLimitService.create(newLimits, (true, value), user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
+      case Some(values) =>
+        val updatedIds = speedLimitService.updateValues(ids, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
+        val createdIds = speedLimitService.create(newLimits, values, user.username, validateUserAccess(user, Some(SpeedLimitAsset.typeId))).toSet
         speedLimitService.getSpeedLimitAssetsByIds(updatedIds ++ createdIds)
       case _ => BadRequest("Speed limit value not provided")
     }
@@ -1389,9 +1387,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       (parsedBody \ "startMeasure").extract[Double],
       (parsedBody \ "endMeasure").extract[Double])
 
-    //TODO extract probably doesn't work
+    val c = (parsedBody \ "value").extract[SpeedLimitValue]
+
     speedLimitService.create(Seq(newLimit),
-      (parsedBody \ "value").extract[(Boolean, Int)],
+      (parsedBody \ "value").extract[SpeedLimitValue],
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId))).headOption match {
       case Some(id) => speedLimitService.getSpeedLimitById(id)
