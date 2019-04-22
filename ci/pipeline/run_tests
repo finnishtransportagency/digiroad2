@@ -92,7 +92,7 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
-                        "oth-backend-sbt",
+                        "digiroad2-backend-sbt",
                         "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                 }
@@ -117,7 +117,7 @@ pipeline {
         stage("Run Tests") {
             agent {
                 docker {
-                    image "oth-backend-sbt"
+                    image "digiroad2-backend-sbt"
                     reuseNode true
                 }
             }
