@@ -145,25 +145,25 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService, new OthSwagger)
   addServlet(municipalityApi, "/*")
 
-  when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))
-  when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, linkSource = NormalLinkInterface)))
-  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
-  when(mockTrafficLightService.getById(1)).thenReturn(Some(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
-
-  when(mockPedestrianCrossingService.getByMunicipality(235)).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))
-  when(mockObstacleService.getByMunicipality(235)).thenReturn(Seq(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, linkSource =  NormalLinkInterface)))
-  when(mockRailwayCrossingService.getByMunicipality(235)).thenReturn(Seq(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
-  when(mockTrafficLightService.getByMunicipality(235)).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
-
-  when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink])).thenReturn(1L)
-  when(mockObstacleService.create(any[IncomingObstacle], any[String], any[RoadLink])).thenReturn(1L)
-  when(mockRailwayCrossingService.create(any[IncomingRailwayCrossing], any[String], any[RoadLink])).thenReturn(1L)
-  when(mockTrafficLightService.create(any[IncomingTrafficLight], any[String], any[RoadLink])).thenReturn(1L)
-
-  when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, linkSource = NormalLinkInterface)))
-  when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, linkSource =  NormalLinkInterface)))
-  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
-  when(mockTrafficLightService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+//  when(mockPedestrianCrossingService.getById(1)).thenReturn(Some(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))
+//  when(mockObstacleService.getById(1)).thenReturn(Some(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, linkSource = NormalLinkInterface)))
+//  when(mockRailwayCrossingService.getById(1)).thenReturn(Some(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
+//  when(mockTrafficLightService.getById(1)).thenReturn(Some(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+//
+//  when(mockPedestrianCrossingService.getByMunicipality(235)).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, linkSource = NormalLinkInterface)))
+//  when(mockObstacleService.getByMunicipality(235)).thenReturn(Seq(Obstacle(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, None, None, None, linkSource =  NormalLinkInterface)))
+//  when(mockRailwayCrossingService.getByMunicipality(235)).thenReturn(Seq(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
+//  when(mockTrafficLightService.getByMunicipality(235)).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
+//
+//  when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink])).thenReturn(1L)
+//  when(mockObstacleService.create(any[IncomingObstacle], any[String], any[RoadLink])).thenReturn(1L)
+//  when(mockRailwayCrossingService.create(any[IncomingRailwayCrossing], any[String], any[RoadLink])).thenReturn(1L)
+//  when(mockTrafficLightService.create(any[IncomingTrafficLight], any[String], any[RoadLink])).thenReturn(1L)
+//
+//  when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, linkSource = NormalLinkInterface)))
+//  when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, linkSource =  NormalLinkInterface)))
+//  when(mockRailwayCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(RailwayCrossing(1, 1000, 0, 0, 0, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
+//  when(mockTrafficLightService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {

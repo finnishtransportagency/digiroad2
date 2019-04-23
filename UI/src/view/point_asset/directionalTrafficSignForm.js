@@ -17,8 +17,8 @@
       return '' +
         '  <div class="form-group editable form-directional-traffic-sign">' +
         '      <label class="control-label">Teksti</label>' +
-        '      <p class="form-control-static">' + (asset.text || '–') + '</p>' +
-        '      <textarea class="form-control large-input">' + (asset.text || '') + '</textarea>' +
+        '      <p class="form-control-static">' + (me.getPointPropertyValue(asset,'opastustaulun_teksti') || '–') + '</p>' +
+        '      <textarea class="form-control large-input">' + (me.getPointPropertyValue(asset,'opastustaulun_teksti') || '') + '</textarea>' +
         '  </div>' +
         '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
         '      <label class="control-label">Vaikutussuunta</label>' +
@@ -30,7 +30,7 @@
 
       rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
         var eventTarget = $(event.currentTarget);
-        selectedAsset.set({text: eventTarget.val()});
+        selectedAsset.setPropertyByPublicId("opastustaulun_teksti", eventTarget.val());
       });
     };
   };

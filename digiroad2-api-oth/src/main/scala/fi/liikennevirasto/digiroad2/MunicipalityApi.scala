@@ -213,20 +213,21 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val service = verifyPointServiceToUse(typeId)
     val asset = typeId match {
       case Obstacles.typeId =>
-        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingObstacleAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt))
+        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingObstacleAsset( x.linkId, x.startMeasure.toLong, Set()/*x.properties.map(_.value).head.toInt)*/))
       case PedestrianCrossings.typeId =>
-        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong, Set()))
       case RailwayCrossings.typeId =>
         parsedBody.extractOpt[NewAssetValues].map(x =>
           IncomingRailwayCrossingtAsset(
             x.linkId,
             x.startMeasure.toLong,
-            x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
-            x.properties.find(_.name == "name").map { name => name.value },
-            x.properties.find(_.name == "railwayCrossingId").map { code => code.value }.get
+//            x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
+//            x.properties.find(_.name == "name").map { name => name.value },
+//            x.properties.find(_.name == "railwayCrossingId").map { code => code.value }.get,
+            Set()
           ))
       case TrafficLights.typeId =>
-        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong, Set()))
     }
 
     val pointAsset = asset.getOrElse(throw new NoSuchElementException(""))
@@ -332,20 +333,21 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val service = verifyPointServiceToUse(typeId)
     val assets = typeId match {
       case Obstacles.typeId =>
-        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingObstacleAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt))
+        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingObstacleAsset( x.linkId, x.startMeasure.toLong, Set()/*x.properties.map(_.value).head.toInt)*/))
       case PedestrianCrossings.typeId =>
-        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong, Set()))
       case RailwayCrossings.typeId =>
         parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>
           IncomingRailwayCrossingtAsset(
             x.linkId,
             x.startMeasure.toLong,
-              x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
-              x.properties.find(_.name == "name").map { name => name.value },
-              x.properties.find(_.name == "railwayCrossingId").map { code => code.value }.get
+//              x.properties.find(_.name == "safetyEquipment").map { safetyEquipment => safetyEquipment.value.toInt }.get,
+//              x.properties.find(_.name == "name").map { name => name.value },
+//              x.properties.find(_.name == "railwayCrossingId").map { code => code.value }.get,
+            Set()
           ))
       case TrafficLights.typeId =>
-        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong, Set()))
     }
 
     val links = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet)
@@ -364,15 +366,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def extractPointProperties(pointAsset: PersistedPointAsset, typeId: Int): Any = {
     typeId match {
-      case Obstacles.typeId  => Seq(Map("value" ->  pointAsset.asInstanceOf[Obstacle].obstacleType, "name" -> getAssetNameProp(typeId).head))
+      case Obstacles.typeId  => Seq(Map("value" ->  Set()/*pointAsset.asInstanceOf[Obstacle].obstacleType*/, "name" -> getAssetNameProp(typeId).head))
       case PedestrianCrossings.typeId  => Seq(Map("value" -> "1" , "name" -> getAssetNameProp(typeId).head))
       case RailwayCrossings.typeId  => Seq(
-        Map( "name" -> "name",
-          "value" ->  pointAsset.asInstanceOf[RailwayCrossing].name),
-        Map("name" -> "safetyEquipment",
-          "value" -> pointAsset.asInstanceOf[RailwayCrossing].safetyEquipment),
-        Map("name" -> "railwayCrossingId",
-          "value" -> pointAsset.asInstanceOf[RailwayCrossing].code)
+//        Map( "name" -> "name",
+//          "value" ->  pointAsset.asInstanceOf[RailwayCrossing].name),
+//        Map("name" -> "safetyEquipment",
+//          "value" -> pointAsset.asInstanceOf[RailwayCrossing].safetyEquipment),
+//        Map("name" -> "railwayCrossingId",
+//          "value" -> pointAsset.asInstanceOf[RailwayCrossing].code)
       )
       case TrafficLights.typeId  => Seq(Map("value" -> "1" , "name" -> getAssetNameProp(typeId).head))
     }

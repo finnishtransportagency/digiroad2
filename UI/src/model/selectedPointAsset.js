@@ -10,6 +10,7 @@
       get: get,
       place: place,
       set: set,
+      setProperties: setProperties,
       save: save,
       isDirty: isDirty,
       isNew: isNew,
@@ -39,6 +40,14 @@
         if (_.isArray(a)) { return b; }
       });
       eventbus.trigger(assetName + ':changed');
+    }
+
+    function setProperties(property) {
+      dirty = true;
+      _.mergeWith(current.properties, property, function(a, b){
+        if(_.isArray(a)) { return b; }
+      });
+      eventbus.trigger(assetName + ":changed");
     }
 
     function open(asset) {

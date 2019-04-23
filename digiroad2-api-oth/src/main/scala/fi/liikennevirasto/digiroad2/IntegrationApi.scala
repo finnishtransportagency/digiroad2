@@ -449,7 +449,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "m_value" -> directionalTrafficSign.mValue,
         "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
-        "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
+//        "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
         lastModifiedBy(directionalTrafficSign.createdBy, directionalTrafficSign.modifiedBy),
         "linkSource" -> directionalTrafficSign.linkSource.value)
@@ -526,9 +526,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
-        "safetyEquipment" -> railwayCrossing.safetyEquipment,
-        "name" -> railwayCrossing.name,
-        "railwayCrossingId" -> railwayCrossing.code,
+//        "safetyEquipment" -> railwayCrossing.safetyEquipment,
+//        "name" -> railwayCrossing.name,
+//        "railwayCrossingId" -> railwayCrossing.code,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)
@@ -542,7 +542,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
-        "obstacle_type" -> obstacle.obstacleType,
+//        "obstacle_type" -> obstacle.obstacleType,
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
         "linkSource" -> obstacle.linkSource.value)

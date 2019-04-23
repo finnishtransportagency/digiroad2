@@ -62,9 +62,10 @@ object OracleTrafficSignDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
         join property p on a.asset_type_id = p.asset_type_id
+        left join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id and p.property_type = 'checkbox'
         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
         left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id and p.property_type = 'text'
-        left join enumerated_value ev on scv.enumerated_value_id = ev.id
+        left join enumerated_value ev on scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
       """
 
@@ -360,6 +361,10 @@ object OracleTrafficSignDao {
     StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
+  private def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
+    StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
       case Text | LongText =>
@@ -383,6 +388,13 @@ object OracleTrafficSignDao {
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
           insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
+        }
+      case CheckBox =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
+        if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
+          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+        } else {
+          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

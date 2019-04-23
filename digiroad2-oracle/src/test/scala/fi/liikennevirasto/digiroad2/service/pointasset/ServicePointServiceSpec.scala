@@ -26,7 +26,7 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
 
   test("Create new service point") {
     runWithRollback {
-      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
+      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200))), Set()),235, "jakke")
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -45,7 +45,7 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
 
   test("Expire service point") {
     runWithRollback {
-      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
+      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200))), Set()),235,"jakke")
       val assets = service.getPersistedAssetsByIds(Set(id))
       val asset = assets.head
       service.expire(asset.id, "jakke")
@@ -59,7 +59,7 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
       val result = service.get(BoundingRectangle(Point(374127.5, 6677511.5), Point(374128.5, 6677512.5))).head
       result.id should equal(600061)
 
-      val updated = IncomingServicePoint(result.lon,result.lat, Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200))))
+      val updated = IncomingServicePoint(result.lon,result.lat, Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200))), Set())
 
       service.update(result.id, updated, 235, "unit_test")
       val updatedServicePoint = service.get(BoundingRectangle(Point(374127.5, 6677511.5), Point(374128.5, 6677512.5))).head
@@ -73,14 +73,14 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
   test("Create service point with wrong authority data ") {
     runWithRollback {
       intercept[ServicePointException] {
-        service.create(IncomingServicePoint(374128.0, 6677512.0, Set(IncomingService(10, Some("Testipalvelu1"), Some("Lisätieto1"), Some(3), Some(100)))), 235, "jakke")
+        service.create(IncomingServicePoint(374128.0, 6677512.0, Set(IncomingService(10, Some("Testipalvelu1"), Some("Lisätieto1"), Some(3), Some(100))), Set()), 235, "jakke")
       }
     }
   }
 
   test("Create service point with right authority data ") {
     runWithRollback {
-      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200)))),235,"jakke")
+      val id = service.create(IncomingServicePoint(374128.0,6677512.0,Set(IncomingService(6,Some("Testipalvelu1"),Some("Lisätieto1"),Some(3),Some(100)),IncomingService(8,Some("Testipalvelu2"),Some("Lisätieto2"),None,Some(200))), Set()),235,"jakke")
       val assets = service.getPersistedAssetsByIds(Set(id))
       assets.size should be(1)
 

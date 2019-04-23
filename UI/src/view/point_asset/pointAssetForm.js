@@ -94,14 +94,14 @@ root.PointAssetForm = function() {
 
     rootElement.find('#suggested-asset').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({isSuggested: eventTarget.prop('checked')});
+      selectedAsset.setPropertyByPublicId($('#suggested-asset').attr('name'), +eventTarget.prop('checked'));
     });
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
       var eventTarget = $(event.currentTarget);
       var obj = {};
       obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
-      selectedAsset.set(obj);
+      selectedAsset.setPropertyByPublicId(eventTarget.attr('name'), eventTarget.val());
     });
 
     rootElement.find('button#change-validity-direction').on('click', function() {
@@ -144,13 +144,23 @@ root.PointAssetForm = function() {
     return date ? (date + ' / ' + username) : '-';
   };
 
+  this.getPointPropertyValue = function(selectedAsset, publicId) {
+    return _.find(selectedAsset.propertyData, function(asset) { return asset.publicId === publicId; }).values[0].propertyValue;
+  };
+
+  var getSuggestedBoxValue = function(selectedAsset, publicId) {
+    return !!parseInt(me.getPointPropertyValue(selectedAsset, publicId));
+  };
+
   var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
-    if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
-      var checkedValue = selectedAsset.get().isSuggested ? 'checked' : '';
+    var selectedAssetPublicId = _.find(selectedAsset.get().propertyData, function(asset) { return asset.propertyType === "checkbox"; }).publicId;
+    var suggestedBoxValue = getSuggestedBoxValue(selectedAsset.get(), selectedAssetPublicId);
+    if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset, suggestedBoxValue)) {
+      var checkedValue = suggestedBoxValue ? 'checked' : '';
       return '<div class="form-group editable form-' + me.pointAsset.layerName + '">' +
               '<label class="control-label">Vihjetieto</label>' +
               '<p class="form-control-static">' + 'Kylla' + '</p>' +
-              '<input type="checkbox" class="form-control suggested-checkbox" id="suggested-asset"' + checkedValue + '>' +
+              '<input type="checkbox" class="form-control suggested-checkbox" id="suggested-asset" name="' + selectedAssetPublicId + '" ' + checkedValue + '>' +
             '</div>';
     } else {
       return '';

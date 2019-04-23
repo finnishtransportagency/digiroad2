@@ -754,7 +754,10 @@
         layerName: 'pedestrianCrossings',
         title: 'Suojatie',
         allowComplementaryLinks: true,
-        newAsset: {  },
+        newAsset: { propertyData: [
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "pedestrian_crossings_suggest_box", values: [ {propertyValue: 0} ]}
+        ]},
+        isSuggestedAsset: true,
         legendValues: [
           {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'},
           {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
@@ -765,7 +768,6 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         saveCondition: function(selectedAsset, authorizationPolicy) {
           var selected = selectedAsset.get();
           return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
@@ -779,7 +781,10 @@
         layerName: 'obstacles',
         title: 'Esterakennelma',
         allowComplementaryLinks: true,
-        newAsset: { obstacleType: 1 },
+        newAsset: { propertyData: [
+            {'name': 'Esterakennelma', 'propertyType': 'single_choice', 'publicId': "esterakennelma", values: [ {propertyValue: 1, propertyDisplayValue: ""} ] },
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "obstacle_suggest_box", values: [ {propertyValue: 0} ]}
+        ]},
         legendValues: [
           {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
           {symbolUrl: 'images/point-assets/point_green.svg', label: 'Avattava puomi'},
@@ -793,8 +798,9 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
         saveCondition: function(selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "obstacle_suggest_box"; }).values[0].propertyValue);
+          var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          return !(suggestedAssetCondition && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
         },
         hasMunicipalityValidation: true,
         isSuggestedAsset: true,
@@ -805,7 +811,12 @@
         layerName: 'railwayCrossings',
         title: 'Rautatien tasoristeys',
         allowComplementaryLinks: true,
-        newAsset: { safetyEquipment: 1 },
+        newAsset: { safetyEquipment: 1, propertyData: [
+            {'name': "Turvavarustus", 'propertyType': 'single_choice', 'publicId': "turvavarustus", values: [ {propertyValue: 0} ]},
+            {'name': "Nimi", 'propertyType': 'text', 'publicId': "rautatien_tasoristeyksen_nimi", values: [ {propertyValue: ''} ]},
+            {'name': "Tasoristeystunnus", 'propertyType': 'text', 'publicId': "tasoristeystunnus", values: [ {propertyValue: ''} ]},
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "railway_crossing_suggest_box", values: [ {propertyValue: 0} ]}
+        ]},
         legendValues: [
           {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
           {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
@@ -817,7 +828,8 @@
         },
         saveCondition: function(selectedAsset, authorizationPolicy) {
           var selected = selectedAsset.get();
-          return (selected.code ? selected.code !== '' : false) && (!(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator());
+          var propertyValue = parseInt(_.find(selected.propertyData, function(prop){ return prop.publicId === 'turvavarustus'; }).values[0].propertyValue);
+          return (propertyValue ? propertyValue !== 0 : false) && (!(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator());
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: RailwayCrossingForm,
@@ -829,7 +841,10 @@
         layerName: 'directionalTrafficSigns',
         title: 'Opastustaulu',
         allowComplementaryLinks: false,
-        newAsset: { validityDirection: 2 },
+        newAsset: { validityDirection: 2, propertyData: [
+            {'name': "Teksti", 'propertyType': 'text', 'publicId': "opastustaulun_teksti", values: [ {propertyValue: ""} ]},
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "directional_traffic_signs_suggest_box", values: [ {propertyValue: 0} ]}
+          ]},
         legendValues: [
           {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg', label: 'Opastustaulu'},
           {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning-directional-traffic-sign.svg', label: 'Geometrian ulkopuolella'}
@@ -855,7 +870,9 @@
         allowComplementaryLinks: false,
         allowGrouping: true,
         groupingDistance: Math.pow(3, 2),
-         newAsset: { services: [] },
+         newAsset: { services: [], propertyData: [
+             {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "service_points_suggest_box", values: [ {propertyValue: 0} ]}
+           ] },
         legendValues: [
           {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
           {symbolUrl: 'images/service_points/parking.png', label: 'Pysäköintialue'},
@@ -894,7 +911,10 @@
         layerName: 'trafficLights',
         title: 'Liikennevalo',
         allowComplementaryLinks: true,
-        newAsset: {  },
+        newAsset: { propertyData: [
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "traffic_lights_suggest_box", values: [ {propertyValue: 0} ]}
+        ]},
+        isSuggestedAsset: true,
         legendValues: [
           {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
           {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
@@ -905,7 +925,6 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         saveCondition: function(selectedAsset, authorizationPolicy) {
           var selected = selectedAsset.get();
           return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
@@ -921,8 +940,8 @@
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
-          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : ""}}
-
+          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : ""}},
+          {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "traffic_signs_suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
         collection: TrafficSignsCollection,
@@ -945,7 +964,8 @@
           ];
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
-          var suggestedAssetCondition = !(selectedAsset.get().isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "traffic_signs_suggest_box"; }).values[0].propertyValue);
+          var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
           return (functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true) && suggestedAssetCondition;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer

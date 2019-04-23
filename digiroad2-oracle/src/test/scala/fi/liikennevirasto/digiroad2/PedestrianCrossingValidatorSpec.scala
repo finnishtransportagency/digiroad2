@@ -62,9 +62,11 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
       val propTrafficSign = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
+
       when(pedestrianValidator.dao.fetchPedestrianCrossingByLinkIds(Seq(1001l, 1002l, 1003l)))
         .thenReturn(
-          Seq(PedestrianCrossing(1, 1003l, 1.0, 1.0, 1.0, false, 0, 235, linkSource = LinkGeomSource.NormalLinkInterface))
+          Seq(PedestrianCrossing(1, 1003l, 1.0, 1.0, 1.0, false, 0, 235, Seq(pointAssetProperty), linkSource = LinkGeomSource.NormalLinkInterface))
         )
 
       val result = pedestrianValidator.assetValidator(trafficSign)
@@ -79,10 +81,12 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
       val propTrafficSign = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1002l, 12, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
+
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(pedestrianValidator.dao.fetchPedestrianCrossingByLinkIds(Seq(1001l,1002l, 1003l, 1004l)))
         .thenReturn(
-          Seq(PedestrianCrossing(1, 1004l, 13, 13, 13, false, 0, 235, linkSource = LinkGeomSource.NormalLinkInterface))
+          Seq(PedestrianCrossing(1, 1004l, 13, 13, 13, false, 0, 235, Seq(pointAssetProperty), linkSource = LinkGeomSource.NormalLinkInterface))
         )
 
       val result = pedestrianValidator.assetValidator(trafficSign)
@@ -96,13 +100,14 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   test("Pedestrian crossing traffic filter nearest asset") {
     OracleDatabase.withDynTransaction {
 
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val assets = Seq(
-        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
 
       val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(0, 0.0), 0)
       result should have size 1
@@ -116,12 +121,14 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   test("Pedestrian crossing traffic filter further asset") {
     OracleDatabase.withDynTransaction {
 
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
+
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val assets = Seq(
-        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
 
       val result = pedestrianValidator.filteredAsset(roadLink, assets, Point(50, 0.0), 0)
       result should have size 1
@@ -135,12 +142,14 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
   test("Pedestrian crossing traffic (AgainstDigitizing) in roadLink filter nearest asset TowardDigitalization") {
     OracleDatabase.withDynTransaction {
 
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
+
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val assets = Seq(
-        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
 
       val propTrafficSign = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
@@ -156,13 +165,14 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
 
   test("Pedestrian crossing traffic (TowardsDigitizing) in roadLink filter nearest asset AgainstDigitizing") {
     OracleDatabase.withDynTransaction {
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val assets = Seq(
-        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
 
       val propTrafficSign = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -178,13 +188,14 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
 
   test("Pedestrian crossing traffic (AgainstDigitizing) in roadLink filter nearest asset AgainstDigitizing") {
     OracleDatabase.withDynTransaction {
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val assets = Seq(
-        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
 
       val propTrafficSign = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
@@ -200,13 +211,14 @@ class PedestrianCrossingValidatorSpec extends FunSuite with Matchers{
 
   test("Pedestrian crossing traffic (TowardsDigitizing) in roadLink filter nearest asset TowardDigitalization") {
     OracleDatabase.withDynTransaction {
+      val pointAssetProperty = PointAssetProperty(111111, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
 
       val roadLink = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(50, 0.0)), 50, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val assets = Seq(
-        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
-        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
+        PedestrianCrossing(1l, 1001l, 0, 5, 5, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(2l, 1001l, 0, 10, 10, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(3l, 1001l, 0, 30, 30, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface),
+        PedestrianCrossing(4l, 1001l, 0, 40, 40, false, 0 ,235, Seq(pointAssetProperty), Some("testUser"), Some(DateTime.now), None, None, linkSource = LinkGeomSource.NormalLinkInterface))
 
       val propTrafficSign = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 0, 25, 25, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)

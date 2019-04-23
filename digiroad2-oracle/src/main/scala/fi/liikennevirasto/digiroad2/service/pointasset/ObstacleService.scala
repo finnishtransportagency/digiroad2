@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SimplePointAssetProperty, SimpleTrafficSignProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -10,8 +10,8 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
-case class IncomingObstacleAsset(linkId: Long, mValue: Long, obstacleType: Int)  extends IncomePointAsset
+case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingObstacleAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 
 class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -70,7 +70,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
-    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
+    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
     updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated", Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
@@ -83,7 +83,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource)
 
   }
@@ -98,7 +98,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingObstacle] = {
      GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-       point =>  IncomingObstacle(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingObstacleAsset].obstacleType)
+       point =>  IncomingObstacle(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingObstacle].propertyData)
      }
   }
 }

@@ -1,20 +1,25 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
+
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
+import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
+
 import scala.math.BigDecimal.RoundingMode
-import java.text.{NumberFormat, DecimalFormat}
+import java.text.{DecimalFormat, NumberFormat}
+
 import Q._
-import org.joda.time.{LocalDate, DateTime}
+import org.joda.time.{DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
+
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -129,6 +134,13 @@ object Queries {
        where asset_id = $assetId and property_id = $propertyId
    """
 
+  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
+    sqlu"""
+      update multiple_choice_value set enumerated_value_id =
+        (select id from enumerated_value where value = $propertyValue and property_id = $propertyId)
+        where asset_id = $assetId and property_id = $propertyId
+    """
+
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
@@ -144,6 +156,9 @@ object Queries {
 
   def existsTextProperty =
     "select id from text_property_value where asset_id = ? and property_id = ?"
+
+  def existsMultipleChoiceProperty =
+    "select asset_id from multiple_choice_value where asset_id = ? and property_id = ?"
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
     sqlu"""

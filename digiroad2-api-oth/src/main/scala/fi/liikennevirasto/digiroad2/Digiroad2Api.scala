@@ -159,13 +159,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
       }))
 
+  case object PointAssetSerializer extends CustomSerializer[SimplePointAssetProperty](format =>
+    ({
+      case jsonObj: JObject =>
+        val publicId = (jsonObj \ "publicId").extract[String]
+        val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+
+        SimplePointAssetProperty(publicId, propertyValue)
+    },
+      {
+        case tv : SimplePointAssetProperty => Extraction.decompose(tv)
+      }))
+
   case object AdditionalInfoClassSerializer extends CustomSerializer[AdditionalInformation](format => ( {
     case JString(additionalInfo) => AdditionalInformation(additionalInfo)
   }, {
     case ai: AdditionalInformation => JString(ai.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + AdditionalInfoClassSerializer + TrafficSignSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + WidthLimitReasonSerializer + AdditionalInfoClassSerializer + TrafficSignSerializer + PointAssetSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -1566,11 +1578,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def checkPropertySize(service: RailwayCrossingService): Unit = {
     val asset = (parsedBody \ "asset").extractOrElse[IncomingRailwayCrossing](halt(BadRequest("Malformed asset")))
-    val code = asset.code.length
+//    val code = asset.code.length
     val maxSize = railwayCrossingService.getCodeMaxSize
-
-    if(code > maxSize)
-      halt(BadRequest("Railway id property is too big"))
+//
+//    if(code > maxSize)
+//      halt(BadRequest("Railway id property is too big"))
   }
 
 

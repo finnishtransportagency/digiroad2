@@ -72,7 +72,9 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
-      service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317), 31.550,  "Hannu", 235, None, linkSource = NormalLinkInterface)
+      val values = Seq(TextPropertyValue("0"))
+      val simpleProperty = SimplePointAssetProperty("pedestrian_crossings_suggest_box", values)
+      service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317, Set(simpleProperty)), 31.550, "Hannu", 235, None, linkSource = NormalLinkInterface)
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
       result.id should equal(600029)
       result.linkId should equal(1611317)
@@ -109,7 +111,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(2, 0.0, 388553075), "jakke", roadLink )
+      val id = service.create(IncomingPedestrianCrossing(2, 0.0, 388553075, Set()), "jakke", roadLink )
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -117,6 +119,9 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
 
       asset.vvhTimeStamp should not be(0)
+
+      val propertyId = asset.propertyData.head.id
+      val pointAssetProperty = PointAssetProperty(propertyId, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
 
       asset should be(PedestrianCrossing(
         id = id,
@@ -127,6 +132,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         floating = false,
         vvhTimeStamp = asset.vvhTimeStamp,
         municipalityCode = 235,
+        propertyData = Seq(pointAssetProperty),
         createdBy = Some("jakke"),
         createdAt = asset.createdAt,
         linkSource = NormalLinkInterface
@@ -139,10 +145,10 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   test("Update pedestrian crossing with geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075), "jakke", roadLink )
+      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075), roadLink, "test")
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 10.0, 388553075, Set()), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -160,10 +166,10 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   test("Update pedestrian crossing without geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075), "jakke", roadLink )
+      val id = service.create(IncomingPedestrianCrossing(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075), roadLink, "test")
+      val newId = service.update(id, IncomingPedestrianCrossing(0.0, 20.0, 388553075, Set()), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)

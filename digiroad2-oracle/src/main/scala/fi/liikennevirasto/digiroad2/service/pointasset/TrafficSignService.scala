@@ -40,6 +40,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
   val additionalPublicId = "additional_panel"
+  val suggestedPublicId = "traffic_signs_suggest_box"
   private val counterPublicId = "counter"
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"

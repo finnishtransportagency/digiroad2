@@ -16,6 +16,8 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.dao.Queries.{deleteAdditionalPanelProperty, deleteTextProperty, insertAdditionalPanelProperty, insertMultipleChoiceValue, insertSingleChoiceProperty, insertTextProperty, updateMultipleChoiceValue, updateSingleChoiceProperty, updateTextProperty}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}

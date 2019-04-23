@@ -73,8 +73,8 @@
       });
     };
 
-    this.handleSuggestedAsset = function(selectedAsset) {
-      return (selectedAsset.isNew() && me.isOperator()) || (selectedAsset.get().isSuggested && (me.isOperator() || me.isMunicipalityMaintainer()));
+    this.handleSuggestedAsset = function(selectedAsset, suggestedBoxValue) {
+      return (selectedAsset.isNew() && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
 
   };
