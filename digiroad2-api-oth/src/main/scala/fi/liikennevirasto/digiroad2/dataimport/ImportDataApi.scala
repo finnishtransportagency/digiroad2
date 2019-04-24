@@ -66,29 +66,10 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
   }
 
-  post("/obstacles") {
+  post("/:pointAssetTypeImport") {
     validateOperation()
-    importPointAssets(fileParams("csv-file"), "obstacles")
-  }
-
-  post("/trafficLights") {
-    validateOperation()
-    importPointAssets(fileParams("csv-file"), "trafficLights")
-  }
-
-  post("/railwayCrossings") {
-    validateOperation()
-    importPointAssets(fileParams("csv-file"), "railwayCrossings")
-  }
-  
-  post("/pedestrianCrossings") {
-    validateOperation()
-    importPointAssets(fileParams("csv-file"), "pedestrianCrossings")
-  }
-
-  post("/servicePoints") {
-    validateOperation()
-    importPointAssets(fileParams("csv-file"), "servicePoints")
+    val assetType = params("pointAssetTypeImport")
+    importPointAssets(fileParams("csv-file"), assetType)
   }
 
   post("/roadLinks") {
