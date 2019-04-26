@@ -16,7 +16,7 @@ pipeline {
                             script {
                                 STAGE_RUN_ROSATTE_CONVERSION = [
                                     "mkdir -p ${WORKSPACE}/dev/fd/3/ &&",
-                                    "curl -s -v -X POST \ https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its.herokuapp.com/conversion
+                                    "curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its.herokuapp.com/conversion
                                 ].join(" ")
                             }
                     }
