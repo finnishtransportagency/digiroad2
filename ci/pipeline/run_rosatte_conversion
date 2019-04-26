@@ -37,8 +37,8 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
-                         "digiroad2-cap",
-                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
+                        "digiroad2-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                 }
             }
