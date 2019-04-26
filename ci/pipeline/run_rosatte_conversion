@@ -38,21 +38,9 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
-                        "digiroad2-frontend",
-                        "${build_args} -f ci/docker/Dockerfile.node ci"
-                    )
-                    docker.build(
                         "digiroad2-backend-sbt",
                         "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
-                    docker.build(
-                        "digiroad2-maven-publish",
-                        "${build_args} -f ci/docker/Dockerfile.maven ci"
-                    )
-                    docker.build(
-                        "digiroad2-cap",
-                        "${build_args} -f ci/docker/Dockerfile.ruby ci"
-                     )
                 }
             }
             post {
