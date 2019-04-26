@@ -10,17 +10,10 @@ pipeline {
 
     stages {
         stage("Setup") {
-
             steps {
-
                     script {
-                        STAGE_RUN_TASK = [
-
-                            "ssh web@gateway \'cd /home/web/digiroad2/current && echo YES |",
-                             "/home/web/digiroad2/current/./sbt",
-                             "-Ddigiroad2.env=staging",
-                             "\'project digiroad2-oracle\'",
-                             "\'test:run-main fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList\'"
+                        STAGE_RUN_ROSATTE_CONVERSION = [
+                            "curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its.herokuapp.com/conversion | tee /dev/fd/3 | tail -n 1 | grep OK"
                         ].join(" ")
                     }
             }
@@ -47,7 +40,7 @@ pipeline {
             }
         }
 
-        stage("Run Task") {
+        stage("Run Rosatte Conversion") {
             agent {
                 docker {
                     image "digiroad2-cap"
@@ -55,7 +48,7 @@ pipeline {
                 }
             }
             steps {
-                sh STAGE_RUN_TASK
+                sh STAGE_RUN_ROSATTE_CONVERSION
             }
         }
     }
