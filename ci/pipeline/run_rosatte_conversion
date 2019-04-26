@@ -47,7 +47,7 @@ pipeline {
         stage("Run Rosatte Conversion") {
             agent {
                 docker {
-                    image "digiroad2-cap"
+                    image "digiroad2-backend-sbt"
                     reuseNode true
                 }
             }
