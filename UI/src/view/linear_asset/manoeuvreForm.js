@@ -181,6 +181,7 @@
         rootElement.find('.adjacent-link').toggle(!readOnly);
         rootElement.find('.manoeuvre').toggle(readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.suggestion-box').toggle(!readOnly);
         if(readOnly){
           rootElement.find('.wrapper').addClass('read-only');
         } else {
@@ -290,6 +291,10 @@
           })));
         });
 
+        rootElement.find('.form').append(
+            suggestionElement(selectedManoeuvreSource, authorizationPolicy)
+        );
+
         toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
 
         var manoeuvreData = function(formGroupElement) {
@@ -297,6 +302,7 @@
           var destLinkId = firstTargetLinkId;
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
+          var isSuggested = !_.isEmpty(rootElement.find('.suggestionCheckBox')) ? rootElement.find('.suggestionCheckBox').prop('checked') : false;
           var nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
           var linkIds = [firstTargetLinkId];
           return {
@@ -307,7 +313,8 @@
             linkIds: linkIds,
             exceptions: manoeuvreExceptions(formGroupElement),
             validityPeriods: manoeuvreValidityPeriods(formGroupElement),
-            additionalInfo: additionalInfo
+            additionalInfo: additionalInfo,
+            isSuggested: isSuggested
           };
         };
 
@@ -345,6 +352,11 @@
         }, 1000);
 
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
+
+        rootElement.find('.suggestion-box').on('change', 'input[type="checkbox"]', function(event) {
+          var manoeuvreId = selectedManoeuvreSource.getId();
+          selectedManoeuvreSource.setSuggestionInfo(manoeuvreId, $(event.currentTarget).prop('checked'));
+        });
 
         // Verify value of checkBox for remove the manoeuvres
         // If the checkBox was checked remove the manoeuvre
@@ -527,6 +539,7 @@
       });
 
       eventbus.on('manoeuvre:changed', function() {
+        alert(selectedManoeuvreSource.isDirty());
         rootElement.find('.form-controls button').attr('disabled', false);
       });
 
@@ -639,6 +652,22 @@
       '  <span class="minute-separator"></span>' +
         minutesElement(period.endMinute, 'end') +
       '</div></li>';
+  }
+
+  function suggestionElement(selectedManoeuvreSource, authorizationPolicy) {
+    if(authorizationPolicy.handleSuggestedAsset(selectedManoeuvreSource)) {
+    var checkedValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
+      return  '<div class="form-group suggestion-element">' +
+                '<label class="control-label">Vihjetieto</label>' +
+                '<div class="form-group manoeuvre">' +
+                  '<p class="form-control-static"> kyllä </p>' +
+                '</div>' +
+                '<div class="form-group suggestion-box">' +
+                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
+                '</div>' +
+              '</div>';
+    } else
+      return '';
   }
 
   function validityPeriodDisplayElement(period) {

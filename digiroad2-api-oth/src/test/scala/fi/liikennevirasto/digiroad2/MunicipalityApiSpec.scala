@@ -138,9 +138,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockRoadLinkService.getRoadsLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(newRoadLinks)
 
-  when(mockManoeuvreService.getByMunicipalityAndRoadLinks(235)).thenReturn(Seq((Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), ""), newRoadLinks)))
+  when(mockManoeuvreService.getByMunicipalityAndRoadLinks(235)).thenReturn(Seq((Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), "", false), newRoadLinks)))
   when(mockManoeuvreService.createManoeuvre(any[String], any[NewManoeuvre], any[Seq[RoadLink]])).thenReturn(10)
-  when(mockManoeuvreService.find(any[Long])).thenReturn(Some(Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), "")))
+  when(mockManoeuvreService.find(any[Long])).thenReturn(Some(Manoeuvre(1, manoeuvreElement, Set.empty, Nil, None, None, "", DateTime.now(), "", false)))
 
   private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService, new OthSwagger)
   addServlet(municipalityApi, "/*")
@@ -752,7 +752,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   test("encode Manoeuvre asset") {
     val formatter = DateTimeFormat.forPattern("dd-MM-yyyy HH:mm:ss")
     val modifiedAt = DateTime.parse("18-11-2017 03:01:03", formatter)
-    val manoeuvreAsset = Manoeuvre(1, manoeuvreElement, Set(ValidityPeriod(12, 13, Weekday , 30, 35)), Seq(10,22), Some(modifiedAt), None, "test", DateTime.now, "")
+    val manoeuvreAsset = Manoeuvre(1, manoeuvreElement, Set(ValidityPeriod(12, 13, Weekday , 30, 35)), Seq(10,22), Some(modifiedAt), None, "test", DateTime.now, "", false)
 
     val manoeuvreMap =  municipalityApi.manoeuvreAssetToApi(manoeuvreAsset, newRoadLinks)
     manoeuvreMap.get("id").get should be (1)

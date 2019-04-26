@@ -67,7 +67,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val start = ManoeuvreElement(1, 1003l, 1004l, ElementTypes.FirstElement)
       val end = ManoeuvreElement(1, 1004l, 0, ElementTypes.LastElement)
 
-      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
+      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "", false)
 
       val propNoLeftTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoLeftTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 10, 2, 2, false, 0, 235, propNoLeftTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -93,7 +93,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val start = ManoeuvreElement(1, 1003l, 1004l, ElementTypes.FirstElement)
       val end = ManoeuvreElement(1, 1004l, 0, ElementTypes.LastElement)
 
-      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
+      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "", false)
 
       val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -121,7 +121,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val intermediate = ManoeuvreElement(1, 1004l, 1005l, ElementTypes.IntermediateElement)
       val end = ManoeuvreElement(1, 1005l, 0, ElementTypes.LastElement)
 
-      val manoeuvre =  Manoeuvre(1l, Seq(start, intermediate, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
+      val manoeuvre =  Manoeuvre(1l, Seq(start, intermediate, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "", false)
 
       val propNoUTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoUTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propNoUTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -149,7 +149,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val start = ManoeuvreElement(1, 1003l, 1004l, ElementTypes.FirstElement)
       val end = ManoeuvreElement(1, 1004l, 0, ElementTypes.LastElement)
 
-      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
+      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "", false)
 
       val propNoUTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoUTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 2, 2, false, 0, 235, propNoUTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -178,7 +178,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val start = ManoeuvreElement(1, 1003l, 1004l, ElementTypes.FirstElement)
       val end = ManoeuvreElement(1, 1004l, 0, ElementTypes.LastElement)
 
-      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "" )
+      val manoeuvre =  Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "", false)
 
       val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 10, 2, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
@@ -207,7 +207,7 @@ class ManoeuvreValidatorSpec  extends FunSuite with Matchers {
       val start = ManoeuvreElement(1, 1003l, 1004l, ElementTypes.FirstElement)
       val end = ManoeuvreElement(1, 1004l, 0, ElementTypes.LastElement)
 
-      val manoeuvre = Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "")
+      val manoeuvre = Manoeuvre(1l, Seq(start, end), Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, None, "", DateTime.now(), "", false)
 
       val propNoRightTurn = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoRightTurn.OTHvalue.toString))))
       val trafficSign = PersistedTrafficSign(1, 1001l, 2, 10, 2, false, 0, 235, propNoRightTurn, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)

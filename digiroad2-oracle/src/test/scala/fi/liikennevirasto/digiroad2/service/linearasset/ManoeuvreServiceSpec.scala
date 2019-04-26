@@ -85,8 +85,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         RoadLink(234, List(Point(10.0, 0.0), Point(50.0, 0.0)), 25.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
       )
 
-      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124), None), roadLink1)
-      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234), None),roadLink2)
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124), None, false), roadLink1)
+      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(233, 234), None, false),roadLink2)
 
       val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -108,8 +108,8 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         RoadLink(125, List(Point(20.0, 0.0), Point(25.0, 0.0)), 25.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
       )
 
-      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124), None),roadLink1)
-      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125), None),roadLink2)
+      val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124), None, false),roadLink1)
+      val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125), None, false),roadLink2)
 
       val manoeuvres = manoeuvreService.getByMunicipality(235)
 
@@ -124,7 +124,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       RoadLink(124, List(Point(10.0, 0.0), Point(25.0, 0.0)), 25.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None)
     )
 
-    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124), None),roadLink)
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124), None, false),roadLink)
 
     manoeuvreService.getByMunicipality(235)
       .find(_.id == manoeuvreId)
@@ -238,22 +238,22 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       var result: Boolean = false
 
       val roadLinksNoValid = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235, Seq(Point(25, 0), Point(30, 0))))
-      val manoeuvreNoValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None)
+      val manoeuvreNoValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None, false)
       result = manoeuvreService.isValid(manoeuvreNoValid, roadLinksNoValid)
       result should be(false)
 
       val roadLinksValid = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235))
-      val manoeuvreValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None)
+      val manoeuvreValid = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq, None, false)
       result = manoeuvreService.isValid(manoeuvreValid, roadLinksValid)
       result should be(true)
 
       val roadLinksValid2 = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235), vvhRoadLink(125, 235), vvhRoadLink(126, 235))
-      val manoeuvreValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None)
+      val manoeuvreValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None, false)
       result = manoeuvreService.isValid(manoeuvreValid2, roadLinksValid2)
       result should be(true)
 
       val roadLinksNoValid2 = Seq(vvhRoadLink(123, 235), vvhRoadLink(124, 235, Seq(Point(25, 0), Point(30, 0))), vvhRoadLink(125, 235), vvhRoadLink(126, 235))
-      val manoeuvreNoValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None)
+      val manoeuvreNoValid2 = NewManoeuvre(Set.empty, Nil, None, roadLinksSeq2, None, false)
       result = manoeuvreService.isValid(manoeuvreNoValid2, roadLinksNoValid2)
       result should be(false)
     }
@@ -275,7 +275,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val exceptions = Seq(2, 5)
       val additionalInfo = "Additional Info"
 
-      val manoeuvreUpdate = ManoeuvreUpdates(Option(validityPeriod), Option(exceptions), Option(additionalInfo))
+      val manoeuvreUpdate = ManoeuvreUpdates(Option(validityPeriod), Option(exceptions), Option(additionalInfo), false)
 
       val newId = manoeuvreService.updateManoeuvre("updater", oldId, manoeuvreUpdate, None)
       val manoeuvresNew = manoeuvreService.getByBoundingBox(bounds, Set(235))

@@ -15,6 +15,8 @@ import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
+import scala.util.Try
+
 case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 case class NewManoeuvreValues(linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], properties: Seq[ManoeuvreProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 
@@ -262,7 +264,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       val exceptions = manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt))
       val additionalInfo = manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString)
 
-      val manoeuvreUpdates = ManoeuvreUpdates(validityPeriods, exceptions, additionalInfo)
+      val manoeuvreUpdates = ManoeuvreUpdates(validityPeriods, exceptions, additionalInfo, false)
       val updatedId = manoeuvreService.updateManoeuvre(user.username, assetId, manoeuvreUpdates, Some(new DateTime(manoeuvre.geometryTimestamp.get)))
       getManoeuvreAndRoadLinks(Seq(updatedId.toInt)).headOption.getOrElse(halt(InternalServerError("Asset not Updated")))
     }.get
@@ -307,12 +309,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           NewManoeuvre(
             convertValidityPeriod(manoeuvre.properties.find(_.name == "validityPeriods")).getOrElse(Seq()).toSet,
             manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt)).getOrElse(Seq()),
-            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds, None),
+            manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString), linkIds, None, Try(manoeuvre.properties.find(_.name == "suggestionInfo").exists(_.toString.toBoolean)).getOrElse(false)),
          roadLinks.filter(road => linkIds.contains(road.linkId))
         )
       }
     }.get
-
     getManoeuvreAndRoadLinks(manoeuvreIds)
   }
 

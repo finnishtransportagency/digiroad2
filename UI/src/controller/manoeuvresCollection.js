@@ -282,6 +282,20 @@
       eventbus.trigger('manoeuvre:changed', additionalInfo);
     };
 
+    var setSuggestionInfo = function(manoeuvreId, suggestionInfo) {
+
+      if(!manoeuvreId) {
+        addedManoeuvre.isSuggested = suggestionInfo;
+      }
+      else {
+        var info = updatedInfo[manoeuvreId] || {};
+        info.isSuggested = suggestionInfo;
+        updatedInfo[manoeuvreId] = info;
+        dirty = true;
+        eventbus.trigger('manoeuvre:changed', suggestionInfo);
+      }
+    };
+
     /**
      * Revert model state after cancellation.
      */
@@ -684,6 +698,7 @@
       setExceptions: setExceptions,
       setValidityPeriods: setValidityPeriods,
       setAdditionalInfo: setAdditionalInfo,
+      setSuggestionInfo: setSuggestionInfo,
       cancelModifications: cancelModifications,
       cancelManoeuvreRemoval: cancelManoeuvreRemoval,
       isDirty: isDirty,
