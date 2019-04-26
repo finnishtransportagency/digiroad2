@@ -22,14 +22,6 @@ pipeline {
                             }
                     }
             }
-            post {
-                failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    )
-                }
-            }
         }
 
         stage("Prepare") {
@@ -81,7 +73,6 @@ pipeline {
             }
         }
     }
-
     post {
         always {
             slackSend(
