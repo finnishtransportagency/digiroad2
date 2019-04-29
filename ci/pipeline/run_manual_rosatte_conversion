@@ -3,7 +3,7 @@ import java.net.URI
 pipeline {
     agent any
     parameters {
-        string(name: 'CONVERTER_END_DATE', description: 'The formatter is yyyy-MM-dd'T'HH:mm:ss.SSSZZ  (The time zone offset is 'Z' for zero, and of the form '±HH:mm' for non-zero)')
+        string(name: 'CONVERTER_END_DATE', description: 'The formatter is yyyy-MM-ddTHH:mm:ss.SSSZZ  (The time zone offset is Z for zero, and of the form ±HH:mm for non-zero)')
     }
     environment {
         NOTIFY_SLACK_SUBJECT = "${JOB_NAME} - <${RUN_DISPLAY_URL}|${BUILD_DISPLAY_NAME}>"
