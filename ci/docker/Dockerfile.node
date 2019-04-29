@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:8
 ARG JENKINS_UID=10000
 RUN adduser --system --disabled-password --uid $JENKINS_UID jenkins
 
@@ -9,7 +9,8 @@ RUN apt-get update && \
                        apt-transport-https \
                        ca-certificates
 
-RUN echo "deb http://archive.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list && \
+RUN echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/100disablechecks
+RUN echo "deb http://archive.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list && \
     mkdir -p /usr/share/man/man1 && \
     apt-get update && apt-get install -t jessie-backports ca-certificates-java openjdk-8-jre-headless -y
 
