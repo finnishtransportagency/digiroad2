@@ -11,12 +11,11 @@ class WidthLimitValidator extends SevenRestrictionsLimitationValidator{
   override val radiusDistance: Int = 50
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
-    val assetValue = getAssetValue(asset)
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case NoWidthExceeding =>
-        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
+        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, "width")
       case FreeWidth =>
-        trafficSignService.getProperty(trafficSign, "trafficSigns_info").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
+        trafficSignService.getProperty(trafficSign, "trafficSigns_info").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, "width")
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }

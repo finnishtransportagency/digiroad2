@@ -10,7 +10,6 @@ class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
   override def assetTypeInfo: AssetTypeInfo = BogieWeightLimit
   override val allowedTrafficSign: Set[TrafficSignType] = Set(MaxTonsOnBogieExceeding)
   override val radiusDistance: Int = 500
-  lazy val dynamicAssetDao = new DynamicLinearAssetDao
 
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
@@ -21,53 +20,6 @@ class BogieWeightLimitValidator extends SevenRestrictionsLimitationValidator {
           is3AxleBogieProperty(additionalPanelProperties) && getAdditionalPanelValue(additionalPanelProperties.panelInfo) == getAssetValue(asset, publicId = "bogie_weight_3_axel" )
         }
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
-    }
-  }
-
-  def getAssetValue(asset: PersistedLinearAsset, publicId: String): String = {
-    asset.value match {
-      case Some(DynamicValue(value)) => value.properties.find(_.publicId == publicId).map(_.values) match {
-        case Some(values) => values.map(_.value).head.toString
-        case _ => ""
-      }
-      case _ => ""
-    }
-  }
-
-  override def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType] = {
-    dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(assetTypeInfo.typeId, roadLink.map(_.linkId))
-  }
-
-  override def reprocessRelevantTrafficSigns(assetInfo: AssetValidatorInfo): Unit = {
-    if (assetInfo.ids.toSeq.nonEmpty) {
-      withDynTransaction {
-
-        val assets = dynamicAssetDao.fetchDynamicLinearAssetsByIds(assetInfo.ids).filterNot(_.expired)
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
-
-        assets.foreach { asset =>
-          roadLinks.find(_.linkId == asset.linkId) match {
-            case Some(roadLink) =>
-              val assetGeometry = GeometryUtils.truncateGeometry2D(roadLink.geometry, asset.startMeasure, asset.endMeasure)
-              val (first, last) = GeometryUtils.geometryEndpoints(assetGeometry)
-
-              val trafficSigns: Set[PersistedTrafficSign] = getPointOfInterest(first, last, SideCode.apply(asset.sideCode)).flatMap { position =>
-                splitBothDirectionTrafficSignInTwo(trafficSignService.getTrafficSignByRadius(position, radiusDistance) ++ trafficSignService.getTrafficSign(Seq(asset.linkId)))
-                  .filter(sign => allowedTrafficSign.contains(TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, "trafficSigns_type").get.propertyValue.toInt)))
-                  .filterNot(_.floating)
-              }.toSet
-              val allLinkIds = assetInfo.newLinkIds ++ trafficSigns.map(_.linkId)
-
-              inaccurateAssetDAO.deleteInaccurateAssetByIds(assetInfo.ids)
-              if(allLinkIds.nonEmpty)
-                inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(allLinkIds, assetTypeInfo.typeId)
-
-              trafficSigns.foreach(validateAndInsert)
-
-            case _ =>
-          }
-        }
-      }
     }
   }
 

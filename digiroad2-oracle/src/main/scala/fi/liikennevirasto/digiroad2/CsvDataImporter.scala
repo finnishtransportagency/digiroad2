@@ -7,7 +7,7 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -748,18 +748,18 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  def getPropertyValue(maintenanceRoadAttributes: CsvAssetRow, propertyName: String): Any = {
-    maintenanceRoadAttributes.properties.find(prop => prop.columnName == propertyName).map(_.value).get
+  def getPropertyValue(maintenanceRoadAttributes: CsvAssetRow, propertyName: String): DynamicPropertyValue = {
+    DynamicPropertyValue(maintenanceRoadAttributes.properties.find(prop => prop.columnName == propertyName).map(_.value).get)
   }
 
   def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow, username: String): Unit = {
     val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[Integer].toLong
-    val newKoProperty = Props("huoltotie_kayttooikeus", "single_choice", getPropertyValue(maintenanceRoadAttributes, "rightOfUse").toString)
-    val orAccessProperty = Props("huoltotie_huoltovastuu", "single_choice", getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility").toString)
+    val newKoProperty = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(getPropertyValue(maintenanceRoadAttributes, "rightOfUse")))
+    val orAccessProperty = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility")))
 
     roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId)).map { roadlink =>
-      val values = MaintenanceRoad(Seq(newKoProperty, orAccessProperty))
-
+      val values = DynamicValue(DynamicAssetValue(Seq(newKoProperty, orAccessProperty)))
+      //case class Properties(publicId: String, propertyType: String, value: String)
       maintenanceService.createWithHistory(MaintenanceRoadAsset.typeId, linkId, values,
         SideCode.BothDirections.value, Measures(0, roadlink.length), username, Some(roadlink))
     }

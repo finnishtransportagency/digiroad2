@@ -12,8 +12,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.Asset.DatePropertyFormat
-
 
 case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: DynamicPropertyRow,
                            startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
@@ -24,8 +22,10 @@ class DynamicLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
   val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
-  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val filterFloating = if (includeFloating) "" else " and a.floating = 0"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filter = filterFloating + filterExpired
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
@@ -51,8 +51,7 @@ class DynamicLinearAssetDao {
           left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
-          and a.floating = 0
-          #$filterExpired""".as[DynamicAssetRow].list
+          #$filter""".as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -89,7 +88,7 @@ class DynamicLinearAssetDao {
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where a.floating = 0 """.as[DynamicAssetRow].list
+          where a.floating = 0 """.as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -119,7 +118,7 @@ class DynamicLinearAssetDao {
   }
 
   implicit val getDynamicAssetRow = new GetResult[DynamicAssetRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val sideCode = r.nextInt()

@@ -13,7 +13,7 @@ class TotalWeightLimitValidator extends SevenRestrictionsLimitationValidator {
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case MaxLadenExceeding =>
-        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
+        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset, "total_weight")
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }

@@ -42,7 +42,7 @@ case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: 
 
 case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
 
-case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
+//case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
 case class NewDynamicLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
 
@@ -1033,7 +1033,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
     val prohibitionParameter: Option[Prohibitions] = value.extractOpt[Prohibitions]
-    val maintenanceRoadParameter: Option[Seq[Properties]] = value.extractOpt[Seq[Properties]]
     val textualParameter = value.extractOpt[String]
     val dynamicValueParameter: Option[DynamicAssetValue] = value.extractOpt[DynamicAssetValue]
 
@@ -1041,12 +1040,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Some(Prohibitions(false, Nil)) => None
       case None => None
       case Some(x) => Some(Prohibitions(x.isSuggested, x.prohibitions))
-    }
-
-    val maintenanceRoad = maintenanceRoadParameter match {
-      case Some(Nil) => None
-      case None => None
-      case Some(x) => Some(MaintenanceRoad(x))
     }
 
     val dynamicValueProps = dynamicValueParameter match {
@@ -1059,7 +1052,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .map(NumericValue)
       .orElse(textualParameter.map(TextualValue))
       .orElse(prohibition)
-      .orElse(maintenanceRoad)
       .orElse(dynamicValueProps)
   }
 
@@ -1069,13 +1061,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, TextualValue(x.value), x.sideCode, 0, None))
       case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
         value.extractOpt[Seq[NewProhibition]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, x.value, x.sideCode, 0, None))
-      case MaintenanceRoadAsset.typeId =>
-        value.extractOpt[Seq[NewMaintenanceRoad]].getOrElse(Nil).map(x =>NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, MaintenanceRoad(x.value), x.sideCode, 0, None))
-      //Replace the number below for the asset type id to start using the new extract to MultiValue Service for that Linear Asset
-      case DamagedByThaw.typeId | CareClass.typeId | MassTransitLane.typeId | CarryingCapacity.typeId | PavedRoad.typeId | BogieWeightLimit.typeId =>
-        value.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
-      case _ =>
+      case EuropeanRoads.typeId | ExitNumbers.typeId | TrafficVolume.typeId | NumberOfLanes.typeId =>
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
+      case _ =>
+        value.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
     }
   }
 
@@ -1205,7 +1194,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/speedlimits") {
-    val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = Set()
 
     params.get("bbox").map { bbox =>
@@ -1293,11 +1281,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/speedLimits/municipalities"){
     val user = userProvider.getCurrentUser()
-    val includedMunicipalities = user.isOperator() match {
-      case true => None
-      case false => Some(user.configuration.authorizedMunicipalities)
-    }
-
     speedLimitService.getMunicipalitiesWithUnknown(Some(Municipality)).sortBy(_._2).map { municipality =>
       Map("id" -> municipality._1,
         "name" -> municipality._2)
@@ -1770,7 +1753,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId=>  dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId | LitRoad.typeId => dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService

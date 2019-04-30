@@ -72,6 +72,10 @@
 
         me.editModeRender = function (currentValue, sideCode, setValue, getValue){};
 
+        me.showAndHide = function(element, assetConfig, value) {
+             return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value) ? '' : element.css("display", "none");
+        };
+
         me.setSelectedValue = function(setValue, getValue){
 
             var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
@@ -409,7 +413,7 @@
             me.element = $('' +
                 '<div class="form-group">' +
                 '<label class="control-label">'+ field.label+'</label>' +
-                '<div class="choice-group"> ' +
+                '<div class="choice-group">' +
                 '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice-' + sideCode + '" name = "' + field.publicId + '-' + sideCode + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
                 '</div>'+
                 '</div>');
@@ -417,6 +421,8 @@
             me.getValue = function() {
                 return $(checkBoxElement).prop('checked') ? 1: 0;
             };
+
+            me.showAndHide(me.element, assetTypeConfiguration, _value);
 
             me.hasValue = function(){
                 return true;

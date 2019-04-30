@@ -49,6 +49,10 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
+    var showAndHideRule = function (authorizationPolicy, selectedLinearAsset, value) {
+          return authorizationPolicy.handleSuggestedAsset(selectedLinearAsset, value);
+    };
+
     var linearAssetSpecs = [
       {
         typeId: assetType.totalWeightLimit,
@@ -76,7 +80,13 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         isSuggestedAsset: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "massarajoitus", type: 'integer', publicId: "total_weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "total_weight_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.trailerTruckWeightLimit,
@@ -103,7 +113,13 @@
         isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "massarajoitus", type: 'integer', publicId: "trailer_truck_weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "trailer_truck_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.axleWeightLimit,
@@ -130,7 +146,13 @@
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "massarajoitus", type: 'integer', publicId: "axle_weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "axle_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.bogieWeightLimit,
@@ -161,7 +183,8 @@
         form: new DynamicAssetForm({
         fields: [
             {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
-            {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2}
+            {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2},
+            {label: "vihjetieto", type: 'checkbox', publicId: "bogie_suggest_box", weight: 3, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -189,7 +212,13 @@
         isMultipleLinkSelectionAllowed: true,
         isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "korkeusrajoitus", type: 'integer', publicId: "height_weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "height_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.lengthLimit,
@@ -215,7 +244,13 @@
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "length_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.widthLimit,
@@ -242,7 +277,13 @@
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "width_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.litRoad,
@@ -265,7 +306,13 @@
         hasMunicipalityValidation: true,
         isSuggestedAsset: true,
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "????", type: 'integer', publicId: "width", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "width_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.roadDamagedByThaw,
@@ -569,7 +616,7 @@
                           {id: 9, label: 'Potentiaalinen käyttöoikeus'},
                           {id: 99, label: 'Tuntematon'}
                           ], weight: 1},
-          {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
+          {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", defaultValue: "1", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
           {label: "Tiehoitokunta", type: 'text', publicId: "huoltotie_tiehoitokunta", weight: 3},
           {label: "Yhteyshenkilö", type: 'header', header: 2, weight: 3},
           {label: "Nimi", type: 'text', publicId: "huoltotie_nimi", weight: 4},
@@ -580,7 +627,7 @@
           {label: "Puhelin 2", type: 'text', publicId: "huoltotie_puh2", weight: 9},
           {label: "Lisätietoa", type: 'text', publicId: "huoltotie_lisatieto", weight: 10},
           {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 11},
-          {label: "Vihjetieto", type: 'checkbox', publicId: "huoltotie_vihjetieto", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12}]
+          {label: "Vihjetieto", type: 'checkbox', publicId: "huoltotie_vihjetieto", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12, showAndHide: showAndHideRule }]
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
