@@ -16,7 +16,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   private val validityDirectionPublicId = "vaikutussuunta"
   private val ignoredProperties = Seq(terminalChildrenPublicId, validityDirectionPublicId)
 
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
+  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop], oldLink: Option[RoadLink]): Boolean = {
     //If the stop have the property stop type with the terminal value
     val properties = existingAssetOption match {
       case Some(existingAsset) =>

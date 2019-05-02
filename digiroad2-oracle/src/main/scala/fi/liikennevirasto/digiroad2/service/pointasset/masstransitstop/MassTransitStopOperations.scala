@@ -45,6 +45,8 @@ object MassTransitStopOperations {
   val InventoryDateId = "inventointipaiva"
   val RoadName_FI = "osoite_suomeksi"
   val RoadName_SE = "osoite_ruotsiksi"
+  val FloatingReasonPublicId = "kellumisen_syy"
+  val EndDate = "viimeinen_voimassaolopaiva"
 
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"
