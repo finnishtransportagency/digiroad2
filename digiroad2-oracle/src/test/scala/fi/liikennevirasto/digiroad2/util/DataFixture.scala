@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
-import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, LinkProperties, RoadAddressService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
@@ -166,6 +166,10 @@ object DataFixture {
 
   lazy val speedLimitDao: OracleSpeedLimitDao = {
     new OracleSpeedLimitDao(null, null)
+  }
+
+  lazy val verificationService: VerificationService = {
+    new VerificationService( new DummyEventBus, roadLinkService)
   }
 
   def getProperty(name: String) = {
@@ -1673,6 +1677,26 @@ object DataFixture {
     println("\n")
   }
 
+  def loadMunicipalitiesVerificationInfo(): Unit = {
+    println("\nRefreshing information on municipality verification")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Working on municipality : $municipality")
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+        verificationService.refreshVerificationInfo(municipality, roadLinks.map(_.linkId), Some(DateTime.now()))
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def extractTrafficSigns(group: Option[String]): Unit = {
     val signGroup = group match {
       case Some(x) => trafficSignGroup(x)
@@ -1832,6 +1856,8 @@ object DataFixture {
         removeUnnecessaryUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
+      case Some("load_municipalities_verification_info") =>
+        loadMunicipalitiesVerificationInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1842,7 +1868,8 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs")
+        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | load_municipalities_verification_info")
     }
   }
 }
