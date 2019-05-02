@@ -33,7 +33,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels)
+  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels, TrafficSignTypeGroup.InformationSigns)
 
   private def generateProperties(trAssetData: TierekisteriAssetData, additionalProperties: Set[AdditionalPanelInfo] = Set()) = {
     val trafficType = trAssetData.assetType
