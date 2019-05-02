@@ -115,13 +115,13 @@ VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (sel
 
 --Add property Bussipysäkit Tarkistettu
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'checkbox', 0, 'db_migration_v199', 'vihjetieto', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
+VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Bussipysäkit'), 'checkbox', 0, 'db_migration_v199', 'mass_transit_stop_suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'vihjetieto'));
+VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'mass_transit_stop_suggest_box'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'vihjetieto'));
+VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'mass_transit_stop_suggest_box'));
 
 --Add property Palvelupiste Tarkistettu
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
