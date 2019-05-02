@@ -10,10 +10,9 @@
 
     this.handleSuggestedAsset = function(selectedAsset, value, layerMode) {
       if (layerMode === 'readOnly')
-        return !_.isUndefined(value);
+        return !!parseInt(value);
       else
-        return selectedAsset.sideCode && ((_.isUndefined(_.head(selectedAsset.get()).id) && me.isOperator()) || (!!parseInt(value) && (me.isOperator() || me.isMunicipalityMaintainer())));
+        return ((_.isUndefined(_.head(selectedAsset.get()).id) && me.isOperator()) || (!!parseInt(value) && (me.isOperator() || me.isMunicipalityMaintainer())));
     };
-
   };
 })(this);

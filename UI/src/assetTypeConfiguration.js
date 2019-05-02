@@ -413,7 +413,7 @@
         form: new DynamicAssetForm({
             fields : [
               {
-                label: 'Paallysteluokka', type: 'single_choice', publicId: "paallysteluokka", defaultValue: "99",
+                label: 'Paallysteluokka', type: 'single_choice', publicId: "paallysteluokka", defaultValue: "99", weight: 1,
                 values: [
                   {id: 99, label: 'Päällystetty, tyyppi tuntematon'},
                   {id: 1, label: 'Betoni'},
@@ -424,7 +424,8 @@
                   {id: 40, label: 'Sorakulutuskerros'},
                   {id: 50, label: 'Muut pinnoitteet'}
                 ]
-              }
+              },
+              {label: "vihjetieto", type: 'checkbox', publicId: "paved_road_suggest_box", weight: 2, showAndHide: showAndHideRule }
             ]
           }
         ),
