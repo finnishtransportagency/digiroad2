@@ -49,8 +49,8 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
-    var showAndHideRule = function (authorizationPolicy, selectedLinearAsset, value) {
-          return authorizationPolicy.handleSuggestedAsset(selectedLinearAsset, value);
+    var showAndHideRule = function (authorizationPolicy, selectedLinearAsset, value, layerMode) {
+          return authorizationPolicy.handleSuggestedAsset(selectedLinearAsset, value, layerMode);
     };
 
     var linearAssetSpecs = [
@@ -204,7 +204,7 @@
           disabled: 'Ei rajoitusta',
           showUnit: true
         },
-        label: new LinearAssetLabel(),
+        label: new DynamicAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
@@ -215,7 +215,7 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "korkeusrajoitus", type: 'integer', publicId: "height_weight", unit: "Kg", required: true, weight: 1},
+            {label: "korkeusrajoitus", type: 'integer', publicId: "height_weight", unit: "cm", required: true, weight: 1},
             {label: "vihjetieto", type: 'checkbox', publicId: "height_suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
@@ -236,7 +236,7 @@
           disabled: 'Ei rajoitusta',
           showUnit: true
         },
-        label: new LinearAssetLabel(),
+        label: new DynamicAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
@@ -247,7 +247,7 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "Kg", required: true, weight: 1},
+            {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "cm", required: true, weight: 1},
             {label: "vihjetieto", type: 'checkbox', publicId: "length_suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
@@ -269,7 +269,7 @@
           disabled: 'Ei rajoitusta',
           showUnit: true
         },
-        label: new LinearAssetLabel(),
+        label: new DynamicAssetLabel(),
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
@@ -280,7 +280,7 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "Kg", required: true, weight: 1},
+            {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
             {label: "vihjetieto", type: 'checkbox', publicId: "width_suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
@@ -309,7 +309,6 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "????", type: 'integer', publicId: "width", unit: "Kg", required: true, weight: 1},
             {label: "vihjetieto", type: 'checkbox', publicId: "width_suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
@@ -380,12 +379,18 @@
           disabled: 'Leveys ei tiedossa',
           showUnit: true
         },
-        label: new LinearAssetLabel(),
+        label: new DynamicAssetLabel(),
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        form: new DynamicAssetForm({
+          fields: [
+            {label: "leveys", type: 'integer', publicId: "road_width", unit: "cm", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "road_width_suggest_box", weight: 2, showAndHide: showAndHideRule }
+          ]
+        })
       },
       {
         typeId: assetType.pavedRoad,

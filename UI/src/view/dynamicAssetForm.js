@@ -72,8 +72,8 @@
 
         me.editModeRender = function (currentValue, sideCode, setValue, getValue){};
 
-        me.showAndHide = function(element, assetConfig, value) {
-             return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value) ? '' : element.css("display", "none");
+        me.showAndHide = function(element, assetConfig, value, layerMode) {
+             return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value, layerMode) ? '' : element.css("display", "none");
         };
 
         me.setSelectedValue = function(setValue, getValue){
@@ -422,7 +422,7 @@
                 return $(checkBoxElement).prop('checked') ? 1: 0;
             };
 
-            me.showAndHide(me.element, assetTypeConfiguration, _value);
+            me.showAndHide(me.element, assetTypeConfiguration, _value, 'editMode');
 
             me.hasValue = function(){
                 return true;
@@ -457,7 +457,12 @@
 
             var someValue = _.find(field.values, function(value) {return String(value.id) === curr; });
             var value = someValue ? someValue.label : '-';
-            return $(template({divCheckBox : value}));
+
+            me.element = $(template({divCheckBox : value}));
+
+            me.showAndHide(me.element, assetTypeConfiguration, curr, 'readOnly');
+
+            return me.element;
         };
     };
 
