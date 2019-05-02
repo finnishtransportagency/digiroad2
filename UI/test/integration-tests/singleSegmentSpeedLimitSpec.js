@@ -120,7 +120,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         });
         expect(features.length).not.to.equal(0);
         _.each(features, function(feature) {
-          expect(feature.getProperties().value).to.equal(100);
+          expect(feature.getProperties().value.value).to.equal(100);
         });
       });
 
