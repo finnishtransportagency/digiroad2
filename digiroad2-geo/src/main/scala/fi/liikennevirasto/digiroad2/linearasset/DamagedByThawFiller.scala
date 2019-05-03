@@ -12,14 +12,6 @@ class DamagedByThawFiller extends AssetFiller {
   val formatter = DateTimeFormat.forPattern(dateFormat)
   val today: DateTime = DateTime.now()
 
-  def dateToString(date: DateTime): String = {
-    date.toString(dateFormat)
-  }
-
-  def stringToDate(date: String): DateTime = {
-    formatter.parseDateTime(date)
-  }
-
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
     def getProperties(publicId: String, propertyData: Seq[DynamicProperty]): Seq[DynamicPropertyValue] = {
