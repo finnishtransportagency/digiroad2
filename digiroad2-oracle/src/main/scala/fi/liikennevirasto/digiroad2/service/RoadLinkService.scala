@@ -797,10 +797,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.roadNodesData.fetchByMunicipality(municipality)
   }
 
-  def getHistoryLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getHistoryLinksFromVVH(Set(linkId), newTransaction: Boolean).headOption
+  def getHistoryDataLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinksFromVVH(Set(linkId), newTransaction: Boolean).headOption
 
-  def getHistoryLinksFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchHistoryLinks(linkId)
+  def getHistoryDataLinksFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchHistoryDataLinks(linkId)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
@@ -809,7 +809,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def fetchHistoryLinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+  def fetchHistoryDataLinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty)
       vvhClient.historyData.fetchByLinkIds(linkIds)
     else
