@@ -56,7 +56,7 @@ class MassTransitStopDao {
           left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
-          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
       """
@@ -266,6 +266,10 @@ class MassTransitStopDao {
     }
   }
 
+  def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
+    Q.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
   private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
     propertyType match {
       case Text | LongText => {
@@ -286,7 +290,7 @@ class MassTransitStopDao {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         }
       }
-      case MultipleChoice => {
+      case MultipleChoice | CheckBox => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
       }
       case ReadOnly | ReadOnlyNumber | ReadOnlyText => {

@@ -61,5 +61,10 @@
       /**boolean inverted because it is used for 'isReadOnly' in mass transit stop form*/
       return !hasAccess;
     };
+
+    this.handleMassTransitStopSuggestion = function(selectedAsset, suggestedProperty) {
+      var suggestedBoxValue = !_.isEmpty(suggestedProperty.values) ? !!parseInt(suggestedProperty.values[0].propertyValue) : false;
+      return (!_.isNumber(selectedAsset.getId()) && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
+    };
   };
 })(this);
