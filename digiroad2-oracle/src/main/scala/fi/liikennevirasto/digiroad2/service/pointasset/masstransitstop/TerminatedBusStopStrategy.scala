@@ -27,7 +27,7 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
   override def pickRoadLink(optRoadLink: Option[RoadLink], optHistoric: Option[RoadLink]): RoadLink = {
     optHistoric.getOrElse(throw new NoSuchElementException)
   }
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop], oldLink: Option[RoadLink]): Boolean = {
+  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
@@ -37,7 +37,7 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
       case _ => newProperties.toSeq
     }
     val isOnTerminatedRoad = properties.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).exists(_.values.headOption.exists(_.propertyValue == FloatingReason.TerminatedRoad.value.toString))
-    oldLink.nonEmpty && roadLink.isEmpty && isOnTerminatedRoad
+    isOnTerminatedRoad
   }
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(!allowedPropertyChanges(properties) || changesOnDefaultValues(properties, asset))
