@@ -110,6 +110,7 @@ object Queries {
     sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
   }
 
+  def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first
   def getPropertyMaxSize = "select max_value_length from property where public_id = ?"

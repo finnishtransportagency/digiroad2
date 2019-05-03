@@ -13,11 +13,11 @@ import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Mea
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriClientException, TierekisteriMassTransitStopClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder

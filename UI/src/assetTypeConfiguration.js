@@ -83,8 +83,8 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "massarajoitus", type: 'integer', publicId: "total_weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "total_weight_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -116,8 +116,8 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "massarajoitus", type: 'integer', publicId: "trailer_truck_weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "trailer_truck_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -149,8 +149,8 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "massarajoitus", type: 'integer', publicId: "axle_weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "axle_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -184,7 +184,7 @@
         fields: [
             {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
             {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2},
-            {label: "vihjetieto", type: 'checkbox', publicId: "bogie_suggest_box", weight: 3, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 3, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -215,8 +215,8 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "korkeusrajoitus", type: 'integer', publicId: "height_weight", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "height_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "korkeusrajoitus", type: 'integer', publicId: "height", unit: "cm", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -248,7 +248,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "length_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -281,7 +281,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "width_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -309,7 +309,7 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "vihjetieto", type: 'checkbox', publicId: "width_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -356,7 +356,8 @@
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
             { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
-            { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
+            { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3},
+            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox',  weight: 4, showAndHide: showAndHideRule }
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -387,8 +388,8 @@
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
-            {label: "leveys", type: 'integer', publicId: "road_width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "road_width_suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "leveys", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
           ]
         })
       },
@@ -425,7 +426,7 @@
                   {id: 50, label: 'Muut pinnoitteet'}
                 ]
               },
-              {label: "vihjetieto", type: 'checkbox', publicId: "paved_road_suggest_box", weight: 2, showAndHide: showAndHideRule }
+              {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
             ]
           }
         ),

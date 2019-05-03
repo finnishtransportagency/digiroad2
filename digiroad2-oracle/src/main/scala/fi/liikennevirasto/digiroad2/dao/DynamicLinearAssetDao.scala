@@ -170,18 +170,18 @@ class DynamicLinearAssetDao {
     }
   }
 
-  private def propertyWithTypeAndId(property: DynamicProperty): Tuple3[String, Option[Long], DynamicProperty] = {
+  private def propertyWithTypeAndId(typeId: Int, property: DynamicProperty): Tuple3[String, Option[Long], DynamicProperty] = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
     else {
-      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
       (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[DynamicProperty]) {
-    properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
+  def updateAssetProperties(assetId: Long, properties: Seq[DynamicProperty], typeId: Int) {
+    properties.map(prop =>propertyWithTypeAndId(typeId, prop)).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
       } else {

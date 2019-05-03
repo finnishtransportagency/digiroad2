@@ -247,7 +247,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | LitRoad.typeId =>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -262,10 +262,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+  private def isUnknown(asset: PieceWiseLinearAsset): Boolean = asset.id == 0
 
-    val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+  private def isSuggested(asset: PieceWiseLinearAsset): Boolean =
+    asset.value match {
+      case Some(Prohibitions(isSuggested, _)) => isSuggested
+      case Some(SpeedLimitValue(isSuggested, _)) => isSuggested
+      case Some(DynamicValue(x)) =>
+        x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
+          case Some(value) => value.toString.toBoolean
+          case _ => false
+        }
+      case _ => false
+    }
+
+  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(asset => isUnknown(asset) || isSuggested(asset))
 
     linearAssets.map { asset =>
       Map("id" -> asset.id,
@@ -298,8 +310,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   protected def getMultiValueLinearAssetByMunicipality(typeId: Int, municipalityNumber: Int): Seq[PieceWiseLinearAsset] = {
-    def isUnknown(asset: PieceWiseLinearAsset) = asset.id == 0
-    getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+    getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(asset => isUnknown(asset) || isSuggested(asset))
   }
 
   def massTransitLanesToApi( municipalityNumber: Int): Seq[Map[String, Any]] = {
@@ -315,6 +326,26 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         }))
 
       defaultMultiValueLinearAssetsMap(massTransitLane) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def sevenRestrictionToApi(typeId: Int , municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val sevenRestriction = getMultiValueLinearAssetByMunicipality(typeId, municipalityNumber)
+
+    sevenRestriction.map { asset =>
+      val dynamicWeightLinearAssetsMap = asset.value match {
+        case Some(DynamicValue(value)) =>
+          value.properties.flatMap { asset =>
+            Map("value" ->  (asset.publicId match {
+              case "height" | "length" |"weight" =>
+                asset.values.map(_.value)
+              case _ => None
+            }))
+          }
+        case _ => Map()
+      }
+
+      defaultMultiValueLinearAssetsMap(asset) ++ dynamicWeightLinearAssetsMap
     }
   }
 
@@ -394,23 +425,37 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def linearAssetsToApiWithInformationSource(assets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
-    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+  def multiValueWithInformationSource(asset: PieceWiseLinearAsset): Map[String, Any] = {
+      val extraFields = Map("informationSource" -> getInformationSource(asset.informationSource))
 
-    assets.filterNot(isUnknown).map { asset =>
-      Map("id" -> asset.id,
-        "points" -> asset.geometry,
-        geometryWKTForLinearAssets(asset.geometry),
-        "value" -> valueToApi(asset.value),
-        "side_code" -> asset.sideCode.value,
-        "linkId" -> asset.linkId,
-        "startMeasure" -> asset.startMeasure,
-        "endMeasure" -> asset.endMeasure,
-        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
-        lastModifiedBy(asset.createdBy, asset.modifiedBy),
-        "linkSource" -> asset.linkSource.value,
-        "informationSource" -> getInformationSource(asset.informationSource)
-      )
+    defaultMultiValueLinearAssetsMap(asset) ++ extraFields
+  }
+
+  def pavedRoadToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val pavedRoads = getMultiValueLinearAssetByMunicipality(PavedRoad.typeId, municipalityNumber)
+
+    pavedRoads.map { pavedRoad =>
+      val dynamicMultiValueLinearAssetsMap =
+        pavedRoad.value match {
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "paallysteluokka").map(_.values.map(_.value.toString.toInt)))
+          case _ => Map()
+        }
+
+      multiValueWithInformationSource(pavedRoad) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def roadWidthToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val roadsWidth = getMultiValueLinearAssetByMunicipality(RoadWidth.typeId, municipalityNumber)
+
+    roadsWidth.map { roadWidth =>
+      val dynamicMultiValueLinearAssetsMap =
+        roadWidth.value match {
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "width").map(_.values.map(_.value.toString.toInt)))
+          case _ => Map()
+        }
+
+      multiValueWithInformationSource(roadWidth) ++ dynamicMultiValueLinearAssetsMap
     }
   }
 
@@ -738,13 +783,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
         case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
-        case "total_weight_limits" => linearAssetsToApi(TotalWeightLimit.typeId, municipalityNumber)
-        case "trailer_truck_weight_limits" => linearAssetsToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
-        case "axle_weight_limits" => linearAssetsToApi(AxleWeightLimit.typeId, municipalityNumber)
+        case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
+        case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
+        case "axle_weight_limits" => sevenRestrictionToApi(AxleWeightLimit.typeId, municipalityNumber)
         case "bogie_weight_limits" => bogieWeightLimitsToApi(municipalityNumber)
-        case "height_limits" => linearAssetsToApi(HeightLimitInfo.typeId, municipalityNumber)
-        case "length_limits" => linearAssetsToApi(LengthLimit.typeId, municipalityNumber)
-        case "width_limits" => linearAssetsToApi(WidthLimitInfo.typeId, municipalityNumber)
+        case "height_limits" => sevenRestrictionToApi(HeightLimitInfo.typeId, municipalityNumber)
+        case "length_limits" => sevenRestrictionToApi(LengthLimit.typeId, municipalityNumber)
+        case "width_limits" => sevenRestrictionToApi(WidthLimitInfo.typeId, municipalityNumber)
         case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
         case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
@@ -755,8 +800,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "number_of_lanes" => linearAssetsToApi(NumberOfLanes.typeId, municipalityNumber)
         case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
         case "roads_affected_by_thawing" => damagedByThawToApi(municipalityNumber)
-        case "widths" => linearAssetsToApiWithInformationSource(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
-        case "paved_roads" => linearAssetsToApiWithInformationSource(pavedRoadService.getByMunicipality(PavedRoad.typeId, municipalityNumber))
+        case "widths" => roadWidthToApi(municipalityNumber)
+        case "paved_roads" => pavedRoadToApi(municipalityNumber)
         case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(WinterSpeedLimit.typeId, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
