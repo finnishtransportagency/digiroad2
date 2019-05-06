@@ -6,7 +6,6 @@ root.PointAssetForm = function() {
   me.roadCollection = null;
   me.applicationModel = null;
   me.backend= null;
-  me.isVerifiable = null;
   me.saveCondition= null;
   me.feedbackCollection= null;
 

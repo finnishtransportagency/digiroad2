@@ -235,10 +235,7 @@ object ServicePointsClass {
 
   def apply(value: String): Int = {
     values.find { servicePoint =>
-      val name = Normalizer.normalize(servicePoint.labelName, Normalizer.Form.NFD)
-                  .replaceAll("[^\\p{ASCII}]", "")
-                  .replaceAll("/-|\\s/g", "").toLowerCase
-      name == value
+      stringNormalizerToCsvDataImport(servicePoint.labelName) == value
     }.getOrElse(Unknown).value
   }
 
@@ -248,10 +245,10 @@ object ServicePointsClass {
       .replaceAll("-|\\s", "").toLowerCase
   }
 
-  def getTypeExtensionValue(typeExtention: String, serviceType: Int): Option[Int] = {
+  def getTypeExtensionValue(typeExtension: String, serviceType: Int): Option[Int] = {
     val serviceTypeClass = values.find(_.value == serviceType)
 
-    val normalizedValue = stringNormalizerToCsvDataImport(typeExtention)
+    val normalizedValue = stringNormalizerToCsvDataImport(typeExtension)
 
     val normalizedSubTypes = serviceTypeClass.get.subTypeName.map { subType =>
       (stringNormalizerToCsvDataImport(subType._1), subType._2)
