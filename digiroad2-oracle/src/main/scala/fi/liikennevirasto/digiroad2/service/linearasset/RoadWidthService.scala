@@ -161,7 +161,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case Some(DynamicValue(multiTypeProps)) =>
             val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
             validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props)
+            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
           case _ => None
         }
       }

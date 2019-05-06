@@ -85,7 +85,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
               case Some(id) =>
                 val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
                 validateRequiredProperties(linearAsset.typeId, props)
-                dynamicLinearAssetDao.updateAssetProperties(id, props)
+                dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
               case _ => None
             }
           case _ => None
@@ -174,7 +174,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       case DynamicValue(multiTypeProps) =>
         val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, typeId)
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
         dynamicLinearAssetDao.updateAssetLastModified(id, username)
       case _ => None
     }
@@ -194,7 +194,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
       case _ => None
     }
     id

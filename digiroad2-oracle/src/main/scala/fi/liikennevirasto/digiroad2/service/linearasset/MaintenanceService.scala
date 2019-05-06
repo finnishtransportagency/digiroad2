@@ -86,7 +86,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         case Some(DynamicValue(multiTypeProps)) =>
         val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
         validateRequiredProperties(linearAsset.typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
         case _ => None
         }
       }
@@ -174,7 +174,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
       case _ => None
     }
     id
