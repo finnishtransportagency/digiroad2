@@ -84,7 +84,7 @@ object OracleObstacleDao {
   }
 
   private def queryToObstacle(query: String): Seq[Obstacle] = {
-    val rows = StaticQuery.queryNA[ObstacleRow](query).iterator.toSeq
+    val rows = StaticQuery.queryNA[ObstacleRow](query)(getPointAsset).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head

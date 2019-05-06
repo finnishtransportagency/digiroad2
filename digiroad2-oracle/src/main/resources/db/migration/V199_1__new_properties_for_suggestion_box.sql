@@ -7,30 +7,30 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Ajokielto'), 'checkbox', 0, 'db_migration_v199', 'suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Ajokielto')));
+VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Ajokielto')));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Ajokielto')));
+VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Ajokielto')));
 
 --Add property VAK-rajoitus Vihjetieto
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'VAK-rajoitus'), 'checkbox', 0, 'db_migration_v118', 'suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'VAK-rajoitus')));
+VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'VAK-rajoitus')));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'VAK-rajoitus')));
+VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'VAK-rajoitus')));
 
 --Add property Nopeusrajoitukset Vihjetieto
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Nopeusrajoitukset'), 'checkbox', 0, 'db_migration_v118', 'suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Nopeusrajoitukset')));
+VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Nopeusrajoitukset')));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Nopeusrajoitukset')));
+VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Nopeusrajoitukset')));
 
 --Add property Huoltotie Vihjetieto
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
@@ -128,10 +128,10 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Päällystetty tie'), 'checkbox', 0, 'db_migration_v199', 'suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Päällystetty tie')));
+VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Päällystetty tie')));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Päällystetty tie')));
+VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Päällystetty tie')));
 
 
 -- Add property RoadDamagedByThaw Tarkistettu
@@ -139,10 +139,10 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Kelirikko'), 'checkbox', 0, 'db_migration_v199', 'suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Kelirikko')));
+VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Kelirikko')));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type = (select id from asset_type where name = 'Kelirikko')));
+VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v199', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Kelirikko')));
 
 -- Change manoeuvre table
 ALTER TABLE MANOEUVRE ADD (
