@@ -186,4 +186,6 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
         (municipality, typeId, numberOfAssets, None, None)
     }
   }
+
+  def getNumberSuggestedAssetNumber(municipalityCode: Set[Int]) : Long = withDynTransaction { dao.getNumberSuggestedAssetNumber(municipalityCode)}
 }

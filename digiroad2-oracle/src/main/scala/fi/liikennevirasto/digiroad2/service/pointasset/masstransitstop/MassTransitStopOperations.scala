@@ -96,7 +96,7 @@ object MassTransitStopOperations {
   }
 
   def isVirtualBusStop(properties: Set[SimpleProperty]): Boolean = {
-    properties.find(pro => pro.publicId == MassTransitStopTypePublicId).exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+    properties.find(pro => pro.publicId == MassTransitStopTypePublicId).exists(_.values.exists(_.asInstanceOf[PropertyValue].propertyValue == VirtualBusStopPropertyValue))
   }
 
   def getAdministrationClass(properties: Seq[AbstractProperty]): Option[AdministrativeClass] = {
@@ -105,9 +105,9 @@ object MassTransitStopOperations {
 
     propertyValueOption match {
       case None => None
-      case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
-      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
-        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+      case Some(propertyValue) if propertyValue.asInstanceOf[PropertyValue].propertyValue.isEmpty => None
+      case Some(propertyValue) if propertyValue.asInstanceOf[PropertyValue].propertyValue.nonEmpty =>
+        Some(AdministrativeClass.apply(propertyValue.asInstanceOf[PropertyValue].propertyValue.toInt))
     }
   }
 
@@ -120,14 +120,14 @@ object MassTransitStopOperations {
   def mixedStoptypes(stopProperties: Set[SimpleProperty]): Boolean =
   {
     val propertiesSelected = stopProperties.filter(p => MassTransitStopTypePublicId.equalsIgnoreCase(p.publicId))
-      .flatMap(_.values).map(_.propertyValue)
+      .flatMap(_.values).map(_.asInstanceOf[PropertyValue].propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
 
   def getVerifiedProperties(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): Set[SimpleProperty] = {
     val administrationFromProperties = properties.find(_.publicId == AdministratorInfoPublicId)
 
-    administrationFromProperties.flatMap(_.values.headOption.map(_.propertyValue)) match {
+    administrationFromProperties.flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)) match {
       case Some(value) => properties
       case None =>
         properties.filterNot(p => p.publicId == AdministratorInfoPublicId) ++ assetProperties.find(_.publicId == AdministratorInfoPublicId).
@@ -138,7 +138,7 @@ object MassTransitStopOperations {
   def isValidBusStopDirections(properties: Seq[SimpleProperty], roadLink: Option[RoadLinkLike]) = {
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
-    properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.propertyValue)) match {
+    properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)) match {
       case Some(busDir) =>
         !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
       case None => false
@@ -146,7 +146,7 @@ object MassTransitStopOperations {
   }
 
   def getTerminalMassTransitStopChildren(properties: Seq[SimpleProperty]) : Seq[Long] = {
-    properties.find(_.publicId == terminalChildrenPublicId).map(_.values).getOrElse(Seq()).map(_.propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
+    properties.find(_.publicId == terminalChildrenPublicId).map(_.values).getOrElse(Seq()).map(_.asInstanceOf[PropertyValue].propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
       result ++ Seq(child.toLong)
     }
   }
@@ -158,7 +158,7 @@ object MassTransitStopOperations {
   def extractStopTypes(properties: Seq[AbstractProperty]): Seq[BusStopType] ={
     properties.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
       case Some(property) =>
-        property.values.map(p => BusStopType.apply(p.propertyValue.toInt))
+        property.values.map(p => BusStopType.apply(p.asInstanceOf[PropertyValue].propertyValue.toInt))
       case _ =>
         Seq()
     }
@@ -170,7 +170,7 @@ object MassTransitStopOperations {
       .filter { property => property.publicId.equals("nimi_suomeksi") }
       .filterNot { property => property.values.isEmpty }
       .map(_.values.head)
-      .map(_.propertyValue)
+      .map(_.asInstanceOf[PropertyValue].propertyValue)
       .headOption
       .getOrElse("")
   }
@@ -186,7 +186,7 @@ object MassTransitStopOperations {
     } ++ properties
 
     defaultproperties.map { parameter =>
-      if (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")) {
+      if (parameter.values.isEmpty || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "")) {
         parameter.publicId match {
           case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
           case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))

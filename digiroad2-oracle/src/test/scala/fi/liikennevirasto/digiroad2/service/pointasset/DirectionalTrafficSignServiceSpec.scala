@@ -44,7 +44,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
         result.lon should equal(374467)
         result.lat should equal(6677347)
         result.mValue should equal(103)
-        result.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should equal("HELSINKI:HELSINGFORS;;;;1;1;")
+        result.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[PropertyValue].propertyValue should equal("HELSINKI:HELSINGFORS;;;;1;1;")
       }
     }
 
@@ -52,7 +52,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val textValues = Seq(TextPropertyValue("HELSINKI:HELSINGFORS;;;;1;1;"))
+      val textValues = Seq(PropertyValue("HELSINKI:HELSINGFORS;;;;1;1;"))
       val simpleProperty = SimplePointAssetProperty("opastustaulun_teksti", textValues)
       val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some(0), Set(simpleProperty)), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
@@ -69,7 +69,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       asset.floating should be(false)
       asset.municipalityCode should be(235)
       asset.validityDirection should be(3)
-      asset.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("HELSINKI:HELSINGFORS;;;;1;1;")
+      asset.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("HELSINKI:HELSINGFORS;;;;1;1;")
       asset.createdBy should be(Some("jakke"))
       asset.createdAt shouldBe defined
 
@@ -117,7 +117,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.validityDirection should equal(2)
 
       val roadLink =  RoadLink(123, linkGeometry, 200, Municipality, FunctionalClass.Unknown, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), linkSource = NormalLinkInterface)
-      val textValues = Seq(TextPropertyValue("New text"))
+      val textValues = Seq(PropertyValue("New text"))
       val simpleProperty = SimplePointAssetProperty("opastustaulun_teksti", textValues)
       val newAssetId = service.update(id = 600053, IncomingDirectionalTrafficSign(200, 0, 123, 3, Some(0), Set(simpleProperty)), roadLink,  "test")
 
@@ -132,7 +132,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)
       afterUpdate.modifiedBy should equal(Some("test"))
       afterUpdate.modifiedAt.isDefined should equal(true)
-      afterUpdate.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should equal("New text")
+      afterUpdate.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[PropertyValue].propertyValue should equal("New text")
       afterUpdate.validityDirection should equal(3)
     }
   }
@@ -147,7 +147,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     val roadLink = RoadLink(388553075, linkGeometry, 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
     runWithRollback {
-      val textValues = Seq(TextPropertyValue("HELSINKI:HELSINGFORS;;;;1;1;"))
+      val textValues = Seq(PropertyValue("HELSINKI:HELSINGFORS;;;;1;1;"))
       val simpleProperty = SimplePointAssetProperty("opastustaulun_teksti", textValues)
       val assetCreatedID = service.create(IncomingDirectionalTrafficSign(100, 0, 388553075, 3, Some(0), Set(simpleProperty)), "test", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(assetCreatedID))
@@ -162,11 +162,11 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.floating should be(false)
       beforeUpdate.municipalityCode should be(235)
       beforeUpdate.validityDirection should be(3)
-      beforeUpdate.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("HELSINKI:HELSINGFORS;;;;1;1;")
+      beforeUpdate.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("HELSINKI:HELSINGFORS;;;;1;1;")
       beforeUpdate.createdBy should be(Some("test"))
       beforeUpdate.createdAt shouldBe defined
 
-      val updatedTextValues = Seq(TextPropertyValue("New text"))
+      val updatedTextValues = Seq(PropertyValue("New text"))
       val updatedSimpleProperty = SimplePointAssetProperty("opastustaulun_teksti", updatedTextValues)
       service.update(assetCreatedID, IncomingDirectionalTrafficSign(100, 0, 388553075, 3, Some(0), Set(updatedSimpleProperty)), roadLink, "test")
 
@@ -181,7 +181,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)
       afterUpdate.modifiedBy should equal(Some("test"))
       afterUpdate.modifiedAt.isDefined should equal(true)
-      afterUpdate.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should equal("New text")
+      afterUpdate.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.head.asInstanceOf[PropertyValue].propertyValue should equal("New text")
       afterUpdate.validityDirection should equal(3)
     }
   }

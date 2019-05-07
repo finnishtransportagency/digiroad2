@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset._
@@ -13,14 +12,9 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
-import slick.jdbc.StaticQuery.interpolation
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.dao.Queries.{deleteAdditionalPanelProperty, deleteTextProperty, insertAdditionalPanelProperty, insertMultipleChoiceValue, insertSingleChoiceProperty, insertTextProperty, updateMultipleChoiceValue, updateSingleChoiceProperty, updateTextProperty}
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -71,6 +65,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val floating: Boolean
   val vvhTimeStamp: Long
   val linkSource: LinkGeomSource
+  val propertyData: Seq[Property]
 }
 
 trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
@@ -88,6 +83,7 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
   val modifiedAt: Option[DateTime]
   val expired: Boolean
   val linkSource: LinkGeomSource
+  val propertyData: Seq[Property]
 }
 
 

@@ -196,4 +196,13 @@ class VerificationDao {
       LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
     }
   }
+
+  def getNumberSuggestedAssetNumber(municipalityCode: Set[Int]) : Long = {
+    sql"""
+      select SUM(REGEXP_COUNT(suggested_assets , ',') + 1)
+      from municipality_verification
+      where valid_to is null
+      and municipality_id in (${municipalityCode.mkString(",")})
+          """.as[Long].first
+  }
 }

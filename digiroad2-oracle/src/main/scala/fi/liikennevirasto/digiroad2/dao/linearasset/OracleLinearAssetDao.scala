@@ -257,7 +257,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join #$idTableName i on i.id = pos.link_id
-          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink].list
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink](getAssetLink).list
     }
   }
 
@@ -796,7 +796,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def updateProhibitionValue(id: Long, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
     Queries.updateAssetModified(id, username).first
 
-    val propertyId = Queries.getPropertyIdByPublicId("prohibition_suggest_box")
+    val propertyId = Queries.getPropertyIdByPublicId("suggest_box")
     val currentIdsAndValue = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(id, propertyId).list
     val oldValue = if(currentIdsAndValue.head._2 == 1) true else false
 
@@ -831,7 +831,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * Saves prohibition value to db. Used by OracleLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
     */
   def insertProhibitionValue(assetId: Long, value: Prohibitions): Unit = {
-    val propertyId = Queries.getPropertyIdByPublicId("prohibition_suggest_box")
+    val propertyId = Queries.getPropertyIdByPublicId("suggest_box")
     insertMultipleChoiceValue(assetId, propertyId, if(value.isSuggested) 1 else 0).execute
 
     value.prohibitions.foreach { prohibition: ProhibitionValue =>

@@ -19,7 +19,7 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 mValue: Double, floating: Boolean,
                                 vvhTimeStamp: Long,
                                 municipalityCode: Int,
-                                propertyData: Seq[TrafficSignProperty],
+                                propertyData: Seq[Property],
                                 createdBy: Option[String] = None,
                                 createdAt: Option[DateTime] = None,
                                 modifiedBy: Option[String] = None,
@@ -109,11 +109,11 @@ object OracleTrafficSignDao {
   }
 
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
-    val rows = StaticQuery.queryNA[TrafficSignRow](query).iterator.toSeq
+    val rows = StaticQuery.queryNA[TrafficSignRow](query)(getTrafficSignRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
-      val properties: Seq[TrafficSignProperty] = assetRowToProperty(signRows)
+      val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
@@ -327,10 +327,10 @@ object OracleTrafficSignDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("trafficSigns_info").first
   }
 
-  def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[TrafficSignProperty] = {
+  def assetRowToProperty(assetRows: Seq[TrafficSignRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
-      TrafficSignProperty(
+      Property(
         id = key,
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
@@ -342,13 +342,13 @@ object OracleTrafficSignDao {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
                 case _ => Seq()
               }
-            case _ => Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+            case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
           }
-        }.toSeq)
+        })
     }.toSeq
   }
 
-  private def propertyWithTypeAndId(property: SimpleTrafficSignProperty): Tuple3[String, Option[Long], SimpleTrafficSignProperty] = {
+  private def propertyWithTypeAndId(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
     val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
@@ -372,16 +372,16 @@ object OracleTrafficSignDao {
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case AdditionalPanelType =>
         if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
@@ -392,9 +392,9 @@ object OracleTrafficSignDao {
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
-          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

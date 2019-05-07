@@ -3,9 +3,9 @@ package fi.liikennevirasto.digiroad2.middleware
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import fi.liikennevirasto.digiroad2.TrafficSignType
-import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, TextPropertyValue, TrafficSignProperty}
+import fi.liikennevirasto.digiroad2.asset.{AdditionalPanel, Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.service.linearasset.{ManoeuvreCreationException, ManoeuvreService, ProhibitionService}
 
 class TrafficSignManager(manoeuvreService: ManoeuvreService) {
@@ -23,12 +23,12 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService) {
     }
   }
 
-  def deleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
+  def deleteAssets(signInfo: Seq[(Long, Seq[Property])]): Unit = {
     val username = Some("automatic_trafficSign_deleted")
 
     val (turnRestrictionSigns, others) = signInfo.partition{
       case (id, propertyData) =>
-        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+        val trafficSignType = propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[PropertyValue]).head.propertyValue.toInt
         TrafficSignType.belongsToManoeuvre(trafficSignType)
     }
 

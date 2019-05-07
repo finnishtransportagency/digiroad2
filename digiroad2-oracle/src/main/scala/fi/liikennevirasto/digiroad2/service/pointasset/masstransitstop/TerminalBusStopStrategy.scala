@@ -28,7 +28,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     }
 
     properties.exists(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId &&
-      p.values.exists(v => v.propertyValue == BusStopType.Terminal.value.toString))
+      p.values.exists(v => v.asInstanceOf[PropertyValue].propertyValue == BusStopType.Terminal.value.toString))
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {

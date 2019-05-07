@@ -21,13 +21,13 @@ trait AssetPropertiesReader {
     asset.propertyData
       .find(property => property.publicId == propertyPublicId)
       .flatMap(property => property.values.headOption)
-      .map(value => value.propertyValue)
+      .map(value => value.asInstanceOf[PropertyValue].propertyValue)
   }
 
   protected def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {
     try {
       val property = properties.find(x => x.publicId == name).get
-      sanitizedPropertyValues(property.propertyType, property.values)
+      sanitizedPropertyValues(property.propertyType, property.values.map(_.asInstanceOf[PropertyValue]))
     }
     catch {
       case e: Exception => println(s"""$name with $properties"""); throw e

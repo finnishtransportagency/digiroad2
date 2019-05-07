@@ -13,8 +13,8 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
-case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
+case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {
@@ -40,7 +40,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
   val additionalPublicId = "additional_panel"
-  val suggestedPublicId = "traffic_signs_suggest_box"
+  val suggestedPublicId = "suggest_box"
   private val counterPublicId = "counter"
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
@@ -132,7 +132,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   override def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
     val result = super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
-    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt == PedestrianCrossingSign.OTHvalue)
+    val (pc, others) = result.partition(asset => asset.createdBy.contains(batchProcessName) && asset.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt == PedestrianCrossingSign.OTHvalue)
 
     sortCrossings(pc, Seq()) ++ others
   }
@@ -142,7 +142,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     if(centerSignOpt.nonEmpty) {
       val centerSign = centerSignOpt.get
       val (inProximity, outsiders) = sorted.tail.partition(sign => centerSign.linkId == sign.linkId && centerSign.validityDirection == sign.validityDirection && GeometryUtils.withinTolerance(Seq(Point(centerSign.lon, centerSign.lat)), Seq(Point(sign.lon, sign.lat)), tolerance = GroupingDistance))
-      val counterProp = TrafficSignProperty(0, counterPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(TextPropertyValue((1 + inProximity.size).toString, Some(counterDisplayValue))))
+      val counterProp = Property(0, counterPublicId, PropertyTypes.ReadOnlyNumber, values = Seq(PropertyValue((1 + inProximity.size).toString, Some(counterDisplayValue))))
       val withCounter = centerSign.copy(propertyData = centerSign.propertyData ++ Seq(counterProp))
       sortCrossings(outsiders, result ++ Seq(withCounter))
     } else {
@@ -156,7 +156,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
     val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId,
-      persistedAsset.propertyData.map(prop => SimpleTrafficSignProperty(prop.publicId, prop.values)).toSet,
+      persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet,
       persistedAsset.validityDirection, persistedAsset.bearing)
 
     updateWithoutTransaction(adjustment.assetId, updated, roadLink,
@@ -264,7 +264,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val assets = OracleTrafficSignDao.fetchByRadius(position, meters)
     optGroupType match {
       case Some(groupType) => assets.filter(asset =>
-        TrafficSignType.applyOTHValue(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).group == groupType)
+        TrafficSignType.applyOTHValue(asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt).group == groupType)
       case _ => assets
     }
   }
@@ -333,8 +333,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     trafficSigns.maxBy { ts => ts.modifiedAt.getOrElse(ts.createdAt.get) }
   }
 
-  def getProperty(trafficSign: PersistedTrafficSign, property: String) : Option[TextPropertyValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+  def getProperty(trafficSign: PersistedTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
   }
 
   def getAdditionalPanelProperty(trafficSign: PersistedTrafficSign, property: String): Option[AdditionalPanel] = {
@@ -345,13 +345,13 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def getProperty(trafficSign: IncomingTrafficSign, property: String) : Option[TextPropertyValue] = {
-    trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+  def getProperty(trafficSign: IncomingTrafficSign, property: String) : Option[PropertyValue] = {
+    trafficSign.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
   }
 
-  def getProperty(propertyData: Set[SimpleTrafficSignProperty], property: String) : Option[TextPropertyValue] = {
+  def getProperty(propertyData: Set[SimplePointAssetProperty], property: String) : Option[PropertyValue] = {
     propertyData.find(p => p.publicId == property) match {
-      case Some(additionalProperty) => additionalProperty.values.map(_.asInstanceOf[TextPropertyValue]).headOption
+      case Some(additionalProperty) => additionalProperty.values.map(_.asInstanceOf[PropertyValue]).headOption
       case _ => None
     }
   }
@@ -400,18 +400,18 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }).value
   }
 
-  def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimpleTrafficSignProperty] = {
-    val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt).toSet
+  def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimplePointAssetProperty] = {
+    val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt).toSet
     val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
       AdditionalPanel(getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt,
-        getProperty(panel.propertyData, infoPublicId).getOrElse(TextPropertyValue("")).propertyValue,
-        getProperty(panel.propertyData, valuePublicId).getOrElse(TextPropertyValue("")).propertyValue,
+        getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
+        getProperty(panel.propertyData, valuePublicId).getOrElse(PropertyValue("")).propertyValue,
         index)
     }.toSeq
 
 
     if(additionalPanelsProperty.nonEmpty)
-      Set(SimpleTrafficSignProperty(additionalPublicId, additionalPanelsProperty))
+      Set(SimplePointAssetProperty(additionalPublicId, additionalPanelsProperty))
     else
       Set()
   }

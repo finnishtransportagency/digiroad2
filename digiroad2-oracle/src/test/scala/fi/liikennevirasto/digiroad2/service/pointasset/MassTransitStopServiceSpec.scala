@@ -149,7 +149,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
   }
 
   test("do not update existing inventory date") {
@@ -159,7 +159,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
     after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values should have size(1)
-    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.propertyValue should be ( "2015-12-30")
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ( "2015-12-30")
   }
 
   test("Calculate mass transit stop validity periods") {
@@ -302,15 +302,15 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         case (equipment, existence) if(equipment.isMaster) =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
-          property.values.head.propertyValue should be(existence.propertyValue.toString)
+          property.values.head.asInstanceOf[PropertyValue].propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
       val name_fi = stop.get.propertyData.find(_.publicId == MassTransitStopOperations.nameFiPublicId).get.values
       val name_se = stop.get.propertyData.find(_.publicId == MassTransitStopOperations.nameSePublicId).get.values
       name_fi should have size (1)
       name_se should have size (1)
-      name_fi.head.propertyValue should be ("TierekisteriFi")
-      name_se.head.propertyValue should be ("TierekisteriSe")
+      name_fi.head.asInstanceOf[PropertyValue].propertyValue should be ("TierekisteriFi")
+      name_se.head.asInstanceOf[PropertyValue].propertyValue should be ("TierekisteriSe")
       showStatusCode should be (false)
     }
   }
@@ -341,7 +341,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
-          property.values.head.propertyValue should be(existence.propertyValue.toString)
+          property.values.head.asInstanceOf[PropertyValue].propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
       showStatusCode should be (false)
@@ -376,7 +376,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
-          property.values.head.propertyValue should be(existence.propertyValue.toString)
+          property.values.head.asInstanceOf[PropertyValue].propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
       showStatusCode should be (false)
@@ -410,7 +410,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         case (equipment, existence) if equipment.isMaster =>
           val property = stop.map(_.propertyData).get.find(p => p.publicId == equipment.publicId).get
           property.values should have size (1)
-          property.values.head.propertyValue should be(existence.propertyValue.toString)
+          property.values.head.asInstanceOf[PropertyValue].propertyValue should be(existence.propertyValue.toString)
         case _ => ;
       }
       showStatusCode should be (false)
@@ -518,7 +518,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("livi1")
+      liviIdentifierProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("livi1")
     }
   }
 
@@ -534,10 +534,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val massTransitStop = service.getById(assetId).get
 
       val swedishNameProperty = massTransitStop.propertyData.find(p => p.publicId == "nimi_ruotsiksi").get
-      swedishNameProperty.values.head.propertyValue should be("Swedish name")
+      swedishNameProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("Swedish name")
 
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("OTHJ1")
+      liviIdentifierProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("OTHJ1")
     }
   }
 
@@ -560,7 +560,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("OTHJ1")
+      liviIdentifierProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("OTHJ1")
     }
   }
 
@@ -727,7 +727,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       //The property yllapitajan_koodi should be overridden with OTHJ + NATIONAL ID
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
+      liviIdentifierProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
 
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:saved"), any[EventBusMassTransitStop]())
     }
@@ -760,15 +760,15 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
 
       val administratorProperty = massTransitStop.propertyData.find(p => p.publicId == "tietojen_yllapitaja").get
-      administratorProperty.values.head.propertyValue should be("3")
+      administratorProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("3")
 
       val administrativeClassProperty = massTransitStop.propertyData.find(p => p.publicId == "linkin_hallinnollinen_luokka").get
-      administrativeClassProperty.values.head.propertyValue should be("1")
+      administrativeClassProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("1")
 
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-      liviIdentifierProperty.values.head.propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
+      liviIdentifierProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("OTHJ%d".format(massTransitStop.nationalId))
 
-      val liviId = liviIdentifierProperty.values.head.propertyValue
+      val liviId = liviIdentifierProperty.values.head.asInstanceOf[PropertyValue].propertyValue
 
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
       verify(mockTierekisteriClient, Mockito.atLeastOnce).createMassTransitStop(captor.capture, any[Option[String]])
@@ -805,10 +805,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val massTransitStop = service.updateExistingById(id, None, newProperties, "test2", (Int, _) => Unit)
 
       val administratorProperty = massTransitStop.propertyData.find(p => p.publicId == "tietojen_yllapitaja").get
-      administratorProperty.values.head.propertyValue should be("1")
+      administratorProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("1")
 
       val administrativeClassProperty = massTransitStop.propertyData.find(p => p.publicId == "linkin_hallinnollinen_luokka").get
-      administrativeClassProperty.values.head.propertyValue should be("1")
+      administrativeClassProperty.values.head.asInstanceOf[PropertyValue].propertyValue should be("1")
 
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
       val stringCaptor: ArgumentCaptor[Option[String]] = ArgumentCaptor.forClass(classOf[Option[String]])
@@ -846,8 +846,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       trStop.equipments.filterNot( x => x._1 == Equipment.Roof).forall(_._2 == Existence.Unknown) should be (true)
       trStop.operatingFrom.isEmpty should be (false)
       trStop.operatingTo.isEmpty should be (false)
-      val opFrom = stop.propertyData.find(_.publicId=="ensimmainen_voimassaolopaiva").flatMap(_.values.headOption.map(_.propertyValue))
-      val opTo = stop.propertyData.find(_.publicId=="viimeinen_voimassaolopaiva").flatMap(_.values.headOption.map(_.propertyValue))
+      val opFrom = stop.propertyData.find(_.publicId=="ensimmainen_voimassaolopaiva").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue))
+      val opTo = stop.propertyData.find(_.publicId=="viimeinen_voimassaolopaiva").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue))
       opFrom shouldNot be (None)
       opTo shouldNot be (None)
       dateFormatter.format(trStop.operatingFrom.get) should be (opFrom.get)
@@ -996,9 +996,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newAdmin = admin.copy(values = List(PropertyValue("2")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
       val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
-      admin.values.exists(_.propertyValue == "1") should be(true)
-      types.values.exists(_.propertyValue == "2") should be(true)
-      types.values.exists(_.propertyValue == "3") should be(false)
+      admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -1031,9 +1031,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newAdmin = admin.copy(values = List(PropertyValue("3")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
       val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
-      admin.values.exists(_.propertyValue == "1") should be(true)
-      types.values.exists(_.propertyValue == "2") should be(true)
-      types.values.exists(_.propertyValue == "3") should be(false)
+      admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
@@ -1217,7 +1217,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         val equipmentPublicIds = Equipment.values.filter(_.isMaster).map(_.publicId)
         // All should be unknown as set in the TRClientMock
         val equipments = trStops.map(t => t.propertyData.filter(p => equipmentPublicIds.contains(p.publicId)))
-        equipments.forall(_.forall(p => p.values.nonEmpty && p.values.head.propertyValue == v)) should be(true)
+        equipments.forall(_.forall(p => p.values.nonEmpty && p.values.head.asInstanceOf[PropertyValue].propertyValue == v)) should be(true)
       }
       verify(mockRoadLinkService, times(1)).getRoadLinksWithComplementaryFromVVH(any[Int])
       verify(mockTierekisteriClient, Mockito.atLeast(1)).fetchMassTransitStop(any[String])
@@ -1342,8 +1342,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       after should have size (3)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
-      after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("roadname_fi")
-      after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("roadname_se")
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_fi")
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_se")
     }
 
   test("Update roadNames properties when exist and not filled") {
@@ -1358,8 +1358,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
-    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("roadname_fi")
-    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("roadname_se")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_fi")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("roadname_se")
   }
 
   test("Not update when roadNames properties are filled") {
@@ -1375,8 +1375,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
-    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("user_road_name_fi")
-    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("user_road_name_se")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("user_road_name_fi")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.asInstanceOf[PropertyValue].propertyValue should be ("user_road_name_se")
   }
 
   test("Find more than one busStop with same passengerId"){
@@ -1431,9 +1431,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newAdmin = admin.copy(values = List(PropertyValue("2")))
       val types = props.find(_.publicId == "pysakin_tyyppi").get
       val newTypes = types.copy(values = List(PropertyValue("2"), PropertyValue("3")))
-      admin.values.exists(_.propertyValue == "1") should be(true)
-      types.values.exists(_.propertyValue == "2") should be(true)
-      types.values.exists(_.propertyValue == "3") should be(false)
+      admin.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "1") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "2") should be(true)
+      types.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "3") should be(false)
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))

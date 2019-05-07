@@ -2,15 +2,15 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SimplePointAssetProperty, SimpleTrafficSignProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+
 case class IncomingObstacleAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 

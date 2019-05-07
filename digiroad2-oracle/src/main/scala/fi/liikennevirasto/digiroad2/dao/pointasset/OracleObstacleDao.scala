@@ -24,20 +24,21 @@ case class ObstacleRow(id: Long, linkId: Long,
                        modifiedBy: Option[String] = None,
                        modifiedAt: Option[DateTime] = None,
                        expired: Boolean = false,
-                       linkSource: LinkGeomSource) extends PersistedPoint
+                       linkSource: LinkGeomSource)
 
 case class Obstacle(id: Long, linkId: Long,
                     lon: Double, lat: Double,
                     mValue: Double, floating: Boolean,
                     vvhTimeStamp: Long,
                     municipalityCode: Int,
-                    propertyData: Seq[PointAssetProperty],
+                    propertyData: Seq[Property],
                     createdBy: Option[String] = None,
                     createdAt: Option[DateTime] = None,
                     modifiedBy: Option[String] = None,
                     modifiedAt: Option[DateTime] = None,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource) extends PersistedPoint
+
 
 object OracleObstacleDao {
 
@@ -69,16 +70,16 @@ object OracleObstacleDao {
     queryToObstacle(queryWithFilter)
   }
 
-  def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[PointAssetProperty] = {
+  def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
-      PointAssetProperty(
+      Property(
         id = key,
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
-           Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+           Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
         }.toSeq)
     }.toSeq
   }
@@ -88,7 +89,7 @@ object OracleObstacleDao {
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
-      val properties: Seq[PointAssetProperty] = assetRowToProperty(signRows)
+      val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> Obstacle(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
@@ -307,16 +308,16 @@ object OracleObstacleDao {
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case AdditionalPanelType =>
         if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
@@ -327,9 +328,9 @@ object OracleObstacleDao {
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
-          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

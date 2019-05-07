@@ -72,8 +72,8 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
-      val values = Seq(TextPropertyValue("0"))
-      val simpleProperty = SimplePointAssetProperty("pedestrian_crossings_suggest_box", values)
+      val values = Seq(PropertyValue("0"))
+      val simpleProperty = SimplePointAssetProperty("suggest_box", values)
       service.dao.update(600029, IncomingPedestrianCrossing( 374406.8,6677308.2, 1611317, Set(simpleProperty)), 31.550, "Hannu", 235, None, linkSource = NormalLinkInterface)
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
       result.id should equal(600029)
@@ -121,7 +121,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
       asset.vvhTimeStamp should not be(0)
 
       val propertyId = asset.propertyData.head.id
-      val pointAssetProperty = PointAssetProperty(propertyId, "pedestrian_crossings_suggest_box", "checkbox", false, Seq(TextPropertyValue("", None, false)))
+      val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
       asset should be(PedestrianCrossing(
         id = id,

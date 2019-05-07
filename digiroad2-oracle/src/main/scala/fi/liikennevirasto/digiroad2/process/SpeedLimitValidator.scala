@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TextPropertyValue, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{SideCode, PropertyValue, TrafficDirection}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit, SpeedLimitValue}
@@ -27,7 +27,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
             speedLimit.value match {
               case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
-                  case Some(trafficSignValue) if trafficSignValue.asInstanceOf[TextPropertyValue].propertyValue == speedLimitValue.toString => true
+                  case Some(trafficSignValue) if trafficSignValue.asInstanceOf[PropertyValue].propertyValue == speedLimitValue.toString => true
                   case _ => false
                 }
               case _ => false
@@ -69,7 +69,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue)
-                    if trafficSignValue.asInstanceOf[TextPropertyValue].propertyValue.toInt == speedLimitValue
+                    if trafficSignValue.asInstanceOf[PropertyValue].propertyValue.toInt == speedLimitValue
                       || (speedLimitValue != startUrbanAreaSpeedLimit && speedLimitValue != endUrbanAreaSpeedLimit) => true
                   case _ => false
                 }

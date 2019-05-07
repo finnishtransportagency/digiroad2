@@ -579,7 +579,7 @@ object DataFixture {
     case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
     def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
       persistedStop.propertyData.
-        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.propertyValue.isEmpty))
+        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.asInstanceOf[PropertyValue].propertyValue.isEmpty))
     }
 
     println("\nGet the list of tierekisteri bus stops that doesn't have livi id in OTH")
@@ -739,7 +739,7 @@ object DataFixture {
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
         val stopLiviId = stop.propertyData.
           find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+          flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
         if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
 
@@ -1122,14 +1122,14 @@ object DataFixture {
       persistedStop.foreach { stop =>
         val stopLiviId = stop.propertyData.
           find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+          flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
         if (stopLiviId.isDefined && liviIdsListTR.contains(stopLiviId.get)) {
           //Data From OTH
           val stopNameSE =
             stop.propertyData.find(property => property.publicId == MassTransitStopOperations.nameSePublicId).
-              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
             match {
               case Some(roofValue) => roofValue
               case _ => ""
@@ -1137,7 +1137,7 @@ object DataFixture {
 
           val stopRoofValue =
             stop.propertyData.find(property => property.publicId == MassTransitStopOperations.roofPublicId).
-              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
             match {
               case Some(roofValue) => Existence.fromPropertyValue(roofValue)
               case _ => ""
@@ -1145,7 +1145,7 @@ object DataFixture {
 
           val stopRaisedBusStopValue =
             stop.propertyData.find(property => property.publicId == MassTransitStopOperations.raisePublicId).
-              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
             match {
               case Some(raisedValue) => Existence.fromPropertyValue(raisedValue)
               case _ => ""
@@ -1437,7 +1437,7 @@ object DataFixture {
             val roadLink = roadLinks.find(_.linkId == sign.linkId).get
             val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
             val additionalPanels = panels.filter(panel => GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(panel.lon, panel.lat))) <= 2).map { panel =>
-              AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
+              AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
             }.toSet
 
             val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
@@ -1445,7 +1445,7 @@ object DataFixture {
             try{
               if (uniquePanels.size <= 3 && additionalPanelsInRadius.nonEmpty) {
                 val additionalPanels = trafficSignService.additionalPanelProperties(uniquePanels)
-                val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
+                val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimplePointAssetProperty(x.publicId, x.values)) ++ additionalPanels
                 val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, propertyData.toSet, sign.validityDirection, sign.bearing)
 
                 trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
@@ -1682,7 +1682,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = Seq(766) //OracleDatabase.withDynSession { Queries.getMunicipalities  }
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")

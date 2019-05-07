@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.vallu
 
 import fi.liikennevirasto.digiroad2.EventBusMassTransitStop
-import fi.liikennevirasto.digiroad2.asset.Property
+import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.util.AssetPropertiesReader
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer._
 import org.joda.time.format.ISODateTimeFormat
+
 import scala.language.reflectiveCalls
 
 object ValluStoreStopChangeMessage extends AssetPropertiesReader {
@@ -90,6 +91,6 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
 
   private def extractPropertyDisplayValue(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): String = {
     asset.propertyData.find(property => property.publicId == propertyPublicId)
-      .head.values.head.propertyDisplayValue.get
+      .head.values.head.asInstanceOf[PropertyValue].propertyDisplayValue.get
   }
 }

@@ -97,7 +97,7 @@ class MassTransitStopDao {
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
-    val rows = Q.queryNA[MassTransitStopRow](query).iterator.toSeq
+    val rows = Q.queryNA[MassTransitStopRow](query)(getMassTransitStopRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
@@ -259,9 +259,9 @@ class MassTransitStopDao {
   def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
-        updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+        updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
       } else {
-        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
       }
     }
   }
@@ -341,11 +341,10 @@ class MassTransitStopDao {
       case SingleChoice => {
         val newVal = propertyValues.head.propertyValue.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
-          (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue).contains(newVal))
+          (p.publicId == propertyPublicId) && p.values.map(_.asInstanceOf[PropertyValue].propertyValue).contains(newVal)
         } match {
-          case Some(propValues) => {
+          case Some(propValues) =>
             updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute
-          }
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
         }
       }

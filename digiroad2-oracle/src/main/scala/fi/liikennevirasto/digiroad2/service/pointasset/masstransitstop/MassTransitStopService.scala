@@ -438,7 +438,7 @@ trait MassTransitStopService extends PointAssetOperations {
     AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ withDynSession {
       val properties = Queries.availableProperties(typeId)
       point match {
-        case Some(point) => {
+        case Some(point) =>
           val childFilters = massTransitStopDao.fetchByRadius(point, 200)
             .filter(a =>  a.terminalId.isEmpty)
             .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
@@ -447,7 +447,6 @@ trait MassTransitStopService extends PointAssetOperations {
             PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
           })
           Seq(newProperty) ++ properties
-        }
         case _ => properties
       }
     }

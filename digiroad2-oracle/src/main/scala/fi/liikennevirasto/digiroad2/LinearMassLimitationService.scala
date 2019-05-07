@@ -59,9 +59,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
     val values = assets.map{asset =>
       AssetTypes(asset.typeId ,asset.value match {
         case Some(DynamicValue(value)) if asset.typeId == BogieWeightLimit.typeId  => getDynamicValue(value , "bogie_weight_2_axel").getOrElse(getDynamicValue(value , "bogie_weight_3_axel").getOrElse(""))
-        case Some(DynamicValue(value)) if asset.typeId == TotalWeightLimit.typeId  => getDynamicValue(value , "total_weight").getOrElse("")
-        case Some(DynamicValue(value)) if asset.typeId == TrailerTruckWeightLimit.typeId  => getDynamicValue(value , "trailer_truck_weight").getOrElse("")
-        case Some(DynamicValue(value)) if asset.typeId == AxleWeightLimit.typeId  => getDynamicValue(value , "axle_weight").getOrElse("")
+        case Some(DynamicValue(value)) if Seq(TrailerTruckWeightLimit.typeId, TotalWeightLimit.typeId, AxleWeightLimit.typeId ).contains(asset.typeId)  => getDynamicValue(value , "weight").getOrElse("")
         case _ => throw new NumberFormatException(s"Value format not supported on asset type ${AssetTypeInfo.apply(asset.typeId).label}")
       })}
     MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, assets.head.sideCode, Some(MassLimitationValue(values)), geometry)

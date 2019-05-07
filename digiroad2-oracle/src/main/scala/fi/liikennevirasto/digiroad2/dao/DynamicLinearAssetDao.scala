@@ -294,7 +294,7 @@ class DynamicLinearAssetDao {
       case SingleChoice =>
         val newVal = propertyValues.head.value.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
-          (p.publicId == propertyPublicId) && p.values.map(_.propertyValue).contains(newVal)
+          (p.publicId == propertyPublicId) && p.values.map(_.asInstanceOf[PropertyValue].propertyValue).contains(newVal)
         } match {
           case Some(propValues) =>
             updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute
@@ -352,7 +352,7 @@ class DynamicLinearAssetDao {
           join property p on p.asset_type_id = $typeId and p.property_type = 'time_period'
           join #$idTableName i on i.id = vpp.asset_id
           where vpp.property_id = p.id
-        """.as[ValidityPeriodRow].list
+        """.as[ValidityPeriodRow](getValidityPeriodRow).list
     }
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>
@@ -373,7 +373,7 @@ class DynamicLinearAssetDao {
           join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
           join #$idTableName i on i.id = dp.asset_id
           where dp.property_id = p.id
-        """.as[DatePeriodRow].list
+        """.as[DatePeriodRow](getDatePeriodRow).list
     }
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>

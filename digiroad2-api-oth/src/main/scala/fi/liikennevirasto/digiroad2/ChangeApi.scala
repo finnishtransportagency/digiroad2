@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.DynamicValue
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -11,7 +11,6 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
@@ -43,26 +42,26 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    val withAdjust = params.get("withAdjust") match{
-      case Some(value)=> true
+    val withAdjust = params.get("withAdjust") match {
+      case Some(value) => true
       case _ => false
     }
 
     params("assetType") match {
-      case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust))
-      case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withAdjust))
-      case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust))
-      case "axle_weight_limits"          => linearAssetsToGeoJson(since, linearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust))
-      case "bogie_weight_limits"         => bogieWeightLimitsToGeoJson(since, dynamicLinearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust))
-      case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust))
-      case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
-      case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
-      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "vehicle_prohibitions"        => linearAssetsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
-      case "pedestrian_crossing"         => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until), pointAssetGenericProperties)
-      case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until), pointAssetGenericProperties)
-      case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetWarningSignsGroupProperties)
-      case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(Stop.OTHvalue), since, until), pointAssetStopSignProperties)
+      case "speed_limits" => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust))
+      case "total_weight_limits" => sevenRestrictionToGeoJson(since, linearAssetService.getChanged(TotalWeightLimit.typeId, since, until, withAdjust))
+      case "trailer_truck_weight_limits" => sevenRestrictionToGeoJson(since, linearAssetService.getChanged(TrailerTruckWeightLimit.typeId, since, until, withAdjust))
+      case "axle_weight_limits" => sevenRestrictionToGeoJson(since, linearAssetService.getChanged(AxleWeightLimit.typeId, since, until, withAdjust))
+      case "bogie_weight_limits" => bogieWeightLimitsToGeoJson(since, dynamicLinearAssetService.getChanged(BogieWeightLimit.typeId, since, until, withAdjust))
+      case "height_limits" => sevenRestrictionToGeoJson(since, linearAssetService.getChanged(HeightLimit.typeId, since, until, withAdjust))
+      case "length_limits" => sevenRestrictionToGeoJson(since, linearAssetService.getChanged(LengthLimit.typeId, since, until, withAdjust))
+      case "width_limits" => sevenRestrictionToGeoJson(since, linearAssetService.getChanged(WidthLimit.typeId, since, until, withAdjust))
+      case "road_names" => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
+      case "vehicle_prohibitions" => prohibitionsToGeoJson(since, prohibitionService.getChanged(Prohibition.typeId, since, until, withAdjust))
+      case "pedestrian_crossing" => pointAssetsToGeoJson(since, pedestrianCrossingService.getChanged(since, until), pointAssetGenericProperties)
+      case "obstacles" => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until), pointAssetGenericProperties)
+      case "warning_signs_group" => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetWarningSignsGroupProperties)
+      case "stop_sign" => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(Stop.OTHvalue), since, until), pointAssetStopSignProperties)
     }
   }
 
@@ -70,7 +69,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+        speedLimits.filterNot(x => x.speedLimit.value.nonEmpty && x.speedLimit.value.get.isSuggested).map { case ChangedSpeedLimit(speedLimit, link) =>
           Map(
             "type" -> "Feature",
             "id" -> speedLimit.id,
@@ -115,7 +114,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     )
 
   private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
-    changedLinearAssets.map { case ChangedLinearAsset(linearAsset, _) =>
+    changedLinearAssets.filterNot(isSuggested).map { case ChangedLinearAsset(linearAsset, _) =>
       val dynamicMultiValueLinearAssetMap: Seq[(String, Any)] = linearAsset.value match {
         case Some(DynamicValue(value)) =>
           value.properties.flatMap { bogieWeightAxel =>
@@ -135,6 +134,44 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
 
       dynamicLinearAssetsToGeoJson(since, changedLinearAssets, dynamicMultiValueLinearAssetMap)
+    }
+  }
+
+  private def isSuggested(asset: ChangedLinearAsset): Boolean = {
+    asset.linearAsset.value match {
+      case Some(Prohibitions(isSuggested, _)) => isSuggested
+      case Some(SpeedLimitValue(isSuggested, _)) => isSuggested
+      case Some(DynamicValue(x)) =>
+        x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
+          case Some(value) => value.toString.toBoolean
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+
+  private def isSuggested(asset: ChangedPointAsset): Boolean = {
+    asset.pointAsset.propertyData.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
+      case Some(value) => value.toString.toBoolean
+      case _ => false
+    }
+  }
+
+  private def sevenRestrictionToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
+    changedLinearAssets.filterNot(isSuggested).map { case ChangedLinearAsset(linearAsset, _) =>
+      val sevenRestrictionValueAssetMap: Seq[(String, Any)] = linearAsset.value match {
+        case Some(DynamicValue(value)) =>
+          value.properties.flatMap { asset =>
+            Map("value" ->  (asset.publicId match {
+              case "height" | "length" | "weight" | "width" =>
+                asset.values.map(_.value)
+              case _ => None
+            }))
+          }
+        case _ => Seq()
+      }
+
+      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, sevenRestrictionValueAssetMap)
     }
   }
 
@@ -186,11 +223,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     )
 }
 
-  private def linearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]) =
+  private def prohibitionsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedLinearAssets.map { case ChangedLinearAsset(linearAsset, link) =>
+        changedLinearAssets.filterNot(x => x.linearAsset.value.nonEmpty && x.linearAsset.value.get.asInstanceOf[Prohibitions].isSuggested).map { case ChangedLinearAsset(linearAsset, link) =>
           Map(
             "type" -> "Feature",
             "id" -> linearAsset.id,
@@ -236,7 +273,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   private def mapValue(optValue: Option[Value]): Option[Any] = {
     optValue match {
-      case Some(Prohibitions(false, prohibitions)) => Some(prohibitions.map { prohibitionValue =>
+      case Some(Prohibitions(false, prohibitions)) =>
+        Some(prohibitions.map { prohibitionValue =>
         Map("typeId" -> prohibitionValue.typeId,
           "exceptions" -> prohibitionValue.exceptions,
           "validityPeriod" ->
@@ -258,7 +296,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedPointAssets.map {  case ChangedPointAsset(pointAsset, link) =>
+        changedPointAssets.filterNot(isSuggested).map {  case ChangedPointAsset(pointAsset, link) =>
          val point = GeometryUtils.calculatePointFromLinearReference(link.geometry, pointAsset.mValue).getOrElse(Point(pointAsset.lon, pointAsset.lat))
           Map(
             "type" -> "Feature",
