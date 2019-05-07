@@ -42,7 +42,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def assetFiller: AssetFiller = new OneWayAssetFiller
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
   /**
@@ -90,7 +89,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val timing = System.currentTimeMillis
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, mappedChanges))
-    val myval = roadLinks.sortBy(_.linkId).headOption
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 

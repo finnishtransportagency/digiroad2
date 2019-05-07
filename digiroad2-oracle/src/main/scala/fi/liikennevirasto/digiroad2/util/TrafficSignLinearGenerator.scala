@@ -30,12 +30,11 @@ trait TrafficSignLinearGenerator {
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  //  type AssetValue <: Value
   val assetType: Int
 
   final val userCreate = "automatic_trafficSign_created"
   final val userUpdate = "automatic_trafficSign_updated"
-  final val debbuger = true
+  final val debbuger = false
 
   lazy val properties: Properties = {
     val props = new Properties()
@@ -156,13 +155,13 @@ trait TrafficSignLinearGenerator {
     if (debbuger) println("findStartEndRoadLinkOnChain")
     val borderRoadLinks = roadLinks.filterNot { r =>
       val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
-      val RoadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
+      val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
 
-      RoadLinksFiltered.exists { r3 =>
+      roadLinksFiltered.exists { r3 =>
         val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
         GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(first, last2)
       } &&
-        RoadLinksFiltered.exists { r3 =>
+        roadLinksFiltered.exists { r3 =>
           val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
           GeometryUtils.areAdjacent(last, first2) || GeometryUtils.areAdjacent(last, last2)
         }
@@ -369,7 +368,7 @@ trait TrafficSignLinearGenerator {
     newSeg.signId.diff(oldSeg.signId).foreach(sign => createAssetRelation(oldSeg.oldAssetId.get, sign))
   }
 
-  def combine(segments: Seq[TrafficSignToLinear] /*, endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]*/): Seq[TrafficSignToLinear] = {
+  def combine(segments: Seq[TrafficSignToLinear]): Seq[TrafficSignToLinear] = {
     def squash(startM: Double, endM: Double, segments: Seq[TrafficSignToLinear]): Seq[TrafficSignToLinear] = {
       val sl = segments.filter(sl => sl.startMeasure <= startM && sl.endMeasure >= endM)
       val a = sl.filter(sl => sl.sideCode.equals(SideCode.AgainstDigitizing) || sl.sideCode.equals(SideCode.BothDirections))
@@ -383,7 +382,7 @@ trait TrafficSignLinearGenerator {
       }
     }
 
-    def combineEqualValues(segmentPieces: Seq[TrafficSignToLinear] /*, segments : Seq[TrafficSignToLinear]*/): Seq[TrafficSignToLinear] = {
+    def combineEqualValues(segmentPieces: Seq[TrafficSignToLinear]): Seq[TrafficSignToLinear] = {
       val seg1 = segmentPieces.head
       val seg2 = segmentPieces.last
       if (seg1.startMeasure.equals(seg2.startMeasure) && seg1.endMeasure.equals(seg2.endMeasure) && compareValue(seg1.value, seg2.value) && seg1.sideCode != seg2.sideCode) {
