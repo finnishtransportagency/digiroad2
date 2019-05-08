@@ -122,6 +122,18 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
+  def getSuggestedLinearAssets(linkIds: Seq[Long]): Seq[(Long, Int)] = {
+    withDynSession {
+      dao.getSuggestedLinearAssets(linkIds.toSet)
+    }
+  }
+
+  def getSuggestedPointAssets(municipality: Int): Seq[(Long, Int)] = {
+    withDynSession {
+      dao.getSuggestedPointAssets(municipality)
+    }
+  }
+
   def getNumberOfPointAssets(municipality: Int): Seq[(Int, Int)] = {
     withDynSession {
       dao.getNumberOfPointAssets(municipality)
@@ -166,11 +178,14 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       pointLastModification <- Future(getLastModificationPointAssets(municipality))
       numberOfPointAssets <- Future(getNumberOfPointAssets(municipality))
       verifiedAssetTypes <- Future(getVerifiedAssetTypes)
-    } yield (linearLastModification, pointLastModification, numberOfPointAssets, verifiedAssetTypes)
+      suggestedLinearAssets <- Future(getSuggestedLinearAssets(linkIds))
+      suggestedPointAssets <- Future(getSuggestedPointAssets(municipality))
+    } yield (linearLastModification, pointLastModification, numberOfPointAssets, verifiedAssetTypes, suggestedLinearAssets, suggestedPointAssets)
 
-    val (linearLastModification, pointLastModification, numberOfPointAssets, verifiedAssetTypes) = Await.result(fut, Duration.Inf)
+    val (linearLastModification, pointLastModification, numberOfPointAssets, verifiedAssetTypes, suggestedLinearAssets, suggestedPointAssets) = Await.result(fut, Duration.Inf)
 
     val assetsLastModification = linearLastModification ++ pointLastModification
+    val suggestedAssets = suggestedLinearAssets ++ suggestedPointAssets
     verifiedAssetTypes.map{ case (typeId, geometryType) =>
       val numberOfAssets = if(geometryType == "point")
         numberOfPointAssets.find(_._1 == typeId).map(_._2).getOrElse(0)
