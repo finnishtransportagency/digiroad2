@@ -634,7 +634,7 @@
           {label: "Puhelin 2", type: 'text', publicId: "huoltotie_puh2", weight: 9},
           {label: "Lisätietoa", type: 'text', publicId: "huoltotie_lisatieto", weight: 10},
           {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 11},
-          {label: "Vihjetieto", type: 'checkbox', publicId: "huoltotie_vihjetieto", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12, showAndHide: showAndHideRule }]
+          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12, showAndHide: showAndHideRule }]
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
