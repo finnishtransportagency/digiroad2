@@ -957,16 +957,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     Q.updateNA(queryFilter(query) + ")").execute
   }
 
-  def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int, lastCreationDate: Option[DateTime]): List[(Int, DateTime, Int)] = {
+  def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int, lastCreationDate: Option[DateTime]): List[(Long, Int)] = {
     val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities.mkString(",")}) "
 
-    sql"""select a.id, TO_DATE(TO_CHAR(a.created_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), a1.municipality_code
+    sql"""select a.id, a1.municipality_code
          from asset a
          join connected_asset ca on a.id = ca.linear_asset_id
          join asset a1 on ca.point_asset_id = a1.id and a1.asset_type_id = ${TrafficSigns.typeId}
          where  (a.valid_to is null or a.valid_to > sysdate)
-         and a.created_by = 'automatic_process'
+         and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
-         and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1) #$municipalityFilter""".as[(Int, DateTime, Int)].list
+         and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1) #$municipalityFilter""".as[(Long, Int)].list
   }
 }

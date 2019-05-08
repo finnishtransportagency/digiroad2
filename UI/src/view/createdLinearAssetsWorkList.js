@@ -61,7 +61,7 @@
 
       var tableContentRows = function(ids) {
         return _.map(ids, function(id) {
-          return $('<tr/>').append($('<td/>').append(assetLink(id._1)));
+          return $('<tr/>').append($('<td/>').append(assetLink(id)));
         });
       };
 
@@ -77,7 +77,7 @@
       };
 
       return $('<div/>').append(municipalityHeader(assetContent.municipality))
-                        .append(tableForGroupingValues(assetContent.created_assets));
+                        .append(tableForGroupingValues(assetContent.createdAssets));
                                     
     };
 

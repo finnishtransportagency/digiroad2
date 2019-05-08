@@ -863,11 +863,18 @@ trait LinearAssetOperations {
     query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
   }
 
-  def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(Int, DateTime, Int)] = {
+  def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(String, Seq[Long])] = {
     withDynTransaction {
       val lastCreationDate = dao.getLastExecutionDateOfConnectedAsset()
-      if(lastCreationDate.nonEmpty)
-        dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId, lastCreationDate)
+      if (lastCreationDate.nonEmpty) {
+        val automaticGeneratedAssets = dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId, lastCreationDate).groupBy(_._2)
+        val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(automaticGeneratedAssets.keys.toSet)
+
+        automaticGeneratedAssets.map {
+          generatedAsset =>
+            (municipalityNames.find(_.id == generatedAsset._1).get.name, generatedAsset._2.map(_._1))
+        }.toSeq
+      }
       else Seq()
     }
   }

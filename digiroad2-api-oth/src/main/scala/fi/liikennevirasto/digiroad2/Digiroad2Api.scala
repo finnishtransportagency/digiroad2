@@ -1652,10 +1652,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val createdAssets = linearAssetService.getAutomaticGeneratedAssets(municipalities, assetTypeId)
 
-    createdAssets.groupBy(_._3).map{ asset =>
+    createdAssets.map { asset =>
       Map(
-        "municipality" -> municipalityService.getMunicipalitiesNameAndIdByCode(Set(asset._1)).map(_.name).head,
-        "created_assets" -> asset._2
+        "municipality" -> asset._1,
+        "createdAssets" -> asset._2
       )
     }
   }
