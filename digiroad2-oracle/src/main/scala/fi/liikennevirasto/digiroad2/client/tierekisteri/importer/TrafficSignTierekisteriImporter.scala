@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriTrafficSign
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
@@ -138,7 +138,6 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     if(trafficSignsIds.nonEmpty) {
       trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-      prohibitionService.deleteAssetBasedOnSign(prohibitionService.withIds(trafficSignsIds), withTransaction = false)
     }
   }
 
@@ -181,7 +180,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
 
         val additionalProperties = getAdditionalPanels(trProperties, mappedRoadAddresses, mappedRoadLinks)
 

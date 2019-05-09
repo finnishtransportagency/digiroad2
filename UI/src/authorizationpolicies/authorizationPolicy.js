@@ -67,5 +67,11 @@
       return selectedInfo.administrativeClass === "State" || selectedInfo.administrativeClass === 1;
     };
 
+    this.validateMultiple = function(selectedAssets) {
+      return _.every(selectedAssets, function(selectedAsset){
+        return me.formEditModeAccess(selectedAsset);
+      });
+    };
+
   };
 })(this);

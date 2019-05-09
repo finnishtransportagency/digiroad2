@@ -73,7 +73,7 @@ window.UserNotificationPopup = function(models) {
   var renderDialog = function(notifications) {
     $('#update-notification').append(me.createNotificationPopUp(notifications)).show();
 
-    $('.confirm-modal .cancel').on('click', function() {
+    $('.confirm-modal#notification .cancel').on('click', function() {
       options.closeCallback();
     });
 
@@ -109,6 +109,6 @@ window.UserNotificationPopup = function(models) {
   };
 
   var purge = function() {
-    $('.confirm-modal').remove();
+    $('.confirm-modal#notification').remove();
   };
 };

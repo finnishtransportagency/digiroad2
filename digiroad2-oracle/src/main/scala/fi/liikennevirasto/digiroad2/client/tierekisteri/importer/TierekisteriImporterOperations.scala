@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -33,7 +33,7 @@ trait TierekisteriImporterOperations {
     Class.forName(getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
   lazy val assetDao: OracleAssetDao = new OracleAssetDao
-  lazy val roadAddressService : RoadAddressesService = new RoadAddressesService(viiteClient)
+  lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }
   lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
 
@@ -201,6 +201,13 @@ trait TierekisteriImporterOperations {
   def getLastExecutionDate: Option[DateTime] = {
       assetDao.getLastExecutionDate(typeId, s"batch_process_$assetName")
   }
+
+  def getRoadLinks(linkIds: Set[Long], administrativeClassFilter: Option[AdministrativeClass] = None): Seq[VVHRoadlink] = {
+    administrativeClassFilter match {
+      case Some(adminClass) => roadLinkService.fetchVVHRoadlinks(linkIds).filter(_.administrativeClass == adminClass)
+      case _ => roadLinkService.fetchVVHRoadlinks(linkIds)
+    }
+  }
 }
 
 trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations {
@@ -297,7 +304,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
 
         //For each section creates a new OTH asset
         trAddressSections.foreach {
@@ -330,7 +337,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
             //Expire all the sections that have changes in tierekisteri
             expireAssets(changedRoadAddresses.map(_.linkId))
             val mappedChangedRoadAddresses = changedRoadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-            val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(changedRoadAddresses.map(ra => ra.linkId).toSet)
+            val mappedRoadLinks = getRoadLinks(changedRoadAddresses.map(ra => ra.linkId).toSet, Some(State))
             //Creates the assets on top of the expired sections
             changedRoadParts.foreach{
               roadPart =>

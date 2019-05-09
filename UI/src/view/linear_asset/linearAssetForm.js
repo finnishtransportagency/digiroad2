@@ -35,7 +35,7 @@
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
-      toggleMode( validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || applicationModel.isReadOnly());
+      toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy));
     });
 
     eventbus.on(events('unselect'), function() {
@@ -52,7 +52,7 @@
 
     eventbus.on('application:readOnly', function(readOnly){
       if(layerName ===  applicationModel.getSelectedLayer()) {
-        toggleMode(validateAdministrativeClass(selectedLinearAsset, authorizationPolicy) || readOnly);
+        toggleMode(!validateAccess(selectedLinearAsset, authorizationPolicy) || readOnly);
       }
     });
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
@@ -158,13 +158,13 @@
         });
       };
 
-      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+      var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var message = '';
 
-      if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinearAsset)) {
+      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedLinearAsset)) {
         message = limitedRights;
-      } else if (!authorizationPolicy.formEditModeAccess(selectedLinearAsset))
+      } else if (!authorizationPolicy.validateMultiple(selectedLinearAsset.get()))
         message = noRights;
 
       if(message) {
@@ -214,18 +214,15 @@
       default:
         textName = "Vanhentuneiden kohteiden lista";
     }
-    $('ul[class=information-content]').append('<li><button id="unchecked-links" class="unchecked-linear-assets" onclick=location.href="#work-list/' + layerName + '">' + textName + '</button></li>');
+    $('ul[class=information-content]').append('<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">' + textName + '</button></li>');
   };
 
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
-    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirheet Lista</button></li>');
+    $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
 
-  function validateAdministrativeClass(selectedLinearAsset, authorizationPolicy){
-    var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
-      return !authorizationPolicy.formEditModeAccess(selected);
-    });
-    return !_.isEmpty(selectedAssets);
+  function validateAccess(selectedLinearAsset, authorizationPolicy){
+    return authorizationPolicy.validateMultiple(selectedLinearAsset.get());
   }
 
 })(this);

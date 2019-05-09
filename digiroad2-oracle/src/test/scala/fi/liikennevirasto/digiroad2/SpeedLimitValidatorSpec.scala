@@ -25,7 +25,6 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
   val mockProhibitionService = MockitoSugar.mock[ProhibitionService]
@@ -35,7 +34,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
     new BoneCPDataSource(cfg)
   }
 
-  object testTrafficSignService extends TrafficSignService(mockRoadLinkService, mockUserProvider, new DummyEventBus){
+  object testTrafficSignService extends TrafficSignService(mockRoadLinkService, new DummyEventBus){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
   }

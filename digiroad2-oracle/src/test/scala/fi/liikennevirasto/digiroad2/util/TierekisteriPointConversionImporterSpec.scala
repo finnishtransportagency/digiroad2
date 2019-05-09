@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-import fi.liikennevirasto.digiroad2.service.{RoadAddressesService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -16,7 +16,7 @@ import org.scalatest.{FunSuite, Matchers}
 class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
 
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
-  val mockRoadAddressService = MockitoSugar.mock[RoadAddressesService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockTRClient: TierekisteriWeightLimitAssetClient = MockitoSugar.mock[TierekisteriWeightLimitAssetClient]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -32,7 +32,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     override type TierekisteriClientType = TierekisteriAssetDataClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriAssetDataClient = mockTierekisteriAssetDataClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -62,7 +62,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     override type TierekisteriClientType = TierekisteriWeightLimitAssetClient
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override lazy val roadAddressService: RoadAddressesService = mockRoadAddressService
+    override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override val tierekisteriClient: TierekisteriWeightLimitAssetClient = mockTierekisteriWeightLimitAssetClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
@@ -84,7 +84,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, startAddressMValue, startAddressMValue)
     val section = AddressSection(roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(0,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("VERTICALLEVEL" -> 1))
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
 
     tierekisteriPointConversionImporter.createAssetTest(section, trAssetData.asInstanceOf[tierekisteriPointConversionImporter.TierekisteriAssetData], Seq(roadAddress).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track)), Seq(vvhRoadLink))
 
@@ -109,7 +109,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, startAddressMValue, startAddressMValue)
     val section = AddressSection(roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(0,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
 
     val adjacentVVHRoadLink = VVHRoadlink(5002, 235, Seq(Point(10,0), Point(20,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("VERTICALLEVEL" -> 1))
     val mappedRoadLinks = Seq(adjacentVVHRoadLink, vvhRoadLink)
@@ -137,7 +137,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 2, 2)
     val section = AddressSection(roadNumber, startRoadPartNumber, track, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(5,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, track, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, track, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
 
     val adjacentVVHRoadLink = Seq(VVHRoadlink(5000, 235, Seq(Point(0,0), Point(5,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("VERTICALLEVEL" -> 1)),
                                   VVHRoadlink(5002, 235, Seq(Point(10,0), Point(20,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("VERTICALLEVEL" -> 1)))
@@ -167,7 +167,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
     val trAssetData = TierekisteriDataTest(roadNumber, startRoadPartNumber, startRoadPartNumber, track, 1, 1)
     val section = AddressSection(roadNumber, startRoadPartNumber, track, startAddressMValue, Some(endAddressMValue))
     val vvhRoadLink = VVHRoadlink(5001, 235, Seq(Point(0,0), Point(10,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, track, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, track, startAddressMValue, endAddressMValue, None, None, 5001, 1, 11, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
 
     val adjacentVVHRoadLink = Seq(VVHRoadlink(5000, 235, Seq(Point(10,0), Point(52,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
       VVHRoadlink(5002, 235, Seq(Point(52,0), Point(60,0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("VERTICALLEVEL" -> 1)))

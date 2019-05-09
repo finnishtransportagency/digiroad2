@@ -203,10 +203,9 @@
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
         'manoeuvres/:id': 'manoeuvres',
-        'work-list/speedLimit': 'speedLimitWorkList',
-        'work-list/speedLimit/state': 'speedLimitStateWorkList',
+        'work-list/speedLimit(/:administrativeClass)': 'speedLimitWorkList',
         'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
-        'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
+        'work-list/speedLimitErrors(/:administrativeClass)': 'speedLimitErrorsWorkList',
 
         'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
         'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
@@ -364,12 +363,8 @@
         });
       },
 
-      speedLimitWorkList: function () {
-        eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits());
-      },
-
-      speedLimitStateWorkList: function () {
-        eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimitsState());
+      speedLimitWorkList: function (municipality) {
+        eventbus.trigger('workList:select', 'speedLimit', backend.getUnknownLimits(municipality));
       },
 
       speedLimitMunicipalitiesWorkList: function (id) {
@@ -382,8 +377,8 @@
         this.stateHistory = null;
       },
 
-      speedLimitErrorsWorkList: function () {
-        eventbus.trigger('workList-inaccurate:select', 'speedLimitErrors', backend.getSpeedLimitErrors());
+      speedLimitErrorsWorkList: function (municipality) {
+        eventbus.trigger('workList-inaccurate:select', 'speedLimitErrors', backend.getSpeedLimitErrors(municipality));
       },
 
       hazardousMaterialProhibitionErrorsWorkList: function () {

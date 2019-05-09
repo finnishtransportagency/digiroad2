@@ -23,20 +23,17 @@ case class AssetValidatorInfo(ids: Set[Long], newLinkIds: Set[Long] = Set())
 trait AssetServiceValidator {
 
   val eventbus = new DummyEventBus
-
   lazy val dr2properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  lazy val userProvider: UserProvider = {
-    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
-  }
+
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val manoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
   lazy val prohibitionService = new ProhibitionService(roadLinkService, eventbus)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventbus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val inaccurateAssetDAO = new InaccurateAssetDAO()
 
   type AssetType

@@ -61,7 +61,7 @@
       var selectedMulti = _.clone(selectedLinearAsset);
       selectedMulti.setValue =  setValue;
       selectedMulti.removeValue = removeValue;
-      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true).find('.editable'));
+      container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true, true).find('.editable'));
       eventbus.trigger('massDialog:rendered' , $('button.save'));
     };
 

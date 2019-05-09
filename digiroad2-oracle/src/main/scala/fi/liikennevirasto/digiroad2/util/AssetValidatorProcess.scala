@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset}
+import fi.liikennevirasto.digiroad2.asset.{Municipality, SpeedLimitAsset, State}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, Queries}
@@ -42,7 +42,7 @@ object AssetValidatorProcess {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, new DummyEventBus)
+    new TrafficSignService(roadLinkService, new DummyEventBus)
   }
 
   lazy val manoeuvreService: ManoeuvreService = {
@@ -111,7 +111,7 @@ object AssetValidatorProcess {
 
       municipalities.foreach { municipality =>
         println("Working on... municipality -> " + municipality)
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == Municipality).groupBy(_.linkId)
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(roadLink => Seq(Municipality, State).contains(roadLink.administrativeClass)).groupBy(_.linkId)
         val speedLimitsByLinkId = dao.getCurrentSpeedLimitsByLinkIds(Some(roadLinks.keys.toSet)).groupBy(_.linkId)
 
         val inaccurateAssets = speedLimitsByLinkId.flatMap {
@@ -175,7 +175,7 @@ object AssetValidatorProcess {
         if(assetName == "speedLimit")
           verifyInaccurateSpeedLimits()
         else
-          validateAssets(validatorProcessAssets.get(assetName).get)
+          validateAssets(validatorProcessAssets(assetName))
       }else{
         println(s"The asset with name $assetName is not supported")
         println()

@@ -186,6 +186,8 @@ class AssetFiller {
     (segments ++ generated, changeSet)
   }
 
+  protected def updateValues(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = (segments, changeSet)
+
   private def combine(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
     def replaceUnknownAssetIds(asset: PersistedLinearAsset, pseudoId: Long) = {
@@ -498,7 +500,8 @@ class AssetFiller {
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId)
+      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+      updateValues
     )
 
     val changeSet = changedSet match {
@@ -507,7 +510,8 @@ class AssetFiller {
                               expiredAssetIds = Set.empty[Long],
                               adjustedMValues = Seq.empty[MValueAdjustment],
                               adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                              adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                              adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+                              valueAdjustments = Seq.empty[ValueAdjustment])
     }
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>

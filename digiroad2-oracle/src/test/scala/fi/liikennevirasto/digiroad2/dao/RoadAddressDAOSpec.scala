@@ -7,8 +7,8 @@ import org.scalatest.{FunSuite, Matchers}
 class RoadAddressDAOSpec extends FunSuite with Matchers {
 
   test("LRM calculation on Road Address") {
-    val towards = RoadAddress(1L, 1L, 1L, Track.RightSide, 100, 110, None, None, 123L, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
-    val against = RoadAddress(1L, 1L, 1L, Track.RightSide, 100, 110, None, None, 123L, 1.5, 11.4, SideCode.AgainstDigitizing, false, Seq(), false, None, None, None)
+    val towards = RoadAddress(1L, 1L, 1L, Track.RightSide, 100, 110, None, None, 123L, 1.5, 11.4, SideCode.TowardsDigitizing, Seq(), false, None, None, None)
+    val against = RoadAddress(1L, 1L, 1L, Track.RightSide, 100, 110, None, None, 123L, 1.5, 11.4, SideCode.AgainstDigitizing, Seq(), false, None, None, None)
     towards.addressMValueToLRM(100L).get should be (1.5 +- .001)
     against.addressMValueToLRM(100L).get should be (11.4 +- .001)
     towards.addressMValueToLRM(110L).get should be (11.4 +- .001)

@@ -79,7 +79,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
   }
 
-  private def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
+  def fetchSpeedLimitsByLinkIds(linkIds: Seq[Long]): Seq[SpeedLimit] = {
 
     val queryFilter = "AND (valid_to IS NULL OR valid_to > SYSDATE)"
     fetchByLinkIds(linkIds, queryFilter).map {
@@ -219,6 +219,17 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
 
+  def getMunicipalitiesWithUnknown(municipality: Int): Seq[Long] = {
+
+    val municipalitiesQuery =
+      s"""
+      select LINK_ID from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
+      """
+
+    Q.queryNA[Long](municipalitiesQuery).list
+  }
+
+
     /**
     * Returns data for municipality validation. Used by OracleSpeedLimitDao.splitSpeedLimit.
     */
@@ -246,14 +257,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Used by SpeedLimitService.get (by bounding box and a list of municipalities) and SpeedLimitService.get (by municipality)
     */
   def getSpeedLimitLinksByRoadLinks(roadLinks: Seq[RoadLink], showSpeedLimitsHistory: Boolean = false): (Seq[SpeedLimit], Seq[RoadLink]) = {
-    val topology = roadLinks.filter(_.isCarTrafficRoad)
     var speedLimitLinks: Seq[SpeedLimit] = Seq()
     if (showSpeedLimitsHistory) {
-      speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+      speedLimitLinks = fetchHistorySpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     } else {
-      speedLimitLinks = fetchSpeedLimitsByLinkIds(topology.map(_.linkId)).map(createGeometryForSegment(topology))
+      speedLimitLinks = fetchSpeedLimitsByLinkIds(roadLinks.map(_.linkId)).map(createGeometryForSegment(roadLinks))
     }
-    (speedLimitLinks, topology)
+    (speedLimitLinks, roadLinks)
   }
 
   def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedSpeedLimit] = {
@@ -506,6 +516,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     if (towardsRemainders.isEmpty && againstRemainders.isEmpty) {
       sqlu"""delete from unknown_speed_limit where link_id = $linkId""".execute
     }
+  }
+
+  /**
+    * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
+    */
+  def deleteUnknownSpeedLimits(linkIds: Seq[Long]): Unit = {
+    sqlu"""delete from unknown_speed_limit where link_id in (#${linkIds.mkString(",")})""".execute
   }
 
   private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
