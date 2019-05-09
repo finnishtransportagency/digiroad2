@@ -24,7 +24,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   lazy val userProvider: UserProvider = {
     Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
   }
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, userProvider, eventBus)
+  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBus)
 
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
 

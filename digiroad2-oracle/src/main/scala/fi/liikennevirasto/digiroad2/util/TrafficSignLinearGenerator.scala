@@ -69,7 +69,7 @@ trait TrafficSignLinearGenerator {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, eventbus)
   }
 
   lazy val oracleLinearAssetDao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
