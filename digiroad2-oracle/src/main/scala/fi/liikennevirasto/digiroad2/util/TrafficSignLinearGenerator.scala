@@ -401,7 +401,7 @@ trait TrafficSignLinearGenerator {
   }
 
   def findNextEndAssets(segments: Seq[TrafficSignToLinear], baseSegment: TrafficSignToLinear, result: Seq[TrafficSignToLinear] = Seq(), numberOfAdjacent: Int = 0): Seq[TrafficSignToLinear] = {
-    val adjacent = roadLinkService.getAdjacentTemp(baseSegment.roadLink.linkId)
+    val adjacent = roadLinkService.getAdjacent(baseSegment.roadLink.linkId, false)
     val (start, _) = GeometryUtils.geometryEndpoints(baseSegment.roadLink.geometry)
     val allInSameSide = adjacent.forall { adj =>
       val (first, last) = GeometryUtils.geometryEndpoints(adj.geometry)

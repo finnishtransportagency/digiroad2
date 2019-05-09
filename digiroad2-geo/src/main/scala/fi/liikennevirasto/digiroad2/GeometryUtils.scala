@@ -17,7 +17,7 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
-  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 

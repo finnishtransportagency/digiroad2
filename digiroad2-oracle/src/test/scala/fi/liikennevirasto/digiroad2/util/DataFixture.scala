@@ -1720,7 +1720,7 @@ object DataFixture {
         val roadLink = roadLinks(currentAsset.linkId).head
         val (start, end) = GeometryUtils.geometryEndpoints(roadLink.geometry)
         val pointOfInterest = getPointOfInterest(start, end, roadLink.trafficDirection, SideCode.apply(currentAsset.sideCode))
-        val adjacentRoadLink = roadLinkService.getAdjacent(currentAsset.linkId)
+        val adjacentRoadLink = roadLinkService.getAdjacent(currentAsset.linkId, true)
 
         pointOfInterest.map { point =>
           val filteredAdjacentRoadLink = adjacentRoadLink.filter(link => GeometryUtils.areAdjacent(link.geometry, point)).groupBy(_.linkId)

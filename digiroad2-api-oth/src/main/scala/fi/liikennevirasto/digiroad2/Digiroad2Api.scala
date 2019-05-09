@@ -683,7 +683,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacent/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    roadLinkService.getAdjacent(id).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
+    roadLinkService.getAdjacent(id, true).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
 
   }
 
