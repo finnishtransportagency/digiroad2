@@ -423,8 +423,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val result = importer.processing(inputStream, testUser)
     result should equal(importer.ImportResultMassTransitStop())
 
-    val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("UpdatedAssetName"))))
-    val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("Asset2Name"))))
+    val properties1 = Set(SimplePointAssetProperty("nimi_suomeksi", Seq(PropertyValue("UpdatedAssetName"))))
+    val properties2 = Set(SimplePointAssetProperty("nimi_suomeksi", Seq(PropertyValue("Asset2Name"))))
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties1), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
     verify(mockService).updateExistingById(ArgumentMatchers.eq(2l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties2), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }
@@ -483,7 +483,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(massTransitStopImporter.createCSV(Map("Valtakunnallinen ID" -> 1, "Ylläpitäjän tunnus" -> "NewAdminId")))
 
     importer.processing(csv, testUser) should equal(importer.ImportResultMassTransitStop())
-    val properties = Set(SimpleProperty("yllapitajan_tunnus", Seq(PropertyValue("NewAdminId"))))
+    val properties = Set(SimplePointAssetProperty("yllapitajan_tunnus", Seq(PropertyValue("NewAdminId"))))
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }
 
@@ -497,7 +497,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(massTransitStopImporter.createCSV(Map("Valtakunnallinen ID" -> 1, "LiVi-tunnus" -> "Livi987654")))
 
     importer.processing(csv, testUser) should equal(importer.ImportResultMassTransitStop())
-    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
+    val properties = Set(SimplePointAssetProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }
 
@@ -511,7 +511,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(massTransitStopImporter.createCSV(Map("Valtakunnallinen ID" -> 1, "Matkustajatunnus" -> "H156")))
 
     importer.processing(csv, testUser) should equal(importer.ImportResultMassTransitStop())
-    val properties = Set(SimpleProperty("matkustajatunnus", Seq(PropertyValue("H156"))))
+    val properties = Set(SimplePointAssetProperty("matkustajatunnus", Seq(PropertyValue("H156"))))
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }
 
@@ -525,7 +525,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(massTransitStopImporter.createCSV(Map("Valtakunnallinen ID" -> 1, "Lisätiedot" -> "Updated additional info")))
 
     importer.processing(csv, testUser) should equal(importer.ImportResultMassTransitStop())
-    val properties = Set(SimpleProperty("lisatiedot", Seq(PropertyValue("Updated additional info"))))
+    val properties = Set(SimplePointAssetProperty("lisatiedot", Seq(PropertyValue("Updated additional info"))))
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }
 
@@ -562,8 +562,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(massTransitStopImporter.createCSV(Map("Valtakunnallinen ID" -> 1) ++ massTransitStopImporter.mappings.mapValues(exampleValues(_)._2)))
 
     importer.processing(csv, testUser) should equal(importer.ImportResultMassTransitStop())
-    val properties: Set[SimpleProperty] = exampleValues.map { case (key, value) =>
-      SimpleProperty(key, Seq(PropertyValue(value._2)))
+    val properties: Set[SimplePointAssetProperty] = exampleValues.map { case (key, value) =>
+      SimplePointAssetProperty(key, Seq(PropertyValue(value._2)))
     }.filterNot(_.publicId == "yllapitajan_koodi").toSet
 
     verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
@@ -679,7 +679,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val result = importer.processing(inputStream, testUser, roadTypeLimitations = Set(Municipality))
     result should equal(importer.ImportResultMassTransitStop())
 
-    val properties = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))))
+    val properties = Set(SimplePointAssetProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))))
     verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }
 
@@ -692,8 +692,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val result = importer.processing(inputStream, testUser, roadTypeLimitations = Set(State, Municipality))
     result should equal(importer.ImportResultMassTransitStop())
 
-    val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName1"))))
-    val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName2"))))
+    val properties1 = Set(SimplePointAssetProperty("nimi_suomeksi", Seq(PropertyValue("NewName1"))))
+    val properties2 = Set(SimplePointAssetProperty("nimi_suomeksi", Seq(PropertyValue("NewName2"))))
     verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties1), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
     verify(mockMassTransitStopService).updateExistingById(ArgumentMatchers.eq(2l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties2), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject())
   }

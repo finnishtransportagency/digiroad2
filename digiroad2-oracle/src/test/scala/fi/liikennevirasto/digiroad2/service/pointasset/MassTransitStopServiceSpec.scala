@@ -133,7 +133,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("create and update inventory date propertie") {
 
-    val props = Seq(SimpleProperty("foo", Seq()))
+    val props = Seq(SimplePointAssetProperty("foo", Seq()))
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
@@ -145,7 +145,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("update empty inventory date") {
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq()))
+    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq()))
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
@@ -154,7 +154,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("do not update existing inventory date") {
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
+    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
@@ -185,9 +185,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
@@ -237,9 +237,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val roadLink = RoadLink(1237l, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1237l, 2,
       Seq(
-        SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-        SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-        SimpleProperty("vaikutussuunta", Seq(PropertyValue("2"))) //TowardsDigitizin
+        SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+        SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+        SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))) //TowardsDigitizin
       )), "masstransitstopservice_spec", roadLink)
 
       val stops = RollbackMassTransitStopService.getByBoundingBox(
@@ -510,8 +510,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       dbResult.size should be(1)
       dbResult.head should be("livi1")
       val properties = List(
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
       val position = Some(Position(374450, 6677250, 123l, None))
       RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", (_,_) => Unit)
       val massTransitStop = service.getById(assetId).get
@@ -529,7 +529,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300000
       // properties in csv import file: 1;;Swedish name;;;;;;;;;;;;;;; (national id and swedish name given)
       val properties = List(
-        SimpleProperty("nimi_ruotsiksi", List(PropertyValue("Swedish name"))))
+        SimplePointAssetProperty("nimi_ruotsiksi", List(PropertyValue("Swedish name"))))
       RollbackMassTransitStopService.updateExistingById(assetId, None, properties.toSet, "user", (_,_) => Unit)
       val massTransitStop = service.getById(assetId).get
 
@@ -552,8 +552,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       dbResult.size should be(1)
       dbResult.head should be(null)
       val properties = List(
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
       val position = Some(Position(374450, 6677250, 123l, None))
       RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", (_,_) => Unit)
       val massTransitStop = service.getById(assetId).get
@@ -575,8 +575,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       dbResult.size should be(1)
       dbResult.head should be("livi123")
       val properties = List(
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
       val position = Some(Position(374450, 6677250, 123l, None))
       RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", (_,_) => Unit)
       val massTransitStop = service.getById(assetId).get
@@ -603,7 +603,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Update properties") {
     runWithRollback {
       val values = List(PropertyValue("New name"))
-      val properties = Set(SimpleProperty("nimi_suomeksi", values))
+      val properties = Set(SimplePointAssetProperty("nimi_suomeksi", values))
       RollbackMassTransitStopService.updateExistingById(300000, None, properties, "user", (_,_) => Unit)
       val modifier = sql"""
             select v.value_fi from text_property_value v
@@ -654,10 +654,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
 
       val roadLink = RoadLink(123l, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", roadLink)
@@ -682,10 +682,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("5"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("5"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
       val roadLink = RoadLink(123l, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", roadLink)
       val massTransitStop = service.getById(id).get
@@ -711,12 +711,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))),
-        SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
-        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue(DateTime.now().plusDays(1).toString()))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))),
+        SimplePointAssetProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
+        SimplePointAssetProperty("viimeinen_voimassaolopaiva", List(PropertyValue(DateTime.now().plusDays(1).toString()))))
       val roadLink = RoadLink(123l, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", roadLink)
       val massTransitStop = service.getById(id).get
@@ -743,13 +743,13 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       )
 
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
-        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue(DateTime.now().plusDays(1).toString()))),
-        SimpleProperty("linkin_hallinnollinen_luokka", List(PropertyValue("1"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("3"))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
+        SimplePointAssetProperty("viimeinen_voimassaolopaiva", List(PropertyValue(DateTime.now().plusDays(1).toString()))),
+        SimplePointAssetProperty("linkin_hallinnollinen_luokka", List(PropertyValue("1"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("3"))))
 
       val roadLink = RoadLink(12333l, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))
       val id = service.create(NewMassTransitStop(60.0, 0.0, 12333l, 100, properties), "test", roadLink)
@@ -784,12 +784,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
-        SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2027-01-01"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
+        SimplePointAssetProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2027-01-01"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
 
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
         (RoadAddress(None, 1, 1, Track.Combined, 0, None), RoadSide.Left)
@@ -799,7 +799,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", roadLink)
 
       val newProperties = Set(
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1")))
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("1")))
       )
 
       val massTransitStop = service.updateExistingById(id, None, newProperties, "test2", (Int, _) => Unit)
@@ -883,10 +883,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
       val linkId = 123l
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
@@ -915,10 +915,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
       val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("vaikutussuunta", List(PropertyValue("2"))))
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))))
       val linkId = 123l
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
@@ -981,9 +981,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
@@ -1002,7 +1002,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
-      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit })
       verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
@@ -1015,9 +1015,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
@@ -1037,7 +1037,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
-      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit })
       verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
@@ -1050,9 +1050,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
@@ -1064,9 +1064,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
@@ -1076,7 +1076,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val props = stop.propertyData
       val admin = props.find(_.publicId == "tietojen_yllapitaja").get.copy(values = List(PropertyValue("1")))
       val newStop = stop.copy(stopTypes = Seq(2, 3), propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja") ++ Seq(admin))
-      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit })
       verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
@@ -1253,9 +1253,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       RollbackMassTransitStopServiceWithTierekisteri.updateExistingById(stop.id,
         None, stop.propertyData.map(p =>
           if (p.publicId != MassTransitStopOperations.LiViIdentifierPublicId)
-            SimpleProperty(p.publicId, p.values)
+            SimplePointAssetProperty(p.publicId, p.values)
           else
-            SimpleProperty(p.publicId, Seq(PropertyValue("1")))
+            SimplePointAssetProperty(p.publicId, Seq(PropertyValue("1")))
         ).toSet, "pekka", (Int, _) => Unit)
       val captor: ArgumentCaptor[TierekisteriMassTransitStop] = ArgumentCaptor.forClass(classOf[TierekisteriMassTransitStop])
       verify(mockTierekisteriClient, Mockito.atLeastOnce).updateMassTransitStop(captor.capture, any[Option[String]], any[Option[String]])
@@ -1272,9 +1272,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val geom = Point(374550, 6677350)
     val pos = Position(geom.x, geom.y, 131573L, Some(85))
     val properties = List(
-      SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-      SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
-      SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
+      SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+      SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+      SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
 
     val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus, mockRoadLinkService)
     when(mockTierekisteriClient.isTREnabled).thenReturn(true)
@@ -1318,9 +1318,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0,0.0), Point(120.0, 0.0)), 120, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 1.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
@@ -1335,7 +1335,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         Map("ROADNAME_SE" -> "roadname_se",
           "ROADNAME_FI" -> "roadname_fi")
 
-      val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
+      val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
       val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
       val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
@@ -1351,7 +1351,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       Map("ROADNAME_SE" -> "roadname_se",
         "ROADNAME_FI" -> "roadname_fi")
 
-    val props = Seq(SimpleProperty(MassTransitStopOperations.RoadName_SE, Seq.empty[PropertyValue]), SimpleProperty(MassTransitStopOperations.RoadName_FI, Seq.empty[PropertyValue]))
+    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq.empty[PropertyValue]), SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq.empty[PropertyValue]))
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
@@ -1367,8 +1367,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       Map("ROADNAME_SE" -> "roadname_se",
         "ROADNAME_FI" -> "roadname_fi")
 
-    val props = Seq(SimpleProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue("user_road_name_se"))),
-                    SimpleProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue("user_road_name_fi"))))
+    val props = Seq(SimplePointAssetProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue("user_road_name_se"))),
+                    SimplePointAssetProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue("user_road_name_fi"))))
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
     val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
@@ -1390,17 +1390,17 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       val ids = Seq(RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2"))),
-          SimpleProperty("matkustajatunnus", Seq(PropertyValue("1000")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("matkustajatunnus", Seq(PropertyValue("1000")))
         )), "masstransitstopservice_spec", roadLink.head),
       RollbackMassTransitStopService.create(NewMassTransitStop(15.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2"))),
-          SimpleProperty("matkustajatunnus", Seq(PropertyValue("1000")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("matkustajatunnus", Seq(PropertyValue("1000")))
         )), "masstransitstopservice_spec", roadLink.last))
 
       val result = service.getMassTransitStopByPassengerId("1000", _ => Unit)
@@ -1416,9 +1416,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val roadLink = RoadLink(11, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120, State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
-          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
-          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
-          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+          SimplePointAssetProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimplePointAssetProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimplePointAssetProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec", roadLink)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
@@ -1437,7 +1437,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newStop = stop.copy(stopTypes = Seq(2, 3),
         propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja").filterNot(_.publicId == "pysakin_tyyppi") ++
           Seq(newAdmin, newTypes))
-      val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet ++ Set(SimpleProperty("trSave", Seq(PropertyValue("false"))))
+      val newProps = newStop.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet ++ Set(SimplePointAssetProperty("trSave", Seq(PropertyValue("false"))))
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int, _) => Unit})
       verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])

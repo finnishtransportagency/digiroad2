@@ -458,11 +458,8 @@ abstract class AssetPropertyValue {
 }
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class SimpleProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractProperty
 case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
-//case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
-//case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
 
 abstract class AbstractProperty {
   def publicId: String

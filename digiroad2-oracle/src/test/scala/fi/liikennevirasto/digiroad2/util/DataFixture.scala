@@ -1169,9 +1169,9 @@ object DataFixture {
 
           if ((stopNameSE != nameSEinTR) || (stopRoofValue != roofValueinTR) || (stopRaisedBusStopValue != raisedValueinTR)) {
             val propertiesToUpdate = Seq(
-              SimpleProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
-              SimpleProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString))),
-              SimpleProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString)))
+              SimplePointAssetProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
+              SimplePointAssetProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString))),
+              SimplePointAssetProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString)))
             )
 
             massTransitStopService.updatePropertiesForAsset(stop.id, propertiesToUpdate)

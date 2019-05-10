@@ -220,7 +220,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update operation requires authentication") {
-    val body = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("3"))))
+    val body = propertiesToJson(SimplePointAssetProperty(TestPropertyId2, Seq(PropertyValue("3"))))
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body.getBytes, username = "nonexistent") {
       status should equal(401)
     }
@@ -376,7 +376,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  private[this] def propertiesToJson(prop: SimpleProperty): String = {
+  private[this] def propertiesToJson(prop: SimplePointAssetProperty): String = {
     val json = write(Seq(prop))
     s"""{"properties":$json}"""
   }

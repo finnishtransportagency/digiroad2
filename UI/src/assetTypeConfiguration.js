@@ -809,7 +809,7 @@
         title: 'Suojatie',
         allowComplementaryLinks: true,
         newAsset: { propertyData: [
-            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "pedestrian_crossings_suggest_box", values: [ {propertyValue: 0} ]}
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         isSuggestedAsset: true,
         legendValues: [
@@ -837,7 +837,7 @@
         allowComplementaryLinks: true,
         newAsset: { propertyData: [
             {'name': 'Esterakennelma', 'propertyType': 'single_choice', 'publicId': "esterakennelma", values: [ {propertyValue: 1, propertyDisplayValue: ""} ] },
-            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "obstacle_suggest_box", values: [ {propertyValue: 0} ]}
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         legendValues: [
           {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
@@ -852,7 +852,7 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
         saveCondition: function(selectedAsset, authorizationPolicy) {
-          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "obstacle_suggest_box"; }).values[0].propertyValue);
+          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
           var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
           return !(suggestedAssetCondition && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
         },
@@ -869,7 +869,7 @@
             {'name': "Turvavarustus", 'propertyType': 'single_choice', 'publicId': "turvavarustus", values: [ {propertyValue: 0} ]},
             {'name': "Nimi", 'propertyType': 'text', 'publicId': "rautatien_tasoristeyksen_nimi", values: [ {propertyValue: ''} ]},
             {'name': "Tasoristeystunnus", 'propertyType': 'text', 'publicId': "tasoristeystunnus", values: [ {propertyValue: ''} ]},
-            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "railway_crossing_suggest_box", values: [ {propertyValue: 0} ]}
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         legendValues: [
           {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
@@ -897,7 +897,7 @@
         allowComplementaryLinks: false,
         newAsset: { validityDirection: 2, propertyData: [
             {'name': "Teksti", 'propertyType': 'text', 'publicId': "opastustaulun_teksti", values: [ {propertyValue: ""} ]},
-            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "directional_traffic_signs_suggest_box", values: [ {propertyValue: 0} ]}
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
           ]},
         legendValues: [
           {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg', label: 'Opastustaulu'},
@@ -925,7 +925,7 @@
         allowGrouping: true,
         groupingDistance: Math.pow(3, 2),
          newAsset: { services: [], propertyData: [
-             {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "service_points_suggest_box", values: [ {propertyValue: 0} ]}
+             {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
            ] },
         legendValues: [
           {symbolUrl: 'images/service_points/parkingGarage.png', label: 'Pysäköintitalo'},
@@ -966,7 +966,7 @@
         title: 'Liikennevalo',
         allowComplementaryLinks: true,
         newAsset: { propertyData: [
-            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "traffic_lights_suggest_box", values: [ {propertyValue: 0} ]}
+            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         isSuggestedAsset: true,
         legendValues: [
@@ -995,7 +995,7 @@
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
           {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : ""}},
-          {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "traffic_signs_suggest_box", values: [ {propertyValue: 0} ]}
+          {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
         collection: TrafficSignsCollection,
@@ -1018,7 +1018,7 @@
           ];
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
-          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "traffic_signs_suggest_box"; }).values[0].propertyValue);
+          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
           var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
           return (functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true) && suggestedAssetCondition;
         },

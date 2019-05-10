@@ -89,11 +89,8 @@
           me.reloadForm(municipalityId, true);
         });
 
-      var suggestedAssetsListButton = $('<a />').addClass('btn btn-suggested-list')
-        .text('Vihjetieto').attr("href", "#work-list/suggestedAssets/" + municipalityName + "/" + municipalityId);
-
       var municipalityHeader = function (municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton)/*.append(suggestedAssetsListButton)*/;
+        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton);
       };
 
       var tableHeaderRow = function () {
@@ -116,6 +113,10 @@
         _.forEach(values, function (asset) {
           asset.assetName = _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  asset.typeId; }).title ;
         });
+      };
+
+      var suggestedAssetsButton = function(counter, typeId) {
+        return counter > 0 ? '<a class="btn btn-suggested-list" href="#work-list/suggestedAssets/' + 766 + '/'+ typeId + '">' + counter + '</a>' : "";
       };
 
       var sortAssets = function (values) {
@@ -161,7 +162,7 @@
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
           '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
-          '<td headers="suggestedAssets">' + '<a class="btn btn-suggested-list">30</a>' + '</td>' +
+          '<td headers="suggestedAssets">' + suggestedAssetsButton(asset.countSuggested, asset.typeId) + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
@@ -223,7 +224,7 @@
 
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
-        if (limits.length == 1){
+        if (limits.length === 1){
           showFormBtnVisible = false;
           me.createVerificationForm(_.head(limits));
         }

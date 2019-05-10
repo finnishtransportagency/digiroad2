@@ -239,14 +239,14 @@ class MassTransitStopDao {
     updateAssetModified(assetId, modifier).execute
   }
 
-  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
+  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimplePointAssetProperty]): Boolean = {
     propertyWithType match {
       case (SingleChoice, _, property) => property.values.nonEmpty
       case _ => true
     }
   }
 
-  private def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
+  private def propertyWithTypeAndId(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
@@ -256,7 +256,7 @@ class MassTransitStopDao {
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
@@ -385,16 +385,16 @@ class MassTransitStopDao {
     }
   }
 
-  def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
-    implicit val getDefaultValue = new GetResult[SimpleProperty] {
+  def propertyDefaultValues(assetTypeId: Long): List[SimplePointAssetProperty] = {
+    implicit val getDefaultValue = new GetResult[SimplePointAssetProperty] {
       def apply(r: PositionedResult) = {
-        SimpleProperty(publicId = r.nextString, values = List(PropertyValue(r.nextString)))
+        SimplePointAssetProperty(publicId = r.nextString, values = List(PropertyValue(r.nextString)))
       }
     }
     sql"""
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
-      where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
+      where a.id = $assetTypeId and p.default_value is not null""".as[SimplePointAssetProperty].list
   }
 
   def getAssetAdministrationClass(assetId: Long): Option[AdministrativeClass] = {

@@ -958,7 +958,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
     optionalAsset match {
       case Some(asset) =>
-        massTransitStopService.updateExistingById(asset.id, None, properties.map(prop =>SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, user.username, (_, _) => Unit)
+        massTransitStopService.updateExistingById(asset.id, None, properties.map(prop =>SimplePointAssetProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, user.username, (_, _) => Unit)
       case None => throw new AssetNotFoundException(externalId)
     }
   }
@@ -975,7 +975,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.map(prop =>SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, username, (_, _) => Unit))
+        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.map(prop =>SimplePointAssetProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, username, (_, _) => Unit))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(externalId)
     }

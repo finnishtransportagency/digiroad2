@@ -71,12 +71,12 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       properties.map(epv => epv.publicId -> epv.values).toMap
   }
 
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
+  override def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
           filterNot(property => newProperties.exists(_.publicId == property.publicId)).
-          map(property => SimpleProperty(property.publicId, property.values)) ++ newProperties).
+          map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ newProperties).
           filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
       case _ => newProperties.toSeq
     }
@@ -96,7 +96,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
-  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {
+  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {
     //Remove the Livi ID
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, "")
     getLiviIdValue(existingAsset.propertyData).map {
@@ -127,7 +127,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) =
     create(asset, username, point, roadLink, createTierekisteriBusStop)
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
     }
@@ -148,7 +148,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
     val mergedProperties = (asset.propertyData.
       filterNot(property => properties.exists(_.publicId == property.publicId)).
-      map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
+      map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ properties).
       filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
     //If it was already stored in Tierekisteri
@@ -213,7 +213,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
-  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimpleProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimplePointAssetProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): (PersistedMassTransitStop, AbstractPublishInfo) = {
     optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
     massTransitStopDao.updateAssetLastModified(asset.id, username)
     massTransitStopDao.updateAssetProperties(asset.id, properties)

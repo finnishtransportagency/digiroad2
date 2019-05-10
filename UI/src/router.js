@@ -227,8 +227,8 @@
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
-        'work-list/municipality': 'municipalityWorkList',
-        'work-list/suggestedAssets/:municipalityName/:municipalityId': 'suggestedAssetsWorkList',
+        'work-list/municipality(/:municipalityCode)': 'municipalityWorkList',
+        'work-list/suggestedAssets/:municipalityId/:assetTypeId': 'suggestedAssetsWorkList',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
         ':layerName/linkId/:linkId': 'mapMoving'
       },
@@ -456,12 +456,12 @@
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
       },
 
-      municipalityWorkList: function () {
-        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities());
+      municipalityWorkList: function (municipalityCode) {
+        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities(municipalityCode));
       },
 
-      suggestedAssetsWorkList: function (muncipalityName, municipalityId) {
-        eventbus.trigger('suggestedAssets:select');
+      suggestedAssetsWorkList: function (municipalityCode, assetTypeId) {
+        eventbus.trigger('suggestedAssets:select', backend.getSuggestedAssetsById(municipalityCode, assetTypeId));
       },
 
       speedLimitErrors: function (id) {

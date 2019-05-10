@@ -720,7 +720,7 @@
           'pysakin_omistaja',
           'palauteosoite',
           'lisatiedot',
-          'mass_transit_stop_suggest_box',
+          'suggest_box',
           'trSave'];
 
         return _.sortBy(properties, function(property) {

@@ -73,7 +73,7 @@ object OracleServicePointDao {
       """.execute
     }
 
-    servicePoint.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    servicePoint.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -100,7 +100,7 @@ object OracleServicePointDao {
       """.execute
     }
 
-    updatedAsset.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    updatedAsset.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -246,8 +246,8 @@ object OracleServicePointDao {
     getWithFilter(filter)
   }
 
-  def propertyWithTypeAndId(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
-    val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+  def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
+    val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 

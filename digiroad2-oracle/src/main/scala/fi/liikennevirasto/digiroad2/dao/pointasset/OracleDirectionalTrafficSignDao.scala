@@ -143,7 +143,7 @@ object OracleDirectionalTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
 
-    sign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    sign.propertyData.map(propertyWithTypeAndId(DirectionalTrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -171,7 +171,7 @@ object OracleDirectionalTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(sign.lon, sign.lat))
 
-    sign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    sign.propertyData.map(propertyWithTypeAndId(DirectionalTrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -198,7 +198,7 @@ object OracleDirectionalTrafficSignDao {
        where id = (select position_id from asset_link where asset_id = $id)
     """.execute
 
-    sign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    sign.propertyData.map(propertyWithTypeAndId(DirectionalTrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -215,8 +215,8 @@ object OracleDirectionalTrafficSignDao {
   }
 
 
-  def propertyWithTypeAndId(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
-    val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+  def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
+    val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 

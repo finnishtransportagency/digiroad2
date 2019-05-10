@@ -149,7 +149,7 @@ object OracleObstacleDao {
     """.execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
 
-    obstacle.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    obstacle.propertyData.map(propertyWithTypeAndId(Obstacles.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -166,7 +166,7 @@ object OracleObstacleDao {
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code, modified_by, modified_date)
-        values ($id, 220, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, sysdate)
+        values ($id, ${Obstacles.typeId}, $createdByFromUpdate, $createdDateTimeFromUpdate, $municipality, $username, sysdate)
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, modified_date)
         values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value}, sysdate)
@@ -178,7 +178,7 @@ object OracleObstacleDao {
     """.execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
 
-    obstacle.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    obstacle.propertyData.map(propertyWithTypeAndId(Obstacles.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -194,7 +194,7 @@ object OracleObstacleDao {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
-    obstacle.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    obstacle.propertyData.map(propertyWithTypeAndId(Obstacles.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -260,7 +260,7 @@ object OracleObstacleDao {
     updateAssetModified(id, obstacleUpdated.modifiedBy.get).execute
     updateAssetGeometry(id, Point(obstacleUpdated.lon, obstacleUpdated.lat))
 
-    obstacleUpdated.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    obstacleUpdated.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet.map(propertyWithTypeAndId(Obstacles.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
       val propertyId = propertyWithTypeAndId._2.get
@@ -283,8 +283,8 @@ object OracleObstacleDao {
   }
 
 
-  def propertyWithTypeAndId(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
-    val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+  def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
+    val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 

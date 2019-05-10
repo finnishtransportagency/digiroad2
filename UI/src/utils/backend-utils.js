@@ -459,8 +459,8 @@
       };
     });
 
-    this.getUnverifiedMunicipalities = function() {
-      return $.getJSON('api/municipalities/byUser');
+    this.getUnverifiedMunicipalities = function(municipalityCode) {
+      return $.getJSON('api/municipalities/byUser?municipalityCode=' + municipalityCode);
     };
 
     this.getMunicipalitiesWithUnknowns = function(){
@@ -469,6 +469,14 @@
 
     this.getAssetTypesByMunicipality = function(municipalityCode, refresh) {
       return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes/' + refresh);
+    };
+
+    this.getSuggestedAssetsById = function(municipalityCode, typeId) {
+      return $.getJSON('api/suggested/' + municipalityCode + '/' + typeId);
+    };
+
+    this.getStructuredInfo = function(municipalityName, municipalityCode) {
+      return $.getJSON('api/buildInfo/' + municipalityName + '/' + municipalityCode);
     };
 
     this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {
