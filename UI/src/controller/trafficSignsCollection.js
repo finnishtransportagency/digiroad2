@@ -115,9 +115,9 @@
         });
     };
 
-    var isRelevantToManoeuvres = function(current) {
+    var isRelevant = function(current) {
 
-      if (isTurningRestriction(current)) {
+      if (isTurningRestriction(current) || isTrafficSignProhibitionRestriction(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
         var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
@@ -138,22 +138,27 @@
         return false;
     };
 
-    eventbus.on('trafficSigns:updated', function(current) {
-      if(isRelevantToManoeuvres(current)) {
-        new GenericConfirmPopup('Huom! Liikennemerkin siirto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
+    var getTrafficSignsMessage = function (current, action) {
+      if ((isTrafficSignProhibitionRestriction(current) || isTurningRestriction(current)) && action !== 'updated') {
+        return trafficSignsActionMessages[action].message;
+      } else if (isRelevant(current)) {
+        return trafficSignsActionMessages[action].message;
+      }
+    };
+
+    var trafficSignsActionMessages = {
+      created: {message: 'Tähän liikennemerkkiin liittyvä kohde luodaan seuraavan yön aikana.'},
+      updated: {message: 'Huom! Liikennemerkin päivittäminen saattaa vaikuttaa myös siihen liittyvään kohteeseen.'},
+      deleted: {message: 'Huom! Liikennemerkin poistaminen saattaa vaikuttaa myös siihen liittyvään kohteeseen.'}
+    };
+
+
+    eventbus.on('trafficSigns:created trafficSigns:updated trafficSigns:deleted', function (current, action) {
+      var message = getTrafficSignsMessage(current, action);
+      if (!_.isUndefined(message)) {
+        new GenericConfirmPopup(message,
           {type: 'alert'});
       }
-    });
-    eventbus.on('trafficSigns:deleted', function(current) {
-      if(isTurningRestriction(current)) {
-        new GenericConfirmPopup('Huom! Liikennemerkin poisto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
-          {type: 'alert'});
-      }
-    });
-    eventbus.on('trafficSigns:created', function(current) {
-      if(isTrafficSignProhibitionRestriction(current))
-        new GenericConfirmPopup('Liikennemerkkiin liittyvä rajoitus luodaan seuraavan yön aikana.',
-          {type: 'alert'});
     });
   };
 
