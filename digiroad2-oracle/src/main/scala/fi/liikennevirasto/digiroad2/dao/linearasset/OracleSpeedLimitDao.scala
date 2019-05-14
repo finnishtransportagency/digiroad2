@@ -11,14 +11,12 @@ import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
@@ -74,9 +72,9 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
            join property p on a.asset_type_id = p.asset_type_id
-           join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-           join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
-           join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
+           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+           left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.link_id
 		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[SpeedLimitRow].list
     }
@@ -89,8 +87,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       var rows = groupedSpeedLimit(assetId)
       val asset = rows.head
 
-      val speedLimitValue = (rows.find(_.publicId == "speedLimit_").map(_.value.asInstanceOf[Boolean]), rows.find(_.publicId == "rowsrajoitus").map(_.value.asInstanceOf[Int])) match {
-        case (Some(isSuggested), Some(value)) => Some((isSuggested, value))
+      val speedLimitValue = (rows.find(_.publicId == "suggest_box").head.value.map(_.asInstanceOf[Long]), rows.find(_.publicId == "rajoitus").head.value.map(_.asInstanceOf[Int])) match {
+        case (Some(isSuggested), Some(value)) => Some((isSuggested == 1 , value))
         case (None, Some(value)) => Some((false, value))
         case _ => None
       }
@@ -128,14 +126,14 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def getSpeedLimitLinksByIds(ids: Set[Long]): Seq[SpeedLimit] = {
     val speedLimitRows = MassQuery.withIds(ids) { idTableName =>
       sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
-            a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
+            a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id
-        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-        join MULTIPLE_CHOICE_VALUE mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
-        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
+        left join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        left join MULTIPLE_CHOICE_VALUE mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+        left join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
         join #$idTableName i on i.id = a.id
         where a.asset_type_id = 20
         """.as[SpeedLimitRow].list
@@ -153,14 +151,14 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def getPersistedSpeedLimitByIds(ids: Set[Long]): Seq[PersistedSpeedLimit] = {
     val speedLimitRows = MassQuery.withIds(ids) { idTableName =>
       sql"""select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired,
-            a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
+            a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id
-        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-        join MULTIPLE_CHOICE_VALUE mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
-        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
+        left join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        left join MULTIPLE_CHOICE_VALUE mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+        left join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
         join #$idTableName i on i.id = a.id
 
         where a.asset_type_id = 20
@@ -188,13 +186,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def getPersistedSpeedLimit(id: Long): Option[PersistedSpeedLimit] = {
     val speedLimitRows = sql"""
       select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure,a.modified_by,
-             a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
+             a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source, p.public_id
       from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id
-        join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
-        join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
+        left join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
+        left join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
         left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
         where a.asset_type_id = 20 and a.id = $id
         """.as[SpeedLimitRow].firstOption
@@ -300,13 +298,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
     val speedLimitRows =  sql"""
         select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date,
-        pos.adjusted_timestamp, pos.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
+        pos.adjusted_timestamp, pos.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source, p.public_id
          from asset a
          join asset_link al on a.id = al.asset_id
          join lrm_position pos on al.position_id = pos.id
          join property p on a.asset_type_id = p.asset_type_id
-         join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-         join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
+         left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+         left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
          where a.asset_type_id = 20
          and floating = 0
@@ -393,29 +391,23 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Saves enumerated value to db. Used by OracleSpeedLimitDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
     */
   def insertSingleChoiceValue(assetId: Long, valuePropertyId: String, value: Int): Unit  = {
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
-    sqlu"""
-       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-       values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
-     """.execute
+    val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply(valuePropertyId, SpeedLimitAsset.typeId).first
+    Queries.insertSingleChoiceProperty(assetId, propertyId, value).execute
   }
 
   /**
     * Saves enumerated value to db. Used by OracleSpeedLimitDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.
     */
   def insertMultipleChoiceValue(assetId: Long, valuePropertyId: String, value: Int): Unit  = {
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
-    sqlu"""
-       insert into multiple_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-       values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
-     """.execute
+    val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply(valuePropertyId, SpeedLimitAsset.typeId).first
+    Queries.insertMultipleChoiceValue(assetId, propertyId, value).execute
   }
 
 
   def insertProperties(assetId: Long, value: SpeedLimitValue): Unit = {
     insertSingleChoiceValue(assetId, "rajoitus", value.value)
 
-    insertMultipleChoiceValue(assetId, "suggested_box", if(value.isSuggested) 1 else 0)
+    insertMultipleChoiceValue(assetId, "suggest_box", if(value.isSuggested) 1 else 0)
   }
 
   /**
@@ -479,8 +471,12 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   def updateSpeedLimitValue(id: Long, values: SpeedLimitValue, username: String): Option[Long] = {
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
-    val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, values.value.toLong).first
-    if (assetsUpdated == 1 && propertiesUpdated == 1) {
+    val singlePropertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, values.value.toLong).first
+
+    val propertyIdBox = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", SpeedLimitAsset.typeId).first
+    val propertiesUpdated = Queries.updateMultipleChoiceValue(id, propertyIdBox, if(values.isSuggested) 1 else 0).first + singlePropertiesUpdated
+
+    if (assetsUpdated == 1 && propertiesUpdated == 2) {
       Some(id)
     } else {
       dynamicSession.rollback()

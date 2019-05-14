@@ -242,6 +242,9 @@
                 imgPosition.y += me.getLabelProperty(value).getHeight();
                 styles = styles.concat(me.getStyle(value, imgPosition));
               });
+
+              styles = me.suggestionStyle(getProperty(asset,"suggest_box"), styles, imgPosition.y);
+
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);
               feature.setProperties(_.omit(asset, 'geometry'));

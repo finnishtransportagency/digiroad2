@@ -45,14 +45,7 @@
           if(authorizationPolicy.handleSuggestedAsset(selectedSpeedLimit)) {
               var isSuggested = selectedSpeedLimit.isSuggested();
               var checkedValue = isSuggested ? 'checked' : '';
-              var readOnlySuggestedLabel = isSuggested ?
-                ( '<div class="form-control-static suggestionCheckBox">' +
-                    '<label class="control-label">Vihjetieto</label>' +
-                    '<p class="form-control-static"> kyllä </p>' +
-                    '</div>') : '';
-
                 return '' +
-                   readOnlySuggestedLabel +
                   '<div class="form-control suggestionCheckBox" style="display: none">' +
                     '<label class="control-label">Vihjetieto</label>' +
                     '<input type="checkbox" id="suggestionCheckBox"'  + checkedValue + '>' +
@@ -171,14 +164,10 @@
         return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
       };
 
-      rootElement.find('select.speed-limit').change(function(event) {
+      rootElement.find('select.speed-limit, #suggestionCheckBox').change(function(event) {
         var checkBoxValue = rootElement.find('#suggestionCheckBox').prop('checked');
-        var speedLimitValue = extractValue(event);
-        selectedSpeedLimit.setValue({isSuggested: checkBoxValue, value: speedLimitValue});
-      });
-
-      rootElement.find('#suggestionCheckBox').change(function(event) {
-        selectedSpeedLimit.setValue({isSuggested: $(event.currentTarget).prop('checked')});
+        var speedLimitValue = parseInt(rootElement.find('select.speed-limit').val(),10);
+        selectedSpeedLimit.setValue({isSuggested: checkBoxValue ? checkBoxValue : false, value: speedLimitValue});
       });
 
       rootElement.find('select.speed-limit-a').change(function(event) {

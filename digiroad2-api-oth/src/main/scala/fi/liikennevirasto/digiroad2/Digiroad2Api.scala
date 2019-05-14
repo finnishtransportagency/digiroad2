@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
-import java.text.SimpleDateFormat
 import java.time.LocalDate
 
 import com.newrelic.api.agent.NewRelic
@@ -16,19 +15,16 @@ import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
-import fi.liikennevirasto.digiroad2.service.{pointasset, _}
+import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.digiroad2.util.Track
-import org.apache.http.HttpStatus
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.scalatra._
@@ -38,11 +34,10 @@ import org.slf4j.LoggerFactory
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
 case class NewNumericValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+
 case class NewTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: String, sideCode: Int)
 
 case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double, value: Prohibitions, sideCode: Int)
-
-//case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
 case class NewDynamicLinearAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: DynamicAssetValue, sideCode: Int)
 
@@ -295,7 +290,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "linkSource" -> stop.linkSource.value)
+        "linkSource" -> stop.linkSource.value,
+        "isSuggested" -> extractPropertyValue("suggest_box", stop.propertyData, values => values.headOption.getOrElse(0)))
     }
   }
 
@@ -401,18 +397,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val passengerId = params("passengerId")
     val massTransitStopsReturned = massTransitStopService.getMassTransitStopByPassengerId(passengerId, validateMunicipalityAuthorization(passengerId))
-    massTransitStopsReturned.map { massTransitStopReturned =>
-      massTransitStopReturned match {
-        case Some(stop) =>
-          Map("nationalId" -> stop.nationalId,
-            "lat" -> stop.lat,
-            "lon" -> stop.lon,
-            "municipalityName" -> stop.municipalityName.getOrElse(""),
-            "success" -> true)
-        case None =>
-          Map("success" -> false)
-      }
-    }
+
+    if(massTransitStopsReturned.nonEmpty)
+      massTransitStopsReturned.map( stop =>
+        Map("nationalId" -> stop.nationalId,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "municipalityName" -> stop.municipalityName.getOrElse(""),
+          "success" -> true))
+    else
+      Map("success" -> false)
+
   }
 
   get("/massTransitStops/livi/:liviId") {

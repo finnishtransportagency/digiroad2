@@ -47,13 +47,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
 
-  private val additionalInfoTypeGroups =
-    Set(
-      TrafficSignTypeGroup.GeneralWarningSigns,
-      TrafficSignTypeGroup.ProhibitionsAndRestrictions,
-      TrafficSignTypeGroup.AdditionalPanels
-    )
-
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpired(queryFilter)

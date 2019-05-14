@@ -448,15 +448,6 @@ object Asset {
   val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
 }
 
-//abstract class AbstractProperty {
-//  def publicId: String
-//  def values: Seq[PropertyValue]
-//}
-
-abstract class AssetPropertyValue {
-  def propertyValue: Any
-}
-
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
@@ -465,7 +456,6 @@ abstract class AbstractProperty {
   def publicId: String
   def values: Seq[PointAssetValue]
 }
-
 
 sealed trait PointAssetValue {
   def toJson: Any

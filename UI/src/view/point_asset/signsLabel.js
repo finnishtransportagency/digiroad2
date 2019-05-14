@@ -27,6 +27,23 @@
       });
     };
 
+    this.getSuggestionSyle = function (yPosition) {
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: 'images/traffic-signs/questionMarkerIcon.png',
+          anchor : [0.5, yPosition],
+          anchorYUnits: "pixels"
+        }))
+      });
+    };
+
+    this.suggestionStyle = function(suggestionInfo, styles, yPosition) {
+      if(_.isUndefined(suggestionInfo) ? false : !!parseInt(suggestionInfo.propertyValue))
+        return styles.concat(me.getSuggestionSyle((yPosition + 48)));
+      else
+        return styles;
+    };
+
     this.getPropertiesConfiguration = function (counter) {};
 
     this.getSignType = function (sign) {};
@@ -37,7 +54,7 @@
       });
     };
 
-    me.getLabelProperty = function (sign, counter) {
+    me.getLabelProperty = function (sign) {
 
       var labelProperty = me.getLabel(sign);
 

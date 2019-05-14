@@ -47,6 +47,12 @@
 
     var validateText = function () { return true;};
 
+    var getProperty = function (asset, publicId) {
+      return _.head(_.find(asset.propertyData, function (prop) {
+        return prop.publicId === publicId;
+      }).values);
+    };
+
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
       if(!this.isVisibleZoom(zoomLevel))
         return [];
@@ -62,6 +68,9 @@
               imgPosition.y += me.getLabelProperty(value).getHeight();
               return me.getStyle(value, imgPosition );
             })));
+
+            styles = me.suggestionStyle(getProperty(asset,"suggest_box"), styles, imgPosition.y);
+
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);
             feature.setProperties(_.omit(asset, 'geometry'));

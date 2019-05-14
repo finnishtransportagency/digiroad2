@@ -198,7 +198,8 @@
     };
 
     this.getValue = function() {
-      return getProperty('value');
+      var speedValue = getProperty('value');
+      return !_.isNull(speedValue) && speedValue.value;
     };
 
     this.getModifiedBy = function() {
@@ -229,8 +230,10 @@
       if (value != selection[0].value) {
         var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
-        dirty = true;
-        eventbus.trigger('speedLimit:valueChanged', self);
+        if(!_.isNaN(selection[0].value.value)) {
+          dirty = true;
+          eventbus.trigger('speedLimit:valueChanged', self);
+        }
       }
     };
 
@@ -291,8 +294,8 @@
     };
 
     this.isSuggested = function() {
-      var  suggestedProp = getProperty('isSuggested');
-      return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp);
+      var  suggestedProp = getProperty('value');
+      return !_.isNull(suggestedProp) && suggestedProp.isSuggested;
     };
   };
 })(this);
