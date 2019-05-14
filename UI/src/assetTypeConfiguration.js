@@ -828,7 +828,8 @@
         },
         hasInaccurate: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
-        authorizationPolicy: new PointStateRoadAuthorizationPolicy()
+        authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.obstacles,
@@ -858,7 +859,8 @@
         },
         hasMunicipalityValidation: true,
         isSuggestedAsset: true,
-        roadCollection: ObstaclesRoadCollection
+        roadCollection: ObstaclesRoadCollection,
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.railwayCrossings,
@@ -888,7 +890,8 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: RailwayCrossingForm,
         isSuggestedAsset: true,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -915,7 +918,8 @@
           var selected = selectedAsset.get();
           return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
         },
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.servicePoints,
@@ -983,7 +987,8 @@
           var selected = selectedAsset.get();
           return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
         },
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.trafficSigns,

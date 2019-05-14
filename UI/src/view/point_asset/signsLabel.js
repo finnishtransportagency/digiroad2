@@ -27,21 +27,19 @@
       });
     };
 
-    this.getSuggestionSyle = function (yPosition) {
+    this.getSuggestionStyle = function (yPosition) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: 'images/traffic-signs/questionMarkerIcon.png',
+          src: 'images/icons/questionMarkerIcon.png',
           anchor : [0.5, yPosition],
           anchorYUnits: "pixels"
         }))
       });
     };
 
-    this.suggestionStyle = function(suggestionInfo, styles, yPosition) {
-      if(_.isUndefined(suggestionInfo) ? false : !!parseInt(suggestionInfo.propertyValue))
-        return styles.concat(me.getSuggestionSyle((yPosition + 48)));
-      else
-        return styles;
+    this.suggestionStyle = function(suggestionInfo, position, styles) {
+      return !_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue) ?
+          styles.concat(me.getSuggestionStyle((position.y + 48))) : styles;
     };
 
     this.getPropertiesConfiguration = function (counter) {};
@@ -144,14 +142,7 @@
       })];
     };
 
-    this.renderFeaturesByPointAssets = function(pointAssets, zoomLevel){
-      return me.renderGroupedFeatures(pointAssets, zoomLevel, function(asset){
-        return me.getCoordinate(asset);
-      });
-    };
-
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){ };
-
 
     this.createFeature = function(point){
       return new ol.Feature(new ol.geom.Point(point));

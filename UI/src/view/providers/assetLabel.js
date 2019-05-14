@@ -100,5 +100,19 @@
 
         this.getStyle = function(value){};
 
+        this.getSuggestionStyle = function (position) {
+            return new ol.style.Style({
+                image: new ol.style.Icon(({
+                    src: 'images/icons/questionMarker.png',
+                    anchor : [position.x, position.y],
+                    anchorYUnits: "pixels"
+                }))
+            });
+        };
+
+        this.suggestionStyle = function(suggestionInfo, position, styles) {
+            return !_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue) ?
+                styles.concat(me.getSuggestionStyle(position)) : styles;
+        };
     };
 })(this);
