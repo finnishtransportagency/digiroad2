@@ -213,13 +213,16 @@
     };
 
     var createQuestionIconStyle = function(data, margin){
-      var maxNumStopTypes = _.maxBy(data.group.assetGroup, function(group) { return group.stopTypes;}) ;
-      var types = _.isEmpty(maxNumStopTypes.stopTypes) ? 1 : _.head(maxNumStopTypes.stopTypes) - 1;
+      var totalStopTypes = !_.isUndefined(data.group) ?
+          _.map(data.group.assetGroup, function(group) {
+            return group.stopTypes.length;
+          }).reduce(function(a,b){return a + b;},0) : 1;
+      var numberOfGroup = !_.isUndefined(data.group) ?  data.group.assetGroup.length : 1;
       var imgMargin = margin ? margin : 0;
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: 'images/icons/questionMarkerIcon.png',
-          anchor :  [0-imgMargin , (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + 2 + 50],
+          anchor :  [0-imgMargin , (totalStopTypes * IMAGE_HEIGHT) + STICK_HEIGHT + (numberOfGroup * IMAGE_PADDING * 2) + 1 + 50],
           anchorXUnits: 'pixels',
           anchorYUnits: "pixels"
         }))
@@ -315,7 +318,7 @@
       styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
       styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
       styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
-      styles = selectedMassTransitStopModel.isSuggested() ? styles.concat(createQuestionIconStyle(data.stopTypes, (IMAGE_MARGIN + (IMAGE_PADDING * 2) + IMAGE_WIDTH + NATIONAL_ID_WIDTH + 15) / 2)) : styles;
+      styles = selectedMassTransitStopModel.isSuggested() ? styles.concat(createQuestionIconStyle(data, (IMAGE_MARGIN + (IMAGE_PADDING * 2) + IMAGE_WIDTH + NATIONAL_ID_WIDTH + 15) / 2)) : styles;
       return styles;
     };
 
