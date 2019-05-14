@@ -96,7 +96,7 @@ pipeline {
 
                         STAGE_DEPLOY_CMD = [
                             "cd ~/",
-                            "bundle exec cap ${get_environment()?.trim()} deploy"
+                            "bundle exec cap ${get_environment()?.trim()} deploy --trace"
                         ].join(" && ")
                     }
                 }
