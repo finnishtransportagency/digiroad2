@@ -801,6 +801,26 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.roadNodesData.fetchByMunicipality(municipality)
   }
 
+  def getHistoryDataLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getHistoryDataLinksFromVVH(Set(linkId), newTransaction).headOption
+
+  def getHistoryDataLinksFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchHistoryDataLinks(linkId)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }
+    else
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
+  def fetchHistoryDataLinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    if (linkIds.nonEmpty)
+      vvhClient.historyData.fetchByLinkIds(linkIds)
+    else
+      Seq.empty[VVHRoadlink]
+  }
+
+
   /**
     * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints.
     */

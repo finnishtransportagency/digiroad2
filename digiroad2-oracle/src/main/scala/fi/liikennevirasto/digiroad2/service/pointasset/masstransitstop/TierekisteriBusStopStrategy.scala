@@ -26,7 +26,8 @@ object TierekisteriBusStopStrategyOperations{
     val isVirtualStop = stopType.exists(_.values.exists(_.propertyValue == MassTransitStopOperations.VirtualBusStopPropertyValue))
     val isHSLAdministrated =  administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
     val isAdminClassState = administrativeClass.contains(State)
-    !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
+    val isOnTerminatedRoad = properties.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).exists(_.values.headOption.exists(_.propertyValue == FloatingReason.TerminatedRoad.value.toString))
+    !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState)) && !isOnTerminatedRoad
   }
 
   /**
@@ -328,7 +329,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
 
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    val floatingReason = persistedAsset.propertyData.find(_.publicId == "kellumisen_syy").map(_.values).getOrElse(Seq()).headOption
+    val floatingReason = persistedAsset.propertyData.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).map(_.values).getOrElse(Seq()).headOption
 
     if(persistedAsset.floating && floatingReason.nonEmpty && floatingReason.get.propertyValue == FloatingReason.TerminatedRoad.value.toString)
       (persistedAsset.floating, Some(FloatingReason.TerminatedRoad))
