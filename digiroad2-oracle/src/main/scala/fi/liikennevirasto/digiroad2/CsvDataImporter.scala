@@ -1075,7 +1075,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   }
 }
 
-abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
+class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -1215,7 +1215,7 @@ abstract class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, event
     }
 }
 
-  def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset
+  def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = throw new UnsupportedOperationException("Not supported method")
 
   def importAssets(inputStream: InputStream, fileName: String, user: User): Unit = {
     val logId = create(user.username, logInfo, fileName)
@@ -1396,7 +1396,6 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       val nearbyLinks = railwayCrossingAttribute.roadLink
 
       val position = getCoordinatesFromProperties(csvProperties)
-
       val code = getPropertyValue(csvProperties, "id").asInstanceOf[String]
       val safetyEquipment = getPropertyValue(csvProperties, "safety equipment").asInstanceOf[String].toInt
       val name = getPropertyValueOption(csvProperties, "name").map(_.toString)

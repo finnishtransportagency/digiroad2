@@ -136,7 +136,6 @@ object OracleDirectionalTrafficSignDao {
             where a.verified_by is null
             and a.valid_to is null
             and a.modified_date is null
-            and a.created_by = 'silari'
             and a.asset_type_id = $assetTypeId
             and a.verified_date is null
            	or exists (select m.verified_date from municipality_verification m where m.asset_type_id = $assetTypeId
@@ -146,10 +145,6 @@ object OracleDirectionalTrafficSignDao {
   def updateVerifiedInfo(assetId: Long, user: String): Long = {
     sqlu"""update asset set verified_by = $user, verified_date = sysdate where id = $assetId""".execute
     assetId
-  }
-
-  def getMunicipalityNamesByCodes(codes: Set[Int]): Map[Int, String] = {
-    sql"""select id, name_fi from municipality where id in (${codes.mkString(",")})""".as[(Int, String)].toMap
   }
 
   private def getTextPropertyId: Long = {

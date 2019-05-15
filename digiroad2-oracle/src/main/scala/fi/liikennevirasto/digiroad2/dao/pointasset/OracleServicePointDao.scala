@@ -52,10 +52,6 @@ object OracleServicePointDao {
     """.execute
     Queries.updateAssetGeometry(servicePointId, Point(servicePoint.lon, servicePoint.lat))
     servicePoint.services.foreach { service =>
-
-      println(s"$servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData}")
-
-
       val serviceId = Sequences.nextPrimaryKeySeqValue
       sqlu"""
         insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data) values
