@@ -79,7 +79,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       )
       val dao = new OracleSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
 
-      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
       speedLimits._1.map(_.id) should equal(Seq(300103))
     }
@@ -94,7 +94,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       )
       val dao = new OracleSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
 
-      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
+      val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
       speedLimits._1.map(_.id) should equal(Seq(300103))
     }
