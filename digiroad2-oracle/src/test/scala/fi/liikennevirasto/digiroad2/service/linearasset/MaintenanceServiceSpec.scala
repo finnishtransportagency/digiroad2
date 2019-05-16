@@ -108,37 +108,34 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   }
 
   test("update new maintenanceRoad") {
+    val linkIdTest = 388562360l
+
     val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
     val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
-    val propIns3 = Properties("huoltotie_postinumero", "text", "text prop3")
-    val propIns4 = Properties("huoltotie_puh1" , "text", "text prop4")
-    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", "text")
+    val propIns3 = Properties("huoltotie_tiehoitokunta", "text", "text")
 
-    val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
+    val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3)
     val maintenanceRoadIns = MaintenanceRoad(propIns)
 
     val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", "4")
     val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", "1")
-    val propUpd3 = Properties("huoltotie_postinumero", "text",  "text prop3 Update")
-    val propUpd4 = Properties("huoltotie_puh1" , "text", "")
-    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", "text")
-    val propUpd6 = Properties("huoltotie_puh2" , "text", "text prop puh2")
+    val propUpd3 = Properties("huoltotie_tiehoitokunta", "text", "text updated")
 
-    val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
+    val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3)
     val maintenanceRoadUpd = MaintenanceRoad(propUpd)
 
-    val maintenanceRoadFetch = MaintenanceRoad(propUpd.filterNot(_.publicId == "huoltotie_puh1"))
-
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoadIns, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(linkIdTest, 0, 20, maintenanceRoadIns, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
       newAssets.length should be(1)
+      val assetIns = maintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(linkIdTest)).filterNot(_.expired).head
+      assetIns.value should be (Some(maintenanceRoadIns))
+      assetIns.expired should be (false)
 
       val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
       updAssets.length should be(1)
-
-      val asset = maintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(388562360l)).filterNot(_.expired).head
-      asset.value should be (Some(maintenanceRoadFetch))
-      asset.expired should be (false)
+      val assetUpd = maintenanceDao.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, Seq(linkIdTest)).filterNot(_.expired).head
+      assetUpd.value should be (Some(maintenanceRoadUpd))
+      assetUpd.expired should be (false)
     }
   }
 
