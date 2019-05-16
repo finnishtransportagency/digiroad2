@@ -348,7 +348,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        authorizationPolicy: asset.authorizationPolicy,
        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
-       massLimitation: asset.editControlLabels.massLimitations,
+       massLimitation: asset.editControlLabels.additionalInfo,
        typeId: asset.typeId,
        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed,
        minZoomForContent: asset.minZoomForContent,
@@ -502,7 +502,7 @@
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.massLimitations];
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.additionalInfo];
         return [new LinearAssetBox(asset, legendValues)];
       }
       return [];
@@ -523,13 +523,14 @@
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}), isExperimental);
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
     return [
       []
         .concat([massTransitBox])
         .concat(getPointAsset(assetType.obstacles))
         .concat(getPointAsset(assetType.railwayCrossings))
         .concat(getPointAsset(assetType.directionalTrafficSigns))
-        .concat(getPointAsset(assetType.pedestrianCrossings))
+        .concat(pedestrianCrossingBox)
         .concat(getPointAsset(assetType.trafficLights))
         .concat([trafficSignBox])
         .concat(getPointAsset(assetType.servicePoints)),

@@ -65,7 +65,7 @@
           title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -91,7 +91,7 @@
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -117,7 +117,7 @@
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
+          additionalInfo : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -142,8 +142,8 @@
         allowComplementaryLinks: true,
         editControlLabels: { title: 'Rajoitus',
           enabled: 'Rajoitus',
+          additionalInfo : 'Muut massarajoitukset',
           disabled: 'Ei rajoitusta',
-          massLimitations : 'Muut massarajoitukset',
           showUnit: true
         },
         label: new MassLimitationsLabel(),
@@ -273,14 +273,36 @@
         editControlLabels: {
           title: 'Kelirikko',
           enabled: 'Kelirikko',
-          disabled: 'Ei kelirikkoa'
+          disabled: 'Ei kelirikkoa',
+          additionalInfo: 'Kelirikolle altis tie'
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         label: new RoadDamagedByThawLabel(),
+        style: new RoadDamagedByThawStyle(),
+        saveCondition: function (fields) {
+          var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
+
+          var isInDatePeriod = function(date) {
+            var datePeriodValue = date.getPropertyValue().values;
+            var startDate = new Date(_.head(datePeriodValue).value.startDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+            var endDate = new Date(_.head(datePeriodValue).value.endDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+
+            return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
+          };
+
+          var isValidDate =  _.every(datePeriodField, function(date) {
+            return date.hasValue() && isInDatePeriod(date);
+          });
+
+          var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
+          return checkBoxField ? isValidDate : true;
+        },
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'kelirikko',  label:'rajoitus', type: 'number', weight: 1, unit: 'kg' }
+            { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
+            { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -537,14 +559,6 @@
                           ]},
           {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
           {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
-          {'name': "Yhteyshenkilö", 'propType': 'header' },
-          {'name': "Nimi", 'propType': 'text', 'id': "huoltotie_nimi" },
-          {'name': "Osoite", 'propType': 'text', 'id': "huoltotie_osoite"},
-          {'name': "Postinumero", 'propType': 'text', 'id': "huoltotie_postinumero"},
-          {'name': "Postitoimipaikka", 'propType': 'text', 'id': "huoltotie_postitoimipaikka"},
-          {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
-          {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
-          {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),

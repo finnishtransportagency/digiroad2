@@ -233,7 +233,6 @@ form.maintenanceRoad-b {
     }
 
     .input-unit-combination {
-      width: 280px;
 
       .form-group {
         border-bottom: none;
@@ -243,17 +242,23 @@ form.maintenanceRoad-b {
           text-align: right;
         }
 
+        .choice-group {
+          width: 10px;
+          margin-top: 12px;
+          margin-left: 0px;
+        }
+
         .form-control {
-          width: 145px;
+          width: 194px;
           margin: 0;
         }
 
-        .form-control.unit{
-          width: 92px;
+        .form-control.unit {
+          width: 136px;
         }
 
         .input-group-addon {
-          width: 35px;
+          width: 40px;
         }
 
         .sub-control{
@@ -261,9 +266,46 @@ form.maintenanceRoad-b {
         }
 
         .control-label.daysf {
-          width: 45px;
+          width: 90px;
         }
 
+        .date-time-period input {
+          width: 80px !important;
+        }
+      }
+
+      .date-time-period-group {
+        padding: 0;
+        ul {
+          width: 190px;
+          display: inline-block;
+        }
+
+        .existing-date-period {
+          input {
+            width: 87px !important;
+            text-align: center;
+            margin-bottom: 6px;
+          }
+
+          .date-separator {
+            float: left;
+            padding: 0 4px;
+            font-size: 21px;
+            margin-top: 10px;
+            margin-bottom: 0;
+            height: 21px;
+            color: #7f7f7c;
+          }
+        }
+
+        .date-time-period-buttons {
+          button {
+            width: 80px !important;
+            float: none !important;
+            margin: 0 0 0 4px;
+          }
+        }
       }
     }
   }
@@ -303,28 +345,34 @@ form.maintenanceRoad-b {
     padding: 0;
 
   }
+
   .control-label {
     width: 130px;
     margin-top: 7px;
   }
+
   .form-group.editable {
     margin-left: -8px;
   }
+
   .choice-group {
     width: 200px;
     margin-top: 6px;
   }
+
   .form-group.read-only {
     margin-top: -15px;
     margin-left: 3px;
   }
-  .validity-period-group{
+
+  .validity-period-group {
     margin-left: 79px;
     margin-top: 6px;
 
     label {
       text-transform: none;
       font-weight: normal;
+
       .form-dark& {
         color: @gray-light;
       }
@@ -335,9 +383,11 @@ form.maintenanceRoad-b {
     select {
       width: 45px !important;
     }
+
     label {
       width: 40px !important;
     }
+
     .delete {
       margin-top: 6px;
     }
@@ -346,6 +396,42 @@ form.maintenanceRoad-b {
   .new-validity-period {
     select {
       width: 250px !important;
+    }
+  }
+
+  .date-time-period-group {
+    ul {
+      width: 190px;
+      display: inline-block;
+    }
+
+    .existing-date-period {
+      input {
+        width: 87px !important;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      .date-separator {
+        float: left;
+        padding: 0 4px;
+        font-size: 21px;
+        margin-top: 10px;
+        margin-bottom: 0;
+        height: 21px;
+      }
+    }
+
+    .date-time-period-buttons {
+      button {
+        width: 80px !important;
+        float: none !important;
+        margin: 0 0 0 4px;
+      }
+
+      span {
+        padding: 9px;
+      }
     }
   }
 

@@ -2,8 +2,9 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, SideCode, SpeedLimitAsset, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 
 object SpeedLimitFiller {
   private val MaxAllowedMValueError = 0.1
@@ -122,13 +123,18 @@ object SpeedLimitFiller {
     (limits, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ limitsToDrop))
   }
 
+
   private def generateUnknownSpeedLimitsForLink(roadLink: RoadLink, segmentsOnLink: Seq[SpeedLimit]): Seq[SpeedLimit] = {
     val lrmPositions: Seq[(Double, Double)] = segmentsOnLink.map { x => (x.startMeasure, x.endMeasure) }
-    val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength}
-    remainders.map { segment =>
-      val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
-      SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None, linkSource = roadLink.linkSource)
-    }
+
+    if(roadLink.isSimpleCarTrafficRoad) {
+      val remainders = lrmPositions.foldLeft(Seq((0.0, roadLink.length)))(GeometryUtils.subtractIntervalFromIntervals).filter { case (start, end) => math.abs(end - start) > MinAllowedSpeedLimitLength }
+      remainders.map { segment =>
+        val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment._1, segment._2)
+        SpeedLimit(0, roadLink.linkId, SideCode.BothDirections, roadLink.trafficDirection, None, geometry, segment._1, segment._2, None, None, None, None, 0, None, linkSource = roadLink.linkSource)
+      }
+    } else
+      Seq()
   }
 
   private def dropSegmentsOutsideGeometry(roadLink: RoadLink, assets: Seq[SpeedLimit], changeSet: ChangeSet): (Seq[SpeedLimit], ChangeSet) = {
@@ -393,7 +399,7 @@ object SpeedLimitFiller {
       }
     }
     val (extended, newChangeSet) = extendToGeometry(speedLimits, roadLink, changeSet)
-    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set()))
+    val (geometrySegments, geometryAdjustments) = fillBySideCode(extended, roadLink, ChangeSet(Set(), Nil, Nil, Nil, Set(), Nil))
     (geometrySegments.toSeq,
       newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ geometryAdjustments.adjustedMValues))
   }
@@ -467,7 +473,8 @@ object SpeedLimitFiller {
         expiredAssetIds = Set.empty[Long],
         adjustedMValues = Seq.empty[MValueAdjustment],
         adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
     }
 
     roadLinks.foldLeft(Seq.empty[SpeedLimit], changeSet) { case (acc, roadLink) =>

@@ -1111,7 +1111,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
     val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
 
-    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+    val roadLinksFilteredByBearing = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
 
     roadLinksFilteredByBearing.size should be (1)
     roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
@@ -1146,7 +1146,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
     val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
 
-    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+    val roadLinksFilteredByBearing = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
 
     roadLinksFilteredByBearing should be (Seq(newRoadLink1, newRoadLink3))
   }
@@ -1181,10 +1181,118 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLink3 = RoadLink(newLinkId3, geometryPoints3, 0.0, administrativeClass, 1, trafficDirection3, Motorway, None, None)
     val roadLinkSeq = Seq(newRoadLink1, newRoadLink2, newRoadLink3)
 
-    val roadLinksFilteredByBearing = service.getRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
+    val roadLinksFilteredByBearing = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection1).value), trafficSignCoordinates, roadLinkSeq)
 
     roadLinksFilteredByBearing.size should be (1)
     roadLinksFilteredByBearing.head.linkId should be (newLinkId1)
   }
 
+  test("filter road links when bearing info not sended") {
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val service = new TestService(mockVVHClient)
+    val newLinkId = 5000
+    val geometryPoints = List(Point(60.0, 35.0), Point(60.0, 15.0), Point(50.0, 10.0), Point(30.0, 15.0), Point(10.0, 25.0))
+    val trafficDirection = TrafficDirection.BothDirections
+
+    val trafficSignBearing = None
+    val trafficSignCoordinates = Point(70.0, 32.0)
+    val administrativeClass = Municipality
+
+    val newRoadLink = RoadLink(newLinkId, geometryPoints, 0.0, administrativeClass, 1, trafficDirection, Motorway, None, None)
+    val roadLinkSeq = Seq(newRoadLink)
+
+    val roadLinksFiltered = service.filterRoadLinkByBearing(trafficSignBearing, Some(TrafficDirection.toSideCode(trafficDirection).value), trafficSignCoordinates, roadLinkSeq)
+
+    roadLinksFiltered.size should be (1)
+    roadLinksFiltered.head.linkId should be (newLinkId)
+  }
+
+  test("Test to fetch road link by private road association name") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+
+      val dummyRoadAssociationName = "Dummy Road Association"
+
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555555, 'PRIVATE_ROAD_ASSOCIATION', 55555555, $dummyRoadAssociationName, 'test_user')""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (66666666, 'PRIVATE_ROAD_ASSOCIATION', 66666666, $dummyRoadAssociationName, 'test_user')""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (77777777, 'PRIVATE_ROAD_ASSOCIATION', 77777777, $dummyRoadAssociationName, 'test_user')""".execute
+
+      val attributesRoad1 = Map("ROADNAME_FI" -> "Road Number 1", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad2 = Map("ROADNAME_FI" -> "Road Number 2", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad3 = Map("ROADNAME_FI" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
+
+      val vvhRoadLinks = Seq(
+        VVHRoadlink(55555555, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad1, length = 100),
+        VVHRoadlink(66666666, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad2, length = 200),
+        VVHRoadlink(77777777, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad3, length = 150)
+      )
+
+      val linkIds = vvhRoadLinks.map(_.linkId)
+
+      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+
+      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+      when(mockVVHComplementaryClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(Seq()))
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
+
+      val result = service.getPrivateRoadsByAssociationName(dummyRoadAssociationName, false)
+
+      result.length should be (3)
+
+      result.map(_.roadName).contains(attributesRoad1("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad2("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(true)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Test to fetch road link by private road association name having road links with different road association name, different municipalities and no road name") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+      val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+
+      val dummyRoadAssociationNameNumberOne = "Dummy Road Association number one"
+      val dummyRoadAssociationNameNumberTwo = "Dummy Road Association number two"
+      val noRoadName = "tuntematon tienimi"
+
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555555, 'PRIVATE_ROAD_ASSOCIATION', 55555555, $dummyRoadAssociationNameNumberOne, 'test_user')""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (66666666, 'PRIVATE_ROAD_ASSOCIATION', 66666666, $dummyRoadAssociationNameNumberOne, 'test_user')""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (77777777, 'PRIVATE_ROAD_ASSOCIATION', 77777777, $dummyRoadAssociationNameNumberTwo, 'test_user')""".execute
+
+      val attributesRoad1 = Map("ROADNAME_FI" -> "Road Number 1", "MUNICIPALITYCODE" -> BigInt(16))
+      val attributesRoad2 = Map("ROADNAME_FI" -> "", "MUNICIPALITYCODE" -> BigInt(766))
+      val attributesRoad3 = Map("ROADNAME_FI" -> "Road Number 3", "MUNICIPALITYCODE" -> BigInt(16))
+
+      val vvhRoadLinks = Seq(
+        VVHRoadlink(55555555, 16, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad1, length = 100),
+        VVHRoadlink(66666666, 766, Seq(Point(386133, 6671115, 21), Point(386136, 6671029, 15)), Municipality, BothDirections, FeatureClass.AllOthers, attributes = attributesRoad2, length = 200)
+      )
+
+      val linkIds = vvhRoadLinks.map(_.linkId)
+
+      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+
+      when(mockVVHClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+      when(mockVVHComplementaryClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(Seq()))
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
+
+      val result = service.getPrivateRoadsByAssociationName(dummyRoadAssociationNameNumberOne, false)
+
+      result.length should be (2)
+
+      result.map(_.roadName).contains(attributesRoad1("ROADNAME_FI")) should be(true)
+      result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(false)
+      result.map(_.roadName).contains(noRoadName) should be(true)
+
+      dynamicSession.rollback()
+    }
+  }
 }

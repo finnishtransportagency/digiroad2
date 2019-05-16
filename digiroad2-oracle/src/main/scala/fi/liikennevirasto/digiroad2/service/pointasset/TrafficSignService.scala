@@ -120,15 +120,15 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
-      case old if old.bearing != updatedAsset.bearing || (old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) || old.validityDirection != updatedAsset.validityDirection =>
+      case old if old.bearing != updatedAsset.bearing || !GeometryUtils.areAdjacent(Point(old.lon, old.lat), Point(updatedAsset.lon, updatedAsset.lat)) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
         val newId = OracleTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, value), value, username, roadLink.municipalityCode, vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()), roadLink.linkSource, old.createdBy, old.createdAt)
-        eventBus.publish("trafficSign:update", ((newId, roadLink), id))
+        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(newId, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink)))
         newId
       case _ =>
-        val updatedId = OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
-        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(id, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink)))
-        updatedId
+        val updated = OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, value), value, roadLink.municipalityCode, username, Some(vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp())), roadLink.linkSource)
+        eventBus.publish("trafficSign:update", (id, TrafficSignInfo(updated, updatedAsset.linkId, updatedAsset.validityDirection, getProperty(updatedAsset, typePublicId).get.propertyValue.toInt, value, roadLink)))
+        updated
     }
   }
 
@@ -298,20 +298,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  def getProhibitionsEnumeratedValues(newTransaction: Boolean = true): Seq[Long] = {
-    val trafficSignValues = Seq(ClosedToAllVehicles, NoPowerDrivenVehicles, NoLorriesAndVans, NoVehicleCombinations,
-      NoAgriculturalVehicles, NoMotorCycles, NoMotorSledges, NoBuses, NoMopeds,
-      NoCyclesOrMopeds, NoPedestrians, NoPedestriansCyclesMopeds, NoRidersOnHorseback)
-
-    if(newTransaction)
-      withDynSession {
-        OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-      }
-    else {
-      OracleTrafficSignDao.fetchEnumeratedValueIds(trafficSignValues)
-    }
-  }
-
   override def expire(id: Long, username: String): Long = {
     withDynSession {
       expireWithoutTransaction(id, username)
@@ -468,8 +454,18 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         } else if (adjacentRoadLinkInfo.size == 1) {
           allowedAdditionalPanels.filter(additionalSign => additionalSign.validityDirection == validityDirection && additionalSign.linkId == linkId) ++
             allowedAdditionalPanels.filter { additionalSign =>
-              val additionalPanelDistance = if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._1).head, point)) additionalSign.mValue else GeometryUtils.geometryLength(adjacentRoadLinkInfo.map(_._4).head) - additionalSign.mValue
-              additionalSign.validityDirection == validityDirection && additionalSign.linkId == adjacentRoadLinkInfo.map(_._3).head && (additionalPanelDistance + signDistance) <= AdditionalPanelDistance
+
+              val (additionalPanelDistance, direction) =
+                if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._1).head, first))
+                   (additionalSign.mValue, SideCode.switch(SideCode.apply(additionalSign.validityDirection)))
+                else if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._2).head, last))
+                   (GeometryUtils.geometryLength(adjacentRoadLinkInfo.map(_._4).head) - additionalSign.mValue, SideCode.switch(SideCode.apply(additionalSign.validityDirection)))
+                else if (GeometryUtils.areAdjacent(adjacentRoadLinkInfo.map(_._1).head, last))
+                  (additionalSign.mValue, additionalSign.validityDirection)
+                else
+                   (GeometryUtils.geometryLength(adjacentRoadLinkInfo.map(_._4).head) - additionalSign.mValue, additionalSign.validityDirection)
+
+              direction == validityDirection && additionalSign.linkId == adjacentRoadLinkInfo.map(_._3).head && (additionalPanelDistance + signDistance) <= AdditionalPanelDistance
             }
         } else
           Seq()
@@ -500,5 +496,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def getLastExecutionDate(createdBy: String, signTypes: Set[Int]) : Option[DateTime] = {
     OracleTrafficSignDao.getLastExecutionDate(createdBy, signTypes)
+  }
+
+  def distinctPanels(panels: Set[AdditionalPanelInfo]): Set[AdditionalPanelInfo] = {
+    panels.groupBy{ panel =>
+      val props = panel.propertyData
+      (getProperty(props, typePublicId), getProperty(props, valuePublicId), getProperty(props, infoPublicId))
+    }.map(_._2.head).toSet
   }
 }

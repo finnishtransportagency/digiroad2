@@ -127,7 +127,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     if (csvFileInputStream.available() == 0)
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else
-      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, municipalitiesToExpire.map(_.asInstanceOf[NumericValues])))
+      eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, municipalitiesToExpire.map(NumericValues)))
   }
 
   def importPointAssets(csvFileItem: FileItem, layerName: String): Unit = {
@@ -161,6 +161,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
 
-    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, administrativeClassLimitations.map(_.asInstanceOf[AdministrativeValues])))
+    eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, administrativeClassLimitations.map(AdministrativeValues)))
   }
 }
