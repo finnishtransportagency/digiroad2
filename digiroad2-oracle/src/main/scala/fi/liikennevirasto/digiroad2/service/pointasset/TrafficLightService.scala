@@ -59,7 +59,9 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   def checkDuplicates(incomingTrafficLight: IncomingTrafficLight): Option[TrafficLight] = {
-    val signsInRadius = getDirectionalSignsByRadius(Point(incomingTrafficLight.lon, incomingTrafficLight.lat), 2)
+    val position = Point(incomingTrafficLight.lon, incomingTrafficLight.lat)
+    val signsInRadius = OracleTrafficLightDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
+      .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
     if(signsInRadius.nonEmpty)
       return Some(getLatestModifiedAsset(signsInRadius))
     None
@@ -67,10 +69,6 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   def getLatestModifiedAsset(signs: Seq[TrafficLight]): TrafficLight = {
     signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
-  }
-
-  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[TrafficLight] = {
-    OracleTrafficLightDao.fetchByRadius(position, meters)
   }
 
   def createFloatingWithoutTransaction(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {

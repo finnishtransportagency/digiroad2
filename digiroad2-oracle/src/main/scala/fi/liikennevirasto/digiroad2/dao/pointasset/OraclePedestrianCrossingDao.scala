@@ -78,15 +78,6 @@ class OraclePedestrianCrossingDao() {
     id
   }
 
-  def fetchByRadius(position : Point, meters: Int): Seq[PedestrianCrossing] = {
-    val topLeft = Point(position.x - meters, position.y - meters)
-    val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-    val filter = s"Where a.asset_type_id = 200 and $boundingBoxFilter"
-    fetchByFilter(query => query + filter).
-      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
-  }
-
   def create(crossing: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Long, adjustedTimestamp: Long, linkSource: LinkGeomSource,
              createdByFromUpdate: Option[String] = Some(""),
              createdDateTimeFromUpdate: Option[DateTime]): Long = {

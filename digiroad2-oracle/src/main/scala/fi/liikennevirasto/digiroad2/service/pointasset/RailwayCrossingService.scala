@@ -76,8 +76,10 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   }
 
   def checkDuplicates(incomingRailwayCrossing: IncomingRailwayCrossing): Option[RailwayCrossing] = {
-    val signsInRadius = getDirectionalSignsByRadius(Point(incomingRailwayCrossing.lon, incomingRailwayCrossing.lat), 2).filter(
+    val position = Point(incomingRailwayCrossing.lon, incomingRailwayCrossing.lat)
+    val signsInRadius = OracleRailwayCrossingDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
       asset =>
+        GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
         asset.safetyEquipment == incomingRailwayCrossing.safetyEquipment
     )
     if(signsInRadius.nonEmpty)
@@ -87,10 +89,6 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   def getLatestModifiedAsset(signs: Seq[RailwayCrossing]): RailwayCrossing = {
     signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
-  }
-
-  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[RailwayCrossing] = {
-    OracleRailwayCrossingDao.fetchByRadius(position, meters)
   }
 
   def createFloatingWithoutTransaction(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink): Long = {

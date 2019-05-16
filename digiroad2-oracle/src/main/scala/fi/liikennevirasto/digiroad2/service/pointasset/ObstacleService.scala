@@ -61,8 +61,10 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   def checkDuplicates(incomingObstacle: IncomingObstacle): Option[Obstacle] = {
-    val signsInRadius = getDirectionalSignsByRadius(Point(incomingObstacle.lon, incomingObstacle.lat), 2).filter(
+    val position = Point(incomingObstacle.lon, incomingObstacle.lat)
+    val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
       asset =>
+        GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
         asset.obstacleType == incomingObstacle.obstacleType
     )
     if(signsInRadius.nonEmpty)
@@ -72,10 +74,6 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   def getLatestModifiedAsset(signs: Seq[Obstacle]): Obstacle = {
     signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
-  }
-
-  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[Obstacle] = {
-    OracleObstacleDao.fetchByRadius(position, meters)
   }
 
   def createFloatingWithoutTransaction(asset: IncomingObstacle, username: String, roadLink: RoadLink): Long = {

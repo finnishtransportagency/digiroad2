@@ -53,15 +53,6 @@ object OracleObstacleDao {
     StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
   }
 
-  def fetchByRadius(position : Point, meters: Int): Seq[Obstacle] = {
-    val topLeft = Point(position.x - meters, position.y - meters)
-    val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-    val filter = s"Where a.asset_type_id = 220 and $boundingBoxFilter"
-    fetchByFilter(query => query + filter).
-      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
-  }
-
   implicit val getPointAsset = new GetResult[Obstacle] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()

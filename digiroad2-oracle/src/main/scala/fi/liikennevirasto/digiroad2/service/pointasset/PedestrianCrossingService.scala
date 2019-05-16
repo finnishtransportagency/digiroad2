@@ -55,7 +55,9 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
   }
 
   def checkDuplicates(incomingPedestrianCrossing: IncomingPedestrianCrossing): Option[PedestrianCrossing] = {
-    val signsInRadius = getDirectionalSignsByRadius(Point(incomingPedestrianCrossing.lon, incomingPedestrianCrossing.lat), 2)
+    val position = Point(incomingPedestrianCrossing.lon, incomingPedestrianCrossing.lat)
+    val signsInRadius = dao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
+      .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
     if(signsInRadius.nonEmpty)
       return Some(getLatestModifiedAsset(signsInRadius))
     None
@@ -63,10 +65,6 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   def getLatestModifiedAsset(signs: Seq[PedestrianCrossing]): PedestrianCrossing = {
     signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
-  }
-
-  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[PedestrianCrossing] = {
-    dao.fetchByRadius(position, meters)
   }
 
   def createFloatingWithoutTransaction(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {

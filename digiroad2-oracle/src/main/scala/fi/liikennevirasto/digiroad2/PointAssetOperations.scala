@@ -106,6 +106,9 @@ trait PointAssetOperations {
   def roadLinkService: RoadLinkService
   val idField = "id"
 
+  final val TwoMeters = 2
+  final val BearingLimit = 25
+
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
@@ -419,6 +422,13 @@ trait PointAssetOperations {
     val (pointAsset, floatingReason) = toPointAsset(persistedAsset)
     if (persistedAsset.floating != pointAsset.floating) updateFloating(pointAsset.id, pointAsset.floating, floatingReason)
     pointAsset
+  }
+
+  def withBoundingBoxFilter(position : Point, meters: Int)(query: String): String = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
   }
 
   protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = sqlu"""update asset set floating = $floating where id = $id""".execute

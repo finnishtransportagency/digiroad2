@@ -47,10 +47,10 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
   }
 
   def checkDuplicates(incomingDirectionalTrafficSign: IncomingDirectionalTrafficSign): Option[DirectionalTrafficSign] = {
-    val signsInRadius = getDirectionalSignsByRadius(Point(incomingDirectionalTrafficSign.lon, incomingDirectionalTrafficSign.lat), 2).filter (
-      sign =>
-        Math.abs(sign.bearing.getOrElse(0) - incomingDirectionalTrafficSign.bearing.getOrElse(0)) <= 25
-    )
+    val position = Point(incomingDirectionalTrafficSign.lon, incomingDirectionalTrafficSign.lat)
+    val signsInRadius = OracleDirectionalTrafficSignDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
+      .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters
+        && Math.abs(sign.bearing.getOrElse(0) - incomingDirectionalTrafficSign.bearing.getOrElse(0)) <= BearingLimit)
     if(signsInRadius.nonEmpty)
       return Some(getLatestModifiedAsset(signsInRadius))
     None
@@ -60,9 +60,6 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
   }
 
-  def getDirectionalSignsByRadius(position: Point, meters: Int): Seq[DirectionalTrafficSign] = {
-    OracleDirectionalTrafficSignDao.fetchByRadius(position, meters)
-  }
 
   override def setFloating(persistedAsset: DirectionalTrafficSign, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
