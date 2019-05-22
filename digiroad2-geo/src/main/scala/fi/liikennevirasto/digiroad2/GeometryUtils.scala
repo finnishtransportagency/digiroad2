@@ -17,7 +17,7 @@ object GeometryUtils {
     (firstPoint, lastPoint)
   }
 
-  def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
+  private def liesInBetween(measure: Double, interval: (Double, Double)): Boolean = {
     measure >= interval._1 && measure <= interval._2
   }
 
@@ -302,11 +302,25 @@ object GeometryUtils {
     }
   }
 
-  def calculateBearing(geom: Seq[Point]): Int = {
-    //TODO Test bearing calculation
+  def calculateBearing(geom: Seq[Point], pointMValue: Option[Double] = None): Int = {
     val points = geometryEndpoints(geom)
-    val startPoint = points._1
-    val endPoint = points._2
+    val roadLength = geometryLength(geom)
+
+    val (startPoint, endPoint) =
+      pointMValue match {
+        case Some(mValue) =>
+          val startPointMValue = Math.max(mValue - 5, 0)
+          val endPointMValue = Math.min(mValue + 5, roadLength)
+          (calculatePointFromLinearReference(geom, startPointMValue), calculatePointFromLinearReference(geom, endPointMValue)) match {
+            case (Some(p1), Some(p2)) =>
+              (p1, p2)
+            case _ =>
+              (points._1, points._2)
+          }
+        case _ =>
+          (points._1, points._2)
+      }
+
     val rad = Math.atan2(startPoint.x - endPoint.x, startPoint.y - endPoint.y)
     (180 + (rad * (180 / Math.PI))).asInstanceOf[Int]
   }

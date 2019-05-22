@@ -10,6 +10,8 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{AssetAdjustment, ChangeSet}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
@@ -74,6 +76,13 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
 
   def persistLinearAssetChanges(changeSet: ChangeSet) {
     linearAssetService.updateChangeSet(changeSet)
+  }
+}
+
+class DataImporter(dataImportManager: DataImportManager) extends Actor {
+  def receive = {
+    case x: CsvDataImporterInfo => dataImportManager.importer(x)
+    case _ => println("DataImporter: Received unknown message")
   }
 }
 
@@ -308,6 +317,9 @@ object Digiroad2Context {
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
   eventbus.subscribe(valluTerminal, "terminal:saved")
 
+  val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
+  eventbus.subscribe(importCSVDataUpdater, "importCSVData")
+
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
@@ -438,8 +450,8 @@ object Digiroad2Context {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
 
-  lazy val roadAddressesService: RoadAddressesService = {
-    new RoadAddressesService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = {
+    new RoadAddressService(viiteClient)
   }
 
   lazy val assetService: AssetService = {
@@ -490,6 +502,10 @@ object Digiroad2Context {
     new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
+  lazy val damagedByThawService: DamagedByThawService = {
+    new DamagedByThawService(roadLinkService, eventbus)
+  }
+
   lazy val userNotificationService: UserNotificationService = {
     new UserNotificationService()
   }
@@ -502,7 +518,7 @@ object Digiroad2Context {
   }
 
   lazy val massTransitStopService: MassTransitStopService = {
-    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressesService) extends MassTransitStopService {
+    class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
@@ -510,7 +526,11 @@ object Digiroad2Context {
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
-    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressesService)
+    new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressService)
+  }
+
+  lazy val dataImportManager: DataImportManager = {
+    new DataImportManager(roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
@@ -570,7 +590,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, eventbus)
   }
 
   lazy val manoeuvreService = {

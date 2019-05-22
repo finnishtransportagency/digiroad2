@@ -94,7 +94,7 @@ trait TrafficSignLinearGenerator {
   }
 
   lazy val trafficSignService: TrafficSignService = {
-    new TrafficSignService(roadLinkService, userProvider, eventbus)
+    new TrafficSignService(roadLinkService, eventbus)
   }
 
   lazy val oracleLinearAssetDao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
@@ -182,13 +182,13 @@ trait TrafficSignLinearGenerator {
     if (debbuger) println("findStartEndRoadLinkOnChain")
     val borderRoadLinks = roadLinks.filterNot { r =>
       val (first, last) = GeometryUtils.geometryEndpoints(r.geometry)
-      val RoadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
+      val roadLinksFiltered = roadLinks.filterNot(_.linkId == r.linkId)
 
-      RoadLinksFiltered.exists { r3 =>
+      roadLinksFiltered.exists { r3 =>
         val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
         GeometryUtils.areAdjacent(first, first2) || GeometryUtils.areAdjacent(first, last2)
       } &&
-        RoadLinksFiltered.exists { r3 =>
+        roadLinksFiltered.exists { r3 =>
           val (first2, last2) = GeometryUtils.geometryEndpoints(r3.geometry)
           GeometryUtils.areAdjacent(last, first2) || GeometryUtils.areAdjacent(last, last2)
         }
@@ -503,7 +503,7 @@ trait TrafficSignLinearGenerator {
       if (signRoadLink.attributes.get("ROADNAME_FI").exists(_.toString.trim.nonEmpty)) {
         Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_FI").toString)
       } else if (signRoadLink.attributes.get("ROADNAME_SE").exists(_.toString.trim.nonEmpty)) {
-        Some("ROADNAME_FI", signRoadLink.attributes("ROADNAME_SE").toString)
+        Some("ROADNAME_SE", signRoadLink.attributes("ROADNAME_SE").toString)
       } else
         None
 
@@ -562,23 +562,23 @@ trait TrafficSignLinearGenerator {
       val roadLink = roadLinkToBeProcessed.head
       println(s"Processing roadLink linkId ${roadLink.linkId}")
       val allRoadLinksWithSameName = withDynTransaction {
-        val allRoadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
-        if(allRoadLinksWithSameName.nonEmpty){
-          val trafficSigns = trafficSignService.getTrafficSign(allRoadLinksWithSameName.map(_.linkId))
+        val roadLinksWithSameName = getAllRoadLinksWithSameName(roadLink)
+        if(roadLinksWithSameName.nonEmpty){
+          val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithSameName.map(_.linkId))
           val filteredTrafficSigns = trafficSigns.filter(signBelongTo)
 
-          val existingAssets = getExistingSegments(allRoadLinksWithSameName)
-          val (relevantExistingSegments , existingSegments) = segmentsConverter(existingAssets, allRoadLinksWithSameName)
+          val existingAssets = getExistingSegments(roadLinksWithSameName)
+          val (relevantExistingSegments , existingSegments) = segmentsConverter(existingAssets, roadLinksWithSameName)
           println(s"Processing: ${filteredTrafficSigns.size}")
 
           //create and Modify actions
-          val allSegments = segmentsManager(allRoadLinksWithSameName, filteredTrafficSigns, relevantExistingSegments)
+          val allSegments = segmentsManager(roadLinksWithSameName, filteredTrafficSigns, relevantExistingSegments)
           applyChangesBySegments(allSegments, existingSegments)
 
           if (trafficSigns.nonEmpty)
             oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSigns.map(_.id), assetType)
 
-          allRoadLinksWithSameName
+          roadLinksWithSameName
         } else
           Seq()
       }

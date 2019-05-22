@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, Orac
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -255,7 +256,8 @@ trait LinearAssetOperations {
                                expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
                                adjustedMValues = Seq.empty[MValueAdjustment],
                                adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                               adjustedSideCodes = Seq.empty[SideCodeAdjustment])
+                               adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+                               valueAdjustments = Seq.empty[ValueAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
@@ -705,6 +707,12 @@ trait LinearAssetOperations {
       changeSet.adjustedSideCodes.foreach { adjustment =>
         adjustedSideCode(adjustment)
       }
+
+      if(changeSet.valueAdjustments.nonEmpty)
+        logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
+      changeSet.valueAdjustments.foreach { adjustment =>
+        updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+      }
     }
   }
 
@@ -854,11 +862,18 @@ trait LinearAssetOperations {
     query + s" and a.municipality_code in (${municipalities.mkString(",")}) and a.created_by != 'batch_process_trafficSigns'"
   }
 
-  def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(Int, DateTime, Int)] = {
+  def getAutomaticGeneratedAssets(municipalities: Set[Int], assetTypeId: Int): Seq[(String, Seq[Long])] = {
     withDynTransaction {
       val lastCreationDate = dao.getLastExecutionDateOfConnectedAsset()
-      if(lastCreationDate.nonEmpty)
-        dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId, lastCreationDate)
+      if (lastCreationDate.nonEmpty) {
+        val automaticGeneratedAssets = dao.getAutomaticGeneratedAssets(municipalities.toSeq, assetTypeId, lastCreationDate).groupBy(_._2)
+        val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(automaticGeneratedAssets.keys.toSet)
+
+        automaticGeneratedAssets.map {
+          generatedAsset =>
+            (municipalityNames.find(_.id == generatedAsset._1).get.name, generatedAsset._2.map(_._1))
+        }.toSeq
+      }
       else Seq()
     }
   }
@@ -875,7 +890,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+  override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
 }
 

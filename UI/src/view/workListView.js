@@ -82,7 +82,7 @@
     this.generateWorkList = function(layerName, listP) {
       var layerInfo = {
         speedLimit: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit'},
-        speedLimitErrors: {Title: 'Laatuvirheet Lista',  SourceLayer: 'speedLimit'},
+        speedLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'speedLimit'},
         linkProperty: 'Korjattavien linkkien lista',
         massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
         pedestrianCrossings: 'Geometrian ulkopuolelle jääneet suojatiet',

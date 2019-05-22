@@ -61,9 +61,8 @@
   function optionalSave() {
     var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY();
     var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress();
-    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL();
     var floating = selectedMassTransitStopModel.getFloatingReason();
-    return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && isAdministratorHSL)) && !floating;
+    return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && !isAdministratorELY)) && !floating;
   }
 
   var SaveButton = function(isTerminalActive) {
@@ -291,13 +290,13 @@
 
       var userInformationLog = function() {
 
-        var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain omalla toimialueellasi.';
+        var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
         var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
         var message = '';
 
-        if ((authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
+        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !authorizationPolicy.hasRightsInMunicipality(selectedMassTransitStopModel.getMunicipalityCode())) {
           message = limitedRights;
-        } else if (authorizationPolicy.formEditModeAccess())
+        } else if (!authorizationPolicy.assetSpecificAccess())
           message = noRights;
 
         if(message) {
@@ -850,7 +849,7 @@
         var notRendered = !$('#asset-work-list-link').length;
         if(notRendered) {
           $('ul[class=information-content]').append('' +
-            '<li><button id="asset-work-list-link" class="floating-stops" onclick=location.href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</button></li>');
+            '<li><button id="asset-work-list-link" class="floating-stops btn btn-tertiary" onclick=location.href="#work-list/massTransitStop">Geometrian ulkopuolelle jääneet pysäkit</button></li>');
         }
       };
 

@@ -58,7 +58,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
         val sectionAssets = getAllTierekisteriAddressSections(roadNumber)
-        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val mappedRoadLinks  = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
         val roadAddressInfo = getAllRoadAddressMeasures(sectionAssets, mappedRoadAddresses, mappedRoadLinks)
         val groupedByLinkId = roadAddressInfo.flatten.groupBy(_._1.linkId)
         withDynTransaction {
@@ -92,7 +92,7 @@ class CareClassTierekisteriImporter extends TierekisteriImporterOperations {
           }
 
           val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-          val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+          val mappedRoadLinks  = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
 
           //Creates the assets on top of the expired sections
           expiredSections.foreach {

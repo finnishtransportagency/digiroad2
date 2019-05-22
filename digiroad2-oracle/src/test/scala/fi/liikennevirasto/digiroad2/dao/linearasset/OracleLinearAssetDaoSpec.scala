@@ -74,7 +74,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch simple prohibition without validity periods or exceptions") {
     val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, null))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, ""))
 
     runWithRollback {
       setupTestProhibition(linkId, fixtureProhibitionValues)
@@ -92,7 +92,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("fetch prohibition with validity period") {
     val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
-    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, null))
+    val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, ""))
 
     runWithRollback {
       setupTestProhibition(linkId, fixtureProhibitionValues)
@@ -111,7 +111,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(
-      ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), null))
+      ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), ""))
 
     runWithRollback {
       setupTestProhibition(linkId, fixtureProhibitionValues)
@@ -154,11 +154,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     val linkId5 = 5l
     val fixtureProhibitionValues1 = Set(
       ProhibitionValue(typeId = 10, Set(
-        ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3), additionalInfo = null),
-      ProhibitionValue(typeId = 9, validityPeriods = Set.empty, exceptions = Set(1, 2), additionalInfo = null))
-    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Set.empty, exceptions = Set.empty, additionalInfo = null))
-    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set(1), additionalInfo = null))
-    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, additionalInfo = null))
+        ValidityPeriod(12, 16, Weekday), ValidityPeriod(19, 21, Weekday)), exceptions = Set(1, 2, 3), additionalInfo = ""),
+      ProhibitionValue(typeId = 9, validityPeriods = Set.empty, exceptions = Set(1, 2), additionalInfo = ""))
+    val fixtureProhibitionValues2 = Set(ProhibitionValue(typeId = 3, validityPeriods = Set.empty, exceptions = Set.empty, additionalInfo = ""))
+    val fixtureProhibitionValues3 = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set(1), additionalInfo = ""))
+    val fixtureProhibitionValues4 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, additionalInfo = ""))
     val fixtureProhibitionValues5 = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(9, 19, Weekday)), exceptions = Set(1), additionalInfo = "Value Test"))
 
     runWithRollback {

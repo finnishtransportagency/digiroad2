@@ -41,7 +41,7 @@
       };
 
       var assetLink = function(assetType) {
-        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(renameAsset(assetType)).click(function(){
+        return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(renameAsset(assetType, assetConfig.assetTypeInfo).title).click(function(){
           me.createVerificationForm(assetType);
         });
       };
@@ -61,12 +61,12 @@
 
       var tableContentRows = function(ids) {
         return _.map(ids, function(id) {
-          return $('<tr/>').append($('<td/>').append(assetLink(id._1)));
+          return $('<tr/>').append($('<td/>').append(assetLink(id)));
         });
       };
 
       var assetLink = function(id) {
-        var link = '#' + renameAssetLink(assetTypeId) + '/' + id;
+        var link = '#' + renameAsset(assetTypeId, assetConfig.linearAssetsConfig).singleElementEventCategory + '/' + id;
         var workListItem = $('<a class="work-list-item"/>').attr('href', link).html(link);
         return workListItem;
       };
@@ -77,24 +77,22 @@
       };
 
       return $('<div/>').append(municipalityHeader(assetContent.municipality))
-                        .append(tableForGroupingValues(assetContent.created_assets));
+                        .append(tableForGroupingValues(assetContent.createdAssets));
                                     
     };
 
     this.reloadForm = function(assetTypeId){
       $('#formTable').remove();
       backend.getCreatedLinearAssets(assetTypeId).then( function(assets){
-        $('#work-list .work-list').html($('<h2/>').html(renameAsset(assetTypeId)).append(_.map(assets, function(assets) { return me.generatedLinearAssetsTable(assets, assetTypeId);})));
+        $('#work-list .work-list').html($('<h2/>').html(renameAsset(assetTypeId, assetConfig.assetTypeInfo).title).append(_.map(assets, function(assets) { return me.generatedLinearAssetsTable(assets, assetTypeId);})));
       });
 
     };
 
-    var renameAsset = function(assetTypeId) {
-      return _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  assetTypeId; }).title ;
-    };
-
-    var renameAssetLink = function(assetTypeId) {
-      return _.find(assetConfig.linearAssetsConfig, function(config){ return config.typeId ===  assetTypeId; }).singleElementEventCategory ;
+    var renameAsset = function (assetTypeId, assetConfigInfo) {
+      return _.find(assetConfigInfo, function (config) {
+        return config.typeId === assetTypeId;
+      });
     };
 
     this.generateWorkList = function(assetsList) {

@@ -2,7 +2,7 @@
    root.FeedbackApplicationTool = function (authorizationPolicy, collection) {
 
        var initialize = function(){
-            eventbus.trigger('closeFeedBackData');
+           eventbus.trigger('closeFeedBackData');
            purge();
            renderConfirmDialog();
            $('#kidentifier').text(authorizationPolicy.username);
@@ -69,7 +69,7 @@
            });
        };
 
-       var suggestionText = 'Jättääksesi palautetta aineistosta, valitse haluamasi linkki ja <br /> valitse "Anna palautetta kohteesta" lomakkeen oikeasta alakulmasta';
+       var suggestionText = 'Jättääksesi palautetta aineistosta, valitse haluamasi linkki ja <br /> valitse "Anna palautetta kohteesta" lomakkeen oikeasta yläkulmasta';
 
        var confirmDiv =
            '<div class="modal-overlay confirm-modal" id="feedback">' +

@@ -86,8 +86,8 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val pairedTrafficSign = PersistedTrafficSign(2, 1010, 20, 0, 0, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
-    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB2))
-    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB1))
+    when(mockRoadLinkService.getAdjacent(1005, false)).thenReturn(Seq(roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq(roadLinkNameB1))
 
     val result= prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign), Seq()).toSeq.sortBy(_.roadLink.linkId)
     result.size should be (2)
@@ -110,9 +110,9 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val unPairedTrafficSign = PersistedTrafficSign(3, 1010, 10, 0, 8, false, 0, 235, propertiesB, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
-    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
-    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq())
-    when(mockRoadLinkService.getAdjacentTemp(1015)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
+    when(mockRoadLinkService.getAdjacent(1005, false)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq())
+    when(mockRoadLinkService.getAdjacent(1015, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
 
     val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign, unPairedTrafficSign), Seq()).toSeq.sortBy(_.roadLink.linkId)
     result.size should be (7)
@@ -152,9 +152,9 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val pairedSign2 = PersistedTrafficSign(4, 1015, 30, 0, 10, false, 0, 235, propertiesB, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
-    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
-    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq())
-    when(mockRoadLinkService.getAdjacentTemp(1015)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
+    when(mockRoadLinkService.getAdjacent(1005, false)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
+    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq())
+    when(mockRoadLinkService.getAdjacent(1015, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
 
     val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign1, trafficSign2, pairedSign1, pairedSign2), Seq()).toSeq.sortBy(_.roadLink.linkId)
     result.size should be (4)
@@ -185,8 +185,8 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val trafficSign = PersistedTrafficSign(1, 1005, 5, 0, 5, false, 0, 235, propertiesA, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2)
-    when(mockRoadLinkService.getAdjacentTemp(1005)).thenReturn(Seq(roadLinkNameB2, roadLinkNameA))
-    when(mockRoadLinkService.getAdjacentTemp(1010)).thenReturn(Seq(roadLinkNameB1))
+    when(mockRoadLinkService.getAdjacent(1005, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameA))
+    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq(roadLinkNameB1))
 
     val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign), Seq())
     result.size should be (2)
@@ -275,7 +275,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     prohibitionGenerator.applyChangesBySegments(segments, existingSegments)
     val updatedInfo = prohibitionGenerator.getUpdatedInfo
     updatedInfo.size should be(1)
-    updatedInfo.head._1 should be (roadLinkNameB1)
+    updatedInfo.head._1 should be (100)
     updatedInfo.head._2 should be(Prohibitions(value ++ existingValue))
 
     val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo
