@@ -117,7 +117,7 @@
 
     var isRelevant = function(current) {
 
-      if (isTurningRestriction(current) || isTrafficSignProhibitionRestriction(current)) {
+      if (isTurningRestriction(current) || isTrafficSignRestriction(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
         var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
