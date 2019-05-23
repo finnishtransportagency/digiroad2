@@ -11,6 +11,7 @@
       me.saveCondition = parameters.saveCondition;
       me.feedbackCollection = parameters.feedbackCollection;
       me.bindEvents(parameters);
+      me.selectedAsset = parameters.pointAsset.selectedPointAsset;
     };
 
     var namePublicId = 'rautatien_tasoristeyksen_nimi';
@@ -26,27 +27,28 @@
     };
 
     this.renderValueElement = function(asset) {
+      var safetyEquipmentValue = me.selectedAsset.getByProperty(safetyEquipmentPublicId);
         return '' +
           '    <div class="form-group editable form-railway-crossing">' +
           '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
-          '        <p class="form-control-static">' + (me.getPointPropertyValue(asset, codePublicId) || '–') + '</p>' +
-          '        <input type="text" class="form-control"  maxlength="15" name="tasoristeystunnus" value="' + (me.getPointPropertyValue(asset, codePublicId) || '')  + '">' +
+          '        <p class="form-control-static">' + ( me.selectedAsset.getByProperty(codePublicId) || '–') + '</p>' +
+          '        <input type="text" class="form-control"  maxlength="15" name="tasoristeystunnus" value="' + ( me.selectedAsset.getByProperty(codePublicId) || '')  + '">' +
           '    </div>' +
           '    <div class="form-group editable form-railway-crossing">' +
           '      <label class="control-label">Turvavarustus</label>' +
-          '      <p class="form-control-static">' + safetyEquipments[parseInt(me.getPointPropertyValue(asset,'turvavarustus'))] + '</p>' +
+          '      <p class="form-control-static">' + safetyEquipments[parseInt( me.selectedAsset.getByProperty('turvavarustus'))] + '</p>' +
           '      <select class="form-control" style="display:none">  ' +
-          '        <option value="1" '+ (parseInt(me.getPointPropertyValue(asset, safetyEquipmentPublicId)) === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
-          '        <option value="2" '+ (parseInt(me.getPointPropertyValue(asset, safetyEquipmentPublicId)) === 2 ? 'selected' : '') +'>Ei turvalaitetta</option>' +
-          '        <option value="3" '+ (parseInt(me.getPointPropertyValue(asset, safetyEquipmentPublicId)) === 3 ? 'selected' : '') +'>Valo/äänimerkki</option>' +
-          '        <option value="4" '+ (parseInt(me.getPointPropertyValue(asset, safetyEquipmentPublicId)) === 4 ? 'selected' : '') +'>Puolipuomi</option>' +
-          '        <option value="5" '+ (parseInt(me.getPointPropertyValue(asset, safetyEquipmentPublicId)) === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
+          '        <option value="1" '+ (parseInt(safetyEquipmentValue) === 1 ? 'selected' : '') +'>Rautatie ei käytössä</option>' +
+          '        <option value="2" '+ (parseInt(safetyEquipmentValue) === 2 ? 'selected' : '') +'>Ei turvalaitetta</option>' +
+          '        <option value="3" '+ (parseInt(safetyEquipmentValue) === 3 ? 'selected' : '') +'>Valo/äänimerkki</option>' +
+          '        <option value="4" '+ (parseInt(safetyEquipmentValue) === 4 ? 'selected' : '') +'>Puolipuomi</option>' +
+          '        <option value="5" '+ (parseInt(safetyEquipmentValue) === 5 ? 'selected' : '') +'>Kokopuomi</option>' +
           '      </select>' +
           '    </div>' +
           '    <div class="form-group editable form-railway-crossing">' +
           '        <label class="control-label">' + 'Nimi' + '</label>' +
-          '        <p class="form-control-static">' + (me.getPointPropertyValue(asset, namePublicId) || '–') + '</p>' +
-          '        <input type="text" class="form-control" name="rautatien_tasoristeyksen_nimi" value="' + (me.getPointPropertyValue(asset, namePublicId) || '')  + '">' +
+          '        <p class="form-control-static">' + ( me.selectedAsset.getByProperty(namePublicId) || '–') + '</p>' +
+          '        <input type="text" class="form-control" name="rautatien_tasoristeyksen_nimi" value="' + ( me.selectedAsset.getByProperty(namePublicId) || '')  + '">' +
           '    </div>';
     };
 

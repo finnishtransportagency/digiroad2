@@ -526,7 +526,8 @@
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
         isSuggestedAsset: true,
-        readOnlyLayer: TrafficSignReadOnlyLayer
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.hazardousMaterialTransportProhibition,
@@ -549,8 +550,8 @@
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
         isSuggestedAsset: true,
-        readOnlyLayer: TrafficSignReadOnlyLayer
-
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        label: new SuggestionLabel()
       },
       {
         typeId: assetType.europeanRoads,

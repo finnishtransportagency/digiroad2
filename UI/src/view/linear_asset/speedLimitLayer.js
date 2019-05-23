@@ -532,7 +532,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var isUnknown = function(speedLimit) {
-    return !_.isNumber(speedLimit.value);
+    return _.isUndefined(speedLimit.value) || !_.isNumber(speedLimit.value.value);
   };
 
   var limitSigns = function(speedLimits) {

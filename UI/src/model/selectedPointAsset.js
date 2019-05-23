@@ -8,6 +8,7 @@
       open: open,
       getId: getId,
       get: get,
+      getByProperty: getByProperty,
       place: place,
       set: set,
       setProperties: setProperties,
@@ -78,6 +79,14 @@
 
     function get() {
       return current;
+    }
+
+    function getByProperty(key) {
+      if (exists()) {
+        return _.find(current.propertyData, function(asset) {
+          return asset.publicId === key;
+        }).values[0].propertyValue;
+      }
     }
 
     function exists() {

@@ -28,10 +28,6 @@ case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
 
-//case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
-//  override def toJson: Any = properties
-//}
-
 case class Prohibitions(isSuggested: Boolean, prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 

@@ -53,13 +53,16 @@
       function suggestionElement(isSuggested) {
         if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
           var checkedValue = isSuggested ? 'checked' : '';
-          return '<div class="form-control-static">' +
-              '<label class="control-label">Vihjetieto</label>' +
-              '<p class="form-control-static"> kyllä </p>' +
-              '</div>' +
-              '<div class="edit-control-group">' +
-              '<label class="control-label">Vihjetieto</label>' +
-              '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
+          return ''+
+              '<div class="suggestion"> ' +
+                '<div class="form-control-static">' +
+                  '<label class="control-label">Vihjetieto</label>' +
+                  '<p class="form-control-static"> kyllä </p>' +
+                '</div>' +
+                '<div class="edit-control-group">' +
+                  '<label class="control-label">Vihjetieto</label>' +
+                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
+                '</div>' +
               '</div>';
         } else
           return '';
@@ -167,7 +170,6 @@
             });
             return items.join('');
           }
-
           return '' +
             '<div class="exception-group">' +
             exceptionLabel(prohibition) +
@@ -350,6 +352,19 @@
         };
         var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
+        $(rootElement).one('click','.prohibition-a, .prohibition-b', function () {
+          $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+          valueSetters.b( {isSuggested: false, prohibitions: selectedLinearAsset.getBValue().prohibitions});
+          valueSetters.a( {isSuggested: false, prohibitions: selectedLinearAsset.getValue().prohibitions});
+        });
+
+        $(rootElement).one('click','.prohibition', function () {
+          if(!_.isNull(selectedLinearAsset.getId())) {
+            $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+            $(rootElement).find('.suggestion').hide();
+          }
+        });
+
         $(rootElement).on('change', inputElements, function () {
           setValue(extractValue(rootElement, className));
         });
@@ -392,7 +407,7 @@
             validityPeriods: [],
             additionalInfo: {}
           }));
-          $(rootElement).find('.form-group' + className + ' .edit-control-group').append(newProhibitionElement());
+          $(rootElement).find('.form-group' + className + ' ul.edit-control-group').append(newProhibitionElement());
           setValue(extractValue(rootElement, className));
         });
 

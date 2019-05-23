@@ -295,39 +295,6 @@
         eventbus.trigger(multiElementEvent('valueChanged'), self, multipleSelected);
     };
 
-    // function isValueDifferent(selection){
-    //   if(selection.length == 1) return true;
-    //
-    //   var nonEmptyValues = _.map(selection, function (select) {
-    //     return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
-    //   });
-    //   var zipped = _.zip(nonEmptyValues[0], nonEmptyValues[1]);
-    //   var mapped = _.map(zipped, function (zipper) {
-    //       if(!zipper[1] || !zipper[0])
-    //         return true;
-    //       else
-    //         return zipper[0].value !== zipper[1].value;
-    //   });
-    //   return _.includes(mapped, true);
-    // }
-
-    // function getRequiredFields(properties){
-    //   return _.filter(properties, function (property) {
-    //     return (property.publicId === "huoltotie_kayttooikeus") || (property.publicId === "huoltotie_huoltovastuu");
-    //   });
-    // }
-
-    // function checkFormMandatoryFields(formSelection) {
-    //     if (_.isUndefined(formSelection.value)) return true;
-    //     var requiredFields = getRequiredFields(formSelection.value);
-    //     return !_.some(requiredFields, function(fields){ return fields.value === ''; });
-    // }
-
-    // function checkFormsMandatoryFields(formSelections) {
-    //   var mandatorySelected = !_.some(formSelections, function(formSelection){ return !checkFormMandatoryFields(formSelection); });
-    //   return mandatorySelected;
-    // }
-
     this.setAValue = function (value) {
       if (value != selection[0].value) {
         var newGroup = _.assign({}, selection[0], { value: value });
@@ -401,56 +368,11 @@
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
 
-    // this.requiredPropertiesMissing = function (formStructure) {
-    //
-    //   var requiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
-    //
-    //   var assets = this.isSplitOrSeparated() ? _.filter(selection, function(asset){ return asset.value; }) : selection;
-    //
-    //   return !_.every(assets, function(asset){
-    //
-    //     return _.every(requiredFields, function(field){
-    //       if(!asset.value || _.isEmpty(asset.value))
-    //         return false;
-    //
-    //       var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
-    //
-    //       if(!property)
-    //         return false;
-    //
-    //       if(_.isEmpty(property.values))
-    //         return false;
-    //
-    //       return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
-    //     });
-    //   });
-    // };
-    //
-    // this.isSplitOrSeparatedEqual = function(){
-    //   if (_.filter(selection, function(p){return p.value;}).length <= 1)
-    //     return false;
-    //
-    //   return _.every(selection[0].value.properties, function(property){
-    //       var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
-    //       if(!iProperty)
-    //         return false;
-    //
-    //       return _.isEqual(property.values, iProperty.values);
-    //   });
-    // };
-    //
-    // this.hasValidValues = function () {
-    //    return isValid;
-    // };
-    //
-    // this.setValidValues = function (valid) {
-    //   isValid = valid;
-    // };
-
-
     this.isSuggested = function() {
         var  suggestedProp = getProperty('isSuggested');
-      return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp);
+      return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp) ||
+          _.some(selection, function(asset) {
+        return asset.value.isSuggested;});
     };
   };
 })(this);

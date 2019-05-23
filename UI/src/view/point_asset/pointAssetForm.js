@@ -92,9 +92,14 @@ root.PointAssetForm = function() {
       selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
     });
 
-    rootElement.find('#suggested-asset').on('change', function (event) {
+    rootElement.find('.suggested-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.setPropertyByPublicId($('#suggested-asset').attr('name'), +eventTarget.prop('checked'));
+      selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), +eventTarget.prop('checked'));
+    });
+
+    rootElement.find('.editable').not('.suggestion-box').on('change', function() {
+      selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), false);
+      rootElement.find('.suggested-checkbox').prop('checked', false);
     });
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
@@ -144,23 +149,18 @@ root.PointAssetForm = function() {
     return date ? (date + ' / ' + username) : '-';
   };
 
-  this.getPointPropertyValue = function(selectedAsset, publicId) {
-    return _.find(selectedAsset.propertyData, function(asset) { return asset.publicId === publicId; }).values[0].propertyValue;
-  };
-
-  var getSuggestedBoxValue = function(selectedAsset, publicId) {
-    return !!parseInt(me.getPointPropertyValue(selectedAsset, publicId));
+  var getSuggestedBoxValue = function() {
+    return !!parseInt(me.selectedAsset.getByProperty("suggest_box"));
   };
 
   var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
-    var selectedAssetPublicId = _.find(selectedAsset.get().propertyData, function(asset) { return asset.propertyType === "checkbox"; }).publicId;
-    var suggestedBoxValue = getSuggestedBoxValue(selectedAsset.get(), selectedAssetPublicId);
+    var suggestedBoxValue = getSuggestedBoxValue();
     if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset, suggestedBoxValue)) {
       var checkedValue = suggestedBoxValue ? 'checked' : '';
-      return '<div class="form-group editable form-' + me.pointAsset.layerName + '">' +
+      return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
               '<label class="control-label">Vihjetieto</label>' +
               '<p class="form-control-static">' + 'Kylla' + '</p>' +
-              '<input type="checkbox" class="form-control suggested-checkbox" id="suggested-asset" name="' + selectedAssetPublicId + '" ' + checkedValue + '>' +
+              '<input type="checkbox" class="form-control suggested-checkbox" name="suggest_box"' + checkedValue + '>' +
             '</div>';
     } else {
       return '';

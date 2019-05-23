@@ -187,8 +187,8 @@
       manoeuvresCollection.setAdditionalInfo(manoeuvreId, additionalInfo);
     };
 
-    var setSuggestionInfo = function(manoeuvreId, suggestedInfo) {
-      manoeuvresCollection.setSuggestionInfo(manoeuvreId, suggestedInfo);
+    var setSuggestionInfo = function(manoeuvreId, linkId, suggestedInfo) {
+      manoeuvresCollection.setSuggestionInfo(manoeuvreId, linkId, suggestedInfo);
     };
 
     /**

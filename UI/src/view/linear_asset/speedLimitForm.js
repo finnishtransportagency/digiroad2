@@ -33,8 +33,9 @@
             '<label class="control-label">Rajoitus</label>' +
             '<p class="form-control-static">' + ((selectedSpeedLimit.getValue() + ' ' + unit) || 'Tuntematon') + '</p>' +
             '<select class="form-control <%- speedLimitClass %>" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
-            suggestionElement() +
-            '</div>');
+            '</div>' +
+            suggestionElement()
+        );
         return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
       };
       var separateValueElement = singleValueElement("a") + singleValueElement("b");
@@ -46,10 +47,16 @@
               var isSuggested = selectedSpeedLimit.isSuggested();
               var checkedValue = isSuggested ? 'checked' : '';
                 return '' +
-                  '<div class="form-control suggestionCheckBox" style="display: none">' +
-                    '<label class="control-label">Vihjetieto</label>' +
-                    '<input type="checkbox" id="suggestionCheckBox"'  + checkedValue + '>' +
-                  '</div>';
+                    '<div class="form-group suggestion"> ' +
+                      '<div class="form-control-static">' +
+                        '<label class="control-label">Vihjetieto</label>' +
+                        '<p class="form-control-static"> kyllä </p>' +
+                      '</div>' +
+                      '<div class="edit-control-group">' +
+                        '<label class="control-label">Vihjetieto</label>' +
+                        '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
+                      '</div>' +
+                    '</div>';
           } else
               return '';
       }
@@ -153,6 +160,7 @@
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.editable .form-control').prop('disabled', readOnly);
+      rootElement.find('.edit-control-group').toggle(!readOnly);
     };
 
     eventbus.on('speedLimit:selected speedLimit:cancelled', function() {

@@ -49,17 +49,26 @@
       createZoomDependentOneWayRule(15, { stroke: {width: 8 }})
     ];
 
+    var getProperty = function(speedLimit, propertyName) {
+      return _.has(speedLimit, propertyName) ? speedLimit[propertyName] : null;
+    };
+
+    var value = function(speedLimit) {
+      var speedValue = getProperty(speedLimit,'value');
+      return !_.isNull(speedValue) && speedValue.value;
+    };
+
     var speedLimitStyleRules = [
-      new StyleRule().where('value').is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg'}}),
-      new StyleRule().where('value').is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg'}}),
-      new StyleRule().where('value').is(40).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/40.svg'}}),
-      new StyleRule().where('value').is(50).use({ stroke: { color: '#ff0000', fill: '#11bb00'}, icon: {src:  'images/speed-limits/50.svg'}}),
-      new StyleRule().where('value').is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
-      new StyleRule().where('value').is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
-      new StyleRule().where('value').is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
-      new StyleRule().where('value').is(90).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/90.svg'}}),
-      new StyleRule().where('value').is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}}),
-      new StyleRule().where('value').is(120).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/120.svg'}})
+      new StyleRule().where(value).is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg'}}),
+      new StyleRule().where(value).is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg'}}),
+      new StyleRule().where(value).is(40).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/40.svg'}}),
+      new StyleRule().where(value).is(50).use({ stroke: { color: '#ff0000', fill: '#11bb00'}, icon: {src:  'images/speed-limits/50.svg'}}),
+      new StyleRule().where(value).is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
+      new StyleRule().where(value).is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
+      new StyleRule().where(value).is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
+      new StyleRule().where(value).is(90).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/90.svg'}}),
+      new StyleRule().where(value).is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}}),
+      new StyleRule().where(value).is(120).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/120.svg'}})
     ];
 
     var speedLimitFeatureSizeRules = [
@@ -144,7 +153,7 @@
     historyStyle.addRules(oneWayOverlayStyleRules);
 
     var isUnknown = function(speedLimit) {
-      return !_.isNumber(speedLimit.value);
+      return !_.isNumber(speedLimit.value.value);
     };
 
     var lineFeatures = function(speedLimits) {

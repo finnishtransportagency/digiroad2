@@ -539,7 +539,6 @@
       });
 
       eventbus.on('manoeuvre:changed', function() {
-        alert(selectedManoeuvreSource.isDirty());
         rootElement.find('.form-controls button').attr('disabled', false);
       });
 
@@ -663,7 +662,7 @@
                   '<p class="form-control-static"> kyllä </p>' +
                 '</div>' +
                 '<div class="form-group suggestion-box">' +
-                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
+                  '<input type="checkbox" class="suggestionCheckBox linkid=""'  + checkedValue + '>' +
                 '</div>' +
               '</div>';
     } else

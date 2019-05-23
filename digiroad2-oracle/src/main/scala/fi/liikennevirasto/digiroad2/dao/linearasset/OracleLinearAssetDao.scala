@@ -29,6 +29,7 @@ case class AssetLink(id: Long, linkId: Long)
 
 
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
+  implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger = LoggerFactory.getLogger(getClass)
 
   /**
@@ -793,16 +794,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateProhibitionValue(id: Long, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
+  def updateProhibitionValue(id: Long, typeId: Int, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
     Queries.updateAssetModified(id, username).first
 
-    val propertyId = Queries.getPropertyIdByPublicId("suggest_box")
+    val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first
     val currentIdsAndValue = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(id, propertyId).list
-    val oldValue = if(currentIdsAndValue.head._2 == 1) true else false
 
-    if(value.isSuggested != oldValue) {
+    if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
       Queries.deleteMultipleChoiceValue(currentIdsAndValue.head._1)
-      insertMultipleChoiceValue(id, propertyId, if (value.isSuggested) 1 else 0).execute
+      insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
     }
 
     val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
@@ -812,7 +812,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
     }
 
-    insertProhibitionValue(id, value)
+    insertProhibitionValue(id, typeId, value)
     optMeasure match {
       case None => None
       case Some(measure) => updateMValues(id, (measure.startMeasure, measure.endMeasure))
@@ -830,9 +830,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Saves prohibition value to db. Used by OracleLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
     */
-  def insertProhibitionValue(assetId: Long, value: Prohibitions): Unit = {
-    val propertyId = Queries.getPropertyIdByPublicId("suggest_box")
-    insertMultipleChoiceValue(assetId, propertyId, if(value.isSuggested) 1 else 0).execute
+  def insertProhibitionValue(assetId: Long, typeId: Int, value: Prohibitions): Unit = {
+    val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first
+    Queries.insertMultipleChoiceValue(assetId, propertyId, if(value.isSuggested) 1 else 0).execute
 
     value.prohibitions.foreach { prohibition: ProhibitionValue =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue

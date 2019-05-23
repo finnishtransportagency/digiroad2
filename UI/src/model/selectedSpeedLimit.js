@@ -28,7 +28,7 @@
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimitValue = self.getValue();
+      originalSpeedLimitValue = self.getValue().value;
       collection.setSelection(self);
       eventbus.trigger('speedLimit:selected', self);
     };
@@ -98,7 +98,7 @@
           return { ids: _.map(selection, 'id') };
         }
       };
-      var payload = _.merge({value: self.getValue()}, payloadContents());
+      var payload = _.merge({value: {isSuggested: self.getSuggestionValue() ,value:self.getValue()}}, payloadContents());
 
       backend.updateSpeedLimits(payload, function() {
         dirty = false;
@@ -200,6 +200,11 @@
     this.getValue = function() {
       var speedValue = getProperty('value');
       return !_.isNull(speedValue) && speedValue.value;
+    };
+
+    this.getSuggestionValue = function() {
+      var speedValue = getProperty('value');
+      return !_.isNull(speedValue) && speedValue.isSuggested;
     };
 
     this.getModifiedBy = function() {

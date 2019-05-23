@@ -9,9 +9,7 @@
     };
 
     this.handleSuggestedAsset = function(selectedAsset) {
-      return (_.isEmpty(selectedAsset.getId()) && me.isOperator()) || (selectedAsset.get().isSuggested && (me.isOperator() || me.isMunicipalityMaintainer()));
+      return (_.isNull(selectedAsset.getId()) && me.isOperator()) || (selectedAsset.isSuggested() && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
-
-
   };
 })(this);

@@ -283,7 +283,6 @@
     };
 
     var setSuggestionInfo = function(manoeuvreId, suggestionInfo) {
-
       if(!manoeuvreId) {
         addedManoeuvre.isSuggested = suggestionInfo;
       }
@@ -294,6 +293,8 @@
         dirty = true;
         eventbus.trigger('manoeuvre:changed', suggestionInfo);
       }
+
+     eventbus.trigger('manoeuvre:suggestion');
     };
 
     /**
