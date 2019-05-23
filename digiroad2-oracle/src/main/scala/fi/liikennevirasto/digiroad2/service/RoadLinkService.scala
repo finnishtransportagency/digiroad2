@@ -285,7 +285,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return VVHRoadLinks
     */
-  def fetchVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else vvhClient.roadLinkData.fetchByLinkIds(linkIds) }
     else Seq.empty[VVHRoadlink]
   }
@@ -486,6 +486,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
     else enrichRoadLinksFromVVH(links ++ complementaryLinks)
+  }
+
+
+  def getRoadLinksChangeInfo(linkIds: Set[Long], attributeName: String, newTransaction:Boolean = true): Seq[ChangeInfo] = {
+    val fut = for{
+      f1Result <- vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds, attributeName)
+    } yield (f1Result)
+
+    Await.result(fut, Duration.Inf)
+
   }
 
   def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {

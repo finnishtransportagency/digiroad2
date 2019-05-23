@@ -1,6 +1,8 @@
+
 package fi.liikennevirasto.digiroad2.util
 
 import java.text.SimpleDateFormat
+import java.util.Properties
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{AnimalWarningsType, _}
@@ -259,7 +261,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }
-
   test("test createPoint main method") {
     val pointImporterOperations = new TestPointAssetTierekisteriImporterOperations()
 
@@ -1149,7 +1150,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockMunicipalityDao.getMunicipalities).thenReturn(Seq(235))
       when(mockRoadAddressService.getAllRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockTRSpeedLimitAssetClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))  /*needed for update*/
+      when(mockTRSpeedLimitAssetClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))  //needed for update
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
       when(mockRoadAddressService.getAllByRoadNumber(any[Long])).thenReturn(Seq(ra))

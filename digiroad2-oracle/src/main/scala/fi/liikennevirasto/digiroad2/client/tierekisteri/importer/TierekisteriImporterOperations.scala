@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, TierekisteriAssetDataClient}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHHistoryRoadLink, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHHistoryRoadLink, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
@@ -399,27 +399,64 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
 
   protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 
+  def getChangeInfoRelationIds(historicMappedRoadLinksIds: Set[Long], changeInfoRelationIds: Seq[(Long, Long)]): Seq[(Long, Long)] = {
+    val changeInfos = roadLinkService.getRoadLinksChangeInfo(historicMappedRoadLinksIds, "OLD_ID")
+    val lastChangeInfos = changeInfos.groupBy(_.oldId).mapValues(_.sortBy(_.vvhTimeStamp).reverse.head).values
+    val lastChangeInfo = lastChangeInfos.flatMap {x => changeInfos.groupBy(a => (a.oldId, a.vvhTimeStamp))(x.oldId, x.vvhTimeStamp)}.filterNot(change => change.newId == change.oldId || change.newId.isEmpty)
+
+    lastChangeInfo match {
+      case Nil => changeInfoRelationIds
+      case _ =>
+        val mappedLastChangeInfo = lastChangeInfo.map(x => (x.oldId.getOrElse(0), x.newId.getOrElse(0))).filterNot(_._2 == 0).toSet
+        val changedIds = changeInfoRelationIds.map { a =>
+          if(mappedLastChangeInfo.map(_._1).contains(a._2)) {
+            (a._1, mappedLastChangeInfo.filter(_._1 == a._2).head._2.asInstanceOf[Long])
+          } else {
+            (a._1, a._2)
+          }
+        }
+        getChangeInfoRelationIds(lastChangeInfo.map(_.newId.get).toSet, changedIds)
+    }
+  }
+
   protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[VVHHistoryRoadLink]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
-//    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
+    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
     val historicRoadAddressLink = filterRoadAddressBySectionHistoric(existingRoadAddresses, section, historicMappedRoadLinks)
 //    val roadAddressLink = filterHistoricRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks, historicMappedRoadLinks)
 
-//    roadAddressLink
-//      .foreach { case (ra, roadlink) =>
-//        calculateMeasures(ra, section).foreach {
-//          measures =>
-//            if(measures.endMeasure-measures.startMeasure > 0.01 )
-//              createLinearAsset(roadlink.get, ra, section, measures, trAssetData)
-//        }
-//      }
-    historicRoadAddressLink
+    val changeInfos = roadLinkService.getRoadLinksChangeInfo(historicMappedRoadLinks.map(_.linkId).toSet, "OLD_ID")
+    val lastChangeInfos = changeInfos.groupBy(_.oldId).mapValues(_.sortBy(_.vvhTimeStamp).reverse.head).values
+    val lastChangeInfo = lastChangeInfos.flatMap {x => changeInfos.groupBy(a => (a.oldId, a.vvhTimeStamp))(x.oldId, x.vvhTimeStamp)}.toSet
+
+    val changeInfoRelationIds = lastChangeInfo.flatMap(x =>
+      (x.oldId, x.newId) match {
+        case (Some(oldId), Some(newId)) => Some(oldId, newId)
+        case _=> None
+      })
+    val changeInfoIdsRelation = getChangeInfoRelationIds(lastChangeInfo.flatMap(_.newId), changeInfoRelationIds.toSeq).groupBy(_._1)
+
+    roadAddressLink
       .foreach { case (ra, roadlink) =>
         calculateMeasures(ra, section).foreach {
           measures =>
             if(measures.endMeasure-measures.startMeasure > 0.01 )
-              println(s"roadNumber: ${section.roadNumber}; ${section.roadPartNumber}; ${section.startAddressMValue}; ${section.endAddressMValue}; ${ra.linkId}")
+              createLinearAsset(roadlink.get, ra, section, measures, trAssetData)
+        }
+      }
+
+    historicRoadAddressLink
+      .foreach { case (ra, roadlink) =>
+        calculateMeasures(ra, section).foreach {
+          measures =>
+            if(measures.endMeasure-measures.startMeasure > 0.01 ) {
+              val newIds = changeInfoIdsRelation.filter(_._1 == roadlink.get.linkId)
+              newIds.head._2.foreach { x =>
+                val newRoadLink = roadlink.map { rl => rl.copy(linkId = x._2) }
+                createLinearAsset(newRoadLink.get, ra, section, measures, trAssetData)
+              }
+            }
         }
       }
   }
@@ -429,30 +466,63 @@ trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporter
 
   protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: RoadLinkLike, mValue: Double, trAssetData: TierekisteriAssetData)
 
+  def getChangeInfoRelationIds(historicMappedRoadLinksIds: Set[Long], changeInfoRelationIds: Seq[(Long, Long)]): Seq[(Long, Long)] = {
+    val changeInfos = roadLinkService.getRoadLinksChangeInfo(historicMappedRoadLinksIds, "OLD_ID")
+    val lastChangeInfos = changeInfos.groupBy(_.oldId).mapValues(_.sortBy(_.vvhTimeStamp).reverse.head).values
+    val lastChangeInfo = lastChangeInfos.flatMap {x => changeInfos.groupBy(a => (a.oldId, a.vvhTimeStamp))(x.oldId, x.vvhTimeStamp)}.filterNot(change => change.newId == change.oldId || change.newId.isEmpty)
+
+    lastChangeInfo match {
+      case Nil => changeInfoRelationIds
+      case _ =>
+        val mappedLastChangeInfo = lastChangeInfo.map(x => (x.oldId.getOrElse(0), x.newId.getOrElse(0))).filterNot(_._2 == 0).toSet
+        val changedIds = changeInfoRelationIds.map { a =>
+          if(mappedLastChangeInfo.map(_._1).contains(a._2)) {
+            (a._1, mappedLastChangeInfo.filter(_._1 == a._2).head._2.asInstanceOf[Long])
+          } else {
+            (a._1, a._2)
+          }
+        }
+        getChangeInfoRelationIds(lastChangeInfo.map(_.newId.get).toSet, changedIds)
+    }
+  }
+
   protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[VVHHistoryRoadLink]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
     //Returns all the match Viite road address for the given section
-//    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
-//    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
+    val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
     val historicRoadAddressLink = filterRoadAddressBySectionHistoric(existingRoadAddresses, section, historicMappedRoadLinks)
 //    val roadAddressLink = filterHistoricRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks, historicMappedRoadLinks)
 
+    val changeInfos = roadLinkService.getRoadLinksChangeInfo(historicMappedRoadLinks.map(_.linkId).toSet, "OLD_ID")
+    val lastChangeInfos = changeInfos.groupBy(_.oldId).mapValues(_.sortBy(_.vvhTimeStamp).reverse.head).values
+    val lastChangeInfo = lastChangeInfos.flatMap {x => changeInfos.groupBy(a => (a.oldId, a.vvhTimeStamp))(x.oldId, x.vvhTimeStamp)}.toSet
+
+    val changeInfoRelationIds = lastChangeInfo.flatMap(x =>
+      (x.oldId, x.newId) match {
+        case (Some(oldId), Some(newId)) => Some(oldId, newId)
+        case _=> None
+      })
+    val changeInfoIdsRelation = getChangeInfoRelationIds(lastChangeInfo.flatMap(_.newId), changeInfoRelationIds.toSeq).groupBy(_._1)
+
+    roadAddressLink
+      .foreach { case (ra, roadlink) =>
+        ra.addressMValueToLRM(section.startAddressMValue).foreach{
+          mValue =>
+            createPointAsset(ra, roadlink.get, mValue, trAssetData)
+        }
+      }
 
     historicRoadAddressLink
       .foreach { case (ra, roadlink) =>
-        calculateMeasures(ra, section).foreach {
-          measures =>
-            if(measures.endMeasure-measures.startMeasure > 0.01 )
-              println(s"roadNumber: ${section.roadNumber}; ${section.roadPartNumber}; ${section.startAddressMValue}; ${section.endAddressMValue}; ${ra.linkId}")
+        ra.addressMValueToLRM(section.startAddressMValue).foreach{
+          mValue =>
+            val newIds = changeInfoIdsRelation.filter(_._1 == roadlink.get.linkId)
+            newIds.head._2.foreach { x =>
+              val newRoadLink = roadlink.map { rl => rl.copy(linkId = x._2) }
+              createPointAsset(ra, newRoadLink.get, mValue, trAssetData)
+            }
         }
       }
-//    roadAddressLink
-//      .foreach { case (ra, roadlink) =>
-//        ra.addressMValueToLRM(section.startAddressMValue).foreach{
-//          mValue =>
-//            createPointAsset(ra, roadlink.get, mValue, trAssetData)
-//        }
-//      }
   }
 }

@@ -3,12 +3,12 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.RoadAddress
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
+import fi.liikennevirasto.digiroad2._
 import org.apache.http.conn.HttpHostConnectException
-
 import org.slf4j.LoggerFactory
 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
@@ -134,15 +134,34 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param pieceWiseLinearAssets The linear assets sequence
     * @return
     */
-  def linearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] ={
+  def getLastChanges(linkIds: Set[Long], changeInfos: Set[ChangeInfo], roadLinkService: RoadLinkService): Set[ChangeInfo]  = {
+    val changeInfo = roadLinkService.getRoadLinksChangeInfo(linkIds, "NEW_ID").filterNot(x => x.oldId.isEmpty)
+    val leftIds = linkIds.filterNot(x => changeInfo.exists(_.newId.get == x))
+    leftIds.toSeq match {
+      case Nil => changeInfos ++ changeInfo
+      case _ => getLastChanges(leftIds, changeInfos ++ changeInfo, roadLinkService)
+    }
+  }
+
+  def linearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]], roadLinkService: RoadLinkService): Seq[Seq[PieceWiseLinearAsset]] ={
     try{
-      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      val mappedPieceWiseLinearAssets = pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet
+      val roadAddresses = getAllByLinkIds(mappedPieceWiseLinearAssets.toSeq)
+      val changedInfoLinks = mappedPieceWiseLinearAssets.filterNot(x => roadAddresses.exists(_.linkId == x) ||
+        (getAllByLinkIds(Seq(x)).isEmpty && roadLinkService.getRoadLinksChangeInfo(Set(x), "NEW_ID").forall(x => x.oldId == x.newId)))
+
+      val lastChangedInfos = getLastChanges(changedInfoLinks, Set(), roadLinkService)
+      val mappedLastChangedInfos = getAllByLinkIds(lastChangedInfos.map(_.oldId.get).toSeq) ++ roadAddresses
+      val addressData = groupRoadAddress(mappedLastChangedInfos).map(a => (a.linkId, a)).toMap
+
       pieceWiseLinearAssets.map(
-        _.map(pwa =>
-          if (addressData.contains(pwa.linkId))
-            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(pwa.linkId)))
+        _.map(pwa => {
+          val linkId = if(lastChangedInfos.exists(_.newId.get == pwa.linkId)) lastChangedInfos.filter(_.newId.get == pwa.linkId).head.oldId.get else pwa.linkId
+          if (addressData.contains(linkId))
+            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributes(addressData(linkId)))
           else
             pwa
+        }
         ))
     } catch {
       case hhce: HttpHostConnectException =>

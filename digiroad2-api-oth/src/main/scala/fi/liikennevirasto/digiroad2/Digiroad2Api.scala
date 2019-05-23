@@ -816,7 +816,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean)
-            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
+            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets, roadLinkService))
           else
             mapLinearAssets(assets)
       }
@@ -841,7 +841,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean)
-            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
+            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets, roadLinkService))
           else
             mapLinearAssets(assets)
       }

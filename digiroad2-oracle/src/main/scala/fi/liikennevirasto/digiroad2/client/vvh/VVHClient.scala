@@ -952,8 +952,8 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     Future(queryByPolygons(polygon))
   }
 
-  def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] = {
-    Future(fetchByLinkIds(linkIds))
+  def fetchByLinkIdsF(linkIds: Set[Long], attributeName: String): Future[Seq[ChangeInfo]] = {
+    Future(fetchByLinkIds(linkIds, attributeName))
   }
 
   /**
@@ -962,15 +962,15 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     * @param linkIds Link ids to check as sources
     * @return ChangeInfo for given links
     */
-  def fetchByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
-    queryByLinkIds(linkIds)
+  def fetchByLinkIds(linkIds: Set[Long], attributeName: String): Seq[ChangeInfo] = {
+    queryByLinkIds(linkIds, attributeName)
   }
 
-  protected def queryByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+  protected def queryByLinkIds(linkIds: Set[Long], attributeName: String): Seq[ChangeInfo] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(withFilter("OLD_ID", ids))
+      val definition = layerDefinition(withFilter(attributeName, ids))
       val url = serviceUrl(definition, queryParameters(false))
 
       fetchVVHFeatures(url) match {

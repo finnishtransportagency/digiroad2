@@ -81,7 +81,7 @@ class VVHClientSpec extends FunSuite with Matchers{
 
   test("Test Change Info fetch by LinkId") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val result = vvhClient.roadLinkChangeInfo.fetchByLinkIds(Set(5176799))
+    val result = vvhClient.roadLinkChangeInfo.fetchByLinkIds(Set(5176799), "OLD_ID")
     result.nonEmpty should be (true)
   }
 }
