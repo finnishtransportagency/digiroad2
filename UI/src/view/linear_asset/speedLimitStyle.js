@@ -58,6 +58,11 @@
       return !_.isNull(speedValue) && speedValue.value;
     };
 
+    var isSuggested = function(speedLimit) {
+      var speedValue = getProperty(speedLimit,'value');
+      return !_.isNull(speedValue) && speedValue.isSuggested;
+    };
+
     var speedLimitStyleRules = [
       new StyleRule().where(value).is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg'}}),
       new StyleRule().where(value).is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg'}}),
@@ -88,6 +93,9 @@
       new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
+    var questionMarkerStyleRules = [
+      new StyleRule().where(isSuggested).is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.6, anchor : [0.5, 0]}})
+    ];
     var browseStyle = new StyleRuleProvider({});
     browseStyle.addRules(speedLimitStyleRules);
     browseStyle.addRules(speedLimitFeatureSizeRules);
@@ -95,6 +103,7 @@
     browseStyle.addRules(overlayStyleRules);
     browseStyle.addRules(validityDirectionStyleRules);
     browseStyle.addRules(oneWayOverlayStyleRules);
+    browseStyle.addRules(questionMarkerStyleRules);
 
     var selectionStyle = new StyleRuleProvider({ stroke: {opacity: 0.15}, graphic: {opacity: 0.3}});
     selectionStyle.addRules(speedLimitStyleRules);
@@ -104,6 +113,7 @@
     selectionStyle.addRules(validityDirectionStyleRules);
     selectionStyle.addRules(oneWayOverlayStyleRules);
     selectionStyle.addRules([unknownLimitStyleRule]);
+    selectionStyle.addRules(questionMarkerStyleRules);
 
     //History rules
     var typeSpecificStyleRulesHistory = [
@@ -153,7 +163,7 @@
     historyStyle.addRules(oneWayOverlayStyleRules);
 
     var isUnknown = function(speedLimit) {
-      return !_.isNumber(speedLimit.value.value);
+      return _.isUndefined(speedLimit.value) || !_.isNumber(speedLimit.value.value);
     };
 
     var lineFeatures = function(speedLimits) {

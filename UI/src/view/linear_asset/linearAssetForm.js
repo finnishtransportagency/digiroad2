@@ -84,7 +84,7 @@
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
     }
 
-    eventbus.on(eventCategory + ':selected', function(event){
+    eventbus.on(eventCategory + ':selected', function(){
       handleSuggestionBox();
     });
 

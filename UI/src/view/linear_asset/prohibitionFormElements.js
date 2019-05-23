@@ -28,8 +28,8 @@
           sideCodeMarker(sideCode) +
           assetDisplayElement(prohibitions) +
           assetEditElement(prohibitions) +
-          suggestionElement(isSuggested) +
-          '</div>';
+          '</div>' +
+          suggestionElement(isSuggested);
       }
 
       function assetDisplayElement(prohibitions) {
@@ -50,19 +50,14 @@
           '</ul>';
       }
 
-      function suggestionElement(isSuggested) {
+      function suggestionElement(isSuggested, sideCode) {
         if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
           var checkedValue = isSuggested ? 'checked' : '';
           return ''+
-              '<div class="suggestion"> ' +
-                '<div class="form-control-static">' +
+              '<div class="form-group editable ' +  className + ' suggestion">' +
                   '<label class="control-label">Vihjetieto</label>' +
                   '<p class="form-control-static"> kyllä </p>' +
-                '</div>' +
-                '<div class="edit-control-group">' +
-                  '<label class="control-label">Vihjetieto</label>' +
-                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
-                '</div>' +
+                  '<input type="checkbox" class="edit-control-group suggestionCheckBox"'  + checkedValue + '>' +
               '</div>';
         } else
           return '';

@@ -189,6 +189,11 @@
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
+    var getBProperty = function(propertyName) {
+      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
+    };
+
+
     this.getSpeedLimit = function(id){
       return collection.getByLinkId(id);
     };
@@ -199,6 +204,11 @@
 
     this.getValue = function() {
       var speedValue = getProperty('value');
+      return !_.isNull(speedValue) && speedValue.value;
+    };
+
+    this.getBValue = function() {
+      var speedValue = getBProperty('value');
       return !_.isNull(speedValue) && speedValue.value;
     };
 

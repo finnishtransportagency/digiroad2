@@ -52,6 +52,10 @@
     var showAndHideRule = function (authorizationPolicy, selectedLinearAsset, value, layerMode) {
           return authorizationPolicy.handleSuggestedAsset(selectedLinearAsset, value, layerMode);
     };
+	
+	  var isUnSet = function (selectedLinearAsset) {
+	  	return !_.isNull(_.some(selectedLinearAsset.get(), function (asset) {return asset.id;}))
+	  };
 
     var linearAssetSpecs = [
       {
@@ -84,7 +88,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -626,16 +630,8 @@
                           ], weight: 1},
           {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", defaultValue: "1", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
           {label: "Tiehoitokunta", type: 'text', publicId: "huoltotie_tiehoitokunta", weight: 3},
-          {label: "Yhteyshenkilö", type: 'header', header: 2, weight: 3},
-          {label: "Nimi", type: 'text', publicId: "huoltotie_nimi", weight: 4},
-          {label: "Osoite", type: 'text', publicId: "huoltotie_osoite", weight: 5},
-          {label: "Postinumero", type: 'text', publicId: "huoltotie_postinumero", weight: 6},
-          {label: "Postitoimipaikka", type: 'text', publicId: "huoltotie_postitoimipaikka", weight: 7},
-          {label: "Puhelin 1", type: 'text', publicId: "huoltotie_puh1", weight: 8},
-          {label: "Puhelin 2", type: 'text', publicId: "huoltotie_puh2", weight: 9},
-          {label: "Lisätietoa", type: 'text', publicId: "huoltotie_lisatieto", weight: 10},
           {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 11},
-          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12, showAndHide: showAndHideRule }]
+          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12, showAndHide: showAndHideRule}]
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),

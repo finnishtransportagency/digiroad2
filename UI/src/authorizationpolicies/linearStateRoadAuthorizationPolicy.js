@@ -12,7 +12,7 @@
       if (layerMode === 'readOnly')
         return !!parseInt(value);
       else
-        return ((_.isUndefined(_.head(selectedAsset.get()).id) && me.isOperator()) || (!!parseInt(value) && (me.isOperator() || me.isMunicipalityMaintainer())));
+        return !selectedAsset.isSplitOrSeparated() && (_.isNull((selectedAsset.getId()) && me.isOperator()) || (!!parseInt(value) && (me.isOperator() || me.isMunicipalityMaintainer())));
     };
   };
 })(this);

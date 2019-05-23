@@ -47,15 +47,10 @@
               var isSuggested = selectedSpeedLimit.isSuggested();
               var checkedValue = isSuggested ? 'checked' : '';
                 return '' +
-                    '<div class="form-group suggestion"> ' +
-                      '<div class="form-control-static">' +
+                    '<div class="form-group editable suggestion"> ' +
                         '<label class="control-label">Vihjetieto</label>' +
                         '<p class="form-control-static"> kyllä </p>' +
-                      '</div>' +
-                      '<div class="edit-control-group">' +
-                        '<label class="control-label">Vihjetieto</label>' +
-                        '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
-                      '</div>' +
+                        '<input type="checkbox" class="form-control suggestionCheckBox"'  + checkedValue + '>' +
                     '</div>';
           } else
               return '';
@@ -161,7 +156,35 @@
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.editable .form-control').prop('disabled', readOnly);
       rootElement.find('.edit-control-group').toggle(!readOnly);
+      handleSuggestionBox();
     };
+
+    function handleSuggestionBox() {
+      if((applicationModel.isReadOnly() && (_.isNull(selectedSpeedLimit.getId()) || !selectedSpeedLimit.isSuggested()))) {
+        rootElement.find('.suggestion').hide();
+      } else if(!_.isEmpty(selectedSpeedLimit.get()) && selectedSpeedLimit.isSplitOrSeparated()) {
+        rootElement.find('.suggestion').hide();
+      } else
+        rootElement.find('.suggestion').show();
+    }
+
+    eventbus.on('speedLimit:selected', function(){
+      handleSuggestionBox();
+    });
+
+    $(rootElement).one('click','.speed-limit-a, .speed-limit-b', function () {
+      $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+      selectedSpeedLimit.setValue( {isSuggested: false, value: selectedSpeedLimit.getBValue().value});
+      selectedSpeedLimit.setValue( {isSuggested: false, value: selectedSpeedLimit.getValue().value});
+    });
+
+    $(rootElement).one('change','.speed-limit', function () {
+      if(!_.isNull(selectedSpeedLimit.getId())) {
+        $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+        $(rootElement).find('.suggestion').hide();
+      }
+    });
+
 
     eventbus.on('speedLimit:selected speedLimit:cancelled', function() {
       rootElement.find('#feature-attributes-header').html(header(selectedSpeedLimit));
@@ -172,8 +195,8 @@
         return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
       };
 
-      rootElement.find('select.speed-limit, #suggestionCheckBox').change(function(event) {
-        var checkBoxValue = rootElement.find('#suggestionCheckBox').prop('checked');
+      rootElement.find('select.speed-limit, .suggestionCheckBox').change(function(event) {
+        var checkBoxValue = rootElement.find('.suggestionCheckBox').prop('checked');
         var speedLimitValue = parseInt(rootElement.find('select.speed-limit').val(),10);
         selectedSpeedLimit.setValue({isSuggested: checkBoxValue ? checkBoxValue : false, value: speedLimitValue});
       });
