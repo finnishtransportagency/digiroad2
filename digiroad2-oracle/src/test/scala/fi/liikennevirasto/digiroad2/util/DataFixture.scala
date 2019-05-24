@@ -1461,6 +1461,8 @@ object DataFixture {
         }
       }
       additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
+        //this code is commented until final OK is given by the client to delete additional signs. improvements to this batch were made in DROTH-1917
+        //uncomment to perform one time batch in which additional panel properties are copied to main sign and then deleted.
 //        trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
         println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
       }
