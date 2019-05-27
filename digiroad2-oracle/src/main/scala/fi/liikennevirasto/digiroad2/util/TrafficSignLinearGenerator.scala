@@ -472,7 +472,7 @@ trait TrafficSignLinearGenerator {
       findNextEndAssets(segments, baseSegment)
     }.distinct
 
-    segments.filterNot(seg => endSegments.exists(endSeg => seg.startMeasure == endSeg.startMeasure && seg.endMeasure == endSeg.endMeasure && seg.roadLink.linkId == endSeg.roadLink.linkId)) ++ endSegments
+    segments.filterNot(seg => endSegments.exists(endSeg => seg.startMeasure == endSeg.startMeasure && seg.endMeasure == endSeg.endMeasure && seg.roadLink.linkId == endSeg.roadLink.linkId)) ++ endSegments.filter(_.sideCode == BothDirections)
   }
 
   def convertOneSideCode(segments: Seq[TrafficSignToLinear]): Seq[TrafficSignToLinear] = {
