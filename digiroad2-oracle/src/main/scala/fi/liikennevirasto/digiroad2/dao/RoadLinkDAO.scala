@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao.{column, table}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
+import fi.liikennevirasto.digiroad2.util.Track
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -294,6 +295,24 @@ object RoadLinkDAO{
 
     override def deleteValues(linkId: Long) = {
       throw new UnsupportedOperationException("Administrative Class keeps history, ins't suppost to be deleted any row from db")
+    }
+  }
+
+  case object TempRoadAddressesInfo {
+
+    def getByLinkId(linkIds: Set[Long]): Seq[RoadAddressTEMP] = {
+      val resultx = sql"""select link_Id, road_number, road_part, track_code, start_address_m, end_address_m  from temp_road_address_info where link_id in (#${linkIds.mkString(",")})"""
+        .as[(Long, Long, Long, Int, Long, Long)].list
+
+        resultx.map { case (linkId, roadNumber, roadPart, trackCode, startAddressM, endAddressM) =>
+          RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM)
+        }
+    }
+
+    def insertTempInfo(roadAddressTemp: RoadAddressTEMP, username: String): Unit = {
+      sqlu"""insert into temp_road_address_info (id, link_Id, road_number, road_part, track_code, start_address_m, end_address_m, created_by )
+             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${roadAddressTemp.track.value}, ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM}, $username
+              from dual""".execute
     }
   }
 

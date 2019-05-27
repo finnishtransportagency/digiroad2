@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, 
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressTEMP, RoadLinkDAO, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
@@ -150,6 +150,19 @@ trait TierekisteriImporterOperations {
     addresses.map(ra => (ra, mappedRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
+  protected def filterRoadAddressBySectionHistoric(roadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], section: AddressSection, mappedRoadLinks: Seq[RoadAddressTEMP]) = {
+    def filterAddressMeasures(ra: ViiteRoadAddress) = {
+      section.endAddressMValue match {
+        case Some(endAddrM) => ra.startAddrMValue <= endAddrM && ra.endAddrMValue >= section.startAddressMValue
+        case _ => ra.endAddrMValue >= section.startAddressMValue
+      }
+    }
+
+    val addresses = roadAddresses.getOrElse((section.roadNumber, section.roadPartNumber, section.track), Seq()).filter(ra => filterAddressMeasures(ra))
+
+    addresses.map(ra => (ra, mappedRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
+  }
+
   protected def filterViiteRoadAddress(roadLink: VVHRoadlink): Boolean = {
     true
   }
@@ -273,7 +286,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
     trAsset.flatMap(getRoadAddressSections)
   }
 
-  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit
+  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], vkmMappedRoadLinks: Seq[RoadAddressTEMP] = Seq()): Unit
 
 
   def expireAssets() : Unit = {
@@ -304,13 +317,19 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
+        val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+
+        val historicRoadLinksIds = roadAddresses.filterNot(f => mappedRoadLinks.map(_.linkId).contains(f.linkId)).map(_.linkId).toSet
+        val vkmHistoryRoadLinks = RoadLinkDAO.TempRoadAddressesInfo.getByLinkId(historicRoadLinksIds)
+        val finalMappedRoadLinks = mappedRoadLinks ++ roadLinkService.fetchVVHRoadlinks(vkmHistoryRoadLinks.map(ra => ra.linkId).toSet)
+
+
 
         //For each section creates a new OTH asset
         trAddressSections.foreach {
           case (section, trAssetData) =>
             withDynTransaction {
-              createAsset(section, trAssetData, mappedRoadAddresses, mappedRoadLinks)
+              createAsset(section, trAssetData, mappedRoadAddresses, finalMappedRoadLinks, vkmHistoryRoadLinks)
             }
         }
     }
@@ -345,7 +364,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
                 val trAddressSections = getAllTierekisteriAddressSections(roadNumber, roadPart)
                 trAddressSections.foreach {
                   case (section, trAssetData) =>
-                    createAsset(section, trAssetData, mappedChangedRoadAddresses, mappedRoadLinks)
+//                    createAsset(section, trAssetData, mappedChangedRoadAddresses, mappedRoadLinks)
                 }
             }
           }

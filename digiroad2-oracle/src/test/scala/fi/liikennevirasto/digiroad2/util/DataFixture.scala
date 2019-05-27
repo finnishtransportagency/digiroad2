@@ -296,6 +296,54 @@ object DataFixture {
     println()
   }
 
+  def ResolvingFrozenLinks(): Unit = {
+    println("\nRefreshing information on municipality verification")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = Seq(992)/*OracleDatabase.withDynSession { Queries.getMunicipalities  }*/
+
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Working on municipality : $municipality")
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
+
+        val allRoadLinks = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
+        val frozenRoadLinks = roadLinks.filterNot(road => allRoadLinks.map(_.linkId).contains(road.linkId))
+
+        frozenRoadLinks.foreach { frozen =>
+          val (first , last) = GeometryUtils.geometryEndpoints(frozen.geometry)
+
+          println(s"first ${first.x} ${first.y} last ${last.x} ${last.y}")
+
+          val address =
+            try {
+              Some(geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last)))
+            } catch {
+              case ex: Exception => None
+            }
+
+
+          if (address.isEmpty || (address.nonEmpty && address.get.size != 2))
+            println("problems in wonderland")
+          else {
+            val addresses = address.get.groupBy(x => (x.road, x.roadPart, x.track, x.municipalityCode))
+            if(addresses.keys.size > 1) println(s" ${frozen.linkId} ${addresses.mapValues(_.mkString(","))} ")
+              val orderedAddress = address.get.sortBy(_.addrM)
+              RoadLinkDAO.TempRoadAddressesInfo.insertTempInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, orderedAddress.head.track, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
+              println(s"linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${orderedAddress.head.track}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
+
+          }
+        }
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def generateDroppedAssetsCsv(): Unit = {
     println("\nGenerating list of linear assets outside geometry")
     println(DateTime.now())
@@ -1832,6 +1880,8 @@ object DataFixture {
         removeUnnecessaryUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
+      case Some("xpto") =>
+        ResolvingFrozenLinks()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
