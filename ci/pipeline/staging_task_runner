@@ -1,0 +1,132 @@
+import java.net.URI
+
+pipeline {
+    agent any
+    parameters {
+
+        choice(name: 'TASK', choices: [
+                                        'check_TR_bus_stops_without_OTH_LiviId',
+    								    'set_TR_bus_stops_without_OTH_LiviId',
+        							    'fill_lane_amounts_in_missing_road_links',
+        								'check_bus_stop_matching_between_OTH_TR',
+        								'import_all_trafficVolume_from_TR_to_OTH',
+        								'import_all_litRoad_from_TR_to_OTH',
+        								'import_all_trafficSigns_from_TR_to_OTH',
+        								'import_all_roadWidth_from_TR_to_OTH',
+        								'update_roadWidth_from_TR_to_OTH',
+        								'update_litRoad_from_TR_to_OTH',
+        								'import_all_speedLimits_from_TR_to_OTH',
+        								'import_all_pavedRoad_from_TR_to_OTH',
+        								'import_all_massTransitLane_from_TR_to_OTH',
+        								'import_all_damagedByThaw_from_TR_to_OTH',
+        								'import_all_europeanRoad_from_TR_to_OTH',
+        								'update_pavedRoad_from_TR_to_OTH',
+        								'update_massTransitLane_from_TR_to_OTH',
+        								'update_damagedByThaw_from_TR_to_OTH',
+        								'update_europeanRoad_from_TR_to_OTH',
+        								'update_areas_on_asset',
+        								'update_OTH_BS_with_TR_info',
+        								'import_speed_limit_asset_from_TR_to_OTH',
+        								'fill_roadWidth_in_road_links',
+        								'verify_inaccurate_speed_limit_assets',
+        								'update_traffic_direction_on_roundabouts',
+        								'update_information_source_on_existing_assets',
+        								'import_municipality_codes',
+        								'update_municipalities',
+        								'update_information_source_on_paved_road_assets',
+        								'remove_existing_trafficSigns_duplicates',
+        								'create_manoeuvres_using_traffic_signs',
+        								'update_floating_stops_on_terminated_roads',
+        								'update_private_roads',
+        								'add_geometry_to_linear_assets',
+        								'merge_additional_panels_to_trafficSigns',
+        								'traffic_sign_extract',
+        								'remove_unnecessary_unknown_speedLimits',
+        								'list_incorrect_SpeedLimits_created'
+                                        ])
+
+        choice(name: 'TRAFFICSIGNGROUP', choices: [
+                                        '',
+    								    'SpeedLimits',
+        							    'RegulatorySigns',
+        								'MaximumRestrictions',
+        								'GeneralWarningSigns',
+        								'ProhibitionsAndRestrictions',
+        								'MandatorySigns',
+        								'PriorityAndGiveWaySigns',
+        								'InformationSigns',
+        								'ServiceSigns',
+        								'AdditionalPanels'
+                                        ])
+
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+
+            steps {
+
+                    script {
+                        STAGE_RUN_TASK = [
+                            "ssh web@gateway \'cd /home/web/digiroad2/current && echo YES |",
+                             "/home/web/digiroad2/current/./sbt",
+                             "-Ddigiroad2.env=staging",
+                             "\'project digiroad2-oracle\'",
+                             "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${TRAFFICSIGNGROUP}\'"
+                        ].join(" ")
+                    }
+            }
+        }
+
+        stage("Prepare") {
+            steps {
+                script {
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                         "digiroad2-cap",
+                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
+                    )
+                }
+            }
+        }
+
+        stage("Run Task") {
+            agent {
+                docker {
+                    image "digiroad2-cap"
+                    reuseNode true
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_RUN_TASK
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}

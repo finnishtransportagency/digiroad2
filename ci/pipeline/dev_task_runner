@@ -1,0 +1,190 @@
+import java.net.URI
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'DB', choices: ['-',
+                                     'dr2dev1',
+                                     'dr2dev2',
+                                     'dr2dev3',
+                                     'dr2dev4',
+                                     'dr2dev5',
+                                     'dr2dev7',
+                                     'dr2dev8',
+                                     'dr2dev9',
+                                     'dr2dev10',
+                                     'dr2dev11',
+                                     'dr2dev12',
+                                     'dr2dev13',
+                                     'dr2dev14',
+                                     'dr2dev15',
+                                     'dr2dev16',
+                                     'dr2dev17',
+                                     'dr2dev18'])
+
+        string(name: 'BRANCH', defaultValue: 'master')
+
+        choice(name: 'TASK', choices: [
+                                        'check_TR_bus_stops_without_OTH_LiviId',
+    								    'set_TR_bus_stops_without_OTH_LiviId',
+        							    'fill_lane_amounts_in_missing_road_links',
+        								'check_bus_stop_matching_between_OTH_TR',
+        								'import_all_trafficVolume_from_TR_to_OTH',
+        								'import_all_litRoad_from_TR_to_OTH',
+        								'import_all_trafficSigns_from_TR_to_OTH',
+        								'import_all_roadWidth_from_TR_to_OTH',
+        								'update_roadWidth_from_TR_to_OTH',
+        								'update_litRoad_from_TR_to_OTH',
+        								'import_all_speedLimits_from_TR_to_OTH',
+        								'import_all_pavedRoad_from_TR_to_OTH',
+        								'import_all_massTransitLane_from_TR_to_OTH',
+        								'import_all_damagedByThaw_from_TR_to_OTH',
+        								'import_all_europeanRoad_from_TR_to_OTH',
+        								'update_pavedRoad_from_TR_to_OTH',
+        								'update_massTransitLane_from_TR_to_OTH',
+        								'update_damagedByThaw_from_TR_to_OTH',
+        								'update_europeanRoad_from_TR_to_OTH',
+        								'update_areas_on_asset',
+        								'update_OTH_BS_with_TR_info',
+        								'import_speed_limit_asset_from_TR_to_OTH',
+        								'fill_roadWidth_in_road_links',
+        								'verify_inaccurate_speed_limit_assets',
+        								'update_traffic_direction_on_roundabouts',
+        								'update_information_source_on_existing_assets',
+        								'import_municipality_codes',
+        								'update_municipalities',
+        								'update_information_source_on_paved_road_assets',
+        								'remove_existing_trafficSigns_duplicates',
+        								'create_manoeuvres_using_traffic_signs',
+        								'update_floating_stops_on_terminated_roads',
+        								'update_private_roads',
+        								'add_geometry_to_linear_assets',
+        								'merge_additional_panels_to_trafficSigns',
+        								'traffic_sign_extract',
+        								'remove_unnecessary_unknown_speedLimits',
+        								'list_incorrect_SpeedLimits_created'
+                                        ])
+
+        choice(name: 'TRAFFICSIGNGROUP', choices: [
+                                        '',
+    								    'SpeedLimits',
+        							    'RegulatorySigns',
+        								'MaximumRestrictions',
+        								'GeneralWarningSigns',
+        								'ProhibitionsAndRestrictions',
+        								'MandatorySigns',
+        								'PriorityAndGiveWaySigns',
+        								'InformationSigns',
+        								'ServiceSigns',
+        								'AdditionalPanels'
+                                        ])
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+            steps {
+                withCredentials([
+                                string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
+                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE')]) {
+                    script {
+
+                        def ojdbc = 'ojdbc6'
+                        def ojdbc_version = '11.2.0.3.0'
+                        def version = '11.2.0'
+                        def sdoapl = 'sdoapl'
+                        def sdoutl = 'sdoutl'
+                        def sbt_proxy = new URI(http_proxy)
+
+                        def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
+                        ].join(" ")
+
+                        STAGE_SETUP_ORACLE = [
+                            "mkdir tmp",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output tmp/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output tmp/${sdoutl}.jar",
+                            "mkdir digiroad2-oracle/conf/",
+                            "mkdir digiroad2-oracle/conf/lib/",
+                            "cp -r tmp/ digiroad2-oracle/conf/lib/",
+                            "mkdir digiroad2-oracle/conf/ci-vahti/",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.username='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
+                        ].join(" && ")
+
+                        STAGE_RUN_TASK = [
+                            "./sbt",
+                            "$java_opts",
+                            "-Ddigiroad2.env=ci-vahti",
+                            "\'project digiroad2-oracle\'",
+                            "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${TRAFFICSIGNGROUP}\'"
+                        ].join(" ")
+                    }
+                }
+            }
+        }
+
+        stage("Prepare") {
+            steps {
+                script {
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                        "digiroad2-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
+                    )
+                }
+            }
+        }
+
+        stage("Checkout Branch") {
+            steps {
+                checkout(
+                    [$class: 'GitSCM',
+                     branches: [[name: '*/${BRANCH}']],
+                     doGenerateSubmoduleConfigurations: false,
+                     extensions: [[$class: 'LocalBranch', localBranch: '${BRANCH}']],
+                     submoduleCfg: [],
+                     userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
+                    ]
+                )
+            }
+
+        }
+
+        stage("Run Task") {
+            agent {
+                docker {
+                    image "digiroad2-backend-sbt"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_SETUP_ORACLE
+                sh STAGE_RUN_TASK
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}
