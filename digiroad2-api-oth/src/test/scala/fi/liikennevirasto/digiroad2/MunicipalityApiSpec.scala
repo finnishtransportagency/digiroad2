@@ -155,10 +155,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockRailwayCrossingService.getByMunicipality(235)).thenReturn(Seq(RailwayCrossing(1, 1000, 1, 1, 1, false, 1L, 235, 1, None, "test_code", None, None, None, None, NormalLinkInterface)))
   when(mockTrafficLightService.getByMunicipality(235)).thenReturn(Seq(TrafficLight(1, 1000, 0, 0, 0, false, 1L, 235, None, None, None, None, NormalLinkInterface)))
 
-  when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink])).thenReturn(1L)
-  when(mockObstacleService.create(any[IncomingObstacle], any[String], any[RoadLink])).thenReturn(1L)
-  when(mockRailwayCrossingService.create(any[IncomingRailwayCrossing], any[String], any[RoadLink])).thenReturn(1L)
-  when(mockTrafficLightService.create(any[IncomingTrafficLight], any[String], any[RoadLink])).thenReturn(1L)
+  when(mockPedestrianCrossingService.create(any[IncomingPedestrianCrossing], any[String], any[RoadLink], any[Boolean])).thenReturn(1L)
+  when(mockObstacleService.create(any[IncomingObstacle], any[String], any[RoadLink], any[Boolean])).thenReturn(1L)
+  when(mockRailwayCrossingService.create(any[IncomingRailwayCrossing], any[String], any[RoadLink], any[Boolean])).thenReturn(1L)
+  when(mockTrafficLightService.create(any[IncomingTrafficLight], any[String], any[RoadLink], any[Boolean])).thenReturn(1L)
 
   when(mockPedestrianCrossingService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(PedestrianCrossing(1, 1000, 0, 0, 0, false, 0, 235, None, None, None, None, linkSource = NormalLinkInterface)))
   when(mockObstacleService.getPersistedAssetsByIds(any[Set[Long]])).thenReturn(Seq(Obstacle(1, 1000, 0, 0, 0, false, 1L, 235, 2, None, None, None, None, linkSource =  NormalLinkInterface)))
