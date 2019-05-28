@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, OracleDirectionalTrafficSignDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -32,14 +33,46 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
       asset.copy(geometry = roadLinks.find(_.linkId == asset.linkId).map(_.geometry).getOrElse(Nil))}
   }
 
+  def createFromCoordinates(incomingDirectionalTrafficSign: IncomingDirectionalTrafficSign, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
+    if(isFloating)
+      createFloatingWithoutTransaction(incomingDirectionalTrafficSign.copy(linkId = 0), username, roadLink)
+    else {
+      checkDuplicates(incomingDirectionalTrafficSign) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, incomingDirectionalTrafficSign, roadLink, username)
+        case _ =>
+          create(incomingDirectionalTrafficSign, username, roadLink, false)
+      }
+    }
+  }
+
+  def checkDuplicates(incomingDirectionalTrafficSign: IncomingDirectionalTrafficSign): Option[DirectionalTrafficSign] = {
+    val position = Point(incomingDirectionalTrafficSign.lon, incomingDirectionalTrafficSign.lat)
+    val signsInRadius = OracleDirectionalTrafficSignDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
+      .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters
+        && Math.abs(sign.bearing.getOrElse(0) - incomingDirectionalTrafficSign.bearing.getOrElse(0)) <= BearingLimit)
+    if(signsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(signsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(signs: Seq[DirectionalTrafficSign]): DirectionalTrafficSign = {
+    signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
+  }
+
+
   override def setFloating(persistedAsset: DirectionalTrafficSign, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
-      OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username)
+    if(newTransaction) {
+      withDynTransaction {
+        OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username, false)
+      }
+    } else {
+      OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username, false)
     }
   }
 
@@ -49,19 +82,22 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     }
   }
 
+  def createFloatingWithoutTransaction(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
+    OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username, true)
+  }
+
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingDirectionalTrafficSign, roadLink: RoadLink,  username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry)
     getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found")) match {
       case old if old.bearing != updatedAsset.bearing || ( old.lat != updatedAsset.lat || old.lon != updatedAsset.lon) =>
         expireWithoutTransaction(id)
-        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username,old.createdBy, old.createdAt)
+        OracleDirectionalTrafficSignDao.create(setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, old.createdBy, old.createdAt)
       case _ =>
         OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username)
     }
   }
-
   override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
-
 }
 
 

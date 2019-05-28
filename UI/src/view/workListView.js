@@ -89,7 +89,6 @@
         trafficLights: 'Geometrian ulkopuolelle jääneet liikennevalot',
         obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
         railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
-        directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
 
