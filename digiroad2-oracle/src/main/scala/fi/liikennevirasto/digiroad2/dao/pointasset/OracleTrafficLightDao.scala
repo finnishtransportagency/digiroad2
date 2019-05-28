@@ -1,15 +1,16 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficLight
 
 case class TrafficLight(id: Long, linkId: Long,

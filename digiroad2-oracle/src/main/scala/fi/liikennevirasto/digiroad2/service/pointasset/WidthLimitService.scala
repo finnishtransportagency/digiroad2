@@ -62,7 +62,7 @@ class WidthLimitService(val roadLinkService: RoadLinkService) extends PointAsset
     OracleWidthLimitDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingWidthLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+  override def create(asset: IncomingWidthLimit, username: String, roadLink: RoadLink, newTransaction: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
 
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 

@@ -235,16 +235,15 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
-    val (persistedAsset, publishInfo, strategy) = withDynTransaction {
-      val point = Point(asset.lon, asset.lat)
-      val strategy = getStrategy(asset.properties.toSet, roadLink)
-      val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
-      val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
-      withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
-
-      (persistedAsset, publishInfo, strategy)
-    }
+  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    val (persistedAsset, publishInfo, strategy) =
+      if(newTransaction) {
+        withDynTransaction {
+          createWithUpdateFloating(asset, username, roadLink)
+        }
+      } else {
+        createWithUpdateFloating(asset, username, roadLink)
+      }
     strategy.publishSaveEvent(publishInfo)
     persistedAsset.id
   }
@@ -285,6 +284,15 @@ trait MassTransitStopService extends PointAssetOperations {
     }
 
     StaticQuery.queryNA[(Long, String, Long, Option[Long])](queryFilter(query)).list
+  }
+
+  def createWithUpdateFloating(asset: NewMassTransitStop, username: String, roadLink: RoadLink) = {
+    val point = Point(asset.lon, asset.lat)
+    val strategy = getStrategy(asset.properties.toSet, roadLink)
+    val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
+    val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
+    withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
+    (persistedAsset, publishInfo, strategy)
   }
 
   def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): MassTransitStopWithProperties = {
