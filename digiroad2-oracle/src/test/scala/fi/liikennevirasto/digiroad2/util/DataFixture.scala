@@ -6,6 +6,7 @@ import java.time.LocalDate
 import java.util.{Date, Properties}
 
 import com.googlecode.flyway.core.Flyway
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
@@ -360,40 +361,63 @@ object DataFixture {
 
     OracleDatabase.withDynTransaction {
       val recapturedLinks = municipalities.flatMap { municipality =>
-        RoadLinkDAO.TempRoadAddressesInfo.deleteInfoByMunicipality(municipality)
+        //        RoadLinkDAO.TempRoadAddressesInfo.deleteInfoByMunicipality(municipality)
 
         println(s"Working on municipality : $municipality")
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
 
         val allRoadLinks = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
-        val frozenRoadLinks = roadLinks.filterNot(road => allRoadLinks.map(_.linkId).contains(road.linkId))
+        val frozenRoadLinks = roadLinks.filterNot(road => allRoadLinks.map(_.linkId).contains(road.linkId)).filter(_.linkId == 11171339)
+
 
         frozenRoadLinks.flatMap { frozen =>
-          val (first , last) = GeometryUtils.geometryEndpoints(frozen.geometry)
+          val frozenWidthAdj = roadLinkService.getAdjacent(frozen.linkId, false)
 
-          println(s"first ${first.x} ${first.y} last ${last.x} ${last.y}")
+          if (frozenWidthAdj.exists(x => x.roadNumber.nonEmpty && x.administrativeClass == State)) {
+            val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
 
-          val address =
-            try {
-              geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
-            } catch {
-              case ex: Exception => Seq()
+            println(s"first ${first.x} ${first.y} last ${last.x} ${last.y}")
+
+            val address =
+              try {
+                geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
+              } catch {
+                case ex: Exception => Seq()
+              }
+            //-----------------------------
+            //----- decide trackCode
+            //
+
+            val firstFrozen = frozenWidthAdj.filter { x =>
+              val (start, _) = GeometryUtils.geometryEndpoints(x.geometry)
+              GeometryUtils.areAdjacent(first, start)
             }
 
-          if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-            println("problems in wonderland")
-            None
-          } else {
-            val addresses = address.groupBy(x => (x.road, x.roadPart, x.track, x.municipalityCode))
-            if(addresses.keys.size > 1) {
-              println(s" ${frozen.linkId} ${addresses.values.map(_.mkString(","))} ")
-              Some(frozen, first, last, address)
-            } else {
-              val orderedAddress = address.sortBy(_.addrM)
-              RoadLinkDAO.TempRoadAddressesInfo.insertInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.municipalityCode.get.toInt, orderedAddress.head.road, orderedAddress.head.roadPart, orderedAddress.head.track, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
-              println(s"linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${orderedAddress.head.track}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
+            val lastFrozen = frozenWidthAdj.filter { x =>
+              val (_, last) = GeometryUtils.geometryEndpoints(x.geometry)
+              GeometryUtils.areAdjacent(first, last)
+            }
+
+
+
+
+            if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
+              println("problems in wonderland")
               None
+            } else {
+              val addresses = address.groupBy(x => (x.road, x.roadPart, x.track, x.municipalityCode))
+              if (addresses.keys.size > 1) {
+                println(s" ${frozen.linkId} ${addresses.values.map(_.mkString(","))} ")
+                Some(frozen, first, last, address)
+              } else {
+                val orderedAddress = address.sortBy(_.addrM)
+                RoadLinkDAO.TempRoadAddressesInfo.insertInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.municipalityCode.get.toInt, orderedAddress.head.road, orderedAddress.head.roadPart, orderedAddress.head.track, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
+                println(s"linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${orderedAddress.head.track}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
+                None
+              }
             }
+          }else {
+            Seq()
           }
         }
       }
