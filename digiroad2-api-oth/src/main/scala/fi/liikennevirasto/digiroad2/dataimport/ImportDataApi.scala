@@ -66,6 +66,12 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
   }
 
+  post("/:pointAssetTypeImport") {
+    validateOperation()
+    val assetType = params("pointAssetTypeImport")
+    importPointAssets(fileParams("csv-file"), assetType)
+  }
+
   post("/roadLinks") {
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
@@ -109,6 +115,12 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
   }
 
+  def validateOperation(): Unit = {
+    if(!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
+      halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
+    }
+  }
+
   def importTrafficSigns(csvFileItem: FileItem, municipalitiesToExpire: Set[Int]): Unit = {
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
@@ -116,6 +128,15 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else
       eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, municipalitiesToExpire.map(NumericValues)))
+  }
+
+  def importPointAssets(csvFileItem: FileItem, layerName: String): Unit = {
+    val fileName = csvFileItem.getName
+    val csvFileInputStream = csvFileItem.getInputStream
+    if(csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else
+      eventBus.publish("importCSVData", CsvDataImporterInfo(layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream))
   }
 
   def importRoadLinks(csvFileItem: FileItem ): Unit = {

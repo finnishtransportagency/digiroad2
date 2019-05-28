@@ -56,7 +56,9 @@
     this.createVerificationForm = function(municipality) {
       $('#tableData').hide();
       $('.filter-box').hide();
-      if (showFormBtnVisible) $('.page').attr('class', 'page-content-box').find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
+      var page = $('.page');
+      page.attr('class', 'page-content-box');
+      if (showFormBtnVisible) page.find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
           me.generateWorkList(municipalityList);
         })
       );

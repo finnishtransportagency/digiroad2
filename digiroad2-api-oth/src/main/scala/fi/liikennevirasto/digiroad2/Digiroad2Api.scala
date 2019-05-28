@@ -1765,6 +1765,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def getPointAssetService(assetType: String): PointAssetOperations = {
     assetType match {
       case MassTransitStopAsset.layerName => massTransitStopService
+      case DirectionalTrafficSigns.layerName => directionalTrafficSignService
       case _ => throw new UnsupportedOperationException("Asset type not supported")
     }
   }

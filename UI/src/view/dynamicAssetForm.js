@@ -662,7 +662,7 @@
                 var $startDate = me.element.find('#datePeriod-start' + elementNumber);
                 var $endDate = me.element.find('#datePeriod-end' + elementNumber);
 
-                dateutil.addDependentDatePickers($startDate, $endDate);
+                dateutil.addTwoDependentDatePickers($startDate, $endDate);
             };
 
             var inputLabel = function(type, value) {
