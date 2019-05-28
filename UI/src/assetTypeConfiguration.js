@@ -42,7 +42,8 @@
       trWidthLimits: 370,
       manoeuvre: 380,
       careClass: 390,
-      carryingCapacity: 400
+      carryingCapacity: 400,
+      roadWorksAsset: 420
     };
 
     var assetGroups = {
@@ -301,7 +302,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
-            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', multiElement: true, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
           ]
         }),
@@ -699,6 +700,34 @@
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
         })
+      },
+      {
+        typeId: assetType.roadWorksAsset,
+        singleElementEventCategory: 'roadWorksAsset',
+        multiElementEventCategory: 'roadsWorksAsset',
+        layerName: 'roadWorksAsset',
+        title: 'Tietyöt',
+        newTitle: 'Uusi tietyöt',
+        className: 'road-works-asset',
+        isSeparable: true,
+        allowComplementaryLinks: true,
+        editControlLabels: {
+          title: 'Tietyöt',
+          enabled: 'Tietyö',
+          disabled: 'Ei tietyötä',
+          additionalInfo: 'Tuleva/mennyt tietyö'
+        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        style: new RoadWorkStyle(),
+        form: new DynamicAssetForm ( {
+          fields : [
+            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'number', weight: 1},
+            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, multiElement: false, weight: 2}
+          ]
+        }),
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: false
       }
     ];
 

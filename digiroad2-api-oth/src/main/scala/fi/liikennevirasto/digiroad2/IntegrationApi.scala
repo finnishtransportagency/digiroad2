@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.{WidthLimit => WidthLimitInfo, HeightLimit => HeightLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
@@ -258,6 +258,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case MassTransitLane.typeId => massTransitLaneService
       case NumberOfLanes.typeId => numberOfLanesService
       case DamagedByThaw.typeId => damagedByThawService
+      case RoadWorksAsset.typeId => roadWorkService
       case _ => linearAssetService
     }
   }
@@ -337,6 +338,25 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
+  def roadWorksToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val roadWorks = getMultiValueLinearAssetByMunicipality(RoadWorksAsset.typeId, municipalityNumber)
+
+    roadWorks.map { roadWork =>
+      val dynamicMultiValueLinearAssetsMap = roadWork.value.map(_.asInstanceOf[DynamicValue]) match {
+        case Some(value) =>
+          val roadWorkProps = value.value.properties
+          Map(
+            "estimated_duration" -> roadWorkProps.find(_.publicId == "arvioitu_kesto").map(_.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).map {
+              period => Map("startDate" -> period.startDate, "endDate" -> period.endDate)
+            }),
+            "work_id" -> roadWorkProps.find(_.publicId == "tyon_tunnus").map(_.values.map(_.value.toString.toInt)
+            ))
+        case _ => Map()
+      }
+
+      defaultMultiValueLinearAssetsMap(roadWork) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
 
   private def bogieWeightLimitsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
     val bogieWeightLimits = getMultiValueLinearAssetByMunicipality(BogieWeightLimit.typeId, municipalityNumber)
@@ -776,6 +796,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "care_classes" =>  linearAssetsToApi(CareClass.typeId, municipalityNumber)
         case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
         case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
+        case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
