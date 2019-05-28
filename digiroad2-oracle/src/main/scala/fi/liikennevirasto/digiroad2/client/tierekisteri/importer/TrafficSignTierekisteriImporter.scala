@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -186,13 +186,13 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         trAssetsSections.foreach {
           case (section, trAssetData) =>
             withDynTransaction {
-              createAsset(section, trAssetData, mappedRoadAddresses, mappedRoadLinks, additionalProperties)
+              createAsset(section, trAssetData, mappedRoadAddresses, mappedRoadLinks, additionalProperties, Seq())
             }
         }
     }
   }
 
-  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], vvhRoadLinks: Seq[VVHRoadlink], trAdditionalData: Seq[AdditionalPanelInfo]): Unit = {
+  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], vvhRoadLinks: Seq[VVHRoadlink], trAdditionalData: Seq[AdditionalPanelInfo], historicMappedRoadLinks: Seq[RoadAddressTEMP]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
     if(trAssetData.assetType.source.contains("TRimport")) {
       println("Asset: " + trAssetData.assetType.TRvalue + " / " + trAssetData.assetType.OTHvalue)
@@ -211,7 +211,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     }
   }
 
-  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = throw new UnsupportedOperationException("Not Supported Method")
+  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historyMappedRoadLinks: Seq[RoadAddressTEMP]): Unit = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImporter {
