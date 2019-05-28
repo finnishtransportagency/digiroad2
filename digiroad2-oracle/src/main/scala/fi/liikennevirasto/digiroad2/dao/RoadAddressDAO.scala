@@ -5,6 +5,8 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
+//TODO - Remove after new service NLS is used
+case class RoadAddressTEMP(linkId: Long, municipalityCode: Int, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long)
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, linkId: Long,

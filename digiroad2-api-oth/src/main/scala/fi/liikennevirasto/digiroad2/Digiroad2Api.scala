@@ -561,7 +561,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
-    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) else roadLinkSeq
+    val roadLinks = if(withRoadAddress) {
+      val viiteInformation = roadAddressService.roadLinkWithRoadAddress(roadLinkSeq)
+      val vkmInformation = roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
+      viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
+    } else roadLinkSeq
     partitionRoadLinks(roadLinks)
   }
 
@@ -607,13 +611,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadPartNumber" -> extractLongValue(roadLink, "VIITE_ROAD_PART_NUMBER"),
-      "roadNumber" -> extractLongValue(roadLink, "VIITE_ROAD_NUMBER"),
+      "roadPartNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER")),
+      "roadNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER")),
       "constructionType" -> roadLink.constructionType.value,
       "linkSource" -> roadLink.linkSource.value,
-      "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
-      "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
-      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR"),
+      "track" -> roadLink.attributes.getOrElse("VIITE_TRACK",  roadLink.attributes.get("TEMP_TRACK")),
+      "startAddrMValue" -> roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR")),
+      "endAddrMValue" ->  roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")),
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
@@ -684,7 +688,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacent/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    roadLinkService.getAdjacent(id).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
+    roadLinkService.getAdjacent(id, true).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
 
   }
 
@@ -815,9 +819,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case false =>
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
-          if(params("withRoadAddress").toBoolean)
-            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
-          else
+          if(params("withRoadAddress").toBoolean) {
+            val x = roadAddressService.linearAssetWithRoadAddress(assets)
+            val y = if (params("isExperimental").toBoolean) {
+              roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => x.flatMap(_.map(_.linkId)).contains(a.linkId))))
+            }else {
+              Seq(Seq.empty[PieceWiseLinearAsset])
+          }
+            mapLinearAssets(x ++ y)
+          } else
             mapLinearAssets(assets)
       }
     } getOrElse {
@@ -841,7 +851,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean)
-            mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
+//            if(params("isExperimental").toBoolean)
+              mapLinearAssets(roadAddressService.experimentalLinearAssetWithRoadAddress(assets))
+//            else
+//              mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
           else
             mapLinearAssets(assets)
       }
@@ -964,11 +977,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "area" -> extractIntValue(link.attributes, "area"),
           "municipalityCode" -> extractIntValue(link.attributes, "municipality"),
           "informationSource" -> link.informationSource,
-          "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
-          "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
-          "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
-          "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
-          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+          "roadPartNumber" -> link.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", link.attributes.get("TEMP_ROAD_PART_NUMBER")),
+          "roadNumber" -> link.attributes.getOrElse("VIITE_ROAD_NUMBER", link.attributes.get("TEMP_ROAD_NUMBER")),
+          "track" -> link.attributes.getOrElse("VIITE_TRACK",  link.attributes.get("TEMP_TRACK")),
+          "startAddrMValue" -> link.attributes.getOrElse("VIITE_START_ADDR", link.attributes.get("TEMP_START_ADDR")),
+          "endAddrMValue" ->  link.attributes.getOrElse("VIITE_END_ADDR", link.attributes.get("TEMP_END_ADDR")),
           "administrativeClass" -> link.administrativeClass.value
         )
       }
