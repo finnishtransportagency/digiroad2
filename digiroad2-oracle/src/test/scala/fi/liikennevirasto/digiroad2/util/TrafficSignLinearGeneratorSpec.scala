@@ -111,7 +111,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
     when(mockRoadLinkService.getAdjacent(1005, false)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
-    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq())
+    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq(roadLinkNameB1, roadLinkNameB3))
     when(mockRoadLinkService.getAdjacent(1015, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
 
     val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign, unPairedTrafficSign), Seq()).toSeq.sortBy(_.roadLink.linkId)

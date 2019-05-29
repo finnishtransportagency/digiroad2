@@ -458,12 +458,12 @@ trait TrafficSignLinearGenerator {
   def convertEndRoadSegments(segments: Seq[TrafficSignToLinear], endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]): Seq[TrafficSignToLinear] = {
     val segmentsOndEndRoads = segments.filter { seg =>
       endRoadLinksInfo.exists { case (endRoadLink, firstPoint, lastPoint) =>
-        val (first, _) = GeometryUtils.geometryEndpoints(endRoadLink.geometry)
+        val (first, last) = GeometryUtils.geometryEndpoints(endRoadLink.geometry)
         //if is a lastRoaLink, the point of interest is the first point
-        (if (GeometryUtils.areAdjacent(first, firstPoint.getOrElse(lastPoint.get))) {
-          Math.abs(seg.startMeasure - 0) < 0.01
-        } else {
-          Math.abs(seg.endMeasure - GeometryUtils.geometryLength(endRoadLink.geometry)) < 0.01
+        ((firstPoint, lastPoint) match {
+          case (Some(firstPointDirection) , None) if !GeometryUtils.areAdjacent(last, firstPointDirection) =>  Math.abs(seg.endMeasure - GeometryUtils.geometryLength(endRoadLink.geometry)) < 0.01
+          case (None, Some(lastPointDirection)) if !GeometryUtils.areAdjacent(first, lastPointDirection) => Math.abs(seg.startMeasure - 0) < 0.01
+          case _ => false
         }) && seg.roadLink.linkId == endRoadLink.linkId
       }
     }
@@ -472,7 +472,7 @@ trait TrafficSignLinearGenerator {
       findNextEndAssets(segments, baseSegment)
     }.distinct
 
-    segments.filterNot(seg => endSegments.exists(endSeg => seg.startMeasure == endSeg.startMeasure && seg.endMeasure == endSeg.endMeasure && seg.roadLink.linkId == endSeg.roadLink.linkId)) ++ endSegments.filter(_.sideCode == BothDirections)
+    segments.filterNot(seg => endSegments.exists(endSeg => seg.startMeasure == endSeg.startMeasure && seg.endMeasure == endSeg.endMeasure && seg.roadLink.linkId == endSeg.roadLink.linkId)) ++ endSegments
   }
 
   def convertOneSideCode(segments: Seq[TrafficSignToLinear]): Seq[TrafficSignToLinear] = {
