@@ -13,7 +13,8 @@ pipeline {
                                         'bogieWeightLimit',
                                         'widthLimit',
                                         'lengthLimit',
-                                        'pedestrianCrossing'
+                                        'pedestrianCrossing',
+                                        'speedLimit'
                                         ])
     }
 
