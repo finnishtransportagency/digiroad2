@@ -10,7 +10,7 @@ create table temp_road_address_info (
  created_date date default sysdate not null enable,
  created_by varchar2(128),
  primary key (id)
-)
+);
 
 create index link_id_temp_address on temp_road_address_info(link_id);
 create index municipality_temp_address on temp_road_address_info(MUNICIPALITY_code);
