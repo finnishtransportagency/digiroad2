@@ -174,13 +174,6 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
     case _ => println("prohibitionSaveProjected: Received unknown message")
   }
 }
-//
-//class ProhibitionSaveAssetConnection[T] (prohibitionProvider: ProhibitionService) extends Actor {
-//  def receive = {
-//    case x: Seq[T] => prohibitionProvider.autoGenerateAssets(x.asInstanceOf[Seq[LinearAssetFiller.AssetAdjustment]])
-//    case _ => println("prohibitionsSaveAssetConnection: Received unknown message")
-//  }
-//}
 
 class HazmatTransportProhibitionValidation(prohibitionValidator: HazmatTransportProhibitionValidator) extends Actor {
   def receive = {

@@ -1372,7 +1372,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         intermediants
       } else {
         filteredRoadLink.flatMap { roadLink =>
-          iterativeProcess(roadLink, GeometryUtils.getOpositePoint(roadLink.geometry, point), intermediants ++ Set(roadLink), numberOfConnections + 1, roadNamePublicId, roadNameSource)
+          iterativeProcess(roadLink, GeometryUtils.getOppositePoint(roadLink.geometry, point), intermediants ++ Set(roadLink), numberOfConnections + 1, roadNamePublicId, roadNameSource)
         }
       }.toSet
     }

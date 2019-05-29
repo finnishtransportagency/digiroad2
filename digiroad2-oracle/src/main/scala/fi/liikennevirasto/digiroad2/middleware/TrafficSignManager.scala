@@ -39,22 +39,22 @@ object TrafficSignManager {
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  case object TrafficSignSerializer extends CustomSerializer[TrafficSignProperty](format =>
-    ({
-      case jsonObj: JObject =>
-        val id = (jsonObj \ "id").extract[Long]
-        val publicId = (jsonObj \ "publicId").extract[String]
-        val propertyType = (jsonObj \ "propertyType").extract[String]
-        val values: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
-        val required = (jsonObj \ "required").extract[Boolean]
-        val numCharacterMax = (jsonObj \ "numCharacterMax").extractOpt[Int]
-
-        TrafficSignProperty(id, publicId, propertyType, required, values, numCharacterMax)
-    },
-      {
-        case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
-
-      }))
+//  case object TrafficSignSerializer extends CustomSerializer[TrafficSignProperty](format =>
+//    ({
+//      case jsonObj: JObject =>
+//        val id = (jsonObj \ "id").extract[Long]
+//        val publicId = (jsonObj \ "publicId").extract[String]
+//        val propertyType = (jsonObj \ "propertyType").extract[String]
+//        val values: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+//        val required = (jsonObj \ "required").extract[Boolean]
+//        val numCharacterMax = (jsonObj \ "numCharacterMax").extractOpt[Int]
+//
+//        TrafficSignProperty(id, publicId, propertyType, required, values, numCharacterMax)
+//    },
+//      {
+//        case tv : SimpleTrafficSignProperty => Extraction.decompose(tv)
+//
+//      }))
 
   case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
     case JInt(lg) => LinkGeomSource.apply(lg.toInt)
@@ -74,7 +74,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
 
-    def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
+  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
 
       if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType))
         manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)

@@ -829,16 +829,6 @@ trait LinearAssetOperations {
 
   def validateAssetValue(value: Option[Value]): Unit = {}
 
-//  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
-//    if(newTransaction) {
-//      withDynTransaction {
-//        createLinearAssetFromTrafficSign(trafficSignInfo)
-//      }
-//    }
-//    else
-//      createLinearAssetFromTrafficSign(trafficSignInfo)
-//  }
-
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 
   def deleteOrUpdateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
