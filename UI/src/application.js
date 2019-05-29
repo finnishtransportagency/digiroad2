@@ -487,7 +487,8 @@
           .concat(getLinearAsset(assetType.roadWidth))
           .concat(getLinearAsset(assetType.litRoad))
           .concat([carryingCapacityBox])
-          .concat(getLinearAsset(assetType.roadDamagedByThaw)),
+          .concat(getLinearAsset(assetType.roadDamagedByThaw))
+          .concat(getLinearAsset(assetType.roadWorksAsset)),
       []
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))

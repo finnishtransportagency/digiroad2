@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
@@ -62,8 +62,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
-    withDynTransaction {
+  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    if(newTransaction) {
+      withDynTransaction {
+        createWithoutTransaction(asset, username, roadLink)
+      }
+    } else {
       createWithoutTransaction(asset, username, roadLink)
     }
   }
