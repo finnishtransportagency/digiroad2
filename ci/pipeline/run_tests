@@ -71,6 +71,10 @@ pipeline {
                             "sbt-launch.jar",
                             "test"
                         ].join(" ")
+
+                        STAGE_RUN_ROBOT_FRAMEWORK_TESTS = [
+                            "robot -d robotFrameWork/testSuite/results robotFrameWork/testSuite"
+                        ].join(" ")
                     }
                 }
             }
@@ -92,8 +96,8 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
-                        "digiroad2-backend-sbt",
-                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
+                        "digiroad2-robotframework-sbt",
+                        "${build_args} -f ci/docker/RobotDockerfile.sbt ci"
                     )
                 }
             }
@@ -114,16 +118,15 @@ pipeline {
 
         }
 
-        stage("Run Tests") {
+        stage("Run RobotFramework Tests") {
             agent {
                 docker {
-                    image "digiroad2-backend-sbt"
+                    image "digiroad2-robotframework-sbt"
                     reuseNode true
                 }
             }
             steps {
-                sh STAGE_SETUP_ORACLE
-                sh STAGE_RUN_TESTS
+                sh STAGE_RUN_ROBOT_FRAMEWORK_TESTS
             }
         }
     }
