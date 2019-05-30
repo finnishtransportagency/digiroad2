@@ -134,7 +134,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
 
     if(trafficSignsIds.nonEmpty) {
-      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
+      trafficSignService.massExpireAssetWithoutTransaction(trafficSignsIds, Some("batch_process_trafficSigns"))
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
     }
   }
