@@ -211,7 +211,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     }
   }
 
-  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historyMappedRoadLinks: Seq[RoadAddressTEMP]): Unit = throw new UnsupportedOperationException("Not Supported Method")
+  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historyMappedRoadLinks: Seq[RoadAddressTEMP], vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]]): Unit = throw new UnsupportedOperationException("Not Supported Method")
 }
 
 trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImporter {

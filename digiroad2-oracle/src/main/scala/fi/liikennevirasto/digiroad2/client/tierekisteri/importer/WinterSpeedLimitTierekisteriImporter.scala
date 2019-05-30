@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
 import fi.liikennevirasto.digiroad2.asset.{SideCode, WinterSpeedLimit}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWinterSpeedLimitAssetClient
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -29,4 +29,7 @@ class WinterSpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImport
     linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.speedLimit)
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
+
+
+  protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData) = throw new UnsupportedOperationException
 }

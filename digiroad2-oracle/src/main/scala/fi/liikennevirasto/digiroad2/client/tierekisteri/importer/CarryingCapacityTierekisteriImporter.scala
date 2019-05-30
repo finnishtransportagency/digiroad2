@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{CarryingCapacity, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriCarryingCapacityAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.Queries.{insertDateProperty, insertNumberProperty, insertSingleChoiceProperty}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, Queries, RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -27,6 +27,10 @@ class CarryingCapacityTierekisteriImporter extends LinearAssetTierekisteriImport
   override val tierekisteriClient = new TierekisteriCarryingCapacityAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
+
+  override protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    ???
+  }
 
   override protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val assetId = service.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value, measures, "batch_process_" + assetName,

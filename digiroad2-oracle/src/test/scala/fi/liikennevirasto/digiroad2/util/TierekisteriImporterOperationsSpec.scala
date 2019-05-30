@@ -89,7 +89,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
     def getAllTierekisteriHistoryAddressSectionTest(roadNumber: Long, lastExecution: DateTime) = super.getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime)
 
-    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historyMappedRoadLinks: Seq[RoadAddressTEMP]): Unit = {
+    override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historyMappedRoadLinks: Seq[RoadAddressTEMP], vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]]): Unit = {
 
     }
   }

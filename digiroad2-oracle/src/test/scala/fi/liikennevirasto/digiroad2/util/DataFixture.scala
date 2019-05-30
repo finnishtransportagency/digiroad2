@@ -299,57 +299,57 @@ object DataFixture {
 
   def ResolvingFrozenLinks(): Unit = {
 
-    def recapture(frozen: RoadLink, first: Point, last: Point, address: Seq[RoadAddress]) = {
-
-      val roadLinks = roadLinkService.getAdjacent(frozen.linkId, false).filter(_.administrativeClass == State)
-      if(roadLinks.nonEmpty) {
-        val adjacentRoads = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId)).map(x => (x.linkId, x.roadNumber, x.roadPartNumber, x.track, x.startAddrMValue, x.endAddrMValue)) ++
-          RoadLinkDAO.TempRoadAddressesInfo.getByLinkId(roadLinks.map(_.linkId).toSet).map(x => (x.linkId, x.road, x.roadPart, x.track, x.startAddressM, x.endAddressM))
-
-
-        val firstVkmRoad = geometryTransform.vkmGeometryTransform.coordToAddress(first, includePedestrian = Some(true))
-        val firstAdjacents = adjacentRoads.filter{ case (_, roadNumber, roadPartNumber, _, startAddrMValue, endAddrMValue)  =>
-          roadNumber == firstVkmRoad.road && roadPartNumber == firstVkmRoad.roadPart && (startAddrMValue == firstVkmRoad.addrM || endAddrMValue == firstVkmRoad.addrM)
-        }
-
-        val lastVkmRoad = geometryTransform.vkmGeometryTransform.coordToAddress(last, includePedestrian = Some(true))
-        val lastAdjacents = adjacentRoads.filter{ case (_, roadNumber, roadPartNumber, _, startAddrMValue, endAddrMValue)  =>
-          roadNumber == lastVkmRoad.road && roadPartNumber == lastVkmRoad.roadPart && (startAddrMValue == lastVkmRoad.addrM || endAddrMValue == lastVkmRoad.addrM)
-        }
-
-        val frozenToCreate = (firstAdjacents.isEmpty, lastAdjacents.isEmpty) match {
-          case (true, false) =>
-            if(lastAdjacents.size == 1)
-              Some(address.map(_.copy(track = lastAdjacents.head._4)))
-            else if (lastAdjacents.size == 2 && lastAdjacents.exists(_._4 == Track.RightSide) && lastAdjacents.exists(_._4 == Track.LeftSide)) {
-              Some(address.map(_.copy(track = Track.Combined)))
-            } else
-              None
-          case (false, true) =>
-            if(firstAdjacents.size == 1)
-              Some(address.map(_.copy(track = firstAdjacents.head._4)))
-            else if (firstAdjacents.size == 2 && firstAdjacents.exists(_._4 == Track.RightSide) && firstAdjacents.exists(_._4 == Track.LeftSide)) {
-              Some(address.map(_.copy(track = Track.Combined)))
-            } else
-              None
-          case (true, true) =>
-            if(firstAdjacents.size == 1 && lastAdjacents.size == 1 && firstAdjacents.head._4 == lastAdjacents.head._4)
-              Some(address.map(_.copy(track = firstAdjacents.head._4)))
-            else if(firstAdjacents.size == 2 && firstAdjacents.exists(_._4 == Track.RightSide) && firstAdjacents.exists(_._4 == Track.LeftSide) &&
-              lastAdjacents.size == 2 && lastAdjacents.exists(_._4 == Track.RightSide) && lastAdjacents.exists(_._4 == Track.LeftSide)) {
-              Some(address.map(_.copy(track = Track.Combined)))
-            } else
-              None
-          case _ => None
-        }
-
-        frozenToCreate.foreach{ address =>
-          val orderedAddress = address.sortBy(_.addrM)
-          RoadLinkDAO.TempRoadAddressesInfo.insertInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.municipalityCode.get.toInt, orderedAddress.head.road, orderedAddress.head.roadPart, orderedAddress.head.track, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
-          println(s"VKM GENERATED: linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${orderedAddress.head.track}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
-        }
-      }
-    }
+//    def recapture(frozen: RoadLink, first: Point, last: Point, address: Seq[RoadAddress]) = {
+//
+//      val roadLinks = roadLinkService.getAdjacent(frozen.linkId, false).filter(_.administrativeClass == State)
+//      if(roadLinks.nonEmpty) {
+//        val adjacentRoads = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId)).map(x => (x.linkId, x.roadNumber, x.roadPartNumber, x.track, x.startAddrMValue, x.endAddrMValue)) ++
+//          RoadLinkDAO.TempRoadAddressesInfo.getByLinkId(roadLinks.map(_.linkId).toSet).map(x => (x.linkId, x.road, x.roadPart, x.track, x.startAddressM, x.endAddressM))
+//
+//
+//        val firstVkmRoad = geometryTransform.vkmGeometryTransform.coordToAddress(first, includePedestrian = Some(true))
+//        val firstAdjacents = adjacentRoads.filter{ case (_, roadNumber, roadPartNumber, _, startAddrMValue, endAddrMValue)  =>
+//          roadNumber == firstVkmRoad.road && roadPartNumber == firstVkmRoad.roadPart && (startAddrMValue == firstVkmRoad.addrM || endAddrMValue == firstVkmRoad.addrM)
+//        }
+//
+//        val lastVkmRoad = geometryTransform.vkmGeometryTransform.coordToAddress(last, includePedestrian = Some(true))
+//        val lastAdjacents = adjacentRoads.filter{ case (_, roadNumber, roadPartNumber, _, startAddrMValue, endAddrMValue)  =>
+//          roadNumber == lastVkmRoad.road && roadPartNumber == lastVkmRoad.roadPart && (startAddrMValue == lastVkmRoad.addrM || endAddrMValue == lastVkmRoad.addrM)
+//        }
+//
+//        val frozenToCreate = (firstAdjacents.isEmpty, lastAdjacents.isEmpty) match {
+//          case (true, false) =>
+//            if(lastAdjacents.size == 1)
+//              Some(address.map(_.copy(track = lastAdjacents.head._4)))
+//            else if (lastAdjacents.size == 2 && lastAdjacents.exists(_._4 == Track.RightSide) && lastAdjacents.exists(_._4 == Track.LeftSide)) {
+//              Some(address.map(_.copy(track = Track.Combined)))
+//            } else
+//              None
+//          case (false, true) =>
+//            if(firstAdjacents.size == 1)
+//              Some(address.map(_.copy(track = firstAdjacents.head._4)))
+//            else if (firstAdjacents.size == 2 && firstAdjacents.exists(_._4 == Track.RightSide) && firstAdjacents.exists(_._4 == Track.LeftSide)) {
+//              Some(address.map(_.copy(track = Track.Combined)))
+//            } else
+//              None
+//          case (true, true) =>
+//            if(firstAdjacents.size == 1 && lastAdjacents.size == 1 && firstAdjacents.head._4 == lastAdjacents.head._4)
+//              Some(address.map(_.copy(track = firstAdjacents.head._4)))
+//            else if(firstAdjacents.size == 2 && firstAdjacents.exists(_._4 == Track.RightSide) && firstAdjacents.exists(_._4 == Track.LeftSide) &&
+//              lastAdjacents.size == 2 && lastAdjacents.exists(_._4 == Track.RightSide) && lastAdjacents.exists(_._4 == Track.LeftSide)) {
+//              Some(address.map(_.copy(track = Track.Combined)))
+//            } else
+//              None
+//          case _ => None
+//        }
+//
+//        frozenToCreate.foreach{ address =>
+//          val orderedAddress = address.sortBy(_.addrM)
+//          RoadLinkDAO.TempRoadAddressesInfo.insertInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.municipalityCode.get.toInt, orderedAddress.head.road, orderedAddress.head.roadPart, orderedAddress.head.track, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
+//          println(s"VKM GENERATED: linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${orderedAddress.head.track}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
+//        }
+//      }
+//    }
 
     println("\nRefreshing information on municipality verification")
     println(DateTime.now())
@@ -360,68 +360,43 @@ object DataFixture {
 
 
     OracleDatabase.withDynTransaction {
-      val recapturedLinks = municipalities.flatMap { municipality =>
-        //        RoadLinkDAO.TempRoadAddressesInfo.deleteInfoByMunicipality(municipality)
+      municipalities.foreach { municipality =>
+        RoadLinkDAO.TempRoadAddressesInfo.deleteInfoByMunicipality(municipality)
 
         println(s"Working on municipality : $municipality")
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
 
         val allRoadLinks = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
-        val frozenRoadLinks = roadLinks.filterNot(road => allRoadLinks.map(_.linkId).contains(road.linkId)).filter(_.linkId == 11171339)
+        val frozenRoadLinks = roadLinks.filterNot(road => allRoadLinks.map(_.linkId).contains(road.linkId))
 
+        frozenRoadLinks.foreach { frozen =>
+          val (first , last) = GeometryUtils.geometryEndpoints(frozen.geometry)
 
-        frozenRoadLinks.flatMap { frozen =>
-          val frozenWidthAdj = roadLinkService.getAdjacent(frozen.linkId, false)
+          println(s"first ${first.x} ${first.y} last ${last.x} ${last.y}")
 
-          if (frozenWidthAdj.exists(x => x.roadNumber.nonEmpty && x.administrativeClass == State)) {
-            val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
-
-            println(s"first ${first.x} ${first.y} last ${last.x} ${last.y}")
-
-            val address =
-              try {
-                geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
-              } catch {
-                case ex: Exception => Seq()
-              }
-            //-----------------------------
-            //----- decide trackCode
-            //
-
-            val firstFrozen = frozenWidthAdj.filter { x =>
-              val (start, _) = GeometryUtils.geometryEndpoints(x.geometry)
-              GeometryUtils.areAdjacent(first, start)
+          val address =
+            try {
+              geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
+            } catch {
+              case ex: Exception => Seq()
             }
 
-            val lastFrozen = frozenWidthAdj.filter { x =>
-              val (_, last) = GeometryUtils.geometryEndpoints(x.geometry)
-              GeometryUtils.areAdjacent(first, last)
-            }
-
-
-
-
-            if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-              println("problems in wonderland")
-              None
+          if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
+            println("problems in wonderland")
+            None
+          } else {
+            val addresses = address.groupBy(x => (x.road, x.roadPart,/* x.track,*/ x.municipalityCode))
+            if (addresses.keys.size > 1) {
+              println(s" ${frozen.linkId} ${addresses.values.map(_.mkString(","))} ")
             } else {
-              val addresses = address.groupBy(x => (x.road, x.roadPart, x.track, x.municipalityCode))
-              if (addresses.keys.size > 1) {
-                println(s" ${frozen.linkId} ${addresses.values.map(_.mkString(","))} ")
-                Some(frozen, first, last, address)
-              } else {
-                val orderedAddress = address.sortBy(_.addrM)
-                RoadLinkDAO.TempRoadAddressesInfo.insertInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.municipalityCode.get.toInt, orderedAddress.head.road, orderedAddress.head.roadPart, orderedAddress.head.track, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
-                println(s"linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${orderedAddress.head.track}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
-                None
-              }
+              val orderedAddress = address.sortBy(_.addrM)
+              RoadLinkDAO.TempRoadAddressesInfo.insertInfo(RoadAddressTEMP(frozen.linkId, orderedAddress.head.municipalityCode.get.toInt, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM), "batch_process_temp_road_address")
+              println(s"linkId: ${frozen.linkId} road ${orderedAddress.head.road} roadPart ${orderedAddress.head.roadPart} track ${Track.Unknown}  etays ${orderedAddress.head.addrM} let ${orderedAddress.last.addrM} ")
             }
-          }else {
-            Seq()
           }
         }
       }
-      recapturedLinks.foreach{ case(frozen, first, last, address) => recapture(frozen, first, last, address)}
+//      recapturedLinks.foreach{ case(frozen, first, last, address) => recapture(frozen, first, last, address)}
 
     }
 

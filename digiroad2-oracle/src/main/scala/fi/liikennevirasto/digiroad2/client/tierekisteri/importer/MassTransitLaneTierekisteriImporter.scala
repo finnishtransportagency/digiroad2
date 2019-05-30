@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset.MassTransitLane
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TRLaneArrangementType, TierekisteriMassTransitLaneAssetClient}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
@@ -23,6 +23,10 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
 
   protected override def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
     tierekisteriAssetData.laneType != TRLaneArrangementType.Unknown
+  }
+
+  override protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    ???
   }
 
   override protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {

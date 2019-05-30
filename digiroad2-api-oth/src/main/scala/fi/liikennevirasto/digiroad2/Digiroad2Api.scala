@@ -820,13 +820,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean) {
-            val x = roadAddressService.linearAssetWithRoadAddress(assets)
-            val y = if (params("isExperimental").toBoolean) {
-              roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => x.flatMap(_.map(_.linkId)).contains(a.linkId))))
-            }else {
+            val updatedInfo = roadAddressService.linearAssetWithRoadAddress(assets)
+            val frozenInfo = if (params("isExperimental").toBoolean) {
+              roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => updatedInfo.flatMap(_.map(_.linkId)).contains(a.linkId))))
+            } else
               Seq(Seq.empty[PieceWiseLinearAsset])
-          }
-            mapLinearAssets(x ++ y)
+            mapLinearAssets(updatedInfo ++ frozenInfo)
           } else
             mapLinearAssets(assets)
       }
@@ -850,14 +849,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case false =>
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
-          if(params("withRoadAddress").toBoolean)
-//            if(params("isExperimental").toBoolean)
-              mapLinearAssets(roadAddressService.experimentalLinearAssetWithRoadAddress(assets))
-//            else
-//              mapLinearAssets(roadAddressService.linearAssetWithRoadAddress(assets))
-          else
+          if(params("withRoadAddress").toBoolean) {
+            val updatedInfo = roadAddressService.linearAssetWithRoadAddress(assets)
+            val frozenInfo = if (params("frozenInfo").toBoolean) {
+              roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => updatedInfo.flatMap(_.map(_.linkId)).contains(a.linkId))))
+            } else
+              Seq(Seq.empty[PieceWiseLinearAsset])
+            mapLinearAssets(updatedInfo ++ frozenInfo)
+          } else
             mapLinearAssets(assets)
-      }
+          }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }

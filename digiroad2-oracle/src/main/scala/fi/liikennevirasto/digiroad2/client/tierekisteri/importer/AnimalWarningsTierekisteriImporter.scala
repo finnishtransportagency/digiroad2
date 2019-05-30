@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriAnimalWarningsAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -31,6 +31,10 @@ class AnimalWarningsTierekisteriImporter extends LinearAssetTierekisteriImporter
 
     insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId(animalWarningPropertyId), trAssetData.animalWarningValue.value.toLong).execute
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+  }
+
+  override protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    ???
   }
 }
 
