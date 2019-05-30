@@ -309,9 +309,18 @@ object RoadLinkDAO{
         }
     }
 
+    def getByRoadNumber(roadNumber: Int): Seq[RoadAddressTEMP] = {
+      val resultx = sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m  from temp_road_address_info where road_number = $roadNumber"""
+        .as[(Long, Int, Long, Long, Int, Long, Long)].list
+
+      resultx.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM) =>
+        RoadAddressTEMP(linkId, municipalityCode, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM)
+      }
+    }
+
     def insertInfo(roadAddressTemp: RoadAddressTEMP, username: String): Unit = {
       sqlu"""insert into temp_road_address_info (id, link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, created_by )
-             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${roadAddressTemp.track.value}, ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM}, $username
+             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${Track.Unknown.value}, ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM}, $username
               from dual""".execute
     }
 

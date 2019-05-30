@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.{_}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, LinearAssetTypes, Measures}
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
@@ -18,7 +19,7 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[RoadAddressTEMP]) = throw new UnsupportedOperationException("Not supported method")
+  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[RoadAddressTEMP], vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]]) = throw new UnsupportedOperationException("Not supported method")
 
   override val tierekisteriClient = new TierekisteriTrafficSignAssetSpeedLimitClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
