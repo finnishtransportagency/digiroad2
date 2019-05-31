@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWeightLimitAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleAxleWeightLimitDao, OracleBogieWeightLimitDao, OracleTrailerTruckWeightLimitDao, OracleWeightLimitDao}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingAxleWeightLimit, IncomingBogieWeightLimit, IncomingTrailerTruckWeightLimit, IncomingWeightLimit}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -39,6 +39,8 @@ class TotalWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
+
+  protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
 }
 
 class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
@@ -59,6 +61,8 @@ class TrailerTruckWeightLimitTierekisteriImporter extends WeightLimitTierekister
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
+
+  protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
 }
 
 class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
@@ -79,6 +83,8 @@ class AxleWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporte
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
+
+  protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
 }
 
 class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImporterOperations {
@@ -99,4 +105,6 @@ class BogieWeightLimitTierekisteriImporter extends WeightLimitTierekisteriImport
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
+
+  protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
 }

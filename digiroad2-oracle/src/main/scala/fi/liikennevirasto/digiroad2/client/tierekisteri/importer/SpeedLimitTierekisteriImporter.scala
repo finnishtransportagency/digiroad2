@@ -3,7 +3,8 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset.SpeedLimitAsset
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriSpeedLimitAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{Measures, SpeedLimitService}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -22,7 +23,11 @@ class SpeedLimitTierekisteriImporter extends LinearAssetTierekisteriImporterOper
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    ???
+  }
+
+  protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = speedLimitService.dao.createSpeedLimit("batch_process_speedlimit", vvhRoadlink.linkId, measures, getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide),
         trAssetData.assetValue, Some(vvhClient.roadLinkData.createVVHTimeStamp()), None, None, None, vvhRoadlink.linkSource)

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetDataClient, TierekisteriHeightLimitAssetClient, TierekisteriWeightLimitAssetClient, TierekisteriWeightLimitData}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{DynamicLinearAssetService, LinearAssetService, LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -78,7 +78,7 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
 
   protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 
-  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
+  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[RoadAddressTEMP], vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
     val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)

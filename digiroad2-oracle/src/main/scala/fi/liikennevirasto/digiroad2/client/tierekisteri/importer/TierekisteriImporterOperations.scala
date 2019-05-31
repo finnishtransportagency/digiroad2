@@ -8,11 +8,14 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriAssetData, 
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressTEMP, RoadLinkDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import oracle.jdbc.OracleData
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -86,6 +89,51 @@ trait TierekisteriImporterOperations {
     }
   }
 
+  protected def calculateMeasuresVKM(roadAddress: RoadAddressTEMP, section: AddressSection, vvhRoadLink: VVHRoadlink, trAssetData: TierekisteriAssetData): Option[Measures] = {
+    val startAddrMValueCandidate = calculateStartLrmByAddressVKM(roadAddress, section, vvhRoadLink)
+    val endAddrMValueCandidate = calculateEndLrmByAddressVKM(roadAddress, section, vvhRoadLink)
+
+    (startAddrMValueCandidate, endAddrMValueCandidate) match {
+      case (Some(startAddrMValue), Some(endAddrMValue)) if(startAddrMValue <= endAddrMValue) => Some(Measures(startAddrMValue, endAddrMValue))
+      case (Some(startAddrMValue), Some(endAddrMValue)) => Some(Measures(endAddrMValue, startAddrMValue))
+      case _ => None
+    }
+//    val anchorPoint = roadAddress.startAddressM
+//    val vkmLength = Math.abs(roadAddress.endAddressM - roadAddress.startAddressM)
+//    val linkPercentage = vvhRoadLink.length/vkmLength
+//
+//    if(roadAddress.startAddressM <= trAssetData.startAddressMValue && roadAddress.endAddressM >= trAssetData.endAddressMValue) {
+//      val startMeasure = (trAssetData.startAddressMValue - anchorPoint) * linkPercentage
+//      val endMeasure = Math.abs(trAssetData.endAddressMValue - anchorPoint) * linkPercentage
+//
+//      Some(Measures(startMeasure, endMeasure))
+//    } else
+//      Some(Measures(0, vvhRoadLink.length))
+  }
+
+  protected def calculateStartLrmByAddressVKM(startAddress:  RoadAddressTEMP, section: AddressSection, vvhRoadLink: VVHRoadlink): Option[Double] = {
+    if (startAddress.startAddressM >= section.startAddressMValue)
+      SideCode.apply(startAddress.sideCode.getOrElse(99)) match {
+        case TowardsDigitizing => Some(0.0)
+        case AgainstDigitizing => Some(vvhRoadLink.length)
+        case _ => None
+      }
+    else
+      startAddress.addressMValueToLRM(section.startAddressMValue, vvhRoadLink)
+
+  }
+
+  protected def calculateEndLrmByAddressVKM(endAddress: RoadAddressTEMP, section: AddressSection, vvhRoadLink: VVHRoadlink): Option[Double] = {
+    if (endAddress.endAddressM <= section.endAddressMValue.getOrElse(endAddress.endAddressM))
+      SideCode(endAddress.sideCode.getOrElse(99)) match {
+        case TowardsDigitizing => Some(0.0)
+        case AgainstDigitizing => Some(vvhRoadLink.length)
+        case _ => None
+      }
+    else
+      endAddress.addressMValueToLRM(section.endAddressMValue.get, vvhRoadLink)
+  }
+
   protected def getAllMunicipalities: Seq[Int] = {
     withDynSession {
       municipalityDao.getMunicipalities
@@ -137,6 +185,25 @@ trait TierekisteriImporterOperations {
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
+//  protected def filterHistoricRoadAddressBySection(roadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], section: AddressSection, mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[VVHHistoryRoadLink]) = {
+//    def filterAddressMeasures(ra: ViiteRoadAddress) = {
+//      section.endAddressMValue match {
+//        case Some(endAddrM) => ra.startAddrMValue <= endAddrM && ra.endAddrMValue >= section.startAddressMValue
+//        case _ => ra.endAddrMValue >= section.startAddressMValue
+//      }
+//    }
+//
+//    val addresses = roadAddresses.getOrElse((section.roadNumber, section.roadPartNumber, section.track), Seq()).filter(ra => filterAddressMeasures(ra))
+//
+//    addresses.map(ra => (ra,
+//      if(mappedRoadLinks.exists(_.linkId == ra.linkId)) {
+//        mappedRoadLinks.find(_.linkId == ra.linkId)
+//      } else {
+//        historicMappedRoadLinks.find(_.linkId == ra.linkId)
+//      }
+//    )).filter(_._2.isDefined)
+//  }
+
   protected def filterRoadAddressBySection(roadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], section: AddressSection, mappedRoadLinks: Seq[VVHRoadlink]) = {
     def filterAddressMeasures(ra: ViiteRoadAddress) = {
       section.endAddressMValue match {
@@ -144,6 +211,29 @@ trait TierekisteriImporterOperations {
         case _ => ra.endAddrMValue >= section.startAddressMValue
       }
     }
+
+    val addresses = roadAddresses.getOrElse((section.roadNumber, section.roadPartNumber, section.track), Seq()).filter(ra => filterAddressMeasures(ra))
+
+    addresses.map(ra => (ra, mappedRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
+  }
+
+  protected def filterRoadAddressBySectionVKM(roadAddresses: Map[(Long, Long, Track), Seq[RoadAddressTEMP]], section: AddressSection, mappedRoadLinks: Seq[RoadAddressTEMP]) = {
+    def filterAddressMeasures(ra: RoadAddressTEMP) = {
+      section.endAddressMValue match {
+        case Some(endAddrM) => ra.startAddressM <= endAddrM && ra.endAddressM >= section.startAddressMValue
+        case _ => ra.endAddressM >= section.startAddressMValue
+      }
+    }
+
+    roadAddresses.foreach { mappedRoadAddress =>
+      if(mappedRoadAddress._1._3.value == Track.Unknown.value) {
+        mappedRoadAddress._2.foreach { ra =>
+          println(s"RoadLink with Link ID ${ra.linkId} for section with values {RoadNumber: ${section.roadNumber}, RoadPartNumber: ${section.roadPartNumber}, Track: ${section.track}} won't be used since it's track is unknown")
+        }
+      }
+
+    }
+
 
     val addresses = roadAddresses.getOrElse((section.roadNumber, section.roadPartNumber, section.track), Seq()).filter(ra => filterAddressMeasures(ra))
 
@@ -273,7 +363,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
     trAsset.flatMap(getRoadAddressSections)
   }
 
-  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit
+  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], vkmMappedRoadLinks: Seq[RoadAddressTEMP] = Seq(), vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]] = Map()): Unit
 
 
   def expireAssets() : Unit = {
@@ -304,13 +394,20 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
+        val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+
+//        val historicRoadLinksIds = roadAddresses.filterNot(f => mappedRoadLinks.map(_.linkId).contains(f.linkId)).map(_.linkId).toSet
+        val vkmRoadLinks = OracleDatabase.withDynSession(RoadLinkDAO.TempRoadAddressesInfo.getByRoadNumber(roadNumber.toInt))
+        val finalMappedRoadLinks = mappedRoadLinks ++ roadLinkService.fetchVVHRoadlinks(vkmRoadLinks.map(ra => ra.linkId).toSet)
+
+
+        val vkm = vkmRoadLinks.groupBy(ra => (ra.road, ra.roadPart, ra.track))
 
         //For each section creates a new OTH asset
         trAddressSections.foreach {
           case (section, trAssetData) =>
             withDynTransaction {
-              createAsset(section, trAssetData, mappedRoadAddresses, mappedRoadLinks)
+              createAsset(section, trAssetData, mappedRoadAddresses, finalMappedRoadLinks, vkmRoadLinks, vkm)
             }
         }
     }
@@ -358,12 +455,24 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
 
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
 
-  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
+  protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
+  protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 
-  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit = {
+  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink], vkmMappedRoadLinks: Seq[RoadAddressTEMP], vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
     val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, mappedRoadLinks)
+    val selectedSections = (roadAddressLink.map(_._1.startAddrMValue) ++ roadAddressLink.map(_._1.endAddrMValue) ++ Seq(trAssetData.startAddressMValue, trAssetData.endAddressMValue)).distinct.sorted
+    val zippedSelectedSections = selectedSections.zip(selectedSections.tail)
+    val missedGaps = zippedSelectedSections.filterNot(x => roadAddressLink.exists(_._1.startAddrMValue == x._1) && roadAddressLink.exists(_._1.endAddrMValue == x._2))
+    val filterGapsByTrAsset = missedGaps.map(gap => if(trAssetData.startAddressMValue <= gap._1 && trAssetData.endAddressMValue >= gap._2) gap)
+
+    val availableVkmRoadLinks =
+      if(roadAddressLink.nonEmpty) {
+        vkmMappedRoadLinks.filter(a => filterGapsByTrAsset.contains((a.startAddressM, a.endAddressM)))
+      } else vkmMappedRoadLinks
+
+    val vkmAddressLinks = filterRoadAddressBySectionVKM(vkm, section, availableVkmRoadLinks)
 
     roadAddressLink
       .foreach { case (ra, roadlink) =>
@@ -373,23 +482,53 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
               createLinearAsset(roadlink.get, ra, section, measures, trAssetData)
         }
       }
+
+    vkmAddressLinks
+      .foreach { case (ra, roadAddressTemp) =>
+        calculateMeasuresVKM(ra, section, mappedRoadLinks.find(_.linkId == roadAddressTemp.get.linkId).get, trAssetData).foreach {
+          measures =>
+            if(measures.endMeasure-measures.startMeasure > 0.01 )
+              createLinearAssetVKM(mappedRoadLinks.find(_.linkId == roadAddressTemp.get.linkId).get, ra, section, measures, trAssetData)
+        }
+      }
   }
 }
 
 trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporterOperations{
 
   protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData)
+  protected def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData)
 
-  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], vvhRoadLinks: Seq[VVHRoadlink]): Unit = {
+  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], vvhRoadLinks: Seq[VVHRoadlink], vkmMappedRoadLinks: Seq[RoadAddressTEMP], vkm: Map[(Long, Long, Track), Seq[RoadAddressTEMP]]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
     //Returns all the match Viite road address for the given section
     val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
+    val selectedSections = (roadAddressLink.map(_._1.startAddrMValue) ++ roadAddressLink.map(_._1.endAddrMValue) ++ Seq(trAssetData.startAddressMValue, trAssetData.endAddressMValue)).distinct.sorted
+    val zippedSelectedSections = selectedSections.zip(selectedSections.tail)
+    val missedGaps = zippedSelectedSections.filterNot(x => roadAddressLink.exists(_._1.startAddrMValue == x._1) && roadAddressLink.exists(_._1.endAddrMValue == x._2))
+    val filterGapsByTrAsset = missedGaps.map(gap => if(trAssetData.startAddressMValue <= gap._1 && trAssetData.endAddressMValue >= gap._2) gap)
+
+    val availableVkmRoadLinks =
+      if(roadAddressLink.nonEmpty) {
+        vkmMappedRoadLinks.filter(a => filterGapsByTrAsset.contains((a.startAddressM, a.endAddressM)))
+      } else vkmMappedRoadLinks
+
+    val vkmAddressLinks = filterRoadAddressBySectionVKM(vkm, section, availableVkmRoadLinks)
+
     roadAddressLink
       .foreach { case (ra, roadlink) =>
         ra.addressMValueToLRM(section.startAddressMValue).foreach{
           mValue =>
             createPointAsset(ra, roadlink.get, mValue, trAssetData)
+        }
+      }
+
+    vkmAddressLinks
+      .foreach { case (ra, roadAddressTemp) =>
+        ra.addressMValueToLRM(section.startAddressMValue, vvhRoadLinks.find(_.linkId == roadAddressTemp.get.linkId).get).foreach{
+          mValue =>
+            createPointAssetVkm(ra, vvhRoadLinks.find(_.linkId == roadAddressTemp.get.linkId).get, mValue, trAssetData)
         }
       }
   }

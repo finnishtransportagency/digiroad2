@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 import fi.liikennevirasto.digiroad2.asset.{PavedRoad, PavementClass, RoadRegistry, SideCode}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriPavedRoadAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 
 class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -28,7 +29,11 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
     tierekisteriAssetData.pavementClass != PavementClass.Unknown
   }
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAssetVKM(vvhRoadlink: RoadLinkLike, roadAddress: RoadAddressTEMP, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    ???
+  }
+
+  override protected def createLinearAsset(vvhRoadlink: RoadLinkLike, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (trAssetData.pavementClass != PavementClass.Unknown) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), informationSource = Some(RoadRegistry.value))
