@@ -256,9 +256,9 @@
       });
     }, 1000);
 
-    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom, isExperimental) {
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
       return {
-        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom + '&isExperimental=' + isExperimental
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
       };
     });
 

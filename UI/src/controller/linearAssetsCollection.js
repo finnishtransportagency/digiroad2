@@ -49,8 +49,8 @@
           linearAsset.endMeasure.toFixed(2);
     };
 
-    this.fetch = function(boundingBox, center, zoom, isExperimental) {
-      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom, isExperimental), center);
+    this.fetch = function(boundingBox, center, zoom) {
+      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox, center, zoom) {
