@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.dao
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 //TODO - Remove after new service NLS is used
@@ -11,11 +12,16 @@ case class RoadAddressTEMP(linkId: Long, municipalityCode: Int, road: Long, road
   private val addressLength: Long = endAddressM - startAddressM
   private val lrmLength: Double = Math.abs(endAddressM - startAddressM)
 
-  def addressMValueToLRM(addrMValue: Long): Option[Double] = {
+  def addressMValueToLRM(addrMValue: Long, vvhRoadLink: VVHRoadlink): Option[Double] = {
     if (addrMValue < startAddressM || addrMValue > endAddressM)
       None
     else
-      Some((addrMValue - startAddressM) * lrmLength / addressLength + startAddressM)
+    // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
+      SideCode.apply(sideCode.getOrElse(99)) match {
+        case TowardsDigitizing => Some((addrMValue - startAddressM) * lrmLength / addressLength + 0)
+        case AgainstDigitizing => Some(vvhRoadLink.length - (addrMValue - startAddressM) * lrmLength / addressLength)
+        case _ => None
+      }
   }
 }
 

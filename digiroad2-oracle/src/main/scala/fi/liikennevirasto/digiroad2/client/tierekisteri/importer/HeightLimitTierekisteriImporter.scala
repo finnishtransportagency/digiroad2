@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{SideCode, TrHeightLimit}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriHeightLimitAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleHeightLimitDao
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingHeightLimit
 import org.apache.http.impl.client.HttpClientBuilder
@@ -31,6 +31,8 @@ class HeightLimitTierekisteriImporter extends PointAssetTierekisteriImporterOper
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
     }
   }
+
+  protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
 }
 
 
