@@ -319,8 +319,8 @@ object RoadLinkDAO{
     }
 
     def insertInfo(roadAddressTemp: RoadAddressTEMP, username: String): Unit = {
-      sqlu"""insert into temp_road_address_info (id, link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, created_by )
-             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${Track.Unknown.value}, ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM}, $username
+      sqlu"""insert into temp_road_address_info (id, link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, side_code  ,created_by)
+             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${roadAddressTemp.track.value}, ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM},  ${roadAddressTemp.sideCode}, $username
               from dual""".execute
     }
 

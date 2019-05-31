@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 //TODO - Remove after new service NLS is used
-case class RoadAddressTEMP(linkId: Long, municipalityCode: Int, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long) {
+case class RoadAddressTEMP(linkId: Long, municipalityCode: Int, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long, sideCode: Option[Int] = None) {
 
   private val addressLength: Long = endAddressM - startAddressM
   private val lrmLength: Double = Math.abs(endAddressM - startAddressM)
