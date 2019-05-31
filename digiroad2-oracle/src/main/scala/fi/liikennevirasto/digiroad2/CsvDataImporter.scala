@@ -841,6 +841,13 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
   type ImportResultData = ImportResultMassTransitStop
+  sealed trait ActionType
+  object ActionType {
+    case object Create extends ActionType
+    case object Update extends ActionType
+    case object UpdatePosition extends ActionType
+    case object None extends ActionType
+  }
 
   override val logInfo: String = "bus stop import"
   lazy val massTransitStopService: MassTransitStopService = {
@@ -896,9 +903,19 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
+  private val coordinateMappings = Map(
+    "Koordinaatti X" -> "coordinate_x",
+    "Koordinaatti Y" -> "coordinate_y"
+  )
+  private val externalIdMapping = Map(
+    "Valtakunnallinen ID" -> "external_id"
+  )
+
+  private val optionalMappings = externalIdMapping ++ coordinateMappings
+
   val mappings : Map[String, String]= textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
 
-  val MandatoryParameters: Set[String] = mappings.keySet + "Valtakunnallinen ID"
+  val MandatoryParameters: Set[String] = mappings.keySet
 
 
   private def resultWithType(result: (MalformedParameters, List[AssetProperty]), assetType: Int): ParsedRow = {
@@ -991,8 +1008,24 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
 
-  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-    MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): (List[String], ActionType) = {
+    val missingDefaultParameters = MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
+
+    val action =
+        if(optionalMappings.keys.toSeq.sorted.equals(actionParameters.sorted))
+          ActionType.UpdatePosition
+        else if(externalIdMapping.keys.toSeq.sorted.equals(actionParameters.sorted))
+          ActionType.Update
+        else if(coordinateMappings.keys.toSeq.sorted.equals(actionParameters.sorted))
+          ActionType.Create
+        else
+          ActionType.None
+
+    val missingOptionalParameters = if(action == ActionType.None) missingOptionals else Seq()
+
+    (missingDefaultParameters ++ missingOptionalParameters, action)
   }
 
   def updateAsset(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
@@ -1047,13 +1080,20 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       override val delimiter: Char = ';'
     })
     csvReader.allWithHeaders().foldLeft(ImportResultMassTransitStop()) { (result, row) =>
-      val missingParameters = findMissingParameters(row)
+      val (missingParameters, actionType) = findMissingParameters(row)
       val (malformedParameters, properties) = assetRowToProperties(row)
       if(missingParameters.isEmpty && malformedParameters.isEmpty) {
-        val parsedRow = CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
+        val parsedRow = actionType match {
+          case ActionType.Update || ActionType.UpdatePosition => CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
+          case ActionType.Create => CsvAssetRow(0L, properties = properties)
+        }
         try {
-          val excludedRows = updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, user)
-            .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+          val excludedRows = actionType match {
+            case ActionType.Update => updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, user)
+              .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+            //case ActionType.UpdatePosition =>
+            //case ActionType.Create =>
+          }
           result.copy(excludedRows = excludedRows ::: result.excludedRows)
         } catch {
           case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
