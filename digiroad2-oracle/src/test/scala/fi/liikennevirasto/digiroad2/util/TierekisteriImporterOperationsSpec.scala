@@ -244,6 +244,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       createObject = List.concat(createObject , Seq((roadAddress, vvhRoadlink, mValue, trAssetData)))
     }
 
+    protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
+
     def getCreatedValues: Seq[(ViiteRoadAddress, VVHRoadlink, Double, TierekisteriAssetData)] = {
       createObject
     }

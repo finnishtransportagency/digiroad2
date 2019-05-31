@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{SideCode, TrWidthLimit}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriWidthLimitAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleWidthLimitDao
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingWidthLimit
 import org.apache.http.impl.client.HttpClientBuilder
@@ -32,4 +32,6 @@ class WidthLimitTierekisteriImporter extends PointAssetTierekisteriImporterOpera
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
       }
   }
+
+  protected override def createPointAssetVkm(roadAddress: RoadAddressTEMP, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = throw new UnsupportedOperationException
 }

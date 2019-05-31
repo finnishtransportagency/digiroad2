@@ -301,11 +301,11 @@ object RoadLinkDAO{
   case object TempRoadAddressesInfo {
 
     def getByLinkId(linkIds: Set[Long]): Seq[RoadAddressTEMP] = {
-      val resultx = sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m  from temp_road_address_info where link_id in (#${linkIds.mkString(",")})"""
-        .as[(Long, Int, Long, Long, Int, Long, Long)].list
+      val resultx = sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, side_code  from temp_road_address_info where link_id in (#${linkIds.mkString(",")})"""
+        .as[(Long, Int, Long, Long, Int, Long, Long, Option[Int])].list
 
-        resultx.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM) =>
-          RoadAddressTEMP(linkId, municipalityCode, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM)
+        resultx.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, sideCode) =>
+          RoadAddressTEMP(linkId, municipalityCode, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, sideCode)
         }
     }
 
