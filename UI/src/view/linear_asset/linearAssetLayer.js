@@ -401,7 +401,7 @@ root.LinearAssetLayer  = function(params) {
         eventbus.trigger('layer:linearAsset');
       });
     } else {
-      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom()), isExperimental).then(function() {
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');
       });
     }
