@@ -821,10 +821,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           val assets = usedService.getByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean) {
             val updatedInfo = roadAddressService.linearAssetWithRoadAddress(assets)
-            val frozenInfo = if (params("isExperimental").toBoolean) {
-              roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => updatedInfo.flatMap(_.map(_.linkId)).contains(a.linkId))))
-            } else
-              Seq(Seq.empty[PieceWiseLinearAsset])
+            val frozenInfo = roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => updatedInfo.flatMap(_.map(_.linkId)).contains(a.linkId))))
             mapLinearAssets(updatedInfo ++ frozenInfo)
           } else
             mapLinearAssets(assets)
@@ -851,10 +848,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           val assets = usedService.getComplementaryByBoundingBox(typeId, boundingRectangle)
           if(params("withRoadAddress").toBoolean) {
             val updatedInfo = roadAddressService.linearAssetWithRoadAddress(assets)
-            val frozenInfo = if (params("frozenInfo").toBoolean) {
-              roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => updatedInfo.flatMap(_.map(_.linkId)).contains(a.linkId))))
-            } else
-              Seq(Seq.empty[PieceWiseLinearAsset])
+            val frozenInfo = roadAddressService.experimentalLinearAssetWithRoadAddress(assets.map(_.filterNot(a => updatedInfo.flatMap(_.map(_.linkId)).contains(a.linkId))))
             mapLinearAssets(updatedInfo ++ frozenInfo)
           } else
             mapLinearAssets(assets)
