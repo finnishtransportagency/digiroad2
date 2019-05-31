@@ -7,6 +7,7 @@ create table temp_road_address_info (
  TRACK_CODE NUMBER NOT NULL,
  START_ADDRESS_M NUMBER NOT NULL,
  END_ADDRESS_M NUMBER NOT NULL,
+ side_code numeric default null,
  created_date date default sysdate not null enable,
  created_by varchar2(128),
  primary key (id)
