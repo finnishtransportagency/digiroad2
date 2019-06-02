@@ -83,7 +83,7 @@ trait TierekisteriImporterOperations {
     val endAddrMValueCandidate = calculateEndLrmByAddress(roadAddress, section)
 
     (startAddrMValueCandidate, endAddrMValueCandidate) match {
-      case (Some(startAddrMValue), Some(endAddrMValue)) if(startAddrMValue <= endAddrMValue) => Some(Measures(startAddrMValue, endAddrMValue))
+      case (Some(startAddrMValue), Some(endAddrMValue)) if startAddrMValue <= endAddrMValue => Some(Measures(startAddrMValue, endAddrMValue))
       case (Some(startAddrMValue), Some(endAddrMValue)) => Some(Measures(endAddrMValue, startAddrMValue))
       case _ => None
     }
@@ -94,7 +94,7 @@ trait TierekisteriImporterOperations {
     val endAddrMValueCandidate = calculateEndLrmByAddressVKM(roadAddress, section, vvhRoadLink)
 
     (startAddrMValueCandidate, endAddrMValueCandidate) match {
-      case (Some(startAddrMValue), Some(endAddrMValue)) if(startAddrMValue <= endAddrMValue) => Some(Measures(startAddrMValue, endAddrMValue))
+      case (Some(startAddrMValue), Some(endAddrMValue)) if startAddrMValue <= endAddrMValue => Some(Measures(startAddrMValue, endAddrMValue))
       case (Some(startAddrMValue), Some(endAddrMValue)) => Some(Measures(endAddrMValue, startAddrMValue))
       case _ => None
     }
@@ -113,9 +113,9 @@ trait TierekisteriImporterOperations {
 
   protected def calculateStartLrmByAddressVKM(startAddress:  RoadAddressTEMP, section: AddressSection, vvhRoadLink: VVHRoadlink): Option[Double] = {
     if (startAddress.startAddressM >= section.startAddressMValue)
-      SideCode.apply(startAddress.sideCode.getOrElse(99)) match {
-        case TowardsDigitizing => Some(0.0)
-        case AgainstDigitizing => Some(vvhRoadLink.length)
+      startAddress.sideCode match {
+        case Some(TowardsDigitizing) => Some(0.0)
+        case Some(AgainstDigitizing) => Some(vvhRoadLink.length)
         case _ => None
       }
     else
@@ -125,9 +125,9 @@ trait TierekisteriImporterOperations {
 
   protected def calculateEndLrmByAddressVKM(endAddress: RoadAddressTEMP, section: AddressSection, vvhRoadLink: VVHRoadlink): Option[Double] = {
     if (endAddress.endAddressM <= section.endAddressMValue.getOrElse(endAddress.endAddressM))
-      SideCode(endAddress.sideCode.getOrElse(99)) match {
-        case TowardsDigitizing => Some(0.0)
-        case AgainstDigitizing => Some(vvhRoadLink.length)
+      endAddress.sideCode match {
+        case Some(TowardsDigitizing) => Some(0.0)
+        case Some(AgainstDigitizing) => Some(vvhRoadLink.length)
         case _ => None
       }
     else
@@ -185,25 +185,6 @@ trait TierekisteriImporterOperations {
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
-//  protected def filterHistoricRoadAddressBySection(roadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], section: AddressSection, mappedRoadLinks: Seq[VVHRoadlink], historicMappedRoadLinks: Seq[VVHHistoryRoadLink]) = {
-//    def filterAddressMeasures(ra: ViiteRoadAddress) = {
-//      section.endAddressMValue match {
-//        case Some(endAddrM) => ra.startAddrMValue <= endAddrM && ra.endAddrMValue >= section.startAddressMValue
-//        case _ => ra.endAddrMValue >= section.startAddressMValue
-//      }
-//    }
-//
-//    val addresses = roadAddresses.getOrElse((section.roadNumber, section.roadPartNumber, section.track), Seq()).filter(ra => filterAddressMeasures(ra))
-//
-//    addresses.map(ra => (ra,
-//      if(mappedRoadLinks.exists(_.linkId == ra.linkId)) {
-//        mappedRoadLinks.find(_.linkId == ra.linkId)
-//      } else {
-//        historicMappedRoadLinks.find(_.linkId == ra.linkId)
-//      }
-//    )).filter(_._2.isDefined)
-//  }
-
   protected def filterRoadAddressBySection(roadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], section: AddressSection, mappedRoadLinks: Seq[VVHRoadlink]) = {
     def filterAddressMeasures(ra: ViiteRoadAddress) = {
       section.endAddressMValue match {
@@ -213,7 +194,6 @@ trait TierekisteriImporterOperations {
     }
 
     val addresses = roadAddresses.getOrElse((section.roadNumber, section.roadPartNumber, section.track), Seq()).filter(ra => filterAddressMeasures(ra))
-
     addresses.map(ra => (ra, mappedRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 

@@ -15,8 +15,7 @@ import org.slf4j.LoggerFactory
 class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   val logger = LoggerFactory.getLogger(getClass)
-
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   /**
     * Return all the current existing road numbers
@@ -114,7 +113,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   def roadLinkWithRoadAddressTemp(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     try {
-      val roadAddressLinks = withDynSession(RoadLinkDAO.TempRoadAddressesInfo.getByLinkId(roadLinks.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
+      val roadAddressLinks = withDynTransaction(RoadLinkDAO.TempRoadAddressesInfo.getByLinkIds(roadLinks.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
       logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
 
       roadLinks.map(rl =>
@@ -182,7 +181,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
   def experimentalLinearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] ={
     try{
       val filtered = pieceWiseLinearAssets.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty))
-      val addressData = withDynSession(RoadLinkDAO.TempRoadAddressesInfo.getByLinkId(filtered.head.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap)
+      val addressData = withDynTransaction(RoadLinkDAO.TempRoadAddressesInfo.getByLinkIds(filtered.head.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap)
 
       filtered.map(
         _.map(pwa =>

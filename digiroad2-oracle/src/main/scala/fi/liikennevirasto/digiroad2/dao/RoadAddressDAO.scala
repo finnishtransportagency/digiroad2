@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.util.Track
 import org.joda.time.DateTime
 //TODO - Remove after new service NLS is used
-case class RoadAddressTEMP(linkId: Long, municipalityCode: Int, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long, sideCode: Option[Int] = None) {
+case class RoadAddressTEMP(linkId: Long, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, geom: Seq[Point] = Seq(), sideCode: Option[SideCode] = None, municipalityCode: Option[Int] = None) {
 
   private val addressLength: Long = endAddressM - startAddressM
   private val lrmLength: Double = Math.abs(endAddressM - startAddressM)
@@ -17,7 +17,7 @@ case class RoadAddressTEMP(linkId: Long, municipalityCode: Int, road: Long, road
       None
     else
     // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
-      SideCode.apply(sideCode.getOrElse(99)) match {
+      sideCode.getOrElse(SideCode.Unknown) match {
         case TowardsDigitizing => Some((addrMValue - startAddressM) * lrmLength / addressLength + 0)
         case AgainstDigitizing => Some(vvhRoadLink.length - (addrMValue - startAddressM) * lrmLength / addressLength)
         case _ => None
