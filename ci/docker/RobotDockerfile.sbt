@@ -39,8 +39,8 @@ RUN pip install robotframework-angularjs==0.0.9
 RUN pip install robotframework-excellibrary==0.0.2
 RUN pip install robotframework-httplibrary==0.4.2
 RUN pip install robotframework-requests==0.5.0
-RUN pip install robotframework-selenium2library==3.0.0
-RUN pip install robotframework-seleniumlibrary==3.3.1
+RUN pip install -U robotframework-selenium2library
+RUN pip install -U robotframework-seleniumlibrary
 RUN pip install robotframework-sshlibrary==3.3.0
 RUN pip install robotframework-testrail==1.0.4
 RUN pip install robotframework-xvfb==1.2.2
