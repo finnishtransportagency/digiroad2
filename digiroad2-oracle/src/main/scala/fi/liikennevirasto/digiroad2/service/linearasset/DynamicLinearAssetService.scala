@@ -273,6 +273,23 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
 
   def enrichPersistedLinearAssetProperties(persistedLinearAsset: Seq[PersistedLinearAsset]) : Seq[PersistedLinearAsset] = persistedLinearAsset
 
+  def enrichWithProperties(properties: Map[Long, Seq[DynamicProperty]], persistedLinearAsset: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+    persistedLinearAsset.groupBy(_.id).flatMap {
+      case (id, assets) =>
+        properties.get(id) match {
+          case Some(props) => assets.map(a => a.copy(value = a.value match {
+            case Some(value) =>
+              val multiValue = value.asInstanceOf[DynamicValue]
+              //If exist at least one property to enrich with value all null properties value could be filter out
+              Some(multiValue.copy(value = DynamicAssetValue(multiValue.value.properties.filter(_.values.nonEmpty) ++ props)))
+            case _ =>
+              Some(DynamicValue(DynamicAssetValue(props)))
+          }))
+          case _ => assets
+        }
+    }.toSeq
+  }
+
   override def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
         val oldAsset = getPersistedAssetsByIds(adjustment.typeId, Set(adjustment.assetId), newTransaction =  false).head
 

@@ -486,7 +486,8 @@
           .concat(getLinearAsset(assetType.roadWidth))
           .concat(getLinearAsset(assetType.litRoad))
           .concat([carryingCapacityBox])
-          .concat(getLinearAsset(assetType.roadDamagedByThaw)),
+          .concat(getLinearAsset(assetType.roadDamagedByThaw))
+          .concat(getLinearAsset(assetType.roadWorksAsset)),
       []
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))
@@ -523,13 +524,14 @@
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}), isExperimental);
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
+    var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
     return [
       []
         .concat([massTransitBox])
         .concat(getPointAsset(assetType.obstacles))
         .concat(getPointAsset(assetType.railwayCrossings))
         .concat(getPointAsset(assetType.directionalTrafficSigns))
-        .concat(getPointAsset(assetType.pedestrianCrossings))
+        .concat(pedestrianCrossingBox)
         .concat(getPointAsset(assetType.trafficLights))
         .concat([trafficSignBox])
         .concat(getPointAsset(assetType.servicePoints)),

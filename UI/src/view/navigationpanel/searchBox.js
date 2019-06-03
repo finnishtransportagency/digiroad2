@@ -11,7 +11,7 @@
     var clearButton = $('<button class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
     var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
 
-    var associationNamesRegex = /^YT +/g;
+    var associationNamesRegex = /^YT +/i;
 
     var bindEvents = function() {
       coordinatesText.keypress(function(event) {
@@ -47,28 +47,13 @@
 
       var showDialog = function(message) {
         instructionsPopup.show(message, 3000);
+        jQuery('.spinner-overlay-search').remove();
+        jQuery('#search-results').parent().hide();
       };
       locationSearch.search(coordinatesText.val()).then(function(results) {
         populateSearchResults(results);
         if (results.length === 1) {
-          var result = results[0];
-          if (result.resultType.indexOf("Mtstop")>-1) {
-            window.location.hash = "#massTransitStop/";
-            window.location.hash="#massTransitStop/"+result.nationalId;
-          }
-          else if (result.resultType.indexOf("Link-id")>-1) {
-            window.location.hash = "#linkProperty/";
-            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
-            window.location.hash = "#linkProperty/" + coordinatesText.val();
-          } else if (result.resultType.indexOf("SpeedLimit")>-1) {
-            eventbus.once('layer:speedLimit:moved', function() {
-              eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
-            });
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-          }
-          else {
-            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-          }
+          redirectToLocation(results[0]);
         }
       }).fail(showDialog);
     };
@@ -78,21 +63,7 @@
         .sortBy('distance')
         .map(function(result) {
           return $('<li></li>').text(result.title).on('click', function() {
-            if (result.resultType.indexOf("Link-id")>-1){
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-              window.location.hash = "#linkProperty/" + coordinatesText.val();
-            } else if (result.resultType.indexOf("SpeedLimit")>-1) {
-              eventbus.once('layer:speedLimit:moved', function() {
-                eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
-              });
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-            } else if (result.resultType.indexOf("Mtstop")>-1) {
-              window.location.hash="#massTransitStop/"+result.nationalId;
-            } else if (result.resultType.indexOf("association")>-1) {
-              window.location.hash = "#linkProperty/" + result.linkId;
-            } else {
-              eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
-            }
+            redirectToLocation(result);
           });
         }).value();
 
@@ -100,6 +71,24 @@
       searchResults.html(resultItems);
       resultsSection.show();
       clearSection.show();
+    };
+
+    var redirectToLocation = function(result) {
+      if (result.resultType.indexOf("Link-id")>-1){
+        eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+        window.location.hash = "#linkProperty/" + coordinatesText.val();
+      } else if (result.resultType.indexOf("SpeedLimit")>-1) {
+        eventbus.once('layer:speedLimit:moved', function() {
+          eventbus.trigger('speedLimit:selectByLinkId', result.linkid);
+        });
+        eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+      } else if (result.resultType.indexOf("Mtstop")>-1) {
+        window.location.hash="#massTransitStop/"+result.nationalId;
+      } else if (result.resultType.indexOf("association")>-1) {
+        window.location.hash = "#linkProperty/" + result.linkId;
+      } else {
+        eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
+      }
     };
 
     var emptyResultSection = function() {

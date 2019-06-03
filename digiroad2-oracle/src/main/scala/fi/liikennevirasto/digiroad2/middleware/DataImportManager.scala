@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.middleware
 import java.io.InputStream
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, MaintenanceRoadAsset, MassTransitStopAsset, TrafficSigns}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
@@ -28,6 +28,11 @@ class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
   lazy val maintenanceRoadCsvImporter: MaintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter(roadLinkService, eventBus)
   lazy val massTransitStopCsvImporter: MassTransitStopCsvImporter = new MassTransitStopCsvImporter(roadLinkService, eventBus)
   lazy val roadLinkCsvImporter: RoadLinkCsvImporter = new RoadLinkCsvImporter(roadLinkService, eventBus)
+  lazy val obstaclesCsvImporter: ObstaclesCsvImporter = new ObstaclesCsvImporter(roadLinkService, eventBus)
+  lazy val trafficLightsCsvImporter: TrafficLightsCsvImporter = new TrafficLightsCsvImporter(roadLinkService, eventBus)
+  lazy val pedestrianCrossingCsvImporter: PedestrianCrossingCsvImporter = new PedestrianCrossingCsvImporter(roadLinkService, eventBus)
+  lazy val railwayCrossingCsvImporter: RailwayCrossingCsvImporter = new RailwayCrossingCsvImporter(roadLinkService, eventBus)
+  lazy val servicePointCsvImporter: ServicePointCsvImporter = new ServicePointCsvImporter(roadLinkService, eventBus)
 
   def importer(dataImporterInfo: CsvDataImporterInfo) {
 
@@ -40,6 +45,16 @@ class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
         roadLinkCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user.username)
       case MassTransitStopAsset.layerName =>
         massTransitStopCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user, dataImporterInfo.additionalImportInfo.map(_.asInstanceOf[AdministrativeValues].administrativeClasses))
+      case Obstacles.layerName =>
+        obstaclesCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
+      case TrafficLights.layerName =>
+        trafficLightsCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
+      case RailwayCrossings.layerName =>
+        railwayCrossingCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
+      case PedestrianCrossings.layerName =>
+        pedestrianCrossingCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
+      case ServicePoints.layerName =>
+        servicePointCsvImporter.importAssets(dataImporterInfo.inputStream, dataImporterInfo.fileName, dataImporterInfo.user)
       case _ =>
     }
   }

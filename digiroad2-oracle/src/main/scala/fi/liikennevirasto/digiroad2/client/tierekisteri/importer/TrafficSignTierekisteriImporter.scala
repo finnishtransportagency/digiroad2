@@ -12,7 +12,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{SpeedLimitTrafficSignClient, TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
@@ -134,7 +134,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
 
     if(trafficSignsIds.nonEmpty) {
-      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
+      trafficSignService.massExpireAssetWithoutTransaction(trafficSignsIds, Some("batch_process_trafficSigns"))
       manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
     }
   }
@@ -245,6 +245,9 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
 
 class TrafficSignSpeedLimitTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
   override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
+  override val tierekisteriClient = new SpeedLimitTrafficSignClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())(filterCondition)
 }
 
 class TrafficSignRegulatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
