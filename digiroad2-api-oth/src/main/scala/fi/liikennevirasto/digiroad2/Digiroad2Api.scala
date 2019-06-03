@@ -561,7 +561,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
-    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) else roadLinkSeq
+    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) ++ roadAddressService.roadLinkWithRoadAddressTemp(roadLinkSeq) else roadLinkSeq
     partitionRoadLinks(roadLinks)
   }
 
@@ -569,7 +569,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksWithComplementaryFromVVH(boundingRectangle, municipalities)
-    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) else roadLinkSeq
+    val roadLinks = if(withRoadAddress) roadAddressService.roadLinkWithRoadAddress(roadLinkSeq) ++ roadAddressService.roadLinkWithRoadAddressTemp(roadLinkSeq) else roadLinkSeq
     partitionRoadLinks(roadLinks)
   }
 
