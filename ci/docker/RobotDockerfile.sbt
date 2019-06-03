@@ -70,3 +70,7 @@ RUN wget https://chromedriver.storage.googleapis.com/74.0.3729.6/chromedriver_li
   && rm chromedriver_linux64.zip \
   && mv chromedriver /usr/local/bin \
   && chmod +x /usr/local/bin/chromedriver
+
+RUN headless_browser=True,
+RUN multi_logs=True,
+RUN nogui=True
