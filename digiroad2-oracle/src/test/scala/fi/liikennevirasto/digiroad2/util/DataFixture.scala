@@ -1887,15 +1887,15 @@ object DataFixture {
           val adj = roadLinkService.getAdjacent(frozen.linkId, false)
           val filtered = roadAddress.filter(x => adj.map(_.linkId).contains(x.linkId))
 
-          if (index == 0 && filtered.count { x1 =>
-            val (first, last) = GeometryUtils.geometryEndpoints(x1.geom)
-            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x1.road && addressL.roadPart == x1.roadPart} == 1)
+          if (index == 0 && filtered.count { x =>
+            val (first, last) = GeometryUtils.geometryEndpoints(x.geom)
+            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x.road && addressL.roadPart == x.roadPart} == 1)
 
             Seq(addressF.copy(road = addressL.road, roadPart = addressL.roadPart), addressL)
 
-          else if (index == zippedFrozen.size && filtered.count { x1 =>
-            val (first, last) = GeometryUtils.geometryEndpoints(x1.geom)
-            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x1.road && addressL.roadPart == x1.roadPart} == 1)
+          else if ((index + 1) == zippedFrozen.size && filtered.count { x =>
+            val (first, last) = GeometryUtils.geometryEndpoints(x.geom)
+            (GeometryUtils.areAdjacent(p2, first) || GeometryUtils.areAdjacent(p2, last)) && addressF.road == x.road && addressF.roadPart == x.roadPart} == 1)
 
             Seq(addressF, addressL.copy(road = addressF.road, roadPart = addressF.roadPart))
           else
@@ -1959,7 +1959,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] =Seq(5) //= OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
     OracleDatabase.withDynTransaction {
       val toCreate = municipalities.flatMap { municipality =>
@@ -1975,6 +1975,7 @@ object DataFixture {
           RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
         }
 
+        val forecedFind = Seq()
         val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
           val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
 
@@ -1986,11 +1987,11 @@ object DataFixture {
             } else {
               val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
               if(grouped.keys.size > 1) {
-                val recalcultaAddresses = recalculateAddress(frozen, mappedAddresses)
-                if(recalcultaAddresses.size == 1)
-                  Some(recalcultaAddresses.head)
+                val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
+                if(recalculateAddresses.size == 1)
+                  Some(recalculateAddresses.head)
                 else {
-                  recalcultaAddresses.foreach { recalc =>
+                  recalculateAddresses.foreach { recalc =>
                     println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.roadPart} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
                   }}
                     None
@@ -2002,7 +2003,7 @@ object DataFixture {
           } catch {
             case ex: Exception =>
               println(s"Exception in VKM for linkId ${frozen.linkId}")
-              None
+            None
           }
         }
         calculateTrackAndSideCode(mappedAddresses, frozenAddresses, roadLinks, Seq())
