@@ -607,13 +607,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "maxAddressNumberRight" -> roadLink.attributes.get("TO_RIGHT"),
       "minAddressNumberLeft" -> roadLink.attributes.get("FROM_LEFT"),
       "maxAddressNumberLeft" -> roadLink.attributes.get("TO_LEFT"),
-      "roadPartNumber" -> extractLongValue(roadLink, "VIITE_ROAD_PART_NUMBER"),
-      "roadNumber" -> extractLongValue(roadLink, "VIITE_ROAD_NUMBER"),
+      "roadPartNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", roadLink.attributes.get("TEMP_ROAD_PART_NUMBER")),
+      "roadNumber" -> roadLink.attributes.getOrElse("VIITE_ROAD_NUMBER", roadLink.attributes.get("TEMP_ROAD_NUMBER")),
       "constructionType" -> roadLink.constructionType.value,
       "linkSource" -> roadLink.linkSource.value,
-      "track" -> extractIntValue(roadLink, "VIITE_TRACK"),
-      "startAddrMValue" -> extractLongValue(roadLink, "VIITE_START_ADDR"),
-      "endAddrMValue" ->  extractLongValue(roadLink, "VIITE_END_ADDR"),
+      "track" -> roadLink.attributes.getOrElse("VIITE_TRACK",  roadLink.attributes.get("TEMP_TRACK")),
+      "startAddrMValue" -> roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR")),
+      "endAddrMValue" ->  roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")),
+
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
@@ -684,7 +685,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacent/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    roadLinkService.getAdjacent(id).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
+    roadLinkService.getAdjacent(id, true).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
 
   }
 
