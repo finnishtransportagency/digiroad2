@@ -1875,10 +1875,33 @@ object DataFixture {
       }
     }
 
-    def recalculateAddress(frozen: RoadLink):  Seq[RoadAddressTEMP] = {
+    def recalculateAddress(frozen: RoadLink, roadAddress: Seq[RoadAddressTEMP]):  Seq[RoadAddressTEMP] = {
       println(s"Recalculate Address on linkId ${frozen.linkId}")
-      frozen.geometry.zip(frozen.geometry.tail).foldLeft(Seq.empty[RoadAddressTEMP]) {case (result, (p1, p2))=>
-        val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(p1, p2), includePedestrian = Some(true))
+      val zippedFrozen = frozen.geometry.zip(frozen.geometry.tail)
+
+      zippedFrozen.zipWithIndex.foldLeft(Seq.empty[RoadAddressTEMP]) {case (result, ((p1, p2), index)) =>
+        val addressF = geometryTransform.vkmGeometryTransform.coordToAddress(p1, includePedestrian = Some(true))
+        val addressL = geometryTransform.vkmGeometryTransform.coordToAddress(p2, includePedestrian = Some(true))
+
+        val address = if(!(addressF.road == addressL.road && addressF.roadPart == addressL.roadPart)) {
+          val adj = roadLinkService.getAdjacent(frozen.linkId, false)
+          val filtered = roadAddress.filter(x => adj.map(_.linkId).contains(x.linkId))
+
+          if (index == 0 && filtered.count { x1 =>
+            val (first, last) = GeometryUtils.geometryEndpoints(x1.geom)
+            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x1.road && addressL.roadPart == x1.roadPart} == 1)
+
+            Seq(addressF.copy(road = addressL.road, roadPart = addressL.roadPart), addressL)
+
+          else if (index == zippedFrozen.size && filtered.count { x1 =>
+            val (first, last) = GeometryUtils.geometryEndpoints(x1.geom)
+            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x1.road && addressL.roadPart == x1.roadPart} == 1)
+
+            Seq(addressF, addressL.copy(road = addressF.road, roadPart = addressF.roadPart))
+          else
+            Seq(addressF,addressL)
+        } else
+          Seq(addressF,addressL)
 
         if(result.isEmpty) {
           val orderedAddress = address.sortBy(_.addrM)
@@ -1963,10 +1986,14 @@ object DataFixture {
             } else {
               val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
               if(grouped.keys.size > 1) {
-                recalculateAddress(frozen).foreach { recalc =>
-                  println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.roadPart} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
-                }
-                None
+                val recalcultaAddresses = recalculateAddress(frozen, mappedAddresses)
+                if(recalcultaAddresses.size == 1)
+                  Some(recalcultaAddresses.head)
+                else {
+                  recalcultaAddresses.foreach { recalc =>
+                    println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.roadPart} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
+                  }}
+                    None
               } else {
                 val orderedAddress = address.sortBy(_.addrM)
                 Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry,  municipalityCode = Some(frozen.municipalityCode)))
