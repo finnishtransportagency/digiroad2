@@ -1961,7 +1961,7 @@ object DataFixture {
     //Get All Municipalities
     val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
-    OracleDatabase.withDynTransaction {
+    val possibleToCreate = OracleDatabase.withDynTransaction {
       val toCreate = municipalities.flatMap { municipality =>
         roadLinkTempDao.deleteInfoByMunicipality(municipality)
 
@@ -2013,7 +2013,11 @@ object DataFixture {
         //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
       })
 
-      cleaning(toCreate.flatMap(_.possibleToCreate))
+      toCreate.flatMap(_.possibleToCreate)
+    }
+
+    OracleDatabase.withDynTransaction {
+      cleaning(possibleToCreate)
     }
 
     println("\n")
