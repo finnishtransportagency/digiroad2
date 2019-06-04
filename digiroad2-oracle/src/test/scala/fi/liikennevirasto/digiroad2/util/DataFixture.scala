@@ -1775,7 +1775,7 @@ object DataFixture {
       mappedAddress.sideCode match {
         case Some (sideCode) =>
           val mappedRoadLink = roadLinks.find (_.linkId == mappedAddress.linkId).get
-          val frozenRoadLink = roadLinks.find (_.linkId == mappedAddress.linkId).get
+          val frozenRoadLink = roadLinks.find (_.linkId == frozenLink.linkId).get
 
           val (firstR, lastR) = GeometryUtils.geometryEndpoints (mappedRoadLink.geometry)
           val (firstF, lastF) = GeometryUtils.geometryEndpoints (frozenRoadLink.geometry)
@@ -1928,7 +1928,7 @@ object DataFixture {
 
       val adjRoadLinks = incompleteVKMInfo.flatMap(x => roadLinkService.getAdjacent(x.linkId, false))
 
-      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH((incompleteVKMInfo.map(_.linkId) ++ adjRoadLinks.map(_.linkId)).toSet , false)
+      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(incompleteVKMInfo.map(_.linkId).toSet , false) ++ adjRoadLinks
 
       val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
       val vkmRoadAddress = roadLinkTempDao.getByLinkIds(adjRoadLinks.map(_.linkId).toSet).filterNot(_.track == Track.Unknown)
@@ -1943,9 +1943,9 @@ object DataFixture {
         val roadLink = roadLinks.find(_.linkId == roadAddr.linkId).get
 
         val track = if(Seq(CycleOrPedestrianPath, PedestrianZone, CableFerry).contains( roadLink.linkType)) Track.Combined else Track.Unknown
-        val mappedAddress = mappedAddresses.find(_.linkId == roadAddr.linkId).get
-        val sideCode = getSideCode(mappedAddress, roadAddr, roadLinks)
-
+        val sideCode = mappedAddresses.find(_.linkId == roadAddr.linkId).flatMap{ mappedAddress =>
+           getSideCode(mappedAddress, roadAddr, roadLinks)
+        }
         roadAddr.copy(track = track, sideCode = sideCode)
       }
 
@@ -1959,7 +1959,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =Seq(5) //= OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
     OracleDatabase.withDynTransaction {
       val toCreate = municipalities.flatMap { municipality =>
@@ -1992,7 +1992,7 @@ object DataFixture {
                   Some(recalculateAddresses.head)
                 else {
                   recalculateAddresses.foreach { recalc =>
-                    println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.roadPart} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
+                    println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
                   }}
                     None
               } else {
