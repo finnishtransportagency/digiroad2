@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-RUN adduser -D -S -u ${JENKINS_UID} jenkins
+RUN useradd -D -u ${JENKINS_UID} jenkins
 
 RUN apt-get update \
 && apt-get install -y build-essential libssl-dev libffi-dev python-dev \
