@@ -9,10 +9,13 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO, RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetService, Measures}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUtils}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
@@ -36,6 +39,7 @@ trait TierekisteriImporterOperations {
   lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }
   lazy val municipalityDao: MunicipalityDao = new MunicipalityDao
+  lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
 
   def typeId: Int
 
@@ -285,9 +289,20 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
     }
   }
 
+  def vkmToVVHRoadLink(vkmAddr: Seq[RoadAddressTEMP]) : Seq[ViiteRoadAddress] = {
+    val roadLinks =  roadLinkService.fetchVVHRoadlinks(vkmAddr.map(ra => ra.linkId).toSet)
+
+    vkmAddr.map{ vkm  =>
+      val roadLink = roadLinks.find(_.linkId == vkm.linkId).get
+      val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, vkm.startMValue, vkm.endMValue)
+      ViiteRoadAddress(0, vkm.road, vkm.roadPart, vkm.track, vkm.startAddressM, vkm.endAddressM, None, None, vkm.linkId, vkm.startMValue, vkm.endMValue,
+        vkm.sideCode.getOrElse(SideCode.Unknown), geometry, false, None, None, None)
+    }
+  }
+
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    expireAssets()
+//    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 
@@ -303,8 +318,10 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
         //If in the future this process get slow we can start using the returned sections
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
-        val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
+        val vkmRoadAddress = OracleDatabase.withDynSession(roadLinkTempDAO.getByRoadNumber(roadNumber.toInt))
+
+        val mappedRoadAddresses = (roadAddresses ++ vkmToVVHRoadLink(vkmRoadAddress)).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+        val mappedRoadLinks = getRoadLinks((roadAddresses.map(ra => ra.linkId)++ vkmRoadAddress.map(_.linkId)).toSet, Some(State))
 
         //For each section creates a new OTH asset
         trAddressSections.foreach {
