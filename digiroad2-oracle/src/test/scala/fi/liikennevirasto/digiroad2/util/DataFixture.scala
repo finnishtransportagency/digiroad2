@@ -1959,7 +1959,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = Seq(992)/*OracleDatabase.withDynSession { Queries.getMunicipalities  }*/
 
     val possibleToCreate = OracleDatabase.withDynTransaction {
       val toCreate = municipalities.flatMap { municipality =>
