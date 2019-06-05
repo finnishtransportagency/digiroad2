@@ -1,5 +1,7 @@
 FROM ubuntu:latest
 
+RUN adduser -D -S -u ${JENKINS_UID} jenkins
+
 RUN apt-get update \
 && apt-get install -y build-essential libssl-dev libffi-dev python-dev \
   python-pip python-dev gcc phantomjs firefox \
@@ -73,3 +75,5 @@ RUN wget https://chromedriver.storage.googleapis.com/74.0.3729.6/chromedriver_li
 
 RUN headless_browser=True,
 RUN nogui=True
+
+USER jenkins
