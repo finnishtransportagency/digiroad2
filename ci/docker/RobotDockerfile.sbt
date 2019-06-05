@@ -1,6 +1,7 @@
 FROM ubuntu:latest
 
-RUN useradd -D -u ${JENKINS_UID} jenkins
+ARG JENKINS_UID=1000
+RUN useradd -u ${JENKINS_UID} jenkins
 
 RUN apt-get update \
 && apt-get install -y build-essential libssl-dev libffi-dev python-dev \
