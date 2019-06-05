@@ -130,6 +130,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   when(mockRoadAddressService.roadLinkWithRoadAddress(any[Seq[RoadLink]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.linearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
   when(mockRoadAddressService.speedLimitWithRoadAddress(any[Seq[Seq[SpeedLimit]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
+  when(mockRoadAddressService.experimentalLinearAssetWithRoadAddress(any[Seq[Seq[PieceWiseLinearAsset]]])).thenAnswer(AdditionalAnswers.returnsFirstArg())
 
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611071l)).thenReturn(Some(RoadLink(1611071l, List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(2l))
@@ -325,7 +326,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
+      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]].toSet
       parsedBody.size should be(3)
       parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
       parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
@@ -347,7 +348,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get complementary numerical limits with bounding box", Tag("db")) {
     getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true&zoom=10") {
       status should equal(200)
-      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
+      val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]].toSet
       parsedBody.size should be(3)
       parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
       parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
