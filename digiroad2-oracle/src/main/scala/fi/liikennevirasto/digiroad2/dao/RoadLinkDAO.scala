@@ -296,38 +296,6 @@ object RoadLinkDAO{
     }
   }
 
-//  case object TempRoadAddressesInfo {
-//
-//    def getByLinkId(linkIds: Set[Long]): Seq[RoadAddressTEMP] = {
-//      val resultx = sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, side_code  from temp_road_address_info where link_id in (#${linkIds.mkString(",")})"""
-//        .as[(Long, Int, Long, Long, Int, Long, Long, Option[Int])].list
-//
-//        resultx.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, sideCode) =>
-//          RoadAddressTEMP(linkId, municipalityCode, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, sideCode)
-//        }
-//    }
-//
-//    def getByRoadNumber(roadNumber: Int): Seq[RoadAddressTEMP] = {
-//      val resultx = sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m  from temp_road_address_info where road_number = $roadNumber"""
-//        .as[(Long, Int, Long, Long, Int, Long, Long)].list
-//
-//      resultx.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM) =>
-//        RoadAddressTEMP(linkId, municipalityCode, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM)
-//      }
-//    }
-//
-//    def insertInfo(roadAddressTemp: RoadAddressTEMP, username: String): Unit = {
-//      sqlu"""insert into temp_road_address_info (id, link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, side_code  ,created_by)
-//             select primary_key_seq.nextval, ${roadAddressTemp.linkId}, ${roadAddressTemp.municipalityCode}, ${roadAddressTemp.road}, ${roadAddressTemp.roadPart}, ${roadAddressTemp.track.value}, ${roadAddressTemp.startAddressM}, ${roadAddressTemp.endAddressM},  ${roadAddressTemp.sideCode}, $username
-//              from dual""".execute
-//    }
-//
-//    def deleteInfoByMunicipality(municipalityCode: Int): Unit = {
-//      sqlu"""delete from temp_road_address_info
-//                 where municipality_code = $municipalityCode""".execute
-//    }
-//  }
-
   case object LinkAttributesDao extends RoadLinkDAO {
 
     def table: String = LinkAttributes
