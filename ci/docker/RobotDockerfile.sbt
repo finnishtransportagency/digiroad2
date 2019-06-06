@@ -1,2 +1,2 @@
 # Base image
-FROM kenith/robotframework
+FROM ppodgorsek/robot-framework

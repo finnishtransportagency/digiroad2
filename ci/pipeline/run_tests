@@ -97,7 +97,7 @@ pipeline {
 
                     docker.build(
                         "digiroad2-robotframework-sbt",
-                        "${build_args} -v ~/Debug:/tmp --rm -p 6901:6901 -p 5901:5901 --shm-size 2048m -d kenith/robotframework:latest"
+                        "${build_args} -f ci/docker/RobotDockerfile.sbt ci"
                     )
                 }
             }
