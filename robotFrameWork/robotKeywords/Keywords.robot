@@ -4,7 +4,6 @@ Variables  ../Variable/Variables.py
 *** Keywords ***
 Open Staging webpage by Chrome
     Open Browser        url=${STAGING_URL}   browser=chrome
-    Maximize Browser Window
     Input Text    id=username    ${USERNAME}
     Input Password    id=password    ${PASSWORD}
     Click Button    class=submit
