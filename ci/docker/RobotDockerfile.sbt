@@ -1,6 +1,9 @@
 # Base image
 FROM python:3.6
 
+RUN apt-get update \
+&& apt-get install -y libnss3-dev
+
 # Install the test project libraries
 RUN	pip install robotframework-selenium2library
 
