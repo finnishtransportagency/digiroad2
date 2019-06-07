@@ -119,20 +119,16 @@ pipeline {
         }
 
         stage("Run RobotFramework Tests") {
-            agent {
-                docker {
-                    image "digiroad2-robotframework-sbt"
-                    reuseNode true
-                }
-            }
+            agent any
             steps {
-                sh STAGE_RUN_ROBOT_FRAMEWORK_TESTS
+                sh 'docker run -v robotFrameWork/testSuite/results:Z -v robotFrameWork/testSuite:Z -e -e BROWSER=chrome ppodgorsek/robot-framework:latest'
             }
         }
     }
 
     post {
         always {
+            archive (includes: 'reports/*.html')
             deleteDir()
         }
     }
