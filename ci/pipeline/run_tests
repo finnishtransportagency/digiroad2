@@ -121,14 +121,13 @@ pipeline {
         stage("Run RobotFramework Tests") {
             agent any
             steps {
-                sh 'docker run -v robotFrameWork/testSuite/results:Z -v robotFrameWork/testSuite:Z -e -e BROWSER=chrome ppodgorsek/robot-framework:latest'
+                sh 'docker run -v ${WORKSPACE}/robotFrameWork/testSuite/results:/opt/robotframework/reports:Z -v ${WORKSPACE}/robotFrameWork/testSuite:/opt/robotframework/tests:Z -e BROWSER=chrome ppodgorsek/robot-framework:latest'
             }
         }
     }
 
     post {
         always {
-            archive (includes: 'reports/*.html')
             deleteDir()
         }
     }
