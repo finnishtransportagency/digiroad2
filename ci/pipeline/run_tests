@@ -121,7 +121,7 @@ pipeline {
         stage("Run RobotFramework Tests") {
             agent any
             steps {
-                sh 'docker run -v ${WORKSPACE}/robotFrameWork/testSuite/results:/opt/robotframework/reports:Z \
+                sh 'docker run -v ${WORKSPACE}/robotFrameWork/testSuite/results:/robotFrameWork/testSuite/results:Z \
                     -v ${WORKSPACE}/robotFrameWork/testSuite:/robotFrameWork/testSuite:Z \
                     -v ${WORKSPACE}/robotFrameWork/Variable:/robotFrameWork/Variable:Z \
                     -v ${WORKSPACE}/robotFrameWork/robotKeywords:/robotFrameWork/robotKeywords:Z \
