@@ -122,11 +122,11 @@ pipeline {
             agent any
             steps {
                 sh 'docker run -v ${WORKSPACE}/robotFrameWork/testSuite/results:/opt/robotframework/reports:Z \
-                    -v ${WORKSPACE}/robotFrameWork/testSuite:/opt/robotframework/tests:Z \
-                    -v ${WORKSPACE}/robotFrameWork/Variable:/opt/robotframework/variable:Z \
-                    -v ${WORKSPACE}/robotFrameWork/robotKeywords:/opt/robotframework/robotKeywords:Z \
-                    -v ${WORKSPACE}/robotFrameWork/Variable/Variables.py:/opt/robotframework/variable/variables:Z \
-                    -v ${WORKSPACE}/robotFrameWork/robotKeywords/Keywords.robots:/opt/robotframework/robotKeywords/keywords:Z \
+                    -v ${WORKSPACE}/robotFrameWork/testSuite:/robotFrameWork/testSuite:Z \
+                    -v ${WORKSPACE}/robotFrameWork/Variable:/robotFrameWork/Variable:Z \
+                    -v ${WORKSPACE}/robotFrameWork/robotKeywords:/robotFrameWork/robotKeywords:Z \
+                    -v ${WORKSPACE}/robotFrameWork/Variable/Variables.py:/robotFrameWork/Variable/Variables.py:Z \
+                    -v ${WORKSPACE}/robotFrameWork/robotKeywords/Keywords.robots:/robotFrameWork/robotKeywords/Keywords.robots:Z \
                     -e BROWSER=chrome ppodgorsek/robot-framework:latest'
             }
         }
