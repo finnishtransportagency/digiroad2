@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation           Suite description
-Library                 Selenium2Library
+Library                 SeleniumLibrary
 Resource                ../robotKeywords/Keywords.robot
 
 *** Test Cases ***
