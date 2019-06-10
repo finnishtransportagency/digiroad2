@@ -17,7 +17,7 @@ Validate if exist checkbox to show related traffic signs on the left box
 
 *** Keywords ***
 Open Staging webpage by Chrome
-    Open Browser        ${STAGING_URL}   ${BROWSER}
+    Open Browser        ${STAGING_URL}
     Input Text  username  ${USERNAME}
     Input Password    password    ${PASSWORD}
     Click Button    class=submit
