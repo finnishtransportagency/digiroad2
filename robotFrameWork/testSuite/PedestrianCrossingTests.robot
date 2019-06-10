@@ -1,13 +1,17 @@
 *** Settings ***
 Documentation           Suite description
 Library                 SeleniumLibrary
-Resource                ../robotKeywords/Keywords.robot
 
 *** Test Cases ***
 Validate if exist checkbox to show related traffic signs on the left box
    [Setup]
-        Open Staging webpage by Chrome
-        Go to a specific Asset      nav-pedestrianCrossings
+        Open Browser        url='https://devtest.liikennevirasto.fi/digiroad/'   browser=chrome
+        Input Text    id=username    'k215271'
+        Input Password    id=password    'di9LNKRH996'
+        Click Button    class=submit
+        Sleep    5s
+        Click Element    //*[contains(text(),'Valitse tietolaji')]
+        Click Element    id=nav-pedestrianCrossings
         Page Should Contain Checkbox    id=trafficSignsCheckbox
         Page Should Contain    Näytä liikennemerkit
    [Teardown]  Close Browser
