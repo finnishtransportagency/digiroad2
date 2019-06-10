@@ -5,6 +5,7 @@ Library                 SeleniumLibrary
 *** Variables ***
 ${STAGING_URL}  https://devtest.liikennevirasto.fi/digiroad/
 ${QA_URL}  https://testiextranet.liikennevirasto.fi/digiroad/
+${BROWSER}      firefox
 ${USERNAME}     k215271
 ${PASSWORD}     di9LNKRH996
 
@@ -17,7 +18,7 @@ Validate if exist checkbox to show related traffic signs on the left box
 
 *** Keywords ***
 Open Staging webpage by Chrome
-    Open Browser        ${STAGING_URL}
+    Open Browser        ${STAGING_URL}   ${BROWSER}
     Input Text  username  ${USERNAME}
     Input Password    password    ${PASSWORD}
     Click Button    class=submit

@@ -124,8 +124,6 @@ pipeline {
                 sh 'docker run \
                     -v ${WORKSPACE}/robotFrameWork/testSuite/results:/opt/robotframework/reports:Z \
                     -v ${WORKSPACE}/robotFrameWork/testSuite:/opt/robotframework/tests:Z \
-                    -e BROWSER=firefox \
-                    -e ROBOT_THREADS=4 \
                      ppodgorsek/robot-framework:latest'
             }
         }
