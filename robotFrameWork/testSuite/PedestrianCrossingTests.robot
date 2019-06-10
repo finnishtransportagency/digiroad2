@@ -18,8 +18,8 @@ Validate if exist checkbox to show related traffic signs on the left box
 
 *** Keywords ***
 Open Staging webpage by Chrome
-    Open Browser        ${QA_URL}   ${BROWSER}
-    Input Text  username  k215271
+    Open Browser        ${STAGING_URL}   ${BROWSER}
+    Input Text  id:username  k215271
     Input Password    password    ${PASSWORD}
     Click Button    class=submit
     Sleep    5s
