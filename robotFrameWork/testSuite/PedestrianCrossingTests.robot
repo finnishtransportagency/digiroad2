@@ -19,4 +19,5 @@ Validate if exist checkbox to show related traffic signs on the left box
 *** Keywords ***
 Open Staging webpage by Chrome
     Open Browser        ${STAGING_URL}   ${BROWSER}
+    Sleep    20s
     Input Text  username  ${USERNAME}
