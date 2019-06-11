@@ -38,12 +38,35 @@
     };
 
     me.renderFeatures = function(linearAssets) {
-      return me.lineFeatures(me.getNewFeatureProperties(linearAssets));
+      if(_.some(linearAssets, function(asset) { return asset.marker;}))
+        return me.lineFeatures(me.getNewFeatureProperties(linearAssets));
+      else
+        return me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.limitSigns(linearAssets));
     };
-
+    
+    me.getSuggested = function(linearAsset) {
+      return (_.isUndefined(linearAsset.value) || _.isUndefined(linearAsset.value.isSuggested)) ? false : linearAsset.value.isSuggested;
+    };
+    
+    me.limitSigns = function(linearAssets) {
+      return _.map(linearAssets, function(linearAsset) {
+        var points = _.map(linearAsset.points, function(point) {
+          return [point.x, point.y];
+        });
+        var road = new ol.geom.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var type =  {linkId: linearAsset.linkId, type: 'suggestion', suggested: me.getSuggested(linearAsset)};
+        var attributes = _.merge(_.cloneDeep(_.omit(linearAsset, "geometry")), type);
+      
+        var feature = new ol.Feature(new ol.geom.Point([signPosition.x, signPosition.y]));
+        feature.setProperties(attributes);
+        return feature;
+      });
+    };
+  
     this.renderOverlays = function(linearAssets){};
     this.isUnknown = function(linerAsset){};
     this.dottedLineFeatures = function(linearAssets){};
-    this.limitSigns = function (speedLimits) {};
+  
   };
 })(this);

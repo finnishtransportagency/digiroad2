@@ -17,6 +17,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+import scala.language.implicitConversions
 
 case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
@@ -801,7 +802,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val currentIdsAndValue = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(id, propertyId).list
 
     if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
-      Queries.deleteMultipleChoiceValue(currentIdsAndValue.head._1)
+      Queries.deleteMultipleChoiceValue(currentIdsAndValue.head._1).execute
       insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
     }
 

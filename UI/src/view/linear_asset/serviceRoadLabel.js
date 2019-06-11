@@ -13,8 +13,8 @@
         }))
       });
     };
-
-    this.getStyle = function(value){
+    
+    this.defaultStyle = function(value){
       return [backgroundStyle(value), new ol.style.Style({
         text : new ol.style.Text({
           text : validateText(value),
@@ -31,9 +31,9 @@
     };
 
     var obtainValue = function(value){
-      var property = _.find(value, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
+      var property = _.find(value.properties, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
       if(property)
-        return property.value;
+        return _.head(property.values).value;
       return 0;
     };
 

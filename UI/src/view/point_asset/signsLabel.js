@@ -39,7 +39,7 @@
 
     this.suggestionStyle = function(suggestionInfo, position, styles) {
       return !_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue) ?
-          styles.concat(me.getSuggestionStyle((position.y + 48))) : styles;
+          styles.concat(me.suggestionStyle((position.y + 48))) : styles;
     };
 
     this.getPropertiesConfiguration = function (counter) {};

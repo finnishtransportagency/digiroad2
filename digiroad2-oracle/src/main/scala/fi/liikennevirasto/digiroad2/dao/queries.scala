@@ -128,6 +128,7 @@ object Queries {
       values (primary_key_seq.nextval, $propertyId, $assetId,
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE)
     """
+
   def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
     sqlu"""
      update multiple_choice_value set enumerated_value_id =

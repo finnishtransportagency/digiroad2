@@ -54,7 +54,7 @@
     };
 	
 	  var isUnSet = function (selectedLinearAsset) {
-	  	return !_.isNull(_.some(selectedLinearAsset.get(), function (asset) {return asset.id;}))
+	  	return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
 	  };
 
     var linearAssetSpecs = [
@@ -311,6 +311,7 @@
         isSuggestedAsset: true,
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
+        label: new SuggestionLabel(),
         form: new DynamicAssetForm({
           fields: [
             {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
@@ -415,6 +416,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new PavedRoadStyle(),
+        label: new SuggestionLabel(),
         form: new DynamicAssetForm({
             fields : [
               {
@@ -753,15 +755,8 @@
         isVerifiable: false,
         form: new DynamicAssetForm({
           fields: [
-            {
-              label: "Kevätkantavuus",
-              type: 'integer',
-              publicId: "kevatkantavuus",
-              unit: "MN/m<sup>2</sup>",
-              weight: 1
-            },
-            {
-              label: "Routivuuskerroin", type: 'single_choice', publicId: "routivuuskerroin",
+            {label: "Kevätkantavuus", type: 'integer', publicId: "kevatkantavuus", unit: "MN/m<sup>2</sup>", weight: 1},
+            {label: "Routivuuskerroin", type: 'single_choice', publicId: "routivuuskerroin",
               values: [{id: 40, label: "40 Erittäin routiva"},
                 {id: 50, label: "50 Väliarvo 50...60"},
                 {id: 60, label: "60 Routiva"},

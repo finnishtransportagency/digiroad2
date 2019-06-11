@@ -347,7 +347,7 @@
         };
         var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
-        $(rootElement).one('click','.prohibition-a, .prohibition-b', function () {
+        $(rootElement).one('click','.prohibition-a, .prohibition-b, .hazardousMaterialTransportProhibition-a, .hazardousMaterialTransportProhibition-b', function () {
           $(rootElement).find('.suggestionCheckBox').prop('checked', false);
           valueSetters.b( {isSuggested: false, prohibitions: selectedLinearAsset.getBValue().prohibitions});
           valueSetters.a( {isSuggested: false, prohibitions: selectedLinearAsset.getValue().prohibitions});

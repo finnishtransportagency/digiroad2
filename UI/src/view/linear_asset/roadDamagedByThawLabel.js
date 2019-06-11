@@ -6,12 +6,11 @@
     var IMAGE_SIGN_ADJUSTMENT = 15;
     var IMAGE_LABEL_HEIGHT = 58;
     var IMAGE_LABEL_ADJUSTMENT = 43;
-
-    this.getStyle = function (values) {
-      var weightLimitValue = _.find(values.properties, function(value){ return value.publicId === "kelirikko"; });
-
+    
+    this.defaultStyle = function(value) {
+      var weightLimitValue = _.find(value.properties, function (value) {return value.publicId === "kelirikko";});
       var validWeightLimitValue = (!_.isUndefined(weightLimitValue) && !_.isEmpty(weightLimitValue.values)) ? weightLimitValue.values[0].value : '';
-
+      
       return createMultiStyles(validWeightLimitValue);
     };
 

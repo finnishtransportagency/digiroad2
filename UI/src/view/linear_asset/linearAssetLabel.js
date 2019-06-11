@@ -35,23 +35,31 @@
               return false;
             return true;
         };
-
-        this.getStyle = function(value){
-          return [backgroundStyle(value), new ol.style.Style({
-            text : new ol.style.Text({
-              text : textStyle(value),
-              fill: new ol.style.Fill({
+  
+        this.defaultStyle = function(value){
+            return [backgroundStyle(value), new ol.style.Style({
+              text : new ol.style.Text({
+                text : textStyle(value),
+                fill: new ol.style.Fill({
                   color: '#ffffff'
-              }),
-              font : '12px sans-serif'
-            })
-          })];
+                }),
+                font : '12px sans-serif'
+              })
+            })];
         };
 
         this.getValue = function(asset){
             return asset.value;
         };
 
+    };
+  
+    root.SuggestionLabel = function() {
+      AssetLabel.call(this);
+      
+      this.getValue = function(asset){
+        return asset.value;
+      };
     };
 
     root.SpeedLimitAssetLabel = function() {
@@ -271,7 +279,16 @@
         // conversion Kg -> t
         return ''.concat(value/1000, 't');
       };
-
+  
+      this.getSuggestionStyle = function (yPosition) {
+        return new ol.style.Style({
+          image: new ol.style.Icon(({
+            src: 'images/icons/questionMarkerIcon.png',
+            anchor : [0.5, yPosition]
+          }))
+        });
+      };
+      
       this.getStyle = function (asset, counter) {
         return [backgroundStyle(getTypeId(asset), counter),
           new ol.style.Style({
@@ -313,6 +330,12 @@
       var getTypeId = function (asset) {
         return asset.typeId;
       };
+      
+      me.isSuggested = function(asset) {
+        return !!parseInt(_.head(getValues(asset)).isSuggested);
+      };
+  
+      var suggestionNumber = 0;
 
       this.renderFeatures = function (assets, zoomLevel, getPoint) {
         if (!me.isVisibleZoom(zoomLevel))
@@ -322,7 +345,12 @@
         return [].concat.apply([], _.chain(assets).map(function (asset) {
           var values = getValues(asset);
           return _.map(values, function (assetValues, index) {
-            var style = me.getStyle(assetValues, index);
+            var style = me.getStyle(assetValues, index + suggestionNumber);
+            
+            if(me.isSuggested(asset)) {
+              suggestionNumber = suggestionNumber + 1;
+              style = style.concat(me.getSuggestionStyle( index + suggestionNumber + 1));
+            }
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(style);
             return feature;

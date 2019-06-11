@@ -64,7 +64,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       roadLinkSide3.size should be (1)
       roadLinkSide2.map(_.geometry) should be (roadLinkSide3.map(_.geometry))
       roadLinkSide2.flatMap(_.geometry) should be (Seq(Point(1, 0), Point(6, 0)))
-      val limitations = MassLimitationValue(Seq(AssetTypes(TotalWeightLimits,"1"), AssetTypes(TrailerTruckWeightLimits,"2")))
+      val limitations = MassLimitationValue(Seq(AssetTypes(TotalWeightLimits,"1", 0), AssetTypes(TrailerTruckWeightLimits,"2", 0)))
       val result2 = roadLinkSide2.flatMap(_.value).head.asInstanceOf[MassLimitationValue]
       limitations.massLimitation.foreach{
         limitation =>
@@ -87,8 +87,8 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.map(_.geometry) should be (roadLinkSide3.map(_.geometry))
       roadLinkSide2.flatMap(_.geometry) should be (Seq(Point(2, 0), Point(20, 0)))
-      roadLinkSide3.flatMap(_.value).head should be (MassLimitationValue(Seq(AssetTypes(AxleWeightLimits,"2"))))
-      val limitations = MassLimitationValue(Seq(AssetTypes(TotalWeightLimits,"1"), AssetTypes(AxleWeightLimits,"2"), AssetTypes(BogieWeightLimits,"2"), AssetTypes(BogieWeightLimits,"3")))
+      roadLinkSide3.flatMap(_.value).head should be (MassLimitationValue(Seq(AssetTypes(AxleWeightLimits,"2", 0))))
+      val limitations = MassLimitationValue(Seq(AssetTypes(TotalWeightLimits,"1",0), AssetTypes(AxleWeightLimits,"2",0), AssetTypes(BogieWeightLimits,"2",0), AssetTypes(BogieWeightLimits,"3",0)))
       val result2 = roadLinkSide2.flatMap(_.value).head.asInstanceOf[MassLimitationValue]
       limitations.massLimitation.foreach{
         limitation =>
@@ -113,7 +113,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       roadLinkSide3.size should be (1)
       roadLinkSide3.flatMap(_.geometry) should be (Seq(Point(5, 0), Point(8, 0)))
       val result = roadLinkSide3.flatMap(_.value).head.asInstanceOf[MassLimitationValue]
-      val limitations = MassLimitationValue(Seq(AssetTypes(AxleWeightLimits,"2"), AssetTypes(TrailerTruckWeightLimits,"2")))
+      val limitations = MassLimitationValue(Seq(AssetTypes(AxleWeightLimits,"2",0), AssetTypes(TrailerTruckWeightLimits,"2",0)))
       limitations.massLimitation.foreach{
         limitation =>
           result.massLimitation.contains(limitation) should be (true)

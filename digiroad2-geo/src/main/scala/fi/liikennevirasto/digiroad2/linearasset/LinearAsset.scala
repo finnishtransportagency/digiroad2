@@ -64,7 +64,7 @@ case class DynamicValue(value: DynamicAssetValue) extends Value {
   }
 }
 
-case class AssetTypes(typeId: Int, value: String)
+case class AssetTypes(typeId: Int, value: String, isSuggested: Int)
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
 

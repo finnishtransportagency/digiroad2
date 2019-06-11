@@ -53,15 +53,25 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: MassLim
    else assets
   }
 
-  def getDynamicValue(value: DynamicAssetValue, publicID: String) : Option[String] = {value.properties.find(_.publicId == publicID).map(_.values.head.value.toString)}
+  def getDynamicValue(value: DynamicAssetValue, publicID: String) : Option[String] = {
+    value.properties.find(_.publicId == publicID).flatMap(_.values.map(_.value.toString).headOption)
+  }
 
   private def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point], roadLink: RoadLink): MassLimitationAsset = {
     val values = assets.map{asset =>
-      AssetTypes(asset.typeId ,asset.value match {
-        case Some(DynamicValue(value)) if asset.typeId == BogieWeightLimit.typeId  => getDynamicValue(value , "bogie_weight_2_axel").getOrElse(getDynamicValue(value , "bogie_weight_3_axel").getOrElse(""))
-        case Some(DynamicValue(value)) if Seq(TrailerTruckWeightLimit.typeId, TotalWeightLimit.typeId, AxleWeightLimit.typeId ).contains(asset.typeId)  => getDynamicValue(value , "weight").getOrElse("")
+      val value = asset.value match {
+        case Some(DynamicValue(value)) if asset.typeId == BogieWeightLimit.typeId => getDynamicValue(value, "bogie_weight_2_axel").getOrElse(getDynamicValue(value, "bogie_weight_3_axel").getOrElse(""))
+        case Some(DynamicValue(value)) if Seq(TrailerTruckWeightLimit.typeId, TotalWeightLimit.typeId, AxleWeightLimit.typeId).contains(asset.typeId) => getDynamicValue(value, "weight").getOrElse("")
         case _ => throw new NumberFormatException(s"Value format not supported on asset type ${AssetTypeInfo.apply(asset.typeId).label}")
-      })}
+      }
+      val isSuggested = asset.value match {
+        case Some(DynamicValue(value)) =>
+          getDynamicValue(value, "suggest_box").getOrElse("0").toInt
+        case _ => throw new NumberFormatException(s"Value format not supported on asset type ${AssetTypeInfo.apply(asset.typeId).label}")
+      }
+
+      AssetTypes(asset.typeId , value, isSuggested)
+    }
     MassLimitationAsset(assets.head.linkId, roadLink.administrativeClass, assets.head.sideCode, Some(MassLimitationValue(values)), geometry)
   }
 }

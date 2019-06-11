@@ -94,8 +94,9 @@
     ];
 
     var questionMarkerStyleRules = [
-      new StyleRule().where(isSuggested).is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.6, anchor : [0.5, 0]}})
+      new StyleRule().where(isSuggested).is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.7, anchor: [0.45, 1]}})
     ];
+    
     var browseStyle = new StyleRuleProvider({});
     browseStyle.addRules(speedLimitStyleRules);
     browseStyle.addRules(speedLimitFeatureSizeRules);

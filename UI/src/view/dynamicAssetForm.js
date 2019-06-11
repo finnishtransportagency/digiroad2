@@ -953,7 +953,7 @@
             });
 
             fieldGroupElement.find('input, select').one('click', function() {
-                me.unSetElement(_assetTypeConfiguration.selectedLinearAsset)
+                me.unSetElement(_assetTypeConfiguration.selectedLinearAsset);
             });
 
             return fieldGroupElement;
@@ -1243,7 +1243,7 @@
                     var propertiesB = _.filter(selectedAsset.getBValue() ? selectedAsset.getBValue().properties : selectedAsset.getBValue(), function (property) {
                         return property.publicId !== field.getPublicId();
                     });
-                    propertiesB ? selectedAsset.setBValue({properties: propertiesA.concat(currentPropertyValue)}) : ''
+                    if(!_.isEmpty(propertiesB)) selectedAsset.setBValue({properties: propertiesB.concat(currentPropertyValue)});
                 }
             });
         };
@@ -1264,7 +1264,6 @@
 
             eventbus.on(events('valueChanged'), function() {
                 updateStatus(element);
-                // me.unSetElement(assetTypeConfiguration.selectedLinearAsset);
             });
 
             eventbus.on('radio-trigger-dirty', function() {
