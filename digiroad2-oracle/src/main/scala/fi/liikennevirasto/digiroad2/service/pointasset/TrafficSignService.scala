@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
@@ -55,8 +55,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
-    withDynTransaction {
+  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    if(newTransaction) {
+      withDynTransaction {
+        createWithoutTransaction(asset, username, roadLink)
+      }
+    } else {
       createWithoutTransaction(asset, username, roadLink)
     }
   }
@@ -300,8 +304,30 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     OracleTrafficSignDao.expireWithoutTransaction(filter, username)
   }
 
+  def massExpireAssetWithoutTransactionMultiQuery(ids: Set[Long], username: Option[String]): Unit = {
+    if (ids.size > 1000) {
+      val groups = ids.grouped(1000).toSeq
+      groups.foreach(group => expireAssetWithoutTransaction(withIds(group), username))
+    } else
+      expireAssetWithoutTransaction(withIds(ids), username)
+  }
+
+  def massExpireAssetWithoutTransaction(ids: Set[Long], username: Option[String]): Unit = {
+    if(ids.size > 1000){
+      val groups = ids.grouped(1000).toSeq
+      expireAssetWithoutTransaction(withIdsBig(groups), username)
+    } else
+      expireAssetWithoutTransaction(withIds(ids), username)
+  }
+
   def withIds(ids: Set[Long])(query: String): String = {
     query + s" and id in (${ids.mkString(",")})"
+  }
+
+  def withIdsBig(groups: Seq[Set[Long]])(query: String): String = {
+    query + groups.map(group => {
+      s""" in (${group.mkString(",")})"""
+    }).mkString(" and id", " or id", "")
   }
 
   def withMunicipalities(municipalities: Set[Int])(query: String): String = {

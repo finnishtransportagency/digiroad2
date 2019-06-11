@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, PersistedPointAsset, Point}
 import fi.liikennevirasto.digiroad2.{PersistedPoint, PersistedPointAsset, Point, PointAssetOperations}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
@@ -38,7 +40,6 @@ case class Obstacle(id: Long, linkId: Long,
                     modifiedAt: Option[DateTime] = None,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource) extends PersistedPoint
-
 
 object OracleObstacleDao {
 

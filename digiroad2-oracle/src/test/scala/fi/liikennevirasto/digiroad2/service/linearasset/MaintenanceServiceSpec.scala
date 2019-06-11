@@ -94,7 +94,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val prop1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue( "1")))
     val prop2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue( "2")))
     val prop3 = DynamicProperty("huoltotie_tiehoitokunta", "text",  false, Seq(DynamicPropertyValue( "text")))
-    
+
     val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
 
     val maintenanceRoad = DynamicAssetValue(propertiesSeq)

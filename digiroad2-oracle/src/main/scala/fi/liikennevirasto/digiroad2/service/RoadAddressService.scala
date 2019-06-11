@@ -3,17 +3,20 @@ package fi.liikennevirasto.digiroad2.service
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
-import fi.liikennevirasto.digiroad2.dao.RoadAddress
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, MassLimitationAsset, Point}
 import org.apache.http.conn.HttpHostConnectException
-
 import org.slf4j.LoggerFactory
 
 class RoadAddressService(viiteClient: SearchViiteClient ) {
 
   val logger = LoggerFactory.getLogger(getClass)
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  def roadLinkTempDao = new RoadLinkTempDAO
 
   /**
     * Return all the current existing road numbers
@@ -109,6 +112,7 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }
   }
 
+
   def massLimitationWithRoadAddress(massLimitationAsset: Seq[Seq[MassLimitationAsset]]): Seq[Seq[MassLimitationAsset]] = {
     try {
       val addressData = groupRoadAddress(getAllByLinkIds(massLimitationAsset.flatMap(pwa => pwa.map(_.linkId)))).map(a => (a.linkId, a)).toMap
@@ -179,6 +183,47 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }
   }
 
+  def roadLinkWithRoadAddressTemp(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
+    try{
+      val roadAddressLinks = withDynTransaction(roadLinkTempDao.getByLinkIds(roadLinks.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
+      logger.info(s"Fetched ${roadAddressLinks.size} road address of ${roadLinks.size} road links.")
+
+      roadLinks.map(rl =>
+        if (roadAddressLinks.contains(rl.linkId))
+          rl.copy(attributes = rl.attributes ++ roadAddressAttributesTemp(roadAddressLinks(rl.linkId)))
+        else
+          rl)
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        roadLinks
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
+        roadLinks
+    }
+  }
+
+  def experimentalLinearAssetWithRoadAddress(pieceWiseLinearAssets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[PieceWiseLinearAsset]] ={
+    try {
+      val addressData = withDynTransaction(roadLinkTempDao.getByLinkIds(pieceWiseLinearAssets.head.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
+
+      pieceWiseLinearAssets.map(
+        _.map(pwa =>
+          if (addressData.contains(pwa.linkId))
+            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributesTemp(addressData(pwa.linkId)))
+          else
+            pwa
+        ))
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        pieceWiseLinearAssets
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
+        pieceWiseLinearAssets
+    }
+  }
+
   private def roadAddressAttributes(roadAddress: RoadAddress) = {
     Map(
       "VIITE_ROAD_NUMBER" -> roadAddress.roadNumber,
@@ -187,6 +232,17 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       "VIITE_SIDECODE" -> roadAddress.sideCode.value,
       "VIITE_START_ADDR" -> roadAddress.startAddrMValue,
       "VIITE_END_ADDR" -> roadAddress.endAddrMValue
+    )
+  }
+
+  private def roadAddressAttributesTemp(roadAddress: RoadAddressTEMP) = {
+    Map(
+      "TEMP_ROAD_NUMBER" -> roadAddress.road,
+      "TEMP_ROAD_PART_NUMBER" -> roadAddress.roadPart,
+      "TEMP_TRACK" -> roadAddress.track.value,
+      "TEMP_START_ADDR" -> roadAddress.startAddressM,
+      "TEMP_END_ADDR" -> roadAddress.endAddressM,
+      "TEMP_SIDECODE" -> roadAddress.sideCode.map(_.value)
     )
   }
 

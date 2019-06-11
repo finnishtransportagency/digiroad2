@@ -69,7 +69,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
               case Some(SpeedLimitValue(false, speedLimitValue)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue)
-                    if trafficSignValue.asInstanceOf[PropertyValue].propertyValue.toInt == speedLimitValue
+                    if trafficSignValue.asInstanceOf[PropertyValue].propertyValue == speedLimitValue.toString
                       || (speedLimitValue != startUrbanAreaSpeedLimit && speedLimitValue != endUrbanAreaSpeedLimit) => true
                   case _ => false
                 }

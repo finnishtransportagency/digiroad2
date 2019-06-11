@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
+import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
 import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point, PointAssetOperations}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
