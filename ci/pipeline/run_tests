@@ -96,6 +96,11 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
+                        "digiroad2-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
+                    )
+
+                    docker.build(
                         "digiroad2-robotframework-sbt",
                         "${build_args} -f ci/docker/RobotDockerfile.sbt ci"
                     )
@@ -116,6 +121,19 @@ pipeline {
                 )
             }
 
+        }
+
+        stage("Run Tests") {
+            agent {
+                docker {
+                    image "digiroad2-backend-sbt"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_SETUP_ORACLE
+                sh STAGE_RUN_TESTS
+            }
         }
 
         stage("Run RobotFramework Tests") {
