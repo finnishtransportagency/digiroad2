@@ -62,9 +62,8 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     val position = Point(incomingTrafficLight.lon, incomingTrafficLight.lat)
     val signsInRadius = OracleTrafficLightDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
       .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }
 
   def getLatestModifiedAsset(signs: Seq[TrafficLight]): TrafficLight = {

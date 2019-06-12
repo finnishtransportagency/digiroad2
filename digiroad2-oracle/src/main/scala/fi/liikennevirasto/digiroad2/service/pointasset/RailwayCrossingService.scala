@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, PointAssetValue, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleRailwayCrossingDao, RailwayCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -18,6 +18,10 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   type PersistedAsset = RailwayCrossing
 
   override def typeId: Int = 230
+
+  val namePublicId = "rautatien_tasoristeyksen_nimi"
+  val safetyEquipmentPublicId = "turvavarustus"
+  val codePublicId = "tasoristeystunnus"
 
   override def setAssetPosition(asset: IncomingRailwayCrossing, geometry: Seq[Point], mValue: Double): IncomingRailwayCrossing = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
@@ -75,16 +79,19 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     }
   }
 
+  def getProperty(incomingRailwayCrossing: IncomingRailwayCrossing, property: String) : Option[PropertyValue] = {
+    incomingRailwayCrossing.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  }
+
   def checkDuplicates(incomingRailwayCrossing: IncomingRailwayCrossing): Option[RailwayCrossing] = {
     val position = Point(incomingRailwayCrossing.lon, incomingRailwayCrossing.lat)
+    val safetyEquipmentType = getProperty(incomingRailwayCrossing, safetyEquipmentPublicId).get.propertyValue.toString
     val signsInRadius = OracleRailwayCrossingDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
-        asset.safetyEquipment == incomingRailwayCrossing.safetyEquipment
+          safetyEquipmentType == getProperty(asset, safetyEquipmentPublicId).get.propertyValue.toString
     )
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }
 
   def getLatestModifiedAsset(signs: Seq[RailwayCrossing]): RailwayCrossing = {

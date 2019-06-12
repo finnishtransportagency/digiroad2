@@ -251,10 +251,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
           && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
     )
 
-    if (trafficSignsInRadius.nonEmpty) {
-      return Some(getLatestModifiedAsset(trafficSignsInRadius))
-    }
-    None
+    if (trafficSignsInRadius.nonEmpty) Some(getLatestModifiedAsset(trafficSignsInRadius)) else None
   }
 
   def getTrafficSignByRadius(position: Point, meters: Int, optGroupType: Option[TrafficSignTypeGroup] = None): Seq[PersistedTrafficSign] = {

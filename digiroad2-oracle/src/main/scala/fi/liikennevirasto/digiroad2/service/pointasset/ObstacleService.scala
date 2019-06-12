@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, OracleDirectionalTrafficSignDao, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -19,6 +19,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   type PersistedAsset = Obstacle
 
   override def typeId: Int = 220
+  val typePublicId = "esterakennelma"
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpired(queryFilter)
@@ -60,16 +61,20 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     }
   }
 
+  def getProperty(incomingObstacle: IncomingObstacle, property: String) : Option[PropertyValue] = {
+    incomingObstacle.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  }
+
   def checkDuplicates(incomingObstacle: IncomingObstacle): Option[Obstacle] = {
     val position = Point(incomingObstacle.lon, incomingObstacle.lat)
+
+    val obstacleType = getProperty(incomingObstacle, typePublicId).get.propertyValue.toString
     val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
-        asset.obstacleType == incomingObstacle.obstacleType
+          obstacleType == getProperty(asset, typePublicId).get.propertyValue.toString
     )
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }
 
   def getLatestModifiedAsset(signs: Seq[Obstacle]): Obstacle = {

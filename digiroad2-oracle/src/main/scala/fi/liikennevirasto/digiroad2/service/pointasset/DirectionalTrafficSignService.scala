@@ -52,9 +52,8 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     val signsInRadius = OracleDirectionalTrafficSignDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
       .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters
         && Math.abs(sign.bearing.getOrElse(0) - incomingDirectionalTrafficSign.bearing.getOrElse(0)) <= BearingLimit)
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else  None
   }
 
   def getLatestModifiedAsset(signs: Seq[DirectionalTrafficSign]): DirectionalTrafficSign = {

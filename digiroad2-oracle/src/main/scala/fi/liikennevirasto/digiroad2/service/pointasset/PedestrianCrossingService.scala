@@ -58,9 +58,8 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
     val position = Point(incomingPedestrianCrossing.lon, incomingPedestrianCrossing.lat)
     val signsInRadius = dao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
       .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }
 
   def getLatestModifiedAsset(signs: Seq[PedestrianCrossing]): PedestrianCrossing = {
