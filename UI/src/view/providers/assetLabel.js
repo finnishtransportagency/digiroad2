@@ -113,8 +113,7 @@
             return new ol.style.Style({
                 image: new ol.style.Icon(({
                     src: 'images/icons/questionMarker.png',
-                    anchor : [position.x, 61 + position.y],
-                    anchorYUnits: "pixels"
+                    anchor : [position.x, 1 + position.y]
                 }))
             });
         };
