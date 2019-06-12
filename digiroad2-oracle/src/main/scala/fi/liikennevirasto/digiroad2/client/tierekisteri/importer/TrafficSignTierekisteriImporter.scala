@@ -130,15 +130,6 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
 
-  protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
-
-    if(trafficSignsIds.nonEmpty) {
-      trafficSignService.massExpireAssetWithoutTransaction(trafficSignsIds, Some("batch_process_trafficSigns"))
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-    }
-  }
-
   private def getAdditionalPanels(trAdditionalData: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]],  vvhRoadLinks: Seq[VVHRoadlink]): Seq[AdditionalPanelInfo] = {
     trAdditionalData.flatMap { case (section, properties) =>
       val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
@@ -154,12 +145,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities
-    municipalities.foreach { municipality =>
-      withDynTransaction{
-        expireAssets(municipality, Some(State))
-      }
-    }
+    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 
@@ -227,6 +213,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
   override def expireAssets() : Unit = {
     val municipalities = getAllMunicipalities
     municipalities.foreach { municipality =>
+      println("\nStart assets expiration in municipality %d".format(municipality))
       withDynTransaction {
 
         val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
@@ -235,6 +222,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
         trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
         trafficSignManager.deleteAssets(trafficSigns.map(tr => (tr.id, tr.propertyData)))
       }
+      println("\nEnd assets expiration in municipality %d".format(municipality))
     }
   }
 

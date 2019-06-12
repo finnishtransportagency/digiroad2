@@ -302,7 +302,7 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
 
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-//    expireAssets()
+    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 

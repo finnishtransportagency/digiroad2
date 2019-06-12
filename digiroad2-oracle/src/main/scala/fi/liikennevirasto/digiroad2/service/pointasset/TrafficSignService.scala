@@ -306,34 +306,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     id
   }
 
-  def expireAssetWithoutTransaction(filter: String => String, username: Option[String]): Unit = {
-    OracleTrafficSignDao.expireWithoutTransaction(filter, username)
-  }
-
-  def massExpireAssetWithoutTransactionMultiQuery(ids: Set[Long], username: Option[String]): Unit = {
-    if (ids.size > 1000) {
-      val groups = ids.grouped(1000).toSeq
-      groups.foreach(group => expireAssetWithoutTransaction(withIds(group), username))
-    } else
-      expireAssetWithoutTransaction(withIds(ids), username)
-  }
-
-  def massExpireAssetWithoutTransaction(ids: Set[Long], username: Option[String]): Unit = {
-    if(ids.size > 1000){
-      val groups = ids.grouped(1000).toSeq
-      expireAssetWithoutTransaction(withIdsBig(groups), username)
-    } else
-      expireAssetWithoutTransaction(withIds(ids), username)
-  }
-
   def withIds(ids: Set[Long])(query: String): String = {
     query + s" and id in (${ids.mkString(",")})"
-  }
-
-  def withIdsBig(groups: Seq[Set[Long]])(query: String): String = {
-    query + groups.map(group => {
-      s""" in (${group.mkString(",")})"""
-    }).mkString(" and id", " or id", "")
   }
 
   def withMunicipalities(municipalities: Set[Int])(query: String): String = {
