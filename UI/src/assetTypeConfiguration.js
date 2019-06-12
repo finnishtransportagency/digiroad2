@@ -122,7 +122,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -155,7 +155,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -189,7 +189,7 @@
         fields: [
             {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
             {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 3, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 3, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -221,7 +221,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "korkeusrajoitus", type: 'integer', publicId: "height", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -253,7 +253,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -286,7 +286,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -315,7 +315,7 @@
         label: new SuggestionLabel(),
         form: new DynamicAssetForm({
           fields: [
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -363,7 +363,7 @@
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
             { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', multiElement: true, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3},
-            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox',  weight: 4, showAndHide: showAndHideRule }
+            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox',  weight: 4, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -395,7 +395,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveys", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         })
       },
@@ -433,7 +433,7 @@
                   {id: 50, label: 'Muut pinnoitteet'}
                 ]
               },
-              {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule }
+              {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showAndHideRule, isUnSet: isUnSet}
             ]
           }
         ),
@@ -633,8 +633,8 @@
                           ], weight: 1},
           {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", defaultValue: "1", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
           {label: "Tiehoitokunta", type: 'text', publicId: "huoltotie_tiehoitokunta", weight: 3},
-          {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 11},
-          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 12, showAndHide: showAndHideRule}]
+          {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 4},
+          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 5, showAndHide: showAndHideRule, isUnSet: isUnSet}]
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
@@ -788,10 +788,12 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new RoadWorkStyle(),
+	      label: new SuggestionLabel(),
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'text', weight: 1},
-            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, multiElement: false, weight: 2}
+            {label: 'Työn tunnus', publicId: 'tyon_tunnus', type: 'text', weight: 1},
+            {label: 'Arvioitu kesto', publicId: 'arvioitu_kesto', type: 'date_period', required: true, multiElement: false, weight: 2},
+	          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showAndHideRule, isUnSet: isUnSet}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
