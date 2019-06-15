@@ -1432,7 +1432,7 @@ object DataFixture {
         println("")
 
         signsByType.flatMap { sign =>
-          val roadLinksInRadius = roadLinkService.getRoadLinksByRadius(Point(sign.lon, sign.lat), 3) //additionalPanel 2 meter + 1 tolerance
+          val roadLinksInRadius = roadLinkService.getRoadLinksByRadius(Point(sign.lon, sign.lat), 3, false) //additionalPanel 2 meter + 1 tolerance
           try {
             val roadLink = roadLinks.find(_.linkId == sign.linkId).get
             val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
