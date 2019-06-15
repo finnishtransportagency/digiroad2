@@ -80,6 +80,13 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
     }
   }
 
+  def getRoadLinksByRadius(point: Point, radiusDistance: Int, newTransaction : Boolean = true): Seq[RoadLink] = {
+    val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
+    val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
+
+    roadLinkService.getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight), Set(),  newTransaction)
+  }
+
   def getAdjacents(previousInfo: (Point, RoadLink), roadLinks: Seq[RoadLink], trafficSign: PersistedTrafficSign): Seq[(RoadLink, (Point, Point))] = {
     roadLinks.filter {
       roadLink =>
@@ -94,7 +101,7 @@ trait AssetServiceValidatorOperations extends AssetServiceValidator {
 
   def assetValidator(trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
     val point = Point(trafficSign.lon, trafficSign.lat)
-    val roadLinks = roadLinkService.getRoadLinksByRadius(point, radiusDistance, false).filterNot(_.administrativeClass == Private)
+    val roadLinks = getRoadLinksByRadius(point, radiusDistance, false).filterNot(_.administrativeClass == Private)
     val trafficSignRoadLink = findNearestRoadLink(point, roadLinks)
 
     val (first, last) = GeometryUtils.geometryEndpoints(trafficSignRoadLink.geometry)
