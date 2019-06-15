@@ -1704,4 +1704,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def getRoadLinksByRadius(point: Point, radiusDistance: Int, newTransaction : Boolean = true): Seq[RoadLink] = {
+    val topLeft = Point(point.x - radiusDistance, point.y - radiusDistance)
+    val bottomRight = Point(point.x + radiusDistance, point.y + radiusDistance)
+
+    getRoadLinksWithComplementaryFromVVH(BoundingRectangle(topLeft, bottomRight), Set(),  newTransaction)
+  }
+
 }
