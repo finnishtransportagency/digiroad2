@@ -1432,7 +1432,6 @@ object DataFixture {
         println("")
 
         signsByType.flatMap { sign =>
-          val roadLinksInRadius = roadLinkService.getRoadLinksByRadius(Point(sign.lon, sign.lat), 3, false) //additionalPanel 2 meter + 1 tolerance
           try {
             val roadLink = roadLinks.find(_.linkId == sign.linkId).get
             val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
@@ -1440,7 +1439,7 @@ object DataFixture {
               AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
             }.toSet
 
-            val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, roadLinksInRadius)
+            val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, roadLinks)
             val uniquePanels = trafficSignService.distinctPanels(additionalPanelsInRadius)
             try{
               if (uniquePanels.size <= 3 && additionalPanelsInRadius.nonEmpty) {
