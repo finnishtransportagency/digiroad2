@@ -47,7 +47,8 @@
                 }
                 else {
                     linkId = selected.linkId ? [selected.linkId] : _.map(selected.assets, function (asset) { return asset.linkId; }).filter(Boolean);
-                    assetId = selected.id ? [selected.id] : _.map(selected.assets, function (asset) { return asset.id; }).filter(Boolean);
+                    assetId = assetInfo.typeId === me.assetConfig.assetTypes.massTransitStop ?
+                        [selected.payload.nationalId] : selected.id ? [selected.id] : _.map(selected.assets, function (asset) { return asset.id; }).filter(Boolean);
                 }
             }
 
