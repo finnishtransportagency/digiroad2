@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
-import fi.liikennevirasto.digiroad2.linearasset.DynamicValue
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import org.joda.time.DateTime
@@ -11,7 +11,6 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
@@ -140,31 +139,33 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         }
     )
 
-  private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
-    changedLinearAssets.map { case ChangedLinearAsset(linearAsset, _) =>
-      val dynamicMultiValueLinearAssetMap: Seq[(String, Any)] = linearAsset.value match {
+  private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Map[String, Any] = {
+    def mapValues(linearAsset: PieceWiseLinearAsset) : Map[String, Any]  = {
+      Map("value" -> (linearAsset.value match {
         case Some(DynamicValue(value)) =>
           value.properties.flatMap { bogieWeightAxel =>
             bogieWeightAxel.publicId match {
               case "bogie_weight_2_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "twoAxelValue" -> v.value
+                  "twoAxleValue" -> v.value
                 }
               case "bogie_weight_3_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "threeAxelValue" -> v.value
+                  "threeAxleValue" -> v.value
                 }
               case _ => None
             }
           }
         case _ => Seq()
       }
-
-      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, dynamicMultiValueLinearAssetMap)
+        )
+      )
     }
+    dynamicLinearAssetsToGeoJson(since, changedLinearAssets, mapValues)
+
   }
 
-  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[(String, Any)]): Map[String, Any] = {
+  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], mapValues: PieceWiseLinearAsset => Map[String, Any] ): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
       "features" ->
@@ -206,7 +207,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
-              ) ++ values)
+              ) ++ mapValues(linearAsset)
+                )
           )
         }
     )
