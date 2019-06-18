@@ -837,7 +837,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
                                            genericExceptionRows: List[GenericException] = Nil) extends ImportResult
 
   class AssetNotFoundException(externalId: Long) extends RuntimeException
-  case class CsvAssetRow(externalId: Long, properties: Seq[AssetProperty])
+  case class CsvAssetRow(externalId: Option[Long], properties: Seq[AssetProperty])
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
   type ImportResultData = ImportResultMassTransitStop
@@ -862,13 +862,6 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     new MassTransitStopServiceWithDynTransaction(eventBusImpl, roadLinkServiceImpl, roadAddressService)
   }
 
-  private def maybeInt(string: String): Option[Int] = {
-    try {
-      Some(string.toInt)
-    } catch {
-      case e: NumberFormatException => None
-    }
-  }
 
   private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
@@ -903,72 +896,22 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
-  private val coordinateMappings = Map(
+  val coordinateMappings = Map(
     "Koordinaatti X" -> "coordinate_x",
     "Koordinaatti Y" -> "coordinate_y"
   )
-  private val externalIdMapping = Map(
+  val externalIdMapping = Map(
     "Valtakunnallinen ID" -> "external_id"
   )
 
-  private val optionalMappings = externalIdMapping ++ coordinateMappings
+  val optionalMappings = externalIdMapping ++ coordinateMappings
 
   val mappings : Map[String, String]= textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
 
   val MandatoryParameters: Set[String] = mappings.keySet
 
-
-  private def resultWithType(result: (MalformedParameters, List[AssetProperty]), assetType: Int): ParsedRow = {
-    result.copy(_2 = result._2 match {
-      case List(AssetProperty("pysakin_tyyppi", xs)) => List(AssetProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.asInstanceOf[Seq[PropertyValue]].toList))
-      case _ => List(AssetProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
-    })
-  }
-
-  private def assetTypeToProperty(assetTypes: String): ParsedRow = {
-    val invalidAssetType = (List("Pysäkin tyyppi"), Nil)
-    val types = assetTypes.split(',')
-    if(types.isEmpty) invalidAssetType
-    else {
-      types.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, assetType) =>
-        maybeInt(assetType.trim)
-          .filter(isValidTypeEnumeration)
-          .map(typeEnumeration => resultWithType(result, typeEnumeration))
-          .getOrElse(invalidAssetType)
-      }
-    }
-  }
-
-  private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedRow = {
-    // less than ideal design but the simplest solution. DO NOT REPEAT IF MORE FIELDS REQUIRE CUSTOM VALUE VALIDATION
-    val isValidStopAdminstratorValue = singleChoiceFieldMappings(parameterName) == stopAdministratorProperty && stopAdministratorValueMappings(assetSingleChoice)
-
-    if (singleChoiceValueMappings(assetSingleChoice) || isValidStopAdminstratorValue) {
-      (Nil, List(AssetProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
-    } else {
-      (List(parameterName), Nil)
-    }
-  }
-
-  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
-    csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
-      val (key, value) = parameter
-      if(isBlank(value)) {
-        result
-      } else {
-        if (textFieldMappings.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = textFieldMappings(key), value = Seq(PropertyValue(value))) :: result._2)
-        } else if (multipleChoiceFieldMappings.contains(key)) {
-          val (malformedParameters, properties) = assetTypeToProperty(value)
-          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        } else if (singleChoiceFieldMappings.contains(key)) {
-          val (malformedParameters, properties) = assetSingleChoiceToProperty(key, value)
-          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        } else {
-          result
-        }
-      }
-    }
+  def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
+    csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
   }
 
   private def municipalityValidation(municipality: Int)(user: User): Unit = {
@@ -1004,30 +947,6 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
-    csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'"} mkString ", "
-  }
-
-  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): (List[String], ActionType) = {
-    val missingDefaultParameters = MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
-    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
-    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
-
-    val action =
-        if(optionalMappings.keys.toSeq.sorted.equals(actionParameters.sorted))
-          ActionType.UpdatePosition
-        else if(externalIdMapping.keys.toSeq.sorted.equals(actionParameters.sorted))
-          ActionType.Update
-        else if(coordinateMappings.keys.toSeq.sorted.equals(actionParameters.sorted))
-          ActionType.Create
-        else
-          ActionType.None
-
-    val missingOptionalParameters = if(action == ActionType.None) missingOptionals else Seq()
-
-    (missingDefaultParameters ++ missingOptionalParameters, action)
-  }
-
   def updateAsset(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
     // Remove livi-id from properties, we don't want to change is with CSV
     val propertiesWithoutLiviId = properties.filterNot(_.columnName == "yllapitajan_koodi")
@@ -1041,6 +960,196 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       updateAssetByExternalId(externalId, propertiesWithoutLiviId, user)
       Nil
     }
+  }
+
+  class AbstractCsvOperations {
+    def is(row: Map[String, String]): Boolean = {false}
+
+    private def maybeInt(string: String): Option[Int] = {
+      try {
+        Some(string.toInt)
+      } catch {
+        case e: NumberFormatException => None
+      }
+    }
+
+    private def resultWithType(result: (MalformedParameters, List[AssetProperty]), assetType: Int): ParsedRow = {
+      result.copy(_2 = result._2 match {
+        case List(AssetProperty("pysakin_tyyppi", xs)) => List(AssetProperty("pysakin_tyyppi", PropertyValue(assetType.toString) :: xs.asInstanceOf[Seq[PropertyValue]].toList))
+        case _ => List(AssetProperty("pysakin_tyyppi", Seq(PropertyValue(assetType.toString))))
+      })
+    }
+
+    private def assetTypeToProperty(assetTypes: String): ParsedRow = {
+      val invalidAssetType = (List("Pysäkin tyyppi"), Nil)
+      val types = assetTypes.split(',')
+      if(types.isEmpty) invalidAssetType
+      else {
+        types.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, assetType) =>
+          maybeInt(assetType.trim)
+            .filter(isValidTypeEnumeration)
+            .map(typeEnumeration => resultWithType(result, typeEnumeration))
+            .getOrElse(invalidAssetType)
+        }
+      }
+    }
+
+    private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedRow = {
+      // less than ideal design but the simplest solution. DO NOT REPEAT IF MORE FIELDS REQUIRE CUSTOM VALUE VALIDATION
+      val isValidStopAdminstratorValue = singleChoiceFieldMappings(parameterName) == stopAdministratorProperty && stopAdministratorValueMappings(assetSingleChoice)
+
+      if (singleChoiceValueMappings(assetSingleChoice) || isValidStopAdminstratorValue) {
+        (Nil, List(AssetProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
+      } else {
+        (List(parameterName), Nil)
+      }
+    }
+
+    def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
+      csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
+        val (key, value) = parameter
+        if(isBlank(value)) {
+          result
+        } else {
+          if (textFieldMappings.contains(key)) {
+            result.copy(_2 = AssetProperty(columnName = textFieldMappings(key), value = Seq(PropertyValue(value))) :: result._2)
+          } else if (multipleChoiceFieldMappings.contains(key)) {
+            val (malformedParameters, properties) = assetTypeToProperty(value)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          } else if (singleChoiceFieldMappings.contains(key)) {
+            val (malformedParameters, properties) = assetSingleChoiceToProperty(key, value)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          } else {
+            result
+          }
+        }
+      }
+    }
+
+    def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+      MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+    }
+
+    def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {throw new UnsupportedOperationException}
+
+    def singleRowProcess(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, result: ImportResultMassTransitStop) = {
+      val missingParameters = findMissingParameters(row)
+      val (malformedParameters, properties) = assetRowToProperties(row)
+      if(missingParameters.isEmpty && malformedParameters.isEmpty) {
+        try {
+          val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
+          result.copy(excludedRows = excludedRows ::: result.excludedRows)
+        } catch {
+          case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = row("Valtakunnallinen ID").toLong, csvRow = rowToString(row)) :: result.nonExistingAssets)
+          case ex: Exception => result.copy(genericExceptionRows = GenericException(reason = ex.getMessage,csvRow = rowToString(row)) :: result.genericExceptionRows)
+        }
+      } else {
+        result.copy(
+          incompleteRows = missingParameters match {
+            case Nil => result.incompleteRows
+            case parameters => IncompleteRow(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteRows
+          },
+          malformedRows = malformedParameters match {
+            case Nil => result.malformedRows
+            case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedRows
+          }
+        )
+      }
+    }
+  }
+
+  class PropertyUpdater extends AbstractCsvOperations {
+    override def is(csvRowWithHeaders: Map[String, String]) = {
+      val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+      val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
+      externalIdMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
+    }
+
+    override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
+      val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
+      updateAsset(parsedRow.externalId.get, parsedRow.properties, roadTypeLimitations, user)
+        .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+    }
+
+    override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
+      csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
+        val (key, value) = parameter
+        if(isBlank(value)) {
+          result
+        } else {
+          if (coordinateMappings.contains(key)) {
+            result //check if value contains only numbers
+          } else {
+            result
+          }
+        }
+      }
+    } // + super method
+  }
+
+  class Creator extends AbstractCsvOperations {
+    override def is(csvRowWithHeaders: Map[String, String]) = {
+      val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+      val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
+      coordinateMappings.keys.toSeq.sorted.equals(actionParameters.sorted)
+    }
+
+    override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
+      val parsedRow = CsvAssetRow(None, properties = properties)
+      updateAsset(parsedRow.externalId.get, parsedRow.properties, roadTypeLimitations, user) //call the create method, not update
+        .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+    }
+
+    override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
+      csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
+        val (key, value) = parameter
+        if(isBlank(value)) {
+          result
+        } else {
+          if (coordinateMappings.contains(key)) {
+            result //check if value contains only numbers
+          } else {
+            result
+          }
+        }
+      }
+    } // + super method
+  }
+
+  class PositionUpdater extends AbstractCsvOperations {
+    override def is(csvRowWithHeaders: Map[String, String]) = {
+      val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+      val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
+      optionalMappings.keys.toSeq.sorted.equals(actionParameters.sorted)
+    }
+
+    override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
+      val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
+      updateAsset(parsedRow.externalId.get, parsedRow.properties, roadTypeLimitations, user) //call the correct update method
+        .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+    }
+  }
+
+  class DefaultOperation extends AbstractCsvOperations { //use this if something is wrong on the parameters
+    override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {throw new UnsupportedOperationException}
+
+    override def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+      optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+    }
+  }
+
+  lazy val propertyUpdater = new PropertyUpdater
+  lazy val positionUpdater = new PositionUpdater
+  lazy val creator = new Creator
+  lazy val default = new DefaultOperation
+
+  private def getStrategies(): (Seq[AbstractCsvOperations], AbstractCsvOperations) ={
+    (Seq(propertyUpdater, creator, positionUpdater), default)
+  }
+
+  private def getStrategy(csvRowWithHeaders: Map[String, String]): AbstractCsvOperations ={
+    val (strategies, defaultStrategy) = getStrategies()
+    strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(defaultStrategy)
   }
 
   private def fork(f: => Unit): Unit = {
@@ -1080,37 +1189,8 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       override val delimiter: Char = ';'
     })
     csvReader.allWithHeaders().foldLeft(ImportResultMassTransitStop()) { (result, row) =>
-      val (missingParameters, actionType) = findMissingParameters(row)
-      val (malformedParameters, properties) = assetRowToProperties(row)
-      if(missingParameters.isEmpty && malformedParameters.isEmpty) {
-        val parsedRow = actionType match {
-          case ActionType.Update || ActionType.UpdatePosition => CsvAssetRow(externalId = row("Valtakunnallinen ID").toLong, properties = properties)
-          case ActionType.Create => CsvAssetRow(0L, properties = properties)
-        }
-        try {
-          val excludedRows = actionType match {
-            case ActionType.Update => updateAsset(parsedRow.externalId, parsedRow.properties, roadTypeLimitations, user)
-              .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
-            //case ActionType.UpdatePosition =>
-            //case ActionType.Create =>
-          }
-          result.copy(excludedRows = excludedRows ::: result.excludedRows)
-        } catch {
-          case e: AssetNotFoundException => result.copy(nonExistingAssets = NonExistingAsset(externalId = parsedRow.externalId, csvRow = rowToString(row)) :: result.nonExistingAssets)
-          case ex: Exception => result.copy(genericExceptionRows = GenericException(reason = ex.getMessage,csvRow = rowToString(row)) :: result.genericExceptionRows)
-        }
-      } else {
-        result.copy(
-          incompleteRows = missingParameters match {
-            case Nil => result.incompleteRows
-            case parameters => IncompleteRow(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteRows
-          },
-          malformedRows = malformedParameters match {
-            case Nil => result.malformedRows
-            case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedRows
-          }
-        )
-      }
+      val strategy = getStrategy(row)
+      strategy.singleRowProcess(row, roadTypeLimitations, user, result)
     }
   }
 }
