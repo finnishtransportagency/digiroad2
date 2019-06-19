@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -350,6 +351,17 @@ object RoadLinkDAO{
 
     def getVVHValue(vvhRoadLink: VVHRoadlink) = {
       throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
+    }
+
+    def getLastModificationRoadInformation(linkId: Long) : Option[(String, String)] = {
+      sql"""SELECT TO_CHAR(lastModifiedDate, 'DD-MM-YYYY hh24:mi:ss'), USERNAME
+            FROM (
+               SELECT CASE WHEN T.MODIFIED_DATE IS NULL THEN T.CREATED_DATE ELSE T.MODIFIED_DATE END AS LASTDATE
+                     ,CASE WHEN MODIFIED_BY IS NULL THEN T.CREATED_BY ELSE T.MODIFIED_BY END AS USERNAME
+                 FROM ROAD_LINK_ATTRIBUTES T
+               WHERE NAME IN ( 'PRIVATE_ROAD_ASSOCIATION', 'ADDITIONAL_INFO')
+               ORDER BY LASTMODIFIEDDATE DESC
+            ) WHERE ROWNUM = 1""".as[(String, String)].firstOption
     }
 
     override def expireValues(linkId: Long, username: Option[String]) = {
