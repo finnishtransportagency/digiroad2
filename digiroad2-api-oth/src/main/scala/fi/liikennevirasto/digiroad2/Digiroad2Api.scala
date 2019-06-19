@@ -1662,20 +1662,29 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/municipalities/:municipalityCode/assetTypes") {
-    val id = params("municipalityCode").toInt
-    val verifiedAssetTypes = verificationService.getAssetTypesByMunicipalityF(id)
-    verifiedAssetTypes.groupBy(_.municipalityName)
-      .mapValues(
-        _.map(assetType => Map("typeId" -> assetType.assetTypeCode,
-          "assetName" -> assetType.assetTypeName,
-          "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-          "verified_by"   -> assetType.verifiedBy.getOrElse(""),
-          "verified"   -> assetType.verified,
-          "counter" -> assetType.counter,
-          "modified_by" -> assetType.modifiedBy.getOrElse(""),
-          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-          "type" -> assetType.geometryType)))
+  get("/municipalities/:municipalityCode/assetTypes/:refresh") {
+    val municipalityCode = params("municipalityCode").toInt
+    val refresh = params("refresh").toBoolean
+
+    val verifiedAssetTypes = if(refresh) {
+      verificationService.getRefreshedAssetTypesByMunicipality(municipalityCode, roadLinkService.getRoadLinksWithComplementaryFromVVH)
+    } else
+      verificationService.getAssetTypesByMunicipality(municipalityCode)
+
+    Map(
+    "municipalityName" -> verifiedAssetTypes.head.municipalityName,
+    "refreshDate" -> verifiedAssetTypes.head.refreshDate.get,
+      "properties" -> verifiedAssetTypes.map{ assetType =>
+        Map("typeId" -> assetType.assetTypeCode,
+        "assetName" -> assetType.assetTypeName,
+        "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+        "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+        "verified"   -> assetType.verified,
+        "counter" -> assetType.counter,
+        "modified_by" -> assetType.modifiedBy.getOrElse(""),
+        "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+        "type" -> assetType.geometryType)}
+    )
   }
 
   post("/municipalities/:municipalityCode/assetVerification") {
@@ -1862,6 +1871,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case _ if userConfiguration.authorizedMunicipalities.nonEmpty || userConfiguration.municipalityNumber.nonEmpty =>
         val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
         val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
+
         val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
 
         val updateUserLastLoginDate = user.copy(configuration = userConfiguration.copy(lastLoginDate = Some(LocalDate.now().toString)))
