@@ -50,6 +50,22 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
+    var datePeriodValueExtract = function (date) {
+      var datePeriodValue = date.getPropertyValue().values;
+      var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+      var endDate = new Date(_.head(datePeriodValue).value.endDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+
+      return [startDate, endDate];
+    };
+
+    var isEndDateAfterStartdate = function (date) {
+      var datePeriods = datePeriodValueExtract(date);
+      var startDate = datePeriods[0];
+      var endDate = datePeriods[1];
+
+      return startDate <= endDate;
+    };
+
     var linearAssetSpecs = [
       {
         typeId: assetType.totalWeightLimit,
@@ -285,19 +301,23 @@
           var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
 
           var isInDatePeriod = function(date) {
-            var datePeriodValue = date.getPropertyValue().values;
-            var startDate = new Date(_.head(datePeriodValue).value.startDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-            var endDate = new Date(_.head(datePeriodValue).value.endDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+            var datePeriods = datePeriodValueExtract(date);
+            var startDate = datePeriods[0];
+            var endDate = datePeriods[1];
 
             return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
           };
 
-          var isValidDate =  _.every(datePeriodField, function(date) {
+          var isValidIntervalDate = _.every(datePeriodField, function (date) {
+            return date.hasValue() ? isEndDateAfterStartdate(date) : true;
+          });
+
+          var isValidPeriodDate =  _.every(datePeriodField, function(date) {
             return date.hasValue() && isInDatePeriod(date);
           });
 
           var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
-          return checkBoxField ? isValidDate : true;
+          return checkBoxField ? isValidPeriodDate : isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
@@ -727,6 +747,13 @@
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
+        saveCondition: function (fields) {
+          var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
+
+          return _.every(datePeriodField, function (date) {
+            return date.hasValue() ? isEndDateAfterStartdate(date) : true;
+          });
+        },
         hasMunicipalityValidation: false
       }
     ];
