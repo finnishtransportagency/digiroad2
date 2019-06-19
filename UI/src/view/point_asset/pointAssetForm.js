@@ -52,8 +52,8 @@ root.PointAssetForm = function() {
     });
 
     eventbus.on(layerName + ':changed', function() {
-      rootElement.find('.form-controls button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
       rootElement.find('button#cancel-button').prop('disabled', !(selectedAsset.isDirty()));
+      rootElement.find('button#save-button').prop('disabled', !(selectedAsset.isDirty() && me.saveCondition(selectedAsset)));
     });
 
     eventbus.on(layerName + ':unselected ' + layerName + ':creationCancelled', function() {

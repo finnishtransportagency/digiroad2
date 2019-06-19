@@ -6,7 +6,6 @@ import java.time.LocalDate
 import java.util.{Date, Properties}
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -17,7 +16,7 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{RoadWorkService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, MassTransitStopService, PersistedMassTransitStop, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.pointasset._
@@ -150,6 +149,10 @@ object DataFixture {
     new MaintenanceService(roadLinkService, new DummyEventBus)
   }
 
+  lazy val roadWorkService: RoadWorkService = {
+    new RoadWorkService(roadLinkService, eventbus)
+  }
+
   lazy val tierekisteriSpeedLimitAsset : TierekisteriSpeedLimitAssetClient = {
     new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -166,6 +169,10 @@ object DataFixture {
 
   lazy val speedLimitDao: OracleSpeedLimitDao = {
     new OracleSpeedLimitDao(null, null)
+  }
+
+  lazy val roadLinkTempDao : RoadLinkTempDAO = {
+    new RoadLinkTempDAO
   }
 
   lazy val verificationService: VerificationService = {
@@ -860,9 +867,9 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     println("Obtaining all Road Links By Municipality")
 
@@ -882,29 +889,29 @@ object DataFixture {
         //Obtain all existing RoadLinkId by AssetType and roadLinks
         val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
 
-      println ("Total created previously      -> " + assetCreated.size)
+        println ("Total created previously      -> " + assetCreated.size)
 
-      //Filter roadLink by Class
-      val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == State))
-      println ("Total RoadLink by State Class -> " + roadLinksFilteredByClass.size)
+        //Filter roadLink by Class
+        val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == State))
+        println ("Total RoadLink by State Class -> " + roadLinksFilteredByClass.size)
 
-      //Obtain asset with a road link type Motorway or Freeway
-      val roadLinkMotorwayFreeway  = roadLinksFilteredByClass.filter(road => road.linkType == asset.Motorway  || road.linkType == asset.Freeway)
+        //Obtain asset with a road link type Motorway or Freeway
+        val roadLinkMotorwayFreeway  = roadLinksFilteredByClass.filter(road => road.linkType == asset.Motorway  || road.linkType == asset.Freeway)
 
-      val (assetToExpire, assetPrevCreated) = assetCreated.partition{
-        case(linkId, value, assetId) =>
-          value <= NumOfRoadLanesSingleCarriageway && roadLinkMotorwayFreeway.map(_.linkId).contains(linkId)
-      }
+        val (assetToExpire, assetPrevCreated) = assetCreated.partition{
+          case(linkId, value, assetId) =>
+            value <= NumOfRoadLanesSingleCarriageway && roadLinkMotorwayFreeway.map(_.linkId).contains(linkId)
+        }
 
-      //Expire all asset with road link type Motorway or Freeway with amount of lane equal 1
-      println("Assets to expire - " + assetToExpire.size)
-      assetToExpire.foreach{case(linkId, value, assetId) => dao.updateExpiration(assetId, expired = true, username)}
+        //Expire all asset with road link type Motorway or Freeway with amount of lane equal 1
+        println("Assets to expire - " + assetToExpire.size)
+        assetToExpire.foreach{case(linkId, value, assetId) => dao.updateExpiration(assetId, expired = true, username)}
 
-      //Exclude previously roadlink created
-      val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetPrevCreated.contains(f.linkId))
-      println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
+        //Exclude previously roadlink created
+        val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetPrevCreated.contains(f.linkId))
+        println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
 
-      if (filteredRoadLinksByNonCreated.nonEmpty) {
+        if (filteredRoadLinksByNonCreated.nonEmpty) {
           //Create new Assets for the RoadLinks from VVH
           filteredRoadLinksByNonCreated.foreach { roadLinkProp =>
 
@@ -963,9 +970,9 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
@@ -995,9 +1002,9 @@ object DataFixture {
 
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
-              assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
-                (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
-                  asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
+            assets.filter(asset => asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "dr1_conversion" ||
+              (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && (asset.modifiedBy.getOrElse(asset.createdBy.getOrElse("")) == "vvh_mtkclass_default" ||
+                asset.modifiedBy.getOrElse("") == "vvh_generated" && asset.createdBy.getOrElse("") == "vvh_mtkclass_default"))
             ).map(_.id)
         }.toSet
 
@@ -1021,7 +1028,7 @@ object DataFixture {
                 measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource, Some("vvh_mtkclass_default"), None, None))
             }.filterNot(a =>
               assets.
-              exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
+                exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
             )
         }
 
@@ -1056,9 +1063,9 @@ object DataFixture {
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     println("Obtaining all Road Links By Municipality")
 
@@ -1210,7 +1217,7 @@ object DataFixture {
 
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
-//    Get All Municipalities
+    //    Get All Municipalities
     val municipalities: Seq[Int] =
       OracleDatabase.withDynSession {
         Queries.getMunicipalities
@@ -1237,7 +1244,7 @@ object DataFixture {
           }
           else{
             if(( (asset.createdBy.contains("dr1_conversion") || asset.createdBy.contains("vvh_generated"))&& asset.modifiedBy.isEmpty)  ||
-                (asset.createdBy.contains("dr1_conversion") && asset.modifiedBy.contains("vvh_generated"))) {
+              (asset.createdBy.contains("dr1_conversion") && asset.modifiedBy.contains("vvh_generated"))) {
               if(!asset.informationSource.contains(MunicipalityMaintenainer)) {
                 if (roadWithMTKClass.exists(_.linkId == asset.linkId)) {
                   println(s"Asset with ${asset.id} created by dr1_conversion or vvh_generated and with valid MTKCLASS")
@@ -1440,7 +1447,7 @@ object DataFixture {
               AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
             }.toSet
 
-            val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, Seq())
+            val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, roadLinks)
             val uniquePanels = trafficSignService.distinctPanels(additionalPanelsInRadius)
             try{
               if (uniquePanels.size <= 3 && additionalPanelsInRadius.nonEmpty) {
@@ -1465,6 +1472,8 @@ object DataFixture {
         }
       }
       additionalPanelIdToExpire.foreach { case (id, linkId, signType) =>
+        //this code is commented until final OK is given by the client to delete additional signs. improvements to this batch were made in DROTH-1917
+        //uncomment to perform one time batch in which additional panel properties are copied to main sign and then deleted.
 //        trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(Set(id).flatten), Some("batch_process_panel_merge"))
         println(s"Additional panel expired with id $id and type ${TrafficSignType.applyOTHValue(signType).toString} on linkId $linkId")
       }
@@ -1526,8 +1535,8 @@ object DataFixture {
     val assetTypes = Set(DamagedByThaw.typeId, LitRoad.typeId, NumberOfLanes.typeId, TotalWeightLimit.typeId)
     //Get All Municipalities
     val municipalities: Seq[Int] =  OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
+      Queries.getMunicipalities
+    }
 
     municipalities.foreach {
       municipality =>
@@ -1560,24 +1569,24 @@ object DataFixture {
   def updatePrivateRoads(): Unit = {
     println("\nStart of update private roads")
     println(DateTime.now())
-      val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
-      //Get All Municipalities
-      val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val assetTypes = Set(Prohibition.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId)
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
-      municipalities.foreach { municipality =>
-        println(s"Obtaining all Road Links for Municipality: $municipality")
-        val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
-          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
-          val linkIds = roadLinks.map(_.linkId)
+    municipalities.foreach { municipality =>
+      println(s"Obtaining all Road Links for Municipality: $municipality")
+      val roadLinksWithAssets =  OracleDatabase.withDynTransaction {
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == Private)
+        val linkIds = roadLinks.map(_.linkId)
 
-          val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
-          roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
-        }
-        roadLinksWithAssets.foreach { roadLink =>
-          val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some(""), Some(AdditionalInformation.DeliveredWithRestrictions), Some(""))
-          roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roads_process"), (_, _) => {})
-        }
+        val existingAssets = oracleLinearAssetDao.fetchAssetsByLinkIds(assetTypes, linkIds)
+        roadLinks.filter(roadLink => existingAssets.map(_.linkId).toSet.contains(roadLink.linkId))
       }
+      roadLinksWithAssets.foreach { roadLink =>
+        val linkProperty = LinkProperties(roadLink.linkId, roadLink.functionalClass, roadLink.linkType, roadLink.trafficDirection, roadLink.administrativeClass, Some(""), Some(AdditionalInformation.DeliveredWithRestrictions), Some(""))
+        roadLinkService.updateLinkProperties(linkProperty, Option("update_private_roads_process"), (_, _) => {})
+      }
+    }
   }
 
   private def updateFloatingStopsOnTerminatedRoads(): Unit ={
@@ -1621,7 +1630,10 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
 
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
@@ -1677,6 +1689,58 @@ object DataFixture {
     println("\n")
   }
 
+  def removeRoadWorksCreatedLastYear(): Unit = {
+    println("\nStart process to remove all road works assets created during the last year")
+    println(DateTime.now())
+
+    val actualYear = DateTime.now().getYear
+    val username = "batch_to_expire_roadworks_on_previous_year"
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+        println("Fetching assets")
+        val existingAssets =
+          roadWorkService.enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(RoadWorksAsset.typeId, roadLinks.map(_.linkId))).filterNot(_.expired)
+
+        val existingAssetsOnLastYear = existingAssets.filter { asset =>
+          asset.value.map(_.asInstanceOf[DynamicValue]) match {
+            case Some(value) =>
+              val roadWorkProps = value.value.properties
+              roadWorkProps.find(_.publicId == "arvioitu_kesto") match {
+                case Some(dateProperty) =>
+                  dateProperty.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).exists { property =>
+                    val endDateYear = DateParser.stringToDate(property.endDate, DateParser.DatePropertyFormat).getYear
+                    endDateYear < actualYear
+                  }
+                case _ => false
+              }
+            case _ => false
+          }
+        }
+
+        println(s"Number of existing assets: ${existingAssetsOnLastYear.length}")
+        println(s"Start expiring valid roadWorks assets")
+
+
+        existingAssetsOnLastYear.foreach { asset =>
+          roadWorkService.expireAsset(RoadWorksAsset.typeId, asset.id, username, true, false)
+          println(s"Asset id ${asset.id} expired. ")
+        }
+      }
+      println("Complete at time: " + DateTime.now())
+    }
+  }
+
   def loadMunicipalitiesVerificationInfo(): Unit = {
     println("\nRefreshing information on municipality verification")
     println(DateTime.now())
@@ -1715,8 +1779,8 @@ object DataFixture {
       municipalities.foreach{ municipality =>
         val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)._1
         val existingAssets = trafficSignService.getPersistedAssetsByLinkIdsWithoutTransaction(roadLinks.map(_.linkId).toSet)
-                                                                      .filterNot(_.floating)
-                                                                      .filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == signGroup)
+          .filterNot(_.floating)
+          .filter(sign => TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == signGroup)
         existingAssets.foreach{sign =>
           val signType = TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).TRvalue
           val signValue = trafficSignService.getProperty(sign, trafficSignService.valuePublicId).flatMap(_.propertyDisplayValue).getOrElse("")
@@ -1727,6 +1791,265 @@ object DataFixture {
       }
     }
   }
+
+  def resolvingFrozenLinks(): Unit = {
+    case class AddressCreateInfo(toCreate : Seq[RoadAddressTEMP] , possibleToCreate: Seq[RoadAddressTEMP])
+
+    def getSideCode(mappedAddress: RoadAddressTEMP , frozenLink: RoadAddressTEMP, roadLinks : Seq[RoadLink]): Option[SideCode] = {
+      mappedAddress.sideCode match {
+        case Some (sideCode) =>
+          val mappedRoadLink = roadLinks.find (_.linkId == mappedAddress.linkId).get
+          val frozenRoadLink = roadLinks.find (_.linkId == frozenLink.linkId).get
+
+          val (firstR, lastR) = GeometryUtils.geometryEndpoints (mappedRoadLink.geometry)
+          val (firstF, lastF) = GeometryUtils.geometryEndpoints (frozenRoadLink.geometry)
+
+          Some (if (GeometryUtils.areAdjacent (firstR, firstF) || GeometryUtils.areAdjacent (lastR, lastF) )
+            sideCode
+          else
+            SideCode.switch(sideCode))
+        case _ => None
+      }
+    }
+
+    def recalculateTrackAndSideCode(mappedAddresses: Seq[RoadAddressTEMP], frozenAddresses: Seq[RoadAddressTEMP], totalFrozen: Int, roadLinks: Seq[RoadLink], result: Seq[AddressCreateInfo]) : Seq[AddressCreateInfo] = {
+      val middleResult = calculateTrackAndSideCode(mappedAddresses, frozenAddresses.distinct, roadLinks, result)
+      val allRoadAddresses = mappedAddresses ++ middleResult.flatMap(_.toCreate)
+      val missingFrozen = middleResult.flatMap(_.possibleToCreate).distinct
+
+      if (totalFrozen == missingFrozen.size ||  middleResult.flatMap(_.possibleToCreate).isEmpty)
+        concatenateResult(result, middleResult)
+      else {
+        recalculateTrackAndSideCode(allRoadAddresses, missingFrozen, missingFrozen.size, roadLinks, concatenateResult(result, middleResult))
+      }
+    }
+
+    def concatenateResult(result: Seq[AddressCreateInfo], newResult: Seq[AddressCreateInfo]) : Seq[AddressCreateInfo] = {
+      Seq(AddressCreateInfo(result.flatMap(_.toCreate) ++ newResult.flatMap(_.toCreate) , result.flatMap(_.possibleToCreate) ++ newResult.flatMap(_.possibleToCreate)))
+    }
+
+    def calculateTrackAndSideCode(mappedAddresses: Seq[RoadAddressTEMP], frozenAddresses: Seq[RoadAddressTEMP], roadLinks: Seq[RoadLink], result: Seq[AddressCreateInfo]) : Seq[AddressCreateInfo] = {
+      if (mappedAddresses.isEmpty) {
+        concatenateResult(result,  Seq(AddressCreateInfo(Seq(), frozenAddresses)))
+      } else {
+        val mappedAddress = mappedAddresses.head
+        val (baseFirst, baseLast) =  GeometryUtils.geometryEndpoints(roadLinks.find(_.linkId == mappedAddress.linkId).get.geometry)
+
+        val adjacentFirst = mappedAddresses.filter { address =>
+          val roadLink = roadLinks.find(_.linkId == address.linkId).get
+          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+          GeometryUtils.areAdjacent (baseFirst, last) || GeometryUtils.areAdjacent (baseFirst, first)
+        }
+
+        val frozenAdjacentFirst = frozenAddresses.filter { frozen =>
+          val roadLink = roadLinks.find(_.linkId == frozen.linkId).get
+          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+          GeometryUtils.areAdjacent (baseFirst, last) || GeometryUtils.areAdjacent (baseFirst, first)
+        }
+
+        val frozenAddrFirst: Seq[RoadAddressTEMP] = (adjacentFirst.size, frozenAdjacentFirst.size) match {
+          case (2, 1) =>
+            val track = if (adjacentFirst.exists(_.track == Track.RightSide) && adjacentFirst.exists(_.track == Track.LeftSide))
+              Track.Combined
+            else if (adjacentFirst.exists(_.track == Track.Combined) && adjacentFirst.exists(_.track == Track.LeftSide))
+              Track.RightSide
+            else
+              Track.LeftSide
+
+            Seq(frozenAdjacentFirst.head.copy(track = track, sideCode = getSideCode(adjacentFirst.head, frozenAdjacentFirst.head, roadLinks)))
+          case (1, 1) =>
+            Seq(frozenAdjacentFirst.head.copy(track = adjacentFirst.head.track, sideCode = getSideCode(adjacentFirst.head, frozenAdjacentFirst.head, roadLinks)))
+          case _ =>
+            frozenAdjacentFirst.map(_.copy(track = Track.Unknown))
+        }
+
+        val adjacentLast = mappedAddresses.filter { address =>
+          val roadLink = roadLinks.find(_.linkId == address.linkId).get
+          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+          GeometryUtils.areAdjacent (baseLast, first) || GeometryUtils.areAdjacent (baseLast, last)
+        }
+
+        val frozenAdjacentLast = frozenAddresses.filter { frozen =>
+          val roadLink = roadLinks.find(_.linkId == frozen.linkId).get
+          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+          GeometryUtils.areAdjacent (baseLast, first) || GeometryUtils.areAdjacent (baseLast, last)
+        }
+
+        val frozenAddrLast: Seq[RoadAddressTEMP] = (adjacentLast.size, frozenAdjacentLast.size) match {
+          case (2, 1) =>
+            val track = if (adjacentLast.exists(_.track == Track.RightSide) && adjacentLast.exists(_.track == Track.LeftSide))
+              Track.Combined
+            else if (adjacentLast.exists(_.track == Track.Combined) && adjacentLast.exists(_.track == Track.LeftSide))
+              Track.RightSide
+            else
+              Track.LeftSide
+
+            Seq(frozenAdjacentLast.head.copy(track = track, sideCode = getSideCode(adjacentLast.head, frozenAdjacentLast.head, roadLinks)))
+          case (1, 1) =>
+            Seq(frozenAdjacentLast.head.copy(track = adjacentLast.head.track, sideCode = getSideCode(adjacentLast.head, frozenAdjacentLast.head, roadLinks)))
+          case _ =>
+            frozenAdjacentLast.map(_.copy(track = Track.Unknown))
+        }
+
+        val (newAddresses, possibleToCreate) = (frozenAddrFirst ++ frozenAddrLast).partition(_.track != Track.Unknown)
+        val oldAddress = mappedAddresses.diff(Seq(mappedAddress)) ++ newAddresses
+        val missingFrozen = frozenAddresses.filterNot(x => newAddresses.map(_.linkId).contains(x.linkId))
+
+        calculateTrackAndSideCode(oldAddress, missingFrozen, roadLinks, concatenateResult(result, Seq(AddressCreateInfo(newAddresses, possibleToCreate))))
+      }
+    }
+
+    def recalculateAddress(frozen: RoadLink, roadAddress: Seq[RoadAddressTEMP]):  Seq[RoadAddressTEMP] = {
+      println(s"Recalculate Address on linkId ${frozen.linkId}")
+      val zippedFrozen = frozen.geometry.zip(frozen.geometry.tail)
+
+      zippedFrozen.zipWithIndex.foldLeft(Seq.empty[RoadAddressTEMP]) {case (result, ((p1, p2), index)) =>
+        val addressF = geometryTransform.vkmGeometryTransform.coordToAddress(p1, includePedestrian = Some(true))
+        val addressL = geometryTransform.vkmGeometryTransform.coordToAddress(p2, includePedestrian = Some(true))
+
+        val address = if(!(addressF.road == addressL.road && addressF.roadPart == addressL.roadPart)) {
+          val adj = roadLinkService.getAdjacent(frozen.linkId, false)
+          val filtered = roadAddress.filter(x => adj.map(_.linkId).contains(x.linkId))
+
+          if (index == 0 && filtered.count { x =>
+            val (first, last) = GeometryUtils.geometryEndpoints(x.geom)
+            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x.road && addressL.roadPart == x.roadPart} == 1)
+
+            Seq(addressF.copy(road = addressL.road, roadPart = addressL.roadPart), addressL)
+
+          else if ((index + 1) == zippedFrozen.size && filtered.count { x =>
+            val (first, last) = GeometryUtils.geometryEndpoints(x.geom)
+            (GeometryUtils.areAdjacent(p2, first) || GeometryUtils.areAdjacent(p2, last)) && addressF.road == x.road && addressF.roadPart == x.roadPart} == 1)
+
+            Seq(addressF, addressL.copy(road = addressF.road, roadPart = addressF.roadPart))
+          else
+            Seq(addressF,addressL)
+        } else
+          Seq(addressF,addressL)
+
+        if(result.isEmpty) {
+          val orderedAddress = address.sortBy(_.addrM)
+          Seq(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM,
+            0, GeometryUtils.geometryLength(Seq(p1, p2)), Seq(p1, p2) , municipalityCode = Some(frozen.municipalityCode)))
+        } else {
+          val addressHead = address.head
+
+          if (result.exists(x => x.road == addressHead.road && x.roadPart == addressHead.roadPart)) {
+            val partOfEndValue = GeometryUtils.geometryLength(Seq(p1, p2))
+            val resultToChange = result.filter(x => x.road == addressHead.road && x.roadPart == addressHead.roadPart).head
+            result.filterNot(x => x.road == addressHead.road && x.roadPart == addressHead.roadPart) :+
+              resultToChange.copy(endAddressM = address.last.addrM, endMValue = partOfEndValue + resultToChange.endMValue, geom = Seq(p1, p2) ++ resultToChange.geom)
+          } else {
+            val startValue = result.maxBy(_.endMValue).endMValue
+            result :+ RoadAddressTEMP(frozen.linkId, addressHead.road, addressHead.roadPart, Track.Unknown, addressHead.addrM, address.last.addrM, startValue, startValue + GeometryUtils.geometryLength(Seq(p1, p2)), Seq(p1, p2), municipalityCode = Some(frozen.municipalityCode))
+          }
+        }
+      }
+    }
+
+    def cleaning(incompleteVKMInfo: Seq[RoadAddressTEMP]): Unit = {
+      println(s"Try to solve ${incompleteVKMInfo.size}")
+
+      val adjRoadLinks = incompleteVKMInfo.flatMap(x => roadLinkService.getAdjacent(x.linkId, false))
+
+      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(incompleteVKMInfo.map(_.linkId).toSet , false) ++ adjRoadLinks
+
+      val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
+      val vkmRoadAddress = roadLinkTempDao.getByLinkIds(adjRoadLinks.map(_.linkId).toSet).filterNot(_.track == Track.Unknown)
+
+      val mappedAddresses = allRoadAddress.map { address =>
+        RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
+      } ++ vkmRoadAddress
+
+      val result = recalculateTrackAndSideCode(mappedAddresses, incompleteVKMInfo, incompleteVKMInfo.size, roadLinks.filter(_.administrativeClass == State), Seq())
+
+      val toCreate = result.flatMap(_.possibleToCreate).map { roadAddr =>
+        val roadLink = roadLinks.find(_.linkId == roadAddr.linkId).get
+
+        val track = if(Seq(CycleOrPedestrianPath, PedestrianZone, CableFerry).contains( roadLink.linkType)) Track.Combined else Track.Unknown
+        val sideCode = mappedAddresses.find(_.linkId == roadAddr.linkId).flatMap{ mappedAddress =>
+           getSideCode(mappedAddress, roadAddr, roadLinks)
+        }
+        roadAddr.copy(track = track, sideCode = sideCode)
+      }
+
+      toCreate.distinct.foreach { frozen =>
+        roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
+        //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
+      }
+    }
+
+    println("\nRefreshing information on municipality verification")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+
+    val possibleToCreate = OracleDatabase.withDynTransaction {
+      val toCreate = municipalities.flatMap { municipality =>
+        roadLinkTempDao.deleteInfoByMunicipality(municipality)
+
+        println(s"Working on municipality : $municipality")
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
+
+        val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
+        val frozenRoadLinks = roadLinks.filterNot(road => allRoadAddress.map(_.linkId).contains(road.linkId))
+
+        val mappedAddresses = allRoadAddress.map { address =>
+          RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
+        }
+
+        val forecedFind = Seq()
+        val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
+          val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
+
+          try {
+            val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
+            if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
+              println("problems in wonderland")
+              Seq()
+            } else {
+              val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
+              if(grouped.keys.size > 1) {
+                val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
+                if(recalculateAddresses.size == 1)
+                  Some(recalculateAddresses.head)
+                else {
+                  recalculateAddresses.foreach { recalc =>
+                    println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
+                  }}
+                    None
+              } else {
+                val orderedAddress = address.sortBy(_.addrM)
+                Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry,  municipalityCode = Some(frozen.municipalityCode)))
+              }
+            }
+          } catch {
+            case ex: Exception =>
+              println(s"Exception in VKM for linkId ${frozen.linkId}")
+            None
+          }
+        }
+        calculateTrackAndSideCode(mappedAddresses, frozenAddresses, roadLinks, Seq())
+      }
+      toCreate.foreach(_.toCreate.distinct.foreach { frozen =>
+        roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
+        //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
+      })
+
+      toCreate.flatMap(_.possibleToCreate)
+    }
+
+    OracleDatabase.withDynTransaction {
+      cleaning(possibleToCreate)
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
 
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
@@ -1850,14 +2173,18 @@ object DataFixture {
         updatePrivateRoads()
       case Some("add_geometry_to_linear_assets") =>
         addGeometryToLinearAssets()
+      case Some("remove_roadWorks_created_last_year") =>
+        removeRoadWorksCreatedLastYear()
       case Some("traffic_sign_extract") =>
-         extractTrafficSigns(args.lastOption)
+        extractTrafficSigns(args.lastOption)
       case Some("remove_unnecessary_unknown_speedLimits") =>
         removeUnnecessaryUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
+      case Some("resolving_Frozen_Links") =>
+        resolvingFrozenLinks()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1869,7 +2196,7 @@ object DataFixture {
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
-        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | load_municipalities_verification_info")
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links")
     }
   }
 }

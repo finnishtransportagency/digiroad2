@@ -45,6 +45,37 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     }
   }
 
+  def createFromCoordinates(incomingTrafficLight: IncomingTrafficLight, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
+    if(isFloating)
+      createFloatingWithoutTransaction(incomingTrafficLight.copy(linkId = 0), username, roadLink)
+    else {
+      checkDuplicates(incomingTrafficLight) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, incomingTrafficLight, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+        case _ =>
+          create(incomingTrafficLight, username, roadLink, false)
+      }
+    }
+  }
+
+  def checkDuplicates(incomingTrafficLight: IncomingTrafficLight): Option[TrafficLight] = {
+    val position = Point(incomingTrafficLight.lon, incomingTrafficLight.lat)
+    val signsInRadius = OracleTrafficLightDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
+      .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
+    if(signsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(signsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(signs: Seq[TrafficLight]): TrafficLight = {
+    signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
+  }
+
+  def createFloatingWithoutTransaction(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
+    OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+  }
+
   override def setFloating(persistedAsset: TrafficLight, floating: Boolean) = {
     persistedAsset.copy(floating = floating)
   }
@@ -53,9 +84,13 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingTrafficLight, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: IncomingTrafficLight, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
+    if(newTransaction) {
+      withDynTransaction {
+        OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      }
+    } else {
       OracleTrafficLightDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }

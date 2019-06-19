@@ -77,7 +77,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
+    when(mockRoadLinkService.getHistoryDataLinkFromVVH(any[Long], any[Boolean])).thenReturn(None)
+
   }
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockEventBus, mockGeometryTransform)
@@ -829,7 +831,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
     runWithRollback {
 
-      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
       when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 
@@ -859,7 +861,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
     runWithRollback {
 
-      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, false, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
+      val dummyRoadAddress = Some(ViiteRoadAddress(1, 921, 2, Track.RightSide, 0, 299, None, None, 1641830, 0, 298.694, SideCode.BothDirections, Seq(Point(4002, 3067), Point(385258.765,7300119.103)), false, None, None, None))
 
       when(mockRoadAddressService.getByLrmPosition(any[Long], any[Double])).thenReturn(dummyRoadAddress)
 

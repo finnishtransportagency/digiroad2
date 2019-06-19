@@ -91,6 +91,20 @@ class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extend
   }
 }
 
+class RoadWorksAssetUpdater(roadWorkAssetService: RoadWorkService) extends Actor {
+  def receive = {
+    case x: ChangeSet => roadWorkAssetService.updateChangeSet(x)
+    case _            => println("RoadWorksAssetUpdater: Received unknown message")
+  }
+}
+
+class DamagedByThawUpdater(damagedByThawService: DamagedByThawService) extends Actor {
+  def receive = {
+    case x: ChangeSet => damagedByThawService.updateChangeSet(x)
+    case _            => println("DamagedByThawUpdater: Received unknown message")
+  }
+}
+
 class ProhibitionUpdater(prohibitionService: ProhibitionService) extends Actor {
   def receive = {
     case x: ChangeSet => prohibitionService.updateChangeSet(x)
@@ -310,6 +324,12 @@ object Digiroad2Context {
 
   val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
   eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
+
+  val roadWorksUpdater = system.actorOf(Props(classOf[RoadWorksAssetUpdater], roadWorkService), name = "roadWorksUpdater")
+  eventbus.subscribe(roadWorksUpdater, "roadWorks:update")
+
+  val damagedByThawUpdater = system.actorOf(Props(classOf[DamagedByThawUpdater], damagedByThawService), name = "damagedByThawUpdater")
+  eventbus.subscribe(damagedByThawUpdater, "damagedByThaw:update")
 
   val prohibitionUpdater = system.actorOf(Props(classOf[ProhibitionUpdater], prohibitionService), name = "prohibitionUpdater")
   eventbus.subscribe(prohibitionUpdater, "prohibition:update")
@@ -618,6 +638,10 @@ object Digiroad2Context {
 
   lazy val numberOfLanesService: NumberOfLanesService = {
     new NumberOfLanesService(roadLinkService, eventbus)
+  }
+
+  lazy val roadWorkService: RoadWorkService = {
+    new RoadWorkService(roadLinkService, eventbus)
   }
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()

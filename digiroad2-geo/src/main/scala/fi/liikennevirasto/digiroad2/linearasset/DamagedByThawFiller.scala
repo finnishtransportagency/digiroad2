@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import java.text.SimpleDateFormat
-
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, ValueAdjustment}
 import org.joda.time.DateTime
@@ -14,14 +12,6 @@ class DamagedByThawFiller extends AssetFiller {
   val formatter = DateTimeFormat.forPattern(dateFormat)
   val today: DateTime = DateTime.now()
 
-  def dateToString(date: DateTime): String = {
-    date.toString(dateFormat)
-  }
-
-  def stringToDate(date: String): DateTime = {
-    formatter.parseDateTime(date)
-  }
-
   override protected def updateValues(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
     def getProperties(publicId: String, propertyData: Seq[DynamicProperty]): Seq[DynamicPropertyValue] = {
@@ -32,18 +22,18 @@ class DamagedByThawFiller extends AssetFiller {
     }
 
     def toCurrentYear(period: DatePeriodValue): DatePeriodValue = {
-      val endDate = stringToDate(period.endDate)
-      val startDate = stringToDate(period.startDate)
+      val endDate = DateParser.stringToDate(period.endDate, DateParser.DatePropertyFormat)
+      val startDate = DateParser.stringToDate(period.startDate, DateParser.DatePropertyFormat)
       val difference = today.getYear - endDate.getYear
       if(difference == 0)
-        DatePeriodValue(dateToString(startDate.plusYears(1)), dateToString(endDate.plusYears(1)))
+        DatePeriodValue(DateParser.dateToString(startDate.plusYears(1), DateParser.DatePropertyFormat), DateParser.dateToString(endDate.plusYears(1), DateParser.DatePropertyFormat))
       else
-        DatePeriodValue(dateToString(startDate.plusYears(difference)), dateToString(endDate.plusYears(difference)))
+        DatePeriodValue(DateParser.dateToString(startDate.plusYears(difference), DateParser.DatePropertyFormat), DateParser.dateToString(endDate.plusYears(difference), DateParser.DatePropertyFormat))
     }
 
     def outsidePeriod(value: DynamicPropertyValue): Boolean = {
       val period = DatePeriodValue.fromMap(value.value.asInstanceOf[Map[String, String]])
-      val endDate = stringToDate(period.endDate)
+      val endDate = DateParser.stringToDate(period.endDate, DateParser.DatePropertyFormat)
       val thisYear = today.getYear
       val endDateYear = endDate.getYear
 

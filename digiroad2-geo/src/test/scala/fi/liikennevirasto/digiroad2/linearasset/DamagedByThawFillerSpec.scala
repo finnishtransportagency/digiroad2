@@ -29,9 +29,21 @@ class DamagedByThawFillerSpec extends FunSuite with Matchers {
   val oneYear = 1
   val oneWeek = 1
   val oneMonth = 1
-  val ongoingPeriod = DatePeriodValue(damagedByThawFiller.dateToString(today.minusYears(oneYear).minusWeeks(oneWeek)), damagedByThawFiller.dateToString(today.plusWeeks(oneYear)))
-  val futurePeriod = DatePeriodValue(damagedByThawFiller.dateToString(today.plusWeeks(oneWeek)), damagedByThawFiller.dateToString(today.plusMonths(oneMonth)))
-  val pastPeriod = DatePeriodValue(damagedByThawFiller.dateToString(today.minusMonths(oneMonth)), damagedByThawFiller.dateToString(today.minusWeeks(oneWeek)))
+  val ongoingPeriod =
+    DatePeriodValue(
+      DateParser.dateToString(today.minusYears(oneYear).minusWeeks(oneWeek), DateParser.DatePropertyFormat),
+      DateParser.dateToString(today.plusWeeks(oneYear), DateParser.DatePropertyFormat)
+    )
+  val futurePeriod =
+    DatePeriodValue(
+      DateParser.dateToString(today.plusWeeks(oneWeek), DateParser.DatePropertyFormat),
+      DateParser.dateToString(today.plusMonths(oneMonth), DateParser.DatePropertyFormat)
+    )
+  val pastPeriod =
+    DatePeriodValue(
+      DateParser.dateToString(today.minusMonths(oneMonth), DateParser.DatePropertyFormat),
+      DateParser.dateToString(today.minusWeeks(oneWeek), DateParser.DatePropertyFormat)
+    )
   val topology = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None))
 
   test("ongoing period is not updated") {
@@ -46,8 +58,16 @@ class DamagedByThawFillerSpec extends FunSuite with Matchers {
     val linearAssets = Map(1l -> Seq(PersistedLinearAsset(1l, 1l, 2, Some(assetValue), 0.0, 10.0, None, None, None, None, false, 110, 0, None, linkSource = NormalLinkInterface, None, None, None)))
     val (filledTopology, changeSet) = damagedByThawFiller.fillTopology(topology, linearAssets, DamagedByThaw.typeId)
     val adjustedValue = DatePeriodValue.fromMap(getChangeSetValue(changeSet).head.head.value.asInstanceOf[Map[String, String]])
-    adjustedValue.startDate should be (damagedByThawFiller.dateToString(damagedByThawFiller.stringToDate(pastPeriod.startDate).plusYears(1)))
-    adjustedValue.endDate should be (damagedByThawFiller.dateToString(damagedByThawFiller.stringToDate(pastPeriod.endDate).plusYears(1)))
+    adjustedValue.startDate should be(
+      DateParser.dateToString(
+        DateParser.stringToDate(pastPeriod.startDate, DateParser.DatePropertyFormat).plusYears(1),
+        DateParser.DatePropertyFormat)
+    )
+    adjustedValue.endDate should be(
+      DateParser.dateToString(
+        DateParser.stringToDate(pastPeriod.endDate, DateParser.DatePropertyFormat).plusYears(1),
+        DateParser.DatePropertyFormat)
+    )
   }
 
   test("future period is not updated") {

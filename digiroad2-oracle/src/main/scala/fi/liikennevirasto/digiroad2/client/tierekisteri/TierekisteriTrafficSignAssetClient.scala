@@ -23,6 +23,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   protected val trPUOLI = "PUOLI"
   protected val trLIIKVAST = "LIIKVAST"
   protected val wrongSideOfTheRoad = "1"
+  protected val trNOPRA506 = "NOPRA506"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
@@ -42,8 +43,6 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   }
 }
 class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
-
-  private val trNOPRA506 = "NOPRA506"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
@@ -70,11 +69,15 @@ class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable:
 
 class TierekisteriTrafficSignGroupClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient)(filterGroupCondition: Int => Boolean) extends TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) {
 
+  def getAssetValue(data: Map[String, Any], assetNumber: Int): String = {
+    getFieldValue(data, trLMTEKSTI).getOrElse("").trim
+  }
+
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
 
     if (filterGroupCondition(assetNumber)) {
-      val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
+      val assetValue = getAssetValue(data, assetNumber)
       val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
@@ -89,5 +92,15 @@ class TierekisteriTrafficSignGroupClient(trEndPoint: String, trEnable: Boolean, 
       Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
     } else
       None
+  }
+}
+
+class SpeedLimitTrafficSignClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient)(filterGroupCondition: Int => Boolean) extends TierekisteriTrafficSignGroupClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient)(filterGroupCondition: Int => Boolean)  {
+  val speedLimitSignsWithValue: Seq[Int] = Seq(SpeedLimitSign.TRvalue, EndSpeedLimit.TRvalue, SpeedLimitZone.TRvalue, EndSpeedLimitZone.TRvalue)
+  override def getAssetValue(data: Map[String, Any], assetNumber: Int): String = {
+    if(speedLimitSignsWithValue.contains(assetNumber))
+      getFieldValue(data, trNOPRA506).getOrElse(getFieldValue(data, trLMTEKSTI).getOrElse("").trim)
+    else
+      super.getAssetValue(data, assetNumber)
   }
 }

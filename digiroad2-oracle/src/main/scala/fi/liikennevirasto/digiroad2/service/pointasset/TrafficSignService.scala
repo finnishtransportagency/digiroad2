@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.SideCode._
@@ -61,8 +61,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink): Long = {
-    withDynTransaction {
+  override def create(asset: IncomingTrafficSign, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    if(newTransaction) {
+      withDynTransaction {
+        createWithoutTransaction(asset, username, roadLink)
+      }
+    } else {
       createWithoutTransaction(asset, username, roadLink)
     }
   }
@@ -302,10 +306,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     id
   }
 
-  def expireAssetWithoutTransaction(filter: String => String, username: Option[String]): Unit = {
-    OracleTrafficSignDao.expireWithoutTransaction(filter, username)
-  }
-
   def withIds(ids: Set[Long])(query: String): String = {
     query + s" and id in (${ids.mkString(",")})"
   }
@@ -416,7 +416,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
-                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink] = Seq()) : Set[AdditionalPanelInfo] = {
+                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[RoadLinkLike] = Seq()) : Set[AdditionalPanelInfo] = {
 
     val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
 
@@ -469,7 +469,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }.toSet
   }
 
-  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[VVHRoadlink]): Seq[(Point, Point, Long, Seq[Point])] = {
+  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[RoadLinkLike]): Seq[(Point, Point, Long, Seq[Point])] = {
     if (roadLinks.isEmpty) {
       roadLinkService.getAdjacent(linkId, Seq(point), false).map { adjacentRoadLink =>
         val (start, end) = GeometryUtils.geometryEndpoints(adjacentRoadLink.geometry)

@@ -705,7 +705,7 @@
                     .append(inputLabel('start', period ? period.startDate : undefined))
                     .append('<span class="date-separator"> - </span>')
                     .append(inputLabel('end', period ? period.endDate : undefined))
-                    .append(me.disabled() ? '' : buttons);
+                    .append(me.disabled() ? '' : fieldValue.multiElement ? buttons : '');
             }
 
             var template = _.template('' +

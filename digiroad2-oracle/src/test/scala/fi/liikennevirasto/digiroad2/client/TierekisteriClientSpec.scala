@@ -114,6 +114,14 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val speedLimitTrafficSignClient: SpeedLimitTrafficSignClient = {
+    def filterCondition(assetNumber : Int): Boolean = TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.AdditionalPanels || TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits
+
+    new SpeedLimitTrafficSignClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())(filterCondition)
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -732,6 +740,18 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
     assetsTypeSpeedLimit.get.roadSide should be (RoadSide.Right)
     assetsTypeEndSpeedLimitZone.get.roadSide should be (RoadSide.Right)
+  }
+
+  test("get NOPRA506 field value on speed limit signs with value") {
+    val assetsTypeSpeedLimit = speedLimitTrafficSignClient.mapFields(trSpeedLimitDataTest(SpeedLimitSign, fldNOPRA506 = "80", fldLMTEKSTI = "20"))
+    assetsTypeSpeedLimit.size should be (1)
+    assetsTypeSpeedLimit.map(_.assetValue).head should be ("80")
+  }
+
+  test("get LMTEKSTI field value on speed limit signs without value") {
+    val assetsTypeSpeedLimit = speedLimitTrafficSignClient.mapFields(trSpeedLimitDataTest(UrbanArea, fldNOPRA506 = "80", fldLMTEKSTI= "100"))
+    assetsTypeSpeedLimit.size should be (1)
+    assetsTypeSpeedLimit.map(_.assetValue).head should be ("100")
   }
 
   def trSpeedLimitDataTest(speedLimitType: TrafficSignType, fldLIIKVAST: String = null, fldNOPRA506: String = null, fldLMTEKSTI: String = null ) = {

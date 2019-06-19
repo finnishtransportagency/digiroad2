@@ -23,7 +23,7 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService) {
     }
   }
 
-  def deleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])]): Unit = {
+  def deleteAssets(signInfo: Seq[(Long, Seq[TrafficSignProperty])], newTransaction: Boolean = true): Unit = {
     val username = Some("automatic_trafficSign_deleted")
 
     val (turnRestrictionSigns, others) = signInfo.partition{
@@ -33,17 +33,17 @@ class TrafficSignManager(manoeuvreService: ManoeuvreService) {
     }
 
     if(turnRestrictionSigns.map(_._1).nonEmpty)
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username)
+      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(turnRestrictionSigns.map(_._1).toSet), username, newTransaction)
   }
 
-  def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo)): Unit = {
+  def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo), newTransaction: Boolean = true): Unit = {
     val username = Some("automatic_trafficSign_deleted")
     val (expireId, trafficSignInfo) = signInfo
 
     if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
       try{
-        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username)
-        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo)
+        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username, newTransaction)
+        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
       }catch{
         case ex: ManoeuvreCreationException =>
           println(s"""creation of manoeuvre on link id ${trafficSignInfo.linkId} from traffic sign ${trafficSignInfo.id} failed with the following exception ${ex.getMessage}""")

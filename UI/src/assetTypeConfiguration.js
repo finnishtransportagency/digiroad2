@@ -42,7 +42,8 @@
       trWidthLimits: 370,
       manoeuvre: 380,
       careClass: 390,
-      carryingCapacity: 400
+      carryingCapacity: 400,
+      roadWorksAsset: 420
     };
 
     var assetGroups = {
@@ -301,7 +302,7 @@
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
-            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', weight: 2},
+            { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', multiElement: true, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3}
           ]
         }),
@@ -559,14 +560,6 @@
                           ]},
           {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
           {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
-          {'name': "Yhteyshenkilö", 'propType': 'header' },
-          {'name': "Nimi", 'propType': 'text', 'id': "huoltotie_nimi" },
-          {'name': "Osoite", 'propType': 'text', 'id': "huoltotie_osoite"},
-          {'name': "Postinumero", 'propType': 'text', 'id': "huoltotie_postinumero"},
-          {'name': "Postitoimipaikka", 'propType': 'text', 'id': "huoltotie_postitoimipaikka"},
-          {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
-          {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
-          {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
           {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
@@ -707,6 +700,34 @@
             {label: "Mittauspäivä", type: 'date', publicId: "mittauspaiva", weight: 3}
           ]
         })
+      },
+      {
+        typeId: assetType.roadWorksAsset,
+        singleElementEventCategory: 'roadWorksAsset',
+        multiElementEventCategory: 'roadsWorksAsset',
+        layerName: 'roadWork',
+        title: 'Tietyöt',
+        newTitle: 'Uusi tietyöt',
+        className: 'road-works-asset',
+        isSeparable: true,
+        allowComplementaryLinks: true,
+        editControlLabels: {
+          title: 'Tietyöt',
+          enabled: 'Tietyö',
+          disabled: 'Ei tietyötä',
+          additionalInfo: 'Tuleva/mennyt tietyö'
+        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        style: new RoadWorkStyle(),
+        form: new DynamicAssetForm ( {
+          fields : [
+            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'text', weight: 1},
+            { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, multiElement: false, weight: 2}
+          ]
+        }),
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: false
       }
     ];
 
