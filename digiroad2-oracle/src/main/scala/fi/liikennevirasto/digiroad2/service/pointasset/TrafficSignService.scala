@@ -304,10 +304,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     id
   }
 
-  def expireAssetWithoutTransaction(filter: String => String, username: Option[String]): Unit = {
-    OracleTrafficSignDao.expireWithoutTransaction(filter, username)
-  }
-
   def withIds(ids: Set[Long])(query: String): String = {
     query + s" and id in (${ids.mkString(",")})"
   }
@@ -403,7 +399,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   def getAdditionalPanels(linkId: Long, mValue: Double, validityDirection: Int, signPropertyValue: Int, geometry: Seq[Point],
-                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[VVHRoadlink] = Seq()) : Set[AdditionalPanelInfo] = {
+                          additionalPanels: Set[AdditionalPanelInfo], roadLinks: Seq[RoadLinkLike] = Seq()) : Set[AdditionalPanelInfo] = {
 
     val trafficSign =  TrafficSignType.applyOTHValue(signPropertyValue)
 
@@ -456,7 +452,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }.toSet
   }
 
-  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[VVHRoadlink]): Seq[(Point, Point, Long, Seq[Point])] = {
+  def getAdjacent(point: Point, linkId: Long, roadLinks : Seq[RoadLinkLike]): Seq[(Point, Point, Long, Seq[Point])] = {
     if (roadLinks.isEmpty) {
       roadLinkService.getAdjacent(linkId, Seq(point), false).map { adjacentRoadLink =>
         val (start, end) = GeometryUtils.geometryEndpoints(adjacentRoadLink.geometry)

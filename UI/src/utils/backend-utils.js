@@ -471,8 +471,8 @@
       return $.getJSON('api/speedLimits/municipalities');
     };
 
-    this.getAssetTypesByMunicipality = function(municipalityCode) {
-      return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes' );
+    this.getAssetTypesByMunicipality = function(municipalityCode, refresh) {
+      return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes/' + refresh);
     };
 
     this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {

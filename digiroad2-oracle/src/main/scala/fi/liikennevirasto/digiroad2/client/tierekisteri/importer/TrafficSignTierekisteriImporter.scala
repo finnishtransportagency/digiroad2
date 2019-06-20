@@ -132,15 +132,6 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
   }
 
-  protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
-
-    if(trafficSignsIds.nonEmpty) {
-      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-    }
-  }
-
   private def getAdditionalPanels(trAdditionalData: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]],  vvhRoadLinks: Seq[VVHRoadlink]): Seq[AdditionalPanelInfo] = {
     trAdditionalData.flatMap { case (section, properties) =>
       val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
@@ -156,12 +147,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities
-    municipalities.foreach { municipality =>
-      withDynTransaction{
-        expireAssets(municipality, Some(State))
-      }
-    }
+    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 
@@ -205,8 +191,16 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
             mValue =>
               val sideCode = getSideCode(ra, trAssetData.track, trAssetData.roadSide).value
               val trafficSignType = trAssetData.assetType.OTHvalue
-              val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData.toSet, vvhRoadLinks)
-              createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties)
+              val allowedAdditionalPanels = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData.toSet, vvhRoadLinks)
+
+              val allowedProperties = if(allowedAdditionalPanels.size > 3) {
+                println(s"WARNING - additional panels excluded - ${allowedAdditionalPanels.size} additional Panel ${ allowedAdditionalPanels.map { panel =>
+                  TrafficSignType.applyOTHValue(trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get.propertyValue.toInt).toString}.mkString(",")}")
+                Set()
+              } else
+                allowedAdditionalPanels
+
+              createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties.toSet)
           }
         }
     }
@@ -228,14 +222,18 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
   override def expireAssets() : Unit = {
     val municipalities = getAllMunicipalities
     municipalities.foreach { municipality =>
+      println("\nStart assets expiration in municipality %d".format(municipality))
       withDynTransaction {
 
         val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter)
+        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter).to.filter {sign =>
+          TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == trafficSignGroup
+        }
 
         trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
-        trafficSignManager.deleteAssets(trafficSigns)
+        trafficSignManager.deleteAssets(trafficSigns.map(tr => (tr.id, tr.propertyData)), false)
       }
+      println("\nEnd assets expiration in municipality %d".format(municipality))
     }
   }
 

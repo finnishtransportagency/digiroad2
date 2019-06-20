@@ -705,7 +705,7 @@
         typeId: assetType.roadWorksAsset,
         singleElementEventCategory: 'roadWorksAsset',
         multiElementEventCategory: 'roadsWorksAsset',
-        layerName: 'roadWorksAsset',
+        layerName: 'roadWork',
         title: 'Tietyöt',
         newTitle: 'Uusi tietyöt',
         className: 'road-works-asset',
@@ -722,7 +722,7 @@
         style: new RoadWorkStyle(),
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'number', weight: 1},
+            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'text', weight: 1},
             { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, multiElement: false, weight: 2}
           ]
         }),

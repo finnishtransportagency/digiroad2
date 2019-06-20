@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao.{column, table}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession

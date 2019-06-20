@@ -1753,5 +1753,4 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       )
     }
   }
-
 }
