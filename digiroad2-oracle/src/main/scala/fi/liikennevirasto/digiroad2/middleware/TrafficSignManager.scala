@@ -5,7 +5,6 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
@@ -48,7 +47,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
   }, {
-    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+    case d: DateTime => JString(DateParser.dateToString(d, DateParser.DateTimePropertyFormat))
   }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + LinkGeomSourceSerializer + DateTimeSerializer
