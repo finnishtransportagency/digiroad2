@@ -413,8 +413,4 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
     hazmatTransportProhibitionGenerator.createValue(Seq(trafficSign)).isEmpty should be (true)
   }
-
-
-  test("test deserialized"){
-  }
 }

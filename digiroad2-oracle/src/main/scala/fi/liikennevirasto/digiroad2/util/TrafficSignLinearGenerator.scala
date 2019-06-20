@@ -62,7 +62,7 @@ trait TrafficSignLinearGenerator {
 
   final val userCreate = "automatic_trafficSign_created"
   final val userUpdate = "automatic_trafficSign_updated"
-  final val debbuger = true
+  final val debbuger = false
 
   lazy val properties: Properties = {
     val props = new Properties()
@@ -725,9 +725,7 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Prohibitions] = {
     if (debbuger) println("createValue")
     val values = trafficSigns.flatMap{ trafficSign =>
-    //val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
     val additionalPanels = trafficSignService.getAllProperties(trafficSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
-    //val sortedAdditionalPanels = additionalPanels.sortBy(_.formPosition)
     val types = additionalPanels.flatMap{ additionalPanel =>
       HazmatTransportProhibitionClass.fromTrafficSign(TrafficSignType.applyOTHValue(additionalPanel.panelType))
     }
