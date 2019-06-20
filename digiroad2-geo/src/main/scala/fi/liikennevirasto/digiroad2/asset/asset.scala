@@ -337,7 +337,38 @@ object TimePeriodClass {
 
     override val trafficSign: TrafficSignType = TrafficSignType.Unknown
   }
+}
 
+sealed trait HazmatTransportProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object HazmatTransportProhibitionClass {
+  val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[HazmatTransportProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): HazmatTransportProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    HazmatTransportProhibitionClass.apply(prohibitionValue).trafficSign
+
+  case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = HazmatProhibitionA
+  }
+
+  case object HazmatProhibitionTypeB extends HazmatTransportProhibitionClass {
+    def value: Int = 25
+    override val trafficSign: TrafficSignType = HazmatProhibitionB
+  }
+
+  case object Unknown extends HazmatTransportProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
 }
 
 sealed trait ProhibitionClass {
@@ -357,21 +388,6 @@ object ProhibitionClass {
 
   def fromTrafficSign(trafficSign: TrafficSignType): Set[ProhibitionClass] = {
     values.filter(_.trafficSign.contains(trafficSign)).toSet
-  }
-
-  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
-    (if (prohibitionValue.intersect(Seq(Moped.value, Pedestrian.value, Bicycle.value)).size == 3) {
-      prohibitionValue --= Seq(Moped.value, Pedestrian.value, Bicycle.value)
-      Seq(NoPedestriansCyclesMopeds)
-    } else Seq()
-      )++
-      (if (prohibitionValue.intersect(Seq(Moped.value, Bicycle.value)).size == 2) {
-        prohibitionValue --= Seq(Moped.value, Bicycle.value)
-        Seq(NoCyclesOrMopeds)
-      } else Seq()
-        ) ++ prohibitionValue.flatMap { value =>
-      ProhibitionClass.apply(value).trafficSign
-    }
   }
 
   case object Vehicle extends ProhibitionClass {
@@ -407,7 +423,7 @@ object ProhibitionClass {
     def value = 26
     def typeDescription = "HorseRiding"
     def rosatteType = ""
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoRidersOnHorseback)
+    override val trafficSign : Seq[TrafficSignType] = Seq(NoRidersOnHorseback)
   }
   case object Moped extends ProhibitionClass {
     def value = 10

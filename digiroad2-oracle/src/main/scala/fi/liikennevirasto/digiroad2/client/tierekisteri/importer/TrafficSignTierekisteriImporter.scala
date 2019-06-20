@@ -125,7 +125,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink), false)
+            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Set()), false)
           }
           newId
       }
@@ -197,7 +197,6 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], vvhRoadLinks: Seq[VVHRoadlink], trAdditionalData: Seq[AdditionalPanelInfo]): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
     if(trAssetData.assetType.source.contains("TRimport")) {
-      println("Asset: " + trAssetData.assetType.TRvalue + " / " + trAssetData.assetType.OTHvalue)
       //Returns all the match Viite road address for the given section
       val roadAddressLink = filterRoadAddressBySection(existingRoadAddresses, section, vvhRoadLinks)
       roadAddressLink

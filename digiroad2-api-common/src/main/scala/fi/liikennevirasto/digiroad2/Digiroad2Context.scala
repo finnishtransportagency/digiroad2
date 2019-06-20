@@ -10,9 +10,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -280,6 +281,7 @@ class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSig
     case x: TrafficSignInfoUpdate =>
        trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
       case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
+                                trafficSignManager.createAssets(x.newSign)
       case _ => println("Nonexistent traffic Sign Type")
     }
       trafficSignManager.createAssets(x.newSign)

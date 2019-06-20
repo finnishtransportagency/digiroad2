@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import fi.liikennevirasto.digiroad2.asset.HazmatTransportProhibitionClass.{HazmatProhibitionTypeA, HazmatProhibitionTypeB}
 import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 
 class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
@@ -110,7 +111,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
     when(mockRoadLinkService.getAdjacent(1005, false)).thenReturn(Seq(roadLinkNameA, roadLinkNameB2))
-    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq())
+    when(mockRoadLinkService.getAdjacent(1010, false)).thenReturn(Seq(roadLinkNameB1, roadLinkNameB3))
     when(mockRoadLinkService.getAdjacent(1015, false)).thenReturn(Seq(roadLinkNameB2, roadLinkNameC))
 
     val result = prohibitionGenerator.segmentsManager(allRoadLinks, Seq(trafficSign, pairedTrafficSign, unPairedTrafficSign), Seq()).toSeq.sortBy(_.roadLink.linkId)
@@ -382,5 +383,34 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     prohibitionGenerator.getUpdatedInfo.isEmpty should be (true)
     prohibitionGenerator.getDeletedInfo.isEmpty should be (true)
   }
+
+  class TestTrafficSignHazmatTransportProhibitionGenerator extends TrafficSignHazmatTransportProhibitionGenerator(mockRoadLinkService) {
+    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+    override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+    override lazy val oracleLinearAssetDao: OracleLinearAssetDao = linearAssetDao
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
   }
 
+  val hazmatTransportProhibitionGenerator = new TestTrafficSignHazmatTransportProhibitionGenerator()
+
+  test("create  hazmat Transport Prohibition values based on trafficSigns"){
+    val signPropA = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))),
+      TrafficSignProperty(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionA.OTHvalue, "", "", 1))))
+    val trafficSignA = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signPropA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+    val hazmatValueA = Prohibitions(Seq(ProhibitionValue(HazmatProhibitionTypeA.value, Set(), Set())))
+    val hazmatResultA = hazmatTransportProhibitionGenerator.createValue(Seq(trafficSignA))
+    hazmatResultA should be (Some(hazmatValueA))
+
+    val signPropB = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))),
+      TrafficSignProperty(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionB.OTHvalue, "", "", 1))))
+    val trafficSignB = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signPropB, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+    val hazmatValueB = Prohibitions(Seq(ProhibitionValue(HazmatProhibitionTypeB.value, Set(), Set())))
+    val hazmatResultB = hazmatTransportProhibitionGenerator.createValue(Seq(trafficSignB))
+    hazmatResultB should be (Some(hazmatValueB))
+
+    val signProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))))
+    val trafficSign = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signProp, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
+    hazmatTransportProhibitionGenerator.createValue(Seq(trafficSign)).isEmpty should be (true)
+  }
+}

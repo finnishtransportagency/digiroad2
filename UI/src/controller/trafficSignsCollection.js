@@ -36,15 +36,15 @@
     };
 
     var trafficSignsTurnRestriction = [10, 11, 12];
-    var trafficSignProhibitionRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26];
+    var trafficSignRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 20];
 
     var isTurningRestriction = function(current) {
       return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
     };
 
-    var isTrafficSignProhibitionRestriction = function(current) {
+    var isTrafficSignRestriction = function(current) {
       var propertyValue = _.head(_.find(current.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue;
-      return _.includes(trafficSignProhibitionRestriction, parseInt(propertyValue));
+      return _.includes(trafficSignRestriction, parseInt(propertyValue));
     };
 
     var getValue = function(current) {
@@ -117,7 +117,7 @@
 
     var isRelevant = function(current) {
 
-      if (isTurningRestriction(current) || isTrafficSignProhibitionRestriction(current)) {
+      if (isTurningRestriction(current) || isTrafficSignRestriction(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
         var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
@@ -139,7 +139,7 @@
     };
 
     var getTrafficSignsMessage = function (current, action) {
-      if ((isTrafficSignProhibitionRestriction(current) || isTurningRestriction(current)) && action !== 'updated') {
+      if ((isTrafficSignRestriction(current) || isTurningRestriction(current)) && action !== 'updated') {
         return trafficSignsActionMessages[action].message;
       } else if (isRelevant(current)) {
         return trafficSignsActionMessages[action].message;

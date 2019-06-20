@@ -605,5 +605,4 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       dynamicSession.rollback()
     }
   }
-
 }

@@ -829,27 +829,15 @@ trait LinearAssetOperations {
 
   def validateAssetValue(value: Option[Value]): Unit = {}
 
-  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
-    if(newTransaction) {
-      withDynTransaction {
-        createLinearAssetFromTrafficSign(trafficSignInfo)
-      }
-    }
-    else
-      createLinearAssetFromTrafficSign(trafficSignInfo)
-  }
-
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 
-  def deleteAssetBasedOnSign(filter: String => String, username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
+  def deleteOrUpdateAssetBasedOnSign(id: Long, additionalPanel: Seq[AdditionalPanel] = Seq(), username: Option[String] = None, withTransaction: Boolean = true) : Unit = {
     logger.info("expiring asset")
     if (withTransaction) {
       withDynTransaction {
-        dao.deleteByTrafficSign(filter, username)
+        dao.deleteByTrafficSign(withId(id), username)
       }
     }
-    else
-      dao.deleteByTrafficSign(filter, username)
   }
 
   def withId(id: Long)(query: String): String = {

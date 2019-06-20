@@ -1,15 +1,22 @@
 package fi.liikennevirasto.digiroad2.middleware
 
 import java.sql.SQLIntegrityConstraintViolationException
+import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
+import fi.liikennevirasto.digiroad2.user.UserProvider
+import org.joda.time.DateTime
+import org.json4s
+import org.json4s.jackson.Json
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject, JString}
 
 object TrafficSignManager {
   val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
@@ -32,23 +39,34 @@ object TrafficSignManager {
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+  }, {
+    case lg: LinkGeomSource => JInt(lg.value)
+  }))
+
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
+    case _ => throw new NotImplementedError("DateTime deserialization")
+  }, {
+    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + LinkGeomSourceSerializer + DateTimeSerializer
+
   lazy val linearAssetDao: OracleLinearAssetDao = {
     new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
 
-    def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
-    trafficSignInfo match {
-      case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
-        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
+  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
 
-      case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, Prohibition)
+      if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType))
+        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
 
-      case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+      else if (TrafficSignManager.belongsToProhibition(trafficSignInfo.signType))
+        insertTrafficSignToProcess(trafficSignInfo.id, Prohibition)
 
-      case _ => None
-    }
+      else if (TrafficSignManager.belongsToHazmat(trafficSignInfo.signType))
+        insertTrafficSignToProcess(trafficSignInfo.id, HazmatTransportProhibition)
   }
 
   def deleteAssets(trafficSign: Seq[PersistedTrafficSign]): Unit = {
@@ -57,24 +75,22 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     trafficSign.foreach { trSign =>
       val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
 
-      trafficSignType match {
-        case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
-          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
+      if (TrafficSignManager.belongsToManoeuvre(trafficSignType))
+        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username)
 
-        case signType  if TrafficSignManager.belongsToProhibition(signType) =>
-            insertTrafficSignToProcess(trSign.id, Prohibition)
+       else if (TrafficSignManager.belongsToProhibition(trafficSignType))
+        insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
 
-        case signType if TrafficSignManager.belongsToHazmat(signType) =>
-            insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+      else if(TrafficSignManager.belongsToHazmat(trafficSignType))
+        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
 
-      }
     }
   }
 
-  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo) : Unit = {
+  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo, persistedTrafficSign: Option[PersistedTrafficSign] = None) : Unit = {
     try {
       withDynTransaction {
-        linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId)
+        linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId, Json(jsonFormats).write(persistedTrafficSign.getOrElse("")))
       }
     } catch {
       case ex: SQLIntegrityConstraintViolationException => print("try insert duplicate key")

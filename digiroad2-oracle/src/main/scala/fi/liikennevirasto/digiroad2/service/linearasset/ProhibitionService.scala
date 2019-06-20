@@ -6,42 +6,23 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.AssetValidatorProcess.dr2properties
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery.interpolation
 
 class ProhibitionCreationException(val response: Set[String]) extends RuntimeException {}
 
 class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
-  lazy val userProvider: UserProvider = {
-    Class.forName(dr2properties.getProperty("digiroad2.userProvider")).newInstance().asInstanceOf[UserProvider]
-  }
-  lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBus)
-
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
-
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
-
   override def eventBus: DigiroadEventBus = eventBusImpl
-
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
-
   override def polygonTools: PolygonTools = new PolygonTools()
-
   override def assetDao: OracleAssetDao = new OracleAssetDao
-
   override def assetFiller: AssetFiller = new OneWayAssetFiller
-
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = throw new UnsupportedOperationException("Not supported method")
 
