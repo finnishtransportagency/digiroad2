@@ -98,21 +98,4 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
         throw new RuntimeException("SQL exception " + e.getMessage)
     }
   }
-
-  def trafficSignsExpireAndCreateAssets(signInfo: (Long, TrafficSignInfo), newTransaction: Boolean = true): Unit = {
-    val username = Some("automatic_trafficSign_deleted")
-    val (expireId, trafficSignInfo) = signInfo
-
-    if (TrafficSignType.belongsToManoeuvre(trafficSignInfo.signType)) {
-      try{
-        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withId(expireId), username, newTransaction)
-        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
-      }catch{
-        case ex: ManoeuvreCreationException =>
-          println(s"""creation of manoeuvre on link id ${trafficSignInfo.linkId} from traffic sign ${trafficSignInfo.id} failed with the following exception ${ex.getMessage}""")
-        case ex: InvalidParameterException =>
-          println(s"""creation of manoeuvre on link id ${trafficSignInfo.linkId} from traffic sign ${trafficSignInfo.id} failed with the Invalid Parameter exception ${ex.getMessage}""")
-      }
-    }
-  }
 }
