@@ -463,6 +463,10 @@
       return $.getJSON('api/municipalities/byUser');
     };
 
+    this.getCreatedLinearAssets = function(assetId) {
+      return $.getJSON('api/createdLinearAssets/byUser/' + assetId);
+    };
+
     this.getMunicipalitiesWithUnknowns = function(){
       return $.getJSON('api/speedLimits/municipalities');
     };

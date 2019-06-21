@@ -10,9 +10,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -268,16 +269,22 @@ class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Ac
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq((x, trafficType.propertyData)))
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")
   }
 }
 
-class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: (Long, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case x: TrafficSignInfoUpdate =>
+       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
+                                trafficSignManager.createAssets(x.newSign)
+      case _ => println("Nonexistent traffic Sign Type")
+    }
+      trafficSignManager.createAssets(x.newSign)
     case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
@@ -372,7 +379,7 @@ object Digiroad2Context {
   val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
   eventbus.subscribe(trafficSignCreate, "trafficSign:create")
 
-  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
@@ -504,7 +511,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
-    new TrafficSignManager(manoeuvreService)
+    new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
   lazy val damagedByThawService: DamagedByThawService = {

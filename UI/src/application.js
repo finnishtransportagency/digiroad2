@@ -132,6 +132,7 @@
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
+    new CreatedLinearAssetWorkList().initialize(backend);
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();

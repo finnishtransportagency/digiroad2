@@ -23,6 +23,8 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -95,6 +97,10 @@ object DataFixture {
 
   lazy val trafficSignService: TrafficSignService = {
     new TrafficSignService(roadLinkService, eventbus)
+  }
+
+  lazy val trafficSignManager: TrafficSignManager = {
+    new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
   lazy val speedLimitValidator: SpeedLimitValidator = {
@@ -177,6 +183,14 @@ object DataFixture {
 
   lazy val verificationService: VerificationService = {
     new VerificationService( new DummyEventBus, roadLinkService)
+  }
+
+  lazy val trafficSignProhibitionGenerator: TrafficSignProhibitionGenerator = {
+    new TrafficSignProhibitionGenerator(roadLinkService)
+  }
+
+  lazy val trafficSignHazmatTransportProhibitionGenerator: TrafficSignHazmatTransportProhibitionGenerator = {
+    new TrafficSignHazmatTransportProhibitionGenerator(roadLinkService)
   }
 
   def getProperty(name: String) = {
@@ -406,27 +420,27 @@ object DataFixture {
     var updateList: List[Obstacle] = List()
 
     do {
-        //Send "1" for get all floating Obstacles assets
-        //lastIdUpdate - Id where to start the fetch
-        //batchSize - Max number of obstacles to fetch at a time
-        val floatingObstaclesAssets =
-          withDynTransaction {
-            obstacleService.getFloatingObstacles(1, lastIdUpdate, batchSize)
-          }
-        obstaclesFound = floatingObstaclesAssets.nonEmpty
-        lastIdUpdate = floatingObstaclesAssets.map(_.id).reduceOption(_ max _).getOrElse(Long.MaxValue)
-        for (obstacleData <- floatingObstaclesAssets) {
-          println("Processing obstacle id "+obstacleData.id)
+      //Send "1" for get all floating Obstacles assets
+      //lastIdUpdate - Id where to start the fetch
+      //batchSize - Max number of obstacles to fetch at a time
+      val floatingObstaclesAssets =
+      withDynTransaction {
+        obstacleService.getFloatingObstacles(1, lastIdUpdate, batchSize)
+      }
+      obstaclesFound = floatingObstaclesAssets.nonEmpty
+      lastIdUpdate = floatingObstaclesAssets.map(_.id).reduceOption(_ max _).getOrElse(Long.MaxValue)
+      for (obstacleData <- floatingObstaclesAssets) {
+        println("Processing obstacle id "+obstacleData.id)
 
-          //Call filtering operations according to rules where
-          val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, roadLinkService)
-          //Save updated assets to database
-          if (!obstacleData.equals(obstacleToUpdate)){
-            updateList = updateList :+ obstacleToUpdate
-            updatedCount += 1
-          }
-          processedCount += 1
+        //Call filtering operations according to rules where
+        val obstacleToUpdate = dataImporter.updateObstacleToRoadLink(obstacleData, roadLinkService)
+        //Save updated assets to database
+        if (!obstacleData.equals(obstacleToUpdate)){
+          updateList = updateList :+ obstacleToUpdate
+          updatedCount += 1
         }
+        processedCount += 1
+      }
     } while (obstaclesFound)
     withDynTransaction {
       updateList.foreach(o => obstacleService.updateFloatingAsset(o))
@@ -500,7 +514,7 @@ object DataFixture {
 
     println("Processing %d assets floating".format(assets.length))
 
-    if(assets.length > 0){
+    if(assets.nonEmpty){
 
       val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
@@ -530,7 +544,7 @@ object DataFixture {
 
     println("Processing %d assets not floating".format(assets.length))
 
-    if(assets.length > 0){
+    if(assets.nonEmpty){
       //Get All RoadLinks from VVH by asset link ids
       val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
@@ -625,16 +639,14 @@ object DataFixture {
                 println("Nearest TR bus stop Livi Id "+trStop.liviId+" asset id "+peristedStop.id+" national ID "+peristedStop.nationalId+" distance "+distance)
                 Some(NearestBusStops(trStop, peristedStop, distance))
               }
-            case _ => {
+            case _ =>
               println("Can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
               None
-            }
           }
         }catch {
-          case e: RoadAddressException => {
+          case e: RoadAddressException =>
             println("RoadAddress throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
             None
-          }
         }
     }
 
@@ -666,7 +678,7 @@ object DataFixture {
 
     println("Processing %d assets not floating".format(assets.length))
 
-    if (assets.length > 0) {
+    if (assets.nonEmpty) {
 
       val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
@@ -824,13 +836,12 @@ object DataFixture {
         roadLinkDirectionValue match {
           case Some(trafficDirection) =>
             // Validate if OTH Bus stop are in conflict with road link traffic direction
-            if ((roadLinkDirectionValue.head.toString() != SideCode.BothDirections.toString()) && (roadLinkDirectionValue.head.toString() != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
+            if ((roadLinkDirectionValue.head.toString != SideCode.BothDirections.toString) && (roadLinkDirectionValue.head.toString != SideCode.apply(massTransitStopDirectionValue.get.toInt).toString())) {
               //Add a list of conflicted Bus Stops
               conflictedBusStopsOTH = conflictedBusStopsOTH ++ List(stop)
             }
-          case _ => {
+          case _ =>
             None
-          }
         }
       }
 
@@ -1384,8 +1395,8 @@ object DataFixture {
 
       println(s"Obtaining all traffic Signs with turning restriction for municipality $municipality")
       //Get All Traffic Signs with traffic restriction
-      val trafficSigns = trafficSignService.getTrafficSignsWithTrafficRestrictions(municipality, trafficSignService.getRestrictionsEnumeratedValues)
 
+      val trafficSigns = trafficSignService.getTrafficSigns(municipality, trafficSignService.getRestrictionsEnumeratedValues(TrafficSignManager.manoeuvreRelatedSigns))
       println(s"Obtaining all Road Links for Municipality: $municipality")
       val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
       println(s"End of roadLinks fetch for Municipality: $municipality")
@@ -1396,7 +1407,7 @@ object DataFixture {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink))
+              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, Set()))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
@@ -2181,6 +2192,10 @@ object DataFixture {
         removeUnnecessaryUnknownSpeedLimits()
       case Some("list_incorrect_SpeedLimits_created") =>
         printSpeedLimitsIncorrectlyCreatedOnUnknownSpeedLimitLinks()
+      case Some("create_prohibition_using_traffic_signs") =>
+        trafficSignProhibitionGenerator.createLinearAssetUsingTrafficSigns()
+      case Some("create_hazmat_transport_prohibition_using_traffic_signs") =>
+        trafficSignHazmatTransportProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
@@ -2196,7 +2211,8 @@ object DataFixture {
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
-        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links")
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | create_hazmat_transport_prohibition_using_traffic_signs |" +
+        " create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links")
     }
   }
 }

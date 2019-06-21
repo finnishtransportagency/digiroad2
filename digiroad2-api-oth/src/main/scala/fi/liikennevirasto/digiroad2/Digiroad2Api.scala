@@ -1662,6 +1662,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/createdLinearAssets/byUser/:assetTypeId") {
+    val assetTypeId = params("assetTypeId").toInt
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if(user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+
+    val createdAssets = linearAssetService.getAutomaticGeneratedAssets(municipalities, assetTypeId)
+
+    createdAssets.map { asset =>
+      Map(
+        "municipality" -> asset._1,
+        "createdAssets" -> asset._2
+      )
+    }
+  }
+
   get("/municipalities/:municipalityCode/assetTypes/:refresh") {
     val municipalityCode = params("municipalityCode").toInt
     val refresh = params("refresh").toBoolean
@@ -1672,18 +1688,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       verificationService.getAssetTypesByMunicipality(municipalityCode)
 
     Map(
-    "municipalityName" -> verifiedAssetTypes.head.municipalityName,
-    "refreshDate" -> verifiedAssetTypes.head.refreshDate.get,
+      "municipalityName" -> verifiedAssetTypes.head.municipalityName,
+      "refreshDate" -> verifiedAssetTypes.head.refreshDate.get,
       "properties" -> verifiedAssetTypes.map{ assetType =>
         Map("typeId" -> assetType.assetTypeCode,
-        "assetName" -> assetType.assetTypeName,
-        "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-        "verified_by"   -> assetType.verifiedBy.getOrElse(""),
-        "verified"   -> assetType.verified,
-        "counter" -> assetType.counter,
-        "modified_by" -> assetType.modifiedBy.getOrElse(""),
-        "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
-        "type" -> assetType.geometryType)}
+          "assetName" -> assetType.assetTypeName,
+          "verified_date" -> assetType.verifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "verified_by"   -> assetType.verifiedBy.getOrElse(""),
+          "verified"   -> assetType.verified,
+          "counter" -> assetType.counter,
+          "modified_by" -> assetType.modifiedBy.getOrElse(""),
+          "modified_date" -> assetType.modifiedDate.map(DatePropertyFormat.print).getOrElse(""),
+          "type" -> assetType.geometryType)}
     )
   }
 

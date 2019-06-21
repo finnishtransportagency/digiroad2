@@ -228,6 +228,7 @@
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
         'work-list/municipality': 'municipalityWorkList',
+        'work-list/createdLinearAssets': 'createdLinearAssets',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
         ':layerName/linkId/:linkId': 'mapMoving'
       },
@@ -457,6 +458,10 @@
 
       municipalityWorkList: function () {
         eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities());
+      },
+
+      createdLinearAssets: function() {
+        eventbus.trigger('createdLinearAssets:select');
       },
 
       speedLimitErrors: function (id) {

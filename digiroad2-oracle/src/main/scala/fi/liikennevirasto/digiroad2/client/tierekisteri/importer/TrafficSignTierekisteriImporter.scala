@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
+import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
@@ -18,7 +18,9 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
   lazy val manoeuvreService: ManoeuvreService = new ManoeuvreService(roadLinkService, eventbus)
-  lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService)
+  lazy val prohibitionService: ProhibitionService = new ProhibitionService(roadLinkService, eventbus)
+  lazy val hazmatTransportProhibitionService: HazmatTransportProhibitionService = new HazmatTransportProhibitionService(roadLinkService, eventbus)
+  lazy val trafficSignManager: TrafficSignManager = new TrafficSignManager(manoeuvreService, roadLinkService)
 
   override def typeId: Int = 300
   override def assetName = "trafficSigns"
@@ -123,7 +125,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink), false)
+            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Set()), false)
           }
           newId
       }
@@ -229,7 +231,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
         }
 
         trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
-        trafficSignManager.deleteAssets(trafficSigns.map(tr => (tr.id, tr.propertyData)), false)
+        trafficSignManager.deleteAssets(trafficSigns, false)
       }
       println("\nEnd assets expiration in municipality %d".format(municipality))
     }

@@ -194,7 +194,7 @@
       };
 
       var showPeriodDayAdditionalInfo = function () {
-        var counter = 2;
+        var counter = 3;
         var index = 0;
         var output = "";
         var timePeriods = this.additionalInfo ? this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/g) : [];

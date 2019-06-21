@@ -75,18 +75,6 @@ object TrafficSignType {
     values.filter(_.group == TrafficSignTypeGroup).map(_.OTHvalue)
   }
 
-
-  def belongsToManoeuvre(intValue: Int) : Boolean = {
-    val trafficSigns = Seq(NoLeftTurn, NoRightTurn, NoUTurn)
-    trafficSigns.contains(TrafficSignType.applyOTHValue(intValue))
-  }
-
-  def belongsToProhibition(intValue: Int) : Boolean = {
-    val trafficSigns = Seq(ClosedToAllVehicles,  NoPowerDrivenVehicles,  NoLorriesAndVans,  NoVehicleCombinations,  NoAgriculturalVehicles,  NoMotorCycles,  NoMotorSledges,
-      NoBuses,  NoMopeds,  NoCyclesOrMopeds,  NoPedestrians,  NoPedestriansCyclesMopeds,  NoRidersOnHorseback)
-    trafficSigns.contains(TrafficSignType.applyOTHValue(intValue))
-  }
-
   case object Unknown extends TrafficSignType {
     override def group: TrafficSignTypeGroup = TrafficSignTypeGroup.Unknown
 
@@ -657,7 +645,6 @@ case object StandingAndParkingProhibited extends ProhibitionsAndRestrictionsType
 
 case object ParkingProhibited extends ProhibitionsAndRestrictionsType {
   override val OTHvalue = 101
-
   override val TRvalue = 372
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,

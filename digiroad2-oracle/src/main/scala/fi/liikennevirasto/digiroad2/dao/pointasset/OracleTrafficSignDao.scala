@@ -87,7 +87,7 @@ object OracleTrafficSignDao {
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
   }
 
-  def fetchByTurningRestrictions(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
+  def fetchByTypeValues(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
     val values = enumValues.mkString(",")
     val filter = s"where ev.id in ($values) and a.municipality_code = $municipality"
     fetchByFilter(query => query + filter)
@@ -438,16 +438,6 @@ object OracleTrafficSignDao {
          )
       """.execute
     }
-  }
-
-  def getTrafficSignType(id: Long): Option[Int]= {
-    sql""" select ev.value
-         from asset a
-         join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'trafficSigns_type'
-         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
-         left join enumerated_value ev on scv.enumerated_value_id = ev.id
-         where a.asset_type_id = ${TrafficSigns.typeId} and a.id = $id
-    """.as[Int].firstOption
   }
 
   def expireWithoutTransaction(queryFilter: String => String, username: Option[String]) : Unit = {
