@@ -280,7 +280,8 @@
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
         accessRightID: linkProperty.accessRightID || '',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '',
-        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99 // Ei toimitettu
+        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99, // Ei toimitettu
+        lastModificationPrivateRoad: linkProperty.
       });
     };
 

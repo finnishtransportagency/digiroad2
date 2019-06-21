@@ -625,7 +625,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "endAddrMValue" ->  roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")),
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
-      "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
+      "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
+      "privateRoadLastModificationInfo" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MODIFICATION")
     )
   }
 
