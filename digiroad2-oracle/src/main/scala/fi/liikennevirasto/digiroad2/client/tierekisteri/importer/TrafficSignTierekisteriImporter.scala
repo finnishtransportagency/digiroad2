@@ -231,7 +231,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
         }
 
         trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
-        trafficSignManager.deleteAssets(trafficSigns.map(tr => (tr.id, tr.propertyData)), false)
+        trafficSignManager.deleteAssets(trafficSigns, false)
       }
       println("\nEnd assets expiration in municipality %d".format(municipality))
     }
