@@ -7,27 +7,24 @@ import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao._
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, RoadLinkLike, Properties => Props}
+import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, RoadLink, Properties => Props}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriClientException, TierekisteriMassTransitStopClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter.viiteClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import java.io.InputStreamReader
-import java.net.FileNameMap
 import java.text.Normalizer
-
 import fi.liikennevirasto.digiroad2.asset.ServicePointsClass.{Unknown => _, _}
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
 
 import scala.util.Try
@@ -896,11 +893,11 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
-  val coordinateMappings = Map(
+  private val coordinateMappings = Map(
     "Koordinaatti X" -> "coordinate_x",
     "Koordinaatti Y" -> "coordinate_y"
   )
-  val externalIdMapping = Map(
+  private val externalIdMapping = Map(
     "Valtakunnallinen ID" -> "external_id"
   )
 
@@ -962,8 +959,8 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  class AbstractCsvOperations {
-    def is(row: Map[String, String]): Boolean = {false}
+  abstract class CsvOperations {
+    def is(row: Map[String, String]): Boolean
 
     private def maybeInt(string: String): Option[Int] = {
       try {
@@ -1005,6 +1002,10 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       }
     }
 
+    def specificValidation(result: ParsedRow, parameter: (String, String)): ParsedRow = {
+      result
+    }
+
     def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
       csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
         val (key, value) = parameter
@@ -1020,14 +1021,17 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
             val (malformedParameters, properties) = assetSingleChoiceToProperty(key, value)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
           } else {
-            result
+            specificValidation(result, parameter)
           }
         }
       }
     }
 
+    def specificParameters(): Set[String] = Set()
+
     def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-      MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+      println(MandatoryParameters.mkString(","))
+      (MandatoryParameters ++ specificParameters).diff(csvRowWithHeaders.keys.toSet).toList
     }
 
     def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {throw new UnsupportedOperationException}
@@ -1058,12 +1062,14 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  class PropertyUpdater extends AbstractCsvOperations {
-    override def is(csvRowWithHeaders: Map[String, String]) = {
+  class Updater extends CsvOperations {
+    override def is(csvRowWithHeaders: Map[String, String]) : Boolean = {
       val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
       val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
       externalIdMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
     }
+
+    override def specificParameters(): Set[String] = externalIdMapping.keySet
 
     override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
       val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
@@ -1071,28 +1077,28 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
         .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
     }
 
-    override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
-      csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
-        val (key, value) = parameter
-        if(isBlank(value)) {
-          result
+    override def specificValidation(result: ParsedRow, parameter: (String, String)): ParsedRow = {
+      val (key, value) = parameter
+      if (coordinateMappings.contains(key)) {
+        if (Try(value.toString.toDouble).isSuccess) {
+          (Nil, List(AssetProperty(coordinateMappings(key), List(PropertyValue(value)))))
         } else {
-          if (coordinateMappings.contains(key)) {
-            result //check if value contains only numbers
-          } else {
-            result
-          }
+          (List(key), Nil)
         }
+      } else {
+        result
       }
-    } // + super method
+    }
   }
 
-  class Creator extends AbstractCsvOperations {
+  class Creator extends CsvOperations {
     override def is(csvRowWithHeaders: Map[String, String]) = {
       val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
       val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
       coordinateMappings.keys.toSeq.sorted.equals(actionParameters.sorted)
     }
+
+    override def specificParameters(): Set[String] = coordinateMappings.keySet
 
     override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
       val parsedRow = CsvAssetRow(None, properties = properties)
@@ -1100,28 +1106,28 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
         .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
     }
 
-    override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
-      csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
-        val (key, value) = parameter
-        if(isBlank(value)) {
-          result
+    override def specificValidation(result: ParsedRow, parameter: (String, String)): ParsedRow = {
+      val (key, value) = parameter
+      if (coordinateMappings.contains(key)) {
+        if (Try(value.toString.toDouble).isSuccess) {
+          (Nil, List(AssetProperty(coordinateMappings(key), List(PropertyValue(value)))))
         } else {
-          if (coordinateMappings.contains(key)) {
-            result //check if value contains only numbers
-          } else {
-            result
-          }
+          (List(key), Nil)
         }
+      } else {
+        result
       }
-    } // + super method
+    }
   }
 
-  class PositionUpdater extends AbstractCsvOperations {
+  class PositionUpdater extends CsvOperations {
     override def is(csvRowWithHeaders: Map[String, String]) = {
       val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
       val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
       optionalMappings.keys.toSeq.sorted.equals(actionParameters.sorted)
     }
+
+    override def specificParameters(): Set[String] = (coordinateMappings ++ externalIdMapping).keySet
 
     override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
       val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
@@ -1130,26 +1136,17 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  class DefaultOperation extends AbstractCsvOperations { //use this if something is wrong on the parameters
-    override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {throw new UnsupportedOperationException}
-
-    override def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-      optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
-    }
-  }
-
-  lazy val propertyUpdater = new PropertyUpdater
+  lazy val propertyUpdater = new Updater
   lazy val positionUpdater = new PositionUpdater
   lazy val creator = new Creator
-  lazy val default = new DefaultOperation
 
-  private def getStrategies(): (Seq[AbstractCsvOperations], AbstractCsvOperations) ={
-    (Seq(propertyUpdater, creator, positionUpdater), default)
+  private def getStrategies(): Seq[CsvOperations] = {
+    Seq(propertyUpdater, creator, positionUpdater)
   }
 
-  private def getStrategy(csvRowWithHeaders: Map[String, String]): AbstractCsvOperations ={
-    val (strategies, defaultStrategy) = getStrategies()
-    strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(defaultStrategy)
+  private def getStrategy(csvRowWithHeaders: Map[String, String]): CsvOperations ={
+    val strategies = getStrategies()
+    strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(throw new UnsupportedOperationException(s"Please check the combination between ${optionalMappings.keySet.mkString(",")}"))
   }
 
   private def fork(f: => Unit): Unit = {
