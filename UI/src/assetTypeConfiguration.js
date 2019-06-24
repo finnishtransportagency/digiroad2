@@ -55,15 +55,12 @@
       var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
       var endDate = new Date(_.head(datePeriodValue).value.endDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
 
-      return [startDate, endDate];
+      return {startDate: startDate, endDate: endDate};
     };
 
     var isEndDateAfterStartdate = function (date) {
       var datePeriods = datePeriodValueExtract(date);
-      var startDate = datePeriods[0];
-      var endDate = datePeriods[1];
-
-      return startDate <= endDate;
+      return datePeriods.startDate <= datePeriods.endDate;
     };
 
     var linearAssetSpecs = [
@@ -302,10 +299,7 @@
 
           var isInDatePeriod = function(date) {
             var datePeriods = datePeriodValueExtract(date);
-            var startDate = datePeriods[0];
-            var endDate = datePeriods[1];
-
-            return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
+            return new Date(datePeriods.endDate.getMonth() + '/' + datePeriods.endDate.getDate() + '/' + (datePeriods.endDate.getFullYear() - 1)) <= datePeriods.startDate;
           };
 
           var isValidIntervalDate = _.every(datePeriodField, function (date) {
@@ -313,7 +307,7 @@
           });
 
           var isValidPeriodDate =  _.every(datePeriodField, function(date) {
-            return date.hasValue() && isInDatePeriod(date);
+            return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
           var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
