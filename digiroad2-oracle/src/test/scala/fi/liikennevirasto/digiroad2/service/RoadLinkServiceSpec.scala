@@ -23,6 +23,7 @@ import slick.jdbc.{StaticQuery => Q}
 import scala.collection.immutable.Stream.Empty
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
+import scala.util.matching.Regex
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -1214,6 +1215,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
       val dummyRoadAssociationName = "Dummy Road Association"
+      val refactoredDummyRoadAssName = dummyRoadAssociationName.trim().toUpperCase()
 
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555555, 'PRIVATE_ROAD_ASSOCIATION', 55555555, $dummyRoadAssociationName, 'test_user')""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (66666666, 'PRIVATE_ROAD_ASSOCIATION', 66666666, $dummyRoadAssociationName, 'test_user')""".execute
@@ -1239,7 +1241,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
 
-      val result = service.getPrivateRoadsByAssociationName(dummyRoadAssociationName, false)
+      val result = service.getPrivateRoadsByAssociationName(refactoredDummyRoadAssName, false)
 
       result.length should be (3)
 
@@ -1258,6 +1260,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
       val dummyRoadAssociationNameNumberOne = "Dummy Road Association number one"
+      val refactoredDummyRoadAssNameNumberOne = dummyRoadAssociationNameNumberOne.trim().toUpperCase()
+
       val dummyRoadAssociationNameNumberTwo = "Dummy Road Association number two"
       val noRoadName = "tuntematon tienimi"
 
@@ -1284,7 +1288,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIdsF(linkIds.toSet)).thenReturn(Future(vvhRoadLinks))
 
-      val result = service.getPrivateRoadsByAssociationName(dummyRoadAssociationNameNumberOne, false)
+      val result = service.getPrivateRoadsByAssociationName(refactoredDummyRoadAssNameNumberOne, false)
 
       result.length should be (2)
 
