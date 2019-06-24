@@ -164,11 +164,16 @@
     };
 
     me.formContent = function (selectedAsset) {
+      var idName = me.layerName === "massTransitStop" ? 'Valtakunnallinen id' : 'Kohteen id';
+
       return '<div class="form-element">' +
         '<label class="control-label">Linkin id</label>' +
         '<span id="linkId" >'+ selectedAsset.linkId.join(', ') +'</span>'+
         '</div>' +
-        assetIdInformation(selectedAsset) +
+        '<div class="form-element">' +
+        '<label class="control-label">' + idName + '</label>' +
+        '<span id="assetId" >'+ selectedAsset.assetId.join(', ')+'</span>'+
+        '</div>' +
         '<div class="form-element">' +
         '<label class="control-label">Tietolaji</label>' +
         '<span id="assetName">'+selectedAsset.title+'</span>'+
@@ -193,15 +198,6 @@
     me.buttons = function () {
       return '<button class = "btn btn-primary save">Lähetä</button>' +
         '<button class = "btn btn-secondary cancel">Peruuta</button>';
-    };
-
-    var assetIdInformation = function(selectedAsset) {
-      var idName = me.layerName === "massTransitStop" ? 'Valtakunnallinen id' : 'Kohteen id';
-
-      return '<div class="form-element">' +
-      '<label class="control-label">' + idName + '</label>' +
-      '<span id="assetId" >'+ selectedAsset.assetId.join(', ')+'</span>'+
-      '</div>';
     };
 
     var createFeedbackForm = function(selectedAsset, layer) {
