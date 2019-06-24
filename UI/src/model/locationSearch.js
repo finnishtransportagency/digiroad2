@@ -206,7 +206,8 @@
      * @param associationRoadName
      */
     var getAssociationRoadNamesByName = function(associationRoad) {
-      return backend.getPrivateRoadAssociationNamesBySearch(associationRoad.name)
+      var associationRoadName = associationRoad.name.toUpperCase().replace(/\s{2,}/g,' ').trim();
+      return backend.getPrivateRoadAssociationNamesBySearch(associationRoadName)
         .then(function(resultFromAPI) {
           if (resultFromAPI.length > 0)
             return _.map(resultFromAPI, function(value) {

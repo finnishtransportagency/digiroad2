@@ -311,7 +311,7 @@ object RoadLinkDAO{
 
     def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
       sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > sysdate) and value = $roadAssociationName""".as[(String, Long)].list
+           and (valid_to is null or valid_to > sysdate) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
     }
 
     def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
