@@ -312,8 +312,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getPrivateRoadsByAssociationName(roadAssociationName: String, newTransaction: Boolean = true): Seq[PrivateRoadAssociation] = {
-    val linkIds = getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId, newTransaction).map(_._2)
-    val roadLinks = getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds.toSet, newTransaction)
+    val roadNamesPerLinkId = getValuesByRoadAssociationName(roadAssociationName, privateRoadAssociationPublicId, newTransaction)
+    val roadLinks = getRoadLinksAndComplementaryByLinkIdsFromVVH(roadNamesPerLinkId.map(_._2).toSet, newTransaction)
 
     val municipalityCodes = roadLinks.map(_.municipalityCode).toSet
     val municipalitiesInfo = municipalityService.getMunicipalitiesNameAndIdByCode(municipalityCodes, newTransaction)
@@ -324,7 +324,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         val roadName = if(roadLinkAssociation._1.getOrElse(" ").trim.isEmpty) roadWithoutName else roadLinkAssociation._1.get
         val maxLengthRoadLink = roadLinkAssociation._2.maxBy(_.length)
         val municipalityName = municipalitiesInfo.find(_.id == maxLengthRoadLink.municipalityCode).head.name
-        PrivateRoadAssociation(roadAssociationName, roadName, municipalityName, maxLengthRoadLink.linkId)
+        PrivateRoadAssociation(roadNamesPerLinkId.head._1, roadName, municipalityName, maxLengthRoadLink.linkId)
       }
     }.toSeq
   }
