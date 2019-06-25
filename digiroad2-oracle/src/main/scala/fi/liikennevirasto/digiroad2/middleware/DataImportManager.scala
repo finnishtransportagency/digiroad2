@@ -6,6 +6,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.csvDataImporter.{MaintenanceRoadCsvImporter, MassTransitStopCsvImporter, ObstaclesCsvImporter, PedestrianCrossingCsvImporter, RailwayCrossingCsvImporter, RoadLinkCsvImporter, ServicePointCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 
 sealed trait AdditionalImportValue {

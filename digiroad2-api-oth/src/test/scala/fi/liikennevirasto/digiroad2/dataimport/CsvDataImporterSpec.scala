@@ -18,6 +18,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
+import fi.liikennevirasto.digiroad2.csvDataImporter.{MassTransitStopCsvImporter, RoadLinkCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
@@ -133,7 +134,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
 
-    trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultTrafficSign(
+    trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultPointAsset(
       malformedRows = List(MalformedRow(
         malformedParameters = List("liikennemerkin tyyppi"),
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
@@ -392,7 +393,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
     when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(Seq())
 
-    trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultTrafficSign(
+    trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultPointAsset(
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
         reason = "Unathorized municipality or nonexistent roadlink near asset position",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
