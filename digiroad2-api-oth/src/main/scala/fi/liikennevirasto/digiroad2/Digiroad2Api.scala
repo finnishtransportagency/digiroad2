@@ -1654,8 +1654,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/municipalities/byUser") {
+    val municipalityCode = params("municipalityCode")
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val municipalities: Set[Int] = if(municipalityCode != "null") Set(municipalityCode.toInt) else { if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities }
     municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,
         "name" -> municipality.name)
@@ -1929,5 +1930,35 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipality" -> value.municipality
       )
     }
+  }
+
+  get("/privateRoads/:municipalityCode") {
+    val municipalityCode = params("municipalityCode")
+    Map(
+      "municipalityCode" -> municipalityCode,
+      "results" -> Map(
+        "result1" ->
+          Map(
+            "privateRoadName" -> "Tiekunta",
+            "associationId" -> "00-123-1234-0",
+            "additionalInfo" -> "Tieto toimitettu, rajoituksia",
+            "lastModifiedDate" -> "22.5.2019"
+          ),
+        "result2" ->
+          Map(
+            "privateRoadName" -> "Tiekunta 2",
+            "associationId" -> "",
+            "additionalInfo" -> "Tieto toimitettu, rajoituksia",
+            "lastModifiedDate" -> "2.4.2019"
+          ),
+        "result3" ->
+          Map(
+            "privateRoadName" -> "Tiekunta 3",
+            "associationId" -> "00-123-1235-1",
+            "additionalInfo" -> "Tieto toimitettu, rajoituksia",
+            "lastModifiedDate" -> "20.4.2019"
+          )
+      )
+    )
   }
 }

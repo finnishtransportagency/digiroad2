@@ -227,8 +227,9 @@
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
         'work-list/trafficSigns': 'trafficSignWorkList',
         'work-list/maintenanceRoad': 'maintenanceRoadWorkList',
-        'work-list/municipality': 'municipalityWorkList',
+        'work-list/municipality(/:municipalityCode)': 'municipalityWorkList',
         'work-list/createdLinearAssets': 'createdLinearAssets',
+        'work-list/privateRoads/:municipalityCode' : 'privateRoadsWorkList',
         'work-list/:layerName': 'unverifiedLinearAssetWorkList',
         ':layerName/linkId/:linkId': 'mapMoving'
       },
@@ -456,8 +457,8 @@
         eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedLinearAsset(290));
       },
 
-      municipalityWorkList: function () {
-        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities());
+      municipalityWorkList: function (municipalityCode) {
+        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities(municipalityCode));
       },
 
       createdLinearAssets: function() {
@@ -603,6 +604,10 @@
       unverifiedLinearAssetWorkList: function(layerName) {
         var typeId = _.find(models.linearAssets, function(assetSpec) { return assetSpec.layerName == layerName; }).typeId;
         eventbus.trigger('verificationList:select', layerName, backend.getUnverifiedLinearAssets(typeId));
+      },
+
+      privateRoadsWorkList: function(municipalityCode) {
+        eventbus.trigger('privateRoadsWorkList:select', backend.getPrivateRoadAssociationsByMunicipality(municipalityCode));
       }
     });
 

@@ -453,14 +453,18 @@
       return $.getJSON('api/linearassets/unverified?typeId=' + typeId);
     };
 
+    this.getPrivateRoadAssociationsByMunicipality = function(municipalityCode) {
+      return $.getJSON('api/privateRoads/' + municipalityCode);
+    };
+
     this.getLinearAssetMidPoint = latestResponseRequestor(function(typeId, id){
       return {
         url: 'api/linearassets/midpoint?typeId=' + typeId + '&id=' + id
       };
     });
 
-    this.getUnverifiedMunicipalities = function() {
-      return $.getJSON('api/municipalities/byUser');
+    this.getUnverifiedMunicipalities = function(municipalityCode) {
+      return $.getJSON('api/municipalities/byUser?municipalityCode=' + municipalityCode);
     };
 
     this.getCreatedLinearAssets = function(assetId) {

@@ -89,13 +89,16 @@
           me.reloadForm(municipalityId, true);
         });
 
+      var privateRoadInfoListButton = $('<a>').addClass('btn btn-primary btn-private-road-list')
+        .text('Yksityistiet').attr("href", "#work-list/privateRoads/" + municipalityId);
+
       var municipalityHeader = function (municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton);
+        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(privateRoadInfoListButton);
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
-               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
+        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä u/ Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
+               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th> <th id="suggestedAssets">Vihjetieto</th> </tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
@@ -113,6 +116,10 @@
         _.forEach(values, function (asset) {
           asset.assetName = _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  asset.typeId; }).title ;
         });
+      };
+
+      var suggestedAssetsButton = function(counter, typeId) {
+        return counter > 0 ? '<a class="btn btn-suggested-list" href="#work-list/suggestedAssets/' + 766 + '/'+ typeId + '">' + counter + '</a>' : "";
       };
 
       var sortAssets = function (values) {
@@ -158,6 +165,7 @@
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
           '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
+          '<td headers="suggestedAssets">' + suggestedAssetsButton(0, asset.typeId) + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
