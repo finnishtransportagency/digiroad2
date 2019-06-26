@@ -1,3 +1,4 @@
+import java.net.URI
 def get_environment() {
     return "testing"
 }
@@ -25,7 +26,15 @@ pipeline {
                 }
             }
             steps {
+            withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS')]) {
                 script {
+
+                       def ojdbc = 'ojdbc6'
+                       def ojdbc_version = '11.2.0.3.0'
+                       def version = '11.2.0'
+                       def sdoapl = 'sdoapl'
+                       def sdoutl = 'sdoutl'
+                       def sbt_proxy = new URI(http_proxy)
 
                        def java_opts = [
                             "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
@@ -33,6 +42,14 @@ pipeline {
                             "-Dhttp.nonProxyHosts=*.vally.local",
                             "-DproxySet=true"
                         ].join(" ")
+
+                        STAGE_SETUP_ORACLE = [
+                            "mkdir digiroad2-oracle/conf/",
+                            "mkdir digiroad2-oracle/conf/lib/",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output digiroad2-oracle/conf/lib/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoutl}.jar",
+                         ].join(" && ")
 
                         STAGE_FRONTEND_BUILD_CMD = [
                             "npm install",
@@ -74,7 +91,8 @@ pipeline {
                         STAGE_DEPLOY_NODE2_CMD = [
                             "cd ~/",
                             "bundle exec cap testing2 deploy"
-                        ].join(" && ")
+                         ].join(" && ")
+                    }
                 }
             }
         }
@@ -166,7 +184,7 @@ pipeline {
                 }
             }
             steps {
-                echo "Build and run backend tests"
+                echo "Build backend"
                 sh STAGE_SETUP_ORACLE
                 sh STAGE_BACKEND_BUILD_CMD
             }
