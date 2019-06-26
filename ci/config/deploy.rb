@@ -37,7 +37,7 @@ namespace :deploy do
       execute "cd #{release_path} && ln -s /data1/logs/digiroad2 logs"
       execute "cd #{release_path} && ./sbt -Ddigiroad2.env=#{fetch(:stage)} assembly"
       execute "cd #{release_path} && rsync -a dist/ src/main/webapp/digiroad2/"
-      execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' digiroad2-UI/ src/main/webapp/digiroad2/"
+      execute "cd #{release_path} && rsync -a --exclude-from 'copy_exclude.txt' UI/ src/main/webapp/digiroad2/"
       execute "cd #{release_path} && rsync -a node_modules src/main/webapp/digiroad2/"
       execute "cd #{release_path} && chmod 700 stop.sh"
       execute "cd #{release_path} && ./stop.sh; exit 0"
