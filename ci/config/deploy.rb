@@ -28,7 +28,6 @@ namespace :deploy do
       execute "cd #{release_path} && npm install && export TMPDIR=#{release_path}/tmp && yarn install && grunt deploy --target=#{fetch(:grunt_target)}"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
       execute "mkdir -p #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}"
-      execute "cd #{deploy_path} && cp digiroad2.properties #{release_path}/conf/staging/."
       execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp conversion.bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."
       execute "cd #{deploy_path} && cp authentication.properties #{release_path}/conf/#{fetch(:stage)}/."
