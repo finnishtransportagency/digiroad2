@@ -1,0 +1,85 @@
+import java.net.URI
+
+pipeline {
+    agent any
+    environment {
+        NOTIFY_SLACK_SUBJECT = "${JOB_NAME} - <${RUN_DISPLAY_URL}|${BUILD_DISPLAY_NAME}>"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+    stages {
+        stage("Setup") {
+            steps {
+                    withCredentials([
+                       string(credentialsId: 'TN_ITS_CONVERSION', variable: 'TN_ITS_CONVERSION')]) {
+                            script {
+                                STAGE_RUN_ROSATTE_CONVERSION = [
+                                    "mkdir -p ${WORKSPACE}/dev/fd/ &&",
+                                    "curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its.herokuapp.com/conversion | tee ${WORKSPACE}/dev/fd/3 | tail -n 1 | grep OK"
+                                ].join(" ")
+                            }
+                    }
+            }
+        }
+
+        stage("Prepare") {
+            steps {
+                script {
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                        "digiroad2-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
+                    )
+                }
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+
+        stage("Run Rosatte Conversion") {
+            agent {
+                docker {
+                    image "digiroad2-backend-sbt"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_RUN_ROSATTE_CONVERSION
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+    }
+    post {
+        always {
+            slackSend(
+                color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+                message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            )
+            deleteDir()
+        }
+    }
+}

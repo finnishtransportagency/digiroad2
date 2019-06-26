@@ -24,14 +24,15 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       scalacOptions ++= Seq("-unchecked", "-feature"),
-      resolvers ++= Seq(
+      resolvers := Seq(
         Classpaths.typesafeReleases,
-        "opengeo" at "http://repo.opengeo.org/",
-        "osgeo" at "http://download.osgeo.org/webdav/geotools/"),
+        "osgeo" at "http://download.osgeo.org/webdav/geotools/",
+        "opengeo" at "http://repo.boundlessgeo.com/main/"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
         "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+        "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
         "org.geotools" % "gt-graph" % "19.0",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
       )
@@ -47,7 +48,9 @@ object Digiroad2Build extends Build {
       name := Digiroad2OracleName,
       version := Version,
       scalaVersion := ScalaVersion,
-      resolvers += Classpaths.typesafeReleases,
+      resolvers ++= Seq(Classpaths.typesafeReleases,
+        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
+        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
@@ -67,6 +70,9 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
+        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
+        "com.oracle" % "sdoapi" % "11.2.0",
+        "com.oracle" % "sdoutl" % "11.2.0",
         "javax.mail" % "javax.mail-api" % "1.6.1",
         "com.sun.mail" % "javax.mail" % "1.6.1"
       ),
