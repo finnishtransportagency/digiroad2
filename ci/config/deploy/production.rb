@@ -2,7 +2,7 @@ role :app, %w{web@production1}
 role :web, %w{web@production1}
 server 'production1', user: 'web', roles: %w{web app}
 
- namespace :deploy do
+namespace :deploy do
   task :start_vallu_server do
     on roles(:all) do
       execute "killall -q node; exit 0"
@@ -11,5 +11,5 @@ server 'production1', user: 'web', roles: %w{web app}
     end
   end
 
-   after :publishing, :start_vallu_server
+  after :publishing, :start_vallu_server
 end
