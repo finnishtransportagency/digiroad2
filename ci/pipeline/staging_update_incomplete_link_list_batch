@@ -15,7 +15,7 @@ pipeline {
 
                     script {
                         STAGE_RUN_TASK = [
-                            "ssh web@gateway"
+                            "ssh web@gateway \'cd /home/web/digiroad2/current &&\'"
                         ].join(" ")
                     }
             }
