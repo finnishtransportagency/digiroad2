@@ -1933,32 +1933,30 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/privateRoads/:municipalityCode") {
-    val municipalityCode = params("municipalityCode")
-    Map(
-      "municipalityCode" -> municipalityCode,
-      "results" -> Map(
-        "result1" ->
-          Map(
-            "privateRoadName" -> "Tiekunta",
-            "associationId" -> "00-123-1234-0",
-            "additionalInfo" -> "Tieto toimitettu, rajoituksia",
-            "lastModifiedDate" -> "22.5.2019"
-          ),
-        "result2" ->
-          Map(
-            "privateRoadName" -> "Tiekunta 2",
-            "associationId" -> "",
-            "additionalInfo" -> "Tieto toimitettu, rajoituksia",
-            "lastModifiedDate" -> "2.4.2019"
-          ),
-        "result3" ->
-          Map(
-            "privateRoadName" -> "Tiekunta 3",
-            "associationId" -> "00-123-1235-1",
-            "additionalInfo" -> "Tieto toimitettu, rajoituksia",
-            "lastModifiedDate" -> "20.4.2019"
-          )
+    val municipalityCode = params("municipalityCode").toInt
+    val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
+    val cachedRoadLinks = roadLinkService.getTinyRoadLinkFromVVH(municipalityCode).map(_.linkId).toSet
+    val results = roadLinkService.getPrivateRoadsInfoByLinkIds(cachedRoadLinks)
+    val groupedResults = results.groupBy(_.linkId).map{ result =>
+      ( result._1,
+        result._2.find(_.name == roadLinkService.privateRoadAssociationPublicId).map(_.value),
+        result._2.find(_.name == roadLinkService.accessRightIDPublicId).map(_.value),
+        result._2.find(_.name == roadLinkService.additionalInfoPublicId).map(_.value),
+        result._2.map(_.lastModifiedDate).map(_.get).head
       )
+    }.groupBy(elem => (elem._2, elem._3, elem._4, elem._5))
+    Map(
+      "municipalityName" -> municipalityName,
+      "municipalityCode" -> municipalityCode,
+      "results" ->
+        groupedResults.map{result =>
+          Map(
+            "privateRoadName" -> result._1._1,
+            "associationId" -> result._1._2,
+            "additionalInfo" -> result._1._3,
+            "lastModifiedDate" -> result._1._4
+          )
+        }
     )
   }
 }

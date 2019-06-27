@@ -329,6 +329,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }.toSeq
   }
 
+  def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long], newTransaction: Boolean = true) = {
+    if(newTransaction) {
+      withDynTransaction {
+        LinkAttributesDao.getPrivateRoadInfoByLinkIds(linkIds)
+      }
+    } else {
+      LinkAttributesDao.getPrivateRoadInfoByLinkIds(linkIds)
+    }
+  }
+
   def getValuesByRoadAssociationName(roadAssociationName: String, roadAssociationPublicId: String, newTransaction: Boolean = true): List[(String, Long)] = {
     if(newTransaction)
       withDynSession {
