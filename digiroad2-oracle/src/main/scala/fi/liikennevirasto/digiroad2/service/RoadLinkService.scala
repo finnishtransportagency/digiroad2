@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -37,6 +37,7 @@ case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
                           accessRightID: Option[String] = None)
 case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: Long)
+case class RoadLinkAttributeInfo(id: Long, linkId: Option[Long], name: Option[String], value: Option[String], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
 
 sealed trait RoadLinkType {
   def value: Int
@@ -88,6 +89,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   val privateRoadAssociationPublicId = "PRIVATE_ROAD_ASSOCIATION"
   val additionalInfoPublicId = "ADDITIONAL_INFO"
   val accessRightIDPublicId = "ACCESS_RIGHT_ID"
+  val lastModifiedDatePublicId = "PRIVATE_ROAD_LAST_MOD_DATE"
 
   //No road name found
   val roadWithoutName = "tuntematon tienimi"
@@ -95,9 +97,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isAfter  _)
   implicit val getDateTime = new GetResult[DateTime] {
     def apply(r: PositionedResult) = {
       new DateTime(r.nextTimestamp())
+    }
+  }
+  implicit val getRoadAttributeInfo = new GetResult[RoadLinkAttributeInfo] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLongOption()
+      val name = r.nextStringOption()
+      val value = r.nextStringOption()
+      val createdDate = r.nextDateOption().map(new DateTime(_))
+      val createdBy = r.nextStringOption()
+      val modifiedDate = r.nextDateOption().map(new DateTime(_))
+      val modifiedBy = r.nextStringOption()
+
+      RoadLinkAttributeInfo(id, linkId, name, value, createdDate, createdBy, modifiedDate, modifiedBy)
     }
   }
 
@@ -329,13 +346,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }.toSeq
   }
 
-  def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long], newTransaction: Boolean = true) = {
-    if(newTransaction) {
-      withDynTransaction {
-        LinkAttributesDao.getPrivateRoadInfoByLinkIds(linkIds)
+  def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long]) = {
+    withDynTransaction {
+      MassQuery.withIds(linkIds) { idTableName =>
+        fetchOverridedRoadLinkAttributes(idTableName)
       }
-    } else {
-      LinkAttributesDao.getPrivateRoadInfoByLinkIds(linkIds)
     }
   }
 
@@ -802,22 +817,39 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
     val fetchResult =
-    sql"""select i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by
-            from #$idTableName i
-            left join road_link_attributes rla on i.id = rla.link_id and (rla.valid_to IS NULL OR rla.valid_to > sysdate)
-      """.as[(Long, Option[Long], Option[String], Option[String], Option[DateTime], Option[String])].list.map(row => {
+      sql"""select i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
+            from road_link_attributes rla
+            left join #$idTableName i on i.id = rla.link_id and (rla.valid_to IS NULL OR rla.valid_to > sysdate)
+      """.as[RoadLinkAttributeInfo].list
 
-      val rla = (row._3, row._4) match {
+    val a = fetchResult.map(row => {
+      val rla = (row.name, row.value) match {
         case (Some(name), Some(value)) => Option((name, value))
         case _ => None
       }
 
-      row._1 -> rla
+      row.id -> rla
     }
     )
+    val b = getPrivateRoadLastModification(fetchResult)
 
-    fetchResult.map(i => i._1 -> i._2)
+    a ++ b
   }
+
+  private def getPrivateRoadLastModification(fetchResult: Seq[RoadLinkAttributeInfo]): Seq[(Long, Option[(String, String)])] = {
+    val groupedResults = fetchResult.filter(row => row.linkId.nonEmpty && Seq(privateRoadAssociationPublicId, additionalInfoPublicId).contains(row.name.get)).flatMap {roadInfo =>
+        (roadInfo.createdDate, roadInfo.modifiedDate) match {
+          case (Some(createdDt), None) => Some(roadInfo.linkId.get, createdDt, roadInfo.createdBy.get)
+          case (_, Some(modifiedDt)) => Some(roadInfo.linkId.get, modifiedDt, roadInfo.modifiedBy.get)
+          case _ => None
+        }
+    }.groupBy(_._1).mapValues(_.sortBy(_._2)(dateTimeOrdering).head)
+
+    groupedResults.map(value => Seq((value._2._1, Some("PRIVATE_ROAD_LAST_MOD_DATE" , DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss").print(value._2._2))),
+      (value._2._1, Some("PRIVATE_ROAD_LAST_MOD_USER", value._2._3)))
+    ).flatten.toSeq
+  }
+
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
     val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)

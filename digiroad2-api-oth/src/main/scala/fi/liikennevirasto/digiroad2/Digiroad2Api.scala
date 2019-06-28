@@ -626,6 +626,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO")
+      //TODO Pay atention with merge of 1931 US
     )
   }
 
@@ -1937,24 +1938,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
     val cachedRoadLinks = roadLinkService.getTinyRoadLinkFromVVH(municipalityCode).map(_.linkId).toSet
     val results = roadLinkService.getPrivateRoadsInfoByLinkIds(cachedRoadLinks)
-    val groupedResults = results.groupBy(_.linkId).map{ result =>
-      ( result._1,
-        result._2.find(_.name == roadLinkService.privateRoadAssociationPublicId).map(_.value),
-        result._2.find(_.name == roadLinkService.accessRightIDPublicId).map(_.value),
-        result._2.find(_.name == roadLinkService.additionalInfoPublicId).map(_.value),
-        result._2.map(_.lastModifiedDate).map(_.get).head
+    val groupedResults = results.groupBy(_._1).map(a =>
+      (a._1,
+        a._2.map(_._2).filter(_.get._1 == roadLinkService.privateRoadAssociationPublicId).map(_.get._2).headOption,
+        a._2.map(_._2).filter(_.get._1 == roadLinkService.accessRightIDPublicId).map(_.get._2).headOption,
+        a._2.map(_._2).filter(_.get._1 == roadLinkService.additionalInfoPublicId).map(_.get._2).headOption,
+        a._2.map(_._2).filter(_.get._1 == roadLinkService.lastModifiedDatePublicId).map(_.get._2).headOption
       )
-    }.groupBy(elem => (elem._2, elem._3, elem._4, elem._5))
+    ).groupBy(elem => (elem._2, elem._3, elem._4, elem._5))
     Map(
       "municipalityName" -> municipalityName,
       "municipalityCode" -> municipalityCode,
       "results" ->
         groupedResults.map{result =>
           Map(
-            "privateRoadName" -> result._1._1,
-            "associationId" -> result._1._2,
-            "additionalInfo" -> result._1._3,
-            "lastModifiedDate" -> result._1._4
+            "privateRoadName" -> result._1._1.getOrElse(""),
+            "associationId" -> result._1._2.getOrElse(""),
+            "additionalInfo" -> result._1._3.getOrElse(99),
+            "lastModifiedDate" -> result._1._4.get
           )
         }
     )

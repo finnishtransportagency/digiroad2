@@ -9,7 +9,6 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
-case class RoadLinkAttributeInfo(linkId: Long, name: String, value: String, lastModifiedDate: Option[DateTime])
 
 sealed trait RoadLinkDAO{
 
@@ -305,18 +304,6 @@ object RoadLinkDAO{
     def table: String = LinkAttributes
     def column: String = LinkAttributes
 
-    implicit val getRoadAttributeInfo = new GetResult[RoadLinkAttributeInfo] {
-      def apply(r: PositionedResult) = {
-        val linkId = r.nextLong()
-        val name = r.nextString()
-        val value = r.nextString()
-        val lastModifiedDate = r.nextDateOption().map(new DateTime(_))
-
-
-        RoadLinkAttributeInfo(linkId, name, value, lastModifiedDate)
-      }
-    }
-
     def getExistingValues(linkId: Long) = {
       sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
     }
@@ -366,17 +353,6 @@ object RoadLinkDAO{
 
     def getVVHValue(vvhRoadLink: VVHRoadlink) = {
       throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
-    }
-
-    def getPrivateRoadInfoByLinkIds(linkIds: Set[Long]): List[RoadLinkAttributeInfo] = {
-      MassQuery.withIds(linkIds) { idTableName =>
-        sql"""select rla.link_id, rla.name, rla.value,
-              (select max(coalesce(created_date, modified_date))
-               from road_link_attributes pla
-               where pla.link_id = rla.link_id) as lastmodification
-              from road_link_attributes rla
-              join #$idTableName i on i.id = rla.link_id""".as[RoadLinkAttributeInfo].list
-      }
     }
 
     override def expireValues(linkId: Long, username: Option[String]) = {
