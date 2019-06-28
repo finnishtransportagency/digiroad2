@@ -1,0 +1,4 @@
+[repositories]
+ local
+ my-ivy-proxy-releases: http://livibuild04.vally.local/nexus/repository/ivy-public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
+ my-mvn-proxy-releases: http://livibuild04.vally.local/nexus/repository/maven-public/

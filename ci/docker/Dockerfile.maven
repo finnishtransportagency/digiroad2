@@ -1,0 +1,6 @@
+FROM maven:alpine
+ARG JENKINS_UID=1000
+RUN adduser -D -S -u ${JENKINS_UID} jenkins
+RUN mkdir /home/jenkins/.m2
+COPY config/settings.xml /home/jenkins/.m2/settings.xml
+RUN chown -R jenkins /home/jenkins
