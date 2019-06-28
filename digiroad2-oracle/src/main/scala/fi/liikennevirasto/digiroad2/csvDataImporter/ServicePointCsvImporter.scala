@@ -27,7 +27,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     "viranomaisdataa" -> "is authority data",
     "pysäkköintipaikkojen lukumäärä" -> "parking place count"
   )
-  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ stringValueFieldsMapping
+  override val mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ stringValueFieldsMapping
 
   lazy val servicePointService: ServicePointService = new ServicePointService
 

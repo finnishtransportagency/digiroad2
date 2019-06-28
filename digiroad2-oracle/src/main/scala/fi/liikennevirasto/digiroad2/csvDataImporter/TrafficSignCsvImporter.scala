@@ -202,8 +202,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       result match {
         case ImportResultPointAsset(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
-          val content = mappingContent(result) +
-            s"<ul>notImportedData: ${result.notImportedData.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}</ul>"
+          val content = mappingContent(result)
           update(logId, Status.NotOK, Some(content))
       }
     } catch {

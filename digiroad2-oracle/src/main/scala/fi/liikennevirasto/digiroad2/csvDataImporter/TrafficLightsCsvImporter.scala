@@ -15,7 +15,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override val mandatoryFieldsMapping = commonFieldsMapping
+  override val mandatoryFieldsMapping = coordinateMappings
 
   lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
 

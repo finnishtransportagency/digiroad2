@@ -26,16 +26,16 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
-  final val commonFieldsMapping = Map(
+  final val coordinateMappings = Map(
     "koordinaatti x" -> "lon",
     "koordinaatti y" -> "lat"
   )
 
-  val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
+  val longValueFieldsMapping: Map[String, String] = coordinateMappings
   val codeValueFieldsMapping: Map[String, String] = Map()
   val stringValueFieldsMapping: Map[String, String] = Map()
 
-  val mandatoryFieldsMapping: Map[String, String] = Map()
+  val mandatoryFieldsMapping: Map[String, String] = coordinateMappings
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
 
@@ -103,9 +103,21 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
+  override def mappingContent(result: ImportResultData): String  = {
+    val excludedResult = result.excludedRows.map{rows => "<li>" + rows.affectedRows ->  rows.csvRow + "</li>"}
+    val incompleteResult = result.incompleteRows.map{ rows=> "<li>" + rows.missingParameters.mkString(";") -> rows.csvRow + "</li>"}
+    val malformedResult = result.malformedRows.map{ rows => "<li>" + rows.malformedParameters.mkString(";") -> rows.csvRow + "</li>"}
+    val notImportedData = result.notImportedData.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}
+
+    s"<ul> excludedLinks: ${excludedResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
+    s"<ul> incompleteRows: ${incompleteResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
+    s"<ul> malformedRows: ${malformedResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
+    s"<ul>notImportedData: ${notImportedData.mkString.replaceAll("[(|)]{1}","")}</ul>"
+  }
+
   def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) {
-      (result, parameter) =>
+      (result, parameter) =>\
         val (key, value) = parameter
 
         if (isBlank(value.toString)) {
@@ -130,10 +142,12 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
           else if (nonMandatoryFieldsMapping.contains(key))
             result.copy(_2 = AssetProperty(columnName = nonMandatoryFieldsMapping(key), value = value) :: result._2)
           else
-            result
+            extraValidation(result, (key, value))
         }
     }
   }
+
+  def extraValidation(result: ParsedRow, parameter: (String, String)): ParsedRow = result
 
   def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData): ImportResultData
 
@@ -145,8 +159,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
       result match {
         case ImportResultPointAsset(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
         case _ =>
-          val content = mappingContent(result) +
-            s"<ul>notImportedData: ${result.notImportedData.map{ rows => "<li>" + rows.reason -> rows.csvRow + "</li>"}.mkString.replaceAll("[(|)]{1}","")}</ul>"
+          val content = mappingContent(result)
           update(logId, Status.NotOK, Some(content))
       }
     } catch {

@@ -16,7 +16,7 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val codeValueFieldsMapping: Map[String, String] = Map("esterakennelman tyyppi" -> "type")
-  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ codeValueFieldsMapping
+  override val mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ codeValueFieldsMapping
 
   lazy val obstaclesService: ObstacleService = new ObstacleService(roadLinkService)
 

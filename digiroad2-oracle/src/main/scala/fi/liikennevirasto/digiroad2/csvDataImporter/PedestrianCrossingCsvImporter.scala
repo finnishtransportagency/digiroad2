@@ -15,10 +15,8 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override val longValueFieldsMapping: Map[String, String] = commonFieldsMapping
-  override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping
-
-  override val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+  override val longValueFieldsMapping: Map[String, String] = coordinateMappings
+  override val mandatoryFieldsMapping: Map[String, String] = coordinateMappings
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = new PedestrianCrossingService(roadLinkService, eventBusImpl)
 
