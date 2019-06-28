@@ -192,6 +192,7 @@ pipeline {
             steps {
                 echo "Build and run backend tests"
                 sh STAGE_SETUP_ORACLE
+                sh STAGE_BACKEND_BUILD_CMD
             }
             post {
                 failure {
