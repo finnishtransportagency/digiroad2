@@ -9,24 +9,8 @@ pipeline {
     								    'set_TR_bus_stops_without_OTH_LiviId',
         							    'fill_lane_amounts_in_missing_road_links',
         								'check_bus_stop_matching_between_OTH_TR',
-        								'import_all_trafficVolume_from_TR_to_OTH',
-        								'import_all_litRoad_from_TR_to_OTH',
-        								'import_all_trafficSigns_from_TR_to_OTH',
-        								'import_all_roadWidth_from_TR_to_OTH',
-        								'update_roadWidth_from_TR_to_OTH',
-        								'update_litRoad_from_TR_to_OTH',
-        								'import_all_speedLimits_from_TR_to_OTH',
-        								'import_all_pavedRoad_from_TR_to_OTH',
-        								'import_all_massTransitLane_from_TR_to_OTH',
-        								'import_all_damagedByThaw_from_TR_to_OTH',
-        								'import_all_europeanRoad_from_TR_to_OTH',
-        								'update_pavedRoad_from_TR_to_OTH',
-        								'update_massTransitLane_from_TR_to_OTH',
-        								'update_damagedByThaw_from_TR_to_OTH',
-        								'update_europeanRoad_from_TR_to_OTH',
         								'update_areas_on_asset',
         								'update_OTH_BS_with_TR_info',
-        								'import_speed_limit_asset_from_TR_to_OTH',
         								'fill_roadWidth_in_road_links',
         								'verify_inaccurate_speed_limit_assets',
         								'update_traffic_direction_on_roundabouts',
@@ -42,7 +26,9 @@ pipeline {
         								'merge_additional_panels_to_trafficSigns',
         								'traffic_sign_extract',
         								'remove_unnecessary_unknown_speedLimits',
-        								'list_incorrect_SpeedLimits_created'
+        								'list_incorrect_SpeedLimits_created',
+        								'create_prohibition_using_traffic_signs',
+        								'create_hazmat_transport_prohibition_using_traffic_signs'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
@@ -76,8 +62,8 @@ pipeline {
                             "ssh web@production1 \'cd /home/web/digiroad2/current && echo YES |",
                              "/home/web/digiroad2/current/./sbt",
                              "-Ddigiroad2.env=production",
-                             "\'project digiroad2-oracle\'",
-                             "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${TRAFFICSIGNGROUP}\'"
+                             "\"project digiroad2-oracle\"",
+                             "\"test:run-main fi.liikennevirasto.digiroad2.util.DataFixture ${TASK} ${TRAFFICSIGNGROUP}\"\'"
                         ].join(" ")
                     }
             }

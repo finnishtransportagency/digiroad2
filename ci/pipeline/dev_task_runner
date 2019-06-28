@@ -45,7 +45,9 @@ pipeline {
         								'merge_additional_panels_to_trafficSigns',
         								'traffic_sign_extract',
         								'remove_unnecessary_unknown_speedLimits',
-        								'list_incorrect_SpeedLimits_created'
+        								'list_incorrect_SpeedLimits_created',
+        								'create_prohibition_using_traffic_signs',
+        								'create_hazmat_transport_prohibition_using_traffic_signs'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
