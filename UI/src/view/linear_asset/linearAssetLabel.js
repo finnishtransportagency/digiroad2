@@ -53,15 +53,7 @@
         };
 
     };
-  
-    root.SuggestionLabel = function() {
-      AssetLabel.call(this);
-      
-      this.getValue = function(asset){
-        return asset.value;
-      };
-    };
-
+    
     root.SpeedLimitAssetLabel = function() {
         LinearAssetLabel.call(this);
 

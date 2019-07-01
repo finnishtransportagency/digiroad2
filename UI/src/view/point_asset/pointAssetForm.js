@@ -17,6 +17,7 @@ root.PointAssetForm = function() {
     me.saveCondition = parameters.saveCondition;
     me.feedbackCollection = parameters.feedbackCollection;
     me.bindEvents(parameters);
+    me.selectedAsset = parameters.pointAsset.selectedPointAsset;
   };
 
   this.bindEvents = function(parameters) {

@@ -127,7 +127,7 @@
             return this.defaultStyle(this.getValue(asset));
         };
 
-        this.suggestionStyle = function(suggestionInfo, position, styles) {
+        this.suggestionStyle = function(suggestionInfo, styles, position) {
             return !_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue) ?
                 styles.concat(me.getSuggestionStyle(position)) : styles;
         };

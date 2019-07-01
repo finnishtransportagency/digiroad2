@@ -243,7 +243,7 @@
                 styles = styles.concat(me.getStyle(value, imgPosition));
               });
 
-              styles = me.suggestionStyle(getProperty(asset,"suggest_box"), styles, imgPosition.y);
+              styles = me.suggestionStyle(getProperty(asset,"suggest_box"), styles, imgPosition.y + 40);
 
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);

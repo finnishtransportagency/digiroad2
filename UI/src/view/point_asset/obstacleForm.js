@@ -11,6 +11,7 @@
       me.saveCondition = parameters.saveCondition;
       me.feedbackCollection = parameters.feedbackCollection;
       me.bindEvents(parameters);
+      me.selectedAsset = parameters.pointAsset.selectedPointAsset;
     };
 
     var obstacleTypes = {
@@ -22,10 +23,10 @@
       return '' +
         '    <div class="form-group editable form-obstacle">' +
         '      <label class="control-label">Esterakennelma</label>' +
-        '      <p class="form-control-static">' + obstacleTypes[me.getPointPropertyValue(asset, 'esterakennelma')] + '</p>' +
+        '      <p class="form-control-static">' + obstacleTypes[me.selectedAsset.getByProperty('esterakennelma')] + '</p>' +
         '      <select class="form-control" style="display:none">  ' +
-        '        <option value="1" '+ (parseInt(me.getPointPropertyValue(asset,'esterakennelma')) === 1 ? 'selected' : '') +'>Suljettu yhteys</option>' +
-        '        <option value="2" '+ (parseInt(me.getPointPropertyValue(asset,'esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
+        '        <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Suljettu yhteys</option>' +
+        '        <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
         '      </select>' +
         '    </div>';
     };

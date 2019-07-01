@@ -13,6 +13,7 @@
       me.feedbackCollection = parameters.feedbackCollection;
       defaultAdditionalPanelValue = _.find(parameters.pointAsset.newAsset.propertyData, function(obj){return obj.publicId === 'additional_panel';}).defaultValue;
       me.bindEvents(parameters);
+      me.selectedAsset = parameters.pointAsset.selectedPointAsset;
     };
 
     var getProperties = function(properties, publicId) {
