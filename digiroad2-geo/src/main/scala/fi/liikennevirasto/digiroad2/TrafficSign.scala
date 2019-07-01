@@ -1003,3 +1003,14 @@ case object DistanceWhichSignApplies extends AdditionalPanelsType {
   override val OTHvalue = 149
   override val TRvalue = 815
 }
+
+case object HusvagnCaravan extends AdditionalPanelsType {
+  override val OTHvalue = 150
+  override val TRvalue = 835
+}
+
+case object Moped extends AdditionalPanelsType {
+  override val OTHvalue = 151
+  override val TRvalue = 842
+}
+

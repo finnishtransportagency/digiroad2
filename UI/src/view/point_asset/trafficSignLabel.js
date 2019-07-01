@@ -175,7 +175,9 @@
           {signValue: [146], image: 'images/traffic-signs/additional-panels/DirectionOfPriorityRoad.png'},
           {signValue: [147], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
           {signValue: [148], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png'},
-          {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png'}
+          {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png'},
+          {signValue: [150], image: 'images/traffic-signs/additional-panels/HusvagnCaravan.png'},
+          {signValue: [151], image: 'images/traffic-signs/additional-panels/Moped.png'}
         ];
       };
 

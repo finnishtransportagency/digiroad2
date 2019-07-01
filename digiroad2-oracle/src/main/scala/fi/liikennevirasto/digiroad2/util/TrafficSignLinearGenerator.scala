@@ -633,6 +633,8 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
     new ProhibitionService(roadLinkService, eventbus)
   }
 
+  val signAllowException = Seq(2, 3, 23)
+
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[Prohibitions] = {
     if (debbuger) println("createValue")
     val value = trafficSigns.flatMap { trafficSign =>
@@ -647,7 +649,13 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
           createValidPeriod(trafficSignType, additionalPanel)
         }.toSet
 
-        types.map(typeId => ProhibitionValue(typeId.value, validityPeriods, Set()))
+        types.map{ typeId =>
+          val exceptions = if(signAllowException.contains(typeId.value))
+            ProhibitionExceptionClass.fromTrafficSign(additionalPanel.map(panel => TrafficSignType.applyOTHValue(panel.panelType)))
+          else Set.empty[Int]
+
+          ProhibitionValue(typeId.value, validityPeriods, exceptions)
+        }
     }
     if(value.nonEmpty) Some(Prohibitions(value)) else None
   }
