@@ -61,7 +61,7 @@ object TrafficSignType {
     RegulationBeginsFromSign, RegulationEndsToTheSign, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, ValidMultiplePeriod, TimeLimit, DistanceCompulsoryStop, DirectionOfPriorityRoad,
     CrossingLogTransportRoad, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText,
     DrivingInServicePurposesAllowed, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, Parking, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
-    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies)
+    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies, HusvagnCaravan, Moped)
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
     values.find(_.OTHvalue == intValue).getOrElse(Unknown)
@@ -1013,4 +1013,3 @@ case object Moped extends AdditionalPanelsType {
   override val OTHvalue = 151
   override val TRvalue = 842
 }
-

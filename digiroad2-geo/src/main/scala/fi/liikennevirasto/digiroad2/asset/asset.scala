@@ -528,7 +528,7 @@ object ProhibitionExceptionClass {
   }
 
   def fromTrafficSign(trafficSign: Seq[TrafficSignType]): Set[Int] = {
-    values.filter(_.trafficSign.contains(trafficSign)).filter(_.value == Unknown.value).map(_.value)
+    values.filter(_.trafficSign.exists( exception => trafficSign.contains(exception))).map(_.value).filterNot(_ == Unknown.value)
   }
 
   case object MopedException extends ProhibitionExceptionClass {

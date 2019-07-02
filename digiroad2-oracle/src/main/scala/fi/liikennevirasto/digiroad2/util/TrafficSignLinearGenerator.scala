@@ -117,6 +117,8 @@ trait TrafficSignLinearGenerator {
 
   def withdraw(value1: Value, value2: Value): Value
 
+  def mergeValue(values: Value): Value
+
   def getPointOfInterest(first: Point, last: Point, sideCode: SideCode): (Option[Point], Option[Point], Option[Int]) = {
     sideCode match {
       case SideCode.TowardsDigitizing => (None, Some(last), Some(sideCode.value))
@@ -319,8 +321,6 @@ trait TrafficSignLinearGenerator {
 
   def getPairSign(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int): Option[PersistedTrafficSign] = {
     if (debbuger) println("getPairSign")
-    val mainSignType = trafficSignService.getProperty(mainSign, trafficSignService.typePublicId).get.propertyValue.toInt
-    val mainAdditionalPanels = trafficSignService.getAllProperties(mainSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel])
 
     allSignsRelated.filterNot(_.id == mainSign.id).filter(_.linkId == actualRoadLink.linkId).find { sign =>
       compareValue(createValue(Seq(mainSign)).get, createValue(Seq(sign)).get) && sign.validityDirection != direction
@@ -540,7 +540,7 @@ trait TrafficSignLinearGenerator {
         if (toUpdateValue.nonEmpty) {
           val head = toUpdateValue.head
 
-          updateLinearAsset(head.oldAssetId.get, segment.value, userUpdate)
+          updateLinearAsset(head.oldAssetId.get, mergeValue(segment.value), userUpdate)
           updateRelation(segment, head)
 
           applyChangesBySegments(allSegments.filterNot(_ == segment), existingSegments.filterNot(_ == head))
@@ -650,8 +650,7 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
         }.toSet
 
         types.map{ typeId =>
-          val exceptions = if(signAllowException.contains(typeId.value))
-            ProhibitionExceptionClass.fromTrafficSign(additionalPanel.map(panel => TrafficSignType.applyOTHValue(panel.panelType)))
+          val exceptions = if(signAllowException.contains(typeId.value)) ProhibitionExceptionClass.fromTrafficSign(additionalPanel.map(panel => TrafficSignType.applyOTHValue(panel.panelType)))
           else Set.empty[Int]
 
           ProhibitionValue(typeId.value, validityPeriods, exceptions)
@@ -718,6 +717,17 @@ case class TrafficSignProhibitionGenerator(roadLinkServiceImpl: RoadLinkService)
 
   override def withdraw(value1: Value, value2: Value): Value = {
      Prohibitions(value1.asInstanceOf[Prohibitions].prohibitions.diff(value2.asInstanceOf[Prohibitions].prohibitions))
+  }
+
+  override def mergeValue(values: Value): Value = {
+    Prohibitions(
+      values.asInstanceOf[Prohibitions].prohibitions.foldLeft(Seq.empty[ProhibitionValue] ) { case (res, value) =>
+      res.find(_.typeId == value.typeId) match {
+        case Some(result) =>
+          res.filterNot(_.typeId == value.typeId) :+ result.copy(validityPeriods = value.validityPeriods ++ result.validityPeriods, exceptions = value.exceptions ++ result.exceptions )
+        case None => res :+ value
+      }
+    })
   }
 }
 
