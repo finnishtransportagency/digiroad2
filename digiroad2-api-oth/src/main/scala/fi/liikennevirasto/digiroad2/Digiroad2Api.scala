@@ -21,10 +21,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.HttpStatus
-import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
@@ -1938,24 +1936,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
     val cachedRoadLinks = roadLinkService.getTinyRoadLinkFromVVH(municipalityCode).map(_.linkId).toSet
     val results = roadLinkService.getPrivateRoadsInfoByLinkIds(cachedRoadLinks)
-    val groupedResults = results.groupBy(_._1).map(a =>
-      (a._1,
-        a._2.map(_._2).filter(_.get._1 == roadLinkService.privateRoadAssociationPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == roadLinkService.accessRightIDPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == roadLinkService.additionalInfoPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == roadLinkService.lastModifiedDatePublicId).map(_.get._2).headOption
-      )
-    ).groupBy(elem => (elem._2, elem._3, elem._4, elem._5))
+    val groupedResults = roadLinkService.groupPrivateRoadInformation(results)
     Map(
       "municipalityName" -> municipalityName,
       "municipalityCode" -> municipalityCode,
       "results" ->
         groupedResults.map{result =>
           Map(
-            "privateRoadName" -> result._1._1.getOrElse(""),
-            "associationId" -> result._1._2.getOrElse(""),
-            "additionalInfo" -> result._1._3.getOrElse(99),
-            "lastModifiedDate" -> result._1._4.get
+            "privateRoadName" -> result.privateRoadName.getOrElse(""),
+            "associationId" -> result.associationId.getOrElse(""),
+            "additionalInfo" -> result.additionalInfo.getOrElse(99),
+            "lastModifiedDate" -> result.lastModifiedDate.get
           )
         }
     )

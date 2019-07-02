@@ -19,8 +19,8 @@
         $('.container').hide();
         $('#work-list').show();
         $('body').addClass('scrollable');
-        addSpinner();
         me.generateWorkList(listP);
+        addSpinner();
       });
     };
 
@@ -32,6 +32,31 @@
       $('.spinner-overlay').remove();
     };
 
+    this.downloadCSV = function(csv, filename) {
+      var csvFile = new Blob(["\ufeff", csv], {type: "text/csv;charset=ANSI"});
+      $('.btn-download').attr("href", window.URL.createObjectURL(csvFile)).attr("download", filename).one("click", function(){});
+    };
+
+    this.exportTableToCSV = function(municipalityName, html, filename) {
+      var date = new Date();
+      var csv = [];
+
+      csv.push(municipalityName + ";Tulostettu;" + String(date.getDate()).padStart(2, '0') + "/" + String(date.getMonth()).padStart(2, '0') + "/" + String(date.getFullYear()));
+
+      var rows = document.querySelectorAll("table tr");
+
+      for (var i = 0; i < rows.length; i++) {
+        var row = [], cols = rows[i].querySelectorAll("td, th");
+
+        for (var j = 0; j < cols.length; j++)
+          row.push(cols[j].innerText);
+
+        csv.push(row.join(";"));
+      }
+
+      me.downloadCSV(csv.join("\n"), filename);
+    };
+
     this.workListItemTable = function(result) {
       var additionalInfoIds = {
         1: 'Tieto toimitettu, rajoituksia',
@@ -39,12 +64,16 @@
         99: 'Ei toimitettu'
       };
 
-      var downloadCsvButton = $('<button />').addClass('btn btn-primary btn-download')
+      var downloadCsvButton = $('<a />').addClass('btn btn-primary btn-download')
         .text('Lataa CSV')
         .append("<img src='images/icons/export-icon.png'/>")
-        .click();
+        .click(function() {
+          var html = $(".work-list").find(" table");
+          var date = new Date();
+          me.exportTableToCSV(result.municipalityName, html, me.title.toLowerCase()  + "_" + result.municipalityCode + "_" + String(date.getDate()).padStart(2, '0') + "-" + String(date.getMonth()).padStart(2, '0') + "-" + String(date.getFullYear())+ ".csv");
+        });
 
-      var municipilatyHeader = function(municipalityName) {
+      var municipalityHeader = function(municipalityName) {
         return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(downloadCsvButton);
       };
 
@@ -71,7 +100,7 @@
           .append($('<tbody>').append(tableBodyRows(values.results))).append('</tbody>');
       };
 
-      return $('<div id="formTable"/>').append(municipilatyHeader(result.municipalityName)).append(tableForGroupingValues(result));
+      return $('<div id="formTable"/>').append(municipalityHeader(result.municipalityName)).append(tableForGroupingValues(result));
     };
 
     this.generateWorkList = function(listP) {

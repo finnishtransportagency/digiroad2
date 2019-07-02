@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, T
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
+import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
@@ -59,6 +59,7 @@ object RoadLinkType{
 
 sealed trait AdditionalInformation {
   def value: String
+  def label: String
 }
 
 object AdditionalInformation{
@@ -68,10 +69,12 @@ object AdditionalInformation{
     values.find(_.value == stringValue).getOrElse(NotDelivered)
   }
 
-  case object NotDelivered extends AdditionalInformation { def value = "99" }
-  case object DeliveredWithRestrictions extends AdditionalInformation { def value = "1" }
-  case object DeliveredWithoutRestrictions extends AdditionalInformation { def value = "2" }
+  case object NotDelivered extends AdditionalInformation { def value = "99"; def label = "Ei toimitettu"; }
+  case object DeliveredWithRestrictions extends AdditionalInformation { def value = "1"; def label = "Tieto toimitettu, rajoituksia"; }
+  case object DeliveredWithoutRestrictions extends AdditionalInformation { def value = "2"; def label = "Tieto toimitettu, ei rajoituksia"; }
 }
+
+case class PrivateRoadInfoStructure(privateRoadName: Option[String], associationId: Option[String], additionalInfo: Option[String],lastModifiedDate: Option[String])
 
 /**
   * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
@@ -346,7 +349,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }.toSeq
   }
 
-  def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long]) = {
+  def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long]): List[(Long, Option[(String, String)])] = {
     withDynTransaction {
       MassQuery.withIds(linkIds) { idTableName =>
         fetchOverridedRoadLinkAttributes(idTableName)
@@ -822,7 +825,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             left join #$idTableName i on i.id = rla.link_id and (rla.valid_to IS NULL OR rla.valid_to > sysdate)
       """.as[RoadLinkAttributeInfo].list
 
-    val a = fetchResult.map(row => {
+    fetchResult.map(row => {
       val rla = (row.name, row.value) match {
         case (Some(name), Some(value)) => Option((name, value))
         case _ => None
@@ -830,10 +833,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
       row.id -> rla
     }
-    )
-    val b = getPrivateRoadLastModification(fetchResult)
-
-    a ++ b
+    ) ++ getPrivateRoadLastModification(fetchResult)
   }
 
   private def getPrivateRoadLastModification(fetchResult: Seq[RoadLinkAttributeInfo]): Seq[(Long, Option[(String, String)])] = {
@@ -850,6 +850,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     ).flatten.toSeq
   }
 
+
+  def groupPrivateRoadInformation(results: List[(Long, Option[(String, String)])]): Seq[PrivateRoadInfoStructure] = {
+    results.groupBy(_._1).map(a =>
+      (a._1,
+        a._2.map(_._2).filter(_.get._1 == privateRoadAssociationPublicId).map(_.get._2).headOption,
+        a._2.map(_._2).filter(_.get._1 == accessRightIDPublicId).map(_.get._2).headOption,
+        a._2.map(_._2).filter(_.get._1 == additionalInfoPublicId).map(_.get._2).headOption,
+        a._2.map(_._2).filter(_.get._1 == lastModifiedDatePublicId).map(_.get._2).headOption
+      )
+    ).groupBy(elem => PrivateRoadInfoStructure(elem._2, elem._3, elem._4, elem._5)).keys.toSeq
+  }
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
     val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
