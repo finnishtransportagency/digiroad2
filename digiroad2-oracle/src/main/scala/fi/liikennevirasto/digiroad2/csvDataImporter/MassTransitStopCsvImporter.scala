@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, FloatingReason, ImportResult, IncompleteRow, MalformedRow, Status}
+import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, IncompleteRow, MalformedRow, Status}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, PropertyValue, SimpleProperty, Unknown}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -45,11 +45,8 @@ class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBus
 
 
 trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
-//  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
-//  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-  override def roadLinkService: RoadLinkService
-//  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
-  override def eventBus: DigiroadEventBus
+  def roadLinkService: RoadLinkService
+  def eventBus: DigiroadEventBus
 
   class AssetNotFoundException(externalId: Long) extends RuntimeException
   case class CsvAssetRow(externalId: Option[Long], properties: Seq[AssetProperty])
@@ -104,6 +101,8 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "Roska-astia" -> "roska_astia",
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
+
+  override val intValueFieldsMapping = externalIdMapping
 
    val externalIdMapping = Map(
     "Valtakunnallinen ID" -> "external_id"
@@ -201,6 +200,9 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
       } else {
         if (longValueFieldsMapping.contains(key)) {
           val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if(intValueFieldsMapping.contains(key)) {
+          val (malformedParameters, properties) = verifyIntType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (textFieldMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = textFieldMappings(key), value = Seq(PropertyValue(value))) :: result._2)

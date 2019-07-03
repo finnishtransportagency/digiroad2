@@ -16,6 +16,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val codeValueFieldsMapping: Map[String, String] = Map("turvavarustus" -> "safety equipment")
+  override val intValueFieldsMapping: Map[String, String] = codeValueFieldsMapping
   override val specificFieldsMapping: Map[String, String] = Map("tasoristeystunnus" -> "id")
   override val nonMandatoryFieldsMapping: Map[String, String] = Map("nimi" -> "name")
   override val mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ codeValueFieldsMapping ++ specificFieldsMapping

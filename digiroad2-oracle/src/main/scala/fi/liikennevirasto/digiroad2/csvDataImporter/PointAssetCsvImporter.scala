@@ -34,7 +34,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   val longValueFieldsMapping: Map[String, String] = coordinateMappings
   val codeValueFieldsMapping: Map[String, String] = Map()
   val stringValueFieldsMapping: Map[String, String] = Map()
-
+  val intValueFieldsMapping: Map[String, String] = Map()
   val mandatoryFieldsMapping: Map[String, String] = coordinateMappings
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
@@ -57,7 +57,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def verifyCodeType(parameterName: String, parameterValue: String): ParsedRow = {
+  def verifyIntType(parameterName: String, parameterValue: String): ParsedRow = {
     if (parameterValue.forall(_.isDigit)) {
       (Nil, List(AssetProperty(columnName = codeValueFieldsMapping(parameterName), value = parameterValue)))
     } else {
@@ -117,7 +117,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) {
-      (result, parameter) =>\
+      (result, parameter) =>
         val (key, value) = parameter
 
         if (isBlank(value.toString)) {
@@ -131,8 +131,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
           if (longValueFieldsMapping.contains(key)) {
             val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-          } else if (codeValueFieldsMapping.contains(key)) {
-            val (malformedParameters, properties) = verifyCodeType(key, value.toString)
+          } else if (intValueFieldsMapping.contains(key)) {
+            val (malformedParameters, properties) = verifyIntType(key, value.toString)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
           } else if (stringValueFieldsMapping.contains(key)) {
             val (malformedParameters, properties) = verifyStringType(key, value.toString)
