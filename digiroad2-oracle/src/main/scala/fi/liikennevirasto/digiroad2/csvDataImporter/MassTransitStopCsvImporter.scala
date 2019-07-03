@@ -39,7 +39,7 @@ class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBus
     val csvRead = csvReader.allWithHeaders()
     val strategy = getStrategy(csvRead.head)
 
-    strategy.importAssets(inputStream: InputStream, fileName, user, roadTypeLimitations)
+    strategy.importAssets(csvRead: List[Map[String, String]], fileName, user, roadTypeLimitations)
   }
 }
 
@@ -102,17 +102,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
-  override val intValueFieldsMapping = externalIdMapping
+   protected val externalIdMapping = Map("Valtakunnallinen ID" -> "external_id")
 
-   val externalIdMapping = Map(
-    "Valtakunnallinen ID" -> "external_id"
-  )
+  override val intValueFieldsMapping = externalIdMapping
 
   val optionalMappings = externalIdMapping ++ coordinateMappings
 
   val mappings: Map[String, String] = textFieldMappings ++ multipleChoiceFieldMappings ++ singleChoiceFieldMappings
-
-  val mandatoryParameters: Set[String] = mappings.keySet
 
   private def municipalityValidation(municipality: Int)(user: User): Unit = {
     if (!user.isAuthorizedToWrite(municipality)) {
@@ -134,12 +130,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
+  case class CsvImportMassTransitStop(id: Long, floating: Boolean, roadLinkType: AdministrativeClass) extends FloatingAsset {}
+
   private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String): Either[AdministrativeClass, MassTransitStopWithProperties] = {
-    class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
       val roadLink = vvhClient.roadLinkData.fetchByLinkId(stop.linkId)
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
-      (new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
+      (CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
 
     val optionalAsset = massTransitStopService.getByNationalId(externalId, municipalityValidation, massTransitStopTransformation)
@@ -238,12 +235,12 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }).start()
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
+  def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
 
     val logId = create(user.username, logInfo, fileName)
     fork {
       try {
-        val result = processing(inputStream, user, roadTypeLimitations)
+        val result = processing(csvReader, user, roadTypeLimitations)
         result match {
           case ImportResultPointAsset(Nil, Nil, Nil, Nil, Nil) => update(logId, Status.OK)
           case _ =>
@@ -253,19 +250,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
       } catch {
         case e: Exception =>
           update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
-      } finally {
-        inputStream.close()
       }
     }
   }
 
-  def processing(inputStream: InputStream, user: User, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResultPointAsset = {
-    val streamReader = new InputStreamReader(inputStream, "UTF-8")
-    val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
-      override val delimiter: Char = ';'
-    })
+  def processing(csvReader: List[Map[String, String]], user: User, roadTypeLimitations: Set[AdministrativeClass] = Set()): ImportResultPointAsset = {
     withDynTransaction {
-      csvReader.allWithHeaders().foldLeft(ImportResultPointAsset()) {
+      csvReader.foldLeft(ImportResultPointAsset()) {
         (result, row) =>
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
@@ -303,9 +294,11 @@ object ActionType {
 }
 
 trait CsvOperations extends MassTransitStopCsvImporter {
-
-  def is(row: Map[String, String]): Boolean
-
+  def is(csvRowWithHeaders: Map[String, String]): Boolean = {
+    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
+    mandatoryFieldsMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
+  }
 }
 
 class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
@@ -315,13 +308,9 @@ class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def is(csvRowWithHeaders: Map[String, String]): Boolean = {
-    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
-    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
-    externalIdMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
-  }
-
-  override val mandatoryFieldsMapping: Map[String, String] = externalIdMapping
+  override def mandatoryFieldsMapping: Map[String, String] = Map(
+    "Valtakunnallinen ID" -> "external_id"
+  )
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
@@ -337,18 +326,12 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def is(csvRowWithHeaders: Map[String, String]) = {
-    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
-    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
-    coordinateMappings.keys.toSeq.sorted.equals(actionParameters.sorted)
-  }
-
-
+  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     val parsedRow = CsvAssetRow(None, properties = properties)
-    updateAsset(parsedRow.externalId.get, parsedRow.properties, roadTypeLimitations, user) //call the create method, not update
-      .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+
+    throw new UnsupportedOperationException(s"method missing") //TODO DROTH-2002
   }
 }
 
@@ -359,16 +342,10 @@ class PositionUpdater (roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def is(csvRowWithHeaders: Map[String, String]) = {
-    val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
-    val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
-    optionalMappings.keys.toSeq.sorted.equals(actionParameters.sorted)
-  }
-  override val mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ externalIdMapping
+  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ externalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
-    updateAsset(parsedRow.externalId.get, parsedRow.properties, roadTypeLimitations, user) //call the correct update method
-      .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+    throw new UnsupportedOperationException(s"method missing") //TODO DROTH-2001
   }
 }

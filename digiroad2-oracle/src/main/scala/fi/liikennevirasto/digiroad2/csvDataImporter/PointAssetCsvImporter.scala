@@ -27,19 +27,19 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
   final val coordinateMappings = Map(
-    "koordinaatti x" -> "lon",
-    "koordinaatti y" -> "lat"
+    "Koordinaatti X" -> "lon",
+    "Koordinaatti Y" -> "lat"
   )
 
   val longValueFieldsMapping: Map[String, String] = coordinateMappings
   val codeValueFieldsMapping: Map[String, String] = Map()
   val stringValueFieldsMapping: Map[String, String] = Map()
   val intValueFieldsMapping: Map[String, String] = Map()
-  val mandatoryFieldsMapping: Map[String, String] = coordinateMappings
+  def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
 
-  val mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+  def mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
 
   def checkMinimumDistanceFromRoadLink(pointPosition: Point, linkGeometry: Seq[Point]): Boolean = {
     GeometryUtils.minimumDistance(pointPosition, linkGeometry) >= MinimumDistanceFromRoadLink
@@ -59,7 +59,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   def verifyIntType(parameterName: String, parameterValue: String): ParsedRow = {
     if (parameterValue.forall(_.isDigit)) {
-      (Nil, List(AssetProperty(columnName = codeValueFieldsMapping(parameterName), value = parameterValue)))
+      (Nil, List(AssetProperty(columnName = intValueFieldsMapping(parameterName), value = parameterValue)))
     } else {
       (List(parameterName), Nil)
     }

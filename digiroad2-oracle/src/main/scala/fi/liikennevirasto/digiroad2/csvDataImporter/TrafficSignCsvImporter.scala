@@ -33,10 +33,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
-  private val longValueFieldMappings = Map(
-    "koordinaatti x" -> "lon",
-    "koordinaatti y" -> "lat"
-  )
+  private val longValueFieldMappings = coordinateMappings
 
   private val nonMandatoryMappings = Map(
     "arvo" -> "value",
@@ -127,7 +124,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  def createAsset(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData ): ImportResultData = {
+  override def createAsset(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData ): ImportResultData = {
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val props = trafficSignAttribute.properties
