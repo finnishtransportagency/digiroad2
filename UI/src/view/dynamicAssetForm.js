@@ -407,8 +407,10 @@
 
             var checkBoxElement = "input[name = '" + field.publicId + '-' + sideCode + "']";
 
+            var checkSpecialClass = field.publicId === "suggest_box" ? "suggestion" : "";
+
             me.element = $('' +
-              '<div class="form-group">' +
+              '<div class="form-group ' + checkSpecialClass + '">' +
               '<label class="control-label">'+ field.label+'</label>' +
               '<div class="choice-group">' +
               '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice-' + sideCode + '" name = "' + field.publicId + '-' + sideCode + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
