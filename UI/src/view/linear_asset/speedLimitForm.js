@@ -202,10 +202,10 @@
       });
 
       rootElement.find('select.speed-limit-a').change(function(event) {
-        selectedSpeedLimit.setAValue(extractValue(event));
+        selectedSpeedLimit.setAValue({value: extractValue(event), isSuggested: false});
       });
       rootElement.find('select.speed-limit-b').change(function(event) {
-        selectedSpeedLimit.setBValue(extractValue(event));
+        selectedSpeedLimit.setBValue({value: extractValue(event), isSuggested: false});
       });
       rootElement.find('#separate-limit').on('click', function() { selectedSpeedLimit.separate(); });
       rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });

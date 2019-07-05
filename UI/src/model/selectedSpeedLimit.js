@@ -28,7 +28,7 @@
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimitValue = self.getValue().value;
+      originalSpeedLimitValue = self.getValue();
       collection.setSelection(self);
       eventbus.trigger('speedLimit:selected', self);
     };
@@ -156,7 +156,7 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimitValue }); });
+      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: { value: originalSpeedLimitValue } }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);

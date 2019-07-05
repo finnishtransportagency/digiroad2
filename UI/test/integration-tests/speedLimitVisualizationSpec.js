@@ -23,13 +23,13 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
     });
     it('displays speed limits', function() {
       var speedLimitVectors = lineStrings(testHelpers.getSpeedLimitFeatures(openLayersMap));
-      var limits = _.map(speedLimitVectors, function(vector) { return vector.getProperties().value; });
+      var limits = _.map(speedLimitVectors, function(vector) { return vector.getProperties().value.value; });
       expect(limits).to.have.length(2);
       expect(limits).to.have.members([40, 60]);
     });
     it('displays speed limit signs', function() {
       var speedLimitSigns = points(testHelpers.getSpeedLimitFeatures(openLayersMap));
-      var limits = _.map(speedLimitSigns, function(point) { return point.getProperties().value; });
+      var limits = _.map(speedLimitSigns, function(point) { return point.getProperties().value.value; });
       expect(limits).to.have.length(2);
       expect(limits).to.have.members([40, 60]);
     });

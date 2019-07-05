@@ -10,6 +10,7 @@
       me.backend = parameters.backend;
       me.saveCondition = parameters.saveCondition;
       me.feedbackCollection = parameters.feedbackCollection;
+      me.selectedAsset = me.pointAsset.selectedPointAsset;
       me.bindEvents(parameters);
     };
 

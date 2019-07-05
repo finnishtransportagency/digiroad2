@@ -96,11 +96,19 @@ root.PointAssetForm = function() {
     rootElement.find('.suggested-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), +eventTarget.prop('checked'));
+
+      if(id) {
+        me.switchSuggestedValue(true);
+        rootElement.find('.suggested-checkbox').prop('checked', false);
+      }
     });
 
     rootElement.find('.editable').not('.suggestion-box').on('change', function() {
-      selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), false);
-      rootElement.find('.suggested-checkbox').prop('checked', false);
+      if(id) {
+        me.switchSuggestedValue(true);
+        rootElement.find('.suggested-checkbox').prop('checked', false);
+        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), false);
+      }
     });
 
     rootElement.find('input[type="text"]').on('input change', function (event) {
@@ -108,6 +116,12 @@ root.PointAssetForm = function() {
       var obj = {};
       obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
       selectedAsset.setPropertyByPublicId(eventTarget.attr('name'), eventTarget.val());
+
+      if(id) {
+        me.switchSuggestedValue(true);
+        rootElement.find('.suggested-checkbox').prop('checked', false);
+        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), false);
+      }
     });
 
     rootElement.find('button#change-validity-direction').on('click', function() {
@@ -120,6 +134,7 @@ root.PointAssetForm = function() {
     });
 
     rootElement.find('.pointasset button.cancel').on('click', function() {
+      me.switchSuggestedValue(false);
       selectedAsset.cancel();
     });
 
@@ -156,13 +171,14 @@ root.PointAssetForm = function() {
 
   var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
     var suggestedBoxValue = getSuggestedBoxValue();
-    if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset, suggestedBoxValue)) {
+    var suggestedBoxDisabledState = getSuggestedBoxDisabledState();
+
+    if(suggestedBoxDisabledState) {
+      var disabledValue = 'disabled';
+      return me.renderSuggestBoxElement(disabledValue);
+    } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset, suggestedBoxValue)) {
       var checkedValue = suggestedBoxValue ? 'checked' : '';
-      return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
-              '<label class="control-label">Vihjetieto</label>' +
-              '<p class="form-control-static">' + 'Kylla' + '</p>' +
-              '<input type="checkbox" class="form-control suggested-checkbox" name="suggest_box"' + checkedValue + '>' +
-            '</div>';
+      return me.renderSuggestBoxElement(checkedValue);
     } else {
       return '';
     }
@@ -221,6 +237,14 @@ root.PointAssetForm = function() {
       '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
   };
 
+  this.renderSuggestBoxElement = function(inputProperty) {
+    return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
+            '<label class="control-label">Vihjetieto</label>' +
+            '<p class="form-control-static">' + 'Kylla' + '</p>' +
+            '<input type="checkbox" class="form-control suggested-checkbox" name="suggest_box"' + inputProperty + '>' +
+           '</div>';
+  };
+
   this.toggleMode = function(rootElement, readOnly) {
     rootElement.find('.delete').toggle(!readOnly);
     rootElement.find('.form-controls').toggle(!readOnly);
@@ -243,6 +267,14 @@ root.PointAssetForm = function() {
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
     $('ul[class=information-content]').append('' +
       '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
+  };
+
+  var getSuggestedBoxDisabledState = function() {
+    return $('.suggested-checkbox').is(':disabled');
+  };
+
+  this.switchSuggestedValue = function(disabledValue) {
+    $('.suggested-checkbox').attr('disabled', disabledValue);
   };
 };
 })(this);
