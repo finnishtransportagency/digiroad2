@@ -3,13 +3,13 @@
     var selection = [];
     var self = this;
     var dirty = false;
-    var originalSpeedLimitValue = null;
+    var originalSpeedLimitValues = null;
     var isSeparated = false;
 
     this.splitSpeedLimit = function(id, split) {
       collection.splitSpeedLimit(id, split, function(splitSpeedLimits) {
         selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
-        originalSpeedLimitValue = splitSpeedLimits.existing.value;
+        originalSpeedLimitValues = { isSuggested: splitSpeedLimits.existing.value.isSuggested, value: splitSpeedLimits.existing.value.value };
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
@@ -28,7 +28,7 @@
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimitValue = self.getValue();
+      originalSpeedLimitValues = { isSuggested: self.getSuggestionValue(), value: self.getValue() };
       collection.setSelection(self);
       eventbus.trigger('speedLimit:selected', self);
     };
@@ -62,7 +62,7 @@
       var payload = {
         newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'linkId', 'startMeasure', 'endMeasure'); }),
         ids: _.map(knownSpeedLimits, 'id'),
-        value: value
+        value: { isSuggested: false, value: value }
       };
       backend.updateSpeedLimits(payload, function() {
         dirty = false;
@@ -145,7 +145,7 @@
     var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
       if (isSeparated) {
-        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
+        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValues, sideCode: 1});
         collection.replaceSegments([selection[0]], [originalSpeedLimit]);
       }
       collection.setSelection(null);
@@ -156,7 +156,7 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: { value: originalSpeedLimitValue } }); });
+      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value:  originalSpeedLimitValues }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);

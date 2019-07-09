@@ -107,7 +107,7 @@ root.PointAssetForm = function() {
       if(id) {
         me.switchSuggestedValue(true);
         rootElement.find('.suggested-checkbox').prop('checked', false);
-        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), false);
+        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), 0);
       }
     });
 
@@ -120,7 +120,7 @@ root.PointAssetForm = function() {
       if(id) {
         me.switchSuggestedValue(true);
         rootElement.find('.suggested-checkbox').prop('checked', false);
-        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), false);
+        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), 0);
       }
     });
 

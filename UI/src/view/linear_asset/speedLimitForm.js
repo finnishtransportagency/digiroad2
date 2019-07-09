@@ -50,7 +50,7 @@
                     '<div class="form-group editable suggestion"> ' +
                         '<label class="control-label">Vihjetieto</label>' +
                         '<p class="form-control-static"> kyllä </p>' +
-                        '<input type="checkbox" class="form-control suggestionCheckBox"'  + checkedValue + '>' +
+                        '<input type="checkbox" class="form-control suggestionCheckBox" '  + checkedValue + '>' +
                     '</div>';
           } else
               return '';
@@ -172,16 +172,17 @@
       handleSuggestionBox();
     });
 
-    $(rootElement).one('click','.speed-limit-a, .speed-limit-b', function () {
+    $(rootElement).find('.speed-limit-a, .speed-limit-b').on('click', function () {
       $(rootElement).find('.suggestionCheckBox').prop('checked', false);
       selectedSpeedLimit.setValue( {isSuggested: false, value: selectedSpeedLimit.getBValue().value});
       selectedSpeedLimit.setValue( {isSuggested: false, value: selectedSpeedLimit.getValue().value});
     });
 
-    $(rootElement).one('change','.speed-limit', function () {
+    $(rootElement).find('.speed-limit').on('change', function () {
       if(!_.isNull(selectedSpeedLimit.getId())) {
+        $(rootElement).find('.suggestionCheckBox').attr('disabled', true);
         $(rootElement).find('.suggestionCheckBox').prop('checked', false);
-        $(rootElement).find('.suggestion').hide();
+        selectedSpeedLimit.setValue({isSuggested: false, value: parseInt(rootElement.find('select.speed-limit').val(),10)});
       }
     });
 
@@ -199,6 +200,12 @@
         var checkBoxValue = rootElement.find('.suggestionCheckBox').prop('checked');
         var speedLimitValue = parseInt(rootElement.find('select.speed-limit').val(),10);
         selectedSpeedLimit.setValue({isSuggested: checkBoxValue ? checkBoxValue : false, value: speedLimitValue});
+
+        if(!_.isNull(selectedSpeedLimit.getId())) {
+          $(rootElement).find('.suggestionCheckBox').attr('disabled', true);
+          $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+          selectedSpeedLimit.setValue({isSuggested: false, value: speedLimitValue});
+        }
       });
 
       rootElement.find('select.speed-limit-a').change(function(event) {

@@ -398,11 +398,7 @@ window.SpeedLimitLayer = function(params) {
       selectToolControl.addSelectionFeatures(feature);
     }
   };
-  
-  var removeFeature = function(feature) {
-    return vectorSource.removeFeature(feature);
-  };
-  
+
   var speedLimitSelected = function() {
     decorateSelection(vectorLayer);
   };
@@ -411,8 +407,6 @@ window.SpeedLimitLayer = function(params) {
     if (selectedSpeedLimit.exists()) {
       var feature = _.filter(layerToUse.getSource().getFeatures(), function(feature) { return selectedSpeedLimit.isSelected(feature.getProperties()); });
       if (feature) {
-        // var pointFeatures = _.filter(layerToUse.getSource().getFeatures(), function(layerFeature){ return layerFeature.values_.geometry instanceof ol.geom.Point;});
-        // _.each(pointFeatures, removeFeature);
         selectToolControl.addSelectionFeatures(feature);
       }
       if (selectedSpeedLimit.isSplitOrSeparated()) {
@@ -513,7 +507,7 @@ window.SpeedLimitLayer = function(params) {
 
     var speedLimits = _.flatten(speedLimitChains);
     drawSpeedLimits(speedLimits, vectorLayer);
-     eventbus.trigger('speedLimits:redrawed', speedLimitChains);
+    eventbus.trigger('speedLimits:redrawed', speedLimitChains);
   };
 
   var drawSpeedLimits = function(speedLimits, layerToUse) {

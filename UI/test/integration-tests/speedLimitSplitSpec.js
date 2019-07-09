@@ -111,8 +111,8 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
               var backendCall = _.head(splitBackendCalls);
               expect(backendCall.id).to.equal(111);
               expect(backendCall.splitMeasure).to.be.closeTo(40.0, 0.5);
-              expect(backendCall.createdLimit.value).to.equal(100);
-              expect(backendCall.existingLimit.value).to.equal(40);
+              expect(backendCall.createdLimit).to.equal(100);
+              expect(backendCall.existingLimit).to.equal(40);
             });
           });
         });
