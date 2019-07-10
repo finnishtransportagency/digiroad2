@@ -1708,20 +1708,19 @@ object DataFixture {
 
     val username = "external_private_road_info"
 
-    def insertOrUpdate(linkProperties: LinkProperties, name: String, value: String, mmlId: Option[Long]): Unit = {
+    def insert(linkProperties: LinkProperties, name: String, value: String, mmlId: Option[Long]): Unit = {
       try {
         LinkAttributesDao.insertAttributeValue(linkProperties, username, name, value, mmlId)
       } catch {
         case ex: SQLIntegrityConstraintViolationException =>
           println(s" Update attribute value for linkId: ${linkProperties.linkId} with attribute name $name")
-        //              LinkAttributesDao.updateAttributeValue(linkId, username, name, value)
         case e: Exception => throw new RuntimeException("SQL exception " + e.getMessage)
       }
     }
 
     //Get All Municipalities
     val municipalities: Seq[Int] = OracleDatabase.withDynSession {
-/*      Queries.getMunicipalities*/ Seq(5, 9)
+      Queries.getMunicipalities
     }
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
@@ -1742,6 +1741,7 @@ object DataFixture {
           val (privateRoad, otherRoad) = roadLinks.partition(_.administrativeClass == Private)
 
           otherRoad.foreach { road =>
+            println(s"Change Administrative Class for link ${road.linkId}")
             val linkProperties = LinkProperties(road.linkId, road.functionalClass, road.linkType, road.trafficDirection, road.administrativeClass)
             if (road.administrativeClass != Unknown)
               AdministrativeClassDao.updateValues(linkProperties, roadLinksVVH.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
@@ -1753,10 +1753,10 @@ object DataFixture {
             val linkProperties = LinkProperties(road.linkId, road.functionalClass, road.linkType, road.trafficDirection, road.administrativeClass)
             privateRoadInfo(road.linkId).foreach { case (_, mmlId, _, accessRight, name) =>
               if (accessRight.nonEmpty)
-                insertOrUpdate(linkProperties, roadLinkService.accessRightIDPublicId, accessRight, Some(mmlId))
+                insert(linkProperties, roadLinkService.accessRightIDPublicId, accessRight, Some(mmlId))
 
               if (name.nonEmpty)
-                insertOrUpdate(linkProperties, roadLinkService.privateRoadAssociationPublicId, name, Some(mmlId))
+                insert(linkProperties, roadLinkService.privateRoadAssociationPublicId, name, Some(mmlId))
             }
           }
         }
