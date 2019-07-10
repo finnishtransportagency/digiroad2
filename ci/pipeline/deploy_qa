@@ -72,7 +72,7 @@ pipeline {
                         STAGE_PUBLISH_CMD = [
                             "mvn deploy:deploy-file",
                             "-DgroupId=fi.liikennevirasto.digiroad2",
-                            "-DartifactId=oth-${get_environment()?.trim()}",
+                            "-DartifactId=digiroad2-${get_environment()?.trim()}",
                             "-Dversion=1.0.0-${BUILD_ID}",
                             "-DgeneratePom=true",
                             "-Dpackaging=war",
@@ -116,19 +116,19 @@ pipeline {
                         "--build-arg JENKINS_UID=${jenkins_uid}"
                     ].join(" ")
                     docker.build(
-                        "oth-frontend",
+                        "digiroad2-frontend",
                         "${build_args} -f ci/docker/Dockerfile.node ci"
                     )
                     docker.build(
-                        "oth-backend-sbt",
+                        "digiroad2-backend-sbt",
                         "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                     docker.build(
-                        "oth-maven-publish",
+                        "digiroad2-maven-publish",
                         "${build_args} -f ci/docker/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "oth-cap",
+                        "digiroad2-cap",
                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
                      )
                 }
@@ -145,9 +145,9 @@ pipeline {
         stage("Build: Frontend") {
             agent {
                 docker {
-                    image "oth-frontend"
+                    image "digiroad2-frontend"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -172,9 +172,9 @@ pipeline {
 		stage("Build: Backend") {
             agent {
                 docker {
-                    image "oth-backend-sbt"
+                    image "digiroad2-backend-sbt"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -200,9 +200,9 @@ pipeline {
         stage("Package & Publish") {
             agent {
                 docker {
-                    image "oth-maven-publish"
+                    image "digiroad2-maven-publish"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -229,7 +229,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "oth-cap"
+                    image "digiroad2-cap"
                     reuseNode true
                 }
             }
@@ -262,7 +262,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "oth-cap"
+                    image "digiroad2-cap"
                     reuseNode true
                 }
             }
