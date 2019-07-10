@@ -342,10 +342,10 @@ object Queries {
     """
   }
 
-  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, String, String)] = {
+  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
     sql"""
       select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
-    """.as[(Long, Long, Int, String, String)].list
+    """.as[(Long, Long, Int, Option[String], Option[String])].list
   }
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {

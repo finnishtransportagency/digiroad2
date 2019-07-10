@@ -1713,7 +1713,7 @@ object DataFixture {
         LinkAttributesDao.insertAttributeValue(linkProperties, username, name, value, mmlId)
       } catch {
         case ex: SQLIntegrityConstraintViolationException =>
-          println(s" Update attribute value for linkId: ${linkProperties.linkId} with attribute name $name")
+          println(s" Already exist attribute for linkId: ${linkProperties.linkId} with attribute name $name")
         case e: Exception => throw new RuntimeException("SQL exception " + e.getMessage)
       }
     }
@@ -1753,10 +1753,10 @@ object DataFixture {
             val linkProperties = LinkProperties(road.linkId, road.functionalClass, road.linkType, road.trafficDirection, road.administrativeClass)
             privateRoadInfo(road.linkId).foreach { case (_, mmlId, _, accessRight, name) =>
               if (accessRight.nonEmpty)
-                insert(linkProperties, roadLinkService.accessRightIDPublicId, accessRight, Some(mmlId))
+                insert(linkProperties, roadLinkService.accessRightIDPublicId, accessRight.get, Some(mmlId))
 
               if (name.nonEmpty)
-                insert(linkProperties, roadLinkService.privateRoadAssociationPublicId, name, Some(mmlId))
+                insert(linkProperties, roadLinkService.privateRoadAssociationPublicId, name.get, Some(mmlId))
             }
           }
         }
