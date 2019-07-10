@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.security.InvalidParameterException
+import java.sql.SQLIntegrityConstraintViolationException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.util.{Date, Properties}
@@ -25,6 +26,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -1700,6 +1702,69 @@ object DataFixture {
     println("\n")
   }
 
+  def importPrivateRoadInformation() : Unit = {
+    println("\nStart process to import road information")
+    println(DateTime.now())
+
+    val username = "external_private_road_info"
+
+    def insertOrUpdate(linkProperties: LinkProperties, name: String, value: String, mmlId: Option[Long]): Unit = {
+      try {
+        LinkAttributesDao.insertAttributeValue(linkProperties, username, name, value, mmlId)
+      } catch {
+        case ex: SQLIntegrityConstraintViolationException =>
+          println(s" Update attribute value for linkId: ${linkProperties.linkId} with attribute name $name")
+        //              LinkAttributesDao.updateAttributeValue(linkId, username, name, value)
+        case e: Exception => throw new RuntimeException("SQL exception " + e.getMessage)
+      }
+    }
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+/*      Queries.getMunicipalities*/ Seq(5, 9)
+    }
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Working on municipality : $municipality")
+
+        val privateRoadInfo = Queries.getPrivateRoadExternalInfo(municipality).groupBy(_._1)
+
+        if (privateRoadInfo.nonEmpty) {
+          println(s"Number of records to update ${privateRoadInfo.keySet.size}")
+
+          val roadLinksVVH = roadLinkService.fetchVVHRoadlinksAndComplementary(privateRoadInfo.keySet)
+          val roadLinks = roadLinkService.enrichRoadLinksFromVVH(roadLinksVVH)
+
+          val missingRoadLinks = privateRoadInfo.keySet.diff(roadLinks.map(_.linkId).toSet)
+          if (missingRoadLinks.nonEmpty)
+            println(s"LinkId not found ${missingRoadLinks.mkString(",")}")
+
+          val (privateRoad, otherRoad) = roadLinks.partition(_.administrativeClass == Private)
+
+          otherRoad.foreach { road =>
+            val linkProperties = LinkProperties(road.linkId, road.functionalClass, road.linkType, road.trafficDirection, road.administrativeClass)
+            if (road.administrativeClass != Unknown)
+              AdministrativeClassDao.updateValues(linkProperties, roadLinksVVH.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
+            else
+              AdministrativeClassDao.insertValues(linkProperties, roadLinksVVH.find(_.linkId == road.linkId).get, Some(username), Private.value, privateRoadInfo(road.linkId).map(_._2).headOption)
+          }
+
+          (privateRoad ++ otherRoad).foreach { road =>
+            val linkProperties = LinkProperties(road.linkId, road.functionalClass, road.linkType, road.trafficDirection, road.administrativeClass)
+            privateRoadInfo(road.linkId).foreach { case (_, mmlId, _, accessRight, name) =>
+              if (accessRight.nonEmpty)
+                insertOrUpdate(linkProperties, roadLinkService.accessRightIDPublicId, accessRight, Some(mmlId))
+
+              if (name.nonEmpty)
+                insertOrUpdate(linkProperties, roadLinkService.privateRoadAssociationPublicId, name, Some(mmlId))
+            }
+          }
+        }
+      }
+    }
+    println("Complete at time: " + DateTime.now())
+  }
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -2200,6 +2265,8 @@ object DataFixture {
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
         resolvingFrozenLinks()
+      case Some("import_private_road_info") =>
+        importPrivateRoadInformation()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2212,7 +2279,7 @@ object DataFixture {
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | create_hazmat_transport_prohibition_using_traffic_signs |" +
-        " create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links")
+        " create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links| import_private_road_info")
     }
   }
 }
