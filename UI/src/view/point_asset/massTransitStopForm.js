@@ -212,6 +212,15 @@
           wrapper.addClass('read-only');
           wrapper.removeClass('edit-mode');
         }
+
+        $('.form-horizontal').on('change', function () {
+          if (selectedMassTransitStopModel.getId()) {
+            var values = [{propertyValue: 0, propertyDisplayValue: "", checked: false}];
+            selectedMassTransitStopModel.setProperty("suggest_box", values, "checkbox");
+
+            rootElement.find('.suggested-box').prop('checked', false).attr('disabled', true);
+          }
+        });
       };
 
       var getStreetView = function() {
@@ -736,6 +745,7 @@
           'muokattu_viimeksi',
           'nimi_suomeksi',
           'nimi_ruotsiksi',
+          'suggest_box',
           'liitetyt_pysakit'];
 
         return _.sortBy(properties, function(property) {

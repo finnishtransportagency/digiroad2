@@ -292,7 +292,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
         "linkSource" -> stop.linkSource.value,
-        "isSuggested" -> extractPropertyValue("suggest_box", stop.propertyData, values => values.headOption.getOrElse(0)))
+        "propertyData" -> stop.propertyData)
     }
   }
 

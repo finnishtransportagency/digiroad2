@@ -318,7 +318,7 @@
       styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
       styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
       styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
-      styles = selectedMassTransitStopModel.isSuggested() ? styles.concat(createQuestionIconStyle(data, (IMAGE_MARGIN + (IMAGE_PADDING * 2) + IMAGE_WIDTH + NATIONAL_ID_WIDTH + 15) / 2)) : styles;
+      styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;
     };
 

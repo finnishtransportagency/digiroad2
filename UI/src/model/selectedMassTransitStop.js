@@ -543,15 +543,9 @@
     }
 
     function isSuggested(properties) {
-      if (properties)
-        return !!parseInt(properties.isSuggested);
-      else {
-        properties = getProperties();
-
-        return _.some(properties, function (property) {
-          return property.publicId === 'suggest_box' && !_.isEmpty(property.values) && !!parseInt(_.head(property.values).propertyValue);
-        });
-      }
+      return _.some( (_.isUndefined(properties.propertyData) ? properties.payload.properties : properties.propertyData), function (property) {
+        return property.publicId === 'suggest_box' && !_.isEmpty(property.values) && !!parseInt(_.head(property.values).propertyValue);
+      });
     }
 
     return {
