@@ -65,6 +65,10 @@
     return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && !isAdministratorELY)) && !floating;
   }
 
+  function saveNewBusStopStrategy() {
+    return selectedMassTransitStopModel.isSuggested(selectedMassTransitStopModel.get()) && _.isUndefined(selectedMassTransitStopModel.getId());
+  }
+
   var SaveButton = function(isTerminalActive) {
     var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
@@ -77,15 +81,24 @@
         });
       } else {
         if(optionalSave()){
-          new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
-            successCallback: function () {
-              selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
-              saveStop();
-            },
-            closeCallback: function () {
-              saveStop();
-            }
-          });
+          if(saveNewBusStopStrategy()) {
+            new GenericConfirmPopup('Because this asset is suggested it will not be created on Tierekisteri side. Do you which to keep it this way?', {
+              successCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
+                saveStop();
+              }});
+          } else {
+            new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
+              successCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
+                saveStop();
+              },
+              closeCallback: function () {
+                saveStop();
+              }
+            });
+          }
+
         } else {
           saveStop();
         }
