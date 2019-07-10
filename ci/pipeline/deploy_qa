@@ -1,6 +1,6 @@
 import java.net.URI
 def get_environment() {
-    return "testing"
+    return "integration"
 }
 
 pipeline {
