@@ -82,7 +82,7 @@
       } else {
         if(optionalSave()){
           if(saveNewBusStopStrategy()) {
-            new GenericConfirmPopup('Because this asset is suggested it will not be created on Tierekisteri side. Do you which to keep it this way?', {
+            new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi, siihen liittyviä tietoja ei lähetetä Tierekisteriin. Haluatko silti tallentaa sen OTH:ssa?', {
               successCallback: function () {
                 selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
                 saveStop();
