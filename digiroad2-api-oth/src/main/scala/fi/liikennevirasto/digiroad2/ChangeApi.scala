@@ -342,7 +342,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   }
 
   private def massTransitStopsToGeoJson(since: DateTime, massTransitStopsOnVallu: Seq[ChangedPointAsset]): Map[String, Any] = {
-    def getValiditiDatesProperties(stop: PersistedMassTransitStop, publicId: String): String = {
+    def getValidityDatesProperties(stop: PersistedMassTransitStop, publicId: String): String = {
       if (!propertyIsDefined(stop, publicId) || propertyIsEmpty(stop, publicId)) {
         "true"
       } else
@@ -363,8 +363,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             case Some(_) => massTransitStop.modified
             case _ => massTransitStop.created
           }
-          val validTo = getValiditiDatesProperties(massTransitStop, "viimeinen_voimassaolopaiva")
-          val validFrom = getValiditiDatesProperties(massTransitStop, "ensimmainen_voimassaolopaiva")
+          val validTo = getValidityDatesProperties(massTransitStop, "viimeinen_voimassaolopaiva")
+          val validFrom = getValidityDatesProperties(massTransitStop, "ensimmainen_voimassaolopaiva")
 
           Map(
             "id" -> massTransitStop.nationalId,
