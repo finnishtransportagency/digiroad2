@@ -39,7 +39,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
     OracleHeightLimitDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingHeightLimit, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+  override def create(asset: IncomingHeightLimit, username: String, roadLink: RoadLink, newTransaction: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
 
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, SideCodeAdjustment, ValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -62,7 +62,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(0,SideCode.BothDirections,170)), Set.empty[Long]))
+        .publish("linearAssets:update", ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(0,SideCode.BothDirections,170)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
@@ -102,7 +102,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("linearAssets:update", ChangeSet(Set(0), Nil, Nil, Nil, Set.empty[Long]))
+        .publish("linearAssets:update", ChangeSet(Set(0), Nil, Nil, Nil, Set.empty[Long], Nil))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())

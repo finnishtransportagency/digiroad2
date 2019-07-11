@@ -282,6 +282,17 @@ trait VVHClientOperations {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
 
+  protected def withRoadNameFilter[T](attributeName: String, names: Set[T]): String = {
+    val filter =
+      if (names.isEmpty) {
+        ""
+      } else {
+        val query = names.mkString("','")
+        s""""where":"$attributeName IN ('$query')","""
+      }
+    filter
+  }
+
   protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
 
     (filter1.isEmpty, filter2.isEmpty) match {
@@ -533,8 +544,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
 
-
-
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
@@ -598,6 +607,31 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
       val definition = layerDefinition(filter(ids), fieldSelection)
+      val url = serviceUrl(definition, queryParameters(fetchGeometry))
+
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map { feature =>
+          val attributes = extractFeatureAttributes(feature)
+          val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
+          resultTransition(attributes, geometry)
+        }
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }.toList
+  }
+
+  /**
+    * Returns VVH road links related with finnish names.
+    */
+  protected def queryByNames[T](names: Set[String],
+                                  fieldSelection: Option[String],
+                                  fetchGeometry: Boolean,
+                                  resultTransition: (Map[String, Any], List[List[Double]]) => T,
+                                  filter: Set[String] => String): Seq[T] = {
+    val batchSize = 1000
+    val nameGroups: List[Set[String]] = names.grouped(batchSize).toList
+    nameGroups.par.flatMap { names =>
+      val definition = layerDefinition(filter(names), fieldSelection)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
       fetchVVHFeatures(url) match {
@@ -720,6 +754,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     withFilter("LINKID", linkIds)
   }
 
+  protected def withFinNameFilter(roadNameSource: String)(roadNames: Set[String]): String = {
+    withRoadNameFilter(roadNameSource, roadNames)
+  }
+
   protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
     withFilter("MTKID", mmlIds)
   }
@@ -804,6 +842,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     Future(fetchByLinkIds(linkIds))
   }
 
+  def fetchByRoadNamesF(roadNamePublicIds: String, roadNameSource: Set[String]) = {
+    Future(fetchByRoadNames(roadNamePublicIds, roadNameSource))
+  }
+
   /**
     * Returns VVH road link by mml id.
     * Used by RoadLinkService.getRoadLinkMiddlePointByMmlId
@@ -879,6 +921,14 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   def fetchByMunicipalityAndRoadNumbers(municipality: Int, roadNumbers: Seq[(Int, Int)]): Seq[VVHRoadlink] = {
     queryByRoadNumbersAndMunicipality(municipality, roadNumbers)
+  }
+
+  /**
+    * Returns VVH road links by finnish names.
+    * Used by VVHClient.fetchByLinkId,
+    */
+  def fetchByRoadNames(roadNamePublicId: String, roadNames: Set[String]): Seq[VVHRoadlink] = {
+    queryByNames(roadNames, None, true, extractRoadLinkFeature, withFinNameFilter(roadNamePublicId))
   }
 
   /**

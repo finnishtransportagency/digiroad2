@@ -61,9 +61,8 @@
   function optionalSave() {
     var isAdministratorELY = selectedMassTransitStopModel.isAdministratorELY();
     var hasRoadAddress = selectedMassTransitStopModel.hasRoadAddress();
-    var isAdministratorHSL = selectedMassTransitStopModel.isAdministratorHSL();
     var floating = selectedMassTransitStopModel.getFloatingReason();
-    return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && isAdministratorHSL)) && !floating;
+    return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && !isAdministratorELY)) && !floating;
   }
 
   var SaveButton = function(isTerminalActive) {

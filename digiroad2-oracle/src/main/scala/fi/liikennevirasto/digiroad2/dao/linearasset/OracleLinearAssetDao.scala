@@ -89,7 +89,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val geomModifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val validityPeridoStartMinute = r.nextIntOption()
       val validityPeridoEndMinute = r.nextIntOption()
-      val prohibitionAdditionalInfo = r.nextString
+      val prohibitionAdditionalInfo = r.nextStringOption().getOrElse("")
       val linkSource = r.nextInt()
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
@@ -673,7 +673,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false, createdByFromUpdate: Option[String] = Some(""),  createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
-                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq(), trafficSignId: Option[Long] = None): Long = {
+                        verifiedBy: Option[String] = None, verifiedDateFromUpdate: Option[DateTime] = None, informationSource: Option[Int] = None, geometry: Seq[Point] = Seq()): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
@@ -737,14 +737,63 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         """.execute
     }
 
-    if(trafficSignId.nonEmpty)
-      insertConnectedAsset(id, trafficSignId.get)
-
     id
   }
 
-  def insertConnectedAsset(id: Long, connected_id : Long) : Int = {
-    sqlu"""insert into connected_asset(asset_id, connected_asset_id) values ($id, $connected_id)""".first
+  def insertConnectedAsset(linearId: Long, pointId : Long) : Unit =
+    sqlu"""insert into connected_asset(linear_asset_id, point_asset_id) values ($linearId, $pointId)""".execute
+
+
+  def expireConnectedByLinearAsset(id: Long) : Unit =
+    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and linear_asset_id = $id""".execute
+
+
+  def expireConnectedByPointAsset(id: Long) : Unit = {
+    sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and point_asset_id = $id""".execute
+  }
+
+  def getLastExecutionDateOfConnectedAsset(): Option[DateTime] = {
+    sql"""select * from (
+            select max(greatest( coalesce(created_date, modified_date , valid_to))) as lastExecutionDate
+              from connected_asset)
+          where lastExecutionDate is not null
+          """.as[DateTime].firstOption
+  }
+
+  def insertTrafficSignsToProcess(assetId: Long, linearAssetTypeId: Int, sign: String) : Unit = {
+    sqlu""" insert into traffic_sign_manager (traffic_sign_id, linear_asset_type_id, sign)
+           values ($assetId, $linearAssetTypeId, $sign)
+           """.execute
+  }
+
+  def getTrafficSignsToProcess(typeId: Int) : Seq[Long] = {
+    sql""" select traffic_sign_id
+           from traffic_sign_manager
+           where linear_asset_type_id = $typeId
+           """.as[Long].list
+  }
+
+  def getTrafficSignsToProcessById(ids: Seq[Long]) : Seq[(Long, String)] = {
+    sql""" select traffic_sign_id, sign
+           from traffic_sign_manager
+           where traffic_sign_id in (#${ids.mkString(",")})
+           """.as[(Long, String)].list
+  }
+
+  def deleteTrafficSignsToProcess(ids: Seq[Long], typeId: Int) : Unit = {
+    sqlu"""delete from traffic_sign_manager
+           where linear_asset_type_id = $typeId
+           and traffic_sign_id in (#${ids.mkString(",")})
+         """.execute
+  }
+
+  def getConnectedAssetFromTrafficSign(id: Long): Seq[Long] = {
+    val linearAssetsIds = sql"""select linear_asset_id from connected_asset where point_asset_id = $id""".as[(Long)].list
+    linearAssetsIds
+  }
+
+  def getConnectedAssetFromLinearAsset(ids: Seq[Long]): Seq[(Long, Long)] = {
+    sql"""select linear_asset_id, point_asset_id from connected_asset where linear_asset_id in (#${ids.mkString(",")})""".as[(Long, Long)].list
   }
 
   /**
@@ -790,7 +839,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       None
     }
   }
-
 
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
@@ -913,5 +961,18 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                        and a.asset_type_id = ${TrafficSigns.typeId}
           """
     Q.updateNA(queryFilter(query) + ")").execute
+  }
+
+  def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int, lastCreationDate: Option[DateTime]): List[(Long, Int)] = {
+    val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities.mkString(",")}) "
+
+    sql"""select a.id, a1.municipality_code
+         from asset a
+         join connected_asset ca on a.id = ca.linear_asset_id
+         join asset a1 on ca.point_asset_id = a1.id and a1.asset_type_id = ${TrafficSigns.typeId}
+         where  (a.valid_to is null or a.valid_to > sysdate)
+         and a.created_by = 'automatic_trafficSign_created'
+         and a.asset_type_id = $assetTypeId
+         and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1) #$municipalityFilter""".as[(Long, Int)].list
   }
 }

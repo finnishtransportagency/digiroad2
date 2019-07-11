@@ -32,13 +32,19 @@
     };
 
     var additionalValues = {
-        additionalPanels: { values : [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 148, 149], groupName: 'Lisakilvet'}
+        additionalPanels: { values : [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 148, 149, 150, 151], groupName: 'Lisakilvet'}
     };
 
     var trafficSignsTurnRestriction = [10, 11, 12];
+    var trafficSignRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 20];
 
     var isTurningRestriction = function(current) {
       return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
+    };
+
+    var isTrafficSignRestriction = function(current) {
+      var propertyValue = _.head(_.find(current.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue;
+      return _.includes(trafficSignRestriction, parseInt(propertyValue));
     };
 
     var getValue = function(current) {
@@ -109,9 +115,9 @@
         });
     };
 
-    var isRelevantToManoeuvres = function(current) {
+    var isRelevant = function(current) {
 
-      if (isTurningRestriction(current)) {
+      if (isTurningRestriction(current) || isTrafficSignRestriction(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
         var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
 
@@ -132,15 +138,25 @@
         return false;
     };
 
-    eventbus.on('trafficSigns:updated', function(current) {
-      if(isRelevantToManoeuvres(current)) {
-        new GenericConfirmPopup('Huom! Liikennemerkin siirto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
-          {type: 'alert'});
+    var getTrafficSignsMessage = function (current, action) {
+      if ((isTrafficSignRestriction(current) || isTurningRestriction(current)) && action !== 'updated') {
+        return trafficSignsActionMessages[action].message;
+      } else if (isRelevant(current)) {
+        return trafficSignsActionMessages[action].message;
       }
-    });
-    eventbus.on('trafficSigns:deleted', function(current) {
-      if(isTurningRestriction(current)) {
-        new GenericConfirmPopup('Huom! Liikennemerkin poisto saattaa vaikuttaa myös olemassa olevan kääntymisrajoituksen sijaintiin.',
+    };
+
+    var trafficSignsActionMessages = {
+      created: {message: 'Tähän liikennemerkkiin liittyvä kohde luodaan seuraavan yön aikana.'},
+      updated: {message: 'Huom! Liikennemerkin päivittäminen saattaa vaikuttaa myös siihen liittyvään kohteeseen.'},
+      deleted: {message: 'Huom! Liikennemerkin poistaminen saattaa vaikuttaa myös siihen liittyvään kohteeseen.'}
+    };
+
+
+    eventbus.on('trafficSigns:created trafficSigns:updated trafficSigns:deleted', function (current, action) {
+      var message = getTrafficSignsMessage(current, action);
+      if (!_.isUndefined(message)) {
+        new GenericConfirmPopup(message,
           {type: 'alert'});
       }
     });
