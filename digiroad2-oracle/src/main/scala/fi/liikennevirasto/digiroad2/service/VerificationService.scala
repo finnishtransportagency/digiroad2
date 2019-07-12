@@ -102,7 +102,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
 
   def getAssetLatestModifications(municipalities: Set[Int]): List[LatestModificationInfo] = {
     val tinyRoadLink = municipalities.flatMap { municipality =>
-      roadLinkService.getTinyRoadLinkFromVVH(municipality)
+      roadLinkService.getRoadLinksFromVVH(municipality)
     }
 
     withDynTransaction {

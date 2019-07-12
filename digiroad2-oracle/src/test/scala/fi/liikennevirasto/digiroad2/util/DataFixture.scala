@@ -2126,6 +2126,31 @@ object DataFixture {
     println("\n")
   }
 
+  def updateLastModifiedAssets(): Unit = {
+    println("\nUpdating last modified assets information")
+    println(DateTime.now())
+
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities }
+
+    println("\n")
+    println("Municipalities fetched after: " + DateTime.now())
+    println("\n")
+
+
+    municipalities.foreach { municipality =>
+      OracleDatabase.withDynTransaction {
+        println("Working on municipality " + municipality)
+        val municipalityRoadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).toSet
+        val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinks.map(_.linkId))
+
+        modifiedAssetTypes.foreach { asset =>
+          verificationService.dao.insertAssetModified(municipality, asset)
+        }
+        println("Modified assets transfered for municipality " + municipality + " in " + DateTime.now())
+        println("\n")
+      }
+    }
+  }
 
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
@@ -2267,6 +2292,8 @@ object DataFixture {
         resolvingFrozenLinks()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
+      case Some("update_last_modified_assets_info") =>
+        updateLastModifiedAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2279,7 +2306,7 @@ object DataFixture {
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | create_hazmat_transport_prohibition_using_traffic_signs |" +
-        " create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links| import_private_road_info")
+        " create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links | import_private_road_info | update_last_modified_assets_info")
     }
   }
 }
