@@ -260,20 +260,20 @@ object ServicePointsClass {
     normalizedSubTypes.get(normalizedValue)
   }
 
-  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true;}
-  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true;}
-  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true;}
-  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true;}
-  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true;}
-  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true;}
-  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true;}
-  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true;}
-  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true;}
-  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true;}
-  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true;}
-  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false;}
-  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false;}
-  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true;}
+  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true; val labelName = "Tulli";}
+  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true; val labelName = "Rajanylityspaikka";}
+  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true; val labelName = "Lepoalue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true; val labelName = "Lentokenttä";}
+  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true; val labelName = "Laivaterminaali";}
+  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true; val labelName = "Rautatieasema"; override val subTypeName = Map("Merkittävä rautatieasema" -> 5,"Vähäisempi rautatieasema" -> 6, "Maanalainen/metroasema" -> 7)}
+  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true; val labelName = "Pysäköintialue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true; val labelName = "Autojen lastausterminaali";}
+  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true; val labelName = "Linja- ja kuorma-autojen pysäköintialue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true; val labelName = "Pysäköintitalo";}
+  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true; val labelName = "Linja-autoasema";}
+  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false; val labelName = "Taksiasema";}
+  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false; val labelName = "Sähköautojen latauspiste";}
+  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true; val labelName = "Unknown";}
 }
 
 
@@ -365,38 +365,6 @@ object ParkingProhibitionClass {
   }
 
   case object Unknown extends ParkingProhibitionClass {
-    override def value: Int = 99
-    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
-  }
-}
-
-sealed trait HazmatTransportProhibitionClass {
-  def value: Int
-  val trafficSign: TrafficSignType
-}
-object HazmatTransportProhibitionClass {
-  val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
-
-  def fromTrafficSign(trafficSign: TrafficSignType): Set[HazmatTransportProhibitionClass] = {
-    values.find(_.trafficSign == trafficSign).toSet
-  }
-  def apply(value: Int): HazmatTransportProhibitionClass =
-    values.find(_.value == value).getOrElse(Unknown)
-
-  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
-    HazmatTransportProhibitionClass.apply(prohibitionValue).trafficSign
-
-  case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
-    def value: Int = 24
-    override val trafficSign: TrafficSignType = HazmatProhibitionA
-  }
-
-  case object HazmatProhibitionTypeB extends HazmatTransportProhibitionClass {
-    def value: Int = 25
-    override val trafficSign: TrafficSignType = HazmatProhibitionB
-  }
-
-  case object Unknown extends HazmatTransportProhibitionClass {
     override def value: Int = 99
     override val trafficSign: TrafficSignType = TrafficSignType.Unknown
   }

@@ -951,8 +951,6 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
       else
         None
     }
-    // oracleLinearAssetDao.deleteTrafficSignsToProcess(trafficSigns.map(_.id), assetType)
-    //Deveria apagar os sinais da tablea trafficSignManager quand sao usados como end
   }
 
   def generateSegmentPiece(currentRoadLink: RoadLink, sign: PersistedTrafficSign, value: Value, endDistance: Option[Double], direction: Int): TrafficSignToLinear = {
@@ -994,5 +992,9 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
   override def filterTrafficSigns(trafficSigns: Seq[PersistedTrafficSign], actualRoadLink: RoadLink): Seq[PersistedTrafficSign] = {
     trafficSigns.filter(_.linkId == actualRoadLink.linkId).filterNot(sign =>
       trafficSignService.getAllProperties(sign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel]).exists(_.panelType == RegulationEndsToTheSign.OTHvalue))
+  }
+
+  override def mergeValue(values: Value): Value = {
+    values
   }
 }

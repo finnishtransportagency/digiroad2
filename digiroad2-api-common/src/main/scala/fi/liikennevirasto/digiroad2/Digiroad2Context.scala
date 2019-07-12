@@ -14,8 +14,6 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
-import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -34,6 +32,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration.FiniteDuration
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
@@ -42,14 +41,16 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
     withDynSession {
-      val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
+      massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
     }
   }
 }
 
 class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case x: AbstractPublishInfo => persistedAssetChanges(x.asInstanceOf[TerminalPublishInfo])
@@ -58,12 +59,13 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
 
   def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
     withDynSession {
-    val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset++terminalPublishInfo.detachAsset).toSet)
+      val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset ++ terminalPublishInfo.detachAsset).toSet)
 
-    persistedStop.foreach { busStop =>
-        val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      persistedStop.foreach { busStop =>
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
         val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
         ValluSender.postToVallu(massTransitStop)
+        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
     }
   }
@@ -333,6 +335,12 @@ object Digiroad2Context {
   val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
   eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
 
+  val roadWorksUpdater = system.actorOf(Props(classOf[RoadWorksAssetUpdater], roadWorkService), name = "roadWorksUpdater")
+  eventbus.subscribe(roadWorksUpdater, "roadWorks:update")
+
+  val damagedByThawUpdater = system.actorOf(Props(classOf[DamagedByThawUpdater], damagedByThawService), name = "damagedByThawUpdater")
+  eventbus.subscribe(damagedByThawUpdater, "damagedByThaw:update")
+
   val prohibitionUpdater = system.actorOf(Props(classOf[ProhibitionUpdater], prohibitionService), name = "prohibitionUpdater")
   eventbus.subscribe(prohibitionUpdater, "prohibition:update")
 
@@ -506,15 +514,11 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
-<<<<<<<<< Temporary merge branch 1
     new TrafficSignManager(manoeuvreService, roadLinkService)
-=========
-    new TrafficSignManager(manoeuvreService)
   }
 
   lazy val damagedByThawService: DamagedByThawService = {
     new DamagedByThawService(roadLinkService, eventbus)
->>>>>>>>> Temporary merge branch 2
   }
 
   lazy val userNotificationService: UserNotificationService = {

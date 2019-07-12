@@ -96,6 +96,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
 
         case signType if TrafficSignManager.belongsToParking(signType) =>
           insertTrafficSignToProcess(trSign.id, ParkingProhibition)
+      }
     }
   }
 

@@ -81,7 +81,6 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
       adjustedSideCodes = Seq.empty[SideCodeAdjustment],
       valueAdjustments = Seq.empty[ValueAdjustment])
-                                    valueAdjustments = Seq.empty[ValueAdjustment])
 
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
