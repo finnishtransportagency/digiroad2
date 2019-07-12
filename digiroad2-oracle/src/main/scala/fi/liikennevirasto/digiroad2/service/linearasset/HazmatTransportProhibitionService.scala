@@ -12,12 +12,19 @@ import fi.liikennevirasto.digiroad2.util.PolygonTools
 
 class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
+
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
+
   override def eventBus: DigiroadEventBus = eventBusImpl
+
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+
   override def polygonTools: PolygonTools = new PolygonTools()
+
   override def assetDao: OracleAssetDao = new OracleAssetDao
+
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
@@ -61,7 +68,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
       updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
 
-    eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
+    eventBus.publish("hazmatTransportProhibition:Validator", AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 
@@ -75,7 +82,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo(newIds.toSet))
+    eventBus.publish("hazmatTransportProhibition:Validator", AssetValidatorInfo(newIds.toSet))
     newIds
   }
 
@@ -85,61 +92,8 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         .groupBy(_.municipality)
         .mapValues {
           _.groupBy(_.administrativeClass)
-            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
+            .mapValues(_.map { values => Map("assetId" -> values.assetId, "linkId" -> values.linkId) })
         }
     }
   }
-//  override def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
-//    logger.info("Creating prohibition from traffic sign")
-//    val tsLinkId = trafficSignInfo.linkId
-//    val tsDirection = trafficSignInfo.validityDirection
-//
-//    if (tsLinkId != trafficSignInfo.roadLink.linkId)
-//      throw new ProhibitionCreationException(Set("Wrong roadlink"))
-//
-//    if (SideCode(tsDirection) == SideCode.BothDirections)
-//      throw new ProhibitionCreationException(Set("Isn't possible to create a prohibition based on a traffic sign with BothDirections"))
-//
-//    val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ProhibitionCreationException(Set("Connection Point not valid")))
-//
-//    val roadLinks = roadLinkService.recursiveGetAdjacent(trafficSignInfo.roadLink, connectionPoint)
-//    logger.info("End of fetch for adjacents")
-//
-//    val orderedPanel = trafficSignInfo.additionalPanel.sortBy(_.formPosition)
-//
-//    val prohibitionValue = createValue(orderedPanel).groupBy(_.typeId).values.flatten.toSeq
-//
-//    if (prohibitionValue.nonEmpty) {
-//      val ids = (roadLinks ++ Set(trafficSignInfo.roadLink)).map { roadLink =>
-//        val (startMeasure, endMeasure): (Double, Double) = SideCode(tsDirection) match {
-//          case SideCode.TowardsDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (trafficSignInfo.mValue, roadLink.length)
-//          case SideCode.AgainstDigitizing if roadLink.linkId == trafficSignInfo.roadLink.linkId => (0, trafficSignInfo.mValue)
-//          case _ => (0, roadLink.length)
-//
-//        }
-//        val assetId = createWithoutTransaction(HazmatTransportProhibition.typeId, roadLink.linkId, Prohibitions(prohibitionValue), BothDirections.value, Measures(startMeasure, endMeasure),
-//          "automatic_process_prohibitions", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), trafficSignId = Some(trafficSignInfo.id))
-//
-//        dao.insertConnectedAsset(assetId, trafficSignInfo.id)
-//
-//        logger.info(s"HazmatTransportProhibition created with id: $assetId")
-//        assetId
-//      }
-//      ids.toSeq
-//    }
-//    else Seq()
-//  }
-
-//  def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-//    val assets = if(withTransaction) {
-//      withDynTransaction {
-//        val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
-//        dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
-//      }
-//    } else {
-//      val assetIds = dao.getConnectedAssetFromTrafficSign(trafficSignId)
-//      dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, assetIds.toSet)
-//    }
-//    assets
-//  }
 }

@@ -2274,7 +2274,7 @@ object DataFixture {
         resolvingFrozenLinks()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
-            case _ => println("Usage: DataFixture test | import_roadlink_data |" +
+      case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
         " prohibitions | hazmat_prohibitions | adjust_digitization | repair | link_float_obstacle_assets |" +

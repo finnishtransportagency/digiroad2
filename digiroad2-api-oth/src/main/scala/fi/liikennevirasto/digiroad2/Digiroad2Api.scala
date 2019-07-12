@@ -1782,7 +1782,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case MaintenanceRoadAsset.typeId => maintenanceRoadService
       case PavedRoad.typeId => pavedRoadService
       case RoadWidth.typeId => roadWidthService
-      case Prohibition.typeId => parkingProhibitionService
+      case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
       case CareClass.typeId | CarryingCapacity.typeId => dynamicLinearAssetService

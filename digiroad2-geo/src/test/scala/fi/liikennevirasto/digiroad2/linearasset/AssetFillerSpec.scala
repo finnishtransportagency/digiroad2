@@ -100,58 +100,6 @@ class AssetFillerSpec extends FunSuite with Matchers {
       SideCodeAdjustment(3l, SideCode.BothDirections, PavedRoad.typeId)))
   }
 
-  test("merge two persisted linear assets of different type with different size") {
-    val topology = Seq(
-      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(24, Set(), Set())))), 0.0, 10.0, Some("automatic_process_prohibitions"), None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None),
-      PersistedLinearAsset(2l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(25, Set(), Set())))), 0.0, 8.0, None, None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None))
-    )
-
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
-
-    filledTopology should have size 2
-
-    changeSet.adjustedSideCodes should be(Seq())
-  }
-
-  test("merge two persisted linear assets of different type with same size") {
-    val topology = Seq(
-      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(24, Set(), Set())))), 0.0, 10.0, Some("automatic_process_prohibitions"), None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None),
-        PersistedLinearAsset(2l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(25, Set(), Set())))), 0.0, 10.0, None, None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None))
-    )
-
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
-
-    filledTopology should have size 1
-
-    changeSet.adjustedSideCodes should be(Seq())
-  }
-
-  test("merge two persisted linear assets of the different type") {
-    val topology = Seq(
-      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
-        1, TrafficDirection.BothDirections, Motorway, None, None))
-    val linearAssets = Map(
-      1l -> Seq(PersistedLinearAsset(1l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(24,
-        Set(ValidityPeriod(12, 24, ValidityPeriodDayOfWeek.Saturday)),
-        Set())))), 0.0, 8.0, Some("automatic_process_prohibitions"), None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None),
-        PersistedLinearAsset(2l, 1l, SideCode.BothDirections.value, Some(Prohibitions(Seq(ProhibitionValue(25,
-          Set(ValidityPeriod(12, 24, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(10, 24, ValidityPeriodDayOfWeek.Weekday)),
-          Set())))), 2.0, 10.0, None, None, None, None, false, HazmatTransportProhibition.typeId, 0, None, linkSource = NormalLinkInterface, None, None, None))
-    )
-
-    val (filledTopology, changeSet) = assetFiller.fillTopology(topology, linearAssets, HazmatTransportProhibition.typeId)
-
-    filledTopology should have size 3
-
-    changeSet.adjustedSideCodes should be(Seq())
-  }
-
   test("generate two-sided asset when two-way road link is half-covered") {
     val topology = Seq(
       RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,

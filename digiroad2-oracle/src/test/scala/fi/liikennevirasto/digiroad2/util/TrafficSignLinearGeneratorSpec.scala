@@ -262,7 +262,6 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
       withClue("trafficSign sign " + sign) {
         Some(prohibitions) should be (prohibitionsResult)
       }
-      Some(prohibitions) should be (prohibitionsResult)
     }
   }
 
@@ -277,7 +276,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     prohibitionGenerator.applyChangesBySegments(segments, existingSegments)
     val updatedInfo = prohibitionGenerator.getUpdatedInfo
     updatedInfo.size should be(1)
-    updatedInfo.head._1 should be (roadLinkNameB1)
+    updatedInfo.head._1 should be (100)
     updatedInfo.head._2 should be(Prohibitions(value ++ existingValue))
 
     val relationInfo = prohibitionGenerator.getCreateAssetRelationInfo

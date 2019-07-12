@@ -65,8 +65,6 @@ trait TrafficSignLinearGenerator {
   final val userUpdate = "automatic_trafficSign_updated"
   final val debbuger = false
 
-  val formatter = java.text.NumberFormat.getCurrencyInstance
-
   lazy val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
