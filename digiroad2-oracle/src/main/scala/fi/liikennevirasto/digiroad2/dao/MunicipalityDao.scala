@@ -41,7 +41,6 @@ class MunicipalityDao {
       select name_fi from municipality where id = $id""".as[String].first
   }
 
-  //Todo Review this query
   def getMunicipalityById(id: Int): Seq[Int] = {
     sql"""select id from municipality where id = $id """.as[Int].list
   }

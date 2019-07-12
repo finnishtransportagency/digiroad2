@@ -761,9 +761,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           """.as[DateTime].firstOption
   }
 
-  def insertTrafficSignsToProcess(assetId: Long, linearAssetTypeId: Int) : Unit = {
-    sqlu""" insert into traffic_sign_manager (traffic_sign_id, linear_asset_type_id)
-           values ($assetId, $linearAssetTypeId)
+  def insertTrafficSignsToProcess(assetId: Long, linearAssetTypeId: Int, sign: String) : Unit = {
+    sqlu""" insert into traffic_sign_manager (traffic_sign_id, linear_asset_type_id, sign)
+           values ($assetId, $linearAssetTypeId, $sign)
            """.execute
   }
 
@@ -772,6 +772,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
            from traffic_sign_manager
            where linear_asset_type_id = $typeId
            """.as[Long].list
+  }
+
+  def getTrafficSignsToProcessById(ids: Seq[Long]) : Seq[(Long, String)] = {
+    sql""" select traffic_sign_id, sign
+           from traffic_sign_manager
+           where traffic_sign_id in (#${ids.mkString(",")})
+           """.as[(Long, String)].list
   }
 
   def deleteTrafficSignsToProcess(ids: Seq[Long], typeId: Int) : Unit = {
@@ -957,10 +964,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     Q.updateNA(queryFilter(query) + ")").execute
   }
 
-  def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int, lastCreationDate: Option[DateTime]): List[(Int, DateTime, Int)] = {
+  def getAutomaticGeneratedAssets(municipalities: Seq[Int], assetTypeId: Int, lastCreationDate: Option[DateTime]): List[(Long, Int)] = {
     val municipalityFilter = if(municipalities.isEmpty) "" else s" and a1.municipality_code in (${municipalities.mkString(",")}) "
 
-    sql"""select a.id, TO_DATE(TO_CHAR(a.created_date, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), a1.municipality_code
+    sql"""select a.id, a1.municipality_code
          from asset a
          join connected_asset ca on a.id = ca.linear_asset_id
          join asset a1 on ca.point_asset_id = a1.id and a1.asset_type_id = ${TrafficSigns.typeId}
@@ -968,6 +975,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
          and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1)
-         #$municipalityFilter""".as[(Int, DateTime, Int)].list
+         #$municipalityFilter""".as[(Long, Int)].list
   }
 }

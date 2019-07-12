@@ -45,7 +45,7 @@ trait WeightLimitService extends PointAssetOperations {
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedAsset] =  { throw new UnsupportedOperationException("Not Supported Method") }
 
-  override def create(asset: IncomingAsset, username: String, roadLink: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
+  override def create(asset: IncomingAsset, username: String, roadLink: RoadLink, newTransaction: Boolean) = throw new UnsupportedOperationException("Not Supported Method")
 
   override  def expire(id: Long, username: String): Long = throw new UnsupportedOperationException("Not Supported Method")
 

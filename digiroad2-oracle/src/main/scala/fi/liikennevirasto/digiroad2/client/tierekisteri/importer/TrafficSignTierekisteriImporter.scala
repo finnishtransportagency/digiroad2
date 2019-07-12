@@ -6,14 +6,13 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
-import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
 import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{SpeedLimitTrafficSignClient, TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
@@ -126,20 +125,11 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Seq()), false)
+            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Set()), false)
           }
           newId
       }
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
-  }
-
-  protected override def expireAssets(linkIds: Seq[Long]): Unit = {
-    val trafficSignsIds = assetDao.getAssetIdByLinks(typeId, linkIds).toSet
-
-    if(trafficSignsIds.nonEmpty) {
-      trafficSignService.expireAssetWithoutTransaction(trafficSignService.withIds(trafficSignsIds), Some("batch_process_trafficSigns"))
-      manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(trafficSignsIds), None, withTransaction = false)
-    }
   }
 
   private def getAdditionalPanels(trAdditionalData: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]],  vvhRoadLinks: Seq[VVHRoadlink]): Seq[AdditionalPanelInfo] = {
@@ -157,12 +147,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities
-    municipalities.foreach { municipality =>
-      withDynTransaction{
-        expireAssets(municipality, Some(State))
-      }
-    }
+    expireAssets()
 
     val roadNumbers = getAllViiteRoadNumbers
 
@@ -181,7 +166,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         //from trAddressSections sequence so we reduce the amount returned
         val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
         val mappedRoadAddresses = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-        val mappedRoadLinks  = roadLinkService.fetchVVHRoadlinks(roadAddresses.map(ra => ra.linkId).toSet)
+        val mappedRoadLinks = getRoadLinks(roadAddresses.map(ra => ra.linkId).toSet, Some(State))
 
         val additionalProperties = getAdditionalPanels(trProperties, mappedRoadAddresses, mappedRoadLinks)
 
@@ -206,8 +191,16 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
             mValue =>
               val sideCode = getSideCode(ra, trAssetData.track, trAssetData.roadSide).value
               val trafficSignType = trAssetData.assetType.OTHvalue
-              val allowedProperties = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData.toSet, vvhRoadLinks)
-              createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties)
+              val allowedAdditionalPanels = trafficSignService.getAdditionalPanels(ra.linkId, mValue, sideCode, trafficSignType, roadlink.get.geometry, trAdditionalData.toSet, vvhRoadLinks)
+
+              val allowedProperties = if(allowedAdditionalPanels.size > 3) {
+                println(s"WARNING - additional panels excluded - ${allowedAdditionalPanels.size} additional Panel ${ allowedAdditionalPanels.map { panel =>
+                  TrafficSignType.applyOTHValue(trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get.propertyValue.toInt).toString}.mkString(",")}")
+                Set()
+              } else
+                allowedAdditionalPanels
+
+              createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties.toSet)
           }
         }
     }
@@ -229,14 +222,18 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
   override def expireAssets() : Unit = {
     val municipalities = getAllMunicipalities
     municipalities.foreach { municipality =>
+      println("\nStart assets expiration in municipality %d".format(municipality))
       withDynTransaction {
 
         val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter)
+        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter).to.filter {sign =>
+          TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == trafficSignGroup
+        }
 
         trafficSignService.expireAssetsByLinkId(roadLinksWithStateFilter, trafficSignsInGroup(trafficSignGroup))
-        trafficSignManager.deleteAssets(trafficSigns)
+        trafficSignManager.deleteAssets(trafficSigns, false)
       }
+      println("\nEnd assets expiration in municipality %d".format(municipality))
     }
   }
 
@@ -247,6 +244,9 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
 
 class TrafficSignSpeedLimitTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {
   override lazy val trafficSignGroup : TrafficSignTypeGroup = TrafficSignTypeGroup.SpeedLimits
+  override val tierekisteriClient = new SpeedLimitTrafficSignClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())(filterCondition)
 }
 
 class TrafficSignRegulatorySignsTierekisteriImporter extends TrafficSignByGroupTierekisteriImporter {

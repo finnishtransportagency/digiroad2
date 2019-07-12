@@ -15,7 +15,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
@@ -104,6 +104,9 @@ trait PointAssetOperations {
   def roadLinkService: RoadLinkService
   val idField = "id"
 
+  final val TwoMeters = 2
+  final val BearingLimit = 25
+
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
@@ -114,7 +117,7 @@ trait PointAssetOperations {
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
-  def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long
+  def create(asset: IncomingAsset, username: String, roadLink: RoadLink, newTransaction: Boolean = true): Long
   def update(id:Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String): Long
   def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset
   def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingAsset] = { throw new UnsupportedOperationException()}
@@ -417,6 +420,13 @@ trait PointAssetOperations {
     val (pointAsset, floatingReason) = toPointAsset(persistedAsset)
     if (persistedAsset.floating != pointAsset.floating) updateFloating(pointAsset.id, pointAsset.floating, floatingReason)
     pointAsset
+  }
+
+  def withBoundingBoxFilter(position : Point, meters: Int)(query: String): String = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
   }
 
   protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = sqlu"""update asset set floating = $floating where id = $id""".execute

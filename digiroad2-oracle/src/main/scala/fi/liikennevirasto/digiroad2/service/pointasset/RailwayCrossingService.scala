@@ -62,9 +62,47 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
       persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 
-  override def create(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink): Long = {
+  def createFromCoordinates(incomingRailwayCrossing: IncomingRailwayCrossing, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
+    if(isFloating)
+      createFloatingWithoutTransaction(incomingRailwayCrossing.copy(linkId = 0), username, roadLink)
+    else {
+      checkDuplicates(incomingRailwayCrossing) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, incomingRailwayCrossing, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+        case _ =>
+          create(incomingRailwayCrossing, username, roadLink, false)
+      }
+    }
+  }
+
+  def checkDuplicates(incomingRailwayCrossing: IncomingRailwayCrossing): Option[RailwayCrossing] = {
+    val position = Point(incomingRailwayCrossing.lon, incomingRailwayCrossing.lat)
+    val signsInRadius = OracleRailwayCrossingDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
+      asset =>
+        GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
+        asset.safetyEquipment == incomingRailwayCrossing.safetyEquipment
+    )
+    if(signsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(signsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(signs: Seq[RailwayCrossing]): RailwayCrossing = {
+    signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
+  }
+
+  def createFloatingWithoutTransaction(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
+    OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+  }
+
+  override def create(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
+    if(newTransaction) {
+      withDynTransaction {
+        OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      }
+    } else {
       OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }

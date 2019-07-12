@@ -13,6 +13,7 @@
       roadDamagedByThaw: function() { return true; },
       massTransitLanes: function() { return true; },
       carryingCapacity: function() { return true; },
+      roadWorksAsset: function() { return true; },
       pavedRoad: function() { return true; },
       careClass: function() {return true; },
       bogieWeightLimit: function() { return true; },

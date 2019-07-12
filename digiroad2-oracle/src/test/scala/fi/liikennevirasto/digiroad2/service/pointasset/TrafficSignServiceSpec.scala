@@ -77,6 +77,15 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("10"))),
     SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
 
+  val simpleProperties82 = Set(
+    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
+    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+
+  val simpleProperties46 = Set(
+    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("46"))),
+    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
+    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
@@ -438,7 +447,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, Seq()))
+      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, simpleProperties10))
     }
   }
 
@@ -459,7 +468,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("trafficSign:create", TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, Seq()))
+      verify(mockEventBus, times(1)).publish("trafficSign:create", TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, simpleProperties10))
 
       trService.expire(id, "test_user")
       verify(mockEventBus, times(1)).publish("trafficSign:expire", id)
@@ -672,12 +681,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       VVHRoadlink(388553075, 235,Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
-
-      val properties = Set(
-      SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
-      SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-      SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
-
+    val properties = simpleProperties82
     val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
 
@@ -718,10 +722,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Get additional panels in 2 meter buffer area for specific sign"){
     runWithRollback {
 
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      val properties = simpleProperties82
 
       val additionalPanelProperties = Set(
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("45"))),
@@ -760,10 +761,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Get additional panels in 2 meter buffer area for specific sign with adjacent links"){
     runWithRollback {
 
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      val properties = simpleProperties82
 
       val additionalPanelProperties = Set(
         SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("45"))),
@@ -800,15 +798,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("No additional panels detected with adjacent links"){
     runWithRollback {
 
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      val properties = simpleProperties82
 
-      val additionalPanelProperties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("46"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      val additionalPanelProperties = simpleProperties46
 
       val roadLink = RoadLink(1000, Seq(Point(10.0, 0.0), Point(13.0, 0.0)), 3, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(2000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -838,15 +830,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("No additional panels detected"){
     runWithRollback {
 
-      val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      val properties = simpleProperties82
 
-      val additionalPanelProperties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("46"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      val additionalPanelProperties = simpleProperties46
 
       val roadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
@@ -900,6 +886,34 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
+
+      result.size should be (1)
+    }
+  }
+
+  test("Additional panels return results are unique"){
+    runWithRollback {
+
+      val properties = simpleProperties82
+      val additionalPanelProperties = simpleProperties46
+      val roadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val trafficSign = service.create(IncomingTrafficSign(6.0, 0.0, 1000, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+
+      val additionalPanel = service.create(IncomingTrafficSign(6.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel2 = service.create(IncomingTrafficSign(6.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel3 = service.create(IncomingTrafficSign(6.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+      val additionalPanel4 = service.create(IncomingTrafficSign(6.0, 0.0, 1000, additionalPanelProperties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
+
+      when(mockRoadLinkService.getRoadLinkFromVVH(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockRoadLinkService.getAdjacent(any[Long], any[Seq[Point]], any[Boolean])).thenReturn(Seq())
+
+      val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
+
+      val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
+      }.toSet
+
+      val result = service.distinctPanels(service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq()))
 
       result.size should be (1)
     }

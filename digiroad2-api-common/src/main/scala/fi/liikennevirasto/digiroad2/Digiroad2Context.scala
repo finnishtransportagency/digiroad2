@@ -10,7 +10,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -88,6 +91,20 @@ class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extend
   def receive = {
     case x: ChangeSet => dynamicAssetService.updateChangeSet(x)
     case _            => println("DynamicAssetUpdater: Received unknown message")
+  }
+}
+
+class RoadWorksAssetUpdater(roadWorkAssetService: RoadWorkService) extends Actor {
+  def receive = {
+    case x: ChangeSet => roadWorkAssetService.updateChangeSet(x)
+    case _            => println("RoadWorksAssetUpdater: Received unknown message")
+  }
+}
+
+class DamagedByThawUpdater(damagedByThawService: DamagedByThawService) extends Actor {
+  def receive = {
+    case x: ChangeSet => damagedByThawService.updateChangeSet(x)
+    case _            => println("DamagedByThawUpdater: Received unknown message")
   }
 }
 
@@ -173,13 +190,6 @@ class ProhibitionSaveProjected[T](prohibitionProvider: ProhibitionService) exten
     case _ => println("prohibitionSaveProjected: Received unknown message")
   }
 }
-//
-//class ProhibitionSaveAssetConnection[T] (prohibitionProvider: ProhibitionService) extends Actor {
-//  def receive = {
-//    case x: Seq[T] => prohibitionProvider.autoGenerateAssets(x.asInstanceOf[Seq[LinearAssetFiller.AssetAdjustment]])
-//    case _ => println("prohibitionsSaveAssetConnection: Received unknown message")
-//  }
-//}
 
 class HazmatTransportProhibitionValidation(prohibitionValidator: HazmatTransportProhibitionValidator) extends Actor {
   def receive = {
@@ -496,11 +506,15 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
+<<<<<<<<< Temporary merge branch 1
     new TrafficSignManager(manoeuvreService, roadLinkService)
+=========
+    new TrafficSignManager(manoeuvreService)
   }
 
   lazy val damagedByThawService: DamagedByThawService = {
     new DamagedByThawService(roadLinkService, eventbus)
+>>>>>>>>> Temporary merge branch 2
   }
 
   lazy val userNotificationService: UserNotificationService = {
@@ -630,6 +644,10 @@ object Digiroad2Context {
 
   lazy val numberOfLanesService: NumberOfLanesService = {
     new NumberOfLanesService(roadLinkService, eventbus)
+  }
+
+  lazy val roadWorkService: RoadWorkService = {
+    new RoadWorkService(roadLinkService, eventbus)
   }
 
   lazy val parkingProhibitionService: ParkingProhibitionService = {
