@@ -515,6 +515,68 @@ object ProhibitionClass {
   }
 }
 
+sealed trait ProhibitionExceptionClass {
+  def value: Int
+  val trafficSign: Seq[TrafficSignType] = Seq()
+}
+
+object ProhibitionExceptionClass {
+  val values = Set(MopedException, ServiceVehicles, Motorbike, BusException, Sedan, VanException, LorryException, Caravan, Unknown)
+
+  def apply(value: Int): ProhibitionExceptionClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromTrafficSign(trafficSign: Seq[TrafficSignType]): Set[Int] = {
+    values.filter(_.trafficSign.exists( exception => trafficSign.contains(exception))).map(_.value).filterNot(_ == Unknown.value)
+  }
+
+  case object MopedException extends ProhibitionExceptionClass {
+    def value = 10
+    override val trafficSign: Seq[TrafficSignType] = Seq(Moped)
+  }
+
+  case object ServiceVehicles extends ProhibitionExceptionClass {
+    def value = 21
+    override val trafficSign: Seq[TrafficSignType] = Seq(DrivingInServicePurposesAllowed)
+  }
+
+  case object Motorbike extends ProhibitionExceptionClass {
+    def value = 9
+    override val trafficSign: Seq[TrafficSignType] = Seq(MotorCycle)
+  }
+
+  case object BusException extends ProhibitionExceptionClass {
+    def value = 5
+    override val trafficSign: Seq[TrafficSignType] = Seq(Bus)
+  }
+
+  case object Sedan extends ProhibitionExceptionClass {
+    def value = 7
+    override val trafficSign: Seq[TrafficSignType] = Seq(PassengerCar)
+  }
+
+  case object VanException extends ProhibitionExceptionClass {
+    def value = 6
+    override val trafficSign: Seq[TrafficSignType] = Seq(Van)
+  }
+
+  case object LorryException extends ProhibitionExceptionClass {
+    def value = 4
+    override val trafficSign: Seq[TrafficSignType] = Seq(Lorry)
+  }
+
+  case object Caravan extends ProhibitionExceptionClass {
+    def value = 15
+    override val trafficSign: Seq[TrafficSignType] = Seq(HusvagnCaravan)
+  }
+
+  case object Unknown extends ProhibitionExceptionClass {
+    override def value: Int = 99
+    override val trafficSign: Seq[TrafficSignType] = Seq(TrafficSignType.Unknown)
+  }
+}
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]
