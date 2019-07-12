@@ -44,7 +44,7 @@
       careClass: 390,
       carryingCapacity: 400,
       roadWorksAsset: 420,
-      parkingProhibition: 420
+      parkingProhibition: 430
     };
 
     var assetGroups = {
