@@ -96,6 +96,20 @@ pipeline {
                 }
             }
         }
+        stage("Checkout Branch") {
+            steps {
+                checkout(
+                    [$class: 'GitSCM',
+                     branches: [[name: '*/${REVISION}']],
+                     doGenerateSubmoduleConfigurations: false,
+                     extensions: [[$class: 'LocalBranch', localBranch: '${REVISION}']],
+                     submoduleCfg: [],
+                     userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
+                    ]
+                )
+            }
+
+        }
         stage("Prepare") {
             when {
                 expression {
