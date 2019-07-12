@@ -61,7 +61,7 @@ object TrafficSignType {
     RegulationBeginsFromSign, RegulationEndsToTheSign, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, ValidMultiplePeriod, TimeLimit, DistanceCompulsoryStop, DirectionOfPriorityRoad,
     CrossingLogTransportRoad, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText,
     DrivingInServicePurposesAllowed, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, Parking, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
-    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies)
+    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies, HusvagnCaravan, Moped)
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
     values.find(_.OTHvalue == intValue).getOrElse(Unknown)
@@ -73,18 +73,6 @@ object TrafficSignType {
 
   def apply(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
     values.filter(_.group == TrafficSignTypeGroup).map(_.OTHvalue)
-  }
-
-
-  def belongsToManoeuvre(intValue: Int) : Boolean = {
-    val trafficSigns = Seq(NoLeftTurn, NoRightTurn, NoUTurn)
-    trafficSigns.contains(TrafficSignType.applyOTHValue(intValue))
-  }
-
-  def belongsToProhibition(intValue: Int) : Boolean = {
-    val trafficSigns = Seq(ClosedToAllVehicles,  NoPowerDrivenVehicles,  NoLorriesAndVans,  NoVehicleCombinations,  NoAgriculturalVehicles,  NoMotorCycles,  NoMotorSledges,
-      NoBuses,  NoMopeds,  NoCyclesOrMopeds,  NoPedestrians,  NoPedestriansCyclesMopeds,  NoRidersOnHorseback)
-    trafficSigns.contains(TrafficSignType.applyOTHValue(intValue))
   }
 
   case object Unknown extends TrafficSignType {
@@ -657,7 +645,6 @@ case object StandingAndParkingProhibited extends ProhibitionsAndRestrictionsType
 
 case object ParkingProhibited extends ProhibitionsAndRestrictionsType {
   override val OTHvalue = 101
-
   override val TRvalue = 372
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
@@ -1015,4 +1002,14 @@ case object DistanceFromSignToPointWhichSignApplies extends AdditionalPanelsType
 case object DistanceWhichSignApplies extends AdditionalPanelsType {
   override val OTHvalue = 149
   override val TRvalue = 815
+}
+
+case object HusvagnCaravan extends AdditionalPanelsType {
+  override val OTHvalue = 150
+  override val TRvalue = 835
+}
+
+case object Moped extends AdditionalPanelsType {
+  override val OTHvalue = 151
+  override val TRvalue = 842
 }
