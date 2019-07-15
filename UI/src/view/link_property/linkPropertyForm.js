@@ -219,7 +219,7 @@
 		          '<p class="form-control-static"><%- localizedAdditionalInfoIds %></p>' +
 		          '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
 		      '</div>' +
-		      '<p class="private-road-last-modification"><%- privateRoadLastModificationInfo %></p>' +
+		      '<p class="private-road-last-modification"> Muokattu viimeksi: <%- privateRoadLastModificationInfo %></p>' +
 		    '</div>';
     };
     
