@@ -188,7 +188,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
                                                                                               .filterNot(_._1 == "ACCESS_RIGHT_ID")
                                                                                               .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
                                                                                               .filterNot(_._1 == "ADDITIONAL_INFO")
-
     }
   }
 
