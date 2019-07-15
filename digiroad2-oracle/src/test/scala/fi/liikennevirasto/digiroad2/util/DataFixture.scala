@@ -2146,7 +2146,7 @@ object DataFixture {
         modifiedAssetTypes.foreach { asset =>
           verificationService.dao.insertAssetModified(municipality, asset)
         }
-        println("Modified assets transfered for municipality " + municipality + " in " + DateTime.now())
+        println("Modified assets transferred for municipality " + municipality + " in " + DateTime.now())
         println("\n")
       }
     }

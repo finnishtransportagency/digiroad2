@@ -196,6 +196,22 @@ class VerificationDao {
     }
   }
 
+  def getDashboardInfo(municipalityCodes: Set[Int]): List[LatestModificationInfo] = {
+    val modifiedAssets = sql"""
+        select assetTypeId, modifiedBy, modifiedDate
+        from (
+          select db.asset_type_id as assetTypeId, db.modified_by as modifiedBy, max(to_date(to_char(db.last_modified_date, 'yyyy-mm-dd'), 'yyyy-mm-dd hh24:mi:ss')) as modifiedDate
+          from dashboard_info db
+          where db.municipality_id in (#${municipalityCodes.mkString(",")})
+          group by db.asset_type_id, db.modified_by, db.municipality_id
+          order by max(db.last_modified_date) desc, db.asset_type_id, db.modified_by
+        ) where rownum <= 4""".as[(Int, Option[String], Option[DateTime])].list
+
+    modifiedAssets.map { case (assetTypeCode, modifiedBy, modifiedDate) =>
+      LatestModificationInfo(assetTypeCode,  modifiedBy, modifiedDate)
+    }
+  }
+
   def insertAssetModified(municipalityCode: Int, latestModificationInfo: LatestModificationInfo): Unit = {
     sqlu"""
       insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
