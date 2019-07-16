@@ -3,14 +3,15 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, IncompleteRow, MalformedRow, Status}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, PropertyValue, SimpleProperty, Unknown}
+import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, SimpleProperty, Unknown}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.apache.commons.lang3.StringUtils.isBlank
@@ -121,11 +122,11 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] =
     throw new UnsupportedOperationException("Not Supported Method")
 
-  private def updateAssetByExternalId(externalId: Long, properties: Seq[AssetProperty], user: User): MassTransitStopWithProperties = {
+  private def updateAssetByExternalId(externalId: Long, optPosition: Option[Position],properties: Seq[AssetProperty], user: User): MassTransitStopWithProperties = {
     val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
     optionalAsset match {
       case Some(asset) =>
-        massTransitStopService.updateExistingById(asset.id, None, properties.map(prop => SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, user.username, (_, _) => Unit)
+        massTransitStopService.updateExistingById(asset.id, optPosition, properties.map(prop => SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, user.username, (_, _) => Unit)
       case None => throw new AssetNotFoundException(externalId)
     }
   }
@@ -149,7 +150,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
-  def updateAsset(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
+  def updateAsset(externalId: Long, optPosition: Option[Position], properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], user: User): ExcludedRoadLinkTypes = {
     // Remove livi-id from properties, we don't want to change is with CSV
     val propertiesWithoutLiviId = properties.filterNot(_.columnName == "yllapitajan_koodi")
     if (roadTypeLimitations.nonEmpty) {
@@ -159,7 +160,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
         case _ => Nil
       }
     } else {
-      updateAssetByExternalId(externalId, propertiesWithoutLiviId, user)
+      updateAssetByExternalId(externalId,  optPosition, propertiesWithoutLiviId, user)
       Nil
     }
   }
@@ -225,6 +226,15 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     } else {
       (List(parameterName), Nil)
     }
+  }
+
+  def verifyData(lon: Long, lat: Long, user: User, roadTypeLimitations: Set[AdministrativeClass]): Seq[VVHRoadlink] = {
+    val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong)).
+      filterNot(road => roadTypeLimitations.contains(road.administrativeClass))
+    if(closestRoadLinks.nonEmpty)
+      Seq(closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry)))
+    else
+      Seq()
   }
 
   private def fork(f: => Unit): Unit = {
@@ -314,7 +324,7 @@ class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
-    updateAsset(parsedRow.externalId.get, parsedRow.properties, roadTypeLimitations, user)
+    updateAsset(parsedRow.externalId.get, None, properties, roadTypeLimitations, user)
       .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
   }
 }
@@ -329,9 +339,19 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
-    val parsedRow = CsvAssetRow(None, properties = properties)
+    val lon = row("lon").asInstanceOf[BigDecimal].toLong
+    val lat = row("lat").asInstanceOf[BigDecimal].toLong
 
-    throw new UnsupportedOperationException(s"method missing") //TODO DROTH-2002
+    val prop = properties.map(prop => SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet
+    val roadLink = roadLinkService.enrichRoadLinksFromVVH(verifyData(lon, lat, user, roadTypeLimitations))
+
+    if(roadLink.isEmpty)
+      List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
+    else {
+      val asset = NewMassTransitStop(lon, lat, roadLink.head.linkId, 0, prop.toSeq)
+      massTransitStopService.createWithUpdateFloating(asset, user.username, roadLink.head)
+      List()
+    }
   }
 }
 
@@ -346,6 +366,18 @@ class PositionUpdater (roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
-    throw new UnsupportedOperationException(s"method missing") //TODO DROTH-2001
+
+    val lon = row("lon").asInstanceOf[BigDecimal].toLong
+    val lat = row("lat").asInstanceOf[BigDecimal].toLong
+
+    val roadLink = roadLinkService.enrichRoadLinksFromVVH(verifyData(lon, lat, user, roadTypeLimitations))
+
+    if (roadLink.isEmpty)
+      List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
+    else {
+      val position = Some(Position(lon, lat, roadLink.head.linkId, None))
+      updateAsset(parsedRow.externalId.get, position, properties, roadTypeLimitations, user)
+        .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+    }
   }
 }
