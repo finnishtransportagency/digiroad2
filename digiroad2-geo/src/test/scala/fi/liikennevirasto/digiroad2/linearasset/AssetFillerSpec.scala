@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.linearasset
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.Motorcycle
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -114,7 +115,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     filledTopology.filter(_.id == 1).map(_.value) should be(Seq(Some(NumericValue(1))))
     filledTopology.filter(_.id == 1).map(_.geometry) should be(Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
 
-    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(1,BothDirections,110)), Set.empty[Long]))
+    changeSet should be(ChangeSet(Set.empty[Long], Nil, Nil, List(SideCodeAdjustment(1,BothDirections,110)), Set.empty[Long], Nil))
   }
 
   test("project road lights to new geometry") {
@@ -135,7 +136,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val output = changes map { change =>
       assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
 
 
     output.length should be(3)
@@ -166,7 +167,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val output = changes map { change =>
       assetFiller.projectLinearAsset(assets.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output.head._1.sideCode should be (SideCode.TowardsDigitizing.value)
     output.last._1.sideCode should be (SideCode.AgainstDigitizing.value)
     output.head._1.startMeasure should be(0.0)
@@ -177,7 +178,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val output2 = changes map { change =>
       assetFiller.projectLinearAsset(assets.last, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output2.length should be(3)
     output2.head._1.sideCode should be (SideCode.AgainstDigitizing.value)
     output2.last._1.sideCode should be (SideCode.TowardsDigitizing.value)
@@ -207,7 +208,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       assets.map(
         assetFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil) )._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.head.sideCode should be (SideCode.TowardsDigitizing.value)
     output.last.sideCode should be (SideCode.AgainstDigitizing.value)
@@ -271,7 +272,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
       assets.map(
         assetFiller.projectLinearAsset(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.filter(o => o.linkId == 1 && o.sideCode == SideCode.TowardsDigitizing.value).forall(_.startMeasure == 1.0) should be (true)
     output.filter(o => o.linkId == 1 && o.sideCode == SideCode.AgainstDigitizing.value).forall(_.startMeasure == 0.0) should be (true)
@@ -765,7 +766,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
     val rl = RoadLink(1722175, Seq(Point(0.0, 0.0), Point(0.0, 85.398)), 85.398, AdministrativeClass.apply(1), 1, TrafficDirection.BothDirections, LinkType.apply(1), modifiedAt = None, modifiedBy = None, attributes=Map())
     val assets = makeAssetsList
     val linearAssets = assets.map( a =>
-      PersistedLinearAsset(a._1, a._2, a._3, a._4, a._5, a._6, Option("k123"), None, Option("k345"), Option(DateTime.parse(a._8.dropRight(6), Asset.DateTimePropertyFormatMs)), expired=false, 100, a._7, None, linkSource = NormalLinkInterface, None, None, None)
+      PersistedLinearAsset(a._1, a._2, a._3, a._4, a._5, a._6, Option("k123"), None, Option("k345"), Option(DateTime.parse(a._8.dropRight(6), DateParser.DateTimePropertyFormatMs)), expired=false, 100, a._7, None, linkSource = NormalLinkInterface, None, None, None)
     )
     val (outputAssets, changeSet) = assetFiller.fillTopology(Seq(rl), linearAssets.groupBy(_.linkId), 110)
     changeSet.adjustedMValues.size == 1 should be (true)

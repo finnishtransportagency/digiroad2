@@ -6,6 +6,7 @@
     var idOrRoadRegex = /^\d+$/;
     var liviIdRegex = /^[a-zA-Z]+\d+$/; // At least one letter and one digit, no space between
     var passengerIdRegex = /^MT+\s*\w/gi;
+    var associationRoadIdRegex = /^YT+\s*\w/gi;
 
     var matchedCoordinates = input.match(coordinateRegex);
     var matchedStreet = input.match(streetRegex);
@@ -13,6 +14,7 @@
     var matchedIdOrRoad = input.match(idOrRoadRegex);
     var matchedLiviId = input.match(liviIdRegex);
     var matchedPassengerId = input.match(passengerIdRegex);
+    var matchedAssociationRoadIdRegex = input.match(associationRoadIdRegex);
 
     if (selectedLayer === 'massTransitStop' && matchedLiviId) {
       return {type: 'liviId', text: input};
@@ -21,9 +23,12 @@
     } else if (matchedCoordinates) {
       return parseCoordinates(matchedCoordinates);
     } else if (matchedStreet) {
-      return {type: 'street', address: input};
+        if(matchedAssociationRoadIdRegex)
+          return {type: 'roadAssociationName', name: input.slice(3)};
+        else
+          return {type: 'street', address: input};
     } else if (matchedIdOrRoad) {
-      return { type: 'idOrRoadNumber', text:input};
+      return { type: 'idOrRoadNumber', text: input};
     } else if (matchedRoad) {
       return parseRoad(input);
     } else {

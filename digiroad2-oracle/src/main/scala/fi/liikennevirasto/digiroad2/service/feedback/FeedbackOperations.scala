@@ -153,9 +153,11 @@ class FeedbackDataService extends Feedback {
       }
     }
 
+    val idName = if(body.typeId.getOrElse(UnknownAssetTypeId.typeId) == MassTransitStopAsset.typeId) "Valtakunnallinen id" else "Kohteen id"
+
     s"""<br>
     <b>Linkin id: </b> $linkIds <br>
-    <b>Kohteen id: </b> $ids <br>
+    <b>${idName}: </b> $ids <br>
     <b>Tietolaji: </b> ${body.assetName.getOrElse("-")} <br>
     <b>Palautteen tyyppi: </b> ${body.feedbackDataType.getOrElse("-")} <br>
     <b>K-tunnus: </b> $username <br>

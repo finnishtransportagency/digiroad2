@@ -1,0 +1,277 @@
+import java.net.URI
+def get_environment() {
+    return "staging"
+}
+
+def get_pollSCM_trigger() {
+    return "* * * * *"
+}
+
+pipeline {
+    agent any
+    environment {
+        NOTIFY_SLACK_SUBJECT = "${JOB_NAME} - <${RUN_DISPLAY_URL}|${BUILD_DISPLAY_NAME}>"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+    triggers {
+        pollSCM(get_pollSCM_trigger())
+    }
+    stages {
+        stage("Setup") {
+            when {
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS'),
+                                string(credentialsId: 'DEV_DATABASE', variable: 'DEV_DATABASE'),
+                                string(credentialsId: 'JENKINS_DB', variable: 'JENKINS_DB')]) {
+                    script {
+
+                        def ojdbc = 'ojdbc6'
+                        def ojdbc_version = '11.2.0.3.0'
+                        def version = '11.2.0'
+                        def sdoapl = 'sdoapl'
+                        def sdoutl = 'sdoutl'
+                        def sbt_proxy = new URI(http_proxy)
+
+                        def java_opts = [
+                            "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
+                            "-Dhttp.proxyPort=${sbt_proxy.getPort()}",
+                            "-Dhttp.nonProxyHosts=*.vally.local",
+                            "-DproxySet=true"
+                        ].join(" ")
+
+                        STAGE_SETUP_ORACLE = [
+                            "mkdir digiroad2-oracle/conf/",
+                            "mkdir digiroad2-oracle/conf/lib/",
+                            "mkdir digiroad2-oracle/conf/ci-vahti/",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output digiroad2-oracle/conf/lib/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoutl}.jar",
+                            "echo 'bonecp.jdbcUrl='${DEV_DATABASE} > digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.username='${JENKINS_DB} >> digiroad2-oracle/conf/ci-vahti/bonecp.properties",
+                            "echo 'bonecp.password='${JENKINS_DB} >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
+                         ].join(" && ")
+
+
+                        STAGE_FRONTEND_BUILD_CMD = [
+                            "npm install",
+                            "grunt test",
+                            "grunt deploy --target=${get_environment()?.trim()}",
+                            "cp -r ${WORKSPACE}/dist ~/package/UI/",
+                            "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
+                            "cd ~/package/UI"
+                        ].join(" && ")
+
+                        STAGE_BACKEND_BUILD_CMD = [
+                            "~/sbt/bin/./sbt $java_opts -Ddigiroad2.env=${get_environment()?.trim()} assembly",
+                            "./sbt -Ddigiroad2.env=ci-vahti $java_opts 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture test'", // Fixture reset
+                            "java -Ddigiroad2.env=ci-vahti $java_opts -XX:MaxPermSize=512M -Dfile.encoding=UTF8 -jar ${WORKSPACE}/sbt-launch.jar test", // Run tests
+                            "cp -r ${WORKSPACE}/target/scala-2.11/digiroad2-assembly-0.1.0-SNAPSHOT.jar ~/package/"
+                        ].join(" && ")
+
+                        STAGE_PACKAGE_CMD = [
+                            "cd ~/package/",
+                            "jar -cvf digiroad2-assembly-0.1.0.war *"
+                        ].join(" && ")
+
+                        STAGE_PUBLISH_CMD = [
+                            "mvn deploy:deploy-file",
+                            "-DgroupId=fi.liikennevirasto.digiroad2",
+                            "-DartifactId=digiroad2-${get_environment()?.trim()}",
+                            "-Dversion=1.0.0-${BUILD_ID}",
+                            "-DgeneratePom=true",
+                            "-Dpackaging=war",
+                            "-DrepositoryId=nexus3",
+                            "-Durl=http://livibuild04.vally.local/nexus/repository/oth/",
+                            "-Dfile=/home/jenkins/package/digiroad2-assembly-0.1.0.war",
+                            "-q",
+                            "--batch-mode"
+                        ].join(" ")
+
+                        STAGE_DEPLOY_CMD = [
+                            "cd ~/",
+                            "bundle exec cap ${get_environment()?.trim()} deploy --trace"
+                        ].join(" && ")
+                    }
+                }
+            }
+        }
+        stage("Prepare") {
+            when {
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                sh "cp /data1/ci/maven/* ci/config/"
+                script {
+
+                    echo "Running publish... (skipped for now) "
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+                    docker.build(
+                        "digiroad2-frontend",
+                        "${build_args} -f ci/docker/Dockerfile.node ci"
+                    )
+                    docker.build(
+                        "digiroad2-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
+                    )
+                    docker.build(
+                        "digiroad2-maven-publish",
+                        "${build_args} -f ci/docker/Dockerfile.maven ci"
+                    )
+                    docker.build(
+                        "digiroad2-cap",
+                        "${build_args} -f ci/docker/Dockerfile.ruby ci"
+                     )
+                }
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+        stage("Build: Frontend") {
+            agent {
+                docker {
+                    image "digiroad2-frontend"
+                    reuseNode true
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                sh STAGE_FRONTEND_BUILD_CMD
+                echo "Running frontend build... (skipped for now)"
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+		stage("Build: Backend") {
+            agent {
+                docker {
+                    image "digiroad2-backend-sbt"
+                    reuseNode true
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                echo "Build and run backend tests"
+                sh STAGE_SETUP_ORACLE
+                sh STAGE_BACKEND_BUILD_CMD
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+        stage("Package & Publish") {
+            agent {
+                docker {
+                    image "digiroad2-maven-publish"
+                    reuseNode true
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+                echo "Packaging and publishing release to Nexus"
+                sh STAGE_PACKAGE_CMD
+                sh STAGE_PUBLISH_CMD
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+       stage("Deploy") {
+
+            agent {
+                docker {
+                    image "digiroad2-cap"
+                    reuseNode true
+                }
+            }
+            when {
+                beforeAgent true
+                expression {
+                    get_environment()?.trim()
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_DEPLOY_CMD
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+    }
+    post {
+        always {
+            slackSend(
+                color: currentBuild.currentResult.equals("SUCCESS") ? "good" : "danger",
+                message: "${NOTIFY_SLACK_SUBJECT}\nJob ${currentBuild.currentResult}! More info <${BUILD_URL}|here>."
+            )
+            deleteDir()
+        }
+    }
+}

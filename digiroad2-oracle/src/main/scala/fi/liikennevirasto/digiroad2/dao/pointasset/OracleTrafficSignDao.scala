@@ -87,7 +87,7 @@ object OracleTrafficSignDao {
       filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
   }
 
-  def fetchByTurningRestrictions(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
+  def fetchByTypeValues(enumValues: Seq[Long], municipality: Int) : Seq[PersistedTrafficSign] = {
     val values = enumValues.mkString(",")
     val filter = s"where ev.id in ($values) and a.municipality_code = $municipality"
     fetchByFilter(query => query + filter)
@@ -103,13 +103,33 @@ object OracleTrafficSignDao {
   }
 
   def fetchByLinkId(linkIds : Seq[Long]): Seq[PersistedTrafficSign] = {
-    val filter = s"Where a.asset_type_id = 300 and lp.link_id in (${linkIds.mkString(",")})"
-    fetchByFilter(query => query + filter)
+    val rows = MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
+        select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
+               p.id, p.public_id, p.property_type, p.required, ev.value,
+               case
+                when ev.name_fi is not null then ev.name_fi
+                when tpv.value_fi is not null then tpv.value_fi
+                else null
+               end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
+               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
+        from asset a
+        join asset_link al on a.id = al.asset_id
+        join lrm_position lp on al.position_id = lp.id
+        join property p on a.asset_type_id = p.asset_type_id
+        join #$idTableName i on i.id = lp.link_id
+        left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
+        left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id and p.property_type = 'text'
+        left join enumerated_value ev on scv.enumerated_value_id = ev.id
+        left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
+        where a.asset_type_id = 300
+        and (a.valid_to > sysdate or a.valid_to is null)
+      """.as[TrafficSignRow](getTrafficSignRow).list
+    }
+    groupTrafficSign(rows)
   }
 
-  private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
-    val rows = StaticQuery.queryNA[TrafficSignRow](query).iterator.toSeq
-
+  private def groupTrafficSign(rows: Seq[TrafficSignRow]): Seq[PersistedTrafficSign] = {
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
       val properties: Seq[TrafficSignProperty] = assetRowToProperty(signRows)
@@ -119,6 +139,11 @@ object OracleTrafficSignDao {
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired)
     }.values.toSeq
+  }
+
+  private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
+    val rows = StaticQuery.queryNA[TrafficSignRow](query)(getTrafficSignRow).iterator.toSeq
+    groupTrafficSign(rows)
   }
 
   implicit val getTrafficSignRow = new GetResult[TrafficSignRow] {
@@ -413,16 +438,6 @@ object OracleTrafficSignDao {
          )
       """.execute
     }
-  }
-
-  def getTrafficSignType(id: Long): Option[Int]= {
-    sql""" select ev.value
-         from asset a
-         join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'trafficSigns_type'
-         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
-         left join enumerated_value ev on scv.enumerated_value_id = ev.id
-         where a.asset_type_id = ${TrafficSigns.typeId} and a.id = $id
-    """.as[Int].firstOption
   }
 
   def expireWithoutTransaction(queryFilter: String => String, username: Option[String]) : Unit = {

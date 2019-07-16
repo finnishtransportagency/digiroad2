@@ -28,8 +28,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val assets = Seq(
       SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(0.0, 0.0),
         Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-    SpeedLimit(2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0),
-      Point(3.0, 0.0)), 2.0, 4.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+      SpeedLimit(2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0),
+        Point(3.0, 0.0)), 2.0, 4.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
     )
 
     val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets))
@@ -72,7 +72,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     filledTopology.head.geometry should be(Seq(Point(0.0, 0.0), Point(10.0, 0.0)))
     filledTopology.head.startMeasure should be(0.0)
     filledTopology.head.endMeasure should be(10.0)
-    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil, Nil, Set.empty))
+    changeSet should be(ChangeSet(Set.empty, Seq(MValueAdjustment(1, 1, 0, 10.0)), Nil, Nil, Set.empty, Nil))
   }
 
   test("adjust one way speed limits to cover whole link when there are no multiple speed limits on one side of the link") {
@@ -124,14 +124,14 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
   test("do not drop short speed limit if it fills the road length") {
-  val topology = Seq(
-    roadLink(1, Seq(Point(0.0, 0.0), Point(0.4, 0.0))))
-  val speedLimits = Map(
-    1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
-  val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
-  filledTopology should have size 1
-  changeSet.droppedAssetIds should be(Set())
-}
+    val topology = Seq(
+      roadLink(1, Seq(Point(0.0, 0.0), Point(0.4, 0.0))))
+    val speedLimits = Map(
+      1l -> Seq(SpeedLimit(1, 1, SideCode.TowardsDigitizing, TrafficDirection.BothDirections, Some(NumericValue(40)), Seq(Point(0.0, 0.0), Point(0.4, 0.0)), 0.0, 0.4, None, None, None, None, 0, None, linkSource = NormalLinkInterface)))
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(topology, speedLimits)
+    filledTopology should have size 1
+    changeSet.droppedAssetIds should be(Set())
+  }
 
   test("should not drop adjusted short speed limit") {
     val topology = Seq(
@@ -222,8 +222,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     )
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
-      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-      ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output.length should be(3)
     output.head._1.trafficDirection should be (TrafficDirection.BothDirections)
     output.head._1.startMeasure should be(0.0)
@@ -252,7 +252,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output.head._1.sideCode should be (SideCode.TowardsDigitizing)
     output.last._1.sideCode should be (SideCode.AgainstDigitizing)
     output.head._1.startMeasure should be(0.0)
@@ -264,7 +264,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     val output2 = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.last, linkmap.get(change.newId.get).get,
         Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty)) }
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output2.length should be(3)
     output2.head._1.sideCode should be (SideCode.AgainstDigitizing)
     output2.last._1.sideCode should be (SideCode.TowardsDigitizing)
@@ -296,9 +296,9 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
     val output = changes flatMap { change =>
       speedLimit.map(
-      SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
+        SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.head.startMeasure should be(0.0)
@@ -333,7 +333,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.length should be (4)
@@ -373,7 +373,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.filter(_.linkId == 1).count(_.value.contains(NumericValue(30))) should be (1)
     output.filter(_.linkId == 1).count(_.value.contains(NumericValue(40))) should be (1)
@@ -409,7 +409,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
       speedLimit.map(
         SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
           Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty  ))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) } filter(sl => sl.startMeasure != sl.endMeasure)
   }
 
   test("Should repair speed limit data on overlaps and invalid data") {

@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
@@ -344,7 +345,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   }
 
   private def massTransitStopsToGeoJson(since: DateTime, massTransitStopsOnVallu: Seq[ChangedPointAsset]): Map[String, Any] = {
-    def getValiditiDatesProperties(stop: PersistedMassTransitStop, publicId: String): String = {
+    def getValidityDatesProperties(stop: PersistedMassTransitStop, publicId: String): String = {
       if (!propertyIsDefined(stop, publicId) || propertyIsEmpty(stop, publicId)) {
         "true"
       } else
@@ -365,8 +366,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             case Some(_) => massTransitStop.modified
             case _ => massTransitStop.created
           }
-          val validTo = getValiditiDatesProperties(massTransitStop, "viimeinen_voimassaolopaiva")
-          val validFrom = getValiditiDatesProperties(massTransitStop, "ensimmainen_voimassaolopaiva")
+          val validTo = getValidityDatesProperties(massTransitStop, "viimeinen_voimassaolopaiva")
+          val validFrom = getValidityDatesProperties(massTransitStop, "ensimmainen_voimassaolopaiva")
 
           Map(
             "id" -> massTransitStop.nationalId,

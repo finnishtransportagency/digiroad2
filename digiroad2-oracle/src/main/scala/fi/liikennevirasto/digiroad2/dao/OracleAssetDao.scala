@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.TrafficSigns
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -121,8 +122,6 @@ class OracleAssetDao {
           WHERE id = ${asset.id}
       """.execute
   }
-
-
 
   def expireWithoutTransaction(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).first
