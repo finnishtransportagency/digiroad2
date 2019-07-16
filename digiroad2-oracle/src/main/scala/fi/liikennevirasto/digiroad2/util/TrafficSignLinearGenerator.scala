@@ -916,7 +916,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
     val mainSignRoadLink = (result.map(_.roadLink) :+ actualRoadLink).find(_.linkId == mainSign.linkId).get
     val (start, end) = GeometryUtils.geometryEndpoints(mainSignRoadLink.geometry)
     val x = getPointOfInterest(start, end, SideCode.apply(mainSign.validityDirection))
-    val distance = if(mainSign.linkId == actualRoadLink.linkId) 0 else (if(x._2.nonEmpty) mainSign.mValue else GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue) +
+    val distance = if(mainSign.linkId == actualRoadLink.linkId) 0 else (if (x._2.nonEmpty) GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue else mainSign.mValue) +
       result.filterNot(_.roadLink.linkId == mainSign.linkId).map(res => Math.abs(res.endMeasure - res.startMeasure)).sum
 
     val length = GeometryUtils.geometryLength(actualRoadLink.geometry)

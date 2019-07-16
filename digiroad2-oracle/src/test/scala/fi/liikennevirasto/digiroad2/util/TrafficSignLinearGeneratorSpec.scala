@@ -428,7 +428,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   test("parking generate segments additional panel DistanceFromSignToPointWhichSignApplies") {
     val parkingProhibitionGenerator = new TestTrafficSignParkingProhibitionGenerator()
     val signProperty = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(StandingAndParkingProhibited.OTHvalue.toString))),
-      TrafficSignProperty(1, "additional_panel", "", false, Seq(AdditionalPanel(DistanceFromSignToPointWhichSignApplies.OTHvalue, "", "15", 1))))
+      TrafficSignProperty(1, "additional_panel", "", false, Seq(AdditionalPanel(DistanceWhichSignApplies.OTHvalue, "", "15", 1))))
 
     val trafficSign = PersistedTrafficSign(1, 1005, 0, 0, 0, false, 0, 235, signProperty, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 

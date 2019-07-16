@@ -206,7 +206,7 @@
         'parkingProhibition/:id': 'parkingProhibition',
         'work-list/speedLimit(/:administrativeClass)': 'speedLimitWorkList',
         'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
-        'work-list/speedLimitErrors': 'speedLimitErrorsWorkList',
+        'work-list/speedLimitErrors(/:administrativeClass)': 'speedLimitErrorsWorkList',
 
         'work-list/hazardousMaterialTransportProhibitionErrors': 'hazardousMaterialProhibitionErrorsWorkList',
         'work-list/manoeuvreErrors': 'manoeuvreErrorsWorkList',
