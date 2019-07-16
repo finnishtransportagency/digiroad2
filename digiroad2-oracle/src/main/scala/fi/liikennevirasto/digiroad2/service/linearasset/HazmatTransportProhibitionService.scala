@@ -12,19 +12,12 @@ import fi.liikennevirasto.digiroad2.util.PolygonTools
 
 class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
-
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
-
   override def eventBus: DigiroadEventBus = eventBusImpl
-
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
-
   override def polygonTools: PolygonTools = new PolygonTools()
-
   override def assetDao: OracleAssetDao = new OracleAssetDao
-
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {

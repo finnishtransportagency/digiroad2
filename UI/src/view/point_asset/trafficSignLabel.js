@@ -178,7 +178,7 @@
           {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png'},
           {signValue: [150], image: 'images/traffic-signs/additional-panels/HusvagnCaravan.png', height: 20},
           {signValue: [151], image: 'images/traffic-signs/additional-panels/Moped.png', height: 20}
-          ];
+        ];
       };
 
       var showAdditionalInfo = function () {
