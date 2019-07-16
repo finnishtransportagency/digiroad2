@@ -195,6 +195,11 @@ object DataFixture {
     new TrafficSignHazmatTransportProhibitionGenerator(roadLinkService)
   }
 
+  lazy val trafficSignParkingProhibitionGenerator: TrafficSignParkingProhibitionGenerator = {
+    new TrafficSignParkingProhibitionGenerator(roadLinkService)
+  }
+
+
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
     if(property != null)
@@ -2261,6 +2266,8 @@ object DataFixture {
         trafficSignProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("create_hazmat_transport_prohibition_using_traffic_signs") =>
         trafficSignHazmatTransportProhibitionGenerator.createLinearAssetUsingTrafficSigns()
+      case Some("create_parking_prohibition_using_traffic_signs") =>
+        trafficSignParkingProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
@@ -2278,8 +2285,9 @@ object DataFixture {
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
-        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | create_hazmat_transport_prohibition_using_traffic_signs |" +
-        " create_prohibitions_using_traffic_signs | load_municipalities_verification_info | resolving_Frozen_Links| import_private_road_info")
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
+        " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
+        " resolving_Frozen_Links| import_private_road_info")
     }
   }
 }

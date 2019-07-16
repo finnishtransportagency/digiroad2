@@ -468,12 +468,14 @@
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
+    var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
     return [
       [roadLinkBox]
           .concat([speedLimitBox])
           .concat([manoeuvreBox])
           .concat(getLinearAsset(assetType.prohibition))
-          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
+          .concat([parkingProhibitionBox])
+        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
       []
           .concat(getLinearAsset(assetType.totalWeightLimit))
           .concat(getLinearAsset(assetType.trailerTruckWeightLimit))

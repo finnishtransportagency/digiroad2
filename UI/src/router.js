@@ -203,6 +203,7 @@
         'lengthLimit/:id': 'lengthLimit',
         'widthLimit/:id': 'widthLimit',
         'manoeuvres/:id': 'manoeuvres',
+        'parkingProhibition/:id': 'parkingProhibition',
         'work-list/speedLimit(/:administrativeClass)': 'speedLimitWorkList',
         'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors(/:administrativeClass)': 'speedLimitErrorsWorkList',
@@ -598,6 +599,10 @@
 
       widthLimit: function (id) {
         linearCentering('widthLimit', id);
+      },
+
+      parkingProhibition: function (id) {
+        linearCentering('parkingProhibition', id);
       },
 
       unverifiedLinearAssetWorkList: function(layerName) {

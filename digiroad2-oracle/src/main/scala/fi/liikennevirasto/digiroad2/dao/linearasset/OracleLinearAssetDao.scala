@@ -752,10 +752,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sqlu"""update connected_asset set valid_to = sysdate where valid_to is not null and point_asset_id = $id""".execute
   }
 
-  def getLastExecutionDateOfConnectedAsset(): Option[DateTime] = {
+  def getLastExecutionDateOfConnectedAsset(typeId: Int): Option[DateTime] = {
     sql"""select * from (
-            select max(greatest( coalesce(created_date, modified_date , valid_to))) as lastExecutionDate
-              from connected_asset)
+            select max(greatest( coalesce(con.created_date, con.modified_date , con.valid_to))) as lastExecutionDate
+              from connected_asset con
+              join asset a on a.id = con.linear_asset_id and a.asset_type_id = $typeId)
           where lastExecutionDate is not null
           """.as[DateTime].firstOption
   }
@@ -973,6 +974,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          where  (a.valid_to is null or a.valid_to > sysdate)
          and a.created_by = 'automatic_trafficSign_created'
          and a.asset_type_id = $assetTypeId
-         and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1) #$municipalityFilter""".as[(Long, Int)].list
+         and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1)
+         #$municipalityFilter""".as[(Long, Int)].list
   }
 }
