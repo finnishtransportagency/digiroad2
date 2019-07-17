@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -162,7 +163,7 @@ object RoadLinkDAO{
       dao.updateValues(linkProperty, vvhRoadLink, username, value, mmlId)
   }
 
-  def update(propertyName: String, linkProperty: LinkProperties, username: Option[String], existingValue: Int) = {
+  def update(propertyName: String, linkProperty: LinkProperties, username: Option[String], existingValue: Int, mmlId: Option[Long] = None) = {
     val dao = getDao(propertyName)
     val value = dao.getValue(linkProperty)
 
@@ -248,7 +249,6 @@ object RoadLinkDAO{
           (linkId, asset.LinkType.apply(linkType))
       }
     }
-
   }
 
   case object AdministrativeClassDao extends RoadLinkDAO {
@@ -311,12 +311,12 @@ object RoadLinkDAO{
 
     def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
       sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > sysdate) and value = $roadAssociationName""".as[(String, Long)].list
+           and (valid_to is null or valid_to > sysdate) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
     }
 
-    def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
-      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by )
-             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username
+    def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String, mmlId: Option[Long]): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, mml_id )
+             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username, $mmlId
               from dual""".execute
     }
 

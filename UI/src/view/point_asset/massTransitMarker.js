@@ -231,10 +231,14 @@
 
     var createDirectionArrowStyle = function() {
       var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
-      var directionArrowSrc = basePath + (data.floating ? 'direction-arrow-warning.svg' : 'direction-arrow.svg');
-      if(data.stopTypes[0] == 6)
-          directionArrowSrc = basePath + (data.floating ? 'no-direction-warning.svg' : 'no-direction.svg');
-      var rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
+      var directionArrowSrc, rotation;
+      if (data.stopTypes[0] == 6) {
+        directionArrowSrc = basePath + (data.floating ? 'no-direction-warning.svg' : 'no-direction.svg');
+        rotation = 0;
+      } else {
+        directionArrowSrc = basePath + (data.floating ? 'direction-arrow-warning.svg' : 'direction-arrow.svg');
+        rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
+      }
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: directionArrowSrc,

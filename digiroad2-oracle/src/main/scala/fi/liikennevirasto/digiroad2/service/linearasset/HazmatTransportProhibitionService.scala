@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
-import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, HazmatTransportProhibition}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, MunicipalityDao, OracleAssetDao}
@@ -18,7 +18,6 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools: PolygonTools = new PolygonTools()
   override def assetDao: OracleAssetDao = new OracleAssetDao
-
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit = {
@@ -62,7 +61,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
       updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
 
-    eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
+    eventBus.publish("hazmatTransportProhibition:Validator", AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 
@@ -76,7 +75,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo(newIds.toSet))
+    eventBus.publish("hazmatTransportProhibition:Validator", AssetValidatorInfo(newIds.toSet))
     newIds
   }
 
@@ -86,7 +85,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         .groupBy(_.municipality)
         .mapValues {
           _.groupBy(_.administrativeClass)
-            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
+            .mapValues(_.map { values => Map("assetId" -> values.assetId, "linkId" -> values.linkId) })
         }
     }
   }

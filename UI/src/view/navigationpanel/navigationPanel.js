@@ -37,7 +37,6 @@
     
     function bindEvents() {
       layerSelectBox.button.on('click', function() {
-        assetElementDiv.toggle();
         layerSelectBox.toggle();
       });
 

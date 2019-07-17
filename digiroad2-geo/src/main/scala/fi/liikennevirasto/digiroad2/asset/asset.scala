@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2.asset
 import java.text.Normalizer
 
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Sunday
+import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
 import org.joda.time.format.DateTimeFormat
@@ -295,6 +297,111 @@ object AnimalWarningsType {
   case object Unknown extends AnimalWarningsType { def value = 99;  def typeDescription = "Unknown";}
 }
 
+sealed trait TimePeriodClass {
+  def value: Int
+
+  val trafficSign: TrafficSignType
+}
+
+object TimePeriodClass {
+  val values = Set(ValidMultiplePeriodTime, ValidSatTime, ValidMonFriTime)
+
+  def apply(value: Int): TimePeriodClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[TimePeriodClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+
+  case object ValidMultiplePeriodTime extends TimePeriodClass {
+    def value: Int = 1
+
+    override val trafficSign: TrafficSignType = ValidMultiplePeriod
+  }
+
+  case object ValidSatTime extends TimePeriodClass {
+    def value: Int = 7
+
+    override val trafficSign: TrafficSignType = ValidSat
+  }
+
+  case object ValidMonFriTime extends TimePeriodClass {
+    def value: Int = 2
+
+    override val trafficSign: TrafficSignType = ValidMonFri
+  }
+
+  case object Unknown extends TimePeriodClass {
+    def value: Int = 99
+
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+sealed trait ParkingProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object ParkingProhibitionClass {
+  val values = Set(StandingAndParkingProhibition, ParkingProhibition, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[ParkingProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): ParkingProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    ParkingProhibitionClass.apply(prohibitionValue).trafficSign
+
+  case object StandingAndParkingProhibition extends ParkingProhibitionClass {
+    def value: Int = 1
+    override val trafficSign: TrafficSignType = StandingAndParkingProhibited
+  }
+
+  case object ParkingProhibition extends ParkingProhibitionClass {
+    def value: Int = 2
+    override val trafficSign: TrafficSignType = ParkingProhibited
+  }
+
+  case object Unknown extends ParkingProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
+sealed trait HazmatTransportProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object HazmatTransportProhibitionClass {
+  val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[HazmatTransportProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): HazmatTransportProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    HazmatTransportProhibitionClass.apply(prohibitionValue).trafficSign
+
+  case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = HazmatProhibitionA
+  }
+
+  case object HazmatProhibitionTypeB extends HazmatTransportProhibitionClass {
+    def value: Int = 25
+    override val trafficSign: TrafficSignType = HazmatProhibitionB
+  }
+
+  case object Unknown extends HazmatTransportProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
 sealed trait ProhibitionClass {
   def value: Int
   def typeDescription: String
@@ -302,7 +409,7 @@ sealed trait ProhibitionClass {
   val trafficSign: Seq[TrafficSignType] = Seq()
 }
 object ProhibitionClass {
-  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bud,
+  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bus,
                    Taxi, PassengerCar, DeliveryCar, Truck, RecreationalVehicle, MilitaryVehicle, ArticulatedVehicle, TractorFarmVehicle,
                    OversizedTransport, DrivingInServicePurpose, DrivingToALot, Unknown)
 
@@ -312,21 +419,6 @@ object ProhibitionClass {
 
   def fromTrafficSign(trafficSign: TrafficSignType): Set[ProhibitionClass] = {
     values.filter(_.trafficSign.contains(trafficSign)).toSet
-  }
-
-  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
-    (if (prohibitionValue.intersect(Seq(Moped.value, Pedestrian.value, Bicycle.value)).size == 3) {
-      prohibitionValue --= Seq(Moped.value, Pedestrian.value, Bicycle.value)
-      Seq(NoPedestriansCyclesMopeds)
-    } else Seq()
-      )++
-      (if (prohibitionValue.intersect(Seq(Moped.value, Bicycle.value)).size == 2) {
-        prohibitionValue --= Seq(Moped.value, Bicycle.value)
-        Seq(NoCyclesOrMopeds)
-      } else Seq()
-        ) ++ prohibitionValue.flatMap { value =>
-      ProhibitionClass.apply(value).trafficSign
-    }
   }
 
   case object Vehicle extends ProhibitionClass {
@@ -350,13 +442,13 @@ object ProhibitionClass {
     def value = 12
     def typeDescription = "Pedestrian"
     def rosatteType = "Pedestrian"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians, NoPedestriansCyclesMopeds)
   }
   case object Bicycle extends ProhibitionClass {
     def value = 11
     def typeDescription = "Bicycle"
     def rosatteType = "Bicycle"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
   }
   case object HorseRiding extends ProhibitionClass {
     def value = 26
@@ -368,7 +460,7 @@ object ProhibitionClass {
     def value = 10
     def typeDescription = "Moped"
     def rosatteType = "Moped"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds, NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
   }
   case object Motorcycle extends ProhibitionClass {
     def value = 9
@@ -382,9 +474,9 @@ object ProhibitionClass {
     def rosatteType = ""
     override val trafficSign: Seq[TrafficSignType] = Seq(NoMotorSledges)
   }
-  case object Bud extends ProhibitionClass {
+  case object Bus extends ProhibitionClass {
     def value = 5
-    def typeDescription = "Bud"
+    def typeDescription = "Bus"
     def rosatteType = "PublicBus + PrivateBus"
     override val trafficSign: Seq[TrafficSignType] = Seq(NoBuses)
   }
@@ -451,6 +543,68 @@ object ProhibitionClass {
     def value = 99
     def typeDescription = "Unknown"
     def rosatteType = ""
+  }
+}
+
+sealed trait ProhibitionExceptionClass {
+  def value: Int
+  val trafficSign: Seq[TrafficSignType] = Seq()
+}
+
+object ProhibitionExceptionClass {
+  val values = Set(MopedException, ServiceVehicles, Motorbike, BusException, Sedan, VanException, LorryException, Caravan, Unknown)
+
+  def apply(value: Int): ProhibitionExceptionClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromTrafficSign(trafficSign: Seq[TrafficSignType]): Set[Int] = {
+    values.filter(_.trafficSign.exists( exception => trafficSign.contains(exception))).map(_.value).filterNot(_ == Unknown.value)
+  }
+
+  case object MopedException extends ProhibitionExceptionClass {
+    def value = 10
+    override val trafficSign: Seq[TrafficSignType] = Seq(Moped)
+  }
+
+  case object ServiceVehicles extends ProhibitionExceptionClass {
+    def value = 21
+    override val trafficSign: Seq[TrafficSignType] = Seq(DrivingInServicePurposesAllowed)
+  }
+
+  case object Motorbike extends ProhibitionExceptionClass {
+    def value = 9
+    override val trafficSign: Seq[TrafficSignType] = Seq(MotorCycle)
+  }
+
+  case object BusException extends ProhibitionExceptionClass {
+    def value = 5
+    override val trafficSign: Seq[TrafficSignType] = Seq(Bus)
+  }
+
+  case object Sedan extends ProhibitionExceptionClass {
+    def value = 7
+    override val trafficSign: Seq[TrafficSignType] = Seq(PassengerCar)
+  }
+
+  case object VanException extends ProhibitionExceptionClass {
+    def value = 6
+    override val trafficSign: Seq[TrafficSignType] = Seq(Van)
+  }
+
+  case object LorryException extends ProhibitionExceptionClass {
+    def value = 4
+    override val trafficSign: Seq[TrafficSignType] = Seq(Lorry)
+  }
+
+  case object Caravan extends ProhibitionExceptionClass {
+    def value = 15
+    override val trafficSign: Seq[TrafficSignType] = Seq(HusvagnCaravan)
+  }
+
+  case object Unknown extends ProhibitionExceptionClass {
+    override def value: Int = 99
+    override val trafficSign: Seq[TrafficSignType] = Seq(TrafficSignType.Unknown)
   }
 }
 
@@ -671,6 +825,7 @@ case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType
 case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" ; val layerName = "carryingCapacity"}
 case object AnimalWarnings extends AssetTypeInfo { val typeId = 410; def geometryType = "linear"; val label = "AnimalWarnings" ; val layerName = "animalWarnings"}
 case object RoadWorksAsset extends AssetTypeInfo { val typeId = 420; def geometryType = "linear"; val label = "RoadWorks" ; val layerName = "roadWorks"}
+case object ParkingProhibition extends AssetTypeInfo { val typeId = 430; def geometryType = "linear"; val label = "ParkingProhibition" ; val layerName = "parkingProhibition"}
 
 object AutoGeneratedValues {
   val allAutoGeneratedValues =

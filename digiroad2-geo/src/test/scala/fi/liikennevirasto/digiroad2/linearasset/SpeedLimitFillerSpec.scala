@@ -222,8 +222,8 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     )
     val output = changes map { change =>
       SpeedLimitFiller.projectSpeedLimit(speedLimit.head, linkmap.get(change.newId.get).get,
-      Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-      ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
+        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil)) }
     output.length should be(3)
     output.head._1.trafficDirection should be (TrafficDirection.BothDirections)
     output.head._1.startMeasure should be(0.0)
@@ -296,9 +296,9 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
 
     val output = changes flatMap { change =>
       speedLimit.map(
-      SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
-        Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
-        ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
+        SpeedLimitFiller.projectSpeedLimit(_, linkmap.get(change.newId.get).get,
+          Projection(change.oldStartMeasure.get, change.oldEndMeasure.get, change.newStartMeasure.get, change.newEndMeasure.get, change.vvhTimeStamp.get),
+          ChangeSet(Set.empty, Nil, Nil, Nil, Set.empty, Nil))._1) }  filter(sl => sl.startMeasure != sl.endMeasure)
 
     output.foreach(_.sideCode should be (SideCode.BothDirections))
     output.head.startMeasure should be(0.0)

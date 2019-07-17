@@ -88,6 +88,10 @@
         return labelProperty && labelProperty.height ? labelProperty.height : 35;
       }
 
+      function getTextColor(){
+        return labelProperty && labelProperty.textColor ? labelProperty.textColor :  '#000000';
+      }
+
       return {
         findImage: findImage,
         getTextOffsetX: getTextOffsetX,
@@ -97,7 +101,8 @@
         getUnit : getUnit,
         getAdditionalInfo: getAdditionalInfo,
         getMaxLength: getMaxLength,
-        getHeight: getHeight
+        getHeight: getHeight,
+        getTextColor: getTextColor
       };
     };
 
@@ -128,7 +133,7 @@
         text: new ol.style.Text({
           text: me.textStyle(trafficSign),
           fill: new ol.style.Fill({
-            color: trafficSign.textColor ?  trafficSign.textColor : '#000000'
+            color: trafficSign.textColor ?  trafficSign.textColor : me.getLabelProperty(trafficSign).getTextColor()
           }),
           font: '12px sans-serif',
           offsetX: me.getLabelProperty(trafficSign).getTextOffsetX(),

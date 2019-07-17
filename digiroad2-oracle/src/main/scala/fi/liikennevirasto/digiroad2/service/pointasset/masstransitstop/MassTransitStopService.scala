@@ -4,6 +4,7 @@ import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -589,12 +590,6 @@ trait MassTransitStopService extends PointAssetOperations {
     (previousStrategy, currentStrategy)
   }
 
-  private def publishSaveEvent(persistedStop: PersistedAsset, roadLinkByLinkId: Long => Option[RoadLinkLike]): MassTransitStopWithProperties = {
-    val municipalityName = municipalityDao.getMunicipalityNameByCode(persistedStop.municipalityCode)
-    eventbus.publish("asset:saved", eventBusMassTransitStop(persistedStop, municipalityName))
-    withFloatingUpdate(persistedStopToMassTransitStopWithProperties(roadLinkByLinkId))(persistedStop)
-  }
-
   /**
     * Update asset ajusted geometry
     *
@@ -610,6 +605,30 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def excludeProperties(properties: Seq[SimplePointAssetProperty]): Set[SimplePointAssetProperty] = {
     properties.filterNot(prop => AssetPropertyConfiguration.ExcludedProperties.contains(prop.publicId)).toSet
+  }
+
+  def saveIdPrintedOnValluLog(id: Long): Unit = {
+    massTransitStopDao.insertValluXmlIds(id)
+  }
+
+  def getPublishedOnXml(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
+    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
+
+    val filter = s"join vallu_xml_ids vxi on vxi.asset_id = a.id " +
+      s"where a.asset_type_id = $typeId and floating = 0 and (" +
+      s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
+      s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or " +
+      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
+
+    val assets = withDynSession {
+      fetchPointAssets(withFilter(filter))
+    }
+
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+
+    assets.map { asset =>
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
   }
 }
 

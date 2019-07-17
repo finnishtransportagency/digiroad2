@@ -28,6 +28,10 @@ class VerificationDao {
     }
   }
 
+  def getVerifiedAssetTypes : List[(Int, String)] = {
+    sql"""SELECT id, geometry_type FROM asset_type atype WHERE atype.verifiable = 1""".as[(Int, String)].list
+  }
+
   def getSuggestedByTypeIdAndMunicipality(municipalityId: Int, typeId: Int): SuggestedAssetsStructure = {
     val suggestedAssets =
       sql"""
@@ -40,10 +44,6 @@ class VerificationDao {
     suggestedAssets.map { row =>
       SuggestedAssetsStructure(row._1, row._2, row._3, typeId, row._4.split(",").map(_.toInt).toSeq)
     }.head
-  }
-
-  def getVerifiedAssetTypes : List[(Int, String)] = {
-    sql"""SELECT id, geometry_type FROM asset_type atype WHERE atype.verifiable = 1""".as[(Int, String)].list
   }
 
   def getNumberOfPointAssets(municipalityId: Int) : Seq[(Int, Int)] = {
@@ -173,6 +173,7 @@ class VerificationDao {
          #$filterByType
          """.as[(Int, Int, Option[String], Option[DateTime], Int, Option[DateTime], String)].list
   }
+
   def insertAssetTypeVerification(municipalityId: Int, assetTypeId: Int, username: String): Long = {
     val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
     sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by)

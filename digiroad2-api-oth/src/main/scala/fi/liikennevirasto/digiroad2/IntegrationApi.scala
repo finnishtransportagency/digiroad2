@@ -206,16 +206,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
         "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
-        .filterNot(_._1 == "ROADNUMBER")
-        .filterNot(_._1 == "ROADPARTNUMBER")
-        .filterNot(_._1 == "STARTNODE")
-        .filterNot(_._1 == "ENDNODE")
-        .filterNot(_._1 == "CUST_OWNER")
-        .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
-        .filterNot(_._1 == "ACCESS_RIGHT_ID")
-        .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
-        .filterNot(_._1 == "ADDITIONAL_INFO")
-
+                                                                                              .filterNot(_._1 == "ROADNUMBER")
+                                                                                              .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                                              .filterNot(_._1 == "STARTNODE")
+                                                                                              .filterNot(_._1 == "ENDNODE")
+                                                                                              .filterNot(_._1 == "CUST_OWNER")
+                                                                                              .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+                                                                                              .filterNot(_._1 == "ACCESS_RIGHT_ID")
+                                                                                              .filterNot(_._1 == "PRIVATE_ROAD_ASSOCIATION")
+                                                                                              .filterNot(_._1 == "ADDITIONAL_INFO")
     }
   }
 
@@ -286,6 +285,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case NumberOfLanes.typeId => numberOfLanesService
       case DamagedByThaw.typeId => damagedByThawService
       case RoadWorksAsset.typeId => roadWorkService
+      case ParkingProhibition.typeId => parkingProhibitionService
       case _ => linearAssetService
     }
   }
@@ -362,6 +362,25 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         }))
 
       defaultMultiValueLinearAssetsMap(massTransitLane) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def parkingProhibitionsToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val parkingProhibitions = getMultiValueLinearAssetByMunicipality(ParkingProhibition.typeId, municipalityNumber)
+
+     parkingProhibitions.map { parkingProhibition =>
+     val dynamicMultiValueLinearAssetMap = parkingProhibition.value match {
+       case Some(DynamicValue(value)) =>
+         Map(
+           "parking_prohibition" -> value.properties.find(_.publicId ==  "parking_prohibition").get.values.head.value,
+           "parking_validity_period" -> value.properties.find(_.publicId == "parking_validity_period").get.values.map(_.value).map { timePeriod =>
+             timePeriod.asInstanceOf[Map[String, Any]]
+           }.map(ValidityPeriodValue.fromMap).map(a => toTimeDomain(a))
+         )
+       case _ => Map()
+     }
+
+      defaultMultiValueLinearAssetsMap(parkingProhibition) ++ dynamicMultiValueLinearAssetMap
     }
   }
 
@@ -876,6 +895,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "traffic_signs" => trafficSignsToApi(trafficSignService.getByMunicipality(municipalityNumber))
         case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
+        case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

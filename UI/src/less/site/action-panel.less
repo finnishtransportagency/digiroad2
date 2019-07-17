@@ -76,6 +76,10 @@
   }
 }
 
+.linear-asset-list {
+  .municipality-list;
+}
+
 .select-layer {
   flex: none;
 
@@ -390,6 +394,21 @@
     .paved-road-40 { .linear-asset-legend-entry(@paved-road-40, @linear-asset-node-14); }
     .paved-road-50 { .linear-asset-legend-entry(@paved-road-50, @linear-asset-node-13); }
     .paved-road-99 { .linear-asset-legend-entry(@paved-road-99, @linear-asset-node-12); }
+  }
+}
+
+.parking-prohibition-legend {
+
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+    .parking-prohibition-1  { .linear-asset-color(@gray); }
+    .parking-prohibition-2  { .linear-asset-color(@linear-asset-4); }
+    .parking-prohibition-3  { .linear-asset-color(@parking-prohibition-3); }
   }
 }
 
