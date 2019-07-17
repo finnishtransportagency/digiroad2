@@ -821,19 +821,9 @@ case object ItineraryForHandicapped extends InformationSignsType {
   override val TRvalue = 683
 }
 
-case object AdvanceDirectionSign extends InformationSignsType {
-  override val OTHvalue = 150
-  override val TRvalue = 611
-}
-
 case object AdvanceDirectionSignSmall extends InformationSignsType {
   override val OTHvalue = 178
   override val TRvalue = 612
-}
-
-case object AdvisorySignDetour extends InformationSignsType {
-  override val OTHvalue = 151
-  override val TRvalue = 613
 }
 
 case object AdvisorySignDetourLarge extends InformationSignsType {
@@ -1029,6 +1019,16 @@ case object DirectionToEmergencyExit extends InformationSignsType {
 case object AdvanceDirectionSignAboveSmall extends InformationSignsType {
   override val OTHvalue = 191
   override val TRvalue = 632
+}
+
+case object AdvanceDirectionSign extends InformationSignsType {
+  override val OTHvalue = 192
+  override val TRvalue = 611
+}
+
+case object AdvisorySignDetour extends InformationSignsType {
+  override val OTHvalue = 193
+  override val TRvalue = 613
 }
 
 trait ServiceSignsType extends TrafficSignType  {
