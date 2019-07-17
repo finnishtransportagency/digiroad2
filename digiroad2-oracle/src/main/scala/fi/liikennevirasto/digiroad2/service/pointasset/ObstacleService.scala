@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, OracleDirectionalTrafficSignDao, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
@@ -36,11 +36,49 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     }
   }
 
-  override def create(asset: IncomingObstacle, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: IncomingObstacle, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
-    withDynTransaction {
-      OracleObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+    if(newTransaction) {
+      withDynTransaction {
+        OracleObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
+      }
+    } else {
+        OracleObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
+  }
+
+  def createFromCoordinates(incomingObstacle: IncomingObstacle, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
+    if(isFloating)
+      createFloatingWithoutTransaction(incomingObstacle.copy(linkId = 0), username, roadLink)
+    else {
+      checkDuplicates(incomingObstacle) match {
+        case Some(existingAsset) =>
+          updateWithoutTransaction(existingAsset.id, incomingObstacle, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
+        case _ =>
+          create(incomingObstacle, username, roadLink, false)
+      }
+    }
+  }
+
+  def checkDuplicates(incomingObstacle: IncomingObstacle): Option[Obstacle] = {
+    val position = Point(incomingObstacle.lon, incomingObstacle.lat)
+    val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
+      asset =>
+        GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
+        asset.obstacleType == incomingObstacle.obstacleType
+    )
+    if(signsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(signsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(signs: Seq[Obstacle]): Obstacle = {
+    signs.maxBy(sign => sign.modifiedAt.getOrElse(sign.createdAt.get).getMillis)
+  }
+
+  def createFloatingWithoutTransaction(asset: IncomingObstacle, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat), roadLink.geometry)
+    OracleObstacleDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, username, roadLink.municipalityCode, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, roadLink: RoadLink, username: String): Long = {

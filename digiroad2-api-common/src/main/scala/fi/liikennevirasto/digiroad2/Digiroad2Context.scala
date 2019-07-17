@@ -10,9 +10,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration.FiniteDuration
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
@@ -39,14 +41,16 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
     withDynSession {
-      val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
+      massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
     }
   }
 }
 
 class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case x: AbstractPublishInfo => persistedAssetChanges(x.asInstanceOf[TerminalPublishInfo])
@@ -55,12 +59,13 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
 
   def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
     withDynSession {
-    val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset++terminalPublishInfo.detachAsset).toSet)
+      val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset ++ terminalPublishInfo.detachAsset).toSet)
 
-    persistedStop.foreach { busStop =>
-        val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      persistedStop.foreach { busStop =>
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
         val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
         ValluSender.postToVallu(massTransitStop)
+        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
     }
   }
@@ -88,6 +93,20 @@ class DynamicAssetUpdater(dynamicAssetService: DynamicLinearAssetService) extend
   def receive = {
     case x: ChangeSet => dynamicAssetService.updateChangeSet(x)
     case _            => println("DynamicAssetUpdater: Received unknown message")
+  }
+}
+
+class RoadWorksAssetUpdater(roadWorkAssetService: RoadWorkService) extends Actor {
+  def receive = {
+    case x: ChangeSet => roadWorkAssetService.updateChangeSet(x)
+    case _            => println("RoadWorksAssetUpdater: Received unknown message")
+  }
+}
+
+class DamagedByThawUpdater(damagedByThawService: DamagedByThawService) extends Actor {
+  def receive = {
+    case x: ChangeSet => damagedByThawService.updateChangeSet(x)
+    case _            => println("DamagedByThawUpdater: Received unknown message")
   }
 }
 
@@ -254,16 +273,22 @@ class TrafficSignCreateAssets(trafficSignManager: TrafficSignManager) extends Ac
 class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: Long => trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq((x, trafficType.propertyData)))
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
       case _ => println("Nonexistent traffic Sign Type")
     }
     case _ => println("trafficSignExpireAssets: Received unknown message")
   }
 }
 
-class TrafficSignUpdateAssets(trafficSignManager: TrafficSignManager) extends Actor {
+class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
-    case x: (Long, TrafficSignInfo) => trafficSignManager.trafficSignsExpireAndCreateAssets(x)
+    case x: TrafficSignInfoUpdate =>
+       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
+      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
+                                trafficSignManager.createAssets(x.newSign)
+      case _ => println("Nonexistent traffic Sign Type")
+    }
+      trafficSignManager.createAssets(x.newSign)
     case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
@@ -311,6 +336,12 @@ object Digiroad2Context {
   val dynamicAssetUpdater = system.actorOf(Props(classOf[DynamicAssetUpdater], dynamicLinearAssetService), name = "dynamicAssetUpdater")
   eventbus.subscribe(dynamicAssetUpdater, "dynamicAsset:update")
 
+  val roadWorksUpdater = system.actorOf(Props(classOf[RoadWorksAssetUpdater], roadWorkService), name = "roadWorksUpdater")
+  eventbus.subscribe(roadWorksUpdater, "roadWorks:update")
+
+  val damagedByThawUpdater = system.actorOf(Props(classOf[DamagedByThawUpdater], damagedByThawService), name = "damagedByThawUpdater")
+  eventbus.subscribe(damagedByThawUpdater, "damagedByThaw:update")
+
   val prohibitionUpdater = system.actorOf(Props(classOf[ProhibitionUpdater], prohibitionService), name = "prohibitionUpdater")
   eventbus.subscribe(prohibitionUpdater, "prohibition:update")
 
@@ -352,7 +383,7 @@ object Digiroad2Context {
   val trafficSignCreate = system.actorOf(Props(classOf[TrafficSignCreateAssets], trafficSignManager), name = "trafficSignCreate")
   eventbus.subscribe(trafficSignCreate, "trafficSign:create")
 
-  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignManager), name = "trafficSignUpdate")
+  val trafficSignUpdate = system.actorOf(Props(classOf[TrafficSignUpdateAssets], trafficSignService, trafficSignManager), name = "trafficSignUpdate")
   eventbus.subscribe(trafficSignUpdate, "trafficSign:update")
 
   val hazmatTransportProhibitionVerifier = system.actorOf(Props(classOf[HazmatTransportProhibitionValidation], hazmatTransportProhibitionValidator), name = "hazmatTransportProhibitionValidator")
@@ -484,7 +515,7 @@ object Digiroad2Context {
   }
 
   lazy val trafficSignManager: TrafficSignManager = {
-    new TrafficSignManager(manoeuvreService)
+    new TrafficSignManager(manoeuvreService, roadLinkService)
   }
 
   lazy val damagedByThawService: DamagedByThawService = {
@@ -618,6 +649,10 @@ object Digiroad2Context {
 
   lazy val numberOfLanesService: NumberOfLanesService = {
     new NumberOfLanesService(roadLinkService, eventbus)
+  }
+
+  lazy val roadWorkService: RoadWorkService = {
+    new RoadWorkService(roadLinkService, eventbus)
   }
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()

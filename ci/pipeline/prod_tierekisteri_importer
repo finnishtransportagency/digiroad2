@@ -1,0 +1,127 @@
+import java.net.URI
+
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'ACTION', choices: [
+                                        '-',
+    								    'import',
+                                        'update',
+                                        'converter'
+                                        ])
+
+
+        choice(name: 'ASSET', choices: [
+                                        '-',
+                                        'litRoad',
+                                        'roadWidth',
+                                        'trafficSign',
+                                        'pavedRoad',
+                                        'massTransitLane',
+                                        'damagedByThaw',
+                                        'europeanRoad',
+                                        'stateSpeedLimit',
+                                        'speedLimit',
+                                        'totalWeightLimit',
+                                        'trailerTruckWeightLimit',
+                                        'axleWeightLimit',
+                                        'bogieWeightLimit',
+                                        'heightLimit',
+                                        'widthLimit',
+                                        'careClass',
+                                        'carryingCapacity',
+                                        'trafficVolume',
+                                        'pedestrianCrossing',
+                                        'animalWarnings',
+                                        'bogieWeightConverterImporter',
+                                        'axleWeightConverterImporter',
+                                        'totalWeightConverterImporter',
+                                        'trailerTruckWeightConverterImporter',
+                                        'heightLimitConverterImporter'
+                                        ])
+
+        choice(name: 'TRAFFICSIGNGROUP', choices: [
+                                        '---- Only needed for TrafficSigns ----',
+                                        'SpeedLimits',
+                                        'RegulatorySigns',
+                                        'MaximumRestrictions',
+                                        'GeneralWarningSigns',
+                                        'ProhibitionsAndRestrictions',
+                                        'MandatorySigns',
+                                        'PriorityAndGiveWaySigns',
+                                        'InformationSigns',
+                                        'ServiceSigns',
+                                        'AdditionalPanels'
+                                        ])
+
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "25"))
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Setup") {
+
+            steps {
+
+                    script {
+                        STAGE_RUN_TASK = [
+                            "ssh web@production1 \'cd /home/web/digiroad2/current && echo YES |",
+                             "/home/web/digiroad2/current/./sbt",
+                             "-Ddigiroad2.env=production",
+                             "\'project digiroad2-oracle\'",
+                             "\'test:run-main fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter ${ACTION} ${ASSET} ${TRAFFICSIGNGROUP}\'"
+                        ].join(" ")
+                    }
+            }
+        }
+
+        stage("Prepare") {
+            steps {
+                script {
+
+                    def jenkins_uid = sh(returnStdout: true, script: "id -u").trim()
+
+                    def build_args = [
+                        "--build-arg http_proxy=${http_proxy}",
+                        "--build-arg https_proxy=${http_proxy}",
+                        "--build-arg no_proxy=${no_proxy}",
+                        "--build-arg JENKINS_UID=${jenkins_uid}"
+                    ].join(" ")
+
+                    docker.build(
+                         "digiroad2-cap",
+                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
+                    )
+                }
+            }
+        }
+
+        stage("Run Task") {
+            agent {
+                docker {
+                    image "digiroad2-cap"
+                    reuseNode true
+                }
+            }
+            steps {
+
+                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                    sh "cp ${ID_RSA} ~/.ssh/"
+                }
+                sh STAGE_RUN_TASK
+            }
+        }
+    }
+
+    post {
+        always {
+            deleteDir()
+        }
+    }
+}

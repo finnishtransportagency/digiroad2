@@ -70,7 +70,7 @@
           {signValue: [59], image: 'images/traffic-signs/additional-panels/parkingAgainstFee.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showPeriodDayAdditionalInfo, offsetX: 12, height: 40},
           {signValue: [60], image: 'images/traffic-signs/additional-panels/obligatoryUseOfParkingDisc.png', validation: validateAdditionalInfo, maxLabelLength: 50, additionalInfo: showHourMinAdditionalInfo, offsetX: 12, height: 33},
           {signValue: [61], image: 'images/traffic-signs/additional-panels/additionalPanelWithText.png', validation: validateAdditionalInfo, maxLabelLength: 19, additionalInfo: showAdditionalInfo, offsetX: 3, height: 25},
-          {signValue: [62], image: 'images/traffic-signs/additional-panels/drivingInServicePurposesAllowed.png', validation: validateAdditionalInfo, maxLabelLength: 13, additionalInfo: showAdditionalInfo, offsetX: 2, height: 28},
+          {signValue: [62], image: 'images/traffic-signs/additional-panels/drivingInServicePurposesAllowed.png', height: 25},
           {signValue: [63], image: 'images/traffic-signs/regulatory-signs/busLane.png'},
           {signValue: [64], image: 'images/traffic-signs/regulatory-signs/busLaneEnds.png'},
           {signValue: [65], image: 'images/traffic-signs/regulatory-signs/tramLane.png'},
@@ -154,9 +154,9 @@
           {signValue: [147], image: 'images/traffic-signs/additional-panels/CrossingLogTransportRoad.png'},
           {signValue: [148], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png'},
           {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png'},
-          {signValue: [150], image: 'images/traffic-signs/information-signs/AdvanceDirectionSign.png', height: 58},
+          {signValue: [150], image: 'images/traffic-signs/additional-panels/HusvagnCaravan.png', height: 20},
+          {signValue: [151], image: 'images/traffic-signs/additional-panels/Moped.png', height: 20},
           {signValue: [178], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignSmall.png', height: 24, validation: validateAdditionalInfo},
-          {signValue: [151], image: 'images/traffic-signs/information-signs/AdvisorySignDetour.png', height: 26, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo},
           {signValue: [152], image: 'images/traffic-signs/information-signs/AdvisorySignDetourLarge.png', height: 55},
           {signValue: [153], image: 'images/traffic-signs/information-signs/Detour.png'},
           {signValue: [154], image: 'images/traffic-signs/information-signs/RouteToBeFollowed.png', height: 35},
@@ -195,7 +195,9 @@
           {signValue: [188], image: 'images/traffic-signs/information-signs/OverpassOrUnderpassWithoutSteps.png'},
           {signValue: [189], image: 'images/traffic-signs/information-signs/EmergencyExit.png'},
           {signValue: [190], image: 'images/traffic-signs/information-signs/DirectionToEmergencyExit.png', validation: validateAdditionalInfo},
-          {signValue: [191], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignAboveSmall.png', height: 20, validation: validateAdditionalInfo}
+          {signValue: [191], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignAboveSmall.png', height: 20, validation: validateAdditionalInfo},
+          {signValue: [192], image: 'images/traffic-signs/information-signs/AdvanceDirectionSign.png', height: 58},
+          {signValue: [193], image: 'images/traffic-signs/information-signs/AdvisorySignDetour.png', height: 26, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo}
         ];
       };
 
@@ -214,7 +216,7 @@
       };
 
       var showPeriodDayAdditionalInfo = function () {
-        var counter = 2;
+        var counter = 3;
         var index = 0;
         var output = "";
         var timePeriods = this.additionalInfo ? this.additionalInfo.match(/[(]?\d+\s*[-]{1}\s*\d+[)]?/g) : [];
