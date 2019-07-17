@@ -22,12 +22,11 @@
       speedLimits: { values : [1, 2, 3, 4, 5, 6], groupName: 'Nopeusrajoitukset' },
       regulatorySigns: {values: [7, 63, 64, 65, 66, 67, 68, 69, 105, 106, 107, 108, 109, 110, 111, 112, 137], groupName: 'Ohjemerkit'},
       maximumRestrictions: { values : [8, 30, 31, 32, 33, 34, 35], groupName: 'Suurin sallittu - rajoitukset'},
-      generalWarningSigns: { values : [9, 36, 37, 38, 39, 40, 41, 42, 43, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91,
-          92, 93, 125, 126, 133, 132, 131, 130, 129, 128, 127, 162, 163, 164, 171, 172, 176, 177], groupName: 'Varoitukset'},
+      generalWarningSigns: { values : [9, 36, 37, 38, 39, 40, 41, 42, 43, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 125, 126, 127, 128, 129, 130, 131, 132, 133], groupName: 'Varoitukset'},
       prohibitionsAndRestrictions: { values : [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 80, 81, 100, 101, 102, 103, 104, 134], groupName: 'Kiellot ja rajoitukset'},
       mandatorySigns: {values: [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 136, 135], groupName: 'Määraysmerkit'},
       priorityAndGiveWaySigns: {values: [94, 95, 96, 97, 98, 99], groupName: 'Etuajo-oikeus- ja väistämismerkit'},
-      informationSigns: {values: [113, 114, 115, 116, 117, 118, 119], groupName: 'Opastusmerkit'},
+      informationSigns: {values: [113, 114, 115, 116, 117, 118, 119, 178, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193], groupName: 'Opastusmerkit'},
       serviceSigns: {values: [120, 121, 122, 123, 124], groupName: 'Palvelukohteiden opastusmerkit'}
     };
 
