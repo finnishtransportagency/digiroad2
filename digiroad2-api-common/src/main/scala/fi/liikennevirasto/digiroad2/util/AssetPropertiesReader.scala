@@ -30,7 +30,7 @@ trait AssetPropertiesReader {
 
   def extractOptionalPropertyDisplayValue(asset: {val propertyData: Seq[Property]}, propertyPublicId: String): Option[String] = {
     asset.propertyData.find(property => property.publicId == propertyPublicId)
-      .head.values.head.propertyDisplayValue
+      .head.values.asInstanceOf[Seq[PropertyValue]].head.propertyDisplayValue
   }
 
   def getPropertyValuesByPublicId(name: String, properties: Seq[Property]): Seq[PropertyValue] = {

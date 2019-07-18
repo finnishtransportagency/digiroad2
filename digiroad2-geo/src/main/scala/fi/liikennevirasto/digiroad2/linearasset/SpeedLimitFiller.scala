@@ -502,7 +502,7 @@ object SpeedLimitFiller {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(false, 0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp.toString)
+    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp.toString)
     if (speedLimit.expired) {
       println("N/A")
     } else {

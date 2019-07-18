@@ -337,7 +337,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
       }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(asset.isSuggested, prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
+      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues, asset.isSuggested)), asset.startMeasure, asset.endMeasure, asset.createdBy,
         asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
         asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
     }.toSeq

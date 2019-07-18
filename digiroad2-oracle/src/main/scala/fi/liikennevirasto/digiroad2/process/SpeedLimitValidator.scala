@@ -25,7 +25,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(SpeedLimitValue(false, speedLimitValue)) =>
+              case Some(SpeedLimitValue(speedLimitValue, false)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue) if trafficSignValue.asInstanceOf[PropertyValue].propertyValue == speedLimitValue.toString => true
                   case _ => false
@@ -47,7 +47,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(SpeedLimitValue(false, speedLimitValue)) =>
+              case Some(SpeedLimitValue(speedLimitValue, false)) =>
                 if (speedLimitValue == startUrbanAreaSpeedLimit) true else false
               case _ => false
             }
@@ -66,7 +66,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(SpeedLimitValue(false, speedLimitValue)) =>
+              case Some(SpeedLimitValue(speedLimitValue, false)) =>
                 trafficSignService.getProperty(trafficSign, "trafficSigns_value") match {
                   case Some(trafficSignValue)
                     if trafficSignValue.asInstanceOf[PropertyValue].propertyValue == speedLimitValue.toString
@@ -90,7 +90,7 @@ class SpeedLimitValidator(trafficSignService: TrafficSignService) {
 
           val hasSameSpeedLimitValue =
             speedLimit.value match {
-              case Some(SpeedLimitValue(false, speedLimitValue)) =>
+              case Some(SpeedLimitValue(speedLimitValue, false)) =>
                 if (speedLimitValue != endUrbanAreaSpeedLimit) true else false
               case _ => false
             }

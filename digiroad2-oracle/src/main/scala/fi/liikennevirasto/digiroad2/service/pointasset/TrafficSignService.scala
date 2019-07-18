@@ -15,7 +15,7 @@ import org.joda.time.DateTime
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
-case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, propertyData: Set[SimpleTrafficSignProperty])
+case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, propertyData: Set[SimplePointAssetProperty])
 case class TrafficSignInfoUpdate(expireId: Long, newSign: TrafficSignInfo)
 
 class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetOperations {

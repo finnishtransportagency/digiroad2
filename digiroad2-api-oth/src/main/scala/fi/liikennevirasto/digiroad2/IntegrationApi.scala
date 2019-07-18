@@ -248,7 +248,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def valueToApi(value: Option[Value]) = {
     value match {
-      case Some(Prohibitions(false, x)) => x.map { prohibitionValue =>
+      case Some(Prohibitions(x, false)) => x.map { prohibitionValue =>
         val exceptions = prohibitionValue.exceptions.toList match {
           case Nil => Map()
           case items => Map("exceptions" -> items)
@@ -294,8 +294,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   private def isSuggested(asset: PieceWiseLinearAsset): Boolean = {
     asset.value match {
-      case Some(Prohibitions(isSuggested, _)) => isSuggested
-      case Some(SpeedLimitValue(isSuggested, _)) => isSuggested
+      case Some(Prohibitions(_, isSuggested)) => isSuggested
+      case Some(SpeedLimitValue(_, isSuggested)) => isSuggested
       case Some(DynamicValue(x)) =>
         x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
           case Some(value) => value.toString.toBoolean

@@ -17,7 +17,7 @@ sealed trait Value {
   def toJson: Any
 }
 
-case class SpeedLimitValue(isSuggested: Boolean, value: Int) extends Value {
+case class SpeedLimitValue(value: Int, isSuggested: Boolean = false) extends Value {
   override def toJson: Any = value
 }
 
@@ -28,7 +28,7 @@ case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
 
-case class Prohibitions(isSuggested: Boolean, prohibitions: Seq[ProhibitionValue]) extends Value {
+case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolean = false) extends Value {
   override def toJson: Any = prohibitions
 
   override def equals(obj: scala.Any): Boolean = {

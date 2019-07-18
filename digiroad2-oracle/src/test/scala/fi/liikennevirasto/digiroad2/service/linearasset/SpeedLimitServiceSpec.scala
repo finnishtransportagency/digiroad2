@@ -93,7 +93,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1l))).thenReturn(Seq(roadLink))
 
-      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), SpeedLimitValue(false, 30), "test", (_, _) => Unit)
+      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
 
       val createdLimit = provider.getSpeedLimitById(id.head).get
       createdLimit.value should equal(Some(NumericValue(30)))
@@ -1402,7 +1402,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(false, 0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
+    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
     if (speedLimit.expired) {
       println("N/A")
     } else {

@@ -1035,9 +1035,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val dynamicValueParameter: Option[DynamicAssetValue] = value.extractOpt[DynamicAssetValue]
 
     val prohibition = prohibitionParameter match {
-      case Some(Prohibitions(false, Nil)) => None
+      case Some(Prohibitions(Nil, false)) => None
       case None => None
-      case Some(x) => Some(Prohibitions(x.isSuggested, x.prohibitions))
+      case Some(x) => Some(Prohibitions(x.prohibitions, x.isSuggested))
     }
 
     val dynamicValueProps = dynamicValueParameter match {

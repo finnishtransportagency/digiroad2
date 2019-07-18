@@ -165,8 +165,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   private def isSuggested(asset: ChangedLinearAsset): Boolean = {
     asset.linearAsset.value match {
-      case Some(Prohibitions(isSuggested, _)) => isSuggested
-      case Some(SpeedLimitValue(isSuggested, _)) => isSuggested
+      case Some(Prohibitions(_, isSuggested)) => isSuggested
+      case Some(SpeedLimitValue(_, isSuggested)) => isSuggested
       case Some(DynamicValue(x)) =>
         x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
           case Some(value) => value.toString.toBoolean
@@ -299,7 +299,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   private def mapValue(optValue: Option[Value]): Option[Any] = {
     optValue match {
-      case Some(Prohibitions(false, prohibitions)) =>
+      case Some(Prohibitions(prohibitions, false)) =>
         Some(prohibitions.map { prohibitionValue =>
         Map("typeId" -> prohibitionValue.typeId,
           "exceptions" -> prohibitionValue.exceptions,

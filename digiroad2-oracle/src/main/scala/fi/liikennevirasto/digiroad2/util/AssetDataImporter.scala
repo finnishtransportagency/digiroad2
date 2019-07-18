@@ -359,7 +359,7 @@ class AssetDataImporter {
         val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, linkId, sideCode)
         val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
-          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(false, prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, roadLinkSource, None, None, None)))
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, roadLinkSource, None, None, None)))
         }
         val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
@@ -414,7 +414,7 @@ class AssetDataImporter {
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
       // TODO: when linear assets get included in change history
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(false, prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, LinkGeomSource.apply(linkSource), verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
   }
 
@@ -432,9 +432,9 @@ class AssetDataImporter {
         val linearAssets = fetchProhibitionsByLinkIds(190, assetIds, true)
         val hazmatAssets = linearAssets.map { linearAsset =>
           val newValue = linearAsset.value.map {
-            case Prohibitions(false, prohibitionValues) =>
+            case Prohibitions(prohibitionValues, false) =>
               val hazMatProhibitions = prohibitionValues.filter { p => Set(24, 25).contains(p.typeId) }
-              Prohibitions(false, hazMatProhibitions.map(_.copy(exceptions = Set.empty)))
+              Prohibitions(hazMatProhibitions.map(_.copy(exceptions = Set.empty)))
             case x =>
               throw new IllegalArgumentException
           }
@@ -661,7 +661,7 @@ class AssetDataImporter {
 
       speedLimitLinks.foreach { speedLimitLink =>
         val (id, linkId, sideCode, value, startMeasure, endMeasure, linkSource) = speedLimitLink
-        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", SpeedLimitAsset.typeId , linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value.map(SpeedLimitValue(false, _)), (id, value) => dao.insertProperties(id, value), None, None, None, None, LinkGeomSource.apply(linkSource))
+        dao.forceCreateSpeedLimit(s"split_speedlimit_$id", SpeedLimitAsset.typeId , linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value.map(SpeedLimitValue(_)), (id, value) => dao.insertProperties(id, value), None, None, None, None, LinkGeomSource.apply(linkSource))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 

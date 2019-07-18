@@ -93,7 +93,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 210
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-    val isSuggested = false
 
     val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes),
       RoadLink(oldLinkId2, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
@@ -145,11 +144,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       after.count(_.value.nonEmpty) should be (3)
 
       val linearAssetBothDirections = after.filter(p => (p.sideCode == SideCode.BothDirections) && p.value.nonEmpty).head
-      val prohibitionBothDirections = Prohibitions(isSuggested, Seq(ProhibitionValue(24, Set.empty, Set.empty, "")))
+      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set.empty, "")))
       val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(isSuggested, Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set.empty, "")))
+      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set.empty, "")))
       val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(isSuggested, Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, "")))
+      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, "")))
 
       linearAssetBothDirections.value should be (Some(prohibitionBothDirections))
       linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
@@ -161,20 +160,18 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition") {
     when(mockVVHRoadLinkClient.fetchByLinkId(1610349)).thenReturn(Some(VVHRoadlink(1610349, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-    val isSuggested = false
     runWithRollback {
       when(mockAssetDao.getAssetTypeId(Seq(600020l))).thenReturn(Seq((600020l, LinearAssetTypes.ProhibitionAssetTypeId)))
-      ServiceWithDao.update(Seq(600020l), Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "lol")
       val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(1610349)).head
 
-      limit.value should be (Some(Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))))
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))))
       limit.expired should be (false)
     }
   }
 
   test("Create new prohibition") {
-    val isSuggested = false
-    val prohibition = Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
+    val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
     runWithRollback {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, prohibition, 1, 0, None)), 190, "testuser")
       newAssets.length should be(1)
@@ -186,11 +183,10 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Separate prohibition asset") {
     runWithRollback {
-      val isSuggested = false
-      val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(isSuggested, Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
+      val newLimit = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newLimit), LinearAssetTypes.ProhibitionAssetTypeId, "test").head
-      val prohibitionA = Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
-      val prohibitionB = Prohibitions(isSuggested, Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
 
@@ -214,11 +210,10 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Split prohibition") {
     runWithRollback {
-      val isSuggested = false
-      val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(isSuggested, Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
+      val newProhibition = NewLinearAsset(388562360, 0, 10, Prohibitions(Seq(ProhibitionValue(3, Set.empty, Set.empty))), 1, 0, None)
       val assetId = ServiceWithDao.create(Seq(newProhibition), LinearAssetTypes.ProhibitionAssetTypeId, "test").head
-      val prohibitionA = Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
-      val prohibitionB = Prohibitions(isSuggested, Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
+      val prohibitionA = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
+      val prohibitionB = Prohibitions(Seq(ProhibitionValue(5, Set.empty, Set(1, 2), "")))
 
       when(mockAssetDao.getAssetTypeId(Seq(assetId))).thenReturn(Seq((assetId, LinearAssetTypes.ProhibitionAssetTypeId)))
       val ids = ServiceWithDao.split(assetId, 6.0, Some(prohibitionA), Some(prohibitionB), "unittest", (i, _) => Unit)
@@ -317,13 +312,12 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       //      after.foreach(println)
       after.length should be(4)
       after.count(_.value.nonEmpty) should be (3)
-      val isSuggested = false
       val linearAssetBothDirections = after.filter(p => (p.sideCode == SideCode.BothDirections) && p.value.nonEmpty).head
-      val prohibitionBothDirections = Prohibitions(isSuggested, Seq(ProhibitionValue(24, Set.empty, Set(10), "")))
+      val prohibitionBothDirections = Prohibitions(Seq(ProhibitionValue(24, Set.empty, Set(10), "")))
       val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(isSuggested, Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), "")))
+      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), "")))
       val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(isSuggested, Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), "")))
+      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), "")))
 
       linearAssetBothDirections.value should be (Some(prohibitionBothDirections))
       linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
@@ -428,7 +422,6 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
     val assetTypeId = 190
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
-    val isSuggested = false
 
     val oldRoadLinks = Seq(RoadLink(oldLinkId1, List(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes))
 
@@ -471,9 +464,9 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       after.count(_.value.nonEmpty) should be (2)
 
       val linearAssetTowardsDigitizing = after.filter(p => p.sideCode == SideCode.TowardsDigitizing).head
-      val prohibitionTowardsDigitizing = Prohibitions(isSuggested, Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), "")))
+      val prohibitionTowardsDigitizing = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(12, 13, Saturday)), Set(10), "")))
       val linearAssetAgainstDigitizing = after.filter(p => p.sideCode == SideCode.AgainstDigitizing).head
-      val prohibitionAgainstDigitizing = Prohibitions(isSuggested, Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), "")))
+      val prohibitionAgainstDigitizing = Prohibitions(Seq(ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set(10), "")))
 
       linearAssetTowardsDigitizing.value should be (Some(prohibitionTowardsDigitizing))
       linearAssetAgainstDigitizing.value should be (Some(prohibitionAgainstDigitizing))
@@ -488,29 +481,26 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   }
 
   test("Two prohibitions with same exceptions and validityPeriods in diferent order should return true"){
-    val isSuggested = false
     val validityPeriods1 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3))
-    val prohibition1 = Prohibitions(isSuggested, Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
+    val prohibition1 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
     val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
-    val prohibition2 = Prohibitions(isSuggested, Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
+    val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
     prohibition1 == prohibition2 should be (true)
   }
 
   test("Two prohibitions without same exceptions and the same validityPeriods in diferent order should return false"){
-    val isSuggested = false
     val validityPeriods1 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3))
-    val prohibition1 = Prohibitions(isSuggested, Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
+    val prohibition1 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
     val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
-    val prohibition2 = Prohibitions(isSuggested, Seq(ProhibitionValue(1, validityPeriods2, Set(2,1), "test")))
+    val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(2,1), "test")))
     prohibition1 == prohibition2 should be (false)
   }
 
   test("Two prohibitions with same exceptions and the without same validityPeriods in diferent order should return false"){
-    val isSuggested = false
     val validityPeriods1 = Set(ValidityPeriod(1,1, ValidityPeriodDayOfWeek.Saturday, 1, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3))
-    val prohibition1 = Prohibitions(isSuggested, Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
+    val prohibition1 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods1, Set(1,3), "test")))
     val validityPeriods2 = Set(ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Unknown, 3, 3), ValidityPeriod(0,1, ValidityPeriodDayOfWeek.Saturday, 1, 3))
-    val prohibition2 = Prohibitions(isSuggested, Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
+    val prohibition2 = Prohibitions(Seq(ProhibitionValue(1, validityPeriods2, Set(3,1), "test")))
     prohibition1 == prohibition2 should be (false)
   }
 
@@ -567,8 +557,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
   test("get unVerified prohibition assets") {
     when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(Set(235))).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
     runWithRollback {
-      val isSuggested = false
-      val prohibition = Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
+      val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))
       val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, prohibition, 1, 0, None)), 190, "dr1_conversion")
       val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 20, 60, prohibition, 1, 0, None)), 190, "testuser")
 
@@ -581,15 +570,14 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
   test("Update prohibition and verify asset") {
     runWithRollback {
-      val isSuggested = false
       when(mockAssetDao.getAssetTypeId(Seq(600020l))).thenReturn(Seq((600020l, LinearAssetTypes.ProhibitionAssetTypeId)))
-      ServiceWithDao.update(Seq(600020l), Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testUser")
+      ServiceWithDao.update(Seq(600020l), Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty))), "testUser")
 
       val limit = linearAssetDao.fetchProhibitionsByLinkIds(LinearAssetTypes.ProhibitionAssetTypeId, Seq(1610349)).head
 
       limit.verifiedBy should be (Some("testUser"))
       limit.verifiedDate.get.toString("yyyy-MM-dd") should be (DateTime.now().toString("yyyy-MM-dd"))
-      limit.value should be (Some(Prohibitions(isSuggested, Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))))
+      limit.value should be (Some(Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, "")))))
       limit.expired should be (false)
     }
   }

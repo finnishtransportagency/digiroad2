@@ -103,7 +103,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
     val queryFilter = "AND (valid_to IS NULL OR valid_to > SYSDATE)"
     fetchByLinkIds(linkIds, queryFilter).map {persisted =>
-        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value.map(x => SpeedLimitValue(x._1, x._2)), Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
+        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value.map(x => SpeedLimitValue(x._2, x._1)), Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
   }
 
@@ -114,7 +114,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
     fetchByLinkIds(linkIds, queryFilter).map {
       case (persisted) =>
-        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value.map(x => SpeedLimitValue(x._1, x._2)), Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
+        SpeedLimit(persisted.id, persisted.linkId, persisted.sideCode, TrafficDirection.UnknownDirection, persisted.value.map(x => SpeedLimitValue(x._2, x._1)), Seq(Point(0.0, 0.0)),persisted. startMeasure, persisted.endMeasure, persisted.modifiedBy, persisted.modifiedDate, persisted.createdBy, persisted.createdDate, persisted.vvhTimeStamp, persisted.geomModifiedDate, linkSource = persisted.linkSource)
     }
   }
 
@@ -144,7 +144,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
 
     speedLimits.map {speedLimit =>
       val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == speedLimit.linkId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, vvhRoadLink.trafficDirection, speedLimit.value.map(x => SpeedLimitValue(x._1, x._2)), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.vvhTimeStamp, speedLimit.geomModifiedDate, linkSource = vvhRoadLink.linkSource)
+      SpeedLimit(speedLimit.id, speedLimit.linkId, speedLimit.sideCode, vvhRoadLink.trafficDirection, speedLimit.value.map(x => SpeedLimitValue(x._2, x._1)), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.modifiedBy, speedLimit.modifiedDate, speedLimit.createdBy, speedLimit.createdDate, speedLimit.vvhTimeStamp, speedLimit.geomModifiedDate, linkSource = vvhRoadLink.linkSource)
     }
   }
 

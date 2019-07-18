@@ -95,11 +95,11 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockNumberOfLanesService.update(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]], any[Option[Measures]])).thenReturn(Seq(3L))
   when(mockMassTransitLaneService.update(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]], any[Option[Measures]])).thenReturn(Seq(3L))
 
-  when(mockSpeedLimitService.getByMunicpalityAndRoadLinks(235)).thenReturn(Seq((SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(false,50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface, Map()), roadLink)))
+  when(mockSpeedLimitService.getByMunicpalityAndRoadLinks(235)).thenReturn(Seq((SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface, Map()), roadLink)))
   when(mockSpeedLimitService.createMultiple(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long], any[(Int, AdministrativeClass) => Unit].apply)).thenReturn(Seq(1L))
   when(mockSpeedLimitService.update(any[Long], Seq(any[NewLinearAsset]), any[String])).thenReturn(Seq(3L))
-  when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(1))).thenReturn(Seq(SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(false,50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 1, None, false, LinkGeomSource.NormalLinkInterface, Map())))
-  when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(3))).thenReturn(Seq(SpeedLimit(3, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(false,60)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 2, None, false, LinkGeomSource.NormalLinkInterface, Map())))
+  when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(1))).thenReturn(Seq(SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(50)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 1, None, false, LinkGeomSource.NormalLinkInterface, Map())))
+  when(mockSpeedLimitService.getSpeedLimitAssetsByIds(Set(3))).thenReturn(Seq(SpeedLimit(3, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)), Seq(Point(0, 5), Point(0, 10)), 0, 10, None, None, None, None, 2, None, false, LinkGeomSource.NormalLinkInterface, Map())))
 
   when(mockRoadWidthService.getPersistedAssetsByIds(RoadWidth.typeId, Set(1L))).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(200)), 0, 10, None, None, None, None, false, RoadWidth.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadWidthService.getPersistedAssetsByIds(RoadWidth.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(200)), 0, 10, None, None, None, None, false, RoadWidth.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
@@ -645,7 +645,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("encode speed Limit Asset") {
-    municipalityApi.speedLimitAssetsToApi(Seq((SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(false, 60)), Seq(Point(0,5), Point(0,10)), 0, 10, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface, Map()), roadLink))) should be
+    municipalityApi.speedLimitAssetsToApi(Seq((SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(60)), Seq(Point(0,5), Point(0,10)), 0, 10, None, None, None, None, 0, None, false, LinkGeomSource.NormalLinkInterface, Map()), roadLink))) should be
     Seq(Map(
       "id" -> 1,
       "properties" -> Seq(Map("value" -> Some(60), "name" -> "value")),

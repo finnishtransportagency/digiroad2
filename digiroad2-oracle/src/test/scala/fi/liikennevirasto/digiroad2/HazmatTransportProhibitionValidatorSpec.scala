@@ -68,7 +68,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
-      val value = Prohibitions(false, Seq(ProhibitionValue(25, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null), ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
+      val value = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null), ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
       when(prohibitionValidator.dao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, Seq(1001l, 1002l, 1003l, 1004l), false))
         .thenReturn(Seq(PersistedLinearAsset(1, 1004l, 1, Some(value), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
@@ -92,7 +92,7 @@ class HazmatTransportProhibitionValidatorSpec  extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
       when(prohibitionValidator.dao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, Seq(1003l), false)).thenReturn(Seq())
 
-      val value = Prohibitions(false, Seq(ProhibitionValue(25, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null), ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
+      val value = Prohibitions(Seq(ProhibitionValue(25, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null), ProhibitionValue(24, Set(ValidityPeriod(11, 12, Weekday)), Set.empty, null)))
       when(prohibitionValidator.dao.fetchProhibitionsByLinkIds(HazmatTransportProhibition.typeId, Seq(1001l, 1002l, 1003l, 1004l), false))
         .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(value), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
