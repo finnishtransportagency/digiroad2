@@ -71,7 +71,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
 
       val servicePointInfo =
         if(validatedServiceType == ServicePointsClass.Unknown.value)
-          Seq(NotImportedData(reason = s"Service Point type $serviceType does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+          Seq(NotImportedData(reason = s"Service Point type $serviceType does not exist.", csvRow = rowToString(csvProperties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 

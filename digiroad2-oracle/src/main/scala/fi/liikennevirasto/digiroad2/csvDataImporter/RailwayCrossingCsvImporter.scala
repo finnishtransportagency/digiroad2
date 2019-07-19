@@ -42,7 +42,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
       val validData =
         if(!allowedSafetyEquipmentValues.contains(safetyEquipment))
-          Seq(NotImportedData(reason = s"Railway Crossing safety equipment type $safetyEquipment does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+          Seq(NotImportedData(reason = s"Railway Crossing safety equipment type $safetyEquipment does not exist.", csvRow = rowToString(csvProperties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 

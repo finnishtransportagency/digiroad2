@@ -81,9 +81,9 @@ trait CsvDataImporterOperations {
   val logInfo : String
 
   def mappingContent(result: ImportResultData): String  = {
-    val excludedResult = result.excludedRows.map{rows => "<li>" + rows.affectedRows ->  rows.csvRow + "</li>"}
-    val incompleteResult = result.incompleteRows.map{ rows=> "<li>" + rows.missingParameters.mkString(";") -> rows.csvRow + "</li>"}
-    val malformedResult = result.malformedRows.map{ rows => "<li>" + rows.malformedParameters.mkString(";") -> rows.csvRow + "</li>"}
+    val excludedResult = result.excludedRows.map{rows => s"<li> ${rows.affectedRows} -> ${rows.csvRow} </li>"}
+    val incompleteResult = result.incompleteRows.map{ rows=> s"<li> ${rows.missingParameters.mkString(";")} -> ${rows.csvRow} </li>"}
+    val malformedResult = result.malformedRows.map{ rows => s"<li> ${rows.malformedParameters.mkString(";")}  -> ${rows.csvRow} </li>"}
 
     s"<ul> excludedLinks: ${excludedResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +
     s"<ul> incompleteRows: ${incompleteResult.mkString.replaceAll("[(|)]{1}","")} </ul>" +

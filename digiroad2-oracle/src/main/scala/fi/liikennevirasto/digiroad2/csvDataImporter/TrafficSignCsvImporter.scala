@@ -29,7 +29,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   override val logInfo = "traffic sign import"
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
-  override type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
@@ -48,7 +47,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
   val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
 
-  override val mandatoryFields = longValueFieldMappings.keySet ++ codeValueFieldMappings.keySet
+  override def mandatoryFields = longValueFieldMappings.keySet ++ codeValueFieldMappings.keySet
 
   val mandatoryParameters: Set[String] = mappings.keySet ++ mandatoryFields
 
@@ -92,7 +91,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
 
-  private def generateBaseProperties(trafficSignAttributes: CsvPointAssetRow) : Set[SimpleTrafficSignProperty] = {
+  private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimpleTrafficSignProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
       SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(value.toString)))}
 
@@ -134,28 +133,27 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case "1" => true
         case _ => false
       }
-      val lon = getPropertyValue(props, "lon").asInstanceOf[BigDecimal].toLong
-      val lat = getPropertyValue(props, "lat").asInstanceOf[BigDecimal].toLong
+      val point = getCoordinatesFromProperties(props)
 
       val (assetBearing, assetValidityDirection) = recalculateBearing(optBearing)
 
       val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
 
-      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, Point(lon, lat), closestRoadLinks)
+      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, closestRoadLinks)
 
       val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
       val roadLink = if (roadLinks.nonEmpty) {
-        possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+        possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
       } else
-        closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry))
+        closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
 
       val validityDirection = if(assetBearing.isEmpty) {
-        trafficSignService.getValidityDirection(Point(lon, lat), roadLink, assetBearing, twoSided)
+        trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided)
       } else assetValidityDirection.get
 
-      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.geometry)
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
 
-      (props, CsvTrafficSign(lon, lat, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
+      (props, CsvTrafficSign(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ case(_, sign) =>
@@ -178,14 +176,14 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         try {
           trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, bearing), sign.roadLink, user.username, sign.isFloating)
         } catch {
-          case ex: NoSuchElementException => NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(csvRow.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap))
+          case ex: NoSuchElementException => NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(csvRow.flatMap{x => Map(x.columnName -> x.value)}.toMap))
         }
         filteredAdditionalPanel
       } else Seq()
     }
 
     val unusedAdditionalPanels = additionalPanels.filterNot{ panel => usedAdditionalPanels.contains(panel._2)}.toSeq.map { notImportedAdditionalPanel =>
-      NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(notImportedAdditionalPanel._1.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap))
+      NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(notImportedAdditionalPanel._1.flatMap{x => Map(x.columnName -> x.value)}.toMap))
     }
 
     result.copy(notImportedData = unusedAdditionalPanels.toList ++ result.notImportedData)
@@ -221,7 +219,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         val csvRow = row.map(r => (r._1.toLowerCase, r._2))
         val missingParameters = findMissingParameters(csvRow)
         val (malformedParameters, properties) = assetRowToProperties(csvRow)
-        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvPointAssetRow(properties), user)
+        val (notImportedParameters, parsedRowAndRoadLink) = verifyData(properties, user)
 
         if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
           result.copy(

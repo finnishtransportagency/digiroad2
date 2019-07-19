@@ -4,7 +4,7 @@ import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, SimpleProperty, Unknown}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, SimpleProperty, TrafficDirection, Unknown}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
@@ -50,7 +50,6 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   def eventBus: DigiroadEventBus
 
   class AssetNotFoundException(externalId: Long) extends RuntimeException
-  case class CsvAssetRow(externalId: Option[Long], properties: Seq[AssetProperty])
 
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
@@ -68,11 +67,10 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
     new MassTransitStopServiceWithDynTransaction(eventBus, roadLinkService, roadAddressService)
   }
-
+  override def mandatoryFieldsMapping: Map[String, String]
 
   private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
-  private val stopAdministratorProperty = "tietojen_yllapitaja"
   private val stopAdministratorValueMappings = Set(1, 2, 3, 99).map(_.toString)
 
   private val textFieldMappings = Map(
@@ -89,6 +87,8 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "Pysäkin tyyppi" -> "pysakin_tyyppi"
   )
 
+  val stopAdministratorProperty =  Map("Tietojen ylläpitäjä" -> "tietojen_yllapitaja")
+
   private val singleChoiceFieldMappings = Map(
     "Aikataulu" -> "aikataulu",
     "Katos" -> "katos",
@@ -99,13 +99,19 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "Valaistus" -> "valaistus",
     "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
     "Korotettu" -> "korotettu",
-    "Roska-astia" -> "roska_astia",
-    "Tietojen ylläpitäjä" -> stopAdministratorProperty
-  )
+    "Roska-astia" -> "roska_astia") ++
+    stopAdministratorProperty
 
    protected val externalIdMapping = Map("Valtakunnallinen ID" -> "external_id")
 
   override val intValueFieldsMapping = externalIdMapping
+
+  override val coordinateMappings = Map(
+    "Koordinaatti X" -> "maastokoordinaatti_x",
+    "Koordinaatti Y" -> "maastokoordinaatti_y"
+  )
+
+  override val longValueFieldsMapping = coordinateMappings
 
   val optionalMappings = externalIdMapping ++ coordinateMappings
 
@@ -194,7 +200,10 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
       if (isBlank(value)) {
-        result
+        if (mandatoryFieldsMapping.keySet.contains(key))
+          result.copy(_1 = List(key) ::: result._1, _2 = result._2)
+        else
+          result
       } else {
         if (longValueFieldsMapping.contains(key)) {
           val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
@@ -218,21 +227,26 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   }
 
   private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedRow = {
-    // less than ideal design but the simplest solution. DO NOT REPEAT IF MORE FIELDS REQUIRE CUSTOM VALUE VALIDATION
-    val isValidStopAdminstratorValue = singleChoiceFieldMappings(parameterName) == stopAdministratorProperty && stopAdministratorValueMappings(assetSingleChoice)
-
-    if (singleChoiceValueMappings(assetSingleChoice) || isValidStopAdminstratorValue) {
-      (Nil, List(AssetProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
-    } else {
-      (List(parameterName), Nil)
+    parameterName match {
+      case name if stopAdministratorProperty(name).nonEmpty =>
+        if (stopAdministratorValueMappings.contains(assetSingleChoice))
+          (Nil, List(AssetProperty(singleChoiceFieldMappings(name), List(PropertyValue(assetSingleChoice)))))
+        else
+          (List(name), Nil)
+      case _ =>
+        if (singleChoiceValueMappings(assetSingleChoice)) {
+          (Nil, List(AssetProperty(singleChoiceFieldMappings(parameterName), List(PropertyValue(assetSingleChoice)))))
+        } else {
+          (List(parameterName), Nil)
+        }
     }
   }
 
-  def verifyData(lon: Long, lat: Long, user: User, roadTypeLimitations: Set[AdministrativeClass]): Seq[VVHRoadlink] = {
-    val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong)).
+  def getNearestRoadLink(lon: Double, lat: Double, user: User, roadTypeLimitations: Set[AdministrativeClass]): Seq[VVHRoadlink] = {
+    val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon, lat)).
       filterNot(road => roadTypeLimitations.contains(road.administrativeClass))
     if(closestRoadLinks.nonEmpty)
-      Seq(closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon.toLong, lat.toLong), r.geometry)))
+      Seq(closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(Point(lon, lat), r.geometry)))
     else
       Seq()
   }
@@ -249,7 +263,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
     val logId = create(user.username, logInfo, fileName)
     fork {
-      try {
+//      try {
         val result = processing(csvReader, user, roadTypeLimitations)
         result match {
           case ImportResultPointAsset(Nil, Nil, Nil, Nil, Nil) => update(logId, Status.OK)
@@ -257,10 +271,10 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
             val content = mappingContent(result)
               update(logId, Status.NotOK, Some(content))
         }
-      } catch {
-        case e: Exception =>
-          update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
-      }
+//      } catch {
+//        case e: Exception =>
+//          update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
+//      }
     }
   }
 
@@ -271,13 +285,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
           if (missingParameters.isEmpty && malformedParameters.isEmpty) {
-            try {
+//            try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
-            } catch {
-              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
-              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
-            }
+//            } catch {
+//              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+//              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
+//            }
           } else {
             result.copy(
               incompleteRows = missingParameters match {
@@ -304,10 +318,12 @@ object ActionType {
 }
 
 trait CsvOperations extends MassTransitStopCsvImporter {
+  val decisionFieldsMapping : Map[String, String]
+
   def is(csvRowWithHeaders: Map[String, String]): Boolean = {
     val missingOptionals = optionalMappings.keySet.diff(csvRowWithHeaders.keys.toSet).toList
     val actionParameters = optionalMappings.keySet.toList.diff(missingOptionals)
-    mandatoryFieldsMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
+    decisionFieldsMapping.keys.toSeq.sorted.equals(actionParameters.sorted)
   }
 }
 
@@ -318,13 +334,14 @@ class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def mandatoryFieldsMapping: Map[String, String] = Map(
-    "Valtakunnallinen ID" -> "external_id"
-  )
+  override def mandatoryFieldsMapping: Map[String, String] = externalIdMapping
+
+  override val decisionFieldsMapping = externalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
-    val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
-    updateAsset(parsedRow.externalId.get, None, properties, roadTypeLimitations, user)
+    println("Updating busStop")
+    val externalId = getPropertyValue(properties, "externalId").asInstanceOf[BigDecimal].toLong
+    updateAsset(externalId, None, properties, roadTypeLimitations, user)
       .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
   }
 }
@@ -336,19 +353,39 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
+  override val decisionFieldsMapping = coordinateMappings
+
+  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ stopAdministratorProperty
+
+  def getDirection(roadLink: RoadLink): ParsedProperties = {
+      val direction = roadLink.trafficDirection  match {
+        case TrafficDirection.BothDirections => TrafficDirection.TowardsDigitizing
+        case _ => roadLink.trafficDirection
+      }
+
+    List(AssetProperty("vaikutussuunta", TrafficDirection.toSideCode(direction).value))
+  }
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
-    val lon = row("lon").asInstanceOf[BigDecimal].toLong
-    val lat = row("lat").asInstanceOf[BigDecimal].toLong
+    println("Creating busStop")
+    val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
+    val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
 
-    val prop = properties.map(prop => SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet
-    val roadLink = roadLinkService.enrichRoadLinksFromVVH(verifyData(lon, lat, user, roadTypeLimitations))
+    val nearestRoadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
 
-    if(roadLink.isEmpty)
-      List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
+    if(nearestRoadLink.isEmpty)
+      List(ExcludedRow(affectedRows = "RoadLink no longer available", csvRow = rowToString(row)))
     else {
-      val asset = NewMassTransitStop(lon, lat, roadLink.head.linkId, 0, prop.toSeq)
+      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearestRoadLink)
+
+      val prop = (getDirection(roadLink.head) ++ properties).filterNot(_.columnName == "pysakin_tyyppi").map(prop =>
+        SimpleProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))).toSet ++
+        Seq(SimpleProperty("pysakin_tyyppi", properties.find(_.columnName == "pysakin_tyyppi").get.value.asInstanceOf[Seq[PropertyValue]]))
+
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
+      val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
+
+      val asset = NewMassTransitStop(lon, lat, roadLink.head.linkId, bearing, prop.toSeq)
       massTransitStopService.createWithUpdateFloating(asset, user.username, roadLink.head)
       List()
     }
@@ -362,21 +399,22 @@ class PositionUpdater (roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
 
+  override val decisionFieldsMapping = coordinateMappings ++ externalIdMapping
   override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ externalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
-    val parsedRow = CsvAssetRow(externalId = Some(row("Valtakunnallinen ID").toLong), properties = properties)
+    println("Moving busStop")
+    val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
+    val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
+    val externalId = getPropertyValue(properties, "external_id").toString.toInt
 
-    val lon = row("lon").asInstanceOf[BigDecimal].toLong
-    val lat = row("lat").asInstanceOf[BigDecimal].toLong
-
-    val roadLink = roadLinkService.enrichRoadLinksFromVVH(verifyData(lon, lat, user, roadTypeLimitations))
+    val roadLink = roadLinkService.enrichRoadLinksFromVVH(getNearestRoadLink(lon, lat, user, roadTypeLimitations))
 
     if (roadLink.isEmpty)
       List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
     else {
       val position = Some(Position(lon, lat, roadLink.head.linkId, None))
-      updateAsset(parsedRow.externalId.get, position, properties, roadTypeLimitations, user)
+      updateAsset(externalId, position, properties, roadTypeLimitations, user)
         .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
     }
   }

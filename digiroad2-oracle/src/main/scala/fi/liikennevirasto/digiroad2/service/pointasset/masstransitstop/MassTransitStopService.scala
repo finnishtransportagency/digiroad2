@@ -324,16 +324,17 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedAsset
   }
 
-  def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): Option[T] = {
-    withDynTransaction {
+  def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason]), newTransaction: Boolean = true): Option[T] = {
+    def getByNationalId : Option[T] = {
       val persistedStop = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
+    if(newTransaction) withDynTransaction { getByNationalId } else getByNationalId
   }
 
-  def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit): Option[MassTransitStopWithProperties] = {
-    getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
+  def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit, newTransaction: Boolean = true): Option[MassTransitStopWithProperties] = {
+    getByNationalId(nationalId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink), newTransaction)
   }
 
   def getMassTransitStopByNationalIdWithTRWarnings(nationalId: Long): (Option[MassTransitStopWithProperties], Boolean, Option[Int]) = {

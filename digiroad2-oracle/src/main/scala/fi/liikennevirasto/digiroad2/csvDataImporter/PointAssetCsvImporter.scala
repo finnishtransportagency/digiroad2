@@ -9,8 +9,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
-  case class CsvPointAssetRow(properties: Seq[AssetProperty])
-  case class CsvAssetRowAndRoadLink(properties: CsvPointAssetRow, roadLink: Seq[VVHRoadlink])
+  case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[VVHRoadlink])
 
   case class NotImportedData(reason: String, csvRow: String)
   case class ImportResultPointAsset(incompleteRows: List[IncompleteRow] = Nil,
@@ -26,7 +25,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
-  final val coordinateMappings = Map(
+  val coordinateMappings = Map(
     "Koordinaatti X" -> "lon",
     "Koordinaatti Y" -> "lat"
   )
@@ -73,21 +72,21 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def getPropertyValue(pointAssetAttributes: CsvPointAssetRow, propertyName: String): Any = {
-    pointAssetAttributes.properties.find(prop => prop.columnName == propertyName).map(_.value).get
+  def getPropertyValue(pointAssetAttributes: ParsedProperties, propertyName: String): Any = {
+    pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get
   }
 
-  def getPropertyValueOption(pointAssetAttributes: CsvPointAssetRow, propertyName: String): Option[Any] = {
-    pointAssetAttributes.properties.find(prop => prop.columnName == propertyName).map(_.value)
+  def getPropertyValueOption(pointAssetAttributes: ParsedProperties, propertyName: String): Option[Any] = {
+    pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value)
   }
 
-  def getCoordinatesFromProperties(csvProperties: CsvPointAssetRow): Point = {
+  def getCoordinatesFromProperties(csvProperties: ParsedProperties): Point = {
     val lon = getPropertyValue(csvProperties, "lon").asInstanceOf[BigDecimal].toLong
     val lat = getPropertyValue(csvProperties, "lat").asInstanceOf[BigDecimal].toLong
     Point(lon, lat)
   }
 
-  def verifyData(parsedRow: CsvPointAssetRow, user: User): ParsedCsv = {
+  def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
     val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
     val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
 
@@ -142,12 +141,10 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
           else if (nonMandatoryFieldsMapping.contains(key))
             result.copy(_2 = AssetProperty(columnName = nonMandatoryFieldsMapping(key), value = value) :: result._2)
           else
-            extraValidation(result, (key, value))
+           result
         }
     }
   }
-
-  def extraValidation(result: ParsedRow, parameter: (String, String)): ParsedRow = result
 
   def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData): ImportResultData
 
@@ -181,7 +178,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
           val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
           val missingParameters = findMissingParameters(csvRow)
           val (malformedParameters, properties) = assetRowToProperties(csvRow)
-          val (notImportedParameters, parsedRowAndRoadLink) = verifyData(CsvPointAssetRow(properties), user)
+          val (notImportedParameters, parsedRowAndRoadLink) = verifyData(properties, user)
 
           if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
             result.copy(

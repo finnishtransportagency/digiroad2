@@ -37,7 +37,7 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
 
       val validData =
         if(!allowedTypeValues.contains(obstacleType))
-          Seq(NotImportedData(reason = s"Obstacle type $obstacleType does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+          Seq(NotImportedData(reason = s"Obstacle type $obstacleType does not exist.", csvRow = rowToString(csvProperties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 
