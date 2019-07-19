@@ -1,0 +1,1 @@
+alter table asset add sign_road_side char(1) default '0';
