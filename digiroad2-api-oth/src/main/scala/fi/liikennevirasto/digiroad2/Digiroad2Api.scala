@@ -954,7 +954,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   def mappingValues(x : Option[Value]) = {
     x match {
-      case Some(Prohibitions(isSuggested, prohibitions)) =>
+      case Some(Prohibitions(prohibitions, isSuggested)) =>
         Map(
           "isSuggested" -> isSuggested,
           "prohibitions" -> prohibitions
