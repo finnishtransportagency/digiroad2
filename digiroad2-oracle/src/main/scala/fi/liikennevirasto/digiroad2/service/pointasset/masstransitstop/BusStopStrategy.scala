@@ -40,7 +40,15 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     publishInfo.asset match {
-      case Some(asset) => eventbus.publish("asset:saved", asset)
+      case Some(asset) =>
+        asset.propertyData.find(_.publicId == "suggest_box") match {
+          case Some(property) if property.values.headOption.nonEmpty =>
+            if (property.values.head.asInstanceOf[PropertyValue].propertyValue == "0")
+              eventbus.publish("asset:saved", asset)
+            else
+              None
+          case _ => eventbus.publish("asset:saved", asset)
+        }
       case _ => None
     }
   }
