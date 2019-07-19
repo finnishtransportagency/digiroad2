@@ -27,7 +27,8 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 validityDirection: Int,
                                 bearing: Option[Int],
                                 linkSource: LinkGeomSource,
-                                expired: Boolean = false) extends PersistedPoint
+                                expired: Boolean = false,
+                                roadSideInfo: Boolean = false) extends PersistedPoint
 
 
 case class TrafficSignRow(id: Long, linkId: Long,
@@ -44,7 +45,8 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           modifiedAt: Option[DateTime] = None,
                           linkSource: LinkGeomSource,
                           additionalPanel: Option[AdditionalPanelRow] = None,
-                          expired: Boolean = false)
+                          expired: Boolean = false,
+                          roadSideInfo: Boolean = false)
 
 object OracleTrafficSignDao {
 
@@ -57,7 +59,7 @@ object OracleTrafficSignDao {
                 when tpv.value_fi is not null then tpv.value_fi
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
-               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
+               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired, a.sign_road_side
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -137,7 +139,7 @@ object OracleTrafficSignDao {
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired)
+        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired, roadSideInfo = row.roadSideInfo)
     }.values.toSeq
   }
 
@@ -184,8 +186,9 @@ object OracleTrafficSignDao {
         case _ => None
       }
       val expired = r.nextBoolean()
+      val roadSideInfo = r.nextBoolean()
 
-      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired)
+      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired, roadSideInfo)
     }
   }
 

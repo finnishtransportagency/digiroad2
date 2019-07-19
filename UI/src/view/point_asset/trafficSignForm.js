@@ -43,6 +43,7 @@
       var additionalPanels = getProperties(asset.propertyData, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
+      var roadSideInfo = asset.roadSideInfo ? "Kyllä" : "Ei";
 
       var panelCheckbox =
       '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
@@ -52,15 +53,21 @@
       '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
       '    </div>';
 
+      var wrongSideInfo =
+        '    <div class="form-group form-directional-traffic-sign">' +
+        '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
+        '        <p class="form-control-static">' + roadSideInfo + '</p>' +
+        '    </div>';
 
       if(asset.validityDirection)
         return components +
           '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
           '      <label class="control-label">Vaikutussuunta</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-          '    </div>' + panelCheckbox + renderedPanels;
+          '    </div>' + wrongSideInfo + panelCheckbox + renderedPanels;
 
-      return components + panelCheckbox + renderedPanels;
+
+      return components + wrongSideInfo + panelCheckbox + renderedPanels;
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
