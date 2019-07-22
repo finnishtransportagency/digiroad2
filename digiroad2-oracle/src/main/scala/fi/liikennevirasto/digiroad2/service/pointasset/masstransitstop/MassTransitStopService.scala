@@ -295,9 +295,8 @@ trait MassTransitStopService extends PointAssetOperations {
     (persistedAsset, publishInfo, strategy)
   }
 
-  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): MassTransitStopWithProperties = {
-
-    val (currentStrategy, publishInfo, persistedAsset ) =  withDynTransaction {
+  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTranstaction: Boolean = true): MassTransitStopWithProperties = {
+    def updateExistingById() = {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 
       val linkId = optionalPosition match {
@@ -306,7 +305,7 @@ trait MassTransitStopService extends PointAssetOperations {
       }
 
       val optRoadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
-      val optHistoric = if(optRoadLink.isEmpty) roadLinkService.getHistoryDataLinkFromVVH(linkId, newTransaction = false) else None
+      val optHistoric = if (optRoadLink.isEmpty) roadLinkService.getHistoryDataLinkFromVVH(linkId, newTransaction = false) else None
 
       val (previousStrategy, currentStrategy) = getStrategy(properties, asset, optRoadLink)
       val roadLink = currentStrategy.pickRoadLink(optRoadLink, optHistoric)
@@ -320,6 +319,14 @@ trait MassTransitStopService extends PointAssetOperations {
       val (enrichPersistedAsset, error) = currentStrategy.enrichBusStop(persistedAsset)
       (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
     }
+
+    val (currentStrategy, publishInfo, persistedAsset ) =
+      if (newTranstaction)
+        withDynTransaction {
+          updateExistingById()
+        } else
+        updateExistingById()
+
     currentStrategy.publishSaveEvent(publishInfo)
     persistedAsset
   }
@@ -330,7 +337,12 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
-    if(newTransaction) withDynTransaction { getByNationalId } else getByNationalId
+    if(newTransaction)
+      withDynTransaction {
+        getByNationalId
+      }
+    else
+      getByNationalId
   }
 
   def getMassTransitStopByNationalId(nationalId: Long, municipalityValidation: Int => Unit, newTransaction: Boolean = true): Option[MassTransitStopWithProperties] = {

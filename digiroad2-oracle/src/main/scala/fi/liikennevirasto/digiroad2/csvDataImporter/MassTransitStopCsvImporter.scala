@@ -129,17 +129,28 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     throw new UnsupportedOperationException("Not Supported Method")
 
   private def updateAssetByExternalId(externalId: Long, optPosition: Option[Position],properties: Seq[AssetProperty], user: User): MassTransitStopWithProperties = {
-    val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation)
+    val optionalAsset = massTransitStopService.getMassTransitStopByNationalId(externalId, municipalityValidation, false)
     optionalAsset match {
       case Some(asset) =>
-        massTransitStopService.updateExistingById(asset.id, optPosition, properties.map(prop => SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, user.username, (_, _) => Unit)
+        massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, user.username, (_, _) => Unit, false)
       case None => throw new AssetNotFoundException(externalId)
+    }
+  }
+
+  def convertProperties(properties: Seq[AssetProperty]) : Seq[SimpleProperty] = {
+    properties.map { prop =>
+      prop.value match {
+        case values if values.isInstanceOf[List[_]] =>
+          SimpleProperty(prop.columnName, values.asInstanceOf[List[PropertyValue]])
+        case _ =>
+          SimpleProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))
+      }
     }
   }
 
   case class CsvImportMassTransitStop(id: Long, floating: Boolean, roadLinkType: AdministrativeClass) extends FloatingAsset {}
 
-  private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String): Either[AdministrativeClass, MassTransitStopWithProperties] = {
+  private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[AssetProperty], roadTypeLimitations: Set[AdministrativeClass], username: String, optPosition: Option[Position]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
       val roadLink = vvhClient.roadLinkData.fetchByLinkId(stop.linkId)
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
@@ -150,7 +161,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     optionalAsset match {
       case Some(asset) =>
         val roadLinkType = asset.roadLinkType
-        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, None, properties.map(prop => SimpleProperty(prop.columnName, prop.value.asInstanceOf[Seq[PropertyValue]])).toSet, username, (_, _) => Unit))
+        if (roadTypeLimitations(roadLinkType)) Right(massTransitStopService.updateExistingById(asset.id, optPosition, convertProperties(properties).toSet, username, (_, _) => Unit, false))
         else Left(roadLinkType)
       case None => throw new AssetNotFoundException(externalId)
     }
@@ -160,7 +171,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     // Remove livi-id from properties, we don't want to change is with CSV
     val propertiesWithoutLiviId = properties.filterNot(_.columnName == "yllapitajan_koodi")
     if (roadTypeLimitations.nonEmpty) {
-      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations, user.username)
+      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations, user.username, optPosition)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
@@ -263,7 +274,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
     val logId = create(user.username, logInfo, fileName)
     fork {
-//      try {
+      try {
         val result = processing(csvReader, user, roadTypeLimitations)
         result match {
           case ImportResultPointAsset(Nil, Nil, Nil, Nil, Nil) => update(logId, Status.OK)
@@ -271,10 +282,10 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
             val content = mappingContent(result)
               update(logId, Status.NotOK, Some(content))
         }
-//      } catch {
-//        case e: Exception =>
-//          update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
-//      }
+      } catch {
+        case e: Exception =>
+          update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
+      }
     }
   }
 
@@ -285,13 +296,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
           if (missingParameters.isEmpty && malformedParameters.isEmpty) {
-//            try {
+            try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
-//            } catch {
-//              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
-//              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
-//            }
+            } catch {
+              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
+            }
           } else {
             result.copy(
               incompleteRows = missingParameters match {
@@ -378,9 +389,7 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
     else {
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearestRoadLink)
 
-      val prop = (getDirection(roadLink.head) ++ properties).filterNot(_.columnName == "pysakin_tyyppi").map(prop =>
-        SimpleProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))).toSet ++
-        Seq(SimpleProperty("pysakin_tyyppi", properties.find(_.columnName == "pysakin_tyyppi").get.value.asInstanceOf[Seq[PropertyValue]]))
+      val prop = convertProperties(getDirection(roadLink.head) ++ properties)
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
       val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
@@ -414,7 +423,7 @@ class PositionUpdater (roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
     else {
       val position = Some(Position(lon, lat, roadLink.head.linkId, None))
-      updateAsset(externalId, position, properties, roadTypeLimitations, user)
+      updateAsset(externalId, position, properties.filterNot(_.columnName == "external_id"), roadTypeLimitations, user)
         .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
     }
   }
