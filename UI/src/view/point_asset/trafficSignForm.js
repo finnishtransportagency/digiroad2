@@ -53,11 +53,11 @@
       '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
       '    </div>';
 
-      var wrongSideInfo =
+      var wrongSideInfo = asset.id !== 0 ?
         '    <div class="form-group form-directional-traffic-sign">' +
         '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
         '        <p class="form-control-static">' + roadSideInfo + '</p>' +
-        '    </div>';
+        '    </div>' : '';
 
       if(asset.validityDirection)
         return components +

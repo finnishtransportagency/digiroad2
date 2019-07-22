@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadSide, Track}
 import org.apache.http.impl.client.CloseableHttpClient
 
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TrafficSignType, assetValue: String/*, isWrongSideOfRoad: Boolean*/) extends TierekisteriAssetData
+                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TrafficSignType, assetValue: String, isWrongSideOfRoad: Option[String] = None) extends TierekisteriAssetData
 
 class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
   override def tierekisteriRestApiEndPoint: String = trEndPoint
@@ -42,7 +42,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     }
     if(Seq(NoVehiclesWithDangerGoods, HazmatProhibitionA, HazmatProhibitionB, ValidSat, ValidMultiplePeriod, ValidMonFri).contains(TrafficSignType.applyTRValue(assetNumber))) {
       println(s"Prohibition sign $roadNumber ; $roadPartNumber ; $track ; $startMValue ; $roadSide ; ${TrafficSignType.applyTRValue(assetNumber)}; $assetValue")
-      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
+      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue, wrongSideInformation))
     }else
       None
   }
@@ -60,12 +60,13 @@ class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable:
       val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
       val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
       val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse(getFieldValue(data, trNOPRA506).getOrElse("")).trim
+      val wrongSideInformation = getFieldValue(data, trLIIKVAST)
 
-      getFieldValue(data, trLIIKVAST) match {
+      wrongSideInformation match {
         case Some(sideInfo) if sideInfo == wrongSideOfTheRoad && Seq(SpeedLimitSign, SpeedLimitZone, UrbanArea).contains(TrafficSignType.applyTRValue(assetNumber)) =>
           None
         case _ =>
-          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
+          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue, wrongSideInformation))
       }
     }else
       None
@@ -87,14 +88,15 @@ class TierekisteriTrafficSignGroupClient(trEndPoint: String, trEnable: Boolean, 
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
       val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+      val wrongSideInformation = getFieldValue(data, trLIIKVAST)
 
-      val roadSide: RoadSide = getFieldValue(data, trLIIKVAST) match {
+      val roadSide: RoadSide = wrongSideInformation match {
         case Some(sideInfo) if sideInfo == wrongSideOfTheRoad =>
           RoadSide.switch(convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown))
         case _ =>
           convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
       }
-      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
+      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue, wrongSideInformation))
     } else
       None
   }
