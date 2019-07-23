@@ -624,6 +624,32 @@ trait MassTransitStopService extends PointAssetOperations {
   private def excludeProperties(properties: Seq[SimpleProperty]): Set[SimpleProperty] = {
     properties.filterNot(prop => AssetPropertyConfiguration.ExcludedProperties.contains(prop.publicId)).toSet
   }
+
+  def getProperty(propertyData: Seq[AbstractProperty], property: String) : Seq[String] = {
+    propertyData.find(p => p.publicId == property) match {
+      case Some(prop) => prop.values.map(_.propertyValue)
+      case _ => Seq()
+    }
+  }
+
+  def checkDuplicates(incomingMassTransitStop: NewMassTransitStop): Option[PersistedMassTransitStop] = {
+    val position = Point(incomingMassTransitStop.lon, incomingMassTransitStop.lat)
+    val direction = getProperty(incomingMassTransitStop.properties, "vaikutussuunta")
+    val busTypes = getProperty(incomingMassTransitStop.properties, "pysakin_tyyppi")
+
+    val assetsInRadius = fetchPointAssets(withBoundingBoxFilter(position, TwoMeters))
+      .filter(asset => GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
+        direction == getProperty(asset.propertyData, "vaikutussuunta") &&
+        busTypes == getProperty(asset.propertyData, "pysakin_tyyppi"))
+
+    if(assetsInRadius.nonEmpty)
+      return Some(getLatestModifiedAsset(assetsInRadius))
+    None
+  }
+
+  def getLatestModifiedAsset(assets: Seq[PersistedMassTransitStop]): PersistedMassTransitStop = {
+    assets.maxBy(asset => asset.modified.modificationTime.getOrElse(asset.created.modificationTime.get).getMillis)
+  }
 }
 
 class MassTransitStopException(string: String) extends RuntimeException {

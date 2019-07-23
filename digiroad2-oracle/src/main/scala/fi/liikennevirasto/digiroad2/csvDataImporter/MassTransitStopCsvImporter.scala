@@ -390,13 +390,19 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearestRoadLink)
 
       val prop = convertProperties(getDirection(roadLink.head) ++ properties)
-
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
       val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
+      val point = GeometryUtils.calculatePointFromLinearReference(roadLink.head.geometry, mValue)
+      val asset = NewMassTransitStop(point.map(_.x).getOrElse(lon), point.map(_.y).getOrElse(lat), roadLink.head.linkId, bearing, prop)
 
-      val asset = NewMassTransitStop(lon, lat, roadLink.head.linkId, bearing, prop.toSeq)
-      massTransitStopService.createWithUpdateFloating(asset, user.username, roadLink.head)
-      List()
+      massTransitStopService.checkDuplicates(asset) match {
+        case Some(existingAsset) =>
+          updateAsset(existingAsset.nationalId, None, properties, roadTypeLimitations, user)
+            .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+        case _ =>
+          massTransitStopService.createWithUpdateFloating(asset, user.username, roadLink.head)
+          List()
+      }
     }
   }
 }
@@ -422,7 +428,9 @@ class PositionUpdater (roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     if (roadLink.isEmpty)
       List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))
     else {
-      val position = Some(Position(lon, lat, roadLink.head.linkId, None))
+      val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
+      val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
+      val position = Some(Position(lon, lat, roadLink.head.linkId, Some(bearing)))
       updateAsset(externalId, position, properties.filterNot(_.columnName == "external_id"), roadTypeLimitations, user)
         .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
     }
