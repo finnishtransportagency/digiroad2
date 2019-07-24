@@ -1,46 +1,17 @@
 (function (root) {
-  root.TrafficSignBox = function (assetConfig, isExperimental) {
+  root.ServicePointBox = function (assetConfig, isExperimental) {
     PointAssetBox.call(this, assetConfig);
     var me = this;
 
     this.labeling = function () {
       return _(assetConfig.legendValues).map(function (val) {
         return '<div class="legend-entry">' +
-          '  <div class="label">' +
+          '  <div class="label service-point-label ' + (val.cssClass ? val.cssClass : '') + '">' +
           '    <span>' + val.label + '</span> ' +
           '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
           '  </div>' +
           '</div>';
-      }).join('').concat ([
-        '<div class="panel-section">' +
-        '   <div class="checkbox">' +
-        '     <label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="regulatorySigns" type="checkbox" /> Ohjemerkit</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="maximumRestrictions" type="checkbox" /> Suurin sallittu - rajoitukset</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="generalWarningSigns" type="checkbox" /> Varoitukset</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja väistämismerkit</label>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="serviceSigns" type="checkbox" /> Palvelukohteiden opastusmerkit</label>' +
-        '   </div>' +
-        '</div>'].join(''));
+      }).join('') + '</div>';
     };
 
     var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');
@@ -104,4 +75,3 @@
     this.hide = hide;
   };
 })(this);
-
