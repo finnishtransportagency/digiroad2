@@ -16,6 +16,7 @@
       assetGrouping = params.assetGrouping,
       authorizationPolicy = params.authorizationPolicy,
       trafficSignReadOnlyLayer = params.readOnlyLayer;
+    var pointAssetLayerStyles = PointAssetLayerStyles(params.roadLayer);
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -240,6 +241,7 @@
 
     this.layerStarted = function(eventListener) {
       bindEvents(eventListener);
+      showRoadLinkInformation();
     };
 
     function toggleMode(readOnly) {
@@ -415,6 +417,14 @@
       if(applicationModel.getSelectedLayer() == layerName)
         me.refreshView();
     };
+
+    function showRoadLinkInformation() {
+      if(params.showRoadLinkInfo) {
+        roadLayer.setLayerSpecificStyleProvider(params.layerName, function() {
+          return pointAssetLayerStyles;
+        });
+      }
+    }
 
     return {
       show: show,
