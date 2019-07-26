@@ -27,7 +27,7 @@ class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBus
     Seq(propertyUpdater, creator, positionUpdater)
   }
 
-  private def getStrategy(csvRowWithHeaders: Map[String, String]): CsvOperations = {
+  def getStrategy(csvRowWithHeaders: Map[String, String]): CsvOperations = {
     val strategies = getStrategies()
     strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(throw new UnsupportedOperationException(s"Please check the combination between Koordinaatti and  Valtakunnallinen ID"))
   }
@@ -54,7 +54,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
   override val logInfo: String = "bus stop import"
-  lazy val massTransitStopService: MassTransitStopService = {
+  val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -83,9 +83,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     "Vyöhyketieto" -> "vyohyketieto"
   )
 
-  private val multipleChoiceFieldMappings = Map(
-    "Pysäkin tyyppi" -> "pysakin_tyyppi"
-  )
+  val multipleChoiceFieldMappings = Map("Pysäkin tyyppi" -> "pysakin_tyyppi")
 
   val stopAdministratorProperty =  Map("Tietojen ylläpitäjä" -> "tietojen_yllapitaja")
 
@@ -296,13 +294,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
           if (missingParameters.isEmpty && malformedParameters.isEmpty) {
-            try {
+//            try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
-            } catch {
-              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
-              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
-            }
+//            } catch {
+//              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+//              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
+//            }
           } else {
             result.copy(
               incompleteRows = missingParameters match {
@@ -351,7 +349,7 @@ class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Updating busStop")
-    val externalId = getPropertyValue(properties, "externalId").asInstanceOf[BigDecimal].toLong
+    val externalId = getPropertyValue(properties, "external_id").toString.toInt
     updateAsset(externalId, None, properties, roadTypeLimitations, user)
       .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
   }
@@ -366,7 +364,7 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
 
   override val decisionFieldsMapping = coordinateMappings
 
-  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ stopAdministratorProperty
+  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ stopAdministratorProperty ++ multipleChoiceFieldMappings
 
   def getDirection(roadLink: RoadLink): ParsedProperties = {
       val direction = roadLink.trafficDirection  match {
