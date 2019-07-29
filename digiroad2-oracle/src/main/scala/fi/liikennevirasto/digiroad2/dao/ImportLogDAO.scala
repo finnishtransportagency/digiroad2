@@ -43,7 +43,7 @@ class ImportLogDAO {
     id
   }
 
-  def updateLogInfo(id: Long, importType: String): Long = {
+  def update(id: Long, importType: String): Long = {
     sqlu"""
         update import_log
         set import_type = $importType

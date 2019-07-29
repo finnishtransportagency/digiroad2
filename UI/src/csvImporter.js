@@ -50,13 +50,13 @@ $(function() {
       backend.uploadFile(formData, assetType,
         function(data) {
           spinnerOff();
-          addReplaceRow(data);
+          addNewRow(data);
         },
         function(xhr) {
           spinnerOff();
           if(xhr.status === 403)
             alert("Vain operaattori voi suorittaa Excel-ajon");
-          addReplaceRow(xhr.responseText);
+          addNewRow(xhr.responseText);
         });
     }
     if ($('#deleteCheckbox').is(':checked')) {
@@ -118,30 +118,44 @@ $(function() {
       rootElement.find('.job-status-link').on('click', function (event) {
         getJob(event);
       });
-      var jobsInProgress = _.some(jobs, function(job){return job.status === 1;})
-        refresh = setInterval(_.partial(refreshJobs,jobsInProgress), 30000);
-      
+        refresh = setInterval(refreshJobs, 3000);
     })
   }
   
-  function addReplaceRow(job) {
+  function addNewRow(job) {
     if (!_.isEmpty(job)) {
       var newRow = jobRow(job);
-      $(".job-status-table tr:first").after(newRow);
+      $(".job-status-table tbody tr:first").before(newRow);
+      
+      if(!refresh)
+        refresh = setInterval(refreshJobs, 3000);
     }
   }
   
-    var refreshJobs = function(jobsInProgress) {
-      if(!_.isEmpty(jobsInProgress)) {
-        if(!refresh)
-          refresh = setInterval(_.partial(refreshJobs,jobsInProgress), 30000);
+  function replaceRow(job) {
+    if (!_.isEmpty(job)) {
+      var newRow = jobRow(job);
+      $("#"+job.id).replaceWith(newRow);
+      rootElement.find('.job-status-link').on('click', function (event) {
+        getJob(event);
+      });
+    }
+  }
+  
+    var refreshJobs = function() {
+      var jobsInProgress = $('.in-progress').map(function(){
+        return $(this).attr('id');
+      });
       
+      if(!_.isEmpty(jobsInProgress)) {
         backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
-          var endedJobs = _.filter(jobs, function(job){return job.status !== 1;})
-          _.map(endedJobs, addReplaceRow)
+          var endedJobs = _.filter(jobs, function(job){return job.status !== 1;});
+          _.map(endedJobs, replaceRow);
         })
-      } else
-        clearInterval(refresh)
+      } else {
+        clearInterval(refresh);
+        refresh = null;
+      }
     };
     
   function getJob(evt){
