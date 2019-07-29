@@ -43,19 +43,20 @@ $(function() {
   $('#csvImport').on('submit', (function(e) {
     e.preventDefault();
     var formData = new FormData(this);
+    formData.append("datetime", Date.now().toString());
     formData.delete('municipalityNumbers');
     var assetType = $('#asset-selection').find(":selected").val();
     function uploadFile() {
       backend.uploadFile(formData, assetType,
-        function() {
+        function(data) {
           spinnerOff();
-          getJobs();
+          addReplaceRow(data);
         },
         function(xhr) {
           spinnerOff();
           if(xhr.status === 403)
             alert("Vain operaattori voi suorittaa Excel-ajon");
-          getJobs();
+          addReplaceRow(xhr.responseText);
         });
     }
     if ($('#deleteCheckbox').is(':checked')) {
@@ -109,32 +110,40 @@ $(function() {
       }));
     });
   }
-
+  
   function getJobs() {
-     backend.getJobs().then(function(jobs){
-      if(!_.isEmpty(jobs)) {
+    backend.getJobs().then(function(jobs){
+      if(!_.isEmpty(jobs))
         $('.job-status').empty().html(buildJobTable(jobs));
-        rootElement.find('.job-status-link').on('click', function (event) {
-          getJob(event);
-        });
-        if(!refresh)
-          refresh = setInterval(refreshJobs, 30000);
-      }
-    });
-  }
-
-  var refreshJobs = function() {
-    var jobsInProgress = $('.in-progress').map(function(){
-      return $(this).attr('id');
-    });
-    if(!_.isEmpty(jobsInProgress)){
-      backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
-        if(_.some(jobs, function(job){return job.status !== 1;}))
-          getJobs();
+      rootElement.find('.job-status-link').on('click', function (event) {
+        getJob(event);
       });
+      var jobsInProgress = _.some(jobs, function(job){return job.status === 1;})
+        refresh = setInterval(_.partial(refreshJobs,jobsInProgress), 30000);
+      
+    })
+  }
+  
+  function addReplaceRow(job) {
+    if (!_.isEmpty(job)) {
+      var newRow = jobRow(job);
+      $(".job-status-table tr:first").after(newRow);
     }
-  };
-
+  }
+  
+    var refreshJobs = function(jobsInProgress) {
+      if(!_.isEmpty(jobsInProgress)) {
+        if(!refresh)
+          refresh = setInterval(_.partial(refreshJobs,jobsInProgress), 30000);
+      
+        backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
+          var endedJobs = _.filter(jobs, function(job){return job.status !== 1;})
+          _.map(endedJobs, addReplaceRow)
+        })
+      } else
+        clearInterval(refresh)
+    };
+    
   function getJob(evt){
     var id = $(evt.currentTarget).prop('id');
     backend.getJob(id).then(function(job){
@@ -188,6 +197,16 @@ $(function() {
         '</tr>';
     };
     return table(jobs);
+  };
+  
+  var jobRow = function (job) {
+    return '' +
+      '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
+        '<td headers="date" class="date">' + job.createdDate + '</td>' +
+        '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
+        '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
+        '<td headers="detail" class="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+      '</tr>';
   };
 
 });

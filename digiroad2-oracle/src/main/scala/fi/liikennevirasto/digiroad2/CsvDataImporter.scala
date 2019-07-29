@@ -151,12 +151,6 @@ trait CsvDataImporterOperations {
         importLogDao.update(id, status, content)
       }
     }
-
-    def create(username: String, logInfo: String, fileName: String) : Long  = {
-      OracleDatabase.withDynTransaction {
-        importLogDao.create(username, logInfo, fileName)
-      }
-    }
 }
 
 class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
@@ -386,9 +380,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     result.copy(notImportedData = unusedAdditionalPanels.toList ++ result.notImportedData)
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, municipalitiesToExpire: Set[Int]) : Unit = {
-  val logId = create(user.username, logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, municipalitiesToExpire: Set[Int]) : Unit = {
     try {
       val result = processing(inputStream, municipalitiesToExpire, user)
       result match {
@@ -595,9 +587,7 @@ override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String): Long = {
-    val logId =  create(username,  logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long): Long = {
     try {
       val result = processing(inputStream, username)
       result match {
@@ -771,9 +761,7 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String) {
-
-    val logId = create(username, logInfo, fileName)
+  def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long) {
     try {
       val result = processing(inputStream, username)
       result match {
@@ -1018,9 +1006,7 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }).start()
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]) : Unit = {
-
-    val logId = create(user.username, logInfo, fileName)
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]) : Unit = {
     fork {
       try {
         val result = processing(inputStream, user, roadTypeLimitations)
@@ -1217,9 +1203,7 @@ class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: 
 
   def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = throw new UnsupportedOperationException("Not supported method")
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User): Unit = {
-    val logId = create(user.username, logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
     try {
       val result = processing(inputStream, user)
       result match {
@@ -1407,7 +1391,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
       val validData =
         if(!allowedSafetyEquipmentValues.contains(safetyEquipment))
-          Seq(NotImportedData(reason = s"Railway Crossing safety equipment type ${safetyEquipment} does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+          Seq(NotImportedData(reason = s"Railway Crossing safety equipment type $safetyEquipment does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 
