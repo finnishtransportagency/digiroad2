@@ -126,8 +126,13 @@ $(function() {
   function addNewRow(job) {
     if (!_.isEmpty(job)) {
       var newRow = jobRow(job);
-      $(".job-status-table tbody tr:first").before(newRow);
-      
+      var table = $(".job-status-table tbody tr:first");
+	    
+	    if(_.isEmpty(table))
+	      $('.job-status').empty().html(buildJobTable([job]));
+			else
+		    table.before(newRow);
+	
       if(!refresh)
         refresh = setInterval(refreshJobs, 3000);
       scrollbarResize();
