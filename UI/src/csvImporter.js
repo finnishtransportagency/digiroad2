@@ -118,8 +118,9 @@ $(function() {
       rootElement.find('.job-status-link').on('click', function (event) {
         getJob(event);
       });
-        refresh = setInterval(refreshJobs, 3000);
-    })
+      scrollbarResize();
+      refresh = setInterval(refreshJobs, 3000);
+    });
   }
   
   function addNewRow(job) {
@@ -129,6 +130,7 @@ $(function() {
       
       if(!refresh)
         refresh = setInterval(refreshJobs, 3000);
+      scrollbarResize();
     }
   }
   
@@ -142,21 +144,21 @@ $(function() {
     }
   }
   
-    var refreshJobs = function() {
-      var jobsInProgress = $('.in-progress').map(function(){
-        return $(this).attr('id');
+  var refreshJobs = function() {
+    var jobsInProgress = $('.in-progress').map(function(){
+      return $(this).attr('id');
+    });
+    
+    if(!_.isEmpty(jobsInProgress)) {
+      backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
+        var endedJobs = _.filter(jobs, function(job){return job.status !== 1;});
+        _.map(endedJobs, replaceRow);
       });
-      
-      if(!_.isEmpty(jobsInProgress)) {
-        backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
-          var endedJobs = _.filter(jobs, function(job){return job.status !== 1;});
-          _.map(endedJobs, replaceRow);
-        })
-      } else {
-        clearInterval(refresh);
-        refresh = null;
-      }
-    };
+    } else {
+      clearInterval(refresh);
+      refresh = null;
+    }
+  };
     
   function getJob(evt){
     var id = $(evt.currentTarget).prop('id');
@@ -192,6 +194,7 @@ $(function() {
     var tableHeaderRow = function () {
       return '<thead><th id="date" class="date">Päivämäärä</th> <th id="file" class="file"">Tiedosto</th> <th id="status" class="status">Tila</th> <th id="detail" class="detail">Raportti</th></tr></thead>';
     };
+    
     var tableBodyRows = function (jobs) {
       return $('<tbody>').append(tableContentRows(jobs));
     };
@@ -223,16 +226,20 @@ $(function() {
       '</tr>';
   };
 
+  var scrollbarResize = function (rows) {
+    if ( $('.job-status tbody tr').length >= 5)
+      $('.job-status thead').css("width", "calc(100% - 17px)");
+  }
 });
 
 var getStatusIcon = function(status, description) {
   var icon = {
-               1: "images/csv-status-icons/clock-outline.png",
-               2: "images/csv-status-icons/check-icon.png",
-               3: "images/csv-status-icons/not-ok-check-icon.png",
-               4: "images/csv-status-icons/error-icon-small.png",
-               99: "images/csv-status-icons/unknown-error.png"
-             };
+    1: "images/csv-status-icons/clock-outline.png",
+    2: "images/csv-status-icons/check-icon.png",
+    3: "images/csv-status-icons/not-ok-check-icon.png",
+    4: "images/csv-status-icons/error-icon-small.png",
+    99: "images/csv-status-icons/unknown-error.png"
+  };
   return '<img src="' + icon[status] + '" title="' + description + '"/>';
 };
 
