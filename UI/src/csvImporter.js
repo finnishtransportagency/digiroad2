@@ -229,7 +229,7 @@ $(function() {
   var scrollbarResize = function (rows) {
     if ( $('.job-status tbody tr').length >= 5)
       $('.job-status thead').css("width", "calc(100% - 17px)");
-  }
+  };
 });
 
 var getStatusIcon = function(status, description) {
