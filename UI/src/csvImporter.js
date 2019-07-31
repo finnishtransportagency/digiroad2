@@ -43,7 +43,6 @@ $(function() {
   $('#csvImport').on('submit', (function(e) {
     e.preventDefault();
     var formData = new FormData(this);
-    formData.append("datetime", Date.now().toString());
     formData.delete('municipalityNumbers');
     var assetType = $('#asset-selection').find(":selected").val();
     function uploadFile() {
@@ -127,12 +126,12 @@ $(function() {
     if (!_.isEmpty(job)) {
       var newRow = jobRow(job);
       var table = $(".job-status-table tbody tr:first");
-	    
-	    if(_.isEmpty(table))
-	      $('.job-status').empty().html(buildJobTable([job]));
-			else
-		    table.before(newRow);
-	
+      
+      if(_.isEmpty(table))
+        $('.job-status').empty().html(buildJobTable([job]));
+      else
+        table.before(newRow);
+      
       if(!refresh)
         refresh = setInterval(refreshJobs, 3000);
       scrollbarResize();
@@ -208,16 +207,6 @@ $(function() {
         return jobRow(job).concat('');
       });
     };
-    var jobRow = function (job) {
-      return '' +
-        '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
-        '<td headers="date" class="date">' + job.createdDate + '</td>' +
-        '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
-        '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-        '<td headers="detail" class="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
-
-        '</tr>';
-    };
     return table(jobs);
   };
   
@@ -231,7 +220,7 @@ $(function() {
       '</tr>';
   };
 
-  var scrollbarResize = function (rows) {
+  var scrollbarResize = function () {
     if ( $('.job-status tbody tr').length >= 5)
       $('.job-status thead').css("width", "calc(100% - 17px)");
   };
