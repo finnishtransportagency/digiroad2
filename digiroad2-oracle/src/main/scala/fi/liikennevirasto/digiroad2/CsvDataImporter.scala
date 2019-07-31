@@ -152,11 +152,11 @@ trait CsvDataImporterOperations {
       }
     }
 
-    def create(username: String, logInfo: String, fileName: String) : Long  = {
+    def update(id: Long, importType: String) : Long  = {
       OracleDatabase.withDynTransaction {
-        importLogDao.create(username, logInfo, fileName)
-      }
+        importLogDao.update(id, importType)
     }
+  }
 }
 
 class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl, eventBusImpl) {
@@ -386,10 +386,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     result.copy(notImportedData = unusedAdditionalPanels.toList ++ result.notImportedData)
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, municipalitiesToExpire: Set[Int]) : Unit = {
-  val logId = create(user.username, logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, municipalitiesToExpire: Set[Int]) : Unit = {
     try {
+      update(logId, logInfo)
       val result = processing(inputStream, municipalitiesToExpire, user)
       result match {
         case ImportResultTrafficSign(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
@@ -595,10 +594,9 @@ override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
     csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String): Long = {
-    val logId =  create(username,  logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long): Long = {
     try {
+      update(logId, logInfo)
       val result = processing(inputStream, username)
       result match {
         case ImportResultRoadLink(Nil, Nil, Nil, Nil) => update(logId, Status.OK)
@@ -771,10 +769,9 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String) {
-
-    val logId = create(username, logInfo, fileName)
+  def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long) {
     try {
+      update(logId, logInfo)
       val result = processing(inputStream, username)
       result match {
         case ImportMaintenanceRoadResult(Nil, Nil, Nil) => update(logId, Status.OK)
@@ -1018,11 +1015,10 @@ class MassTransitStopCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
     }).start()
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]) : Unit = {
-
-    val logId = create(user.username, logInfo, fileName)
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]) : Unit = {
     fork {
       try {
+        update(logId, logInfo)
         val result = processing(inputStream, user, roadTypeLimitations)
         result match {
           case ImportResultMassTransitStop(Nil, Nil, Nil, Nil, Nil) => update(logId, Status.OK)
@@ -1217,10 +1213,9 @@ class PointAssetCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: 
 
   def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = throw new UnsupportedOperationException("Not supported method")
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User): Unit = {
-    val logId = create(user.username, logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
     try {
+      update(logId, logInfo)
       val result = processing(inputStream, user)
       result match {
         case ImportResultPointAsset(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
@@ -1302,20 +1297,21 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
       val position = getCoordinatesFromProperties(csvProperties)
       val obstacleType = getPropertyValue(csvProperties, "type").asInstanceOf[String].toInt
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
-
-      val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
+      val roadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks).filter(_.administrativeClass != State)
 
       val validData =
         if(!allowedTypeValues.contains(obstacleType))
-          Seq(NotImportedData(reason = s"Obstacle type ${obstacleType} does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+          Seq(NotImportedData(reason = s"Obstacle type $obstacleType does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+        else if(roadLinks.isEmpty)
+          Seq(NotImportedData(reason = s"RoadLink does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
         else
           Seq()
 
-      if(validData.isEmpty)
+      if(validData.isEmpty) {
+        val nearestRoadLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+        val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
         obstaclesService.createFromCoordinates(IncomingObstacle(position.x, position.y, nearestRoadLink.linkId, obstacleType), nearestRoadLink, user.username, floating)
-
+      }
       validData
     }
 
@@ -1332,21 +1328,28 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
-    pointAssetAttributes.foreach { trafficLightAttribute =>
+    val notImported = pointAssetAttributes.flatMap { trafficLightAttribute =>
       val csvProperties = trafficLightAttribute.properties
       val nearbyLinks = trafficLightAttribute.roadLink
 
       val position = getCoordinatesFromProperties(csvProperties)
+      val roadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks).filter(_.administrativeClass != State)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val validData =
+        if (roadLinks.isEmpty)
+          Seq(NotImportedData(reason = s"RoadLink does not exist.", csvRow = rowToString(csvProperties.properties.flatMap { x => Map(x.columnName -> x.value) }.toMap)))
+        else
+          Seq()
 
-      val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
+      if (validData.isEmpty) {
+        val nearestRoadLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+        val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 
-      trafficLightsService.createFromCoordinates(IncomingTrafficLight(position.x, position.y, nearestRoadLink.linkId), nearestRoadLink, user.username, floating)
+        trafficLightsService.createFromCoordinates(IncomingTrafficLight(position.x, position.y, nearestRoadLink.linkId), nearestRoadLink, user.username, floating)
+      }
+      validData
     }
-
-    result
+    result.copy(notImportedData = notImported.toList ++ result.notImportedData)
   }
 }
 
@@ -1359,21 +1362,29 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
   lazy val pedestrianCrossingService: PedestrianCrossingService = new PedestrianCrossingService(roadLinkService, eventBusImpl)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
-    pointAssetAttributes.foreach { pedestrianCrossingAttribute =>
+    val notImported = pointAssetAttributes.flatMap { pedestrianCrossingAttribute =>
       val csvProperties = pedestrianCrossingAttribute.properties
       val nearbyLinks = pedestrianCrossingAttribute.roadLink
 
       val position = getCoordinatesFromProperties(csvProperties)
+      val roadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks).filter(_.administrativeClass != State)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val validData =
+        if (roadLinks.isEmpty)
+          Seq(NotImportedData(reason = s"RoadLink does not exist.", csvRow = rowToString(csvProperties.properties.flatMap { x => Map(x.columnName -> x.value) }.toMap)))
+        else
+          Seq()
 
-      val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
+      if (validData.isEmpty) {
+        val nearestRoadLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+        val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 
-      pedestrianCrossingService.createFromCoordinates(IncomingPedestrianCrossing(position.x, position.y, nearestRoadLink.linkId), nearestRoadLink, user.username, floating)
+        pedestrianCrossingService.createFromCoordinates(IncomingPedestrianCrossing(position.x, position.y, nearestRoadLink.linkId), nearestRoadLink, user.username, floating)
+      }
+      validData
     }
 
-    result
+    result.copy(notImportedData = notImported.toList ++ result.notImportedData)
   }
 }
 
@@ -1391,7 +1402,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   val allowedSafetyEquipmentValues: Seq[Int] = Seq(1,2,3,4,5)
 
   override def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultPointAsset): ImportResultPointAsset = {
-    val notImportedRailwayCrossings = pointAssetAttributes.flatMap { railwayCrossingAttribute =>
+    val notImported = pointAssetAttributes.flatMap { railwayCrossingAttribute =>
       val csvProperties = railwayCrossingAttribute.properties
       val nearbyLinks = railwayCrossingAttribute.roadLink
 
@@ -1400,24 +1411,25 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       val safetyEquipment = getPropertyValue(csvProperties, "safety equipment").asInstanceOf[String].toInt
       val name = getPropertyValueOption(csvProperties, "name").map(_.toString)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
-
-      val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
+      val roadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks).filter(_.administrativeClass != State)
 
       val validData =
         if(!allowedSafetyEquipmentValues.contains(safetyEquipment))
-          Seq(NotImportedData(reason = s"Railway Crossing safety equipment type ${safetyEquipment} does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+          Seq(NotImportedData(reason = s"Railway Crossing safety equipment type $safetyEquipment does not exist.", csvRow = rowToString(csvProperties.properties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
+        else if (roadLinks.isEmpty)
+          Seq(NotImportedData(reason = s"RoadLink does not exist.", csvRow = rowToString(csvProperties.properties.flatMap { x => Map(x.columnName -> x.value) }.toMap)))
         else
           Seq()
 
-      if(validData.isEmpty)
+      if(validData.isEmpty) {
+        val nearestRoadLink = roadLinks.minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+        val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
         railwayCrossingService.createFromCoordinates(IncomingRailwayCrossing(position.x, position.y, nearestRoadLink.linkId, safetyEquipment, name, code), nearestRoadLink, user.username, floating)
-
+      }
       validData
     }
 
-    result.copy(notImportedData = notImportedRailwayCrossings.toList ++ result.notImportedData)
+    result.copy(notImportedData = notImported.toList ++ result.notImportedData)
   }
 }
 
@@ -1460,6 +1472,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       val position = getCoordinatesFromProperties(csvProperties)
 
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
+      //TODO check if is necessary filter by adminClass
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val serviceType = getPropertyValue(csvProperties, "type").asInstanceOf[String]
