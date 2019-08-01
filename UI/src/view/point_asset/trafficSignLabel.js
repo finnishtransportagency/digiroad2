@@ -156,33 +156,33 @@
           {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceWhichSignApplies.png',  height: 35},
           {signValue: [150], image: 'images/traffic-signs/additional-panels/HusvagnCaravan.png', height: 20},
           {signValue: [151], image: 'images/traffic-signs/additional-panels/Moped.png', height: 20},
-          {signValue: [178], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignSmall.png', height: 24, validation: validateAdditionalInfo},
+          {signValue: [178], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignSmall.png', height: 24, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo},
           {signValue: [152], image: 'images/traffic-signs/information-signs/AdvisorySignDetourLarge.png', height: 55},
           {signValue: [153], image: 'images/traffic-signs/information-signs/Detour.png'},
           {signValue: [154], image: 'images/traffic-signs/information-signs/RouteToBeFollowed.png', height: 35},
           {signValue: [155], image: 'images/traffic-signs/information-signs/InformationOnTrafficLanes.png'},
           {signValue: [156], image: 'images/traffic-signs/information-signs/BiDirectionalInformationOnTrafficLanes.png'},
           {signValue: [157], image: 'images/traffic-signs/information-signs/EndOfLane.png', height: 52},
-          {signValue: [158], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignAbove.png', height: 63},
-          {signValue: [159], image: 'images/traffic-signs/information-signs/ExitSignAbove.png', height: 34, validation: validateAdditionalInfo},
-          {signValue: [160], image: 'images/traffic-signs/information-signs/DirectionSign.png', height: 24, validation: validateAdditionalInfo},
-          {signValue: [161], image: 'images/traffic-signs/information-signs/ExitSign.png', height: 34, validation: validateAdditionalInfo},
-          {signValue: [162], image: 'images/traffic-signs/information-signs/DirectionSignOnPrivateRoad.png', height: 24, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
-          {signValue: [163], image: 'images/traffic-signs/information-signs/LocationSign.png', height: 30, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
-          {signValue: [164], image: 'images/traffic-signs/information-signs/DirectionSignForLightTraffic.png', height: 24, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo, textColor: '#ffffff', maxLabelLength: 20, offsetX: 20},
-          {signValue: [165], image: 'images/traffic-signs/information-signs/DirectionSignForDetourWithText.png', height: 20, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo, maxLabelLength: 10},
+          {signValue: [158], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignAbove.png', height: 63, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, offsetY: -8, textColor: '#ffffff'},
+          {signValue: [159], image: 'images/traffic-signs/information-signs/ExitSignAbove.png', height: 34, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [160], image: 'images/traffic-signs/information-signs/DirectionSign.png', height: 24, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [161], image: 'images/traffic-signs/information-signs/ExitSign.png', height: 34, validation: validateAdditionalInfo, maxLabelLength: 13, additionalInfo: showAdditionalInfo, textColor: '#ffffff', offsetX: -20},
+          {signValue: [162], image: 'images/traffic-signs/information-signs/DirectionSignOnPrivateRoad.png', height: 24, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [163], image: 'images/traffic-signs/information-signs/LocationSign.png', height: 30, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [164], image: 'images/traffic-signs/information-signs/DirectionSignForLightTraffic.png', height: 24, validation: validateAdditionalInfo, maxLabelLength: 17, additionalInfo: showAdditionalInfo, textColor: '#ffffff', offsetX: 20},
+          {signValue: [165], image: 'images/traffic-signs/information-signs/DirectionSignForDetourWithText.png', height: 20, validation: validateAdditionalInfo, maxLabelLength: 10, additionalInfo: showAdditionalInfo},
           {signValue: [166], image: 'images/traffic-signs/information-signs/DirectionSignForDetour.png', height: 20},
-          {signValue: [167], image: 'images/traffic-signs/information-signs/DirectionSignForLocalPurposes.png', height: 28, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo},
-          {signValue: [168], image: 'images/traffic-signs/information-signs/DirectionSignForMotorway.png', height: 25, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo},
+          {signValue: [167], image: 'images/traffic-signs/information-signs/DirectionSignForLocalPurposes.png', height: 28, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo},
+          {signValue: [168], image: 'images/traffic-signs/information-signs/DirectionSignForMotorway.png', height: 25, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
           {signValue: [169], image: 'images/traffic-signs/information-signs/ParkAndRideFacilities.png', height: 20},
-          {signValue: [170], image: 'images/traffic-signs/information-signs/RecommendedMaxSpeed.png', validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo, maxLabelLength: 3, textColor: '#ffffff'},
-          {signValue: [171], image: 'images/traffic-signs/information-signs/SignShowingDistance.png', height: 34, validation: validateAdditionalInfo},
-          {signValue: [172], image: 'images/traffic-signs/information-signs/PlaceName.png', height: 20, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo},
-          {signValue: [173], image: 'images/traffic-signs/information-signs/RoadNumberERoad.png', height: 23, validation: validateAdditionalInfo},
-          {signValue: [174], image: 'images/traffic-signs/information-signs/DirectionToTheNumberedRoad.png', validation: validateAdditionalInfo},
-          {signValue: [175], image: 'images/traffic-signs/information-signs/RoadNumberPrimaryRoad.png', validation: validateAdditionalInfo},
-          {signValue: [176], image: 'images/traffic-signs/information-signs/RoadNumberRegionalOrSecondaryRoad.png', height: 25, validation: validateAdditionalInfo},
-          {signValue: [177], image: 'images/traffic-signs/information-signs/RoadNumberOrdinaryRoad.png', height: 26, validation: validateAdditionalInfo},
+          {signValue: [170], image: 'images/traffic-signs/information-signs/RecommendedMaxSpeed.png', validation: validateAdditionalInfo, maxLabelLength: 3, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [171], image: 'images/traffic-signs/information-signs/SignShowingDistance.png', height: 34, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [172], image: 'images/traffic-signs/information-signs/PlaceName.png', height: 20, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [173], image: 'images/traffic-signs/information-signs/RoadNumberERoad.png', height: 23, validation: validateAdditionalInfo, maxLabelLength: 5, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [174], image: 'images/traffic-signs/information-signs/DirectionToTheNumberedRoad.png', validation: validateNumber, maxLabelLength: 5, textColor: '#ffffff'},
+          {signValue: [175], image: 'images/traffic-signs/information-signs/RoadNumberPrimaryRoad.png', textColor: '#ffffff',  validation: validateNumber, maxLabelLength: 4 },
+          {signValue: [176], image: 'images/traffic-signs/information-signs/RoadNumberRegionalOrSecondaryRoad.png', height: 25, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo},
+          {signValue: [177], image: 'images/traffic-signs/information-signs/RoadNumberOrdinaryRoad.png', height: 26, validation: validateAdditionalInfo, maxLabelLength: 8, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
           {signValue: [179], image: 'images/traffic-signs/information-signs/RoadForMotorVehicles.png'},
           {signValue: [180], image: 'images/traffic-signs/information-signs/Airport.png'},
           {signValue: [181], image: 'images/traffic-signs/information-signs/Ferry.png'},
@@ -194,10 +194,10 @@
           {signValue: [187], image: 'images/traffic-signs/information-signs/OverpassOrUnderpassWithSteps.png'},
           {signValue: [188], image: 'images/traffic-signs/information-signs/OverpassOrUnderpassWithoutSteps.png'},
           {signValue: [189], image: 'images/traffic-signs/information-signs/EmergencyExit.png'},
-          {signValue: [190], image: 'images/traffic-signs/information-signs/DirectionToEmergencyExit.png', validation: validateAdditionalInfo},
-          {signValue: [191], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignAboveSmall.png', height: 20, validation: validateAdditionalInfo},
+          {signValue: [190], image: 'images/traffic-signs/information-signs/DirectionToEmergencyExit.png', validation: validateNumber, maxLabelLength: 5, offsetX: 12, offsetY: 10, textColor: '#ffffff', unit: me.addMeters},
+          {signValue: [191], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignAboveSmall.png', height: 20, validation: validateNumber, maxLabelLength: 4, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
           {signValue: [192], image: 'images/traffic-signs/information-signs/AdvanceDirectionSign.png', height: 58},
-          {signValue: [193], image: 'images/traffic-signs/information-signs/AdvisorySignDetour.png', height: 26, validation: validateAdditionalInfo, additionalInfo: showAdditionalInfo}
+          {signValue: [193], image: 'images/traffic-signs/information-signs/AdvisorySignDetour.png', height: 26, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo}
         ];
       };
 
@@ -242,6 +242,11 @@
         var labelMaxLength = me.getLabelProperty(this).getMaxLength();
         return this.value || (this.additionalInfo && this.additionalInfo.length <= labelMaxLength);
       };
+  
+    var validateNumber = function () {
+      var labelMaxLength = me.getLabelProperty(this).getMaxLength();
+      return this.value && !isNaN(this.value) && this.value.length <= labelMaxLength;
+    };
 
       this.renderFeaturesByPointAssets = function (pointAssets, zoomLevel) {
         return me.renderGroupedFeatures(pointAssets, zoomLevel, function (asset) {
