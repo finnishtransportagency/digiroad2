@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.DateParser._
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.DynamicValue
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
@@ -13,6 +13,10 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import fi.liikennevirasto.digiroad2.linearasset.{Prohibitions, Value}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopOperations, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
+import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.{describeEquipments, describeReachability, transformToISODate}
+import org.joda.time.format.ISODateTimeFormat
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
@@ -37,6 +41,20 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       authorizations "Contact your service provider for more information"
       description "Example URL: api/changes/bogie_weight_limits?since=2018-04-12T04:00Z&until=2018-04-16T15:00Z"
       )
+
+  //Api entry point to get Mass Transit Stops printed on Vally XML file between two dates
+  val getMassTransitStopsPrintedAtValluXML =
+    (apiOperation[Long]("getMassTransitStopsPrintedAtValluXML")
+      .parameters(
+        queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
+        queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset.")
+      )
+      tags "Change API"
+      summary "List all Mass Transit Stops printed on Vally XML file between two specific dates."
+      authorizations "Contact your service provider for more information"
+      description "Example URL: api/changes/mass_transit_stops?since=2019-03-15T09:19:27.424Z&until=2019-03-22T23:55:27.429Z"
+      )
+
 
   get("/:assetType", operation(getChangesOfAssetsByType)) {
     contentType = formats("json")
@@ -64,6 +82,14 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChanged(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until), pointAssetWarningSignsGroupProperties)
       case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChanged(Set(Stop.OTHvalue), since, until), pointAssetStopSignProperties)
     }
+  }
+
+  get("/mass_transit_stops", operation(getMassTransitStopsPrintedAtValluXML)) {
+    contentType = formats("json")
+    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+
+    massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until))
   }
 
   private def speedLimitsToGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
@@ -313,6 +339,86 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
   def pointAssetStopSignProperties(pointAsset: PersistedPointAsset, since: DateTime): Map[String, Any] = {
     val point = pointAsset.asInstanceOf[PersistedTrafficSign]
     pointAssetGenericProperties(pointAsset, since) ++ Map("sideCode" -> point.validityDirection)
+  }
+
+  private def massTransitStopsToGeoJson(since: DateTime, massTransitStopsOnVallu: Seq[ChangedPointAsset]): Map[String, Any] = {
+    def getValidityDatesProperties(stop: PersistedMassTransitStop, publicId: String): String = {
+      if (!propertyIsDefined(stop, publicId) || propertyIsEmpty(stop, publicId)) {
+        "true"
+      } else
+        transformToISODate(extractPropertyValueOption(stop, publicId))
+    }
+
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        massTransitStopsOnVallu.map { case ChangedPointAsset(pointAsset, link) =>
+          val municipalityInfo =
+            massTransitStopsOnVallu.flatMap { stop =>
+              municipalityService.getMunicipalitiesNameAndIdByCode(Set(stop.pointAsset.municipalityCode))
+            }
+          val massTransitStop = pointAsset.asInstanceOf[PersistedMassTransitStop]
+          val busStopTypes = getPropertyValuesByPublicId("pysakin_tyyppi", massTransitStop.propertyData).map(x => x.propertyValue.toLong).toSet
+          val modificationInfo = massTransitStop.modified.modificationTime match {
+            case Some(_) => massTransitStop.modified
+            case _ => massTransitStop.created
+          }
+          val validTo = getValidityDatesProperties(massTransitStop, "viimeinen_voimassaolopaiva")
+          val validFrom = getValidityDatesProperties(massTransitStop, "ensimmainen_voimassaolopaiva")
+
+          Map(
+            "id" -> massTransitStop.nationalId,
+            "geometry" ->
+              Map(
+                "type" -> "MassTransitStop",
+                "coordinates" -> Seq(massTransitStop.lon, massTransitStop.lat)
+              ),
+            "properties" ->
+              Map(
+                "adminStopId" -> extractPropertyValueOption(massTransitStop, "yllapitajan_tunnus").getOrElse(""),
+                "stopCode" -> extractPropertyValueOption(massTransitStop, "matkustajatunnus").getOrElse(""),
+                "name_fi" -> extractPropertyValueOption(massTransitStop, "nimi_suomeksi"),
+                "name_sv" -> extractPropertyValueOption(massTransitStop, "nimi_ruotsiksi"),
+                "bearing" -> massTransitStop.bearing.getOrElse(""),
+                "bearingDescription" -> extractOptionalPropertyDisplayValue(massTransitStop, "liikennointisuuntima"),
+                "direction" -> extractPropertyValueOption(massTransitStop, "liikennointisuunta"),
+                "stopAttribute" -> busStopTypes,
+                "equipment" -> describeEquipments(massTransitStop),
+                "reachability" -> describeReachability(massTransitStop),
+                "specialNeeds" -> extractPropertyValueOption(massTransitStop, "esteettomyys_liikuntarajoitteiselle").getOrElse(""),
+                "modifiedBy" -> modificationInfo.modifier.get,
+                "modifiedTimestamp" -> ISODateTimeFormat.dateHourMinuteSecond.print(modificationInfo.modificationTime.get),
+                "validFrom" -> validFrom,
+                "validTo" -> validTo,
+                "administratorCode" -> (if (propertyIsDefined(massTransitStop, "tietojen_yllapitaja")) extractOptionalPropertyDisplayValue(massTransitStop, "tietojen_yllapitaja").get else "Ei tiedossa"),
+                "municipalityCode" -> massTransitStop.municipalityCode,
+                "municipalityName" -> (if (municipalityInfo.nonEmpty) municipalityInfo.find(_.id == massTransitStop.municipalityCode).head.name else ""),
+                "comments" -> extractPropertyValueOption(massTransitStop, "lisatiedot").getOrElse(""),
+                "platformCode" -> extractPropertyValueOption(massTransitStop, "laiturinumero").getOrElse(""),
+                "connectedToTerminal" -> extractPropertyValueOption(massTransitStop, "liitetty_terminaaliin_ulkoinen_tunnus").getOrElse(""),
+                "contactEmails" -> "pysakit@digiroad.fi",
+                "zoneId" -> extractPropertyValueOption(massTransitStop, "vyohyketieto").getOrElse(""),
+                //Parameter by default to extend from points, we will not use them when print VALLU XML
+                "sideCode" -> SideCode.BothDirections.value,
+                "changeType" -> "",
+                "mValue" -> 0.0,
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                )
+              )
+          )
+        }
+    )
   }
 
   private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {

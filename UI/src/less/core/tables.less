@@ -57,6 +57,20 @@ th {
   }
 }
 
+.municipality-header {
+  width: 100%;
+  display: inline-block;
+  h2 {
+    display: inline-block;
+    width: 33%;
+  }
+  img {
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: -5px;
+  }
+}
+
 #dashBoardVerificationInfo,
 #dashBoardAssetsModificationsInfo {
   table {
@@ -89,11 +103,9 @@ th {
 }
 
 .job-status {
-  padding-top: 20px;
+  padding-top: 10px;
   border-top: 4px solid @gray-light-2;
   font-size: 14px;
-  max-height: 100%;
-  min-height: 0;
 
   table ,tr td{
     font-family: arial, sans-serif;
@@ -120,6 +132,7 @@ th {
     flex-direction: column;
     overflow-x: hidden;
     min-height: 0;
+    max-height: 198px;
   }
   thead, tbody tr {
     display:table;

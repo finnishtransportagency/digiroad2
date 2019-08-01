@@ -29,7 +29,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
   when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   val mocklinearAssetService = MockitoSugar.mock[LinearAssetService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
@@ -47,7 +47,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
@@ -121,7 +121,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockOnOffLinearAssetService.getPersistedAssetsByIds(LitRoad.typeId, Set(3L))).thenReturn(Seq(PersistedLinearAsset(3, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, LitRoad.typeId, 2, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0, 0), Point(0, 500))))
   when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
+  when(mockOnOffLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean])).thenReturn(Seq(PersistedLinearAsset(1, 1000, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
   when(mockOnOffLinearAssetService.update(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]], any[Option[Measures]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
   when(mockAssetService.getMunicipalityById(any[Int])).thenReturn(Seq(235))

@@ -43,11 +43,25 @@
       manoeuvre: 380,
       careClass: 390,
       carryingCapacity: 400,
-      roadWorksAsset: 420
+      roadWorksAsset: 420,
+      parkingProhibition: 430
     };
 
     var assetGroups = {
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
+    };
+
+    var datePeriodValueExtract = function (date) {
+      var datePeriodValue = date.getPropertyValue().values;
+      var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+      var endDate = new Date(_.head(datePeriodValue).value.endDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+
+      return {startDate: startDate, endDate: endDate};
+    };
+
+    var isEndDateAfterStartdate = function (date) {
+      var datePeriods = datePeriodValueExtract(date);
+      return datePeriods.startDate <= datePeriods.endDate;
     };
 
     var linearAssetSpecs = [
@@ -285,19 +299,20 @@
           var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
 
           var isInDatePeriod = function(date) {
-            var datePeriodValue = date.getPropertyValue().values;
-            var startDate = new Date(_.head(datePeriodValue).value.startDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-            var endDate = new Date(_.head(datePeriodValue).value.endDate.replace( /(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-
-            return new Date(endDate.getMonth() + '/' + endDate.getDate() + '/' + (endDate.getFullYear() - 1)) <= startDate;
+            var datePeriods = datePeriodValueExtract(date);
+            return new Date(datePeriods.endDate.getMonth() + '/' + datePeriods.endDate.getDate() + '/' + (datePeriods.endDate.getFullYear() - 1)) <= datePeriods.startDate;
           };
 
-          var isValidDate =  _.every(datePeriodField, function(date) {
-            return date.hasValue() && isInDatePeriod(date);
+          var isValidIntervalDate = _.every(datePeriodField, function (date) {
+            return date.hasValue() ? isEndDateAfterStartdate(date) : true;
+          });
+
+          var isValidPeriodDate =  _.every(datePeriodField, function(date) {
+            return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
           var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
-          return checkBoxField ? isValidDate : true;
+          return checkBoxField ? isValidPeriodDate : isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
@@ -705,7 +720,7 @@
         typeId: assetType.roadWorksAsset,
         singleElementEventCategory: 'roadWorksAsset',
         multiElementEventCategory: 'roadsWorksAsset',
-        layerName: 'roadWorksAsset',
+        layerName: 'roadWork',
         title: 'Tietyöt',
         newTitle: 'Uusi tietyöt',
         className: 'road-works-asset',
@@ -722,12 +737,55 @@
         style: new RoadWorkStyle(),
         form: new DynamicAssetForm ( {
           fields : [
-            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'number', weight: 1},
+            { publicId: 'tyon_tunnus', label: 'Työn tunnus', type: 'text', weight: 1},
             { publicId: 'arvioitu_kesto', label: 'Arvioitu kesto', type: 'date_period', required: true, multiElement: false, weight: 2}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
+        saveCondition: function (fields) {
+          var datePeriodField = _.filter(fields, function(field) { return field.getPropertyValue().propertyType === 'date_period'; });
+
+          return _.every(datePeriodField, function (date) {
+            return date.hasValue() ? isEndDateAfterStartdate(date) : true;
+          });
+        },
         hasMunicipalityValidation: false
+      },
+      {
+        typeId: assetType.parkingProhibition,
+        defaultValue: 1,
+        singleElementEventCategory: 'parkingProhibition',
+        multiElementEventCategory: 'parkingProhibitions',
+        layerName: 'parkingProhibition',
+        title: 'Pysäköintikielto',
+        newTitle: 'Uusi Pysäköintikielto',
+        className: 'parking-prohibition',
+        isSeparable: true,
+        allowComplementaryLinks: false,
+        editControlLabels: {
+          title: 'Pysäköintikielto',
+          enabled: 'Pysäköintikielto',
+          disabled: 'Ei pysäköintikieltoa'
+        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        style: new ParkingProhibitionStyle(),
+        form: new DynamicAssetForm ( {
+          fields : [
+            {
+              label: 'Rajoitus', required: 'required', type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
+              values: [
+                {id: 1, label: 'Pysähtyminen kielletty'},
+                {id: 2, label: 'Pysäköinti kielletty'}
+              ]
+            },
+            {label: "", type: 'time_period', publicId: "parking_validity_period", weight: 2}
+          ]
+        }),
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        minZoomForContent: oneKmZoomLvl
       }
     ];
 

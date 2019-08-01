@@ -40,7 +40,7 @@ case class MalformedRow(malformedParameters: List[String], csvRow: String)
 case class ExcludedRow(affectedRows: String, csvRow: String)
 case class AssetProperty(columnName: String, value: Any)
 
-trait ImportResult {
+sealed trait ImportResult {
   val incompleteRows: List[IncompleteRow]
   val malformedRows: List[MalformedRow]
   val excludedRows: List[ExcludedRow]
@@ -130,11 +130,11 @@ trait CsvDataImporterOperations {
       }
     }
 
-    def create(username: String, logInfo: String, fileName: String) : Long  = {
+    def update(id: Long, importType: String) : Long  = {
       OracleDatabase.withDynTransaction {
-        importLogDao.create(username, logInfo, fileName)
-      }
+        importLogDao.update(id, importType)
     }
+  }
 
     def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
       csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "

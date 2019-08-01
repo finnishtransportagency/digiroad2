@@ -66,11 +66,12 @@
       me.reloadForm(municipality.id);
     };
 
-    this.reloadForm = function(municipalityId){
+    this.reloadForm = function(municipalityId, refresh){
+      refresh = _.isUndefined(refresh) ? false : refresh;
       $('#formTable').remove();
       addSpinner();
-      backend.getAssetTypesByMunicipality(municipalityId).then(function(assets){
-        $('#work-list .work-list').html(_.map(assets, _.partial(unknownLimitsTable, _ , municipalityName, municipalityId)));
+      backend.getAssetTypesByMunicipality(municipalityId, refresh).then(function(assets){
+        $('#work-list .work-list').html(unknownLimitsTable(assets , municipalityName, municipalityId));
         removeSpinner();
       });
     };
@@ -81,8 +82,15 @@
 
     var unknownLimitsTable = function (workListItems, municipalityName, municipalityId) {
       var selected = [];
+      var refreshButton = $('<button />').addClass('btn btn-quinary btn-refresh')
+        .text('Tiedot viimeksi päivitetty: ' + workListItems.refreshDate)
+        .append("<img src='images/icons/refresh-icon.png'/>")
+        .click(function(){
+          me.reloadForm(municipalityId, true);
+        });
+
       var municipalityHeader = function (municipalityName) {
-        return $('<h2/>').html(municipalityName);
+        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton);
       };
 
       var tableHeaderRow = function () {
@@ -189,7 +197,7 @@
           .append(tableBodyRows(values));
       };
 
-      return $('<div id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems)).append(deleteBtn).append(saveBtn);
+      return $('<div id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems.properties)).append(deleteBtn).append(saveBtn);
     };
 
     this.generateWorkList = function (listP) {
