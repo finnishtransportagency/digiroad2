@@ -32,7 +32,7 @@ class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBus
     strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(throw new UnsupportedOperationException(s"Please check the combination between Koordinaatti and  Valtakunnallinen ID"))
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
     val streamReader = new InputStreamReader(inputStream, "UTF-8")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
@@ -40,7 +40,7 @@ class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBus
     val csvRead = csvReader.allWithHeaders()
     val strategy = getStrategy(csvRead.head)
 
-    strategy.importAssets(csvRead: List[Map[String, String]], fileName, user, roadTypeLimitations)
+    strategy.importAssets(csvRead: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
   }
 }
 
@@ -268,9 +268,8 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }).start()
   }
 
-  def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
-
-    val logId = create(user.username, logInfo, fileName)
+  def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
+    update(logId, logInfo)
     fork {
       try {
         val result = processing(csvReader, user, roadTypeLimitations)

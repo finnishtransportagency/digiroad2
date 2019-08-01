@@ -148,9 +148,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData): ImportResultData
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User): Unit = {
-    val logId = create(user.username, logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
+    update(logId, logInfo)
     try {
       val result = processing(inputStream, user)
       result match {

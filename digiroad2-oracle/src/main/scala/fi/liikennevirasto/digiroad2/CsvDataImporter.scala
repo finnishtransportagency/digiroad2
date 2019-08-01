@@ -40,7 +40,7 @@ case class MalformedRow(malformedParameters: List[String], csvRow: String)
 case class ExcludedRow(affectedRows: String, csvRow: String)
 case class AssetProperty(columnName: String, value: Any)
 
-sealed trait ImportResult {
+trait ImportResult {
   val incompleteRows: List[IncompleteRow]
   val malformedRows: List[MalformedRow]
   val excludedRows: List[ExcludedRow]

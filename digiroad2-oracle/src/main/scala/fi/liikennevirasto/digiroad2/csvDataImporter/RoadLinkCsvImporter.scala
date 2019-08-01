@@ -151,9 +151,8 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     }
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, username: String): Long = {
-    val logId =  create(username,  logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long): Long = {
+    update(logId, logInfo)
     try {
       val result = processing(inputStream, username)
       result match {

@@ -189,9 +189,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     result.copy(notImportedData = unusedAdditionalPanels.toList ++ result.notImportedData)
   }
 
-  def importAssets(inputStream: InputStream, fileName: String, user: User, municipalitiesToExpire: Set[Int]) : Unit = {
-    val logId = create(user.username, logInfo, fileName)
-
+  def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, municipalitiesToExpire: Set[Int]) : Unit = {
+    update(logId, logInfo)
     try {
       val result = processing(inputStream, municipalitiesToExpire, user)
       result match {
