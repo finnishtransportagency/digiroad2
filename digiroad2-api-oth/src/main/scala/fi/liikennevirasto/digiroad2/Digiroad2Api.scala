@@ -1948,7 +1948,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "privateRoadName" -> result.privateRoadName.getOrElse(""),
             "associationId" -> result.associationId.getOrElse(""),
             "additionalInfo" -> result.additionalInfo.getOrElse(99),
-            "lastModifiedDate" -> result.lastModifiedDate.get
+            "lastModifiedDate" -> DateParser.dateToString(DateTimePropertyFormat.parseDateTime(result.lastModifiedDate.get), DateParser.DatePropertyFormat)
           )
         }
     )

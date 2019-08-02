@@ -820,14 +820,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
-    val timing = System.currentTimeMillis
     val fetchResult =
       sql"""select /*+ PARALLEL */ i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
             from #$idTableName i
             join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
             .as[RoadLinkAttributeInfo].list
-
-    logger.info("Finnish transfer %d ms after start".format( System.currentTimeMillis - timing))
 
     fetchResult.map(row => {
       val rla = (row.name, row.value) match {
@@ -854,30 +851,30 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     ).flatten.toSeq
   }
 
-
   def groupPrivateRoadInformation(results: List[(Long, Option[(String, String)])]): Seq[PrivateRoadInfoStructure] = {
-    results.groupBy(_._1).map(a =>
-      (a._1,
-        a._2.map(_._2).filter(_.get._1 == privateRoadAssociationPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == accessRightIDPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == additionalInfoPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == privateLastModifiedUserPublicId).map(_.get._2).headOption
+    results.groupBy(_._1).map { attr =>
+      val prop = attr._2.flatMap(_._2)
+      (attr._1,
+        prop.find(_._1 == privateRoadAssociationPublicId).map(_._2),
+        prop.find(_._1 == accessRightIDPublicId).map(_._2),
+        prop.find(_._1 == additionalInfoPublicId).map(_._2),
+        prop.find(_._1 == privateLastModifiedDatePublicId).map(_._2)
       )
-    ).groupBy(elem => PrivateRoadInfoStructure(elem._2, elem._3, elem._4, elem._5)).keys.toSeq
+    }.groupBy(elem => PrivateRoadInfoStructure(elem._2, elem._3, elem._4, elem._5)).keys.toSeq
   }
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
     val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
     val linkprocessor = new VVHRoadLinkHistoryProcessor()
     // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
-    val filtteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
+    val filteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
 
     withDynTransaction {
-      enrichRoadLinksFromVVH(filtteredHistoryLinks)
+      enrichRoadLinksFromVVH(filteredHistoryLinks)
     }
   }
 
-  def reloadRoadNodesFromVVH(municipality: Int): (Seq[VVHRoadNodes])= {
+  def reloadRoadNodesFromVVH(municipality: Int): Seq[VVHRoadNodes] = {
     vvhClient.roadNodesData.fetchByMunicipality(municipality)
   }
 
