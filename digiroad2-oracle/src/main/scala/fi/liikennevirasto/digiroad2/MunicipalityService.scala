@@ -16,7 +16,7 @@ class MunicipalityService (eventbus: DigiroadEventBus, roadLinkService: RoadLink
     }
   }
 
-  def getMunicipalityNameByCode(municipalityId: Int, withTransaction: Boolean = false): String = {
+  def getMunicipalityNameByCode(municipalityId: Int, withTransaction: Boolean = true): String = {
     if (withTransaction) {
       withDynSession {
         municipalityDao.getMunicipalityNameByCode(municipalityId)

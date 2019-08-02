@@ -401,18 +401,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val passengerId = params("passengerId")
     val massTransitStopsReturned = massTransitStopService.getMassTransitStopByPassengerId(passengerId, validateMunicipalityAuthorization(passengerId))
-    massTransitStopsReturned.map { massTransitStopReturned =>
-      massTransitStopReturned match {
-        case Some(stop) =>
-          Map("nationalId" -> stop.nationalId,
-            "lat" -> stop.lat,
-            "lon" -> stop.lon,
-            "municipalityName" -> stop.municipalityName.getOrElse(""),
-            "success" -> true)
-        case None =>
-          Map("success" -> false)
+    if (massTransitStopsReturned.nonEmpty)
+      massTransitStopsReturned.map { stop =>
+        Map("nationalId" -> stop.nationalId,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "municipalityName" -> stop.municipalityName.getOrElse(""),
+          "success" -> true)
       }
-    }
+    else
+      Map("success" -> false)
   }
 
   get("/massTransitStops/livi/:liviId") {
@@ -625,7 +623,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
-      "privateRoadLastModificationInfo" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MODIFICATION")
+      "privateRoadLastModifiedDate" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MOD_DATE"),
+      "privateRoadLastModifiedUser" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MOD_USER")
     )
   }
 

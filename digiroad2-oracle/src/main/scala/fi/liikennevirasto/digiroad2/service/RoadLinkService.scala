@@ -92,7 +92,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   val privateRoadAssociationPublicId = "PRIVATE_ROAD_ASSOCIATION"
   val additionalInfoPublicId = "ADDITIONAL_INFO"
   val accessRightIDPublicId = "ACCESS_RIGHT_ID"
-  val lastModifiedDatePublicId = "PRIVATE_ROAD_LAST_MOD_DATE"
+  val privateLastModifiedDatePublicId = "PRIVATE_ROAD_LAST_MOD_DATE"
+  val privateLastModifiedUserPublicId = "PRIVATE_ROAD_LAST_MOD_USER"
 
   //No road name found
   val roadWithoutName = "tuntematon tienimi"
@@ -112,9 +113,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val linkId = r.nextLongOption()
       val name = r.nextStringOption()
       val value = r.nextStringOption()
-      val createdDate = r.nextDateOption().map(new DateTime(_))
+      val createdDate = r.nextTimestampOption().map(new DateTime(_))
       val createdBy = r.nextStringOption()
-      val modifiedDate = r.nextDateOption().map(new DateTime(_))
+      val modifiedDate = r.nextTimestampOption().map(new DateTime(_))
       val modifiedBy = r.nextStringOption()
 
       RoadLinkAttributeInfo(id, linkId, name, value, createdDate, createdBy, modifiedDate, modifiedBy)
@@ -819,11 +820,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
+    val timing = System.currentTimeMillis
     val fetchResult =
-      sql"""select i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
-            from road_link_attributes rla
-            left join #$idTableName i on i.id = rla.link_id and (rla.valid_to IS NULL OR rla.valid_to > sysdate)
-      """.as[RoadLinkAttributeInfo].list
+      sql"""select /*+ PARALLEL */ i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
+            from #$idTableName i
+            join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
+            .as[RoadLinkAttributeInfo].list
+
+    logger.info("Finnish transfer %d ms after start".format( System.currentTimeMillis - timing))
 
     fetchResult.map(row => {
       val rla = (row.name, row.value) match {
@@ -845,8 +849,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         }
     }.groupBy(_._1).mapValues(_.sortBy(_._2)(dateTimeOrdering).head)
 
-    groupedResults.map(value => Seq((value._2._1, Some("PRIVATE_ROAD_LAST_MOD_DATE" , DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss").print(value._2._2))),
-      (value._2._1, Some("PRIVATE_ROAD_LAST_MOD_USER", value._2._3)))
+    groupedResults.map(value => Seq((value._2._1, Some(privateLastModifiedDatePublicId , DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss").print(value._2._2))),
+      (value._2._1, Some(privateLastModifiedUserPublicId, value._2._3)))
     ).flatten.toSeq
   }
 
@@ -857,7 +861,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         a._2.map(_._2).filter(_.get._1 == privateRoadAssociationPublicId).map(_.get._2).headOption,
         a._2.map(_._2).filter(_.get._1 == accessRightIDPublicId).map(_.get._2).headOption,
         a._2.map(_._2).filter(_.get._1 == additionalInfoPublicId).map(_.get._2).headOption,
-        a._2.map(_._2).filter(_.get._1 == lastModifiedDatePublicId).map(_.get._2).headOption
+        a._2.map(_._2).filter(_.get._1 == privateLastModifiedUserPublicId).map(_.get._2).headOption
       )
     ).groupBy(elem => PrivateRoadInfoStructure(elem._2, elem._3, elem._4, elem._5)).keys.toSeq
   }
