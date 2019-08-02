@@ -196,25 +196,33 @@
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +
             staticField('Linkin tila', 'constructionType') +
-            '<div class="form-group editable private-road" style="display: none">' +
-              '<div class="form-group editable">' +
-                '<label class="control-label">Käyttöoikeustunnus</label>' +
-                '<p class="form-control-static"><%- accessRightID %></p>' +
-                '<input type="text" class="form-control access-right-id"  style="display: none" value="<%- accessRightID %>">' +
-              '</div>' +
-              '<div class="form-group editable">' +
-                '<label class="control-label">Tiekunnan nimi </label>' +
-                '<p class="form-control-static"><%- privateRoadAssociation %></p>' +
-                '<input type="text" class="form-control private-road-association" style="display: none" value="<%- privateRoadAssociation %>">' +
-                '</div>' +
-              '<label class="control-label">Lisätieto</label>' +
-              '<p class="form-control-static"><%- localizedAdditionalInfoIds %></p>' +
-              '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
-            '</div>' +
+	          privateRoadAssociationInfo() +
           '</div>' +
         '</div>', options);
     };
 
+    var privateRoadAssociationInfo = function() {
+    	return '' +
+		    '<div class="form-group editable private-road" style="display: none">' +
+		        '<div class="form-group editable">' +
+		          '<label class="control-label">Käyttöoikeustunnus</label>' +
+		          '<p class="form-control-static"><%- accessRightID %></p>' +
+		          '<input type="text" class="form-control access-right-id"  style="display: none" value="<%- accessRightID %>">' +
+		      '</div>' +
+		      '<div class="form-group editable">' +
+		          '<label class="control-label">Tiekunnan nimi </label>' +
+		          '<p class="form-control-static"><%- privateRoadAssociation %></p>' +
+		          '<input type="text" class="form-control private-road-association" style="display: none" value="<%- privateRoadAssociation %>">' +
+		      '</div>' +
+		      '<div class="form-group editable">' +
+		          '<label class="control-label">Lisätieto</label>' +
+		          '<p class="form-control-static"><%- localizedAdditionalInfoIds %></p>' +
+		          '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
+		      '</div>' +
+		      '<p class="private-road-last-modification"> Muokattu viimeksi: <%- privateRoadLastModificationInfo %></p>' +
+		    '</div>';
+    };
+    
     var footer = function() { return buttons;};
 
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
@@ -280,7 +288,8 @@
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
         accessRightID: linkProperty.accessRightID || '',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '',
-        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99 // Ei toimitettu
+        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99, // Ei toimitettu
+	      privateRoadLastModificationInfo: linkProperty.privateRoadLastModificationInfo
       });
     };
 

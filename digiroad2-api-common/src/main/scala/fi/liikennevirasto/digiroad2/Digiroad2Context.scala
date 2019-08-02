@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration.FiniteDuration
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case (massTransitStop: PersistedMassTransitStop) => persistedAssetChanges(massTransitStop)
@@ -40,14 +41,16 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
     withDynSession {
-      val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
+      massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
     }
   }
 }
 
 class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
   def withDynSession[T](f: => T): T = massTransitStopService.withDynSession(f)
   def receive = {
     case x: AbstractPublishInfo => persistedAssetChanges(x.asInstanceOf[TerminalPublishInfo])
@@ -56,12 +59,13 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
 
   def persistedAssetChanges(terminalPublishInfo: TerminalPublishInfo) = {
     withDynSession {
-    val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset++terminalPublishInfo.detachAsset).toSet)
+      val persistedStop = massTransitStopService.getPersistedAssetsByIdsEnriched((terminalPublishInfo.attachedAsset ++ terminalPublishInfo.detachAsset).toSet)
 
-    persistedStop.foreach { busStop =>
-        val municipalityName = massTransitStopService.massTransitStopDao.getMunicipalityNameByCode(busStop.municipalityCode)
+      persistedStop.foreach { busStop =>
+        val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
         val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
         ValluSender.postToVallu(massTransitStop)
+        massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
     }
   }
@@ -649,6 +653,10 @@ object Digiroad2Context {
 
   lazy val roadWorkService: RoadWorkService = {
     new RoadWorkService(roadLinkService, eventbus)
+  }
+
+  lazy val parkingProhibitionService: ParkingProhibitionService = {
+    new ParkingProhibitionService(roadLinkService, eventbus)
   }
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()

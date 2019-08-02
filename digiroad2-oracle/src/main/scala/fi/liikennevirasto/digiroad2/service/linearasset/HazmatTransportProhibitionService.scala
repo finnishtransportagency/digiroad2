@@ -61,7 +61,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
       updateWithoutTransaction(ids, value, username, vvhTimeStamp, sideCode, measures)
     }
 
-    eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo((ids ++ outputIds).toSet))
+    eventBus.publish("hazmatTransportProhibition:Validator", AssetValidatorInfo((ids ++ outputIds).toSet))
     outputIds
   }
 
@@ -75,7 +75,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadLink.find(_.linkId == newAsset.linkId), verifiedBy = getVerifiedBy(username, typeId))
       }
     }
-    eventBus.publish("hazmatTransportProhibition:Validator",AssetValidatorInfo(newIds.toSet))
+    eventBus.publish("hazmatTransportProhibition:Validator", AssetValidatorInfo(newIds.toSet))
     newIds
   }
 
@@ -85,7 +85,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
         .groupBy(_.municipality)
         .mapValues {
           _.groupBy(_.administrativeClass)
-            .mapValues(_.map{values => Map("assetId" -> values.assetId, "linkId" -> values.linkId)})
+            .mapValues(_.map { values => Map("assetId" -> values.assetId, "linkId" -> values.linkId) })
         }
     }
   }

@@ -646,9 +646,11 @@ class MassTransitStopDao {
     Q.queryNA[(Long, Long)](queryFilter(query)).list
   }
 
-  def getMunicipalityNameByCode(code: Int): String = {
-    sql"""
-      select name_fi from municipality where id = $code
-    """.as[String].first
+  def insertValluXmlIds(assetId: Long): Unit = {
+    sqlu"""
+           insert into vallu_xml_ids(id, asset_id)
+           values (primary_key_seq.nextval, $assetId)
+      """.execute
   }
+
 }
