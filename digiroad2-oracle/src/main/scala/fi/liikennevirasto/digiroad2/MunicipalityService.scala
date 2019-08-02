@@ -34,14 +34,4 @@ class MunicipalityService (eventbus: DigiroadEventBus, roadLinkService: RoadLink
       municipalityDao.getMunicipalitiesNameAndIdByCode(municipalityCodes)
     }
   }
-
-  def getMunicipalityNameByCode(municipalityCode: Int, newTransaction: Boolean = true): String = {
-    if(newTransaction) {
-      withDynSession {
-        municipalityDao.getMunicipalityNameByCode(municipalityCode)
-      }
-    } else {
-      municipalityDao.getMunicipalityNameByCode(municipalityCode)
-    }
-  }
 }

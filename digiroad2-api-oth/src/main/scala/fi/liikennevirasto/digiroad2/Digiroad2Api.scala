@@ -626,7 +626,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
       "privateRoadLastModificationInfo" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MODIFICATION")
-      //TODO Pay atention with merge of 1931 US
     )
   }
 
