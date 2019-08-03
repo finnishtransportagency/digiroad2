@@ -296,7 +296,7 @@ trait MassTransitStopService extends PointAssetOperations {
     (persistedAsset, publishInfo, strategy)
   }
 
-  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTranstaction: Boolean = true): MassTransitStopWithProperties = {
+  def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): MassTransitStopWithProperties = {
     def updateExistingById() = {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 
@@ -322,7 +322,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
 
     val (currentStrategy, publishInfo, persistedAsset ) =
-      if (newTranstaction)
+      if (newTransaction)
         withDynTransaction {
           updateExistingById()
         } else

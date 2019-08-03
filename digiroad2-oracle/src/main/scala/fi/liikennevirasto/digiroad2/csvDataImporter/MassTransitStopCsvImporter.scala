@@ -349,7 +349,7 @@ class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Updating busStop")
     val externalId = getPropertyValue(properties, "external_id").toString.toInt
-    updateAsset(externalId, None, properties, roadTypeLimitations, user)
+    updateAsset(externalId, None, properties.filterNot(_.columnName == "external_id"), roadTypeLimitations, user)
       .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
   }
 }
