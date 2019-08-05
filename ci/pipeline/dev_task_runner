@@ -47,7 +47,8 @@ pipeline {
         								'remove_unnecessary_unknown_speedLimits',
         								'list_incorrect_SpeedLimits_created',
         								'create_prohibition_using_traffic_signs',
-        								'create_hazmat_transport_prohibition_using_traffic_signs'
+        								'create_hazmat_transport_prohibition_using_traffic_signs',
+        								'load_municipalities_verification_info'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
