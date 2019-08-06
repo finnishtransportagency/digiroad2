@@ -1933,6 +1933,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def dateExtractor(date: Option[String]): String = {
+    val resultDate = date.getOrElse("")
+    if(resultDate == "")
+      resultDate
+    else
+      DateParser.dateToString(DateTimePropertyFormat.parseDateTime(resultDate), DateParser.DatePropertyFormat)
+  }
+
   get("/privateRoads/:municipalityCode") {
     val municipalityCode = params("municipalityCode").toInt
     val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
@@ -1948,7 +1956,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "privateRoadName" -> result.privateRoadName.getOrElse(""),
             "associationId" -> result.associationId.getOrElse(""),
             "additionalInfo" -> result.additionalInfo.getOrElse(99),
-            "lastModifiedDate" -> DateParser.dateToString(DateTimePropertyFormat.parseDateTime(result.lastModifiedDate.get), DateParser.DatePropertyFormat)
+            "lastModifiedDate" -> dateExtractor(result.lastModifiedDate)
           )
         }
     )

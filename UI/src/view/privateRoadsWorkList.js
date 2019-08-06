@@ -41,7 +41,8 @@
       var date = new Date();
       var csv = [];
 
-      csv.push(municipalityName + ";Tulostettu;" + String(date.getDate()).padStart(2, '0') + "/" + String(date.getMonth()).padStart(2, '0') + "/" + String(date.getFullYear()));
+      // When extracting the month from the date (date.getMonth()), we add 1 to the result since the method returns the month as a number from 0 to 11.
+      csv.push(municipalityName + ";Tulostettu;" + String(date.getDate()).padStart(2, '0') + "/" + String(date.getMonth() + 1).padStart(2, '0') + "/" + String(date.getFullYear()));
 
       var rows = document.querySelectorAll("table tr");
 
@@ -70,7 +71,8 @@
         .click(function() {
           var html = $(".work-list").find(" table");
           var date = new Date();
-          me.exportTableToCSV(result.municipalityName, html, me.title.toLowerCase()  + "_" + result.municipalityCode + "_" + String(date.getDate()).padStart(2, '0') + "-" + String(date.getMonth()).padStart(2, '0') + "-" + String(date.getFullYear())+ ".csv");
+          // When extracting the month from the date (date.getMonth()), we add 1 to the result since the method returns the month as a number from 0 to 11.
+          me.exportTableToCSV(result.municipalityName, html, me.title.toLowerCase()  + "_" + result.municipalityCode + "_" + String(date.getDate()).padStart(2, '0') + "-" + String(date.getMonth() + 1).padStart(2, '0') + "-" + String(date.getFullYear())+ ".csv");
         });
 
       var municipalityHeader = function(municipalityName) {

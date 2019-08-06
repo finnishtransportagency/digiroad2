@@ -74,7 +74,7 @@ object AdditionalInformation{
   case object DeliveredWithoutRestrictions extends AdditionalInformation { def value = "2"; def label = "Tieto toimitettu, ei rajoituksia"; }
 }
 
-case class PrivateRoadInfoStructure(privateRoadName: Option[String], associationId: Option[String], additionalInfo: Option[String],lastModifiedDate: Option[String])
+case class PrivateRoadInfoStructure(privateRoadName: Option[String], associationId: Option[String], additionalInfo: Option[String], lastModifiedDate: Option[String])
 
 /**
   * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
