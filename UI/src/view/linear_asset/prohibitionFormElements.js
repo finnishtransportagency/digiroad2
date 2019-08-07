@@ -347,18 +347,21 @@
         };
         var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
+        function hideSuggestionCheckBox() {
+          if (!_.isNull(selectedLinearAsset.getId())) {
+            $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+            $(rootElement).find('.suggestion').hide();
+          }
+        }
+
         $(rootElement).one('click','.prohibition-a, .prohibition-b, .hazardousMaterialTransportProhibition-a, .hazardousMaterialTransportProhibition-b', function () {
           $(rootElement).find('.suggestionCheckBox').prop('checked', false);
           valueSetters.b( {isSuggested: false, prohibitions: selectedLinearAsset.getBValue().prohibitions});
           valueSetters.a( {isSuggested: false, prohibitions: selectedLinearAsset.getValue().prohibitions});
         });
 
-        $(rootElement).one('click','.prohibition', function () {
-          if(!_.isNull(selectedLinearAsset.getId())) {
-            $(rootElement).find('.suggestionCheckBox').prop('checked', false);
-            $(rootElement).find('.suggestion').hide();
-          }
-        });
+        $(rootElement).one('change input','.prohibition, .hazardousMaterialTransportProhibition', hideSuggestionCheckBox);
+        $(rootElement).one('click','.btn-delete', hideSuggestionCheckBox);
 
         $(rootElement).on('change', inputElements, function () {
           setValue(extractValue(rootElement, className));
@@ -436,7 +439,9 @@
         var suggestionBox =  $(rootElement).find('.suggestionCheckBox');
         var suggestionValue = !_.isUndefined(suggestionBox) ?  suggestionBox.prop('checked') : false;
         var prohibitionElements = $(rootElement).find(className).find('.edit-control-group .existing-prohibition');
-        return {isSuggested: suggestionValue, prohibitions: _.map(prohibitionElements, extractExistingProhibition)};
+        var prohibitionValue = _.map(prohibitionElements, extractExistingProhibition);
+
+        return _.isEmpty(prohibitionValue) ? undefined : {isSuggested: suggestionValue, prohibitions: prohibitionValue};
       }
 
       function extractExistingProhibition(element) {
