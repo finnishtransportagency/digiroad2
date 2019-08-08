@@ -203,7 +203,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
 
-      val Seq(updatedLimit, createdLimit) = provider.separate(200097, 50, 40, "test", passingMunicipalityValidation)
+      val Seq(updatedLimit, createdLimit) = provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
 
       updatedLimit.linkId should be (388562360)
       updatedLimit.sideCode should be (SideCode.TowardsDigitizing)
@@ -220,7 +220,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("separation should call municipalityValidation") {
     runWithRollback {
       intercept[IllegalArgumentException] {
-        provider.separate(200097, 50, 40, "test", failingMunicipalityValidation)
+        provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", failingMunicipalityValidation)
       }
     }
   }
@@ -228,7 +228,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if no speed limit is found") {
     runWithRollback {
       intercept[NoSuchElementException] {
-        provider.separate(0, 50, 40, "test", passingMunicipalityValidation)
+        provider.separate(0, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
       }
     }
   }
@@ -239,7 +239,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       intercept[IllegalArgumentException] {
-        provider.separate(300388, 50, 40, "test", passingMunicipalityValidation)
+        provider.separate(300388, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
       }
     }
   }
@@ -250,7 +250,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       intercept[IllegalArgumentException] {
-        provider.separate(200299, 50, 40, "test", passingMunicipalityValidation)
+        provider.separate(200299, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
       }
     }
   }

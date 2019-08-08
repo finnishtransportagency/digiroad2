@@ -1368,8 +1368,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/speedlimits/:speedLimitId/separate") {
     val user = userProvider.getCurrentUser()
     speedLimitService.separate(params("speedLimitId").toLong,
-      (parsedBody \ "valueTowardsDigitization").extract[Int],
-      (parsedBody \ "valueAgainstDigitization").extract[Int],
+      (parsedBody \ "valueTowardsDigitization").extract[SpeedLimitValue],
+      (parsedBody \ "valueAgainstDigitization").extract[SpeedLimitValue],
       user.username,
       validateUserAccess(user, Some(SpeedLimitAsset.typeId)))
   }

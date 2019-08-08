@@ -208,7 +208,7 @@
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, speedLimit);
       };
       var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
+      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return !_.isUndefined(speedLimit.value) ? speedLimit.value.value >= 70 : false; });
       var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
       var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
