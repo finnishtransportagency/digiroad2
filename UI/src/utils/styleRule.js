@@ -68,7 +68,12 @@
       if(!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
       expression.compare = function(propertyValue){
-        return propertyValue == value;
+        // Can be improved - solution found for obstacles since they are the only ones that have more than one two colors on point assets
+        if(propertyValue.length > 1) {
+          return _.head(_.find(propertyValue, function(property){ return property.publicId === "esterakennelma"; }).values).propertyValue == value;
+        } else {
+          return propertyValue == value;
+        }
       };
       return this;
     };

@@ -444,7 +444,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
           val assets = getPersistedSpeedLimitByIds(Set(idUpdated, newId), newTransaction = false)
 
           val speedLimits = assets.map{ asset =>
-            SpeedLimit(asset.id, asset.linkId, asset.sideCode, roadLink.trafficDirection, asset.value.map(value => SpeedLimitValue(value._2, value._1)), GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure),
+            SpeedLimit(asset.id, asset.linkId, asset.sideCode, roadLink.trafficDirection, asset.value, GeometryUtils.truncateGeometry3D(roadLink.geometry, asset.startMeasure, asset.endMeasure),
               asset.startMeasure, asset.endMeasure, asset.modifiedBy, asset.modifiedDate, asset.createdBy, asset.createdDate, asset.vvhTimeStamp, asset.geomModifiedDate, linkSource = asset.linkSource)
           }
           speedLimits.filter(asset => asset.id == idUpdated || asset.id == newId)
@@ -476,7 +476,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
     SpeedLimit(
       persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,
-      roadLink.trafficDirection, persistedSpeedLimit.value.map(_.asInstanceOf[SpeedLimitValue]),
+      roadLink.trafficDirection, persistedSpeedLimit.value,
       GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
       persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
       persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
@@ -626,7 +626,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val oldSpeedLimit = getPersistedSpeedLimitById(adjustment.assetId, newTransaction = false).getOrElse(throw new IllegalStateException("Asset no longer available"))
 
     updateByExpiration(oldSpeedLimit.id, true, LinearAssetTypes.VvhGenerated, false)
-   val newId = createWithoutTransaction(Seq(NewLimit(oldSpeedLimit.linkId, oldSpeedLimit.startMeasure, oldSpeedLimit.endMeasure)), SpeedLimitValue(oldSpeedLimit.value.get._2, oldSpeedLimit.value.get._1), LinearAssetTypes.VvhGenerated, adjustment.sideCode)
+   val newId = createWithoutTransaction(Seq(NewLimit(oldSpeedLimit.linkId, oldSpeedLimit.startMeasure, oldSpeedLimit.endMeasure)), SpeedLimitValue(oldSpeedLimit.value.get.value, oldSpeedLimit.value.get.isSuggested), LinearAssetTypes.VvhGenerated, adjustment.sideCode)
   logger.info("SideCodeAdjustment newID" + newId)
   }
 }
