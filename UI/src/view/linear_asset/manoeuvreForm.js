@@ -654,15 +654,15 @@
   }
 
   function suggestionElement(selectedManoeuvreSource, authorizationPolicy) {
-    if(authorizationPolicy.handleSuggestedAsset(selectedManoeuvreSource)) {
-    var checkedValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
+    if(authorizationPolicy.handleSuggestedAsset(selectedManoeuvreSource) && _.isNumber(selectedManoeuvreSource.getId()) ) {
+      var checkedValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
       return  '<div class="form-group suggestion-element">' +
                 '<label class="control-label">Vihjetieto</label>' +
                 '<div class="form-group manoeuvre">' +
                   '<p class="form-control-static"> kyllä </p>' +
                 '</div>' +
                 '<div class="form-group suggestion-box">' +
-                  '<input type="checkbox" class="suggestionCheckBox linkid=""'  + checkedValue + '>' +
+                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
                 '</div>' +
               '</div>';
     } else
