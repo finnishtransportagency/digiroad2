@@ -448,7 +448,7 @@
                   {id: 50, label: 'Muut pinnoitteet'}
                 ]
               },
-              {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showAndHideRule, isUnSet: isUnSet}
+              {label: "vihjetieto", type: 'checkbox', defaultValue: "0", publicId: "suggest_box", weight: 1, showAndHide: showAndHideRule, isUnSet: isUnSet}
             ]
           }
         ),
@@ -648,8 +648,8 @@
                           ], weight: 1},
           {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", defaultValue: "1", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
           {label: "Tiehoitokunta", type: 'text', publicId: "huoltotie_tiehoitokunta", weight: 3},
-          {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 4},
-          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 5, showAndHide: showAndHideRule, isUnSet: isUnSet}]
+          {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", defaultValue: "0", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 4},
+          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 5, showAndHide: showAndHideRule, isUnSet: isUnSet}]
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),

@@ -96,7 +96,9 @@
 
         this.getPoints = function(asset){ return asset.points; };
 
-        this.getValue = function(asset){};
+        this.getValue = function(asset){
+          return asset.value ? asset.value : undefined;
+        };
         
         this.isSuggested = function(asset){
           var suggestionBox =  _.some(asset.value, function(value) {

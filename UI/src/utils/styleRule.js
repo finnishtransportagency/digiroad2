@@ -69,8 +69,10 @@
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
       expression.compare = function(propertyValue){
         // Can be improved - solution found for obstacles since they are the only ones that have more than one two colors on point assets
+        var property;
+
         if(!_.isUndefined(propertyValue) && propertyValue.constructor === Array) {
-          var property =_.head(_.find(propertyValue, function(property){ return property.publicId === "esterakennelma"; }).values).propertyValue
+          property = _.head(_.find(propertyValue, function(property){ return property.publicId === "esterakennelma"; }).values).propertyValue;
         }
 
         var finalProperty = property ? property : propertyValue;
