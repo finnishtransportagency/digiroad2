@@ -34,7 +34,7 @@ pipeline {
                              "/home/web/digiroad2/current/./sbt",
                              "-Ddigiroad2.env=testing",
                              "\"project digiroad2-oracle\"",
-                             "\"test:run-main fi.liikennevirasto.digiroad2.util.AssetValidatorProcess ${TASK}"\'"
+                             "\"test:run-main fi.liikennevirasto.digiroad2.util.AssetValidatorProcess ${TASK}\"\'"
                         ].join(" ")
                     }
             }
