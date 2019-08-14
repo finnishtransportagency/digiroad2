@@ -264,7 +264,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       val exceptions = manoeuvre.properties.find(_.name == "exceptions").map(_.value.asInstanceOf[List[BigInt]].map(_.toInt))
       val additionalInfo = manoeuvre.properties.find(_.name == "additionalInfo").map(_.value.toString)
 
-      val manoeuvreUpdates = ManoeuvreUpdates(validityPeriods, exceptions, additionalInfo, false)
+      val manoeuvreUpdates = ManoeuvreUpdates(validityPeriods, exceptions, additionalInfo, Some(false))
       val updatedId = manoeuvreService.updateManoeuvre(user.username, assetId, manoeuvreUpdates, Some(new DateTime(manoeuvre.geometryTimestamp.get)))
       getManoeuvreAndRoadLinks(Seq(updatedId.toInt)).headOption.getOrElse(halt(InternalServerError("Asset not Updated")))
     }.get

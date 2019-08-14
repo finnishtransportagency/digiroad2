@@ -275,7 +275,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val exceptions = Seq(2, 5)
       val additionalInfo = "Additional Info"
 
-      val manoeuvreUpdate = ManoeuvreUpdates(Option(validityPeriod), Option(exceptions), Option(additionalInfo), false)
+      val manoeuvreUpdate = ManoeuvreUpdates(Option(validityPeriod), Option(exceptions), Option(additionalInfo), Option(false))
 
       val newId = manoeuvreService.updateManoeuvre("updater", oldId, manoeuvreUpdate, None)
       val manoeuvresNew = manoeuvreService.getByBoundingBox(bounds, Set(235))

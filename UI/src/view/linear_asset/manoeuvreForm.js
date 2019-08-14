@@ -89,6 +89,14 @@
           '</div>' +
         '<% } %>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
+        '<% if(isSuggestionElement) { %>' +
+          '<div class="form-group suggestion-element">' +
+            '<label class="control-label">Vihjetieto: </label>' +
+            '<div class="form-group manoeuvre">' +
+              '<p class="form-control-static"> kyllä </p>' +
+            '</div>' +
+          '</div>' +
+        '<% } %>' +
       '</div>';
 
     var manoeuvresEditModeTemplate = '' +
@@ -145,6 +153,14 @@
                                  'placeholder="Muu tarkenne" <% print(manoeuvreExists ? "" : "disabled") %> ' +
                                  '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
             '</div>' +
+            '<% if(isSuggestionElement) { %>' +
+              '<div class="form-group suggestion-element">' +
+                '<label class="control-label">Vihjetieto</label>' +
+                '<div class="form-group suggestion-box">' +
+                  '<input type="checkbox" class="suggestionCheckBox" <%= suggestionValue %>>' +
+                '</div>' +
+              '</div>' +
+            '<% } %>' +
             '<div class="form-remove">' +
               '<div class="checkbox" >' +
                 '<input type="checkbox" class="checkbox-remove"/>' +
@@ -216,11 +232,13 @@
               .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('');
+          var isSuggestionElement = authorizationPolicy.handleSuggestedAsset(selectedManoeuvreSource) && selectedManoeuvreSource.isSuggested();
 
           rootElement.find('.form').append(_.template(manouvresViewModeTemplate)(_.merge({}, manoeuvre, {
             isLinkChain: isLinkChain,
             localizedExceptions: localizedExceptions,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            isSuggestionElement: isSuggestionElement
           })));
         });
 
@@ -245,6 +263,8 @@
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
+          var suggestionValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
+          var isSuggestionElement = selectedManoeuvreSource.isSuggested() || !_.isNumber(selectedManoeuvreSource.getId());
           rootElement.find('.form').append(_.template(manoeuvresEditModeTemplate)(_.merge({}, adjacentLink, {
             manoeuvreExists: manoeuvreExists,
             manoeuvreId: manoeuvreId,
@@ -255,7 +275,9 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isLinkChain: isLinkChain,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            isSuggestionElement: isSuggestionElement,
+            suggestionValue: suggestionValue
           })));
         });
         _.each(roadLink.nonAdjacentTargets, function(target) {
@@ -276,6 +298,8 @@
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
+          var suggestionValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
+          var isSuggestionElement = selectedManoeuvreSource.isSuggested() || selectedManoeuvreSource.getId();
           rootElement.find('.form').append(_.template(manoeuvresEditModeTemplate)(_.merge({}, target, {
             linkId: manoeuvre.destLinkId,
             manoeuvreExists: manoeuvreExists,
@@ -287,13 +311,11 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isLinkChain: isLinkChain,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            isSuggestionElement: isSuggestionElement,
+            suggestionValue: suggestionValue
           })));
         });
-
-        rootElement.find('.form').append(
-            suggestionElement(selectedManoeuvreSource, authorizationPolicy)
-        );
 
         toggleMode(applicationModel.isReadOnly() || validateAdministrativeClass(selectedManoeuvreSource, authorizationPolicy));
 
@@ -360,7 +382,7 @@
 
         // Verify value of checkBox for remove the manoeuvres
         // If the checkBox was checked remove the manoeuvre
-        rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
+        rootElement.find('.adjacent-link').on('change', '.checkbox-remove', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
           if (eventTarget.prop('checked')) {
@@ -651,22 +673,6 @@
       '  <span class="minute-separator"></span>' +
         minutesElement(period.endMinute, 'end') +
       '</div></li>';
-  }
-
-  function suggestionElement(selectedManoeuvreSource, authorizationPolicy) {
-    if(authorizationPolicy.handleSuggestedAsset(selectedManoeuvreSource) && _.isNumber(selectedManoeuvreSource.getId()) ) {
-      var checkedValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
-      return  '<div class="form-group suggestion-element">' +
-                '<label class="control-label">Vihjetieto</label>' +
-                '<div class="form-group manoeuvre">' +
-                  '<p class="form-control-static"> kyllä </p>' +
-                '</div>' +
-                '<div class="form-group suggestion-box">' +
-                  '<input type="checkbox" class="suggestionCheckBox"'  + checkedValue + '>' +
-                '</div>' +
-              '</div>';
-    } else
-      return '';
   }
 
   function validityPeriodDisplayElement(period) {
