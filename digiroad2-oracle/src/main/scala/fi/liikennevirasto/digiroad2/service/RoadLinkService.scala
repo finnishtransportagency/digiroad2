@@ -852,15 +852,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def groupPrivateRoadInformation(results: List[(Long, Option[(String, String)])]): Seq[PrivateRoadInfoStructure] = {
+    val inputFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
+    val outputFormat = new SimpleDateFormat("dd.MM.yyyy")
+
     results.groupBy(_._1).map { attr =>
       val prop = attr._2.flatMap(_._2)
-      (attr._1,
+      PrivateRoadInfoStructure(
         prop.find(_._1 == privateRoadAssociationPublicId).map(_._2),
         prop.find(_._1 == accessRightIDPublicId).map(_._2),
         prop.find(_._1 == additionalInfoPublicId).map(_._2),
-        prop.find(_._1 == privateLastModifiedDatePublicId).map(_._2)
+        prop.find(_._1 == privateLastModifiedDatePublicId).map(date => outputFormat.format(inputFormat.parse(date._2)))
       )
-    }.groupBy(elem => PrivateRoadInfoStructure(elem._2, elem._3, elem._4, elem._5)).keys.toSeq
+    }.toSeq.distinct
   }
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
