@@ -293,13 +293,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
           if (missingParameters.isEmpty && malformedParameters.isEmpty) {
-//            try {
+            try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
-//            } catch {
-//              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
-//              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
-//            }
+            } catch {
+              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
+            }
           } else {
             result.copy(
               incompleteRows = missingParameters match {
