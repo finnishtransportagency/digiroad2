@@ -56,7 +56,6 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
 
-  override val logInfo: String = "bus stop import"
   val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService, val roadAddressService: RoadAddressService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -272,7 +271,6 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   }
 
   def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
-    update(logId, logInfo)
     fork {
       try {
         val result = processing(csvReader, user, roadTypeLimitations)
@@ -296,13 +294,15 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
           if (missingParameters.isEmpty && malformedParameters.isEmpty) {
-            try {
+//            try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
-            } catch {
-              case e: AssetNotFoundException => result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
-              case ex: Exception => result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
-            }
+//            } catch {
+//              case e: AssetNotFoundException =>
+//                result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+//              case ex: Exception =>
+//                result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
+//            }
           } else {
             result.copy(
               incompleteRows = missingParameters match {

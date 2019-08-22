@@ -25,7 +25,6 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
   type ImportResultData = ImportMaintenanceRoadResult
   case class CsvAssetRow(properties: Seq[AssetProperty])
-  override val logInfo: String = "maintenance import"
 
   lazy val maintenanceService: MaintenanceService = new MaintenanceService(roadLinkService, eventBusImpl)
 
@@ -89,7 +88,6 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
   }
 
   def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long) {
-    update(logId, logInfo)
     try {
       val result = processing(inputStream, username)
       result match {

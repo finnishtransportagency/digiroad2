@@ -29,8 +29,6 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
   type ImportResultData = ImportResultRoadLink
 
-  override val logInfo: String = "road link import"
-
   private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
   val authorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
 
@@ -152,7 +150,6 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   }
 
   def importAssets(inputStream: InputStream, fileName: String, username: String, logId: Long): Long = {
-    update(logId, logInfo)
     try {
       val result = processing(inputStream, username)
       result match {

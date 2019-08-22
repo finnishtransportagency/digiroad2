@@ -150,136 +150,136 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   }
 
   val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkService, mockEventBus, mockService)
-
-  test("check mass TransitStop process") {
-    var process : String = ""
-    class TestMassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-      override lazy val propertyUpdater = new Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-        override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
-          process = "Updater"
-        }
-      }
-      override lazy val positionUpdater = new PositionUpdater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-        override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
-          process = "PositionUpdater"
-        }
-      }
-      override lazy val creator = new Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-        override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
-          process = "Creator"
-        }
-      }
-    }
-
-    val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkService, mockEventBus)
-    val updaterCsv = massTransitStopImporterUpdate.createCSV(Map("valtakunnallinen id" -> 1))
-
-    val updateInput = new ByteArrayInputStream(updaterCsv.getBytes)
-    massTransitStopCsvOperation.importAssets(updateInput, "", testUser, 1, Set())
-
-    process should be("Updater")
-
-    val creatorCsv = massTransitStopImporterCreate.createCSV(Map("koordinaatti x" -> 10000, "koordinaatti y" -> 1000))
-    val createInput = new ByteArrayInputStream(creatorCsv.getBytes)
-    massTransitStopCsvOperation.importAssets(createInput, "", testUser, 1, Set())
-
-    process should be("Creator")
-
-    val positionCsv = massTransitStopImporterPosition.createCSV(Map("valtakunnallinen id" -> 1, "koordinaatti x" -> 1000, "koordinaatti y" -> 1000))
-    val positionInput = new ByteArrayInputStream(positionCsv.getBytes)
-    massTransitStopCsvOperation.importAssets(positionInput, "", testUser, 1, Set())
-
-    process should be("PositionUpdater")
-  }
-
-  test("create busStop fails if type is undefined") {
-    val assetFields = Map("koordinaatti x" -> 10000, "koordinaatti y" -> 1000, "pysäkin tyyppi" -> ",", "tietojen ylläpitäjä" -> "1")
-    val invalidCsv = massTransitStopImporterCreate.csvRead(assetFields)
-
-    val result = massTransitStopCsvOperation.creator.processing(invalidCsv, testUser, Set())
-    result.malformedRows.size should be (1)
-    result.malformedRows.head.malformedParameters.size should be (1)
-    result.malformedRows.head.malformedParameters.head should be ("pysäkin tyyppi")
-    result.incompleteRows.isEmpty should be (true)
-    result.excludedRows.isEmpty should be (true)
-    result.notImportedData.isEmpty should be (true)
-  }
-
-  test("validation fails when asset type is unknown") {
-    val assetFields = Map("valtakunnallinen id" -> 1, "pysäkin tyyppi" -> "2,10")
-    val invalidCsv = massTransitStopImporterUpdate.csvRead(assetFields)
-
-    val result = massTransitStopCsvOperation.propertyUpdater.processing(invalidCsv, testUser)
-    result.malformedRows.size should be (1)
-    result.malformedRows.head.malformedParameters.size should be (1)
-    result.malformedRows.head.malformedParameters.head should be ("pysäkin tyyppi")
-    result.incompleteRows.isEmpty should be (true)
-    result.excludedRows.isEmpty should be (true)
-    result.notImportedData.isEmpty should be (true)
-  }
-
-  test("update asset admin id by CSV import") {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil))).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "ylläpitäjän tunnus" -> "NewAdminId"))
-    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set())
-
-    val properties = Set(SimpleProperty("yllapitajan_tunnus", Seq(PropertyValue("NewAdminId"))))
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
-
-  test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)") {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "liVi-tunnus" -> "Livi987654"))
-
-    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set()) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
-    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
-
-  test("update asset stop code by CSV import") {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "matkustajatunnus" -> "H156"))
-
-    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
-    val properties = Set(SimpleProperty("matkustajatunnus", Seq(PropertyValue("H156"))))
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
-
-  test("update additional information by CSV import", Tag("db")) {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-
-    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "lisätiedot" -> "Updated additional info"))
-
-    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
-    val properties = Set(SimpleProperty("lisatiedot", Seq(PropertyValue("Updated additional info"))))
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
-
-  val exampleValues = Map(
-    "nimi_suomeksi" -> ("Passila", "Pasila"),
-    "yllapitajan_tunnus" -> ("1234", "1281"),
-    "yllapitajan_koodi" -> ("LiVV", "LiVi123"),
-    "matkustajatunnus" -> ("sdjkal", "9877"),
-    "pysakin_tyyppi" -> ("2", "1"),
-    "nimi_ruotsiksi" -> ("Bölle", "Böle"),
-    "liikennointisuunta" -> ("Itään", "Pohjoiseen"),
-    "katos" -> ("1", "2"),
-    "aikataulu" -> ("1", "2"),
-    "mainoskatos" -> ("1", "2"),
-    "penkki" -> ("1", "2"),
-    "pyorateline" -> ("1", "2"),
-    "sahkoinen_aikataulunaytto" -> ("1", "2"),
-    "valaistus" -> ("1", "2"),
-    "saattomahdollisuus_henkiloautolla" -> ("1", "2"),
-    "lisatiedot" -> ("qwer", "asdf"),
-    "tietojen_yllapitaja" -> ("1", "3"),
-    "korotettu" -> ("1", "2"),
-    "roska_astia" -> ("1", "2"),
-    "vyohyketieto" -> ("InfoZone", "InfoZone ready")
-  )
-
-  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0, None) , RoadSide.Right))
-
+//
+//  test("check mass TransitStop process") {
+//    var process : String = ""
+//    class TestMassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+//      override lazy val propertyUpdater = new Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+//        override def importAssets(csvReader: List[Map[String, String]], fileName: String,  user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
+//          process = "Updater"
+//        }
+//      }
+//      override lazy val positionUpdater = new PositionUpdater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+//        override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
+//          process = "PositionUpdater"
+//        }
+//      }
+//      override lazy val creator = new Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+//        override def importAssets(csvReader: List[Map[String, String]], fileName: String, user: User, logId: Long, roadTypeLimitations: Set[AdministrativeClass]): Unit = {
+//          process = "Creator"
+//        }
+//      }
+//    }
+//
+//    val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockRoadLinkService, mockEventBus)
+//    val updaterCsv = massTransitStopImporterUpdate.createCSV(Map("valtakunnallinen id" -> 1))
+//
+//    val updateInput = new ByteArrayInputStream(updaterCsv.getBytes)
+//    massTransitStopCsvOperation.importAssets(updateInput, "", testUser, 1, Set())
+//
+//    process should be("Updater")
+//
+//    val creatorCsv = massTransitStopImporterCreate.createCSV(Map("koordinaatti x" -> 10000, "koordinaatti y" -> 1000))
+//    val createInput = new ByteArrayInputStream(creatorCsv.getBytes)
+//    massTransitStopCsvOperation.importAssets(createInput, "", testUser, 1, Set())
+//
+//    process should be("Creator")
+//
+//    val positionCsv = massTransitStopImporterPosition.createCSV(Map("valtakunnallinen id" -> 1, "koordinaatti x" -> 1000, "koordinaatti y" -> 1000))
+//    val positionInput = new ByteArrayInputStream(positionCsv.getBytes)
+//    massTransitStopCsvOperation.importAssets(positionInput, "", testUser, 1, Set())
+//
+//    process should be("PositionUpdater")
+//  }
+//
+//  test("create busStop fails if type is undefined") {
+//    val assetFields = Map("koordinaatti x" -> 10000, "koordinaatti y" -> 1000, "pysäkin tyyppi" -> ",", "tietojen ylläpitäjä" -> "1")
+//    val invalidCsv = massTransitStopImporterCreate.csvRead(assetFields)
+//
+//    val result = massTransitStopCsvOperation.creator.processing(invalidCsv, testUser, Set())
+//    result.malformedRows.size should be (1)
+//    result.malformedRows.head.malformedParameters.size should be (1)
+//    result.malformedRows.head.malformedParameters.head should be ("pysäkin tyyppi")
+//    result.incompleteRows.isEmpty should be (true)
+//    result.excludedRows.isEmpty should be (true)
+//    result.notImportedData.isEmpty should be (true)
+//  }
+//
+//  test("validation fails when asset type is unknown") {
+//    val assetFields = Map("valtakunnallinen id" -> 1, "pysäkin tyyppi" -> "2,10")
+//    val invalidCsv = massTransitStopImporterUpdate.csvRead(assetFields)
+//
+//    val result = massTransitStopCsvOperation.propertyUpdater.processing(invalidCsv, testUser)
+//    result.malformedRows.size should be (1)
+//    result.malformedRows.head.malformedParameters.size should be (1)
+//    result.malformedRows.head.malformedParameters.head should be ("pysäkin tyyppi")
+//    result.incompleteRows.isEmpty should be (true)
+//    result.excludedRows.isEmpty should be (true)
+//    result.notImportedData.isEmpty should be (true)
+//  }
+//
+//  test("update asset admin id by CSV import") {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil))).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+//    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "ylläpitäjän tunnus" -> "NewAdminId"))
+//    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set())
+//
+//    val properties = Set(SimpleProperty("yllapitajan_tunnus", Seq(PropertyValue("NewAdminId"))))
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
+//
+//  test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)") {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+//    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "liVi-tunnus" -> "Livi987654"))
+//
+//    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set()) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
+//    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
+//
+//  test("update asset stop code by CSV import") {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+//    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "matkustajatunnus" -> "H156"))
+//
+//    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
+//    val properties = Set(SimpleProperty("matkustajatunnus", Seq(PropertyValue("H156"))))
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
+//
+//  test("update additional information by CSV import", Tag("db")) {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+//
+//    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "lisätiedot" -> "Updated additional info"))
+//
+//    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
+//    val properties = Set(SimpleProperty("lisatiedot", Seq(PropertyValue("Updated additional info"))))
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
+//
+//  val exampleValues = Map(
+//    "nimi_suomeksi" -> ("Passila", "Pasila"),
+//    "yllapitajan_tunnus" -> ("1234", "1281"),
+//    "yllapitajan_koodi" -> ("LiVV", "LiVi123"),
+//    "matkustajatunnus" -> ("sdjkal", "9877"),
+//    "pysakin_tyyppi" -> ("2", "1"),
+//    "nimi_ruotsiksi" -> ("Bölle", "Böle"),
+//    "liikennointisuunta" -> ("Itään", "Pohjoiseen"),
+//    "katos" -> ("1", "2"),
+//    "aikataulu" -> ("1", "2"),
+//    "mainoskatos" -> ("1", "2"),
+//    "penkki" -> ("1", "2"),
+//    "pyorateline" -> ("1", "2"),
+//    "sahkoinen_aikataulunaytto" -> ("1", "2"),
+//    "valaistus" -> ("1", "2"),
+//    "saattomahdollisuus_henkiloautolla" -> ("1", "2"),
+//    "lisatiedot" -> ("qwer", "asdf"),
+//    "tietojen_yllapitaja" -> ("1", "3"),
+//    "korotettu" -> ("1", "2"),
+//    "roska_astia" -> ("1", "2"),
+//    "vyohyketieto" -> ("InfoZone", "InfoZone ready")
+//  )
+//
+//  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0, None) , RoadSide.Right))
+//
   when(mockService.getByNationalId(ArgumentMatchers.eq(1), anyObject(), anyObject(), anyBoolean())).thenAnswer(new Answer[Option[Object]] {
     override def answer(invocation: InvocationOnMock): Option[Object] = {
       val transformation: PersistedMassTransitStop => (Object, Object) = invocation.getArguments()(2).asInstanceOf[PersistedMassTransitStop => (Object, Object)]
@@ -287,81 +287,81 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       Some(transformation(stop)._1)
     }
   })
-
-  test("update asset's properties in a generic manner", Tag("db")) {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-
-    val csv =  massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1) ++ exampleValues)
-
-    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
-    val properties: Set[SimpleProperty] = exampleValues.map { case (key, value) =>
-      SimpleProperty(key, Seq(PropertyValue(value._2)))
-    }.filterNot(_.publicId == "yllapitajan_koodi").toSet
-
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
-
-  test("raise an error when updating non-existent asset", Tag("db")) {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(6l), anyObject(), anyBoolean())).thenReturn(None)
-    val assetFields = Map("valtakunnallinen id" -> "6", "pysäkin nimi" -> "AssetName")
-    val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
-
-    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser)
-
-    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
-      notImportedData = List(massTransitStopCsvOperation.propertyUpdater.NotImportedData(reason = "Asset not found -> 6",
-        csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetFields))))))
-  }
-
-  test("raise an error when csv row does not define required parameter", Tag("db")) {
-    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-    val assetFields = massTransitStopImporterUpdate.defaultValues(Map()).filterNot(Set("pysäkin nimi"))
-    val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
-
-    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set())
-    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
-      incompleteRows = List(IncompleteRow(missingParameters = List("Pysäkin nimi"),
-        csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(Map()) - "pysäkin nimi" ++ Map("valtakunnallinen id" -> 1))))))
-
-    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
-  }
-
-  test("ignore updates on other road types than streets when import is limited to streets") {
-    val assetFields = Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName")
-    val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
-
-    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser,  roadTypeLimitations = Set(Municipality))
-    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
-      excludedRows = List(ExcludedRow(affectedRows = "State", csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetFields))))))
-
-    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
-  }
-
-  test("update asset on street when import is limited to streets") {
-    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName"))
-
-    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(Municipality))
-    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
-    val properties = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))))
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
-
-  test("update asset on roads and streets when import is limited to roads and streets") {
-    val csv = csvToInputStream(massTransitStopImporterUpdate.createCSV(Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName1"), Map("valtakunnallinen id" -> 2, "pysäkin nimi" -> "NewName2")))
-    val streamReader = new InputStreamReader(csv, "windows-1252")
-    val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
-      override val delimiter: Char = ';'
-    })
-    val inputStream =  csvReader.allWithHeaders()
-
-    val result = massTransitStopCsvOperation.propertyUpdater.processing(inputStream, testUser, roadTypeLimitations = Set(State, Municipality))
-    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
-
-    val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName1"))))
-    val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName2"))))
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties1), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-    verify(mockService).updateExistingById(ArgumentMatchers.eq(2l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties2), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
-  }
+//
+//  test("update asset's properties in a generic manner", Tag("db")) {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+//
+//    val csv =  massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1) ++ exampleValues)
+//
+//    massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser) should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
+//    val properties: Set[SimpleProperty] = exampleValues.map { case (key, value) =>
+//      SimpleProperty(key, Seq(PropertyValue(value._2)))
+//    }.filterNot(_.publicId == "yllapitajan_koodi").toSet
+//
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
+//
+//  test("raise an error when updating non-existent asset", Tag("db")) {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(6l), anyObject(), anyBoolean())).thenReturn(None)
+//    val assetFields = Map("valtakunnallinen id" -> "6", "pysäkin nimi" -> "AssetName")
+//    val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
+//
+//    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser)
+//
+//    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
+//      notImportedData = List(massTransitStopCsvOperation.propertyUpdater.NotImportedData(reason = "Asset not found -> 6",
+//        csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetFields))))))
+//  }
+//
+//  test("raise an error when csv row does not define required parameter", Tag("db")) {
+//    when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
+//    val assetFields = massTransitStopImporterUpdate.defaultValues(Map()).filterNot(Set("pysäkin nimi"))
+//    val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
+//
+//    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set())
+//    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
+//      incompleteRows = List(IncompleteRow(missingParameters = List("Pysäkin nimi"),
+//        csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(Map()) - "pysäkin nimi" ++ Map("valtakunnallinen id" -> 1))))))
+//
+//    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
+//  }
+//
+//  test("ignore updates on other road types than streets when import is limited to streets") {
+//    val assetFields = Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName")
+//    val csv =  massTransitStopImporterUpdate.csvRead(assetFields)
+//
+//    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser,  roadTypeLimitations = Set(Municipality))
+//    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
+//      excludedRows = List(ExcludedRow(affectedRows = "State", csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetFields))))))
+//
+//    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
+//  }
+//
+//  test("update asset on street when import is limited to streets") {
+//    val csv = massTransitStopImporterUpdate.csvRead(Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName"))
+//
+//    val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, roadTypeLimitations = Set(Municipality))
+//    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
+//    val properties = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))))
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
+//
+//  test("update asset on roads and streets when import is limited to roads and streets") {
+//    val csv = csvToInputStream(massTransitStopImporterUpdate.createCSV(Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName1"), Map("valtakunnallinen id" -> 2, "pysäkin nimi" -> "NewName2")))
+//    val streamReader = new InputStreamReader(csv, "windows-1252")
+//    val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
+//      override val delimiter: Char = ';'
+//    })
+//    val inputStream =  csvReader.allWithHeaders()
+//
+//    val result = massTransitStopCsvOperation.propertyUpdater.processing(inputStream, testUser, roadTypeLimitations = Set(State, Municipality))
+//    result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset())
+//
+//    val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName1"))))
+//    val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName2"))))
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(1l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties1), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//    verify(mockService).updateExistingById(ArgumentMatchers.eq(2l), ArgumentMatchers.eq(None), ArgumentMatchers.eq(properties2), ArgumentMatchers.eq("CsvDataImportApiSpec"), anyObject(), anyBoolean())
+//  }
 
   test("ignore updates on all other road types than private roads when import is limited to private roads") {
     val assetOnStreetFields = Map("valtakunnallinen id" -> 1, "pysäkin nimi" -> "NewName1")

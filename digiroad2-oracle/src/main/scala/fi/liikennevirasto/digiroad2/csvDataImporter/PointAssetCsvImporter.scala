@@ -21,8 +21,6 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
   type ImportResultData = ImportResultPointAsset
 
-  override val logInfo = "point asset import"
-
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
   val coordinateMappings = Map(
@@ -149,7 +147,6 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   def createAsset(pointAssetAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData): ImportResultData
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
-    update(logId, logInfo)
     try {
       val result = processing(inputStream, user)
       result match {

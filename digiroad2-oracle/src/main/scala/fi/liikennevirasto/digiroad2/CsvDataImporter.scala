@@ -31,7 +31,7 @@ object Status {
   case object Unknown extends Status {def value = 99; def description = "Unknown Status Type"; def descriptionFi = "Tuntematon tilakoodi"}
 }
 
-case class ImportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], logType: String, content: Option[String])
+case class ImportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], jobName: String, content: Option[String])
 
 class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 
@@ -77,8 +77,6 @@ trait CsvDataImporterOperations {
   type ParsedProperties = List[AssetProperty]
   type ParsedRow = (MalformedParameters, ParsedProperties)
   type ImportResultData <: ImportResult
-
-  val logInfo : String
 
   def mappingContent(result: ImportResultData): String  = {
     val excludedResult = result.excludedRows.map{rows => s"<li> ${rows.affectedRows} -> ${rows.csvRow} </li>"}
@@ -130,12 +128,6 @@ trait CsvDataImporterOperations {
       }
     }
 
-    def update(id: Long, importType: String) : Long  = {
-      OracleDatabase.withDynTransaction {
-        importLogDao.update(id, importType)
-    }
-  }
-
     def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
       csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
     }
@@ -147,5 +139,4 @@ class CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiro
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def eventBus: DigiroadEventBus = eventBusImpl
-  override val logInfo: String = ""
 }
