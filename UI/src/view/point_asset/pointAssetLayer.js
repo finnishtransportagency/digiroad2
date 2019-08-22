@@ -157,8 +157,10 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), zoomlevels.getViewZoom(map));
-         selectControl.activate();
+        var roadLinks = roadCollection.getAll();
+        roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
+        me.drawOneWaySigns(roadLayer.layer, roadLinks);
+        selectControl.activate();
       });
       if(collection.complementaryIsActive()) {
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));

@@ -400,6 +400,7 @@
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         authorizationPolicy: asset.authorizationPolicy,
+        showRoadLinkInfo: asset.showRoadLinkInfo,
         assetTypeIds: asset.typeIds
       });
       return acc;
