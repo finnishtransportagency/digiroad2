@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues}
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
+//import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import org.joda.time.DateTime
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
@@ -109,14 +109,14 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     csvDataImporter.getByIds(ids)
   }
 
-  //TODO check if this exist
-  post("/csv") {
-    if (!userProvider.getCurrentUser().isOperator()) {
-      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-    }
-    val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
-    new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
-  }
+//  //TODO check if this exist
+//  post("/csv") {
+//    if (!userProvider.getCurrentUser().isOperator()) {
+//      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+//    }
+//    val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
+//    new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
+//  }
 
   def validateOperation(): Unit = {
     if(!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {

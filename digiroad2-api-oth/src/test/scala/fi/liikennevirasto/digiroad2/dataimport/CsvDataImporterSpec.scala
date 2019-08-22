@@ -75,7 +75,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def withDynTransaction[T](f: => T): T = f
 
-    private val defaultKeys = "Linkin ID" :: mappings.keys.toList
+    private val defaultKeys = "linkin id" :: mappings.keys.toList
     val defaultValues = defaultKeys.map { key => key -> "" }.toMap
 
     def createCSV(assets: Map[String, Any]*): String = {
@@ -95,9 +95,9 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("rowToString works correctly for few basic fields") {
     roadLinkCsvImporter.rowToString(Map(
-      "Hallinnollinen luokka" -> "Hallinnollinen",
-      "Toiminnallinen luokka" -> "Toiminnallinen"
-    )) should equal("Hallinnollinen luokka: 'Hallinnollinen', Toiminnallinen luokka: 'Toiminnallinen'")
+      "hallinnollinen luokka" -> "Hallinnollinen",
+      "toiminnallinen luokka" -> "Toiminnallinen"
+    )) should equal("hallinnollinen luokka: 'Hallinnollinen', toiminnallinen luokka: 'Toiminnallinen'")
   }
 
   private def createCsvForTrafficSigns(assets: Map[String, Any]*): String = {
@@ -107,6 +107,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }.mkString("\n")
     headers + rows
   }
+
   test("validation for traffic sign import fails if type contains illegal characters", Tag("db")) {
     val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "a")
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
@@ -119,11 +120,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation fails if field type \"Linkin ID\" is not filled", Tag("db")) {
-    val roadLinkFields = Map("Tien nimi (suomi)" -> "nimi", "Liikennevirran suunta" -> "5")
+    val roadLinkFields = Map("tien nimi (suomi)" -> "nimi", "liikennevirran suunta" -> "5")
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(roadLinkFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       malformedRows = List(MalformedRow(
-        malformedParameters = List("Linkin ID"),
+        malformedParameters = List("linkin id"),
         csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ roadLinkFields)))))
   }
 
@@ -140,11 +141,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
-    val assetFields = Map("Linkin ID" -> 1, "Liikennevirran suunta" -> "a")
+    val assetFields = Map("linkin id" -> 1, "liikennevirran suunta" -> "a")
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       malformedRows = List(MalformedRow(
-        malformedParameters = List("Liikennevirran suunta"),
+        malformedParameters = List("liikennevirran suunta"),
         csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
   }
 
@@ -161,7 +162,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
-    val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 2)
+    val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 2)
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       excludedRows = List(ExcludedRow(affectedRows = "AdminClass value State found on  VVH", csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
@@ -180,7 +181,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
-    val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
+    val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       excludedRows = List(ExcludedRow(affectedRows = "AdminClass value State found on  CSV", csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
@@ -199,7 +200,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
     when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
-    val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
+    val assetFields = Map("linkin id" -> 1, "hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(assetFields))
     roadLinkCsvImporter.processing(invalidCsv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink(
       excludedRows = List(ExcludedRow(affectedRows = "AdminClass value State found on  VVH/AdminClass value State found on  CSV", csvRow = roadLinkCsvImporter.rowToString(roadLinkCsvImporter.defaultValues ++ assetFields)))))
@@ -223,7 +224,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val functionalClassValue = 3
       RoadLinkDAO.insert(RoadLinkDAO.FunctionalClass, link_id, Some("unit_test"), 2)
 
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("Linkin ID" -> link_id, "Toiminnallinen luokka" -> functionalClassValue)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "toiminnallinen luokka" -> functionalClassValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
       RoadLinkDAO.get(RoadLinkDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
     }
@@ -246,7 +247,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val link_id = 1000
       val functionalClassValue = 3
 
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("Linkin ID" -> link_id, "Toiminnallinen luokka" -> functionalClassValue)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "toiminnallinen luokka" -> functionalClassValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
       RoadLinkDAO.get(RoadLinkDAO.FunctionalClass, link_id) should equal (Some(functionalClassValue))
     }
@@ -269,7 +270,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val linkTypeValue = 3
       RoadLinkDAO.insert(RoadLinkDAO.LinkType, link_id, Some("unit_test"), 2)
 
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" ->linkTypeValue)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" ->linkTypeValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
       RoadLinkDAO.get(RoadLinkDAO.LinkType, link_id) should equal (Some(linkTypeValue))
     }
@@ -291,7 +292,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val link_id = 1000
       val linkTypeValue = 3
 
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" -> linkTypeValue)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" -> linkTypeValue)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
       RoadLinkDAO.get(RoadLinkDAO.LinkType, link_id) should equal (Some(linkTypeValue))
     }
@@ -314,7 +315,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1611388
       RoadLinkDAO.insert(RoadLinkDAO.TrafficDirection, link_id, Some("unit_test"), 1)
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("Linkin ID" -> link_id, "Liikennevirran suunta" -> 3)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "liikennevirran suunta" -> 3)))
 
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
       RoadLinkDAO.get(RoadLinkDAO.TrafficDirection, link_id) should equal (None)
@@ -340,8 +341,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       val linkTypeValue = 3
       RoadLinkDAO.insert(RoadLinkDAO.LinkType, link_id, Some("unit_test"), 2)
 
-      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" -> linkTypeValue, "Kuntanumero" -> 2,
-        "Liikennevirran suunta" -> 1, "Hallinnollinen luokka" -> 2)))
+      val csv = csvToInputStream(roadLinkCsvImporter.createCSV(Map("linkin id" -> link_id, "tielinkin tyyppi" -> linkTypeValue, "kuntanumero" -> 2,
+        "liikennevirran suunta" -> 1, "hallinnollinen luokka" -> 2)))
       roadLinkCsvImporter.processing(csv, testUser.username) should equal(roadLinkCsvImporter.ImportResultRoadLink())
       RoadLinkDAO.get(RoadLinkDAO.LinkType, link_id) should equal(Some(linkTypeValue))
     }
@@ -369,7 +370,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultPointAsset(
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
-        reason = "Unathorized municipality or nonexistent roadlink near asset position",
+        reason = "No Rights for Municipality or nonexistent road links near asset position",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 

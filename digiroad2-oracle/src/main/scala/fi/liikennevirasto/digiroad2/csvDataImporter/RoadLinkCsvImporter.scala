@@ -35,31 +35,31 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
   val authorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
 
   private val intFieldMappings = Map(
-    "Hallinnollinen luokka" -> "ADMINCLASS",
-    "Toiminnallinen luokka" -> "functional_Class",
-    "Liikennevirran suunta" -> "DIRECTIONTYPE",
-    "Tielinkin tyyppi" -> "link_Type",
-    "Kuntanumero" -> "MUNICIPALITYCODE",
-    "Osoitenumerot oikealla alku" -> "FROM_RIGHT",
-    "Osoitenumerot oikealla loppu" -> "TO_RIGHT",
-    "Osoitenumerot vasemmalla alku" -> "FROM_LEFT",
-    "Osoitenumerot vasemmalla loppu" -> "TO_LEFT",
-    "Linkin tila" -> "CONSTRUCTIONTYPE"
+    "hallinnollinen luokka" -> "ADMINCLASS",
+    "toiminnallinen luokka" -> "functional_Class",
+    "liikennevirran suunta" -> "DIRECTIONTYPE",
+    "tielinkin tyyppi" -> "link_Type",
+    "kuntanumero" -> "MUNICIPALITYCODE",
+    "osoitenumerot oikealla alku" -> "FROM_RIGHT",
+    "osoitenumerot oikealla loppu" -> "TO_RIGHT",
+    "osoitenumerot vasemmalla alku" -> "FROM_LEFT",
+    "osoitenumerot vasemmalla loppu" -> "TO_LEFT",
+    "linkin tila" -> "CONSTRUCTIONTYPE"
   )
 
   private val codeValueFieldMappings = Map(
-    "Tasosijainti" -> "VERTICALLEVEL"
+    "tasosijainti" -> "VERTICALLEVEL"
   )
 
   private val fieldInOTH = List("link_Type", "functional_Class")
 
   private val textFieldMappings = Map(
-    "Tien nimi (suomi)" -> "ROADNAME_FI",
-    "Tien nimi (ruotsi)" -> "ROADNAME_SE",
-    "Tien nimi (saame)" -> "ROADNAME_SM"
+    "tien nimi (suomi)" -> "ROADNAME_FI",
+    "tien nimi (ruotsi)" -> "ROADNAME_SE",
+    "tien nimi (saame)" -> "ROADNAME_SM"
   )
 
-  private val mandatoryFields = "Linkin ID"
+  private val mandatoryFields = "linkin id"
 
   val mappings : Map[String, String] = textFieldMappings ++ intFieldMappings ++ codeValueFieldMappings
 
@@ -175,29 +175,30 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    csvReader.allWithHeaders().foldLeft(ImportResultRoadLink()) { (result, row) =>
-      def getCompletaryVVHInfo(linkId: Long) = {
-        vvhClient.complementaryData.fetchByLinkId(linkId) match {
-          case Some(vvhRoadlink) => (vvhRoadlink.attributes.get("OBJECTID"), vvhRoadlink.administrativeClass.value)
-          case _ => None
-        }
+    def getCompletaryVVHInfo(linkId: Long) = {
+      vvhClient.complementaryData.fetchByLinkId(linkId) match {
+        case Some(vvhRoadLink) => (vvhRoadLink.attributes.get("OBJECTID"), vvhRoadLink.administrativeClass.value)
+        case _ => None
       }
+    }
+    csvReader.allWithHeaders().foldLeft(ImportResultRoadLink()) { (result, row) =>
+      val csvRow = row.map(r => (r._1.toLowerCase, r._2))
 
-      val missingParameters = findMissingParameters(row)
-      val (malformedParameters, properties) = linkRowToProperties(row)
+      val missingParameters = findMissingParameters(csvRow)
+      val (malformedParameters, properties) = linkRowToProperties(csvRow)
 
       if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
         result.copy(
           incompleteRows = missingParameters match {
             case Nil => result.incompleteRows
-            case parameters => IncompleteRow(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteRows
+            case parameters => IncompleteRow(missingParameters = parameters, csvRow = rowToString(csvRow)) :: result.incompleteRows
           },
           malformedRows = malformedParameters match {
             case Nil => result.malformedRows
-            case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedRows
+            case parameters => MalformedRow(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedRows
           })
       } else {
-        val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("Linkin ID").toInt) match {
+        val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("linkin id").toInt) match {
           case None => (None, None)
           case (Some(objId), adminClass) => (objId, adminClass)
         }
@@ -213,7 +214,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
 
           withDynTransaction {
             if (propertiesOTH.nonEmpty || hasDirectionType) {
-              val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertiesOTH)
+              val parsedRowOTH = CsvRoadLinkRow(row("linkin id").toInt, properties = propertiesOTH)
               updateRoadLinkOTH(parsedRowOTH, Some(username), hasDirectionType) match {
                 case None => result
                 case Some(value) =>
@@ -221,7 +222,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
               }
             }
             if (propertiesVVH.nonEmpty) {
-              val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, objectId.toString.toInt, properties = propertiesVVH)
+              val parsedRowVVH = CsvRoadLinkRow(row("linkin id").toInt, objectId.toString.toInt, properties = propertiesVVH)
               updateRoadLinkInVVH(parsedRowVVH) match {
                 case None => result
                 case Some(value) =>
@@ -233,7 +234,7 @@ class RoadLinkCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Di
         } else {
           result.copy(
             nonUpdatedLinks = objectId match {
-              case None => NonUpdatedLink(linkId = row("Linkin ID").toInt, csvRow = rowToString(row)) :: result.nonUpdatedLinks
+              case None => NonUpdatedLink(linkId = row("linkin id").toInt, csvRow = rowToString(row)) :: result.nonUpdatedLinks
               case _ => result.nonUpdatedLinks
             },
             excludedRows = unauthorizedAdminClass match {

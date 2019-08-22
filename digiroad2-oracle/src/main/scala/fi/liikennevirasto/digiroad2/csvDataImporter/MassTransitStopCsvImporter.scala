@@ -38,10 +38,13 @@ class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBus
       override val delimiter: Char = ';'
     })
     val csvRead = csvReader.allWithHeaders()
-    val strategy = getStrategy(csvRead.head)
+    val csvRow = csvRead.map {
+      r => r.toList.map ( p => (p._1.toLowerCase, p._2)).toMap
+    }
 
-    strategy.importAssets(csvRead: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
-  }
+    val strategy = getStrategy(csvRow.head)
+    strategy.importAssets(csvRow: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
+    }
 }
 
 
@@ -74,39 +77,39 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   private val stopAdministratorValueMappings = Set(1, 2, 3, 99).map(_.toString)
 
   private val textFieldMappings = Map(
-    "Pysäkin nimi" -> "nimi_suomeksi",
-    "Ylläpitäjän tunnus" -> "yllapitajan_tunnus",
-    "Matkustajatunnus" -> "matkustajatunnus",
-    "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
-    "Liikennöintisuunta" -> "liikennointisuunta",
-    "Lisätiedot" -> "lisatiedot",
-    "Vyöhyketieto" -> "vyohyketieto"
+    "pysäkin nimi" -> "nimi_suomeksi",
+    "ylläpitäjän tunnus" -> "yllapitajan_tunnus",
+    "matkustajatunnus" -> "matkustajatunnus",
+    "pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
+    "liikennöintisuunta" -> "liikennointisuunta",
+    "lisätiedot" -> "lisatiedot",
+    "vyöhyketieto" -> "vyohyketieto"
   )
 
-  val multipleChoiceFieldMappings = Map("Pysäkin tyyppi" -> "pysakin_tyyppi")
+  val multipleChoiceFieldMappings = Map("pysäkin tyyppi" -> "pysakin_tyyppi")
 
-  val stopAdministratorProperty =  Map("Tietojen ylläpitäjä" -> "tietojen_yllapitaja")
+  val stopAdministratorProperty =  Map("tietojen ylläpitäjä" -> "tietojen_yllapitaja")
 
   private val singleChoiceFieldMappings = Map(
-    "Aikataulu" -> "aikataulu",
-    "Katos" -> "katos",
-    "Mainoskatos" -> "mainoskatos",
-    "Penkki" -> "penkki",
-    "Pyöräteline" -> "pyorateline",
-    "Sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
-    "Valaistus" -> "valaistus",
-    "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
-    "Korotettu" -> "korotettu",
-    "Roska-astia" -> "roska_astia") ++
+    "aikataulu" -> "aikataulu",
+    "katos" -> "katos",
+    "mainoskatos" -> "mainoskatos",
+    "penkki" -> "penkki",
+    "pyöräteline" -> "pyorateline",
+    "sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
+    "valaistus" -> "valaistus",
+    "saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
+    "korotettu" -> "korotettu",
+    "roska-astia" -> "roska_astia") ++
     stopAdministratorProperty
 
-   protected val externalIdMapping = Map("Valtakunnallinen ID" -> "external_id")
+   protected val externalIdMapping = Map("valtakunnallinen id" -> "external_id")
 
   override val intValueFieldsMapping = externalIdMapping
 
   override val coordinateMappings = Map(
-    "Koordinaatti X" -> "maastokoordinaatti_x",
-    "Koordinaatti Y" -> "maastokoordinaatti_y"
+    "koordinaatti X" -> "maastokoordinaatti_x",
+    "koordinaatti Y" -> "maastokoordinaatti_y"
   )
 
   override val longValueFieldsMapping = coordinateMappings
@@ -192,7 +195,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   }
 
   private def assetTypeToProperty(assetTypes: String): ParsedRow = {
-    val invalidAssetType = (List("Pysäkin tyyppi"), Nil)
+    val invalidAssetType = (List("pysäkin tyyppi"), Nil)
     val types = assetTypes.split(',')
     if (types.isEmpty) invalidAssetType
     else {

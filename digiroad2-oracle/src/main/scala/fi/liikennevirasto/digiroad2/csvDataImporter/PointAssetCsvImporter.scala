@@ -26,8 +26,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
   val coordinateMappings = Map(
-    "Koordinaatti X" -> "lon",
-    "Koordinaatti Y" -> "lat"
+    "koordinaatti x" -> "lon",
+    "koordinaatti y" -> "lat"
   )
 
   val longValueFieldsMapping: Map[String, String] = coordinateMappings
