@@ -7,7 +7,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'REVISION', defaultValue: 'master')
+        string(name: 'REVISION', defaultValue: 'DROTH-2061_Fix_Deployed_to_QA_and_Prod')
     }
 
     environment {
