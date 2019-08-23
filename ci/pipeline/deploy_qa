@@ -100,9 +100,9 @@ pipeline {
             steps {
                 checkout(
                     [$class: 'GitSCM',
-                     branches: [[name: '*/${REVISION}']],
+                     branches: [[name: '*/${params.REVISION}']],
                      doGenerateSubmoduleConfigurations: false,
-                     extensions: [[$class: 'LocalBranch', localBranch: '${REVISION}']],
+                     extensions: [[$class: 'LocalBranch', localBranch: '${params.REVISION}']],
                      submoduleCfg: [],
                      userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
                     ]
