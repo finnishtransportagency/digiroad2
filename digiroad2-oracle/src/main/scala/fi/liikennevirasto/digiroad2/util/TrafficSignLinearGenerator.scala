@@ -222,7 +222,10 @@ trait TrafficSignLinearGenerator {
     else Seq()
 
     val existingWithoutSignsRelation = existingAssets.filter(_.value.isDefined).flatMap { asset =>
-      val relevantSigns = trafficSigns.filter(sign => signIdsGroupedByAssetId(asset.id).map(_._2).contains(sign._1))
+      val relevantSigns = trafficSigns.filter(sign => signIdsGroupedByAssetId.get(asset.id) match {
+        case Some(values) => values.map(_._2).contains(sign._1)
+        case _ => false
+      })
 
       val persistedTrafficSign = relevantSigns.map{case (id, value) => Json(jsonFormats).read[PersistedTrafficSign](value)}
       val createdValue = createValue(persistedTrafficSign)
