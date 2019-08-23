@@ -51,7 +51,8 @@ pipeline {
         								'import_private_road_info',
         								'load_municipalities_verification_info',
         								'create_parking_prohibition_using_traffic_signs',
-        								'get_state_roads_with_overridden_functional_class'
+        								'get_state_roads_with_overridden_functional_class',
+        								'get_state_roads_with_undefined_functional_class'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
