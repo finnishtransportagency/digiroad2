@@ -1791,6 +1791,31 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def getStateRoadWithFunctionalClassUndefined(): Unit = {
+    println("\nStart process to get StateRoads With Functional Class Undefined")
+    println(DateTime.now())
+    println("")
+
+    val functionalClassValue = 99
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(rl => rl.administrativeClass == State && rl.functionalClass == functionalClassValue)
+
+        roadLinks.foreach { roadLink =>
+          println(roadLink.linkId + ", " + roadLink.administrativeClass + ", " + roadLink.functionalClass + ", " + roadLink.linkType + ", " + municipality)
+        }
+      }
+
+      println("")
+      println("Complete at time: " + DateTime.now())
+    }
+  }
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -2297,6 +2322,8 @@ object DataFixture {
         importPrivateRoadInformation()
       case Some("get_state_roads_with_overridden_functional_class") =>
         getStateRoadWithFunctionalClassOverridden()
+      case Some("get_state_roads_with_undefined_functional_class") =>
+        getStateRoadWithFunctionalClassUndefined()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2310,7 +2337,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | get_state_roads_with_overridden_functional_class")
+        " resolving_Frozen_Links| import_private_road_info | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class")
     }
   }
 }
