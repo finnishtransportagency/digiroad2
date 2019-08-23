@@ -229,9 +229,9 @@ pipeline {
             steps {
                 checkout(
                     [$class: 'GitSCM',
-                     branches: [[name: '*/${params.BRANCH}']],
+                     branches: [[name: '*/${BRANCH}']],
                      doGenerateSubmoduleConfigurations: false,
-                     extensions: [[$class: 'LocalBranch', localBranch: '${params.BRANCH}']],
+                     extensions: [[$class: 'LocalBranch', localBranch: '${BRANCH}']],
                      submoduleCfg: [],
                      userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
                     ]
