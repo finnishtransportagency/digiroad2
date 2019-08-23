@@ -96,19 +96,6 @@ pipeline {
                 }
             }
         }
-	    stage("Checkout Branch") {
-            steps {
-                checkout(
-                    [$class: 'GitSCM',
-                     branches: [[name: '*/${params.REVISION}']],
-                     doGenerateSubmoduleConfigurations: false,
-                     extensions: [[$class: 'LocalBranch', localBranch: '${params.REVISION}']],
-                     submoduleCfg: [],
-                     userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
-                    ]
-                )
-            }
-        }
         stage("Prepare") {
             when {
                 expression {
@@ -236,6 +223,19 @@ pipeline {
                         message: "${NOTIFY_SLACK_SUBJECT} - Stage ${STAGE_NAME} failure!\nCheck <${BUILD_URL}console|console>!"
                     )
                 }
+            }
+        }
+	    stage("Checkout Branch") {
+            steps {
+                checkout(
+                    [$class: 'GitSCM',
+                     branches: [[name: '*/${params.REVISION}']],
+                     doGenerateSubmoduleConfigurations: false,
+                     extensions: [[$class: 'LocalBranch', localBranch: '${params.REVISION}']],
+                     submoduleCfg: [],
+                     userRemoteConfigs: [[url: 'git@github.com:finnishtransportagency/digiroad2.git']]
+                    ]
+                )
             }
         }
        stage("Deploy Node 1") {
