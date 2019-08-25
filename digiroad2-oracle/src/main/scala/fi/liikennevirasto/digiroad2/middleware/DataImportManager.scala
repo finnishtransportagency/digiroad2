@@ -4,6 +4,7 @@ import java.io.InputStream
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.csvDataImporter.{MaintenanceRoadCsvImporter, MassTransitStopCsvImporter, MassTransitStopCsvOperation, ObstaclesCsvImporter, PedestrianCrossingCsvImporter, RailwayCrossingCsvImporter, RoadLinkCsvImporter, ServicePointCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.user.User
 
@@ -21,11 +22,11 @@ case class NumericValues(values: Int) extends  AdditionalImportValue {
 
 case class CsvDataImporterInfo(assetTypeName: String, fileName: String, user: User, inputStream: InputStream, logId: Long, additionalImportInfo: Set[AdditionalImportValue] = Set())
 
-class DataImportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
+class DataImportManager(vvhClient: VVHClient, roadLinkService: RoadLinkService, eventBus: DigiroadEventBus) {
 
   lazy val trafficSignCsvImporter: TrafficSignCsvImporter = new TrafficSignCsvImporter(roadLinkService, eventBus)
   lazy val maintenanceRoadCsvImporter: MaintenanceRoadCsvImporter = new MaintenanceRoadCsvImporter(roadLinkService, eventBus)
-  lazy val massTransitStopCsvImporter: MassTransitStopCsvOperation = new MassTransitStopCsvOperation(roadLinkService, eventBus)
+  lazy val massTransitStopCsvImporter: MassTransitStopCsvOperation = new MassTransitStopCsvOperation(vvhClient, roadLinkService, eventBus)
   lazy val roadLinkCsvImporter: RoadLinkCsvImporter = new RoadLinkCsvImporter(roadLinkService, eventBus)
   lazy val obstaclesCsvImporter: ObstaclesCsvImporter = new ObstaclesCsvImporter(roadLinkService, eventBus)
   lazy val trafficLightsCsvImporter: TrafficLightsCsvImporter = new TrafficLightsCsvImporter(roadLinkService, eventBus)

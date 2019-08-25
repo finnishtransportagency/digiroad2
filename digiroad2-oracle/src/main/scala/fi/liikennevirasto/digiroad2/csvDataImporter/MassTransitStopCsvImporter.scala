@@ -18,10 +18,10 @@ import org.apache.commons.lang3.StringUtils.isBlank
 
 import scala.util.Try
 
-class MassTransitStopCsvOperation(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
-  lazy val propertyUpdater = new Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
-  lazy val positionUpdater = new PositionUpdater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
-  lazy val creator = new Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
+class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+  lazy val propertyUpdater = new Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
+  lazy val positionUpdater = new PositionUpdater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
+  lazy val creator = new Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus)
 
   private def getStrategies(): Seq[CsvOperations] = {
     Seq(propertyUpdater, creator, positionUpdater)
@@ -107,8 +107,8 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
   override val intValueFieldsMapping = externalIdMapping
 
   override val coordinateMappings = Map(
-    "koordinaatti X" -> "maastokoordinaatti_x",
-    "koordinaatti Y" -> "maastokoordinaatti_y"
+    "koordinaatti x" -> "maastokoordinaatti_x",
+    "koordinaatti y" -> "maastokoordinaatti_y"
   )
 
   override val longValueFieldsMapping = coordinateMappings
@@ -239,7 +239,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
 
   private def assetSingleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedRow = {
     parameterName match {
-      case name if stopAdministratorProperty(name).nonEmpty =>
+      case name if stopAdministratorProperty.get(name).nonEmpty =>
         if (stopAdministratorValueMappings.contains(assetSingleChoice))
           (Nil, List(AssetProperty(singleChoiceFieldMappings(name), List(PropertyValue(assetSingleChoice)))))
         else
@@ -294,15 +294,15 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
           val missingParameters = findMissingParameters(row)
           val (malformedParameters, properties) = assetRowToProperties(row)
           if (missingParameters.isEmpty && malformedParameters.isEmpty) {
-//            try {
+            try {
               val excludedRows = createOrUpdate(row, roadTypeLimitations, user, properties)
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
-//            } catch {
-//              case e: AssetNotFoundException =>
-//                result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
-//              case ex: Exception =>
-//                result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
-//            }
+            } catch {
+              case e: AssetNotFoundException =>
+                result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+              case ex: Exception =>
+                result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
+            }
           } else {
             result.copy(
               incompleteRows = missingParameters match {
@@ -338,11 +338,11 @@ trait CsvOperations extends MassTransitStopCsvImporter {
   }
 }
 
-class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
+class Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def vvhClient: VVHClient = vvhClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override def mandatoryFieldsMapping: Map[String, String] = externalIdMapping
@@ -357,11 +357,11 @@ class Updater(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   }
 }
 
-class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
+class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def vvhClient: VVHClient = vvhClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val decisionFieldsMapping = coordinateMappings
@@ -407,7 +407,7 @@ class Creator(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventB
   }
 }
 
-class PositionUpdater (roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
+class PositionUpdater (vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvOperations {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
