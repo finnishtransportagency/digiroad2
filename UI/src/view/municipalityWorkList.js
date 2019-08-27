@@ -92,8 +92,13 @@
       var privateRoadInfoListButton = $('<a>').addClass('btn btn-primary btn-private-road-list')
         .text('Yksityistiet').attr("href", "#work-list/privateRoads/" + municipalityId);
 
+      var printReportButton = function () {
+        if (authorizationPolicy.isOperator())
+          return $('<a>').addClass('btn btn-primary btn-print').text('Tulosta raportti');
+      };
+
       var municipalityHeader = function (municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(privateRoadInfoListButton);
+        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(printReportButton).append(privateRoadInfoListButton);
       };
 
       var tableHeaderRow = function () {
