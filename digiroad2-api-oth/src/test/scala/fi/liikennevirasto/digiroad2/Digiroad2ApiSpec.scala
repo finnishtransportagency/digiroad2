@@ -232,7 +232,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
     val requestPayload = """{"lon": 7478014, "lat": 483655, "linkId": 2, "bearing": 0}"""
-    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes, username = "silari") {
       status should equal(400)
     }
   }
