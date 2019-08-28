@@ -33,12 +33,12 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   }
 
   test("get user data") {
-    getWithUserAuth("/userconfig/user/test49") {
+    getWithUserAuth("/userconfig/user/municipality49") {
       status should be (200)
       val u = parse(body).extract[User]
-      u.username should be ("test49")
+      u.username should be ("municipality49")
       u.configuration.authorizedMunicipalities should contain only 49
-      u.name.get should be ("Real Name")
+      u.name.get should be ("Municipality Maintainer 49")
     }
     getWithUserAuth("/userconfig/user/nonexistent") {
       status should be (404)
@@ -47,16 +47,16 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
 
   test("set authorized municipalities for user") {
     try {
-      putJsonWithUserAuth("/userconfig/user/test49/municipalities", write(List(1, 2, 3, 4, 5, 49))) {
+      putJsonWithUserAuth("/userconfig/user/municipality49/municipalities", write(List(1, 2, 3, 4, 5, 49))) {
         status should be (200)
-        getWithUserAuth("/userconfig/user/test49") {
+        getWithUserAuth("/userconfig/user/municipality49") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (1, 2, 3, 4, 5, 49)
         }
       }
     } finally {
-      putJsonWithUserAuth("/userconfig/user/test49/municipalities", write(List(49))) {
+      putJsonWithUserAuth("/userconfig/user/municipality49/municipalities", write(List(49))) {
         status should be (200)
-        getWithUserAuth("/userconfig/user/test49") {
+        getWithUserAuth("/userconfig/user/municipality49") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only 49
         }
       }
