@@ -75,18 +75,18 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
   test("batch load users with municipalities") {
     val batchString =
       s"""
-        test2; ; 4, 5, 6, 49, 235; Name from batch
-        test49; ; 1, 2, 3, 49; Replaced name from batch
+        municipality766_749; ; 4, 5, 6, 49, 235; Name from batch
+        municipality49; ; 1, 2, 3, 49; Replaced name from batch
         newuser; ; 2, 3, 6; Another name from batch
         testEly; 0; ;
       """
     try {
       putJsonWithUserAuth("/userconfig/municipalitiesbatch", batchString, Map("Content-type" -> "text/plain")) {
-        getWithUserAuth("/userconfig/user/test2") {
+        getWithUserAuth("/userconfig/user/municipality766_749") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (4, 5, 6, 49, 235)
           parse(body).extract[User].name.get should be ("Name from batch")
         }
-        getWithUserAuth("/userconfig/user/test49") {
+        getWithUserAuth("/userconfig/user/municipality49") {
           parse(body).extract[User].configuration.authorizedMunicipalities should contain only (1, 2, 3, 49)
           parse(body).extract[User].name.get should be ("Replaced name from batch")
         }
@@ -103,10 +103,10 @@ class UserConfigurationApiSpec extends AuthenticatedApiSpec {
       val provider = new OracleUserProvider
       provider.deleteUser("newuser")
       provider.deleteUser("testEly")
-      putJsonWithUserAuth("/userconfig/user/test2/municipalities", write(List(235, 49)), Map("Content-type" -> "application/json")) {}
-      putJsonWithUserAuth("/userconfig/user/test49/municipalities", write(List(49)), Map("Content-type" -> "application/json")) {}
-      putJsonWithUserAuth("/userconfig/user/test2/name", write(""), Map("Content-type" -> "application/json")) {}
-      putJsonWithUserAuth("/userconfig/user/test49/name", write("Real Name"), Map("Content-type" -> "application/json")) {}
+      putJsonWithUserAuth("/userconfig/user/municipality766_749/municipalities", write(List(766, 749)), Map("Content-type" -> "application/json")) {}
+      putJsonWithUserAuth("/userconfig/user/municipality49/municipalities", write(List(49)), Map("Content-type" -> "application/json")) {}
+      putJsonWithUserAuth("/userconfig/user/municipality766_749/name", write("Municipality Maintainer 766 749"), Map("Content-type" -> "application/json")) {}
+      putJsonWithUserAuth("/userconfig/user/municipality49/name", write("Municipality Maintainer 49"), Map("Content-type" -> "application/json")) {}
     }
   }
 
