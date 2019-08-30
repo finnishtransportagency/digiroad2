@@ -34,7 +34,7 @@
     this.labeling = function () {
       var labelingTypePanel = _(assetConfig.legendValues).map(function (val) {
         return '<div class="legend-entry">' +
-          '  <div class="' + (val.cssClass ? val.cssClass : 'label') + '">' +
+          '    <div class="label ' + (val.cssClass ? val.cssClass : '') + '">' +
           '    <span>' + val.label + '</span> ' +
           '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
           '  </div>' +

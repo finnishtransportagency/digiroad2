@@ -530,7 +530,6 @@
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
-    var servicePointBox = new ServicePointBox(_.find(pointAssets, {typeId: assetType.servicePoints}));
     return [
       []
         .concat([massTransitBox])
@@ -540,7 +539,7 @@
         .concat(pedestrianCrossingBox)
         .concat(getPointAsset(assetType.trafficLights))
         .concat([trafficSignBox])
-        .concat([servicePointBox]),
+        .concat(getPointAsset(assetType.servicePoints)),
       [].concat([heightBox])
         .concat([widthBox])
         .concat(getGroupedPointAsset(assetGroups.trWeightGroup))
