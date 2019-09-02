@@ -350,6 +350,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }.toSeq
   }
 
+  def getPrivateRoadsInfoByMunicipality(municipalityCode: Int): Seq[PrivateRoadInfoStructure] = {
+    val cachedRoadLinks = getTinyRoadLinkFromVVH(municipalityCode).map(_.linkId).toSet
+    val results = getPrivateRoadsInfoByLinkIds(cachedRoadLinks)
+    groupPrivateRoadInformation(results)
+  }
+
   def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long]): List[(Long, Option[(String, String)])] = {
     withDynTransaction {
       MassQuery.withIds(linkIds) { idTableName =>
@@ -855,7 +861,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val inputFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
     val outputFormat = new SimpleDateFormat("dd.MM.yyyy")
 
-    results.groupBy(_._1).map { attr =>
+    val resultsWithAddInfo = results.filter(_._2.exists(_._1 == additionalInfoPublicId)).map(_._1)
+
+    results.filter(r => resultsWithAddInfo.contains(r._1)).groupBy(_._1).map { attr =>
       val prop = attr._2.flatMap(_._2)
       PrivateRoadInfoStructure(
         prop.find(_._1 == privateRoadAssociationPublicId).map(_._2),

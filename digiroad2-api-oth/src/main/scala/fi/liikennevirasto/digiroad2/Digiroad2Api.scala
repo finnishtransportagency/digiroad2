@@ -1936,9 +1936,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/privateRoads/:municipalityCode") {
     val municipalityCode = params("municipalityCode").toInt
     val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
-    val cachedRoadLinks = roadLinkService.getTinyRoadLinkFromVVH(municipalityCode).map(_.linkId).toSet
-    val results = roadLinkService.getPrivateRoadsInfoByLinkIds(cachedRoadLinks)
-    val groupedResults = roadLinkService.groupPrivateRoadInformation(results)
+    val groupedResults = roadLinkService.getPrivateRoadsInfoByMunicipality(municipalityCode)
+
     Map(
       "municipalityName" -> municipalityName,
       "municipalityCode" -> municipalityCode,
@@ -1947,7 +1946,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           Map(
             "privateRoadName" -> result.privateRoadName.getOrElse(""),
             "associationId" -> result.associationId.getOrElse(""),
-            "additionalInfo" -> result.additionalInfo.getOrElse(99),
+            "additionalInfo" -> result.additionalInfo.getOrElse(""),
             "lastModifiedDate" -> result.lastModifiedDate.getOrElse("")
           )
         }
