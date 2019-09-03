@@ -819,6 +819,10 @@
       };
       };
 
+      this.getUserConfiguration = function () {
+        return $.getJSON('api/userConfiguration');
+          };
+
     this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
       $.ajax({
         contentType: "application/json",

@@ -1871,6 +1871,21 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
+  get("/userConfiguration") {
+    val user = userProvider.getCurrentUser()
+    /*val east = (parsedBody \ "lon").extractOpt[Long]
+    val north = (parsedBody \ "lat").extractOpt[Long]
+    val zoom = (parsedBody \ "zoom").extractOpt[Int]
+
+    val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
+    userProvider.updateUserConfiguration(updatedUser)*/
+    Map(
+      "username" -> user.username,
+      "configuration" -> user.configuration,
+      "name" -> user.name
+    )
+  }
+
   put("/userConfiguration/defaultLocation") {
     val user = userProvider.getCurrentUser()
     val east = (parsedBody \ "lon").extractOpt[Long]

@@ -10,8 +10,6 @@ import org.scalatest.{FunSuite, Matchers}
 
 class OracleUserProviderSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
-  //executeStatement("SAVEPOINT A")
-  //OracleDatabase.withDynSession {
 
     val TestUserName = "Oracleuserprovidertest"
     val north = 1000
@@ -20,24 +18,24 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
     val newEast = 6000
     val municipalityNumber = 235
 
-    val provider = new OracleUserProvider
-
     test("create and get user") {
       runWithRollback {
-      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'");
+        val provider = new OracleUserProvider
+        provider.deleteUser(TestUserName)
+
       provider.getUser(TestUserName) shouldBe (None)
       provider.createUser(TestUserName, Configuration(north = Some(1000)))
       val user = provider.getUser(TestUserName).get
       user.username should be(TestUserName.toLowerCase)
       user.configuration.north should be(Some(north))
-      //executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
       }
-      //executeStatement("ROLLBACK")
     }
 
     test("update user last notification date field without update modified_date") {
       runWithRollback {
-      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
+        val provider = new OracleUserProvider
+        provider.deleteUser(TestUserName)
+
       provider.getUser(TestUserName) should be(None)
       provider.createUser(TestUserName, Configuration(municipalityNumber = Some(municipalityNumber)))
       val user = provider.getUser(TestUserName).get
@@ -48,14 +46,14 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
       userInfo.username should be(TestUserName.toLowerCase)
       userInfo.configuration.lastNotificationDate should be(Some(LocalDate.now.toString))
       userInfo.configuration.municipalityNumber should be(Some(municipalityNumber))
-      //executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
       }
-      //executeStatement("ROLLBACK")
     }
 
     test("update current user default map location") {
       runWithRollback {
-      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
+        val provider = new OracleUserProvider
+        provider.deleteUser(TestUserName)
+
       provider.getUser(TestUserName) should be(None)
       provider.createUser(TestUserName, Configuration(east = Some(east), north = Some(north)))
       val user = provider.getUser(TestUserName).get
@@ -66,15 +64,15 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
       userInfo.username should be(TestUserName.toLowerCase)
       userInfo.configuration.east should be(Some(newEast))
       userInfo.configuration.north should be(Some(newNorth))
-      //executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
       }
-      //executeStatement("ROLLBACK")
     }
 
 
     test("update user last login date field") {
       runWithRollback {
-      executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'")
+        val provider = new OracleUserProvider
+        provider.deleteUser(TestUserName)
+
       provider.getUser(TestUserName) should be(None)
       provider.createUser(TestUserName, Configuration(municipalityNumber = Some(municipalityNumber)))
       val user = provider.getUser(TestUserName).get
@@ -85,10 +83,7 @@ class OracleUserProviderSpec extends FunSuite with Matchers {
       userInfo.username should be(TestUserName.toLowerCase)
       userInfo.configuration.lastLoginDate should be(Some(LocalDate.now.toString))
       userInfo.configuration.municipalityNumber should be(Some(municipalityNumber))
-      //executeStatement("DELETE FROM service_user WHERE username = '" + TestUserName.toLowerCase() + "'");
+        provider.deleteUser(TestUserName)
       }
-      //executeStatement("ROLLBACK")
     }
-  //}
-  executeStatement("ROLLBACK")
 }
