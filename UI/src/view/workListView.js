@@ -79,6 +79,14 @@
           .append(tableForGroupingValues('Ei tiedossa', workListItems.Unknown, 0));
     };
 
+    var addSpinner = function () {
+      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    };
+
+    var removeSpinner = function () {
+      $('.spinner-overlay').remove();
+    };
+
     this.generateWorkList = function(layerName, listP) {
       var layerInfo = {
         speedLimit: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit'},
@@ -119,9 +127,12 @@
         '</div>' +
         '</div>'
       );
+
+      addSpinner();
       listP.then(function(limits) {
         var unknownLimits = _.map(limits, _.partial(me.workListItemTable, layerName));
         $('#work-list .work-list').html(unknownLimits);
+        removeSpinner();
       });
     };
   };
