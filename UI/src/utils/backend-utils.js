@@ -669,13 +669,13 @@
       var request;
 
       function doRequest() {
-        eventbus.trigger('requests:applied');
+        eventbus.trigger('loadingBar:show');
         if (request)
           request.abort();
 
         request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
           deferred.resolve(result);
-          eventbus.trigger('requests:ended');
+          eventbus.trigger('loadingBar:hide');
         });
         return deferred;
       }
