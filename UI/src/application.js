@@ -289,6 +289,7 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
     new DefaultLocationButton(map, mapPluginsContainer, backend);
+    new LoadingBarDisplay(map, mapPluginsContainer);
 
 
     if (withTileMaps) { new TileMapCollection(map); }
