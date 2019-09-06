@@ -378,6 +378,7 @@
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
        authorizationPolicy: asset.authorizationPolicy,
+       showRoadLinkInfo: asset.showRoadLinkInfo,
        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
      });
      return acc;
@@ -400,6 +401,7 @@
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         authorizationPolicy: asset.authorizationPolicy,
+        showRoadLinkInfo: asset.showRoadLinkInfo,
         assetTypeIds: asset.typeIds
       });
       return acc;
