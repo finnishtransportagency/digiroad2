@@ -89,12 +89,15 @@
           me.reloadForm(municipalityId, true);
         });
 
+      var privateRoadInfoListButton = $('<a>').addClass('btn btn-primary btn-private-road-list')
+        .text('Yksityistiet').attr("href", "#work-list/privateRoads/" + municipalityId);
+
       var municipalityHeader = function (municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton);
+        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(privateRoadInfoListButton);
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
+        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä u/ Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
                '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
       };
       var tableBodyRows = function (values) {

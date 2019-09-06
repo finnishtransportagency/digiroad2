@@ -21,10 +21,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.HttpStatus
-import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
@@ -403,18 +401,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val passengerId = params("passengerId")
     val massTransitStopsReturned = massTransitStopService.getMassTransitStopByPassengerId(passengerId, validateMunicipalityAuthorization(passengerId))
-    massTransitStopsReturned.map { massTransitStopReturned =>
-      massTransitStopReturned match {
-        case Some(stop) =>
-          Map("nationalId" -> stop.nationalId,
-            "lat" -> stop.lat,
-            "lon" -> stop.lon,
-            "municipalityName" -> stop.municipalityName.getOrElse(""),
-            "success" -> true)
-        case None =>
-          Map("success" -> false)
+    if (massTransitStopsReturned.nonEmpty)
+      massTransitStopsReturned.map { stop =>
+        Map("nationalId" -> stop.nationalId,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "municipalityName" -> stop.municipalityName.getOrElse(""),
+          "success" -> true)
       }
-    }
+    else
+      Map("success" -> false)
   }
 
   get("/massTransitStops/livi/:liviId") {
@@ -627,7 +623,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
-      "privateRoadLastModificationInfo" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MODIFICATION")
+      "privateRoadLastModifiedDate" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MOD_DATE"),
+      "privateRoadLastModifiedUser" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MOD_USER")
     )
   }
 
@@ -1657,8 +1654,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/municipalities/byUser") {
+    val municipalityCode = params("municipalityCode")
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val municipalities: Set[Int] = if(municipalityCode != "null") Set(municipalityCode.toInt) else { if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities }
     municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,
         "name" -> municipality.name)
@@ -1933,5 +1931,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipality" -> value.municipality
       )
     }
+  }
+
+  get("/privateRoads/:municipalityCode") {
+    val municipalityCode = params("municipalityCode").toInt
+    val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
+    val groupedResults = roadLinkService.getPrivateRoadsInfoByMunicipality(municipalityCode)
+
+    Map(
+      "municipalityName" -> municipalityName,
+      "municipalityCode" -> municipalityCode,
+      "results" ->
+        groupedResults.map{result =>
+          Map(
+            "privateRoadName" -> result.privateRoadName.getOrElse(""),
+            "associationId" -> result.associationId.getOrElse(""),
+            "additionalInfo" -> result.additionalInfo.getOrElse(""),
+            "lastModifiedDate" -> result.lastModifiedDate.getOrElse("")
+          )
+        }
+    )
   }
 }
