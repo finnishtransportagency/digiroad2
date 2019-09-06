@@ -4,7 +4,7 @@ import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
