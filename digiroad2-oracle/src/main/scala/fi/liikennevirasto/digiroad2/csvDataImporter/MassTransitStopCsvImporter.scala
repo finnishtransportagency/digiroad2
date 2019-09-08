@@ -69,7 +69,6 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
     new MassTransitStopServiceWithDynTransaction(eventBus, roadLinkService, roadAddressService)
   }
-  override def mandatoryFieldsMapping: Map[String, String]
 
   private val isValidTypeEnumeration = Set(1, 2, 3, 4, 5, 99)
   private val singleChoiceValueMappings = Set(1, 2, 99).map(_.toString)
@@ -211,7 +210,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     csvRowWithHeaders.foldLeft((Nil: MalformedParameters, Nil: ParsedProperties)) { (result, parameter) =>
       val (key, value) = parameter
       if (isBlank(value)) {
-        if (mandatoryFieldsMapping.keySet.contains(key))
+        if (mandatoryFields.contains(key))
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
         else
           result
@@ -299,7 +298,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
               result.copy(excludedRows = excludedRows ::: result.excludedRows)
             } catch {
               case e: AssetNotFoundException =>
-                result.copy(notImportedData = NotImportedData(reason = s"Asset not found ${row("Valtakunnallinen ID").toString}", csvRow = rowToString(row)) :: result.notImportedData)
+                result.copy(notImportedData = NotImportedData(reason = s"Asset not found -> ${row("valtakunnallinen id").toString}", csvRow = rowToString(row)) :: result.notImportedData)
               case ex: Exception =>
                 result.copy(notImportedData = NotImportedData(reason = ex.getMessage, csvRow = rowToString(row)) :: result.notImportedData)
             }
@@ -345,9 +344,9 @@ class Updater(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
   override def vvhClient: VVHClient = vvhClientImpl
   override def eventBus: DigiroadEventBus = eventBusImpl
 
-  override def mandatoryFieldsMapping: Map[String, String] = externalIdMapping
-
+  override def mandatoryFields: Set[String] = externalIdMapping.keySet
   override val decisionFieldsMapping = externalIdMapping
+  override def mandatoryFieldsMapping: Map[String, String] = mappings ++ externalIdMapping
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Updating busStop")
@@ -366,7 +365,9 @@ class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
 
   override val decisionFieldsMapping = coordinateMappings
 
-  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ stopAdministratorProperty ++ multipleChoiceFieldMappings
+  override def mandatoryFields: Set[String] = coordinateMappings.keySet ++ stopAdministratorProperty.keySet ++ multipleChoiceFieldMappings.keySet
+
+  override def mandatoryFieldsMapping: Map[String, String] = mappings ++ coordinateMappings
 
   def getDirection(roadLink: RoadLink): ParsedProperties = {
       val direction = roadLink.trafficDirection  match {
@@ -415,7 +416,9 @@ class PositionUpdater (vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkSe
   override def eventBus: DigiroadEventBus = eventBusImpl
 
   override val decisionFieldsMapping = coordinateMappings ++ externalIdMapping
-  override def mandatoryFieldsMapping: Map[String, String] = coordinateMappings ++ externalIdMapping
+  override def mandatoryFields: Set[String] = coordinateMappings.keySet ++ externalIdMapping.keySet
+  override def mandatoryFieldsMapping:  Map[String, String] = mappings ++ coordinateMappings ++ externalIdMapping
+
 
   override def createOrUpdate(row: Map[String, String], roadTypeLimitations: Set[AdministrativeClass], user: User, properties: ParsedProperties): List[ExcludedRow] = {
     println("Moving busStop")

@@ -32,18 +32,19 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   val codeValueFieldsMapping: Map[String, String] = Map()
   val stringValueFieldsMapping: Map[String, String] = Map()
   val intValueFieldsMapping: Map[String, String] = Map()
-  def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
+
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
 
-  def mandatoryFields: Set[String] = mandatoryFieldsMapping.keySet
+  def mandatoryFields: Set[String] = coordinateMappings.keySet
+  def mandatoryFieldsMapping: Map[String, String] = coordinateMappings
 
   def checkMinimumDistanceFromRoadLink(pointPosition: Point, linkGeometry: Seq[Point]): Boolean = {
     GeometryUtils.minimumDistance(pointPosition, linkGeometry) >= MinimumDistanceFromRoadLink
   }
 
   def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
-    mandatoryFields.diff(csvRoadWithHeaders.keys.toSet).toList
+    mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
   }
 
   def verifyDoubleType(parameterName: String, parameterValue: String): ParsedRow = {

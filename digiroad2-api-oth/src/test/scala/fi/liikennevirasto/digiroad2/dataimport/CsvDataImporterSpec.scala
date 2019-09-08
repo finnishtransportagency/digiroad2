@@ -1,3 +1,4 @@
+
 package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{ByteArrayInputStream, InputStream, InputStreamReader}
