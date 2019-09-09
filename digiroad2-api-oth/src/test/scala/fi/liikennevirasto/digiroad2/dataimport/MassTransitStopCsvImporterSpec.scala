@@ -75,7 +75,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
 
       val csv = csvToInputStream(createCSV(assetFields.flatten.toMap))
 // shouldn't be necessary this read with windos-1252
-      val streamReader = new InputStreamReader(csv, "windows-1252")
+      val streamReader = new InputStreamReader(csv, "UTF-8")
       val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
         override val delimiter: Char = ';'
       })
@@ -390,11 +390,11 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
     val assetFields = massTransitStopImporterUpdate.defaultValues(Map("valtakunnallinen id" -> 1))
-    val csv =  massTransitStopImporterUpdate.csvRead(assetFields).filterNot(x => x.exists(_._1 == "pysäkin nimi"))
+    val csv = massTransitStopImporterUpdate.csvRead(assetFields).map(fields => fields.filterNot(field => field._1 == "pysäkin nimi"))
 
     val result = massTransitStopCsvOperation.propertyUpdater.processing(csv, testUser, Set())
     result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
-      incompleteRows = List(IncompleteRow(missingParameters = List("Pysäkin nimi"),
+      incompleteRows = List(IncompleteRow(missingParameters = List("pysäkin nimi"),
         csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(Map()) - "pysäkin nimi" ++ Map("valtakunnallinen id" -> 1))))))
 
     verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
