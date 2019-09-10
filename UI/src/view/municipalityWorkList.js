@@ -217,6 +217,7 @@
         '</div>'
       );
 
+      addSpinner();
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
         if (limits.length == 1){
@@ -237,6 +238,7 @@
             $('#tableData tbody').html(unknownLimits);
           });
         }
+        removeSpinner();
       });
     };
   };
