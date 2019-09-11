@@ -1690,7 +1690,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     Map(
       "municipalityName" -> verifiedAssetTypes.head.municipalityName,
-      "refreshDate" -> verifiedAssetTypes.head.refreshDate.get,
+      "refreshDate" -> verifiedAssetTypes.head.refreshDate.getOrElse(""),
       "properties" -> verifiedAssetTypes.map{ assetType =>
         Map("typeId" -> assetType.assetTypeCode,
           "assetName" -> assetType.assetTypeName,
