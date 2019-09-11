@@ -93,6 +93,7 @@
         .text('Yksityistiet').attr("href", "#work-list/privateRoads/" + municipalityId);
 
       var downloadPDF = function() {
+      pdf.css('height', '1700px').css('width', '700px').addClass('pdfBackgroundColor');
         var html = $('#formTable').html();
 
         var takeOutElements = function(beginElement, endElement, sizeElement){
@@ -112,7 +113,7 @@
         takeOutElements('<td headers="suggestedAssets">', '</td>', 5);
         takeOutElements('<div id="test">', '</div>', 6);
 
-        pdf.html('<div style="background-color: #e3e3e1;">' + '<div class="work-list">' + '<div id="formTable">' + html + '</div>'+ '</div>'+ '</div>');
+        pdf.html('<div class="work-list">' + '<div id="formTable">' + html + '</div>'+ '</div>');
 
         var HTML_Width = $("#pdf").width();
         var HTML_Height = $("#pdf").height();
@@ -134,9 +135,9 @@
           }
 
           var date = new Date();
-            doc.save(municipalityName + '_' + String(date.getDate()).padStart(2, '0') + "_" + String(date.getMonth() + 1).padStart(2, '0') + "_" + String(date.getFullYear()) + '.pdf');
+            doc.save('DR' + '_' + municipalityName.toLowerCase() + '_' + String(date.getDate()).padStart(2, '0') + String(date.getMonth() + 1).padStart(2, '0') + String(date.getFullYear()) + '.pdf');
             });
-        pdf.html('');
+        pdf.html('').css('height', '0px').css('width', '0px');
       };
 
       var printReportButton = function () {
@@ -146,7 +147,7 @@
           });
       };
 
-      var pdf = $('<div id="pdf" style="height: 1700px !important; width: 700px !important;"/>');
+      var pdf = $('<div id="pdf"/>');
 
       var municipalityHeader = function (municipalityName) {
         return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(printReportButton).append(privateRoadInfoListButton);
