@@ -476,7 +476,7 @@ class AssetDataImporter {
       val administratorPropertyId = sql"select p.id from property p where p.public_id = 'tietojen_yllapitaja'".as[Long].first
       val busStopTypePropertyId = sql"select p.id from property p where p.public_id = 'pysakin_tyyppi'".as[Long].first
       val busStopLiViPropertyId = sql"select p.id from property p where p.public_id = 'yllapitajan_koodi'".as[Long].first
-      val busStopSuggestedPropertyId = sql"select p.id from property p where p.public_id = 'suggest_box' AND p.asset_type_id = $MassTransitStopAsset.typeId".as[Long].first
+      val busStopSuggestedPropertyId = sql"select p.id from property p where p.public_id = 'suggest_box' and p.asset_type_id = ${MassTransitStopAsset.typeId}".as[Long].first
       val busStopAssetTypeId = sql"select id from asset_type where name = 'Bussipysäkit'".as[Long].first
       PropertyWrapper(shelterTypePropertyId, accessibilityPropertyId, administratorPropertyId,
                       busStopAssetTypeId, busStopTypePropertyId, busStopLiViPropertyId, busStopSuggestedPropertyId)
