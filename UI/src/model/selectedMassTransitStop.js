@@ -543,9 +543,12 @@
     }
 
     function isSuggested(properties) {
-      return _.some( (_.isUndefined(properties.propertyData) ? properties.payload.properties : properties.propertyData), function (property) {
-        return property.publicId === 'suggest_box' && !_.isEmpty(property.values) && !!parseInt(_.head(property.values).propertyValue);
-      });
+      if (_.isUndefined(properties)) {
+        return _.some((_.isUndefined(properties.propertyData) ? properties.payload.properties : properties.propertyData), function (property) {
+          return property.publicId === 'suggest_box' && !_.isEmpty(property.values) && !!parseInt(_.head(property.values).propertyValue);
+        });
+      } else
+        return false;
     }
 
     return {
