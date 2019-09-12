@@ -11,6 +11,7 @@ case class Configuration(
                         zoom: Option[Int] = None,
                         east: Option[Long] = None,
                         north: Option[Long] = None,
+                        assetType: Option[Int] = None,
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
                         authorizedAreas: Set[Int] = Set(),

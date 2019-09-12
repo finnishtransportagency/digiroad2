@@ -182,7 +182,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, assetType: Int)
 
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
@@ -212,34 +212,39 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   def municipalityDao = new MunicipalityDao
 
-  private def getMapViewStartParameters(mapView: Option[MapViewZoom]): Option[(Double, Double, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom))
+  private def getMapViewStartParameters(mapView: Option[MapViewZoom], assetType: Int): Option[(Double, Double, Int, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom, assetType))
 
 
   get("/startupParameters") {
-    val defaultValues: (Double, Double, Int) = (390000, 6900000, 2)
+    val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, 160)
     val user = userProvider.getCurrentUser()
-    val userPreferences: Option[(Long, Long, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom) match {
-      case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom)
+    val assetTypeId = user.configuration.assetType match {
+      case Some(assetType) => assetType
+      case _  => 160
+    }
+    val userPreferences: Option[(Long, Long, Int, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom, user.configuration.assetType) match {
+      case (Some(east), Some(north), Some(zoom), None) => Some(east, north, zoom, 160)
+      case (Some(east), Some(north), Some(zoom), Some(assetType)) => Some(east, north, zoom, assetType)
       case _  => None
     }
 
 
     val location = userPreferences match {
-      case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3)
+      case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3, preference._4)
       case _ =>
         if(user.isMunicipalityMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty )
-          getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
+          getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality, assetTypeId)
         else {
           if (user.isServiceRoadMaintainer() && user.configuration.authorizedAreas.nonEmpty)
-            getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
+            getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea, assetTypeId)
           else if (user.isBusStopMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty) //case ely maintainer
-            getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
+            getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly, assetTypeId)
           else
             None
         }
     }
     val loc = location.getOrElse(defaultValues)
-    StartupParameters(loc._1, loc._2, loc._3)
+    StartupParameters(loc._1, loc._2, loc._3, loc._4)
   }
 
   private def getUserElysByMunicipalities(authorizedMunicipalities: Set[Int]): Set[Int] = {
@@ -259,8 +264,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getStartUpParameters(authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]): Option[(Double, Double, Int)]  = {
-    authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id)) } match {
+  private def getStartUpParameters(authorizedTo: Set[Int], getter: Int => Option[MapViewZoom], assetType: Int): Option[(Double, Double, Int, Int)]  = {
+    authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id), assetType) } match {
       case Some(param) => param
       case None => None
     }
@@ -1871,19 +1876,67 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
+  get("/userConfiguration/elys") {
+    val user = userProvider.getCurrentUser()
+    val elysId = municipalityDao.getElysByMunicipalities(user.configuration.authorizedMunicipalities)
+    val elysIdAndName = municipalityDao.getElysIdAndNamesByCode(elysId.toSet)
+
+    elysIdAndName.sortBy(_._2).map( ely =>
+      Map(
+        "id" -> ely._1,
+        "name" -> ely._2
+      )
+    )
+  }
+
   get("/userConfiguration") {
     val user = userProvider.getCurrentUser()
-    /*val east = (parsedBody \ "lon").extractOpt[Long]
-    val north = (parsedBody \ "lat").extractOpt[Long]
-    val zoom = (parsedBody \ "zoom").extractOpt[Int]
-
-    val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
-    userProvider.updateUserConfiguration(updatedUser)*/
     Map(
       "username" -> user.username,
       "configuration" -> user.configuration,
       "name" -> user.name
     )
+  }
+
+  get("/userConfiguration/:idEly/:idMunicipality/:assetType") {
+    val user = userProvider.getCurrentUser()
+    val idMunicipality = params("idMunicipality").toString
+    val idEly = params("idEly").toString
+    val assetType = params("assetType").toString
+
+    var east: Long = 0;
+    var north: Long = 0;
+    var zoom: Int = 0;
+
+
+     if(idMunicipality == "null" && idEly!="null"){
+      val coordinatesEly = getMapViewStartParameters(municipalityDao.getCenterViewEly(idEly.toInt), 160)
+      east = coordinatesEly.head._1.toLong
+      north = coordinatesEly.head._2.toLong
+      zoom = coordinatesEly.head._3.toInt
+
+    }else if (idMunicipality != "null" && idEly=="null"){
+      val coordinatesMunicipality = getMapViewStartParameters(municipalityDao.getCenterViewMunicipality(idMunicipality.toInt), 160)
+      east = coordinatesMunicipality.head._1.toLong
+      north = coordinatesMunicipality.head._2.toLong
+      zoom = coordinatesMunicipality.head._3.toInt
+    }
+
+
+    if(idMunicipality == "null" && idEly == "null"){
+      val assetTypeId = assetType.toInt
+      val updatedUser = user.copy(configuration = user.configuration.copy(assetType = Option(assetTypeId)))
+      userProvider.updateUserConfiguration(updatedUser)
+    }
+    else if(assetType == "null"){
+      val updatedUser = user.copy(configuration = user.configuration.copy(east = Option(east), north = Option(north), zoom = Option(zoom)))
+      userProvider.updateUserConfiguration(updatedUser)
+    }
+    else if((idMunicipality != "null" || idEly !="null") && assetType != "null"){
+      val assetTypeId = assetType.toInt
+      val updatedUser = user.copy(configuration = user.configuration.copy(east = Option(east), north = Option(north), zoom = Option(zoom), assetType = Option(assetTypeId)))
+      userProvider.updateUserConfiguration(updatedUser)
+    }
   }
 
   put("/userConfiguration/defaultLocation") {

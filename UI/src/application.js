@@ -1,5 +1,8 @@
 (function(application) {
+    var assetTypeId = 160;
+    var defaultLocation = [390000, 6900000, 2];
   application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
+    var assetTypeLayerName = 'massTransitStop';
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -137,14 +140,28 @@
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
     new UserNotificationPopup(models.userNotificationCollection).initialize();
-
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
+        assetTypeId = startupParameters.assetType;
+        defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
+        if(assetTypeId !== 0 && assetTypeId !==160) {
+            Object.keys(assetConfiguration.assetTypes).some(function (k) {
+                if (assetConfiguration.assetTypes[k] === assetTypeId) {
+                    assetTypeLayerName = k;
+                    return true;
+                }
+            });
+        }
+        if(assetTypeId === 0){
+          assetTypeLayerName = "linkProperty";
+        }
+
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
         startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
+        window.applicationModel.selectLayer(assetTypeLayerName);
       });
     });
   };
@@ -288,7 +305,18 @@
     new TrafficSignToggle(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-    new DefaultLocationButton(map, mapPluginsContainer, backend);
+    new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration,getAssetTitle(), defaultLocation);
+
+    function getAssetTitle() {
+      if(assetTypeId !== 0){
+        return assetConfiguration.assetTypeInfo.find(function (asset) {
+          return asset.typeId === assetTypeId;
+        }).title;
+      }
+      else{
+        return 'Tielinkki';
+      }
+    }
 
 
     if (withTileMaps) { new TileMapCollection(map); }
