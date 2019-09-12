@@ -27,8 +27,7 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 validityDirection: Int,
                                 bearing: Option[Int],
                                 linkSource: LinkGeomSource,
-                                expired: Boolean = false,
-                                roadSideInfo: Boolean = false) extends PersistedPoint
+                                expired: Boolean = false) extends PersistedPoint
 
 
 case class TrafficSignRow(id: Long, linkId: Long,
@@ -45,8 +44,7 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           modifiedAt: Option[DateTime] = None,
                           linkSource: LinkGeomSource,
                           additionalPanel: Option[AdditionalPanelRow] = None,
-                          expired: Boolean = false,
-                          roadSideInfo: Boolean = false)
+                          expired: Boolean = false)
 
 object OracleTrafficSignDao {
 
@@ -59,7 +57,7 @@ object OracleTrafficSignDao {
                 when tpv.value_fi is not null then tpv.value_fi
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
-               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired, a.sign_road_side
+               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -139,7 +137,7 @@ object OracleTrafficSignDao {
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired, roadSideInfo = row.roadSideInfo)
+        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing, expired = row.expired)
     }.values.toSeq
   }
 
@@ -163,7 +161,7 @@ object OracleTrafficSignDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,
@@ -186,9 +184,8 @@ object OracleTrafficSignDao {
         case _ => None
       }
       val expired = r.nextBoolean()
-      val roadSideInfo = r.nextBoolean()
 
-      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired, roadSideInfo)
+      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource), additionalPanel, expired)
     }
   }
 
@@ -223,12 +220,11 @@ object OracleTrafficSignDao {
 
   def create(trafficSign: IncomingTrafficSign, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
-    val readOnlySideInfo = trafficSign.wrongSideInfo.getOrElse("0")
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing, sign_road_side)
-        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing}, ${readOnlySideInfo})
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
+        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing})
 
         into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
         values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})

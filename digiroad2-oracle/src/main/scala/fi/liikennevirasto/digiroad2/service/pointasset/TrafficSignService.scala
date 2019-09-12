@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], wrongSideInfo: Option[String] = None) extends IncomingPointAsset
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
 case class TrafficSignInfo(id: Long, linkId: Long, validityDirection: Int, signType: Int, mValue: Double, roadLink: RoadLink, propertyData: Set[SimpleTrafficSignProperty])
 case class TrafficSignInfoUpdate(expireId: Long, newSign: TrafficSignInfo)

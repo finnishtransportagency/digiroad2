@@ -43,21 +43,24 @@
       var additionalPanels = getProperties(asset.propertyData, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
-      var roadSideInfo = asset.roadSideInfo ? "Kyllä" : "Ei";
+
+      function getSidePlacement() {
+        return _.head(getProperties(asset.propertyData, "opposite_side_sign").values);
+      }
 
       var panelCheckbox =
-      '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
-      '      <div class="checkbox" >' +
-      '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
-      '      </div>' +
-      '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
-      '    </div>';
+          '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
+          '      <div class="checkbox" >' +
+          '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
+          '      </div>' +
+          '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
+          '    </div>';
 
-      var wrongSideInfo = asset.id !== 0 ?
-        '    <div class="form-group form-directional-traffic-sign">' +
-        '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
-        '        <p class="form-control-static">' + roadSideInfo + '</p>' +
-        '    </div>' : '';
+      var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
+          '    <div class="form-group form-directional-traffic-sign">' +
+          '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
+          '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
+          '    </div>' : '';
 
       if(asset.validityDirection)
         return components +
