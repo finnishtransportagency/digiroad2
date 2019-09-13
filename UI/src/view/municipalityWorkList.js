@@ -6,7 +6,7 @@
     this.title = 'Tietolajien kuntasivu';
     var backend;
     var municipalityList;
-    var showFormBtnVisible = true;
+    var fromMunicipalityTabel = false;
     var municipalityName;
     var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
@@ -24,12 +24,17 @@
       me.bindEvents();
     };
     this.bindEvents = function () {
-      eventbus.on('municipality:select', function(listP) {
+      eventbus.on('municipality:select', function(municipalityListAllowed, municipalityCode) {
         $('.container').hide();
         $('#work-list').show();
         $('body').addClass('scrollable');
-        municipalityList = listP;
-        me.generateWorkList(listP);
+        municipalityList = municipalityListAllowed;
+
+        if (_.isNull(municipalityCode)) {
+          me.generateWorkList(municipalityListAllowed);
+        } else {
+          me.generateWorkList(backend.getUnverifiedMunicipalities(municipalityCode));
+        }
       });
 
       eventbus.on('municipality:verified', me.reloadForm);
@@ -47,6 +52,7 @@
       };
       var idLink = function (municipality) {
         return $('<a class="work-list-item"/>').attr('href', me.hrefDir).html(municipality.name).click(function(){
+          fromMunicipalityTabel = true;
           me.createVerificationForm(municipality);
         });
       };
@@ -58,7 +64,7 @@
       $('.filter-box').hide();
       var page = $('.page');
       page.attr('class', 'page-content-box');
-      if (showFormBtnVisible) page.find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
+      if (fromMunicipalityTabel) page.find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
           me.generateWorkList(municipalityList);
         })
       );
@@ -223,10 +229,10 @@
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
         if (limits.length == 1){
-          showFormBtnVisible = false;
           me.createVerificationForm(_.head(limits));
         }
         else {
+          fromMunicipalityTabel = false;
           var unknownLimits = _.partial.apply(null, [me.municipalityTable].concat([limits, ""]))();
           element.html($('<div class="municipality-list">').append(unknownLimits));
 
