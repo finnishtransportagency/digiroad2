@@ -8,8 +8,7 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             var selectedAssetType = $('#assetType').val();
 
             if (selectedLocation === null && selectedAssetType === null){
-                alert("Nothing chosen");
-                return;
+                setTimeout(function() { new GenericConfirmPopup("Mikään ei valittu.", {type: 'alert'});}, 1);
             }
             else if(selectedLocation == "currentLocation"){
                 backend.updateUserConfigurationDefaultLocation(location);
@@ -22,14 +21,14 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             }
             else{
                 if(userRole != "busStopMaintainer"){
-                backend.updateUserConfig("null", selectedLocation, selectedAssetType);
+                    backend.updateUserConfig("null", selectedLocation, selectedAssetType);
                 }
                 else
                 {
-                 backend.updateUserConfig(selectedLocation, "null", selectedAssetType);
+                    backend.updateUserConfig(selectedLocation, "null", selectedAssetType);
                 }
             }
-            new InstructionsPopup($('.digiroad2')).show('Laskeutumissivu päivitetty', 2000);
+            setTimeout(function() { new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: 'alert'});}, 1);
         },
         closeCallback: function(){},
         container: '.container'
@@ -94,7 +93,7 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             '</option>';
         _.map(assetTypes, function (typeId) {
             var type = assetTypeConfig.assetTypeInfo.find(function (asset) {
-                return asset.typeId === assetTypes[i];
+                return asset.typeId === typeId;
             });
 
             options += assetsOptions(type);
@@ -105,7 +104,7 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
 
     var pointAssetsDropdown = function () {
         var assetTypes = [
-            assetTypeConfig.assetTypes.massTransitLane,
+            assetTypeConfig.assetTypes.massTransitStop,
             assetTypeConfig.assetTypes.obstacles,
             assetTypeConfig.assetTypes.railwayCrossings,
             assetTypeConfig.assetTypes.directionalTrafficSigns,

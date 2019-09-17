@@ -1,18 +1,17 @@
 (function (root) {
   root.DefaultLocationButton = function (map, container, backend, assetTypeConfig, defaultAssetType, defaultCoordinates) {
     var vkm = function() {
-      if(lon !== 390000 && lat !== 6900000 && zoom !== 2){
+      if(zoom <= 5){
         backend.getMunicipalityFromCoordinates(lon, lat, function (vkmResult) {
-              var municipalityInfo = vkmResult.kunta ? vkmResult.kunta : "Tuntematon";
+              var municipalityInfo = vkmResult.kunta ? vkmResult.kunta : "Suomi";
               municipality = municipalityInfo;
-              ely = vkmResult.ely_nimi ? vkmResult.ely_nimi : "Tuntematon";
+              ely = vkmResult.ely_nimi ? vkmResult.ely_nimi : "Suomi";
             }, function () {
-              municipality = 'Tuntematon';
-              ely = 'Tuntematon';
+              municipality = 'Suomi';
+              ely = 'Suomi';
             }
         );
       }
-      return true;
     };
 
     var defaultAsset = defaultAssetType;
@@ -32,22 +31,30 @@
 
 
     eventbus.on('roles:fetched', function(userInfo) {
-      if (!(_.some(userInfo.roles, function(role) {return role === "viewer"; })))
-        roles = userInfo.roles.shift();
-        if (roles == "busStopMaintainer")  {
-            places = backend.getUserElyConfiguration();
-            municipality = ely;
-        }else{
-            places = backend.getUnverifiedMunicipalities();
-        }
-        vkm();
-        $('.default-location-btn-container').append('<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muokkaa aloitussivua</button>');
+      if (!(_.some(userInfo.roles, function(role) {return (role === "viewer" || role === "serviceRoadMaintainer");}))) {
+          roles = userInfo.roles.shift();
+          if (roles === "busStopMaintainer") {
+              places = backend.getUserElyConfiguration();
+              municipality = ely;
+          } else if (roles === "operator") {
+              places = [];
+          } else {
+              places = backend.getUnverifiedMunicipalities();
+          }
+          vkm();
+          $('.default-location-btn-container').append('<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muokkaa aloitussivua</button>');
+      }
 
       $('#default-location-btn').on('click', function () {
 
-          places.then(function(places) {
-            new ChangeInitialViewPopup(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
-          });
+          if (places.length === 0) {
+              new ChangeInitialViewPopup(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
+      }
+      else{
+              places.then(function (places) {
+                  new ChangeInitialViewPopup(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
+              });
+        }
         });
       });
 

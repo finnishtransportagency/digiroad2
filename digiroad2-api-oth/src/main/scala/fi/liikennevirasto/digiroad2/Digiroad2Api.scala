@@ -216,14 +216,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/startupParameters") {
-    val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, 160)
+    val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, 10)
     val user = userProvider.getCurrentUser()
     val assetTypeId = user.configuration.assetType match {
       case Some(assetType) => assetType
-      case _  => 160
+      case _  => 10
     }
     val userPreferences: Option[(Long, Long, Int, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom, user.configuration.assetType) match {
-      case (Some(east), Some(north), Some(zoom), None) => Some(east, north, zoom, 160)
+      case (Some(east), Some(north), Some(zoom), None) => Some(east, north, zoom, 10)
       case (Some(east), Some(north), Some(zoom), Some(assetType)) => Some(east, north, zoom, assetType)
       case _  => None
     }
@@ -1910,13 +1910,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
      if(idMunicipality == "null" && idEly!="null"){
-      val coordinatesEly = getMapViewStartParameters(municipalityDao.getCenterViewEly(idEly.toInt), 160)
+      val coordinatesEly = getMapViewStartParameters(municipalityDao.getCenterViewEly(idEly.toInt), 10)
       east = coordinatesEly.head._1.toLong
       north = coordinatesEly.head._2.toLong
       zoom = coordinatesEly.head._3.toInt
 
     }else if (idMunicipality != "null" && idEly=="null"){
-      val coordinatesMunicipality = getMapViewStartParameters(municipalityDao.getCenterViewMunicipality(idMunicipality.toInt), 160)
+      val coordinatesMunicipality = getMapViewStartParameters(municipalityDao.getCenterViewMunicipality(idMunicipality.toInt), 10)
       east = coordinatesMunicipality.head._1.toLong
       north = coordinatesMunicipality.head._2.toLong
       zoom = coordinatesMunicipality.head._3.toInt

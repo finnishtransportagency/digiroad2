@@ -1,5 +1,5 @@
 (function(application) {
-    var assetTypeId = 160;
+    var assetTypeId = 10;
     var defaultLocation = [390000, 6900000, 2];
   application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
     var assetTypeLayerName = 'massTransitStop';
@@ -146,16 +146,23 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         assetTypeId = startupParameters.assetType;
         defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
-        if(assetTypeId !== 0 && assetTypeId !==160) {
-            Object.keys(assetConfiguration.assetTypes).some(function (k) {
-                if (assetConfiguration.assetTypes[k] === assetTypeId) {
-                    assetTypeLayerName = k;
-                    return true;
-                }
-            });
+
+        assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId);
+        if(typeof assetTypeLayerName === 'undefined'){
+          assetTypeLayerName = getSelectedAssetByTypeId(linearAssets, assetTypeId);
         }
+        if(typeof assetTypeLayerName === 'undefined'){
+          assetTypeLayerName = getSelectedAssetByTypeId(groupedPointAssets, assetTypeId);
+        }
+
         if(assetTypeId === 0){
           assetTypeLayerName = "linkProperty";
+        }
+        else if(assetTypeId === 10){
+          assetTypeLayerName = "massTransitStop";
+        }
+        else{
+          assetTypeLayerName = assetTypeLayerName.layerName;
         }
 
         localizedStrings = assetPropertyNames;
@@ -467,6 +474,12 @@
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
     ol.proj.proj4.register(proj4);
   };
+
+  function getSelectedAssetByTypeId(assets, assetTypeId) {
+    return _.find(assets, function (asset) {
+      return asset.typeId === assetTypeId;
+    });
+  }
 
   function getSelectedPointAsset(pointAssets, layerName) {
     return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;
