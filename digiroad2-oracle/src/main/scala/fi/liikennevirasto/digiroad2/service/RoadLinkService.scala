@@ -861,9 +861,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val inputFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
     val outputFormat = new SimpleDateFormat("dd.MM.yyyy")
 
-    val resultsWithAddInfo = results.filter(_._2.exists(_._1 == additionalInfoPublicId)).map(_._1)
-
-    results.filter(r => resultsWithAddInfo.contains(r._1)).groupBy(_._1).map { attr =>
+    results.groupBy(_._1).map { attr =>
       val prop = attr._2.flatMap(_._2)
       PrivateRoadInfoStructure(
         prop.find(_._1 == privateRoadAssociationPublicId).map(_._2),

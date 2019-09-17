@@ -1942,11 +1942,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "municipalityName" -> municipalityName,
       "municipalityCode" -> municipalityCode,
       "results" ->
-        groupedResults.map{result =>
+        groupedResults.filter(row => row.privateRoadName.isDefined || row.associationId.isDefined).map{result =>
           Map(
             "privateRoadName" -> result.privateRoadName.getOrElse(""),
             "associationId" -> result.associationId.getOrElse(""),
-            "additionalInfo" -> result.additionalInfo.getOrElse(""),
+            "additionalInfo" -> result.additionalInfo.getOrElse(99),
             "lastModifiedDate" -> result.lastModifiedDate.getOrElse("")
           )
         }
