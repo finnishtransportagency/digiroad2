@@ -24,6 +24,7 @@
     this.bindExternalEventHandlers = function() {};
 
     this.workListItemTable = function(layerName, workListItems, municipalityName) {
+      var selected = [];
 
       var municipalityHeader = function(municipalityName, totalCount) {
         var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
@@ -33,10 +34,17 @@
         return $('<caption/>').html(headerName);
       };
 
+      var checkbox = function(itemId) {
+        var header = $('.content-box header').clone().children().remove().end().text();
+        if(header === "Tuntemattomien nopeusrajoitusten lista") {
+          return $('<td class="checkboxNoWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+        }
+      };
+
       var tableContentRows = function(assetsInfo) {
         return _.map(assetsInfo, function(item) {
           var image = item.floatingReason === 8 ?   warningIcon : '';
-          return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item))).append($('<td/>').append(image));
+          return $('<tr/>').append(typeof item.id !== 'undefined' ? checkbox(item.id) : checkbox(item)).append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item))).append($('<td/>').append(image));
         });
       };
 
@@ -63,6 +71,25 @@
           .append('</tbody></table>');
       };
 
+      var deleteBtn = function(){
+      var header = $('.content-box header').clone().children().remove().end().text();
+      if(header === "Tuntemattomien nopeusrajoitusten lista") {
+          return $('<button/>').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
+            new GenericConfirmPopup("Haluatko varmasti poistaa nämä tuntemattomat nopeusrajoitukset?", {
+              container: '#work-list',
+              successCallback: function () {
+                $(".verificationCheckbox:checkbox:checked").each(function () {
+                  selected.push(parseInt(($(this).attr('value'))));
+                });
+                //backend.removeMunicipalityVerification(selected, municipalityId);
+                selected = [];
+              },
+              closeCallback: function () {}
+            });
+      })
+      }
+      };
+
       if(layerName === 'maintenanceRoad') {
         var table = $('<div/>');
         table.append(tableForGroupingValues('Tuntematon', workListItems.Unknown));
@@ -72,7 +99,7 @@
         return table;
       } else
 
-        return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
+        return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount).append(deleteBtn()))
           .append(tableForGroupingValues('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
           .append(tableForGroupingValues('Valtion omistama', workListItems.State, workListItems.stateCount))
           .append(tableForGroupingValues('Yksityisen omistama', workListItems.Private, workListItems.privateCount))
