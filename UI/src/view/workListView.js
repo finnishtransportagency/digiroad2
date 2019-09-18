@@ -1,8 +1,10 @@
 (function (root) {
   root.WorkListView = function(){
     var me = this;
+      var backend;
     var warningIcon = '<img src="images/warningLabel.png" title="Pysäkki sijaitsee lakkautetulla tiellä"/>';
-    this.initialize = function() {
+    this.initialize = function(mapBackend) {
+        backend = mapBackend;
       me.bindEvents();
       $(window).on('hashchange', this.showApp);
     };
@@ -75,18 +77,22 @@
       var header = $('.content-box header').clone().children().remove().end().text();
       if(header === "Tuntemattomien nopeusrajoitusten lista") {
           return $('<button/>').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
-            new GenericConfirmPopup("Haluatko varmasti poistaa nämä tuntemattomat nopeusrajoitukset?", {
+            new GenericConfirmPopup("Haluatko varmasti poistaa valitut tuntemattomat nopeusrajoitukset?", {
               container: '#work-list',
               successCallback: function () {
                 $(".verificationCheckbox:checkbox:checked").each(function () {
                   selected.push(parseInt(($(this).attr('value'))));
                 });
-                //backend.removeMunicipalityVerification(selected, municipalityId);
+                backend.deleteUnknownSpeedLimit(selected, function (){
+                  new GenericConfirmPopup("Valitut tuntemattomat nopeusrajoitukset poistettu!", {container: '#work-list',type: "alert", okCallback: function() {location.reload();}});
+                }, function (){
+                  new GenericConfirmPopup("Valittuja tuntemattomia nopeusrajoituksia ei voitu poistaa. Yritä myöhemmin uudelleen!",{container: '#work-list',type: "alert"});
+                });
                 selected = [];
               },
               closeCallback: function () {}
             });
-      })
+      });
       }
       };
 

@@ -834,5 +834,17 @@
         error: failure
       });
     };
+
+    this.deleteUnknownSpeedLimit = function (data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/unknownSpeedLimit/delete",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
   };
 }(this));
