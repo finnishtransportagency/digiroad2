@@ -819,18 +819,6 @@
       };
       };
 
-      this.getUserConfiguration = function () {
-        return $.getJSON('api/userConfiguration');
-          };
-
-    this.getUserElyConfiguration = function () {
-      return $.getJSON('api/userConfiguration/elys');
-    };
-
-    this.updateUserConfig = function(idEly, idMunicipality, assetType) {
-      return $.getJSON('api/userConfiguration/' + idEly + '/' + idMunicipality + '/' +assetType);
-    };
-
     this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
       $.ajax({
         contentType: "application/json",

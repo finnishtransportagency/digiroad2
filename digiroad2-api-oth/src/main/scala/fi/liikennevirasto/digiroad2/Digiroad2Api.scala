@@ -1876,76 +1876,41 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
-  get("/userConfiguration/elys") {
-    val user = userProvider.getCurrentUser()
-    val elysId = municipalityDao.getElysByMunicipalities(user.configuration.authorizedMunicipalities)
-    val elysIdAndName = municipalityDao.getElysIdAndNamesByCode(elysId.toSet)
-
-    elysIdAndName.sortBy(_._2).map( ely =>
-      Map(
-        "id" -> ely._1,
-        "name" -> ely._2
-      )
-    )
-  }
-
-  get("/userConfiguration") {
-    val user = userProvider.getCurrentUser()
-    Map(
-      "username" -> user.username,
-      "configuration" -> user.configuration,
-      "name" -> user.name
-    )
-  }
-
-  get("/userConfiguration/:idEly/:idMunicipality/:assetType") {
-    val user = userProvider.getCurrentUser()
-    val idMunicipality = params("idMunicipality").toString
-    val idEly = params("idEly").toString
-    val assetType = params("assetType").toString
-
-    var east: Long = 0;
-    var north: Long = 0;
-    var zoom: Int = 0;
-
-
-     if(idMunicipality == "null" && idEly!="null"){
-      val coordinatesEly = getMapViewStartParameters(municipalityDao.getCenterViewEly(idEly.toInt), 10)
-      east = coordinatesEly.head._1.toLong
-      north = coordinatesEly.head._2.toLong
-      zoom = coordinatesEly.head._3.toInt
-
-    }else if (idMunicipality != "null" && idEly=="null"){
-      val coordinatesMunicipality = getMapViewStartParameters(municipalityDao.getCenterViewMunicipality(idMunicipality.toInt), 10)
-      east = coordinatesMunicipality.head._1.toLong
-      north = coordinatesMunicipality.head._2.toLong
-      zoom = coordinatesMunicipality.head._3.toInt
-    }
-
-
-    if(idMunicipality == "null" && idEly == "null"){
-      val assetTypeId = assetType.toInt
-      val updatedUser = user.copy(configuration = user.configuration.copy(assetType = Option(assetTypeId)))
-      userProvider.updateUserConfiguration(updatedUser)
-    }
-    else if(assetType == "null"){
-      val updatedUser = user.copy(configuration = user.configuration.copy(east = Option(east), north = Option(north), zoom = Option(zoom)))
-      userProvider.updateUserConfiguration(updatedUser)
-    }
-    else if((idMunicipality != "null" || idEly !="null") && assetType != "null"){
-      val assetTypeId = assetType.toInt
-      val updatedUser = user.copy(configuration = user.configuration.copy(east = Option(east), north = Option(north), zoom = Option(zoom), assetType = Option(assetTypeId)))
-      userProvider.updateUserConfiguration(updatedUser)
-    }
-  }
-
   put("/userConfiguration/defaultLocation") {
+    def getCenterView(id: Int, getCenterViewFunctionType: Int => Option[MapViewZoom], user: User): User = {
+      getCenterViewFunctionType(id) match {
+        case Some(centerView) =>
+          val east = Option(centerView.geometry.x.toLong)
+          val north = Option(centerView.geometry.y.toLong)
+          val zoom = Option(centerView.zoom)
+
+          user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
+        case _ => user
+      }
+    }
+
     val user = userProvider.getCurrentUser()
     val east = (parsedBody \ "lon").extractOpt[Long]
     val north = (parsedBody \ "lat").extractOpt[Long]
     val zoom = (parsedBody \ "zoom").extractOpt[Int]
+    val assetType = (parsedBody \ "assetType").extractOpt[Int]
+    val municipalityId = (parsedBody \ "municipalityId").extractOpt[Int]
+    val elyId = (parsedBody \ "municipalityId").extractOpt[Int]
 
-    val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
+    val updatedUserWithAssetType = assetType match {
+      case Some(_) => user.copy(configuration = user.configuration.copy(assetType = assetType))
+      case _ => user
+    }
+
+    val updatedUser = (municipalityId, elyId) match {
+      case (Some(idMunicipality), _) =>
+        getCenterView(idMunicipality, municipalityDao.getCenterViewMunicipality, updatedUserWithAssetType)
+      case (_, Some(idEly)) =>
+        getCenterView(idEly, municipalityDao.getCenterViewEly, updatedUserWithAssetType)
+      case (_, _) =>
+        updatedUserWithAssetType.copy(configuration = updatedUserWithAssetType.configuration.copy(east = east, north = north, zoom = zoom))
+    }
+
     userProvider.updateUserConfiguration(updatedUser)
   }
 

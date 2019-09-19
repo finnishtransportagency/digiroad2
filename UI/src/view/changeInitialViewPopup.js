@@ -1,38 +1,40 @@
 window.ChangeInitialViewPopup = function(backend, location, userRole, places, assetTypeConfig, defaultAsset, municipality) {
 
-    var options = {
-        confirmButton: 'Tallenna',
-        cancelButton: 'Peruuta',
-        successCallback: function(){
-            var selectedLocation = $('#location').val();
-            var selectedAssetType = $('#assetType').val();
+  var options = {
+    confirmButton: 'Tallenna',
+    cancelButton: 'Peruuta',
+    successCallback: function () {
+      var selectedLocation = $('#location').val();
+      var selectedAssetType = $('#assetType').val();
+      var defaultParameters = {lon: 390000, lat: 6900000, zoom: 2, assetType: selectedAssetType, municipalityId: null, elyId: null};
 
-            if (selectedLocation === null && selectedAssetType === null){
-                setTimeout(function() { new GenericConfirmPopup("Mikään ei valittu.", {type: 'alert'});}, 1);
-            }
-            else if(selectedLocation == "currentLocation"){
-                backend.updateUserConfigurationDefaultLocation(location);
-                backend.updateUserConfig("null", "null", selectedAssetType);
-            }
-            else if(selectedLocation == "suomi"){
-                var suomi = {lon: 390000, lat: 6900000, zoom: 2};
-                backend.updateUserConfigurationDefaultLocation(suomi);
-                backend.updateUserConfig("null", "null", selectedAssetType);
-            }
-            else{
-                if(userRole != "busStopMaintainer"){
-                    backend.updateUserConfig("null", selectedLocation, selectedAssetType);
-                }
-                else
-                {
-                    backend.updateUserConfig(selectedLocation, "null", selectedAssetType);
-                }
-            }
-            setTimeout(function() { new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: 'alert'});}, 1);
-        },
-        closeCallback: function(){},
-        container: '.container'
-    };
+      if (selectedLocation === "currentLocation") {
+        defaultParameters.lon = location.lon;
+        defaultParameters.lat = location.lat;
+        defaultParameters.zoom = location.zoom;
+        backend.updateUserConfigurationDefaultLocation(defaultParameters);
+      }
+      else if (selectedLocation === "suomi") {
+        backend.updateUserConfigurationDefaultLocation(defaultParameters);
+      }
+      else {
+        if (userRole !== "busStopMaintainer") {
+          defaultParameters.municipalityId = selectedLocation;
+        }
+        else {
+          defaultParameters.elyId = selectedLocation;
+        }
+        backend.updateUserConfigurationDefaultLocation(defaultParameters);
+      }
+
+      setTimeout(function () {
+        new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: 'alert'});
+      }, 1);
+
+    },
+    closeCallback: function () {},
+    container: '.container'
+  };
 
     var placesOptions = function (municipality) {
         return '' +
@@ -86,7 +88,6 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             assetTypeConfig.assetTypes.trafficVolume
         ];
 
-        var i = 0;
         var options = '' +
             '<option value=' + 0 + '>' +
             "Tielinkki" +
@@ -97,7 +98,6 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             });
 
             options += assetsOptions(type);
-            i++;
         });
     return options;
     };
@@ -118,7 +118,6 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             assetTypeConfig.assetTypes.trWeightLimits
         ];
 
-        var i = 0;
         var options = '';
         _.map(assetTypes, function (typeId) {
             var type = assetTypeConfig.assetTypeInfo.find(function (asset) {
@@ -126,7 +125,6 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             });
 
             options += assetsOptions(type);
-            i++;
         });
         return options;
     };
@@ -136,7 +134,7 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
             '<div class="modal-dialog">' +
                 '<div class="content">' +
                     '<b>' + "Aloitussivu" + '</b>' +
-                    '<a class="header-link no" href="#">' + "Sulje" + '</a>' +
+                    '<a class="header-link cancel" href="#">' + "Sulje" + '</a>' +
                 '</div>' +
 
                 '<div class="contentNoBackColor">' +
@@ -146,9 +144,9 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
 
                     '<div>' +
                     '<select id="location" class="form-dark form-control municipalityEly" name="places">' +
-                        '<option disabled selected>' + "Valitse sijainti" + '</option>' +
-                        '<option value="currentLocation">' + "Valitse nykyinen karttasijainti" +'</option>' +
-                        '<option value="suomi">'+ "Suomi" +'</option>' +
+                        '<option value="" disabled selected>Valitse sijainti</option>' +
+                        '<option value="currentLocation">Valitse nykyinen karttasijainti</option>' +
+                        '<option value="suomi">Suomi</option>' +
                         municipalityDropdown() +
                     '</select>' +
                     '</div>' +
@@ -161,10 +159,10 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
                     '</div>' +
                     '<div>' +
                         '<select id="assetType" class="form-dark form-control assetType"  name="form-control places">' +
-                            '<option disabled selected>' + "Valitse omaisuuslaji" + '</option>' +
-                            '<option value="linearAssets" disabled>' + "Viivamaiset kohteet" +'</option>' +
+                            '<option value="" disabled selected>Valitse omaisuuslaji</option>' +
+                            '<option value="linearAssets" disabled>Viivamaiset kohteet</option>' +
                                 linearAssetsDropdown() +
-                            '<option value="pointAssets" disabled>' + "Pistemäiset kohteet" +'</option>' +
+                            '<option value="pointAssets" disabled>Pistemäiset kohteet</option>' +
                             pointAssetsDropdown() +
                         '</select>' +
                     '</div>' +
@@ -175,39 +173,46 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
                 '<br>' +
 
                 '<div class="actions" style ="float: right">' +
-                    '<button class = "btn btn-secondary no">' + options.cancelButton + '</button>' +
-                    '<button class = "btn btn-primary yes">' + options.confirmButton + '</button>' +
+                    '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
+                    '<button class = "btn btn-primary confirm" disabled>' + options.confirmButton + '</button>' +
                 '</div>' +
             '</div>' +
         '</div>';
 
-    var renderConfirmDialog = function() {
-        var template = confirmDiv;
+  var renderConfirmDialog = function () {
+    var template = confirmDiv;
 
-        jQuery(options.container).append(template);
-        var modal = $('.modal-dialog');
-    };
+    $(options.container).append(template);
+    var modal = $('.modal-dialog');
+  };
 
-    var bindEvents = function() {
-        jQuery('.confirm-modal .no').on('click', function() {
-            purge();
-            options.closeCallback();
-        });
-        jQuery('.confirm-modal .yes').on('click', function() {
-            options.successCallback();
-            purge();
-        });
-    };
+  var setConfirmButtonState = function () {
+    $('.confirm-modal .confirm').prop('disabled', _.isEmpty($('.confirm-modal #location').val()) && _.isEmpty($('.confirm-modal #assetType').val()));
+  };
 
-    var show = function() {
-        purge();
-        renderConfirmDialog();
-        bindEvents();
-    };
+  var bindEvents = function () {
+    $('.confirm-modal .cancel').on('click', function () {
+      purge();
+      options.closeCallback();
+    });
+    $('.confirm-modal .confirm').on('click', function () {
+      options.successCallback();
+      purge();
+    });
+    $('#location,#assetType').change(function () {
+      setConfirmButtonState();
+    });
+  };
 
-    var purge = function() {
-        jQuery('.confirm-modal').remove();
-    };
+  var show = function () {
+    purge();
+    renderConfirmDialog();
+    bindEvents();
+  };
 
-    show();
+  var purge = function () {
+    $('.confirm-modal').remove();
+  };
+
+  show();
 };
