@@ -1,6 +1,7 @@
 (function (root) {
   var unit = 'km/h';
   var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+  var backend;
   var template = function(selectedSpeedLimit) {
     var modifiedBy = selectedSpeedLimit.getModifiedBy() || '-';
     var modifiedDateTime = selectedSpeedLimit.getModifiedDateTime() ? ' ' + selectedSpeedLimit.getModifiedDateTime() : '';
@@ -131,6 +132,10 @@
 
   var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
     new FeedbackDataTool(feedbackCollection, 'speedLimit', authorizationPolicy);
+    backend = feedbackCollection.backend;
+    if (authorizationPolicy.userRoles.length === 0){
+      backend.getUserRoles();
+    }
 
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
