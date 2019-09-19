@@ -292,11 +292,15 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
   def vkmToVVHRoadLink(vkmAddr: Seq[RoadAddressTEMP]) : Seq[ViiteRoadAddress] = {
     val roadLinks =  roadLinkService.fetchVVHRoadlinks(vkmAddr.map(ra => ra.linkId).toSet)
 
-    vkmAddr.map{ vkm  =>
-      val roadLink = roadLinks.find(_.linkId == vkm.linkId).get
-      val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, vkm.startMValue, vkm.endMValue)
-      ViiteRoadAddress(0, vkm.road, vkm.roadPart, vkm.track, vkm.startAddressM, vkm.endAddressM, None, None, vkm.linkId, vkm.startMValue, vkm.endMValue,
-        vkm.sideCode.getOrElse(SideCode.Unknown), geometry, false, None, None, None)
+    vkmAddr.flatMap { vkm =>
+      roadLinks.find(_.linkId == vkm.linkId) match {
+        case Some(roadLink) =>
+          val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, vkm.startMValue, vkm.endMValue)
+
+          Seq(ViiteRoadAddress(0, vkm.road, vkm.roadPart, vkm.track, vkm.startAddressM, vkm.endAddressM, None, None, vkm.linkId, vkm.startMValue, vkm.endMValue,
+            vkm.sideCode.getOrElse(SideCode.Unknown), geometry, false, None, None, None))
+        case _ => Seq()
+      }
     }
   }
 
