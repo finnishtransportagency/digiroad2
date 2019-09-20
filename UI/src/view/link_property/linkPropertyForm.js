@@ -82,9 +82,21 @@
       return localizedLinkType && localizedLinkType[1];
     };
 
-    var getVerticalLevelType = function(verticalLevel){
-      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
-      return verticalLevelType && verticalLevelType[1];
+    var getVerticalLevelType = function(verticalLevel) {
+      if(typeof verticalLevel === 'string'){
+        var multipleLevels = verticalLevel.includes(",");
+        if (multipleLevels) {
+          return "[useita eri arvoja]";
+        }
+        else{
+          var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel, 10); });
+          return verticalLevelType && verticalLevelType[1];
+        }
+      }
+      else{
+        var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+        return verticalLevelType && verticalLevelType[1];
+      }
     };
 
     var getConstructionType = function(constructionTypeId){
@@ -105,6 +117,9 @@
     var checkIfMultiSelection = function(mmlId){
       if(selectedLinkProperty.count() === 1){
         return mmlId;
+      }
+      else{
+        return "[useita eri arvoja]";
       }
     };
 
