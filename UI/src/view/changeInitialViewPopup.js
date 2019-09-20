@@ -5,8 +5,8 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
     cancelButton: 'Peruuta',
     successCallback: function () {
       var selectedLocation = $('#location').val();
-      var selectedAssetType = $('#assetType').val();
-      var defaultParameters = {lon: 390000, lat: 6900000, zoom: 2, assetType: selectedAssetType, municipalityId: null, elyId: null};
+      var selectedAssetType = parseInt($('#assetType').val(), 10);
+      var defaultParameters = {lon: null, lat: null, zoom: null, assetType: selectedAssetType, municipalityId: null, elyId: null};
 
       if (selectedLocation === "currentLocation") {
         defaultParameters.lon = location.lon;
@@ -15,14 +15,17 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
         backend.updateUserConfigurationDefaultLocation(defaultParameters);
       }
       else if (selectedLocation === "suomi") {
+        defaultParameters.lon = 390000;
+        defaultParameters.lat = 6900000;
+        defaultParameters.zoom = 2;
         backend.updateUserConfigurationDefaultLocation(defaultParameters);
       }
       else {
         if (userRole !== "busStopMaintainer") {
-          defaultParameters.municipalityId = selectedLocation;
+          defaultParameters.municipalityId = parseInt(selectedLocation, 10);
         }
         else {
-          defaultParameters.elyId = selectedLocation;
+          defaultParameters.elyId = parseInt(selectedLocation,10);
         }
         backend.updateUserConfigurationDefaultLocation(defaultParameters);
       }

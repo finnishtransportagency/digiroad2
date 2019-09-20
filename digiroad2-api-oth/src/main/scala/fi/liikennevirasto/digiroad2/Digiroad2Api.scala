@@ -1876,6 +1876,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
+  get("/userConfiguration/elys") {
+    val user = userProvider.getCurrentUser()
+    val elysId = municipalityDao.getElysByMunicipalities(user.configuration.authorizedMunicipalities)
+    val elysIdAndName = municipalityDao.getElysIdAndNamesByCode(elysId.toSet)
+
+    elysIdAndName.sortBy(_._2).map( ely =>
+      Map(
+        "id" -> ely._1,
+        "name" -> ely._2
+      )
+    )
+  }
+
   put("/userConfiguration/defaultLocation") {
     def getCenterView(id: Int, getCenterViewFunctionType: Int => Option[MapViewZoom], user: User): User = {
       getCenterViewFunctionType(id) match {
@@ -1895,20 +1908,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val zoom = (parsedBody \ "zoom").extractOpt[Int]
     val assetType = (parsedBody \ "assetType").extractOpt[Int]
     val municipalityId = (parsedBody \ "municipalityId").extractOpt[Int]
-    val elyId = (parsedBody \ "municipalityId").extractOpt[Int]
+    val elyId = (parsedBody \ "elyId").extractOpt[Int]
 
     val updatedUserWithAssetType = assetType match {
       case Some(_) => user.copy(configuration = user.configuration.copy(assetType = assetType))
       case _ => user
     }
 
-    val updatedUser = (municipalityId, elyId) match {
-      case (Some(idMunicipality), _) =>
+    val updatedUser = (municipalityId, elyId, east) match {
+      case (Some(idMunicipality), _, _) =>
         getCenterView(idMunicipality, municipalityDao.getCenterViewMunicipality, updatedUserWithAssetType)
-      case (_, Some(idEly)) =>
+      case (_, Some(idEly), _) =>
         getCenterView(idEly, municipalityDao.getCenterViewEly, updatedUserWithAssetType)
-      case (_, _) =>
+      case (_, _, Some(_)) =>
         updatedUserWithAssetType.copy(configuration = updatedUserWithAssetType.configuration.copy(east = east, north = north, zoom = zoom))
+      case _ =>
+        updatedUserWithAssetType
     }
 
     userProvider.updateUserConfiguration(updatedUser)
