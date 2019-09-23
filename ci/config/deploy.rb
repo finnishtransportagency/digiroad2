@@ -1,4 +1,3 @@
-lock '3.11.0'
 set :application, 'digiroad2'
 set :repo_url, 'https://github.com/finnishtransportagency/digiroad2.git'
 set :branch, ENV['REVISION'] || ENV['BRANCH_NAME'] || 'master'
