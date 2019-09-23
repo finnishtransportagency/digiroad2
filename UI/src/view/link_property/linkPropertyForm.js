@@ -83,18 +83,20 @@
     };
 
     var getVerticalLevelType = function(verticalLevel) {
+      var verticalLevelType;
+
       if(typeof verticalLevel === 'string'){
         var multipleLevels = verticalLevel.includes(",");
         if (multipleLevels) {
           return "[useita eri arvoja]";
         }
         else{
-          var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel, 10); });
+          verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel, 10); });
           return verticalLevelType && verticalLevelType[1];
         }
       }
       else{
-        var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+        verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
         return verticalLevelType && verticalLevelType[1];
       }
     };
