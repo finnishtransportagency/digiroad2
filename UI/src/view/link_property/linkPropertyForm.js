@@ -255,9 +255,14 @@
       if(!minAddressNumber && !maxAddressNumber) {
         return '';
       } else {
-        var min = minAddressNumber || '';
-        var max = maxAddressNumber || '';
-        return min + '-' + max;
+        if(selectedLinkProperty.count() > 1) {
+          return "[useita eri arvoja]";
+        }
+        else {
+          var min = minAddressNumber || '';
+          var max = maxAddressNumber || '';
+          return min + '-' + max;
+        }
       }
     };
 
