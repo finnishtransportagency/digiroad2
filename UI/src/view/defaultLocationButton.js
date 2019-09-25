@@ -32,7 +32,7 @@
 
     eventbus.on('roles:fetched', function(userInfo) {
       if (!(_.some(userInfo.roles, function(role) {return (role === "viewer" || role === "serviceRoadMaintainer");}))) {
-          roles = userInfo.roles.shift();
+          roles = userInfo.roles[0];
           if (roles === "busStopMaintainer") {
               places = backend.getUserElyConfiguration();
               municipality = ely;
