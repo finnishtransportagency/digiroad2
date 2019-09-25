@@ -1194,7 +1194,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/speedlimits") {
-    val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = Set()
 
     params.get("bbox").map { bbox =>
