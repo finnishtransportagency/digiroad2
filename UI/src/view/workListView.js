@@ -21,6 +21,15 @@
         $('body').addClass('scrollable');
         me.generateWorkList(layerName, listP);
       });
+
+      $('#work-list').on('click', ':checkbox', function () {
+        setDeleteButtonState();
+      });
+    };
+
+    var setDeleteButtonState = function () {
+      var checkedBoxes = $(".verificationCheckbox:checkbox:checked");
+      $('#deleteUnknownSpeedLimits').prop('disabled', _.isEmpty(checkedBoxes));
     };
 
     this.bindExternalEventHandlers = function() {};
@@ -39,7 +48,7 @@
       var checkbox = function(itemId) {
         var header = $('.content-box header').clone().children().remove().end().text();
         if(header === "Tuntemattomien nopeusrajoitusten lista") {
-          return $('<td class="checkboxNoWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+          return $('<td class="checkboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
         }
       };
 
@@ -76,7 +85,7 @@
       var deleteBtn = function(){
       var header = $('.content-box header').clone().children().remove().end().text();
       if(header === "Tuntemattomien nopeusrajoitusten lista") {
-          return $('<button/>').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
+          return $('<button disabled/>').attr('id', 'deleteUnknownSpeedLimits').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
             new GenericConfirmPopup("Haluatko varmasti poistaa valitut tuntemattomat nopeusrajoitukset?", {
               container: '#work-list',
               successCallback: function () {

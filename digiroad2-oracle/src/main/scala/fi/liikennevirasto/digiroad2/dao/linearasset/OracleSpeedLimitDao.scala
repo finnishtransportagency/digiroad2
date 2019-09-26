@@ -536,6 +536,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       select name_fi, s.administrative_class, count(*), m.id
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0
       group by name_fi, administrative_class, m.id
     """.as[(String, Int, Int, Int)].list
 
