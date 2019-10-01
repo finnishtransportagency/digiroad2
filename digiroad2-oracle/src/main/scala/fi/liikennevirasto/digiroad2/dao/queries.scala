@@ -4,6 +4,7 @@ import java.sql.Connection
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
 import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
@@ -347,6 +348,30 @@ object Queries {
     sql"""
       select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
     """.as[(Long, Long, Int, Option[String], Option[String])].list
+  }
+
+  //Table lorry_parking_to_datex2 created using an shape file importer, does't exist on Flyway
+  def getLorryParkingToTransform(): Set[LorryParkingInDATEX2] = {
+    Q.queryNA[LorryParkingInDATEX2](
+      s"""
+      select PALVPISTID, PALVELUID, TYYPPI, TYYPPI_TAR, NIMI, LISATIEDOT, MUOKKAUSPV, KUNTAKOODI, GEOMETRY from lorry_parking_to_datex2
+    """).iterator.toSet
+  }
+
+  implicit val getLorryParkings = new GetResult[LorryParkingInDATEX2] {
+    def apply(r: PositionedResult) = {
+      val servicePointId = r.nextLongOption()
+      val serviceId = r.nextLongOption()
+      val parkingType = r.nextInt()
+      val parkingTypeMeaning = r.nextInt()
+      val name = r.nextStringOption()
+      val additionalInfo = r.nextStringOption()
+      val modifiedDate = r.nextStringOption()
+      val municipalityCode = r.nextInt()
+      val point = r.nextBytesOption().map(bytesToPoint).get
+
+      LorryParkingInDATEX2(servicePointId, serviceId, parkingType, parkingTypeMeaning, name, additionalInfo, point.x, point.y, modifiedDate, municipalityCode)
+    }
   }
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {

@@ -1770,6 +1770,25 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def transformLorryParkingIntoDatex2(): Unit = {
+    //This Batch will use the table PARKS_TO_DATEX previus populated by a shape file gived to the transformation (Example: DROTH-1998)
+    //That table was generated when the conversion of shapefile to ours database
+    println("\nStart process transform lorry parkings into Datex2 format")
+    println(DateTime.now())
+    println()
+
+    val datex2Generator = new Datex2Generator()
+    OracleDatabase.withDynTransaction {
+      val lorryParkingInfo = Queries.getLorryParkingToTransform()
+      datex2Generator.convertToDatex2(lorryParkingInfo)
+    }
+
+
+    println()
+    println()
+    println("Complete at time: " + DateTime.now())
+  }
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -2274,6 +2293,8 @@ object DataFixture {
         resolvingFrozenLinks()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
+      case Some("transform_lorry_parking_into_datex2") =>
+        transformLorryParkingIntoDatex2()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2287,7 +2308,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info")
+        " resolving_Frozen_Links| import_private_road_info | transform_lorry_parking_into_datex2")
     }
   }
 }
