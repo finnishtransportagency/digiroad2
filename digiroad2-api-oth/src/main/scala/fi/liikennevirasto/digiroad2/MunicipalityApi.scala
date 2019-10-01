@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
+import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkService}
@@ -13,11 +14,13 @@ import org.json4s.JsonAST.JObject
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
+import org.json4s.native.Serialization._
+import org.json4s.native.Serialization
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import scala.util.{Try, Success, Failure}
 
 case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 case class NewManoeuvreValues(linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], properties: Seq[ManoeuvreProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
-
 
 case class ExampleItemResponseOnGet(linkId: Long, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], createdAt: DateTime, geometryTimestamp: Int)
 case class ExampleItemResponseOnCreate(linkId: Long, assetType: Int, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], createdAt: DateTime)
@@ -25,6 +28,7 @@ case class ExampleItemRequestOnCreate(linkId: Long, startMeasure: Int, endMeasur
 case class ExampleItemResponseOnUpdate(linkId: Long, assetType: Int, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], geometryTimestamp: Int, createdAt: DateTime,  modifiedAt: DateTime)
 case class ExampleItemRequestOnUpdate(linkId: Long, startMeasure: Int, endMeasure: Int, sideCode: Int, geometryTimestamp: Int, properties: List[TypeProperty])
 case class TypeProperty(name: String, value: Int)
+case class Dataset(datasetId: Option[Any] = None, geoJson: Option[Any] = None, matchedRoadlinks: Option[Any] = None)
 
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
@@ -1129,18 +1133,23 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  case class Dataset(datasetId: Option[Any] = None,
-                     geoJson: Option[Any] = None,
-                     matchedRoadlinks: Option[Any] = None
-                     )
+  def municipalityDao = new MunicipalityDao
 
   put("/update"){
-    val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
+    try {
+      val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
 
-    val listDatasets = jsonDatasets.map(data =>
-      Dataset(data.head(0), data.head(1), data.head(2))
-    )
+      val listDatasets = jsonDatasets.map(data =>
+        Dataset(data.head(0), data.head(1), data.head(2))
+      )
 
-    listDatasets
+      implicit val formats = Serialization.formats(NoTypeHints)
+      listDatasets.map(dataset =>
+        municipalityDao.insertDataset(dataset.datasetId.get.asInstanceOf[String], write(dataset.geoJson.get.asInstanceOf[Map[Any, Any]]), write(dataset.matchedRoadlinks.get.asInstanceOf[List[List[Any]]]))
+      )
+      "Datasets received with success."
+    } catch {
+      case _: Throwable => "Couldn't receive datasets. Please verify information provided."
+    }
   }
 }
