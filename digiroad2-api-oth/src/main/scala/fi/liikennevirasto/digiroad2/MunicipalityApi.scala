@@ -1128,5 +1128,19 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         }
     }
   }
-}
 
+  case class Dataset(datasetId: Option[Any] = None,
+                     geoJson: Option[Any] = None,
+                     matchedRoadlinks: Option[Any] = None
+                     )
+
+  put("/update"){
+    val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
+
+    val listDatasets = jsonDatasets.map(data =>
+      Dataset(data.head(0), data.head(1), data.head(2))
+    )
+
+    listDatasets
+  }
+}
