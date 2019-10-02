@@ -1,7 +1,8 @@
 (function (root) {
   root.WorkListView = function(){
     var me = this;
-      var backend;
+    var numberOfLimits;
+    var backend;
     var warningIcon = '<img src="images/warningLabel.png" title="Pysäkki sijaitsee lakkautetulla tiellä"/>';
     this.initialize = function(mapBackend) {
         backend = mapBackend;
@@ -23,18 +24,14 @@
       });
 
       $('#work-list').on('click', ':checkbox', function () {
-        setDeleteButtonState();
+        var checkedBoxes = $(".verificationCheckbox:checkbox:checked");
+        $('#deleteUnknownSpeedLimits').prop('disabled', _.isEmpty(checkedBoxes));
       });
-    };
-
-    var setDeleteButtonState = function () {
-      var checkedBoxes = $(".verificationCheckbox:checkbox:checked");
-      $('#deleteUnknownSpeedLimits').prop('disabled', _.isEmpty(checkedBoxes));
     };
 
     this.bindExternalEventHandlers = function() {};
 
-    this.workListItemTable = function(layerName, workListItems, municipalityName) {
+    this.workListItemTable = function(layerName, showDeleteCheckboxes, workListItems, municipalityName) {
       var selected = [];
 
       var municipalityHeader = function(municipalityName, totalCount) {
@@ -46,16 +43,26 @@
       };
 
       var checkbox = function(itemId) {
-        var header = $('.content-box header').clone().children().remove().end().text();
-        if(header === "Tuntemattomien nopeusrajoitusten lista") {
-          return $('<td class="checkboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
+        if(showDeleteCheckboxes) {
+          return $('<td class="unknownSpeedLimitCheckboxWidth"/>').append($('<input type="checkbox" class="verificationCheckbox"/>').val(itemId));
         }
       };
 
       var tableContentRows = function(assetsInfo) {
         return _.map(assetsInfo, function(item) {
-          var image = item.floatingReason === 8 ?   warningIcon : '';
-          return $('<tr/>').append(typeof item.id !== 'undefined' ? checkbox(item.id) : checkbox(item)).append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item))).append($('<td/>').append(image));
+          var image = item.floatingReason === 8 ? warningIcon : '';
+          var checkboxFunction;
+          var idToShow;
+
+          if (!_.isUndefined(item.id)) {
+            checkboxFunction = checkbox(item.id);
+            idToShow = assetLink(item);
+          } else {
+            checkboxFunction = checkbox(item);
+            idToShow = idLink(item);
+          }
+
+          return $('<tr/>').append(checkboxFunction).append($('<td/>').append(idToShow)).append($('<td/>').append(image));
         });
       };
 
@@ -83,8 +90,8 @@
       };
 
       var deleteBtn = function(){
-      var header = $('.content-box header').clone().children().remove().end().text();
-      if(header === "Tuntemattomien nopeusrajoitusten lista") {
+      if(showDeleteCheckboxes && numberOfLimits === 0) {
+        numberOfLimits++;
           return $('<button disabled/>').attr('id', 'deleteUnknownSpeedLimits').addClass('delete btn btn-municipality').text('Poista turhat kohteet').click(function () {
             new GenericConfirmPopup("Haluatko varmasti poistaa valitut tuntemattomat nopeusrajoitukset?", {
               container: '#work-list',
@@ -123,7 +130,7 @@
 
     this.generateWorkList = function(layerName, listP) {
       var layerInfo = {
-        speedLimit: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit'},
+        speedLimit: {Title: 'Tuntemattomien nopeusrajoitusten lista',  SourceLayer: 'speedLimit', ShowDeleteCheckboxes: true},
         speedLimitErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'speedLimit'},
         linkProperty: 'Korjattavien linkkien lista',
         massTransitStop: 'Geometrian ulkopuolelle jääneet pysäkit',
@@ -148,6 +155,7 @@
 
       var sourceLayer = (layerInfo[layerName].SourceLayer) ? layerInfo[layerName].SourceLayer : layerName;
       var title = (layerInfo[layerName].Title) ? layerInfo[layerName].Title : layerInfo[layerName];
+      var showDeleteCheckboxes = (layerInfo[layerName].ShowDeleteCheckboxes) ? layerInfo[layerName].ShowDeleteCheckboxes : false;
 
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
@@ -162,7 +170,8 @@
         '</div>'
       );
       listP.then(function(limits) {
-        var unknownLimits = _.map(limits, _.partial(me.workListItemTable, layerName));
+        numberOfLimits = 0;
+        var unknownLimits = _.map(limits, _.partial(me.workListItemTable, layerName, showDeleteCheckboxes));
         $('#work-list .work-list').html(unknownLimits);
       });
     };

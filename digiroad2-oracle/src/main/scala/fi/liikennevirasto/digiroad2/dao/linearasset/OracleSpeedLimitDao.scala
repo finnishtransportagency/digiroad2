@@ -526,7 +526,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     sqlu"""delete from unknown_speed_limit where link_id in (#${linkIds.mkString(",")})""".execute
   }
 
-  def hideUnknownSpeedLimits(linkIds: Set[Int]): Set[Int] = {
+  def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {
     sqlu"""update unknown_speed_limit set unnecessary = 1 where link_id in (#${linkIds.mkString(",")})""".execute
     linkIds
   }
