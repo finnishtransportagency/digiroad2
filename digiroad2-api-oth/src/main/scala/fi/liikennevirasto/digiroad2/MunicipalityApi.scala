@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import java.sql.SQLException
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
@@ -27,7 +28,7 @@ case class ExampleItemRequestOnCreate(linkId: Long, startMeasure: Int, endMeasur
 case class ExampleItemResponseOnUpdate(linkId: Long, assetType: Int, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], geometryTimestamp: Int, createdAt: DateTime,  modifiedAt: DateTime)
 case class ExampleItemRequestOnUpdate(linkId: Long, startMeasure: Int, endMeasure: Int, sideCode: Int, geometryTimestamp: Int, properties: List[TypeProperty])
 case class TypeProperty(name: String, value: Int)
-case class Dataset(datasetId: Option[String] = None, geoJson: Option[Map[Any, Any]] = None, roadlinks: Option[List[List[Any]]] = None)
+case class Dataset(datasetId: Option[String] = None, geoJson: Option[Map[Any, Any]] = None, roadlinks: Option[List[List[BigInt]]] = None)
 
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
@@ -1134,22 +1135,51 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def municipalityDao = new MunicipalityDao
 
-  put("/update"){
+  def validateDataset(dataset: Dataset): Unit= {
+    val assets = dataset.geoJson.get("features").asInstanceOf[List[Map[String, Any]]]
+    val roadlinks = dataset.roadlinks.get.flatten.toSet
+    linkIdValidation(roadlinks.map(number => number.longValue()))
+
+    if(assets.length != dataset.roadlinks.get.length)
+      halt(BadRequest("Assets and roadlinks not corresponding"))
+
+    assets.foreach(feature => {
+      val assetTypeGeometry = feature.getOrElse("geometry", halt(BadRequest("Asset properties not found"))).asInstanceOf[Map[String, Any]]("type")
+      val properties = feature.getOrElse("properties", halt(BadRequest("Asset geometry type not found"))).asInstanceOf[Map[String, Any]]
+
+      assetTypeGeometry match {
+        case "LineString" =>
+          properties.getOrElse("type", halt(BadRequest("LineString asset type not found"))).asInstanceOf[String]
+          properties.getOrElse("pavementClass", halt(BadRequest("LineString asset pavementClass not found"))).asInstanceOf[String].toInt
+          properties.getOrElse("name", halt(BadRequest("LineString asset name not found"))).asInstanceOf[String]
+        case "Point" =>
+          properties.getOrElse("type", halt(BadRequest("Point asset type not found"))).asInstanceOf[String]
+        case _ => halt(BadRequest("Invalid asset geometry type"))
+      }
+      }
+    )
+  }
+
+  put("/assetUpdateFromAWS"){
     try {
       val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
 
       val listDatasets = jsonDatasets.map(data =>
-        Dataset(data.head(0).asInstanceOf[Option[String]], data.head(1).asInstanceOf[Option[Map[Any, Any]]], data.head(2).asInstanceOf[Option[List[List[Any]]]])
+        Dataset(data.head(0).asInstanceOf[Option[String]], data.head(1).asInstanceOf[Option[Map[Any, Any]]], data.head(2).asInstanceOf[Option[List[List[BigInt]]]])
       )
 
-      implicit val formats = Serialization.formats(NoTypeHints)
-      listDatasets.map(dataset =>
+      listDatasets.foreach(dataset =>
+        validateDataset(dataset)
+      )
+
+      listDatasets.foreach(dataset =>
         municipalityDao.insertDataset(dataset.datasetId.get, write(dataset.geoJson.get), write(dataset.roadlinks.get))
       )
-      "Datasets received with success."
+      "Datasets received with success"
     } catch {
-      case _: ClassCastException => "Wrong format"
-      case _: Throwable => "Couldn't receive datasets. Please verify information provided."
+      case _: ClassCastException => halt(BadRequest("Json has wrong format"))
+      case _: SQLException => halt(BadRequest("DatasetId already received"))
+      case _: NumberFormatException => halt(BadRequest("Json has wrong format"))
     }
   }
 }

@@ -84,7 +84,7 @@ class MunicipalityDao {
   }
 
   def insertDataset(id: String, geojson: String, roadlinks: String) {
-    OracleDatabase.withDynSession {
+    OracleDatabase.withDynTransaction {
       sqlu"""insert into dataset(dataset_id, geojson, roadlinks)
           values ($id, $geojson, $roadlinks)
       """.execute
