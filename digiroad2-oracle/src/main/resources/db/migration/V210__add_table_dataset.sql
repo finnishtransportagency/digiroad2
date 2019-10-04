@@ -4,5 +4,11 @@ CREATE TABLE DATASET (
  ROADLINKS CLOB NOT NULL, --There can be a possible improvement for this column
  RECEIVED_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
  PROCESSED_DATE TIMESTAMP,
- STATUS LONG
+ STATUS NUMBER --There can be a possible improvement for this column
+);
+
+CREATE TABLE FEATURE (
+ FEATURE_ID NUMBER PRIMARY KEY,
+ DATASET_ID CHAR(36) REFERENCES DATASET(DATASET_ID),
+ STATUS NUMBER --There can be a possible improvement for this column
 );

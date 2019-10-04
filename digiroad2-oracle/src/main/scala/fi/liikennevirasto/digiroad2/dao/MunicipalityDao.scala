@@ -82,12 +82,4 @@ class MunicipalityDao {
       sql"""select ELY_NRO from municipality  where id in (#${municipalities.mkString(",")} ) group by ELY_NRO""".as[Int].list
     }
   }
-
-  def insertDataset(id: String, geojson: String, roadlinks: String) {
-    OracleDatabase.withDynTransaction {
-      sqlu"""insert into dataset(dataset_id, geojson, roadlinks)
-          values ($id, $geojson, $roadlinks)
-      """.execute
-    }
-  }
 }

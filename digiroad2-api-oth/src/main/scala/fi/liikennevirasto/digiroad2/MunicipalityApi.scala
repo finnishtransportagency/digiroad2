@@ -4,10 +4,9 @@ import java.sql.SQLException
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, AwsService, Dataset, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import org.joda.time.DateTime
@@ -15,8 +14,6 @@ import org.json4s.JsonAST.JObject
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
-import org.json4s.native.Serialization._
-import org.json4s.native.Serialization
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
 
 case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
@@ -28,7 +25,6 @@ case class ExampleItemRequestOnCreate(linkId: Long, startMeasure: Int, endMeasur
 case class ExampleItemResponseOnUpdate(linkId: Long, assetType: Int, municipalityCode: Int, startMeasure: Int, endMeasure: Int, sideCode: Int, id: Long, properties: List[TypeProperty], geometryTimestamp: Int, createdAt: DateTime,  modifiedAt: DateTime)
 case class ExampleItemRequestOnUpdate(linkId: Long, startMeasure: Int, endMeasure: Int, sideCode: Int, geometryTimestamp: Int, properties: List[TypeProperty])
 case class TypeProperty(name: String, value: Int)
-case class Dataset(datasetId: Option[String] = None, geoJson: Option[Map[Any, Any]] = None, roadlinks: Option[List[List[BigInt]]] = None)
 
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
@@ -1133,32 +1129,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def municipalityDao = new MunicipalityDao
-
-  def validateDataset(dataset: Dataset): Unit= {
-    val assets = dataset.geoJson.get("features").asInstanceOf[List[Map[String, Any]]]
-    val roadlinks = dataset.roadlinks.get.flatten.toSet
-    linkIdValidation(roadlinks.map(number => number.longValue()))
-
-    if(assets.length != dataset.roadlinks.get.length)
-      halt(BadRequest("Assets and roadlinks not corresponding"))
-
-    assets.foreach(feature => {
-      val assetTypeGeometry = feature.getOrElse("geometry", halt(BadRequest("Asset properties not found"))).asInstanceOf[Map[String, Any]]("type")
-      val properties = feature.getOrElse("properties", halt(BadRequest("Asset geometry type not found"))).asInstanceOf[Map[String, Any]]
-
-      assetTypeGeometry match {
-        case "LineString" =>
-          properties.getOrElse("type", halt(BadRequest("LineString asset type not found"))).asInstanceOf[String]
-          properties.getOrElse("pavementClass", halt(BadRequest("LineString asset pavementClass not found"))).asInstanceOf[String].toInt
-          properties.getOrElse("name", halt(BadRequest("LineString asset name not found"))).asInstanceOf[String]
-        case "Point" =>
-          properties.getOrElse("type", halt(BadRequest("Point asset type not found"))).asInstanceOf[String]
-        case _ => halt(BadRequest("Invalid asset geometry type"))
-      }
-      }
-    )
-  }
+  def AwsService = new AwsService(onOffLinearAssetService, roadLinkService, linearAssetService, speedLimitService, pavedRoadService, roadWidthService, manoeuvreService,
+    assetService, obstacleService, pedestrianCrossingService, railwayCrossingService, trafficLightService, massTransitLaneService, numberOfLanesService)
 
   put("/assetUpdateFromAWS"){
     try {
@@ -1168,18 +1140,23 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         Dataset(data.head(0).asInstanceOf[Option[String]], data.head(1).asInstanceOf[Option[Map[Any, Any]]], data.head(2).asInstanceOf[Option[List[List[BigInt]]]])
       )
 
+      // Validate dataset and its features and insert them in the db
       listDatasets.foreach(dataset =>
-        validateDataset(dataset)
+        AwsService.validateAndInsertDataset(dataset)
       )
 
-      listDatasets.foreach(dataset =>
-        municipalityDao.insertDataset(dataset.datasetId.get, write(dataset.geoJson.get), write(dataset.roadlinks.get))
+      // Updates the assets
+       listDatasets.foreach(dataset =>
+        AwsService.updateDataset(dataset)
       )
-      "Datasets received with success"
+
+      "Datasets processed"
     } catch {
       case _: ClassCastException => halt(BadRequest("Json has wrong format"))
-      case _: SQLException => halt(BadRequest("DatasetId already received"))
-      case _: NumberFormatException => halt(BadRequest("Json has wrong format"))
+      case _: SQLException => halt(BadRequest("DatasetId or featureId already received or not correctly defined"))
+      case _: NumberFormatException => halt(BadRequest("FeatureId not correctly defined"))
+      case _: Throwable => halt(BadRequest("Could not process Datasets"))
     }
+
   }
 }
