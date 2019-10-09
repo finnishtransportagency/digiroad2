@@ -39,6 +39,15 @@ class AwsDao {
     }
   }
 
+  def checkDatasetStatus(dataset_id: String): String = {
+    OracleDatabase.withDynSession {
+      sql"""select status
+          from dataset
+          where dataset_id = $dataset_id
+      """.as[String].first
+    }
+  }
+
   def checkFeatureStatus(feature_id: Long): String = {
     OracleDatabase.withDynSession {
       sql"""select status

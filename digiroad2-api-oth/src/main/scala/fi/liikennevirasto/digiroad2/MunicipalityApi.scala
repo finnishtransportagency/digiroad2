@@ -1,9 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
 import java.sql.SQLException
+
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.dao.AwsDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, AwsService, Dataset, RoadLinkService}
@@ -15,6 +18,7 @@ import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
 import org.scalatra.swagger.{ResponseMessage, Swagger, SwaggerSupport}
+import fi.liikennevirasto.digiroad2.service.AwsService
 
 case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 case class NewManoeuvreValues(linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double], properties: Seq[ManoeuvreProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
@@ -43,6 +47,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val numberOfLanesService: NumberOfLanesService,
                       implicit val swagger: Swagger
                      ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
+
+  def AwsService = new AwsService(vvhClient,onOffLinearAssetService, roadLinkService, linearAssetService, speedLimitService, pavedRoadService, roadWidthService, manoeuvreService,
+    assetService, obstacleService, pedestrianCrossingService, railwayCrossingService, trafficLightService, massTransitLaneService, numberOfLanesService)
+  def awsDao = new AwsDao
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
@@ -1129,9 +1137,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def AwsService = new AwsService(onOffLinearAssetService, roadLinkService, linearAssetService, speedLimitService, pavedRoadService, roadWidthService, manoeuvreService,
-    assetService, obstacleService, pedestrianCrossingService, railwayCrossingService, trafficLightService, massTransitLaneService, numberOfLanesService)
-
   put("/assetUpdateFromAWS"){
     try {
       val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
@@ -1140,22 +1145,25 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         Dataset(data.head(0).asInstanceOf[Option[String]], data.head(1).asInstanceOf[Option[Map[Any, Any]]], data.head(2).asInstanceOf[Option[List[List[BigInt]]]])
       )
 
-      // Validate dataset and its features and insert them in the db
       listDatasets.foreach(dataset =>
         AwsService.validateAndInsertDataset(dataset)
       )
 
-      // Updates the assets
        listDatasets.foreach(dataset =>
         AwsService.updateDataset(dataset)
       )
 
-      "Datasets processed"
+      var response = Map[String, String]()
+      listDatasets.foreach(dataset =>
+        response += (dataset.datasetId.get -> AwsService.getDatasetStatusById(dataset.datasetId.get))
+      )
+
+      response
     } catch {
       case _: ClassCastException => halt(BadRequest("Json has wrong format"))
       case _: SQLException => halt(BadRequest("DatasetId or featureId already received or not correctly defined"))
       case _: NumberFormatException => halt(BadRequest("FeatureId not correctly defined"))
-      case _: Throwable => halt(BadRequest("Could not process Datasets"))
+      case _: Throwable => halt(BadRequest("Could not process Datasets. Verify information provided"))
     }
 
   }

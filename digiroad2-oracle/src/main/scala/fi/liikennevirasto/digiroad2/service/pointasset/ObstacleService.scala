@@ -60,9 +60,9 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     }
   }
 
-  def checkDuplicates(incomingObstacle: IncomingObstacle): Option[Obstacle] = {
+  def checkDuplicates(incomingObstacle: IncomingObstacle, withDynSession: Boolean = false): Option[Obstacle] = {
     val position = Point(incomingObstacle.lon, incomingObstacle.lat)
-    val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
+    val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters), withDynSession).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
         asset.obstacleType == incomingObstacle.obstacleType
