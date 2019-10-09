@@ -6,11 +6,7 @@
               var municipalityInfo = vkmResult.kunta ? vkmResult.kunta : "Suomi";
               municipality = municipalityInfo;
               ely = vkmResult.ely_nimi ? vkmResult.ely_nimi : "Suomi";
-            }, function () {
-              municipality = 'Suomi';
-              ely = 'Suomi';
-            }
-        );
+            }, function() {});
       }
     };
 
@@ -39,7 +35,7 @@
           } else if (roles === "operator") {
               places = [];
           } else {
-              places = backend.getUnverifiedMunicipalities();
+              places = backend.getMunicipalities();
           }
           vkm();
           $('.default-location-btn-container').append('<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muokkaa aloitussivua</button>');

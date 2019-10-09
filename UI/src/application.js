@@ -147,19 +147,21 @@
         assetTypeId = startupParameters.assetType;
         defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
 
-        assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId);
-        if(typeof assetTypeLayerName === 'undefined'){
-          assetTypeLayerName = getSelectedAssetByTypeId(linearAssets, assetTypeId);
-        }
-        if(typeof assetTypeLayerName === 'undefined'){
-          assetTypeLayerName = getSelectedAssetByTypeId(groupedPointAssets, assetTypeId);
-        }
-
+        assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId);
         if(assetTypeId === 0){
           assetTypeLayerName = "linkProperty";
         }
         else if(assetTypeId === 10){
           assetTypeLayerName = "massTransitStop";
+        }
+        else if(assetTypeId === 20){
+          assetTypeLayerName = "speedLimit";
+        }
+        else if(assetTypeId === 320){
+          assetTypeLayerName = "trWeightLimits";
+        }
+        else if(assetTypeId === 380){
+          assetTypeLayerName = "manoeuvre";
         }
         else{
           assetTypeLayerName = assetTypeLayerName.layerName;

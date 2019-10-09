@@ -12,13 +12,11 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
         defaultParameters.lon = location.lon;
         defaultParameters.lat = location.lat;
         defaultParameters.zoom = location.zoom;
-        backend.updateUserConfigurationDefaultLocation(defaultParameters);
       }
       else if (selectedLocation === "suomi") {
         defaultParameters.lon = 390000;
         defaultParameters.lat = 6900000;
         defaultParameters.zoom = 2;
-        backend.updateUserConfigurationDefaultLocation(defaultParameters);
       }
       else {
         if (userRole !== "busStopMaintainer") {
@@ -27,13 +25,9 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
         else {
           defaultParameters.elyId = parseInt(selectedLocation,10);
         }
-        backend.updateUserConfigurationDefaultLocation(defaultParameters);
       }
-
-      setTimeout(function () {
-        new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: 'alert'});
-      }, 1);
-
+      backend.updateUserConfigurationDefaultLocation(defaultParameters);
+      setTimeout(function () {new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: "alert"})}, 1);
     },
     closeCallback: function () {},
     container: '.container'
