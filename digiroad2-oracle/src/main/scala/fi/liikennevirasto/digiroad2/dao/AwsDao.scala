@@ -57,6 +57,15 @@ class AwsDao {
     }
   }
 
+  def checkAllFeatureIdAndStatusByDataset(dataset_id: String): List[(Long, String)] = {
+    OracleDatabase.withDynSession {
+      sql"""select feature_id,status
+          from feature
+          where dataset_id = $dataset_id
+      """.as[(Long, String)].list
+    }
+  }
+
   def checkProcessedDatasetFeaturesForErrors(dataset_id: String): Int = {
     OracleDatabase.withDynSession {
       sql"""select count(*)

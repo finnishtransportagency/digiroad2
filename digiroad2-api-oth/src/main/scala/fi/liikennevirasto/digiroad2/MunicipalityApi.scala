@@ -1141,21 +1141,22 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     try {
       val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
 
-      val listDatasets = jsonDatasets.map(data =>
-        Dataset(data.head(0).asInstanceOf[Option[String]], data.head(1).asInstanceOf[Option[Map[Any, Any]]], data.head(2).asInstanceOf[Option[List[List[BigInt]]]])
+      val listDatasets = jsonDatasets.head.map(data =>
+        Dataset(data(0).asInstanceOf[Option[String]], data(1).asInstanceOf[Option[Map[Any, Any]]], data(2).asInstanceOf[Option[List[List[BigInt]]]])
       )
 
+      var datasetFeaturesWithoutIds = Map[String, Int]()
       listDatasets.foreach(dataset =>
-        AwsService.validateAndInsertDataset(dataset)
+        datasetFeaturesWithoutIds += (dataset.datasetId.get -> AwsService.validateAndInsertDataset(dataset))
       )
 
        listDatasets.foreach(dataset =>
         AwsService.updateDataset(dataset)
       )
 
-      var response = Map[String, String]()
+      var response = Map[String, Any]()
       listDatasets.foreach(dataset =>
-        response += (dataset.datasetId.get -> AwsService.getDatasetStatusById(dataset.datasetId.get))
+          response += (dataset.datasetId.get -> AwsService.getDatasetStatusById(dataset.datasetId.get, datasetFeaturesWithoutIds(dataset.datasetId.get)))
       )
 
       response

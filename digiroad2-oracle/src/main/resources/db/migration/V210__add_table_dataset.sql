@@ -8,7 +8,8 @@ CREATE TABLE DATASET (
 );
 
 CREATE TABLE FEATURE (
- FEATURE_ID NUMBER PRIMARY KEY,
+ FEATURE_ID NUMBER,
  DATASET_ID CHAR(36) REFERENCES DATASET(DATASET_ID),
- STATUS NUMBER --There can be a possible improvement for this column
+ STATUS NUMBER, --There can be a possible improvement for this column
+ PRIMARY KEY(FEATURE_ID, DATASET_ID)
 );
