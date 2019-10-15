@@ -93,7 +93,7 @@
         .text('Yksityistiet').attr("href", "#work-list/privateRoads/" + municipalityId);
 
       var downloadPDF = function() {
-      pdf.css('height', '1700px').css('width', '700px').addClass('pdfBackgroundColor');
+      pdf.removeClass('pdfHide').addClass('pdfBackgroundColor pdfSize');
         var html = $('#formTable').html();
 
         var takeOutElements = function(beginElement, endElement, sizeElement){
@@ -113,7 +113,7 @@
         takeOutElements('<td headers="suggestedAssets">', '</td>', 5);
         takeOutElements('<div id="test">', '</div>', 6);
 
-        pdf.html('<div class="work-list">' + '<div id="formTable">' + html + '</div>'+ '</div>');
+        pdf.html('<div class="work-list"><div id="formTable">' + html + '</div></div>');
 
         var HTML_Width = $("#pdf").width();
         var HTML_Height = $("#pdf").height();
@@ -137,7 +137,7 @@
           var date = new Date();
             doc.save('DR' + '_' + municipalityName.toLowerCase() + '_' + String(date.getDate()).padStart(2, '0') + String(date.getMonth() + 1).padStart(2, '0') + String(date.getFullYear()) + '.pdf');
             });
-        pdf.html('').css('height', '0px').css('width', '0px');
+        pdf.html('').removeClass('pdfSize').addClass('pdfHide');
       };
 
       var printReportButton = function () {
