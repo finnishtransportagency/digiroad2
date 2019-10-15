@@ -78,7 +78,7 @@ class AwsService(vvhClient: VVHClient,
       pavementClass match {
         case "" =>
         case _ =>
-          val pavementClassValue = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", false, Seq(DynamicPropertyValue(pavementClass.toInt))))))
+          val pavementClassValue = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue(pavementClass.toInt))))))
 
           val duplicate = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(link.linkId))
           duplicate.isEmpty match {

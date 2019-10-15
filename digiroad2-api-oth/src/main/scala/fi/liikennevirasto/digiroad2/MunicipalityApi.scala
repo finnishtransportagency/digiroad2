@@ -1139,7 +1139,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   put("/assetUpdateFromAWS"){
     try {
-      val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extract[List[List[Array[Option[Any]]]]]
+      val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extractOrElse[List[List[Array[Option[Any]]]]](throw new ClassCastException)
 
       val listDatasets = jsonDatasets.head.map(data =>
         Dataset(data(0).asInstanceOf[Option[String]], data(1).asInstanceOf[Option[Map[Any, Any]]], data(2).asInstanceOf[Option[List[List[BigInt]]]])
@@ -1164,7 +1164,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case _: ClassCastException => halt(BadRequest("Json has wrong format"))
       case _: SQLException => halt(BadRequest("DatasetId or featureId already received or not correctly defined"))
       case _: NumberFormatException => halt(BadRequest("FeatureId not correctly defined"))
-      case _: Throwable => halt(BadRequest("Could not process Datasets. Verify information provided"))
+      case _ => halt(BadRequest("Could not process Datasets. Verify information provided"))
     }
 
   }
