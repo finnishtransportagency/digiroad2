@@ -1,4 +1,4 @@
-window.ChangeInitialViewPopup = function(backend, location, userRole, places, assetTypeConfig, defaultAsset, municipality) {
+window.InitialPopupView = function(backend, location, userRole, places, assetTypeConfig, defaultAsset, municipality) {
 
   var options = {
     confirmButton: 'Tallenna',
@@ -27,7 +27,7 @@ window.ChangeInitialViewPopup = function(backend, location, userRole, places, as
         }
       }
       backend.updateUserConfigurationDefaultLocation(defaultParameters);
-      setTimeout(function () {new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: "alert"})}, 1);
+      setTimeout(function () {new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: "alert"});}, 1);
     },
     closeCallback: function () {},
     container: '.container'

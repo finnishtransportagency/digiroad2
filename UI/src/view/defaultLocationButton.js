@@ -29,12 +29,15 @@
     eventbus.on('roles:fetched', function(userInfo) {
       if (!(_.some(userInfo.roles, function(role) {return (role === "viewer" || role === "serviceRoadMaintainer");}))) {
           roles = userInfo.roles[0];
-          if (roles === "busStopMaintainer") {
+          switch(roles){
+            case "busStopMaintainer":
               places = backend.getUserElyConfiguration();
               municipality = ely;
-          } else if (roles === "operator") {
+              break;
+            case "operator":
               places = [];
-          } else {
+              break;
+            default:
               places = backend.getMunicipalities();
           }
           vkm();
@@ -44,11 +47,11 @@
       $('#default-location-btn').on('click', function () {
 
           if (places.length === 0) {
-              new ChangeInitialViewPopup(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
+              new InitialPopupView(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
       }
       else{
               places.then(function (places) {
-                  new ChangeInitialViewPopup(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
+                  new InitialPopupView(backend, actualLocationInfo, roles, places, assetTypeConfig, defaultAsset, municipality);
               });
         }
         });

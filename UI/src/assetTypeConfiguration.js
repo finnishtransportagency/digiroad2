@@ -1065,19 +1065,23 @@
     var assetTypeInfo = [
         {
             typeId: assetType.massTransitStop,
-            title: 'Joukkoliikenteen pysäkki'
+            title: 'Joukkoliikenteen pysäkki',
+            layerName: "massTransitStop"
         },
         {
             typeId: assetType.speedLimit,
-            title: 'Nopeusrajoitus'
+            title: 'Nopeusrajoitus',
+            layerName: "speedLimit"
         },
         {
             typeId: assetType.manoeuvre,
-            title: 'Kääntymisrajoitus'
+            title: 'Kääntymisrajoitus',
+            layerName: "manoeuvre"
         },
         {
             typeId: assetType.trWeightLimits,
-            title: 'TR painorajoitukset'
+            title: 'TR painorajoitukset',
+            layerName: "trWeightLimits"
         }
     ];
 

@@ -1,6 +1,4 @@
 (function(application) {
-    var assetTypeId = 10;
-    var defaultLocation = [390000, 6900000, 2];
   application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
     var assetTypeLayerName = 'massTransitStop';
     var backend = customBackend || new Backend();
@@ -147,21 +145,9 @@
         assetTypeId = startupParameters.assetType;
         defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
 
-        assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId);
+        assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, assetTypeId);
         if(assetTypeId === 0){
           assetTypeLayerName = "linkProperty";
-        }
-        else if(assetTypeId === 10){
-          assetTypeLayerName = "massTransitStop";
-        }
-        else if(assetTypeId === 20){
-          assetTypeLayerName = "speedLimit";
-        }
-        else if(assetTypeId === 320){
-          assetTypeLayerName = "trWeightLimits";
-        }
-        else if(assetTypeId === 380){
-          assetTypeLayerName = "manoeuvre";
         }
         else{
           assetTypeLayerName = assetTypeLayerName.layerName;
