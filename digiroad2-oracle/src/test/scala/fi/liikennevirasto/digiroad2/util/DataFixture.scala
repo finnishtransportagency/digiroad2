@@ -26,7 +26,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, LinkAttributesDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
@@ -1779,7 +1779,7 @@ object DataFixture {
     val sinceDate = Some("20190101") //Format required YYYYMMDD
 
     OracleDatabase.withDynTransaction {
-      val linkIdsOverridden = RoadLinkDAO.getLinkIdByValue("functional_class", functionalClassValue, sinceDate).toSet
+      val linkIdsOverridden = FunctionalClassDao.getLinkIdByValue(functionalClassValue, sinceDate).toSet
       val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIdsOverridden, false).filter(_.administrativeClass == State)
 
       roadLinks.foreach { roadLink =>
