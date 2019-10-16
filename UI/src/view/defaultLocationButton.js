@@ -28,7 +28,7 @@
 
     eventbus.on('roles:fetched', function(userInfo) {
       if (!(_.some(userInfo.roles, function(role) {return (role === "viewer" || role === "serviceRoadMaintainer");}))) {
-          roles = userInfo.roles[0];
+          roles = userInfo.roles.find(function (role) {return role === "busStopMaintainer" || role === "operator";});
           switch(roles){
             case "busStopMaintainer":
               places = backend.getUserElyConfiguration();
