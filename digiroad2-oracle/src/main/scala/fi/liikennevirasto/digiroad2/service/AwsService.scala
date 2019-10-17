@@ -183,10 +183,11 @@ class AwsService(vvhClient: VVHClient,
 
         val properties = feature.getOrElse("properties", "").asInstanceOf[Map[String, Any]]
         val featureId = properties.getOrElse("id", 0)
-        awsDao.insertFeature(featureId.asInstanceOf[BigInt].longValue(), dataset.datasetId.get, 0)
 
         if (featureId != 0) {
           try {
+            awsDao.insertFeature(featureId.asInstanceOf[BigInt].longValue(), dataset.datasetId.get, 0)
+
             val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type")
             linkIdValidation(featureRoadlinks.map(number => number.longValue()).toSet)
 
@@ -282,7 +283,7 @@ class AwsService(vvhClient: VVHClient,
   def getFeatureErrorsByDatasetId(datasetId: String, datasetFeaturesWithoutIds: Int): Any = {
     val featuresStatusCode = awsDao.checkAllFeatureIdAndStatusByDataset(datasetId).filter { case (_, status) => status != "0,2" }
 
-    val featuresStatusMap = featuresStatusCode.map(tuple =>
+    var featuresStatusMap = featuresStatusCode.map(tuple =>
       Map(
         "FeatureId" -> tuple._1.toString,
         "Message" -> tuple._2.split(",").tail.map(message => allFeatureStatus(message.toInt))
@@ -290,7 +291,7 @@ class AwsService(vvhClient: VVHClient,
     )
 
     if (datasetFeaturesWithoutIds != 0) {
-      featuresStatusMap :+ Map("Features without ids" -> datasetFeaturesWithoutIds.toString)
+      featuresStatusMap = featuresStatusMap :+ Map("Features without ids" -> datasetFeaturesWithoutIds.toString)
     }
 
     featuresStatusMap

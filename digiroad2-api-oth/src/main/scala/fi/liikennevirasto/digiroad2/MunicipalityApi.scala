@@ -1155,7 +1155,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       )
 
       val response = listDatasets.map(dataset =>
-        if (AwsService.getDatasetStatusById(dataset.datasetId.get) == "Processed successfuly") {
+        if ((AwsService.getDatasetStatusById(dataset.datasetId.get) == "Processed successfuly" || AwsService.getDatasetStatusById(dataset.datasetId.get) == "Amount of features and roadlinks do not match") && datasetFeaturesWithoutIds(dataset.datasetId.get) == 0){
           Map(
             "DataSetId" -> dataset.datasetId.get,
             "Status" -> AwsService.getDatasetStatusById(dataset.datasetId.get)
