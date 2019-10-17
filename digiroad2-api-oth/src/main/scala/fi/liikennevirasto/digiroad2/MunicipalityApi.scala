@@ -1137,7 +1137,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  put("/assetUpdateFromAWS"){
+  put("/assetUpdateFromAWS") {
     try {
       val jsonDatasets: List[List[Array[Option[Any]]]] = parsedBody.extractOrElse[List[List[Array[Option[Any]]]]](throw new ClassCastException)
 
@@ -1150,22 +1150,28 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         datasetFeaturesWithoutIds += (dataset.datasetId.get -> AwsService.validateAndInsertDataset(dataset))
       )
 
-       listDatasets.foreach(dataset =>
+      listDatasets.foreach(dataset =>
         AwsService.updateDataset(dataset)
       )
 
-      var response = Map[String, Any]()
-      listDatasets.foreach(dataset =>
-          response += (dataset.datasetId.get -> AwsService.getDatasetStatusById(dataset.datasetId.get, datasetFeaturesWithoutIds(dataset.datasetId.get)))
+      val response = listDatasets.map(dataset =>
+        if (AwsService.getDatasetStatusById(dataset.datasetId.get) == "Processed successfuly") {
+          Map(
+            "DataSetId" -> dataset.datasetId.get,
+            "Status" -> AwsService.getDatasetStatusById(dataset.datasetId.get)
+          )
+        } else {
+          Map(
+            "DataSetId" -> dataset.datasetId.get,
+            "Status" -> AwsService.getDatasetStatusById(dataset.datasetId.get),
+            "Features with errors" -> AwsService.getFeatureErrorsByDatasetId(dataset.datasetId.get, datasetFeaturesWithoutIds(dataset.datasetId.get))
+          )
+        }
       )
 
       response
     } catch {
-      case _: ClassCastException => halt(BadRequest("Json has wrong format"))
-      case _: SQLException => halt(BadRequest("DatasetId or featureId already received or not correctly defined"))
-      case _: NumberFormatException => halt(BadRequest("FeatureId not correctly defined"))
       case _ => halt(BadRequest("Could not process Datasets. Verify information provided"))
     }
-
   }
 }
