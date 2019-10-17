@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues}
 import fi.liikennevirasto.digiroad2.user.UserProvider
-//import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import org.joda.time.DateTime
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
