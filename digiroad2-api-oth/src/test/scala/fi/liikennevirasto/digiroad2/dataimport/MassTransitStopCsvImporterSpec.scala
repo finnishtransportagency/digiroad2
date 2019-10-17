@@ -1,12 +1,10 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import java.io.{ByteArrayInputStream, InputStream, InputStreamReader}
+import java.io.ByteArrayInputStream
 
-import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -16,12 +14,8 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.csvDataImporter.{Creator, MassTransitStopCsvImporter, MassTransitStopCsvOperation, PositionUpdater, Updater}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
 import org.mockito.ArgumentMatchers
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -40,7 +34,6 @@ import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
-import org.apache.commons.lang3.StringUtils.isBlank
 
 class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -72,10 +65,12 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     }
 
     def csvRead(assetFields: Map[String, Any]*) : List[Map[String, String]]   = {
-
-      val csv = csvToInputStream(createCSV(assetFields.flatten.toMap))
-// shouldn't be necessary this read with windos-1252
-      val streamReader = new InputStreamReader(csv, "UTF-8")
+      val headers = defaultKeys.mkString(";") + "\n"
+      val rows = assetFields.map { asset =>
+        defaultKeys.map { key => asset.getOrElse(key, "") }.mkString(";")
+      }.mkString("\n")
+      val csv = headers + rows
+      val streamReader = new InputStreamReader(csvToInputStream(csv), "UTF-8")
       val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
         override val delimiter: Char = ';'
       })
@@ -386,6 +381,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
   }
 
   test("raise an error when csv row does not define required parameter", Tag("db")) {
+    val mockService = MockitoSugar.mock[MassTransitStopService]
     val massTransitStopCsvOperation = new TestMassTransitStopCsvOperation(mockVVHClient, mockRoadLinkService, mockEventBus, mockService)
 
     when(mockService.getMassTransitStopByNationalId(ArgumentMatchers.eq(1l), anyObject(), anyBoolean())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
@@ -409,7 +405,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       result should equal(massTransitStopCsvOperation.propertyUpdater.ImportResultPointAsset(
         excludedRows = List(ExcludedRow(affectedRows = "State", csvRow = massTransitStopCsvOperation.propertyUpdater.rowToString(massTransitStopImporterUpdate.defaultValues(assetFields))))))
 
-      verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
+      verify(mockMassTransitStopService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
     }
 
     test("update asset on street when import is limited to streets") {
