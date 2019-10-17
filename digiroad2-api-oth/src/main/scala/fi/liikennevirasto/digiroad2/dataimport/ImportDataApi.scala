@@ -109,15 +109,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     csvDataImporter.getByIds(ids)
   }
 
-//  //TODO check if this exist
-//  post("/csv") {
-//    if (!userProvider.getCurrentUser().isOperator()) {
-//      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-//    }
-//    val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
-//    new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
-//  }
-
   def validateOperation(): Unit = {
     if(!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
       halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))

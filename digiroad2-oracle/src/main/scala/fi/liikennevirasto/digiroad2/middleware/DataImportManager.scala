@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.csvDataImporter.{MaintenanceRoadCsvImporter, MassTransitStopCsvImporter, MassTransitStopCsvOperation, ObstaclesCsvImporter, PedestrianCrossingCsvImporter, RailwayCrossingCsvImporter, RoadLinkCsvImporter, ServicePointCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
+import fi.liikennevirasto.digiroad2.csvDataImporter._
 import fi.liikennevirasto.digiroad2.user.User
 
 sealed trait AdditionalImportValue {
