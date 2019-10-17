@@ -30,10 +30,11 @@ class AwsDao {
     }
   }
 
-  def updateFeatureStatus(feature_id: Long, status: Int) {
+  def updateFeatureStatus(feature_id: Long, status: String) {
+    val statusText = "," + status
     OracleDatabase.withDynTransaction {
       sqlu"""update feature
-          set status = $status
+          set status = (select status from feature where feature_id = $feature_id) || $statusText
           where feature_id = $feature_id
       """.execute
     }
@@ -70,7 +71,7 @@ class AwsDao {
     OracleDatabase.withDynSession {
       sql"""select count(*)
           from feature
-          where dataset_id = $dataset_id and status != 2
+          where dataset_id = $dataset_id and status != '0,2'
       """.as[Int].first
     }
   }
