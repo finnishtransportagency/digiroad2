@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, DynamicProperty}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.MaintenanceService
 import org.joda.time.DateTime
@@ -108,7 +108,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
         Map(
           "type" -> "Feature",
           "geometry" -> getLineStringGeometry(geometry),
-          "properties" -> getProperties(asset, asset.value.getOrElse(DynamicAssetValue(Seq())).asInstanceOf[DynamicAssetValue].properties, roadlink)
+          "properties" -> getProperties(asset, asset.value.getOrElse(DynamicValue(DynamicAssetValue(Seq()))).asInstanceOf[DynamicValue].value.properties, roadlink)
         )
     }
   }
