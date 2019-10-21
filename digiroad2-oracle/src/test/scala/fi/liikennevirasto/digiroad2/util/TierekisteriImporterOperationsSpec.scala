@@ -705,7 +705,12 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testPavedRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
 
       asset.linkId should be (5001)
-      asset.value should be (Some(NumericValue(1)))
+      asset.startMeasure should be (1.5)
+      asset.endMeasure should be (11.4)
+      asset.sideCode should be (Track.RightSide.value)
+      asset.createdBy should be (Some("batch_process_pavedRoad"))
+      asset.expired should be (false)
+      asset.typeId should be (testPavedRoad.typeId)
     }
   }
 
