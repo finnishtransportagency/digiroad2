@@ -401,7 +401,7 @@ class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
           updateAsset(existingAsset.nationalId, None, properties, roadTypeLimitations, user)
             .map(excludedRoadLinkType => ExcludedRow(affectedRows = excludedRoadLinkType.toString, csvRow = rowToString(row)))
         case _ =>
-          massTransitStopService.createWithUpdateFloating(asset, user.username, roadLink.head)
+          massTransitStopService.create(asset, user.username, roadLink.head, newTransaction = false)
           List()
       }
     }
