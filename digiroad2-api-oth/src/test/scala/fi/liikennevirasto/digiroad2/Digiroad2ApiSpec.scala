@@ -302,13 +302,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits", """{"value":60, "ids":[200114]}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits", """{"value":{"isSuggested":false,"value":60}, "ids":[200114]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
 
   test("creating speed limit requires an operator role") {
-    postJsonWithUserAuth("/speedlimits", """{"linkId":1611071, "startMeasure":0.0, "endMeasure":50.0, "value":40}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits", """{"linkId":1611071, "startMeasure":0.0, "endMeasure":50.0, "value":{"isSuggested":false,"value":40}}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
@@ -328,8 +328,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
-      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(1)
     }
   }
 
@@ -350,8 +350,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[Seq[LinearAssetFromApi]]]
       parsedBody.size should be(3)
-      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(1)
-      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isEmpty)).size should be(2)
+      parsedBody.flatMap(pb => pb.filter(_.id.isDefined)).size should be(1)
     }
   }
 
