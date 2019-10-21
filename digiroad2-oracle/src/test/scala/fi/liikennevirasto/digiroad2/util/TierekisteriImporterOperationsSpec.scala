@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.importer._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NumericValue, TextualValue}
+import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import org.joda.time.DateTime
@@ -1119,7 +1119,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val asset = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
 
       asset.linkId should be (5001)
-      asset.value should be (Some(NumericValue(assetValue)))
+      asset.value should be (Some(SpeedLimitValue(assetValue,false)))
     }
   }
 
@@ -1169,7 +1169,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       assetU.startMeasure should not be (assetI.startMeasure)
       assetU.endMeasure should be (assetI.endMeasure)
-      assetU.value should be (Some(NumericValue(assetValueHist)))
+      assetU.value should be (Some(SpeedLimitValue(assetValueHist,false)))
     }
   }
 

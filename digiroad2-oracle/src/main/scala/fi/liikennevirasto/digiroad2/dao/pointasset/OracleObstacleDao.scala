@@ -233,7 +233,7 @@ object OracleObstacleDao {
     val query =
       """
         select * from (
-          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id AS property_id, p.public_id, p.property_type, p.required, ev.value,
             case
               when ev.name_fi is not null then ev.name_fi
               else null

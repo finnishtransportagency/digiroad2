@@ -264,7 +264,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
           """.execute
 
 
-      val result = service.getFloatingObstacles(1, lastIdUpdate, lineRange)
+      val result = service.getFloatingObstacles(1, lastIdUpdate, lineRange).sortBy(_.id)
 
       result.foreach { fields =>
         fields.floating should be(true)

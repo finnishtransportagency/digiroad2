@@ -297,15 +297,16 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
 
     val speedLimitRows =  sql"""
-        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date,
-        pos.adjusted_timestamp, pos.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source, p.public_id
+        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date,
+        case when a.valid_to <= sysdate then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp,
+        pos.modified_date, pos.link_source, p.public_id
          from asset a
          join asset_link al on a.id = al.asset_id
          join lrm_position pos on al.position_id = pos.id
          join property p on a.asset_type_id = p.asset_type_id
          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-         left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+         left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
          where a.asset_type_id = 20
          and floating = 0
          and (
