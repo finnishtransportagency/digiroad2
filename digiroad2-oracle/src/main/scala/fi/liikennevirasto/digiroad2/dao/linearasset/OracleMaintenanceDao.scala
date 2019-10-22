@@ -29,9 +29,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                     select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
                     case
                     when tp.value_fi is not null then tp.value_fi
-                    when np.value is not null then to_char(np.value)
                     when e.value is not null then to_char(e.value)
-                    when dtp.date_time is not null then to_char(dtp.date_time, 'DD.MM.YYYY')
                     else null
                     end as value,
                     a.created_by, a.created_date, a.modified_by, a.modified_date,
@@ -40,9 +38,11 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                    from asset a
                      join asset_link al on a.id = al.asset_id
                      join lrm_position pos on al.position_id = pos.id
-                     join single_choice_value s on s.asset_id = a.id
-                     join enumerated_value e on e.id = s.enumerated_value_id
-                     join property p on p.id = e.property_id
+                     join property p on p.asset_type_id = a.asset_type_id
+                     left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+                     left join enumerated_value e on e.id = s.enumerated_value_id
+                     left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
+                     left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
                      where a.asset_type_id = ${MaintenanceRoadAsset.typeId} $filter and exists (select * from single_choice_value s1
                          join enumerated_value en on s1.enumerated_value_id = en.id and en.VALUE =  $valueToBeFetch and en.name_fi = '$propNameFi'
                          where  s1.asset_id = a.id) """
@@ -177,8 +177,8 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           Select a.id, case when a.area is null then 'Unknown' else TO_CHAR(a.area) end
           from asset a
           left join property p on a.asset_type_id = p.asset_type_id and public_id = 'huoltotie_tarkistettu'
-          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-          join enumerated_value e on e.id = s.enumerated_value_id and e.value = 0
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id
+          join enumerated_value e on e.id = mc.enumerated_value_id and e.value = 0
           where a.asset_type_id = 290
           and(valid_to is NULL OR valid_to > SYSDATE)"""
 

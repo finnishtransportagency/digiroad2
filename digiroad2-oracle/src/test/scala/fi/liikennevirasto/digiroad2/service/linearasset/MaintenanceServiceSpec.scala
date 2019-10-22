@@ -55,7 +55,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val maintenanceDao = new OracleMaintenanceDao(mockVVHClient, mockRoadLinkService)
-  val dynamicLinearAssetDao = new DynamicLinearAssetDao
+  val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -66,8 +66,8 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def polygonTools: PolygonTools = mockPolygonTools
     override def maintenanceDAO: OracleMaintenanceDao = maintenanceDao
     override def municipalityDao: MunicipalityDao = mockMunicipalityDao
-    override def assetDao: OracleAssetDao = mockAssetDao
-    override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
+    override def assetDao: OracleAssetDao = new OracleAssetDao
+    override def dynamicLinearAssetDao: DynamicLinearAssetDao = dynamicLinearAssetDAO
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
 
@@ -94,15 +94,17 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val prop1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue( "1")))
     val prop2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue( "2")))
     val prop3 = DynamicProperty("huoltotie_tiehoitokunta", "text",  false, Seq(DynamicPropertyValue( "text")))
+    val prop4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
+    val prop5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
 
-    val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
+    val propertiesSeq: Seq[DynamicProperty] = List(prop1, prop2, prop3, prop4, prop5)
 
-    val maintenanceRoad = DynamicAssetValue(propertiesSeq)
+    val maintenanceRoad = DynamicValue(DynamicAssetValue(propertiesSeq))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
 
-      val asset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(388562360l)).head
+      val asset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(388562360l)).head
       asset.value should be (Some(maintenanceRoad))
       asset.expired should be (false)
     }
@@ -111,33 +113,32 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   test("update new maintenanceRoad") {
     val propIns1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue( "1")))
     val propIns2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue( "2")))
-    val propIns3 = DynamicProperty("huoltotie_postinumero", "text", false, Seq(DynamicPropertyValue( "text prop3")))
-    val propIns4 = DynamicProperty("huoltotie_puh1" , "text", false, Seq(DynamicPropertyValue( "text prop4")))
-    val propIns5 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue( "text")))
+    val propIns3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue( "text")))
+    val propIns4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
+    val propIns5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
 
     val propIns :Seq[DynamicProperty] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
-    val maintenanceRoadIns = DynamicAssetValue(propIns)
+    val maintenanceRoadIns = DynamicValue(DynamicAssetValue(propIns))
 
     val propUpd1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue("4")))
     val propUpd2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue("1")))
-    val propUpd3 = DynamicProperty("huoltotie_postinumero", "text", false, Seq(DynamicPropertyValue("text prop3 Update")))
-    val propUpd4 = DynamicProperty("huoltotie_puh1" , "text", false, Seq(DynamicPropertyValue("")))
-    val propUpd5 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue("text")))
-    val propUpd6 = DynamicProperty("huoltotie_puh2" , "text", false, Seq(DynamicPropertyValue("text prop puh2")))
+    val propUpd3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue("text")))
+    val propUpd4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
+    val propUpd5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
 
-    val propUpd :Seq[DynamicProperty] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
-    val maintenanceRoadUpd = DynamicAssetValue(propUpd)
+    val propUpd :Seq[DynamicProperty] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5)
+    val maintenanceRoadUpd = DynamicValue(DynamicAssetValue(propUpd))
 
-    val maintenanceRoadFetch = DynamicAssetValue(propUpd.filterNot(_.publicId == "huoltotie_puh1"))
+    val maintenanceRoadFetch = DynamicValue(DynamicAssetValue(propUpd))
 
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoadIns), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoadIns, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
 
-      val updAssets = ServiceWithDao.update(Seq(newAssets.head), DynamicValue(maintenanceRoadUpd), "testuser")
+      val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
       updAssets.length should be(1)
 
-      val asset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(388562360l)).filterNot(_.expired).head
+      val asset = ServiceWithDao.dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(MaintenanceRoadAsset.typeId, Seq(388562360l)).filterNot(_.expired).head
       asset.value should be (Some(maintenanceRoadFetch))
       asset.expired should be (false)
     }
@@ -147,20 +148,22 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val prop1 = DynamicProperty("huoltotie_kayttooikeus", "single_choice", true, Seq(DynamicPropertyValue("1")))
     val prop2 = DynamicProperty("huoltotie_huoltovastuu", "single_choice", true, Seq(DynamicPropertyValue("2")))
     val prop3 = DynamicProperty("huoltotie_tiehoitokunta", "text", false, Seq(DynamicPropertyValue("text")))
+    val prop4 = DynamicProperty("suggest_box", "checkbox",  false, Seq())
+    val prop5 = DynamicProperty("huoltotie_tarkistettu", "checkbox",  false, Seq())
 
-    val propertiesSeq :Seq[DynamicProperty] = List(prop1, prop2, prop3)
+    val propertiesSeq: Seq[DynamicProperty] = List(prop1, prop2, prop3, prop4, prop5)
 
-    val maintenanceRoad = DynamicAssetValue(propertiesSeq)
+    val maintenanceRoad = DynamicValue(DynamicAssetValue(propertiesSeq))
     runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, DynamicValue(maintenanceRoad), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(1)
-      var asset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
+      var asset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.value should be (Some(maintenanceRoad))
       asset.expired should be (false)
 
       val assetId : Seq[Long] = List(asset.id)
-      val deleted = ServiceWithDao.expire( assetId , "testuser")
-      asset = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
+      ServiceWithDao.expire( assetId , "testuser")
+      asset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByIds(Set(newAssets.head)).head
       asset.expired should be (true)
     }
   }
@@ -185,7 +188,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
         asset.linkId should be(388562360l)
         asset.startMeasure should be(0)
         asset.endMeasure should be(20)
-        asset.value.get.asInstanceOf[DynamicAssetValue].properties.length should be(3)
+        asset.value.get.asInstanceOf[DynamicValue].value.properties.length should be(5)
       }
     }
   }
@@ -252,7 +255,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
         asset.linkId should be(388562360l)
         asset.startMeasure should be(0)
         asset.endMeasure should be(20)
-        asset.value.get.asInstanceOf[DynamicAssetValue].properties.length should be(3)
+        asset.value.get.asInstanceOf[DynamicValue].value.properties.length should be(5)
       }
     }
 
@@ -279,11 +282,12 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
                                                 NewLinearAsset(388562361l, 0, 20, DynamicValue(maintenanceRoad1), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(2)
 
-      val assets = maintenanceDao.fetchPotentialServiceRoads()
+      val assets = ServiceWithDao.maintenanceDAO.fetchPotentialServiceRoads()
       assets.size should be(1)
-      assets.foreach {
-        asset => asset.value.get.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "huoltotie_kayttooikeus").get should be ("9")
-      }
+      assets.head.linkId should be(388562361l)
+      assets.head.startMeasure should be(0.0)
+      assets.head.endMeasure should be(20.0)
+      assets.head.value.get.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "huoltotie_kayttooikeus").get.values.head.value should be ("9")
     }
   }
 
@@ -308,7 +312,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
           NewLinearAsset(388562361l, 0, 20, DynamicValue(maintenanceRoad1), 1, 0, None)), MaintenanceRoadAsset.typeId, "testuser")
       newAssets.length should be(2)
 
-      val assets = maintenanceDao.fetchPotentialServiceRoads()
+      val assets = ServiceWithDao.maintenanceDAO.fetchPotentialServiceRoads()
       assets.size should be (0)
     }
   }
