@@ -3,21 +3,19 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import org.mockito.ArgumentMatchers.any
 
 class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -80,7 +78,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     SevenRestrictionsValidation(TotalWeightLimit.typeId, totalWeightLimitValidator, MaxLadenExceeding, "100"),
     SevenRestrictionsValidation(TrailerTruckWeightLimit.typeId, trailerTruckWeightLimitValidator,MaxMassCombineVehiclesExceeding, "100"),
     SevenRestrictionsValidation(AxleWeightLimit.typeId, axleWeightLimitValidator, MaxTonsOneAxleExceeding, "100"),
-    SevenRestrictionsValidation(AxleWeightLimit.typeId, bogieWeightLimitValidator, MaxTonsOnBogieExceeding, "200")
+    SevenRestrictionsValidation(BogieWeightLimit.typeId, bogieWeightLimitValidator, MaxTonsOnBogieExceeding, "200")
   )
 
   val otherLimitAssets = Seq(
@@ -135,7 +133,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
 
       val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
       withClue("assetName " + AssetTypeInfo.apply(sevenRestrictionsAsset.typeId).toString) {
-        result should have size 0
+        result should have size 1
       }
 
       dynamicSession.rollback()

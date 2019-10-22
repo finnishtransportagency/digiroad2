@@ -95,59 +95,6 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-//  override protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
-//    def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-//      !persistedLinearAsset.exists(_.value == assetToPersist.value)
-//    }
-//
-//    toUpdate.foreach { maintenanceAsset =>
-//      val persistedLinearAsset = persisted.getOrElse(maintenanceAsset.id, Seq()).headOption
-//      val id = maintenanceAsset.id
-//      if (valueChanged(maintenanceAsset, persistedLinearAsset)) {
-//        maintenanceAsset.value match {
-//          case Some(maintenance) =>
-//            maintenanceDAO.updateMaintenanceRoadValue(id, maintenance.asInstanceOf[MaintenanceRoad], LinearAssetTypes.VvhGenerated)
-//          case _ => None
-//        }
-//      }
-//    }
-//  }
-
-//  /**
-//    * Mark VALID_TO field of old asset to sysdate and create a new asset.
-//    * Copy all the data from old asset except the properties that changed, modifiedBy and modifiedAt.
-//    */
-//  protected def updateServiceRoad(assetIds: Seq[Long], valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], sideCode: Option[Int] = None): Seq[Long] = {
-//    //Get Old Assets
-//    val oldAssets = dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(assetIds.toSet)
-//
-//    oldAssets.foreach { oldAsset =>
-//      val newMeasures = measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure))
-//      val newSideCode = sideCode.getOrElse(oldAsset.sideCode)
-//      val roadLink = vvhClient.fetchRoadLinkByLinkId(oldAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
-//
-//      if ((validateMinDistance(newMeasures.startMeasure, oldAsset.startMeasure) || validateMinDistance(newMeasures.endMeasure, oldAsset.endMeasure)) || newSideCode != oldAsset.sideCode) {
-//        dao.updateExpiration(oldAsset.id)
-//        Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, newSideCode, newMeasures, username, vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink), fromUpdate = true, createdByFromUpdate = Some(username), verifiedBy = oldAsset.verifiedBy))
-//      }
-//      else
-//        maintenanceDAO.updateValues(oldAsset.id, valueToUpdate.asInstanceOf[MaintenanceRoad], username)
-//    }
-//    assetIds
-//  }
-//
-//  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None,  informationSource: Option[Int] = None): Seq[Long] = {
-//    if (ids.isEmpty)
-//      return ids
-//
-//      val missingProperties = validateRequiredProperties(value.asInstanceOf[MaintenanceRoad])
-//      if (missingProperties.nonEmpty)
-//        throw new MissingMandatoryPropertyException(missingProperties)
-//
-//    updateServiceRoad(ids, value.asInstanceOf[MaintenanceRoad], MaintenanceRoadAsset.typeId.toString(), username, measures, sideCode)
-//  }
-
-
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
@@ -186,14 +133,6 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       createWithoutTransaction(typeId, linkId, value, sideCode, measures, username, vvhClient.roadLinkData.createVVHTimeStamp(), roadLink)
     }
   }
-
-//  private def validateRequiredProperties(maintenanceRoad: MaintenanceRoad): Set[String] = {
-//    val mandatoryProperties: Map[String, String] = maintenanceDAO.getMaintenanceRequiredProperties(MaintenanceRoadAsset.typeId)
-//    val nonEmptyMandatoryProperties: Seq[Properties] = maintenanceRoad.properties.filter { property =>
-//      mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
-//    }
-//    mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
-//  }
 
   def getActiveMaintenanceRoadByPolygon(areaId: Int): Seq[PersistedLinearAsset] = {
     val polygon = polygonTools.getPolygonByArea(areaId)
