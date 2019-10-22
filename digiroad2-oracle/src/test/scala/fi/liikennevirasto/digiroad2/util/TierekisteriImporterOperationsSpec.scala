@@ -465,10 +465,12 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
 
       asset.linkId should be (5001)
-      asset.value should be (Some(NumericValue(1)))
       asset.startMeasure should be (50)
       asset.endMeasure should be (350)
       asset.sideCode should be (1)
+      asset.createdBy should be (Some("batch_process_lighting"))
+      asset.expired should be (false)
+      asset.typeId should be (testLitRoad.typeId)
     }
   }
 
@@ -545,7 +547,12 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
        val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
 
        asset.linkId should be(5001)
-       asset.value should be(Some(NumericValue(1)))
+       asset.startMeasure should be (1.5)
+       asset.endMeasure should be (11.4)
+       asset.sideCode should be (Track.RightSide.value)
+       asset.createdBy should be (Some("batch_process_lighting"))
+       asset.expired should be (false)
+       asset.typeId should be (testLitRoad.typeId)
      }
    }
 
