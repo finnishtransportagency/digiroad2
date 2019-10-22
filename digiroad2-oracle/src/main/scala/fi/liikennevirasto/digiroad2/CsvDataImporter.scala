@@ -765,7 +765,6 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
     roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId)).map { roadlink =>
       val values = DynamicValue(DynamicAssetValue(Seq(newKoProperty, orAccessProperty)))
-      //case class Properties(publicId: String, propertyType: String, value: String)
       maintenanceService.createWithHistory(MaintenanceRoadAsset.typeId, linkId, values,
         SideCode.BothDirections.value, Measures(0, roadlink.length), username, Some(roadlink))
     }
