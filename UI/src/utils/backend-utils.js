@@ -459,6 +459,10 @@
       };
     });
 
+    this.getUnverifiedMunicipalities = function() {
+      return $.getJSON('api/municipalities/byUser');
+    };
+
     this.getUnverifiedMunicipalities = function(municipalityCode) {
       return $.getJSON('api/municipalities/byUser?municipalityCode=' + municipalityCode);
     };

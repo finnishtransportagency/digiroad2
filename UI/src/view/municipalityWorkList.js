@@ -116,7 +116,7 @@
       };
 
       var suggestedAssetsButton = function(counter, typeId) {
-        return counter > 0 ? '<a class="btn btn-suggested-list" href="#work-list/suggestedAssets/' + 766 + '/'+ typeId + '">' + counter + '</a>' : "";
+        return counter > 0 ? '<a class="btn btn-suggested-list" href="#work-list/suggestedAssets/' + municipalityId + '/'+ typeId + '">' + counter + '</a>' : "";
       };
 
       var sortAssets = function (values) {
