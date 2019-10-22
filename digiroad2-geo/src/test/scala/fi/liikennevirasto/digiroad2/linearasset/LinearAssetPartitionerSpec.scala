@@ -24,38 +24,38 @@ class LinearAssetPartitionerSpec extends FunSuite with Matchers {
       1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode, ri))
   }
 
-//  test("doesn't group assets with different prohibition validity periods") {
-//    val prohibitionAssets = Seq(
-//      TestProhibitionAsset(1, 1, SideCode.BothDirections,
-//        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 2, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
-//        Seq(Point(0, 0), Point(10, 0))),
-//      TestProhibitionAsset(2, 2, SideCode.BothDirections,
-//        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
-//        Seq(Point(10, 0), Point(20, 0))))
-//    val links = Map(
-//      1l -> roadLinkForAsset(Left(1)),
-//      2l -> roadLinkForAsset(Left(1)))
-//    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets, links)
-//    groupedLinks should have size 2
-//    groupedLinks(0) should have size 1
-//    groupedLinks(1) should have size 1
-//  }
-//
-//  test("groups assets with equal prohibition validity periods") {
-//    val prohibitionAssets = Seq(
-//      TestProhibitionAsset(1, 1, SideCode.BothDirections,
-//        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
-//        Seq(Point(0, 0), Point(10, 0))),
-//      TestProhibitionAsset(2, 2, SideCode.BothDirections,
-//        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
-//        Seq(Point(10, 0), Point(20, 0))))
-//    val links = Map(
-//      1l -> roadLinkForAsset(Left(1)),
-//      2l -> roadLinkForAsset(Left(1)))
-//    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets, links)
-//    groupedLinks should have size 1
-//    groupedLinks(0) should have size 2
-//  }
+  test("doesn't group assets with different prohibition validity periods") {
+    val prohibitionAssets = Seq(
+      TestProhibitionAsset(1, 1, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 2, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
+        Seq(Point(0, 0), Point(10, 0))),
+      TestProhibitionAsset(2, 2, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
+        Seq(Point(10, 0), Point(20, 0))))
+    val links = Map(
+      1l -> roadLinkForAsset(Left(1)),
+      2l -> roadLinkForAsset(Left(1)))
+    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets, links)
+    groupedLinks should have size 2
+    groupedLinks(0) should have size 1
+    groupedLinks(1) should have size 1
+  }
+
+  test("groups assets with equal prohibition validity periods") {
+    val prohibitionAssets = Seq(
+      TestProhibitionAsset(1, 1, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
+        Seq(Point(0, 0), Point(10, 0))),
+      TestProhibitionAsset(2, 2, SideCode.BothDirections,
+        Some(Prohibitions(Seq(ProhibitionValue(1, Set(ValidityPeriod(1, 3, ValidityPeriodDayOfWeek.Weekday, 0, 0)), Set.empty)))),
+        Seq(Point(10, 0), Point(20, 0))))
+    val links = Map(
+      1l -> roadLinkForAsset(Left(1)),
+      2l -> roadLinkForAsset(Left(1)))
+    val groupedLinks = LinearAssetPartitioner.partition(prohibitionAssets, links)
+    groupedLinks should have size 1
+    groupedLinks(0) should have size 2
+  }
 
   test("group speed limits with same limit value and road number") {
     val linearAssets = Seq(

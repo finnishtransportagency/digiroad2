@@ -246,10 +246,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       var x =_.each(assetGroup, function(asset) {
         return convertBackendAssetToUIAsset(asset, centroidLonLat, assetGroup);
-        // if (!massTransitStopsCollection.getAsset(uiAsset.id)) {
-        //     var assetInModel = createAsset(uiAsset);
-        //     massTransitStopsCollection.insertAsset(assetInModel, uiAsset.id);
-        // }
       });
       _.map(x, function(uiAsset){
         if (!massTransitStopsCollection.getAsset(uiAsset.id)) {

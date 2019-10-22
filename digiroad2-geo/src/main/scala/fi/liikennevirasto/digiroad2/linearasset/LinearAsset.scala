@@ -68,7 +68,6 @@ case class AssetTypes(typeId: Int, value: String, isSuggested: Int)
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
 
-//case class Properties(publicId: String, propertyType: String, value: String)
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {

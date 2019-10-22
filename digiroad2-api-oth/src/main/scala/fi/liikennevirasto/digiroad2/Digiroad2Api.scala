@@ -1559,11 +1559,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def checkPropertySize(service: RailwayCrossingService): Unit = {
     val asset = (parsedBody \ "asset").extractOrElse[IncomingRailwayCrossing](halt(BadRequest("Malformed asset")))
-//    val code = asset.code.length
+    val railwayId = asset.propertyData.filter(_.publicId == "tasoristeystunnus").head.values.head.asInstanceOf[PropertyValue].propertyValue
     val maxSize = railwayCrossingService.getCodeMaxSize
-// TODO check why is commented
-//    if(code > maxSize)
-//      halt(BadRequest("Railway id property is too big"))
+
+    if(railwayId.length > maxSize)
+      halt(BadRequest("Railway id property is too big"))
   }
 
 
