@@ -51,6 +51,11 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
+    var saveConditionWithSuggested = function(selectedAsset, authorizationPolicy) {
+      var selected = selectedAsset.get();
+      return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+    };
+
     var datePeriodValueExtract = function (date) {
       var datePeriodValue = date.getPropertyValue().values;
       var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
@@ -64,13 +69,13 @@
       return datePeriods.startDate <= datePeriods.endDate;
     };
 
-    var showAndHideRule = function (authorizationPolicy, selectedLinearAsset, value, layerMode) {
-          return authorizationPolicy.handleSuggestedAsset(selectedLinearAsset, value, layerMode);
+    var showSuggestBox = function (authorizationPolicy, selectedLinearAsset, value, layerMode) {
+      return authorizationPolicy.handleSuggestedAsset(selectedLinearAsset, value, layerMode);
     };
 
-	  var isUnSet = function (selectedLinearAsset) {
-	  	return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
-	  };
+    var isSuggestBoxUnset = function (selectedLinearAsset) {
+      return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
+    };
 
     var linearAssetSpecs = [
       {
@@ -98,12 +103,11 @@
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
-        isSuggestedAsset: true,
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -129,14 +133,13 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -161,7 +164,6 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
-        isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
@@ -169,7 +171,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -195,7 +197,6 @@
         isVerifiable: true,
         hasInaccurate: true,
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
@@ -203,7 +204,7 @@
         fields: [
             {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
             {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 3, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -229,13 +230,12 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        isSuggestedAsset: true,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
             {label: "korkeusrajoitus", type: 'integer', publicId: "height", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -259,7 +259,6 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
-        isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -267,7 +266,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -292,7 +291,6 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         isVerifiable: true,
         hasInaccurate: true,
-        isSuggestedAsset: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
@@ -300,7 +298,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -323,13 +321,12 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: true,
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
         label: new SuggestionLabel(),
         form: new DynamicAssetForm({
           fields: [
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -378,7 +375,7 @@
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
             { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', multiElement: true, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3},
-            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox',  weight: 4, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox',  weight: 4, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -410,7 +407,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveys", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showAndHideRule, isUnSet: isUnSet}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -448,7 +445,7 @@
                   {id: 50, label: 'Muut pinnoitteet'}
                 ]
               },
-              {label: "vihjetieto", type: 'checkbox', defaultValue: "0", publicId: "suggest_box", weight: 1, showAndHide: showAndHideRule, isUnSet: isUnSet}
+              {label: "vihjetieto", type: 'checkbox', defaultValue: "0", publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
             ]
           }
         ),
@@ -547,7 +544,6 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         label: new SuggestionLabel()
       },
@@ -571,7 +567,6 @@
         isMultipleLinkSelectionAllowed: true,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         hasMunicipalityValidation: true,
-        isSuggestedAsset: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         label: new SuggestionLabel()
       },
@@ -615,7 +610,6 @@
         label: new LinearAssetLabelMultiValues(),
         isVerifiable: false,
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
-        isSuggestedAsset: true,
         isMultipleLinkSelectionAllowed: true
       },
       {
@@ -649,12 +643,11 @@
           {label: 'Huoltovastuu', type: 'single_choice', publicId: "huoltotie_huoltovastuu", defaultValue: "1", values: [{id: 1, label: 'LiVi'}, {id: 2, label: 'Muu'}, {id: 99, label: 'Ei tietoa'}], weight: 2},
           {label: "Tiehoitokunta", type: 'text', publicId: "huoltotie_tiehoitokunta", weight: 3},
           {label: "Tarkistettu", type: 'checkbox', publicId: "huoltotie_tarkistettu", defaultValue: "0", values: [{id: 0, label: 'Ei tarkistettu'}, {id: 1, label: 'Tarkistettu'}], weight: 4},
-          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 5, showAndHide: showAndHideRule, isUnSet: isUnSet}]
+          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 5, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}]
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
         isVerifiable: false,
-        isSuggestedAsset: true,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
@@ -808,7 +801,7 @@
           fields : [
             {label: 'Työn tunnus', publicId: 'tyon_tunnus', type: 'text', weight: 1},
             {label: 'Arvioitu kesto', publicId: 'arvioitu_kesto', type: 'date_period', required: true, multiElement: false, weight: 2},
-	          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showAndHideRule, isUnSet: isUnSet}
+	          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -903,10 +896,7 @@
           newAssetLabel: 'suojatie'
         },
         hasMunicipalityValidation: true,
-        saveCondition: function(selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-        },
+        saveCondition: saveConditionWithSuggested,
         hasInaccurate: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
@@ -995,10 +985,7 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: DirectionalTrafficSignForm,
         isSuggestedAsset: true,
-        saveCondition: function(selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-        },
+        saveCondition: saveConditionWithSuggested,
         hasMunicipalityValidation: true,
         label: new SuggestionLabel()
       },
@@ -1038,10 +1025,7 @@
         label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
-        saveCondition: function(selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-        },
+        saveCondition: saveConditionWithSuggested,
         isSuggestedAsset: true,
         hasMunicipalityValidation: true
       },
@@ -1064,10 +1048,7 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
-        saveCondition: function(selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-        },
+        saveCondition: saveConditionWithSuggested,
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         label: new SuggestionLabel()
       },
