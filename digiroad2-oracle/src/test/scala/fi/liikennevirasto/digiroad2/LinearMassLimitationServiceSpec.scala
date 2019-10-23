@@ -25,27 +25,56 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   val BogieWeightLimits = 60
   val MassLimitationAssetTypes = List(TotalWeightLimits, TrailerTruckWeightLimits, AxleWeightLimits, BogieWeightLimits)
 
-  val assetsTotalWeightLimits = Seq(PersistedLinearAsset(1l, 1000l, SideCode.BothDirections.value, Some(NumericValue(1)), 1.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
-  val assetsTotalWeightLimits2 = Seq(PersistedLinearAsset(2l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(1)), 3.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+  val propSuggestBox = DynamicProperty("suggest_box", "checkbox", false, List(DynamicPropertyValue(0)))
+  val propWeight1 = DynamicProperty("weight", "integer", true, Seq(DynamicPropertyValue("1")))
+  val propWeight2 = DynamicProperty("weight", "integer", true, Seq(DynamicPropertyValue("2")))
+  val propBogieWeight2Axel1 = DynamicProperty("bogie_weight_2_axel", "integer", true, Seq(DynamicPropertyValue("2")))
+  val propBogieWeight2Axel2 = DynamicProperty("bogie_weight_2_axel", "integer", true, Seq(DynamicPropertyValue("3")))
 
-  val assetsTrailerTruckWeightLimits = Seq(PersistedLinearAsset(3l, 1000l, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 2.0, 6.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
-  val assetsTrailerTruckWeightLimits1 = Seq(PersistedLinearAsset(4l, 1001l, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 5.0, 8.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+  val propTotalWeightLimits: Seq[DynamicProperty] = List(propSuggestBox, propWeight1)
+  val propTrailerTruckWeightLimits: Seq[DynamicProperty] = List(propSuggestBox, propWeight2)
+  val propAxleWeightLimits: Seq[DynamicProperty] = List(propSuggestBox, propWeight2)
+  val propBogieWeightLimits1: Seq[DynamicProperty] = List(propSuggestBox, propBogieWeight2Axel1)
+  val propBogieWeightLimits2: Seq[DynamicProperty] = List(propSuggestBox, propBogieWeight2Axel2)
 
-  val assetsAxleWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.BothDirections.value, Some(NumericValue(2)), 2.0, 4.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
-  val assetsAxleWeightLimits1 = Seq(PersistedLinearAsset(5l, 1001l, SideCode.AgainstDigitizing.value, Some(NumericValue(2)), 5.0, 8.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+  val totalWeightLimitsGet = DynamicValue(DynamicAssetValue(propTotalWeightLimits))
+  val trailerTruckWeightLimitsGet = DynamicValue(DynamicAssetValue(propTrailerTruckWeightLimits))
+  val axleWeightLimitsGet = DynamicValue(DynamicAssetValue(propAxleWeightLimits))
+  val bogieWeightLimitsGet1 = DynamicValue(DynamicAssetValue(propBogieWeightLimits1))
+  val bogieWeightLimitsGet2 = DynamicValue(DynamicAssetValue(propBogieWeightLimits2))
 
-  val assetsBogieWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 5.0, 9.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None),
-  PersistedLinearAsset(6l, 1002l, SideCode.TowardsDigitizing.value, Some(NumericValue(3)), 9.0, 20.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+
+  val assetsTotalWeightLimits = Seq(PersistedLinearAsset(1l, 1000l, SideCode.BothDirections.value, Some(totalWeightLimitsGet), 1.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+  val assetsTotalWeightLimits2 = Seq(PersistedLinearAsset(2l, 1002l, SideCode.TowardsDigitizing.value, Some(totalWeightLimitsGet), 3.0, 5.0, None, None, None, None, false, TotalWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+
+  val assetsTrailerTruckWeightLimits = Seq(PersistedLinearAsset(3l, 1000l, SideCode.TowardsDigitizing.value, Some(trailerTruckWeightLimitsGet), 2.0, 6.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+  val assetsTrailerTruckWeightLimits1 = Seq(PersistedLinearAsset(4l, 1001l, SideCode.AgainstDigitizing.value, Some(trailerTruckWeightLimitsGet), 5.0, 8.0, None, None, None, None, false, TrailerTruckWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+
+  val assetsAxleWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.BothDirections.value, Some(axleWeightLimitsGet), 2.0, 4.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+  val assetsAxleWeightLimits1 = Seq(PersistedLinearAsset(5l, 1001l, SideCode.AgainstDigitizing.value, Some(axleWeightLimitsGet), 5.0, 8.0, None, None, None, None, false, AxleWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
+
+  val assetsBogieWeightLimits2 = Seq(PersistedLinearAsset(3l, 1002l, SideCode.TowardsDigitizing.value, Some(bogieWeightLimitsGet1), 5.0, 9.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None),
+  PersistedLinearAsset(6l, 1002l, SideCode.TowardsDigitizing.value, Some(bogieWeightLimitsGet2), 9.0, 20.0, None, None, None, None, false, BogieWeightLimits, 0, None, linkSource = NormalLinkInterface, None, None, None))
 
   val assets = assetsTotalWeightLimits ++ assetsTrailerTruckWeightLimits
   val assets1 = assetsTrailerTruckWeightLimits1 ++ assetsAxleWeightLimits1
   val assets2 = assetsTotalWeightLimits2 ++ assetsAxleWeightLimits2
-  when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1000), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets)
-  when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1001), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets1)
-  when(mockMassLimitationDao.fetchLinearAssetsByLinkIds(MassLimitationAssetTypes, Seq(1002), LinearAssetTypes.numericValuePropertyId)).thenReturn(assets2)
-  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1000))).thenReturn(Seq())
-  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001))).thenReturn(Seq())
-  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1002))).thenReturn(assetsBogieWeightLimits2)
+
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TotalWeightLimits, Seq(1000))).thenReturn(assets)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TrailerTruckWeightLimits, Seq(1000))).thenReturn(assets)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(AxleWeightLimits, Seq(1000))).thenReturn(assets)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimits, Seq(1000))).thenReturn(Seq())
+
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TotalWeightLimits, Seq(1001))).thenReturn(assets1)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TrailerTruckWeightLimits, Seq(1001))).thenReturn(assets1)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(AxleWeightLimits, Seq(1001))).thenReturn(assets1)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimits, Seq(1001))).thenReturn(Seq())
+
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TotalWeightLimits, Seq(1002))).thenReturn(assets2)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TrailerTruckWeightLimits, Seq(1002))).thenReturn(assets2)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(AxleWeightLimits, Seq(1002))).thenReturn(assets2)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimits, Seq(1002))).thenReturn(assetsBogieWeightLimits2)
+
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("get assets with BothDirection split in TowardsDigitizing and AgainstDigitizing") {
