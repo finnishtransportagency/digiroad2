@@ -15,6 +15,8 @@ class MassLimitationDao {
   /**
     * Iterates a set of link ids with asset type id and property id and returns linear assets. Used by LinearAssetService.getByRoadLinks.
     */
+
+  // TODO: This file can be deleted after remove the 2 references founded in code
   def fetchLinearAssetsByLinkIds(assetTypeId: Seq[Int], linkIds: Seq[Long], valuePropertyId: String): Seq[PersistedLinearAsset] = {
    MassQuery.withIds(linkIds.toSet) { idTableName =>
        sql"""
