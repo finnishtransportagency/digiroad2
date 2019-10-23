@@ -147,6 +147,17 @@ object OracleTrafficSignDao {
     groupTrafficSign(rows)
   }
 
+  private def createOrUpdateTrafficSign(trafficSign: IncomingTrafficSign, id: Long): Unit ={
+    trafficSign.propertyData.map(propertyWithTypeAndId(TrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+  }
+
   implicit val getTrafficSignRow = new GetResult[TrafficSignRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -162,7 +173,7 @@ object OracleTrafficSignDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,
@@ -208,14 +219,8 @@ object OracleTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId(TrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
+    createOrUpdateTrafficSign(trafficSign, id)
 
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
     id
   }
 
@@ -237,14 +242,8 @@ object OracleTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId(TrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
+    createOrUpdateTrafficSign(trafficSign, id)
 
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
     id
   }
 
@@ -266,14 +265,8 @@ object OracleTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId(TrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
+    createOrUpdateTrafficSign(trafficSign, id)
 
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
     id
   }
 
@@ -283,14 +276,7 @@ object OracleTrafficSignDao {
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId(TrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateTrafficSign(trafficSign, id)
 
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>
@@ -392,7 +378,7 @@ object OracleTrafficSignDao {
 
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText =>
+      case Text =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute

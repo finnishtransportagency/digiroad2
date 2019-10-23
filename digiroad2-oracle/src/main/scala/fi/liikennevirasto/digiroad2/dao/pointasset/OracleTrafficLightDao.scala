@@ -1,8 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPointAsset, Point}
-import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -15,16 +14,16 @@ import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficLight
 
 case class TrafficLightRow(id: Long, linkId: Long,
-                          lon: Double, lat: Double,
-                          mValue: Double, floating: Boolean,
-                          vvhTimeStamp: Long,
-                          municipalityCode: Int,
-                          property: PropertyRow,
-                          createdBy: Option[String] = None,
-                          createdAt: Option[DateTime] = None,
-                          modifiedBy: Option[String] = None,
-                          modifiedAt: Option[DateTime] = None,
-                          linkSource: LinkGeomSource)
+                           lon: Double, lat: Double,
+                           mValue: Double, floating: Boolean,
+                           vvhTimeStamp: Long,
+                           municipalityCode: Int,
+                           property: PropertyRow,
+                           createdBy: Option[String] = None,
+                           createdAt: Option[DateTime] = None,
+                           modifiedBy: Option[String] = None,
+                           modifiedAt: Option[DateTime] = None,
+                           linkSource: LinkGeomSource)
 
 case class TrafficLight(id: Long, linkId: Long,
                         lon: Double, lat: Double,
@@ -86,6 +85,17 @@ object OracleTrafficLightDao {
     }.values.toSeq
   }
 
+  private def createOrUpdateTrafficLight(trafficLight: IncomingTrafficLight, id: Long): Unit ={
+    trafficLight.propertyData.map(propertyWithTypeAndId(TrafficLights.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+  }
+
   implicit val getPointAsset = new GetResult[TrafficLightRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -101,7 +111,7 @@ object OracleTrafficLightDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,
@@ -135,14 +145,7 @@ object OracleTrafficLightDao {
     """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
 
-    trafficLight.propertyData.map(propertyWithTypeAndId(TrafficLights.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateTrafficLight(trafficLight, id)
 
     id
   }
@@ -164,14 +167,7 @@ object OracleTrafficLightDao {
     """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
 
-    trafficLight.propertyData.map(propertyWithTypeAndId(TrafficLights.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateTrafficLight(trafficLight, id)
 
     id
   }
@@ -203,18 +199,10 @@ object OracleTrafficLightDao {
         """.execute
     }
 
-    trafficLight.propertyData.map(propertyWithTypeAndId(TrafficLights.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateTrafficLight(trafficLight, id)
 
     id
   }
-
 
   def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
     val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
@@ -235,28 +223,6 @@ object OracleTrafficLightDao {
 
   def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText =>
-        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
-          deleteTextProperty(assetId, propertyId).execute
-        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
-        } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
-        }
-      case SingleChoice =>
-        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
-        } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
-        }
-      case AdditionalPanelType =>
-        if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
-        deleteAdditionalPanelProperty(assetId).execute
-        propertyValues.foreach{value =>
-          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
-        }
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
