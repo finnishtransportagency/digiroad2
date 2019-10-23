@@ -1,14 +1,13 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{PersistedPoint, PersistedPointAsset, Point, PointAssetOperations}
+import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
-
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc._
@@ -16,17 +15,17 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 
 case class PedestrianCrossingRow(id: Long, linkId: Long,
-                                lon: Double, lat: Double,
-                                mValue: Double, floating: Boolean,
-                                vvhTimeStamp: Long,
-                                municipalityCode: Int,
-                                property: PropertyRow,
-                                createdBy: Option[String] = None,
-                                createdAt: Option[DateTime] = None,
-                                modifiedBy: Option[String] = None,
-                                modifiedAt: Option[DateTime] = None,
-                                expired: Boolean = false,
-                                linkSource: LinkGeomSource)
+                                 lon: Double, lat: Double,
+                                 mValue: Double, floating: Boolean,
+                                 vvhTimeStamp: Long,
+                                 municipalityCode: Int,
+                                 property: PropertyRow,
+                                 createdBy: Option[String] = None,
+                                 createdAt: Option[DateTime] = None,
+                                 modifiedBy: Option[String] = None,
+                                 modifiedAt: Option[DateTime] = None,
+                                 expired: Boolean = false,
+                                 linkSource: LinkGeomSource)
 
 case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,
@@ -43,6 +42,17 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 
 
 class OraclePedestrianCrossingDao() {
+  private def createOrUpdatePedestrianCrossing(crossing: IncomingPedestrianCrossing, id: Long): Unit ={
+    crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+  }
+
   def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
     sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
@@ -70,14 +80,7 @@ class OraclePedestrianCrossingDao() {
         """.execute
     }
 
-    persisted.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdatePedestrianCrossing(persisted, id)
 
     id
   }
@@ -99,14 +102,7 @@ class OraclePedestrianCrossingDao() {
     """.execute
     updateAssetGeometry(id, Point(crossing.lon, crossing.lat))
 
-    crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdatePedestrianCrossing(crossing, id)
 
     id
   }
@@ -130,18 +126,10 @@ class OraclePedestrianCrossingDao() {
     """.execute
     updateAssetGeometry(id, Point(crossing.lon, crossing.lat))
 
-    crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdatePedestrianCrossing(crossing, id)
 
     id
   }
-
 
   def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
@@ -169,7 +157,6 @@ class OraclePedestrianCrossingDao() {
       left join enumerated_value ev on  mcv.ENUMERATED_VALUE_ID = ev.ID
     """
   }
-
 
   def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
@@ -227,7 +214,6 @@ class OraclePedestrianCrossingDao() {
     }
   }
 
-
   def assetRowToProperty(assetRows: Iterable[PedestrianCrossingRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
@@ -256,7 +242,6 @@ class OraclePedestrianCrossingDao() {
     }.values.toSeq
   }
 
-
   def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
     val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
@@ -274,31 +259,8 @@ class OraclePedestrianCrossingDao() {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-
   def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText =>
-        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
-          deleteTextProperty(assetId, propertyId).execute
-        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
-        } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
-        }
-      case SingleChoice =>
-        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
-        } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
-        }
-      case AdditionalPanelType =>
-        if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
-        deleteAdditionalPanelProperty(assetId).execute
-        propertyValues.foreach{value =>
-          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
-        }
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {

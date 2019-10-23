@@ -14,16 +14,16 @@ import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 
 case class RailwayCrossingRow(id: Long, linkId: Long,
-                             lon: Double, lat: Double,
-                             mValue: Double, floating: Boolean,
-                             vvhTimeStamp: Long,
-                             municipalityCode: Int,
-                             property: PropertyRow,
-                             createdBy: Option[String] = None,
-                             createdAt: Option[DateTime] = None,
-                             modifiedBy: Option[String] = None,
-                             modifiedAt: Option[DateTime] = None,
-                             linkSource: LinkGeomSource)
+                              lon: Double, lat: Double,
+                              mValue: Double, floating: Boolean,
+                              vvhTimeStamp: Long,
+                              municipalityCode: Int,
+                              property: PropertyRow,
+                              createdBy: Option[String] = None,
+                              createdAt: Option[DateTime] = None,
+                              modifiedBy: Option[String] = None,
+                              modifiedAt: Option[DateTime] = None,
+                              linkSource: LinkGeomSource)
 
 case class RailwayCrossing(id: Long, linkId: Long,
                            lon: Double, lat: Double,
@@ -88,6 +88,17 @@ object OracleRailwayCrossingDao {
     }.values.toSeq
   }
 
+  private def createOrUpdateRailwayCrossing(crossing: IncomingRailwayCrossing, id: Long): Unit ={
+    crossing.propertyData.map(propertyWithTypeAndId(RailwayCrossings.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+  }
+
   implicit val getPointAsset = new GetResult[RailwayCrossingRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
@@ -103,7 +114,7 @@ object OracleRailwayCrossingDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,
@@ -138,17 +149,11 @@ object OracleRailwayCrossingDao {
     """.execute
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
 
-    asset.propertyData.map(propertyWithTypeAndId(RailwayCrossings.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateRailwayCrossing(asset, id)
 
     id
   }
+
   def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource, createdByFromUpdate: Option[String] = Some(""), createdDateTimeFromUpdate: Option[DateTime]): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -167,14 +172,7 @@ object OracleRailwayCrossingDao {
     """.execute
     updateAssetGeometry(id, Point(asset.lon, asset.lat))
 
-    asset.propertyData.map(propertyWithTypeAndId(RailwayCrossings.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateRailwayCrossing(asset, id)
 
     id
   }
@@ -208,14 +206,7 @@ object OracleRailwayCrossingDao {
         """.execute
     }
 
-    railwayCrossing.propertyData.map(propertyWithTypeAndId(RailwayCrossings.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateRailwayCrossing(railwayCrossing, id)
 
     id
   }
@@ -236,7 +227,6 @@ object OracleRailwayCrossingDao {
     StaticQuery.query[String, Long](Queries.getPropertyMaxSize).apply("tasoristeystunnus").first
   }
 
-
   def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
     val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
@@ -254,10 +244,9 @@ object OracleRailwayCrossingDao {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-
   def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText =>
+      case Text =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
@@ -273,12 +262,6 @@ object OracleRailwayCrossingDao {
         } else {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
-      case AdditionalPanelType =>
-        if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
-        deleteAdditionalPanelProperty(assetId).execute
-        propertyValues.foreach{value =>
-          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
-        }
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
@@ -290,6 +273,3 @@ object OracleRailwayCrossingDao {
     }
   }
 }
-
-
-
