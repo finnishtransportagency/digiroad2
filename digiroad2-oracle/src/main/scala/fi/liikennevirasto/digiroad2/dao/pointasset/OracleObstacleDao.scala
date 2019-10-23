@@ -252,14 +252,9 @@ object OracleObstacleDao {
     updateAssetModified(id, obstacleUpdated.modifiedBy.get).execute
     updateAssetGeometry(id, Point(obstacleUpdated.lon, obstacleUpdated.lat))
 
-    obstacleUpdated.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet.map(propertyWithTypeAndId(Obstacles.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    val obstacle: IncomingObstacle = IncomingObstacle(obstacleUpdated.lon, obstacleUpdated.lat, obstacleUpdated.linkId,
+                                                        obstacleUpdated.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
+    createOrUpdateObstacle(obstacle, id)
 
     sqlu"""
       update lrm_position

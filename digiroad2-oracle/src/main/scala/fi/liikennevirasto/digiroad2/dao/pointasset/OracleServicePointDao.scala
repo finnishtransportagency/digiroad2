@@ -56,6 +56,17 @@ case class ServicePointRow(id: Long,
                           property: PropertyRow)
 
 object OracleServicePointDao {
+  private def createOrUpdateServicePoint(servicePoint: IncomingServicePoint, id: Long): Unit ={
+    servicePoint.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+  }
+
   def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     val servicePointId = Sequences.nextPrimaryKeySeqValue
     sqlu"""
@@ -73,14 +84,7 @@ object OracleServicePointDao {
       """.execute
     }
 
-    servicePoint.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(servicePointId, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateServicePoint(servicePoint, servicePointId)
 
     servicePointId
   }
@@ -100,14 +104,7 @@ object OracleServicePointDao {
       """.execute
     }
 
-    updatedAsset.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(assetId, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateServicePoint(updatedAsset, assetId)
 
     assetId
   }
@@ -215,7 +212,7 @@ object OracleServicePointDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,
@@ -263,31 +260,8 @@ object OracleServicePointDao {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-
   def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText =>
-        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
-          deleteTextProperty(assetId, propertyId).execute
-        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
-        } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
-        }
-      case SingleChoice =>
-        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
-        } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
-        }
-      case AdditionalPanelType =>
-        if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
-        deleteAdditionalPanelProperty(assetId).execute
-        propertyValues.foreach{value =>
-          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
-        }
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
@@ -299,5 +273,3 @@ object OracleServicePointDao {
     }
   }
 }
-
-
