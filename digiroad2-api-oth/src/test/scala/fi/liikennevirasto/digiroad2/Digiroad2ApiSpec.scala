@@ -34,7 +34,20 @@ case class DirectionalTrafficSignFromApi(id: Long, linkId: Long, lon: Double, la
 case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value], administrativeClass: Int)
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object PointAssetSerializer extends CustomSerializer[PointAssetValue](format =>
+    ({
+      case jsonObj: JObject =>
+        val propertyValue = (jsonObj \ "propertyValue").extract[String]
+        val propertyDisplayValue = (jsonObj \ "propertyDisplayValue").extractOpt[String]
+        val checked = (jsonObj \ "checked").extract[Boolean]
+
+        PropertyValue(propertyValue, propertyDisplayValue, checked)
+    },
+      {
+        case _ => null
+      }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + PointAssetSerializer
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
@@ -270,7 +283,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(47)
+      ps.size should equal(48)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
