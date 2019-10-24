@@ -70,8 +70,8 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
   when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(AxleWeightLimits, Seq(1001))).thenReturn(assets1)
   when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimits, Seq(1001))).thenReturn(Seq())
 
-  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TotalWeightLimits, Seq(1002))).thenReturn(assets2)
-  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TrailerTruckWeightLimits, Seq(1002))).thenReturn(assets2)
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TotalWeightLimits, Seq(1002))).thenReturn(Seq())
+  when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(TrailerTruckWeightLimits, Seq(1002))).thenReturn(Seq())
   when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(AxleWeightLimits, Seq(1002))).thenReturn(assets2)
   when(mockDynamicDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimits, Seq(1002))).thenReturn(assetsBogieWeightLimits2)
 
