@@ -53,6 +53,12 @@
       }).values);
     };
 
+    this.renderFeaturesByPointAssets = function (pointAssets, zoomLevel) {
+      return me.renderGroupedFeatures(pointAssets, zoomLevel, function (asset) {
+        return me.getCoordinate(asset);
+      });
+    };
+
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
       if(!this.isVisibleZoom(zoomLevel))
         return [];
@@ -69,7 +75,11 @@
               return me.getStyle(value, imgPosition );
             })));
 
-            styles = me.suggestionStyle(getProperty(asset,"suggest_box"), styles, imgPosition.y);
+            var suggestionInfo = getProperty(asset,"suggest_box");
+            if(!_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue)){
+              imgPosition.y += 40;
+              styles = me.suggestionStyle(suggestionInfo, styles, imgPosition.y);
+            }
 
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);

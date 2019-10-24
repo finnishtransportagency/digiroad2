@@ -1025,7 +1025,10 @@
         label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
-        saveCondition: saveConditionWithSuggested,
+        saveCondition: function (selectedAsset, authorizationPolicy) {
+          var selected = selectedAsset.get();
+          return selected.services.length > 0 && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isOperator());
+        },
         isSuggestedAsset: true,
         hasMunicipalityValidation: true
       },
