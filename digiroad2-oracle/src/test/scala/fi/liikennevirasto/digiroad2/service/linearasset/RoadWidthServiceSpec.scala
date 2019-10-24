@@ -401,6 +401,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
+      override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
       def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
@@ -417,7 +418,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val changesInfo = Seq(ChangeInfo(Some(5000), Some(5000), 0L, 3, Some(0), Some(GeometryUtils.geometryLength(geometry) - 10), Some(0), Some(GeometryUtils.geometryLength(geometry)), 11L))
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changesInfo))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String], any[Boolean])).thenReturn(assets)
+      when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(assets)
 
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
@@ -439,6 +440,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
+      override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
       def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
@@ -455,7 +457,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val changesInfo = Seq(ChangeInfo(Some(5000), Some(5000), 0L, 3, Some(0), Some(GeometryUtils.geometryLength(geometry) - 10), Some(0), Some(GeometryUtils.geometryLength(geometry)), 11L))
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changesInfo))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String], any[Boolean])).thenReturn(assets)
+      when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(assets)
 
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
