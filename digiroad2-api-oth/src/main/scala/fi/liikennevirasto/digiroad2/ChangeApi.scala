@@ -159,11 +159,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           }
         case _ => Seq()
       }
-        )
-      )
-    }
-    dynamicLinearAssetsToGeoJson(since, changedLinearAssets, mapValues)
 
+      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, dynamicMultiValueLinearAssetMap)
+    }
   }
 
   private def isSuggested(asset: ChangedLinearAsset): Boolean = {
@@ -246,8 +244,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
-              ) ++ mapValues(linearAsset)
-                )
+              ) ++ values)
           )
         }
     )
