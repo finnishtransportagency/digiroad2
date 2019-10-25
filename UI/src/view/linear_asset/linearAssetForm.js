@@ -32,7 +32,11 @@
       }
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
-      rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
+      rootElement.find('.form-controls.linear-asset button.save').on('click', function() {
+        if(selectedLinearAsset.getCreatedBy() === "automatic_trafficSign_created")
+            new GenericConfirmPopup("Liikennemerkkiin on liitetty myös viivamainen tietolaji. Muokkaa tai poista myös viivamainen tietolaji", {type: 'alert'});
+        selectedLinearAsset.save();
+      });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
       toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy));

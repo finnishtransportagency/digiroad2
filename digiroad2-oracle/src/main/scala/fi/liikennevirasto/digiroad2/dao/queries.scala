@@ -358,6 +358,7 @@ object Queries {
     """
   }
 
+  //Table external_road_private_info created using an shape file importer, does't exist on Flyway
   def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
     sql"""
       select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode

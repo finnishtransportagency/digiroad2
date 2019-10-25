@@ -20,8 +20,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
+import fi.liikennevirasto.digiroad2.util._
+import org.apache.http.HttpStatus
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
@@ -399,17 +399,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val passengerId = params("passengerId")
     val massTransitStopsReturned = massTransitStopService.getMassTransitStopByPassengerId(passengerId, validateMunicipalityAuthorization(passengerId))
-
-    if(massTransitStopsReturned.nonEmpty)
-      massTransitStopsReturned.map( stop =>
+    if (massTransitStopsReturned.nonEmpty)
+      massTransitStopsReturned.map { stop =>
         Map("nationalId" -> stop.nationalId,
           "lat" -> stop.lat,
           "lon" -> stop.lon,
           "municipalityName" -> stop.municipalityName.getOrElse(""),
-          "success" -> true))
+          "success" -> true)
+      }
     else
       Map("success" -> false)
-
   }
 
   get("/massTransitStops/livi/:liviId") {
@@ -622,7 +621,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       "accessRightID" -> roadLink.attributes.get("ACCESS_RIGHT_ID"),
       "privateRoadAssociation" -> roadLink.attributes.get("PRIVATE_ROAD_ASSOCIATION"),
       "additionalInfo" -> roadLink.attributes.get("ADDITIONAL_INFO"),
-      "privateRoadLastModificationInfo" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MODIFICATION")
+      "privateRoadLastModifiedDate" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MOD_DATE"),
+      "privateRoadLastModifiedUser" -> roadLink.attributes.get("PRIVATE_ROAD_LAST_MOD_USER")
     )
   }
 
@@ -1937,5 +1937,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipality" -> value.municipality
       )
     }
+  }
+
+  get("/privateRoads/:municipalityCode") {
+    val municipalityCode = params("municipalityCode").toInt
+    val municipalityName = roadLinkService.municipalityService.getMunicipalityNameByCode(municipalityCode)
+    val groupedResults = roadLinkService.getPrivateRoadsInfoByMunicipality(municipalityCode)
+
+    Map(
+      "municipalityName" -> municipalityName,
+      "municipalityCode" -> municipalityCode,
+      "results" ->
+        groupedResults.filter(row => row.privateRoadName.isDefined || row.associationId.isDefined).map{result =>
+          Map(
+            "privateRoadName" -> result.privateRoadName.getOrElse(""),
+            "associationId" -> result.associationId.getOrElse(""),
+            "additionalInfo" -> result.additionalInfo.getOrElse(99),
+            "lastModifiedDate" -> result.lastModifiedDate.getOrElse("")
+          )
+        }
+    )
   }
 }

@@ -117,7 +117,7 @@
     };
 
     me.addMeters = function() {
-      return ''.concat('m');
+      return ''.concat(' m');
     };
 
     me.convertToTons = function(){

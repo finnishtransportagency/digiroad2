@@ -1,7 +1,8 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset.DateParser._
+import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
@@ -147,20 +148,22 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             bogieWeightAxel.publicId match {
               case "bogie_weight_2_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "twoAxelValue" -> v.value
+                  "twoAxleValue" -> v.value
                 }
               case "bogie_weight_3_axel" =>
                 bogieWeightAxel.values.map { v =>
-                  "threeAxelValue" -> v.value
+                  "threeAxleValue" -> v.value
                 }
               case _ => None
             }
           }
         case _ => Seq()
       }
-
-      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, dynamicMultiValueLinearAssetMap)
+        )
+      )
     }
+    dynamicLinearAssetsToGeoJson(since, changedLinearAssets, mapValues)
+
   }
 
   private def isSuggested(asset: ChangedLinearAsset): Boolean = {
@@ -243,7 +246,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
-              ) ++ values)
+              ) ++ mapValues(linearAsset)
+                )
           )
         }
     )

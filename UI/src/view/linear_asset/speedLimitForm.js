@@ -145,8 +145,12 @@
       }
   };
 
-  var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
+  var bindEvents = function(selectedSpeedLimit, feedbackCollection, backend) {
     new FeedbackDataTool(feedbackCollection, 'speedLimit', authorizationPolicy);
+
+    if (authorizationPolicy.userRoles.length === 0){
+      backend.getUserRoles();
+    }
 
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
@@ -247,8 +251,8 @@
   }
 
   root.SpeedLimitForm = {
-    initialize: function(selectedSpeedLimit, feedbackCollection) {
-      bindEvents(selectedSpeedLimit, feedbackCollection);
+    initialize: function(selectedSpeedLimit, feedbackCollection, backend) {
+      bindEvents(selectedSpeedLimit, feedbackCollection, backend);
     }
   };
 })(this);
