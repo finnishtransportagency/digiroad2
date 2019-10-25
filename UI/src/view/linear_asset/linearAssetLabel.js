@@ -326,22 +326,18 @@
       me.isSuggested = function(asset) {
         return !!parseInt(_.head(getValues(asset)).isSuggested);
       };
-  
-      var suggestionNumber = 0;
 
       this.renderFeatures = function (assets, zoomLevel, getPoint) {
         if (!me.isVisibleZoom(zoomLevel))
           return [];
 
-
         return [].concat.apply([], _.chain(assets).map(function (asset) {
           var values = getValues(asset);
           return _.map(values, function (assetValues, index) {
-            var style = me.getStyle(assetValues, index + suggestionNumber);
+            var style = me.getStyle(assetValues, index);
             
             if(me.isSuggested(asset)) {
-              suggestionNumber = suggestionNumber + 1;
-              style = style.concat(me.getSuggestionStyle( index + suggestionNumber + 1));
+              style = style.concat(me.getSuggestionStyle( index + 2));
             }
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(style);

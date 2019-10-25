@@ -450,7 +450,7 @@
             var template = _.template('<div class="form-group">' +
               '   <label class="control-label">' + field.label + '</label>' +
               '   <p class="form-control-static">' +
-              ' <%= divCheckBox %>  ' +
+              ' Kyllä ' +
               '</p>' +
               '</div>' );
 

@@ -98,6 +98,20 @@
     VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v210', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Ajoneuvon suurin sallittu leveys')));
 
 
+--  bogieLimit --
+    INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval,'Ajoneuvon suurin sallittu telimassa','db_migration_v210', sysdate);
+
+    INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
+    VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Ajoneuvon suurin sallittu telimassa'), 'checkbox', 0, 'db_migration_v210', 'suggest_box', (select id from LOCALIZED_STRING where VALUE_FI = 'Vihjetieto'));
+
+    INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+    VALUES (primary_key_seq.nextval, 0, 'Tarkistettu', ' ', 'db_migration_v210', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Ajoneuvon suurin sallittu telimassa')));
+
+    INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+    VALUES (primary_key_seq.nextval, 1, 'Vihjetieto', ' ', 'db_migration_v210', (select id from property where public_ID = 'suggest_box' and asset_type_id = (select id from asset_type where name = 'Ajoneuvon suurin sallittu telimassa')));
+
+
 --  RoadWith --
     INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
     VALUES (primary_key_seq.nextval,'Tien leveys','db_migration_v210', sysdate);
