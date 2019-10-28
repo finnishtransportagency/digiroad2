@@ -795,7 +795,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new RoadWorkStyle(),
-	      label: new SuggestionLabel(),
+	      label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm ( {
           fields : [
             {label: 'Työn tunnus', publicId: 'tyon_tunnus', type: 'text', weight: 1},
