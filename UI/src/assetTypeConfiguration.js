@@ -323,7 +323,7 @@
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
         minZoomForContent: oneKmZoomLvl,
-        label: new SuggestionLabel(),
+        label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm({
           fields: [
             {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
@@ -367,8 +367,7 @@
             return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
-          var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().propertyType === 'checkbox';}), function(checkBox) { return ~~(checkBox.getValue() === 1); });
-          return checkBoxField ? isValidPeriodDate : isValidIntervalDate;
+          return isValidPeriodDate && isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
@@ -429,7 +428,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new PavedRoadStyle(),
-        label: new SuggestionLabel(),
+        label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm({
             fields : [
               {

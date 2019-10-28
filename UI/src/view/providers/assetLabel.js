@@ -104,7 +104,7 @@
           var suggestionBox =  _.some(asset.value, function(value) {
             var suggestionBox = _.find(value, function(prop) {
               return prop.publicId === 'suggest_box';});
-            return (!_.isUndefined(suggestionBox) && !!parseInt(_.head(suggestionBox.values).value));});
+            return (!_.isUndefined(suggestionBox) && suggestionBox.values.length !==0 && !!parseInt(_.head(suggestionBox.values).value));});
           
           return _.has(asset, 'value') && suggestionBox;
         };
