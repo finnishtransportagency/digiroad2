@@ -222,7 +222,7 @@
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: 'images/icons/questionMarkerIcon.png',
-          anchor :  [0-imgMargin , (totalStopTypes * IMAGE_HEIGHT) + STICK_HEIGHT + (numberOfGroup * IMAGE_PADDING * 2) + 1 + 50],
+          anchor :  [0-imgMargin , (totalStopTypes * IMAGE_HEIGHT) + STICK_HEIGHT + (numberOfGroup * IMAGE_PADDING * 2) + 45],
           anchorXUnits: 'pixels',
           anchorYUnits: "pixels"
         }))
