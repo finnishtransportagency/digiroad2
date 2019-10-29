@@ -29,7 +29,7 @@
     "jquery-migrate": "3.0.1",
     "jquery-ui-dist": "1.12.0",
     "jquery-validation": "^1.17.0",
-    "lodash": "4.17.10",
+    "lodash": "4.17.15",
     "moment": "2.22.1",
     "multiselect-two-sides": "2.5.0",
     "ol": "^5.2.0",
