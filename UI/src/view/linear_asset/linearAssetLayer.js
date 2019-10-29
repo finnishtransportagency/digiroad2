@@ -552,8 +552,6 @@ root.LinearAssetLayer  = function(params) {
             });
           });
 
-          var pointFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){ return layerFeature.values_.geometry instanceof ol.geom.Point;});
-          _.each(pointFeatures, removeFeature);
           _.each(currentFeatures, removeFeature);
 
           if(selectedLinearAsset.isSplitOrSeparated() || _.some(linearAssets, function(asset){return !_.isEqual(asset.sideCode, 1);})){
