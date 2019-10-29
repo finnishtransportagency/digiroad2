@@ -349,7 +349,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             "estimated_duration" -> roadWorkProps.find(_.publicId == "arvioitu_kesto").map(_.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).map {
               period => Map("startDate" -> period.startDate, "endDate" -> period.endDate)
             }),
-            "work_id" -> roadWorkProps.find(_.publicId == "tyon_tunnus").map(_.values.map(_.value.toString.toInt)
+            "work_id" -> roadWorkProps.find(_.publicId == "tyon_tunnus").map(_.values.map(_.value.toString)
             ))
         case _ => Map()
       }
