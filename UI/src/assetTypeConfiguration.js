@@ -261,7 +261,7 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicyWithSuggestion(),
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
@@ -293,7 +293,7 @@
         hasInaccurate: true,
         hasMunicipalityValidation: true,
         isMultipleLinkSelectionAllowed: true,
-        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        authorizationPolicy: new LinearAssetAuthorizationPolicyWithSuggestion(),
         minZoomForContent: oneKmZoomLvl,
         form: new DynamicAssetForm({
           fields: [
