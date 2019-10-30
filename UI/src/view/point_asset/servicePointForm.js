@@ -205,8 +205,8 @@
       var weightElement = '' +
         '<label class="control-label">Painorajoitus</label>' +
         '<p class="form-control-static">' + (_.isUndefined(service.weightLimit) ? '–' : service.weightLimit + ' Kg') + '</p>' +
-        '<input type="text" class="form-control weightLimit" data-service-id="' + service.id + '" value="' + (service.weightLimit || '')  + '">'; //+
-        //'<span class="form-control kg-unit-addon">Kg</span>';
+        '<input type="text" class="form-control weightLimit" data-service-id="' + service.id + '" value="' + (service.weightLimit || '')  + '">' +
+        '<span class="form-control kg-unit-addon">Kg</span>';
 
       var nameElement = '' +
         '<div>' +
