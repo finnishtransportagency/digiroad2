@@ -28,7 +28,8 @@
       { value: 13, label: 'Autojen lastausterminaali' },
       { value: 14, label: 'Linja- ja kuorma-autojen pysäköintialue' },
       { value: 17, label: 'Sähköautojen latauspiste'},
-      { value: 18, label: 'E18 rekkaparkki' }
+      { value: 18, label: 'E18 rekkaparkki' },
+      { value: 19, label: 'Tierumpu' }
     ];
 
     var commonServiceExtension = [
@@ -137,6 +138,11 @@
         selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
       });
 
+      rootElement.find('.weightLimit').on('input change', function (event) {
+        var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+        selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {weightLimit: parseInt($(event.currentTarget).val(), 10)})});
+      });
+
       rootElement.find('.form-service').on('change', '.select-service-type', function (event) {
         var newServiceType = parseInt($(event.currentTarget).val(), 10);
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
@@ -196,6 +202,19 @@
         '<p class="form-control-static">' + (service.parkingPlaceCount || '–') + '</p>' +
         '<input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '"></div>';
 
+      var weightElement = '' +
+        '<label class="control-label">Painorajoitus</label>' +
+        '<p class="form-control-static">' + (_.isUndefined(service.weightLimit) ? '–' : service.weightLimit + ' Kg') + '</p>' +
+        '<input type="text" class="form-control weightLimit" data-service-id="' + service.id + '" value="' + (service.weightLimit || '')  + '">'; //+
+        //'<span class="form-control kg-unit-addon">Kg</span>';
+
+      var nameElement = '' +
+        '<div>' +
+        '<label class="control-label">Palvelun nimi</label>' +
+        '<p class="form-control-static">' + (service.name || '–') + '</p>'+
+        '<input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
+        '</div>';
+
       return '<li>' +
         '  <div class="form-group service-point editable">' +
         '  <div class="form-group">' +
@@ -207,11 +226,8 @@
         '      </select>' +
         '    </div>' +
         serviceTypeExtensionElements(service, serviceTypeExtensions) +
+        (!isCulvert(selectedServiceType) ? nameElement : '') +
         '<div>' +
-        '    <label class="control-label">Palvelun nimi</label>' +
-        '    <p class="form-control-static">' + (service.name || '–') + '</p> '+
-        '    <input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
-        '</div><div>' +
         '    <label class="control-label">Palvelun lisätieto</label>' +
         '    <p class="form-control-static">' + (service.additionalInfo || '–') + '</p>' +
         '    <textarea class="form-control large-input" data-service-id="' + service.id + '">' + (service.additionalInfo || '')  + '</textarea>' +
@@ -220,6 +236,7 @@
         '    <p class="form-control-readOnly">'+ (service.isAuthorityData ?  'Kyllä' : 'Ei') +'</p>' +
         '</div><div>' +
         (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
+        (isCulvert(selectedServiceType) ? weightElement : '') +
         '</div></div>' +
         '</li>';
     };
@@ -228,6 +245,10 @@
       var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
       if(!serviceTypeExtensions[serviceType])
         delete service.typeExtension;
+    }
+
+    function isCulvert(selectedServiceType) {
+      return selectedServiceType.value === 19;
     }
 
     function showParkingPlaceCount(selectedServiceType) {
@@ -282,7 +303,7 @@
     }
 
     function isAuthorityData(selectedServiceType) {
-      return !(selectedServiceType === 10 || selectedServiceType === 17);
+      return !(selectedServiceType === 10 || selectedServiceType === 17 || selectedServiceType === 19);
     }
 
   };
