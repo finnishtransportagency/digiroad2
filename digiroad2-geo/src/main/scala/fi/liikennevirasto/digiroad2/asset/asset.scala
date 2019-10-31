@@ -230,7 +230,7 @@ sealed trait ServicePointsClass {
 }
 object ServicePointsClass {
   val values = Set(Customs, BorderCrossing, RestArea, Airport, FerryTerminal, RailwayStation, ParkingArea, TerminalForLoadingCars,
-                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Unknown)
+                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Culvert, Unknown)
 
   def apply(value: Int): Boolean = {
     values.find(_.value == value).getOrElse(Unknown).isAuthorityData
@@ -273,6 +273,9 @@ object ServicePointsClass {
   case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true; val labelName = "Linja-autoasema";}
   case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false; val labelName = "Taksiasema";}
   case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false; val labelName = "Sähköautojen latauspiste";}
+  case object Culvert extends ServicePointsClass { val labelName = "Tierumpu";
+def value = 19;
+def isAuthorityData = false;}
   case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true; val labelName = "Unknown";}
 }
 

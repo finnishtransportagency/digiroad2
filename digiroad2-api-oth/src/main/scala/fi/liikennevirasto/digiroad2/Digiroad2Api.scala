@@ -1647,9 +1647,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/municipalities/byUser") {
-    val municipalityCode = params("municipalityCode")
+    val municipalityCode = try {
+      params("municipalityCode").asInstanceOf[Option[Int]]
+    }catch{
+      case _: Exception => None
+    }
+
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if(municipalityCode != "null") Set(municipalityCode.toInt) else { if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities }
+    val municipalities: Set[Int] = if(municipalityCode.isDefined) Set(municipalityCode.get) else { if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities }
     municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,
         "name" -> municipality.name)
