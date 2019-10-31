@@ -203,24 +203,22 @@
         '<input type="text" class="form-control service-parking-place-count" data-service-id="' + service.id + '" value="' + (service.parkingPlaceCount || '')  + '"></div>';
 
       var weightElement = '' +
-        '<label class="control-label">Painorajoitus</label>' +
+        '<div><label class="control-label">Painorajoitus</label>' +
         '<p class="form-control-static">' + (_.isUndefined(service.weightLimit) ? '–' : service.weightLimit + ' Kg') + '</p>' +
         '<input type="text" class="form-control weightLimit" data-service-id="' + service.id + '" value="' + (service.weightLimit || '')  + '">' +
-        '<span class="form-control kg-unit-addon">Kg</span>';
+        '<span class="form-control kg-unit-addon">Kg</span></div>';
 
       var nameElement = '' +
-        '<div>' +
-        '<label class="control-label">Palvelun nimi</label>' +
+        '<div><label class="control-label">Palvelun nimi</label>' +
         '<p class="form-control-static">' + (service.name || '–') + '</p>'+
-        '<input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '">' +
-        '</div>';
+        '<input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '"></div>';
 
       return '<li>' +
         '  <div class="form-group service-point editable">' +
         '  <div class="form-group">' +
         '      <button class="delete btn-delete">x</button>' +
         '      <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
-        '      <select class="form-control select-service-type" style="display:none" data-service-id="' + service.id + '">  ' +
+        '      <select class="form-control select-service-type" data-service-id="' + service.id + '">  ' +
         '        <option disabled selected>Lisää tyyppi</option>' +
         serviceTypeLabelOptions +
         '      </select>' +
@@ -234,10 +232,9 @@
         '</div><div>' +
         '    <label class="control-label">Viranomaisdataa</label>' +
         '    <p class="form-control-readOnly">'+ (service.isAuthorityData ?  'Kyllä' : 'Ei') +'</p>' +
-        '</div><div>' +
+        '</div>' +
         (showParkingPlaceCount(selectedServiceType) ? parkingPlaceElements : '') +
         (isCulvert(selectedServiceType) ? weightElement : '') +
-        '</div></div>' +
         '</li>';
     };
 
@@ -279,7 +276,7 @@
         return '' +
           '<div><label class="control-label">Tarkenne</label>' +
           '<p class="form-control-static">' + (currentExtensionType ? currentExtensionType.label : '–') + '</p>' +
-          '<select class="form-control select-service-type-extension" style="display:none" data-service-id="' + service.id + '">  ' +
+          '<select class="form-control select-service-type-extension" data-service-id="' + service.id + '">  ' +
           '  <option disabled selected>Lisää tarkenne</option>' +
           extensionOptions +
           '</select></div>';
