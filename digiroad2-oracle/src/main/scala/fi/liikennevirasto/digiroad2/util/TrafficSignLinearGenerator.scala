@@ -815,7 +815,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
       val additionalInfo = if (validityPeriods.nonEmpty)
         validityPeriods.map{validityPeriod =>DynamicPropertyValue(
           Map(
-            "days" -> validityPeriod.days,
+            "days" -> ValidityPeriodDayOfWeek.toTimeDomainValue(validityPeriod.days),
             "startHour" -> validityPeriod.startHour,
             "endHour" -> validityPeriod.endHour,
             "startMinute" -> validityPeriod.startMinute,
