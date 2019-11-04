@@ -1445,7 +1445,8 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     "palvelun nimi" -> "name",
     "palvelun lisätieto" -> "additional info",
     "viranomaisdataa" -> "is authority data",
-    "pysäkköintipaikkojen lukumäärä" -> "parking place count"
+    "pysäkköintipaikkojen lukumäärä" -> "parking place count",
+    "painorajoitus" -> "weight limit"
   )
   override val mandatoryFieldsMapping: Map[String, String] = commonFieldsMapping ++ stringValueFieldsMapping
 
@@ -1485,12 +1486,13 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
       val additionalInfo = getPropertyValueOption(csvProperties, "additional info").map(_.toString)
       val isAuthorityData = getPropertyValue(csvProperties, "is authority data").asInstanceOf[String]
       val parkingPlaceCount = getPropertyValueOption(csvProperties, "parking place count").map(_.toString.toInt)
+      val weightLimit = getPropertyValueOption(csvProperties, "weight limit").map(_.toString.toInt)
 
       val validatedServiceType = serviceTypeConverter(serviceType)
-      val validatedTypeExtension = ServicePointsClass.getTypeExtensionValue(typeExtension.get, validatedServiceType)
+      val validatedTypeExtension = ServicePointsClass.getTypeExtensionValue(typeExtension.getOrElse(""), validatedServiceType)
       val validatedAuthorityData = authorityDataConverter(isAuthorityData)
 
-      val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData)
+      val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData, weightLimit)
 
       val servicePointInfo =
         if(validatedServiceType == ServicePointsClass.Unknown.value)
