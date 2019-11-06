@@ -967,7 +967,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
             (0.toDouble, mValue)
           else {
             val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-            (length - mValue, "%.3f".format(length).toDouble)
+            (length - mValue, "%.3f".formatLocal(java.util.Locale.US, length).toDouble)
           }
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
         }
@@ -977,7 +977,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
             (0L.toDouble, sign.mValue)
           else {
             val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-            (sign.mValue, "%.3f".format(length).toDouble)
+            (sign.mValue, "%.3f".formatLocal(java.util.Locale.US, length).toDouble)
           }
 
           TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), starMeasure, endMeasure, Set(sign.id))
@@ -985,7 +985,7 @@ class TrafficSignParkingProhibitionGenerator(roadLinkServiceImpl: RoadLinkServic
         else {
 
           val length = GeometryUtils.geometryLength(currentRoadLink.geometry)
-          TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, "%.3f".format(length).toDouble, Set(sign.id))
+          TrafficSignToLinear(currentRoadLink, value, SideCode.apply(direction), 0, "%.3f".formatLocal(java.util.Locale.US, length).toDouble, Set(sign.id))
         }
     }
   }
