@@ -136,9 +136,9 @@ object ValidityPeriodDayOfWeek {
     case _ => Unknown
   }
   def toTimeDomainValue(value: ValidityPeriodDayOfWeek) : Int = value match {
-    case Sunday => 1
-    case Weekday => 2
-    case Saturday => 7
+    case Sunday => 2
+    case Weekday => 0
+    case Saturday => 1
     case _ => 99
   }
   def moreSpecific: PartialFunction[(ValidityPeriodDayOfWeek, ValidityPeriodDayOfWeek), ValidityPeriodDayOfWeek] = {
