@@ -3,19 +3,15 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 class ServicePointBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform){
 
-  //TODO put the service points specific fields here
-  //private val terminalChildrenPublicId = "liitetyt_pysakit"
-  //private val validityDirectionPublicId = "vaikutussuunta"
-  //private val ignoredProperties = Seq(validityDirectionPublicId)
+  private val validityDirectionPublicId = "vaikutussuunta"
 
   override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
-    //If the stop have the property stop type with the service point value
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
@@ -29,46 +25,37 @@ class ServicePointBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       p.values.exists(v => v.propertyValue == BusStopType.ServicePoint.value.toString))
   }
 
-  //  override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
-  //    val childFilters =  massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
-  //      .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(asset.id))
-  //      .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
-  //    val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
-  //      val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
-  //      PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
-  //    })
-  //    (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
-  //  }
-  //
-  //  override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-  //    massTransitStopDao.countTerminalChildBusStops(persistedAsset.id) match {
-  //      case 0 => (true, Some(FloatingReason.TerminalChildless))
-  //      case _ => (false, None)
-  //    }
-  //  }
+  override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    (false, None)
+  }
 
   override def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit = {
     super.publishSaveEvent(publishInfo)
     eventbus.publish("service_point:saved", publishInfo)
   }
 
+//  override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
+//    val childFilters =  massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
+//      .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(asset.id))
+//      .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+//    val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
+//      val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
+//      PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
+//    })
+//    (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
+//  }
+
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     val assetId = Sequences.nextPrimaryKeySeqValue
-    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
-    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
-    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue))
-    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, roadLink.linkSource, SideCode.BothDirections)
-    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, username, roadLink.municipalityCode, floating)
-    massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
+    val newAssetPoint = Point(asset.lon, asset.lat)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, username, roadLink.municipalityCode, floating = false)
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
     if (asset.properties.find(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId).size > 1 )
       throw new IllegalArgumentException
 
-    //    massTransitStopDao.updateAssetProperties(assetId, asset.properties.filterNot(p =>  ignoredProperties.contains(p.publicId)) ++ defaultValues.toSet)
-    //    updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
+    massTransitStopDao.updateAssetProperties(assetId, asset.properties.filterNot(p =>  p.publicId == validityDirectionPublicId) ++ defaultValues.toSet)
     val resultAsset = fetchAsset(assetId)
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
