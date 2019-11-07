@@ -1226,6 +1226,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
+  test("ServicePointBusStopStrategy") {
+    //TODO
+  }
+
   test("Updating an existing stop should not create a new Livi ID") {
     val equipments = Map[Equipment, Existence](
       Equipment.BikeStand -> Existence.Yes,

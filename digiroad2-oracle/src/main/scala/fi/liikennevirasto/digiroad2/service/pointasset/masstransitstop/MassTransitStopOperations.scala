@@ -35,6 +35,7 @@ object MassTransitStopOperations {
   val CommuterBusStopPropertyValue: String = "2"
   val LongDistanceBusStopPropertyValue: String = "3"
   val VirtualBusStopPropertyValue: String = "5"
+  val ServicePointBusStopPropertyValue: String = "7"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
   val MassTransitStopAdminClassPublicId = "linkin_hallinnollinen_luokka"
 
