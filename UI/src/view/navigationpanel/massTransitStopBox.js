@@ -8,6 +8,14 @@
       return 'Joukkoliikenteen pysäkki';
     };
 
+    var pointAssetLegend = [
+      {symbolUrl: 'images/service_points/airport.png', label: 'Lentokenttä'},
+      {symbolUrl: 'images/service_points/ferry.png', label: 'Laivaterminaali'},
+      {symbolUrl: 'images/service_points/railwayStation2.png', label: 'Merkittävä rautatieasema'},
+      {symbolUrl: 'images/service_points/railwayStation.png', label: 'Vähäisempi rautatieasema'},
+      {symbolUrl: 'images/service_points/subwayStation.png', label: 'Metroasema'}
+    ];
+
     this.panel = function () {
       return ['<div class="panel">',
         '  <header class="panel-header expanded">',
@@ -32,6 +40,11 @@
         '    <div class="checkbox road-type-checkbox">',
         '      <label>',
         '        <input name="road-types" type="checkbox"> Hallinnollinen luokka',
+        '      </label>',
+        '    </div>',
+        '    <div class="checkbox point-asset-checkbox">',
+        '      <label>',
+        '        <input name="point-asset" type="checkbox"> Point Assets',
         '      </label>',
         '    </div>',
         '  </div>'].join('');
@@ -76,7 +89,20 @@
         ' </div>'
       ].join('');
 
-      return roadTypePanel.concat(constructionTypePanel);
+
+      var pointAssetTypePanel = '   <div class="panel-section panel-legend limit-legend point-asset service-points point-asset-legend">';
+
+      pointAssetTypePanel = pointAssetTypePanel.concat( pointAssetLegend.map(function (val) {
+          return '<div class="legend-entry">' +
+              '    <div class="label">' +
+              '    <span>' + val.label + '</span> ' +
+              '    <img class="symbol-to-right" src="' + val.symbolUrl + '"/>' +
+              '  </div>' +
+              '</div>';
+        }).join('')).concat( '</div>');
+
+
+      return roadTypePanel.concat(constructionTypePanel).concat(pointAssetTypePanel);
     };
 
     this.checkboxPanel = function () {
@@ -94,9 +120,10 @@
     };
 
     this.toolSelection = new me.ToolSelection([
-      new me.Tool('Select', me.selectToolIcon, selectedMassTransitStop),
-      new me.Tool('Add', setTitleTool(me.addToolIcon, 'Lisää pysäkki'), selectedMassTransitStop),
-      new me.Tool('AddTerminal', setTitleTool(me.terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStop)
+      new me.Tool('Select', me.selectToolIcon, selectedMassTransitStop ),
+      new me.Tool('Add', setTitleTool(me.addToolIcon, 'Lisää pysäkki'), selectedMassTransitStop ),
+      new me.Tool('AddTerminal', setTitleTool(me.terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStop),
+      new me.Tool('AddPointAsset', setTitleTool(me.pointAssetToolIcon, 'Add point asset'), selectedMassTransitStop )
     ]);
 
     function setTitleTool(icon, title) {
@@ -138,9 +165,10 @@
         }
       });
       me.addVerificationIcon();
+
       eventbus.on('road-type:selected', toggleRoadType);
 
-      eventbus.on('verificationInfo:fetched', function(visible) {
+     eventbus.on('verificationInfo:fetched', function(visible) {
         var img = me.expanded.find('#right-panel');
         if (visible)
           img.css('display','inline');
@@ -155,6 +183,13 @@
       $(me.expanded).find('.road-link-legend').toggle(bool);
       $(me.expanded).find('.construction-type-legend').toggle(bool);
       expandedRoadTypeCheckboxSelector.prop("checked", bool);
+    };
+
+    var togglePointAsset = function(bool) {
+      var expandedPointAssetCheckboxSelector = $(me.expanded).find('.point-asset-checkbox').find('input[type=checkbox]');
+
+      $(me.expanded).find('.point-asset-legend').toggle(bool);
+      expandedPointAssetCheckboxSelector.prop("checked", bool);
     };
 
     var bindDOMEventHandlers = function() {
@@ -181,6 +216,13 @@
       };
 
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
+
+      var expandedPointAssetCheckboxSelector = $(me.expanded).find('.point-asset-checkbox').find('input[type=checkbox]');
+      expandedPointAssetCheckboxSelector.change( function (e){
+        var checked = e.currentTarget.checked;
+        togglePointAsset(checked);
+          }
+      );
     };
 
     this.template = function () {
@@ -189,6 +231,7 @@
       bindDOMEventHandlers();
       me.bindExternalEventHandlers();
       toggleRoadType(true);
+      togglePointAsset(true);
       return element
         .append(this.expanded)
         .hide();

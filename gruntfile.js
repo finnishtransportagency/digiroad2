@@ -1,9 +1,6 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
-    properties: {
-      app: 'conf/dev/keys.properties'
-    },
     env: {
       options: {},
       development: {
@@ -12,7 +9,7 @@ module.exports = function(grunt) {
       staging: {
         NODE_ENV: 'STAGING'
       },
-      integration: {
+      testing: {
         NODE_ENV: 'PRODUCTION'
       },
       production: {
@@ -37,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/styleRule.js', 'UI/src/view/point_asset/trafficSignLabel.js', 'UI/src/view/providers/assetStyle.js', 'UI/src/view/linear_asset/serviceRoadLabel.js', 'UI/src/view/point_asset/heightLimitLabel.js', 'UI/src/view/point_asset/weightLimitLabel.js', 'UI/src/view/point_asset/widthLimitLabel.js', 'UI/src/view/linear_asset/serviceRoadStyle.js', 'UI/src/view/linear_asset/winterSpeedLimitStyle.js', 'UI/src/view/linear_asset/pavedRoadStyle.js', 'UI/src/view/providers/assetLabel.js', 'UI/src/view/linear_asset/linearAssetLabel.js', 'UI/src/controller/assetsVerificationCollection.js', 'UI/src/controller/trafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js']
+          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/styleRule.js', 'UI/src/view/point_asset/trafficSignLabel.js', 'UI/src/view/providers/assetStyle.js', 'UI/src/view/linear_asset/serviceRoadLabel.js', 'UI/src/view/point_asset/heightLimitLabel.js', 'UI/src/view/point_asset/weightLimitLabel.js', 'UI/src/view/point_asset/widthLimitLabel.js', 'UI/src/view/linear_asset/serviceRoadStyle.js', 'UI/src/view/linear_asset/winterSpeedLimitStyle.js', 'UI/src/view/providers/assetLabel.js', 'UI/src/view/linear_asset/linearAssetLabel.js', 'UI/src/controller/assetsVerificationCollection.js', 'UI/src/controller/trafficSignsCollection.js', 'UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -105,22 +102,15 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: 'oag.vayla.fi',
+            // host: '172.17.204.46',
+            host: '172.17.206.180',
+            port: '8080',
             https: false,
-            changeOrigin: true,
-            xforward: false
-          },
-          {
-            context: '/vionice',
-            port: '443',
-            host: 'map.vionice.io',
-            https: true,
             changeOrigin: true,
             xforward: false,
             rewrite: {
-              '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
-            },
-            headers: {Host: 'map.vionice.io:443'}
+              '^/maasto': '/digiroad/maasto'
+            }
           },
           {
             context: '/vkm',
@@ -149,7 +139,8 @@ module.exports = function(grunt) {
       }
     },
     jshint: {
-      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/' ],
+      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/',
+        'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ],
       options: {
         reporterOutput: "",
         // options here to override JSHint defaults
@@ -174,7 +165,6 @@ module.exports = function(grunt) {
 
           // Indicates whether 'mocha.run()' should be executed in
           // 'bridge.js'
-          timeout: 50000,
           run: false,
           log: true,
           reporter: 'Spec'
@@ -186,18 +176,18 @@ module.exports = function(grunt) {
           urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
           run: false,
           log: true,
-          timeout: 50000,
+          timeout: 10000,
           reporter: 'Spec'
         }
-      },
-      options: {
-        growlOnSuccess: false
       }
+    },
+    options: {
+      growlOnSuccess: false
     },
     watch: {
       oth: {
         files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-        tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
+        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
         options: {
           livereload: true
         }
@@ -212,6 +202,14 @@ module.exports = function(grunt) {
       }
     },
     exec: {
+      prepare_openlayers: {
+        cmd: 'npm install',
+        cwd: './node_modules/openlayers/'
+      },
+      oth_build_openlayers: {
+        cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
+        cwd: './node_modules/openlayers/'
+      }
     }
   });
 
@@ -229,23 +227,20 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
-  grunt.loadNpmTasks('grunt-properties-reader');
 
   var target = grunt.option('target') || 'production';
 
-  grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
+  grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
 
-  grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:' + target, 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
-  grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
+  grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
-
-  grunt.registerTask('test-concat', ['concat']);
 
   grunt.registerTask('save_deploy_info',
     function () {
