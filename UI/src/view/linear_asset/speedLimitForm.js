@@ -132,7 +132,7 @@
   var bindEvents = function(selectedSpeedLimit, feedbackCollection, backend) {
     new FeedbackDataTool(feedbackCollection, 'speedLimit', authorizationPolicy);
 
-    if (authorizationPolicy.userRoles.length === 0){
+    if (!authorizationPolicy.fetched){
       backend.getUserRoles();
     }
 
