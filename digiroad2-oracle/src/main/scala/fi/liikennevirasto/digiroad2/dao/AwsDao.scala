@@ -34,7 +34,7 @@ class AwsDao {
     val statusText = "," + status
     OracleDatabase.withDynTransaction {
       sqlu"""update feature
-          set status = (select status from feature where feature_id = $feature_id) || $statusText
+          set status = status || $statusText
           where feature_id = $feature_id
       """.execute
     }
@@ -49,11 +49,11 @@ class AwsDao {
     }
   }
 
-  def checkFeatureStatus(feature_id: Long): String = {
+  def checkFeatureStatus(feature_id: Long, dataSetId: String): String = {
     OracleDatabase.withDynSession {
       sql"""select status
           from feature
-          where feature_id = $feature_id
+          where feature_id = $feature_id and dataset_id = $dataSetId
       """.as[String].first
     }
   }
