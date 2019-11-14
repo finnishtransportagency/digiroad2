@@ -177,8 +177,8 @@ class LinearSevenRestrictionsServiceSpec extends FunSuite with Matchers {
   test("get unVerified linear assets") {
     when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(List(MunicipalityInfo(235, 9, "Kauniainen")))
     runWithRollback {
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, NumericValue(800), 1, 0, None)), 40, "testuser")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 5, NumericValue(1000), 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 5, 10, NumericValue(800), 1, 0, None)), 40, "testuser")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
