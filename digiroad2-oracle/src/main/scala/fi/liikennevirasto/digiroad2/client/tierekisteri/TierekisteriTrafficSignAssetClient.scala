@@ -39,11 +39,8 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
       case _ =>
         convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
     }
-    if(Seq(NoVehiclesWithDangerGoods, HazmatProhibitionA, HazmatProhibitionB, ValidSat, ValidMultiplePeriod, ValidMonFri).contains(TrafficSignType.applyTRValue(assetNumber))) {
-      println(s"Prohibition sign $roadNumber ; $roadPartNumber ; $track ; $startMValue ; $roadSide ; ${TrafficSignType.applyTRValue(assetNumber)}; $assetValue")
-      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
-    }else
-      None
+
+    Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue))
   }
 }
 class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
