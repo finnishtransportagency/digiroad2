@@ -302,12 +302,20 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/massTransitStops/removal") {
     val user = userProvider.getCurrentUser()
     val assetId = (parsedBody \ "assetId").extractOpt[Int].get
-    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
-      a.linkId match {
-        case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
+    val assets = massTransitStopService.getPersistedAssetsByIds(Set(assetId))
+    if(assets.isEmpty){
+      val service = massTransitStopService.getServicePointById(assetId)
+      validateUserMunicipalityAccessByMunicipality(user)(service.municipalityCode)
+      massTransitStopService.deleteServicePointById(service, user.username)
+    }
+    else{
+      assets.headOption.map{ a =>
+        a.linkId match {
+          case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
+          case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
+        }
+        massTransitStopService.deleteMassTransitStopData(assetId)
       }
-      massTransitStopService.deleteMassTransitStopData(assetId)
     }
   }
 
