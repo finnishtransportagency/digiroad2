@@ -97,7 +97,7 @@ class MassTransitStopDao {
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
-    val rows = Q.queryNA[MassTransitStopRow](query).iterator.toSeq
+    val rows = Q.queryNA[MassTransitStopRow](query)(getMassTransitStopRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
@@ -125,7 +125,7 @@ class MassTransitStopDao {
   }
 
   private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : MassTransitStopRow = {
       val id = r.nextLong
       val externalId = r.nextLong
       val assetTypeId = r.nextLong

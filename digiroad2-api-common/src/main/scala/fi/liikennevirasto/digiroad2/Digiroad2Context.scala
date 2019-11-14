@@ -542,7 +542,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager(roadLinkService, eventbus)
+    new DataImportManager(vvhClient, roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
