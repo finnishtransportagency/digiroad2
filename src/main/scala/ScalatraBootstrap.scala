@@ -1,6 +1,6 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.dataimport.{ImportDataApi}
+import fi.liikennevirasto.digiroad2.dataimport.ImportDataApi
 import fi.liikennevirasto.digiroad2.user.UserConfigurationApi
 import org.scalatra._
 import javax.servlet.ServletContext

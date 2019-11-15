@@ -52,7 +52,7 @@ class DynamicLinearAssetDao {
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
           and a.floating = 0
-          #$filterExpired""".as[DynamicAssetRow].list
+          #$filterExpired""".as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -89,7 +89,7 @@ class DynamicLinearAssetDao {
                       left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and (p.property_type = 'number' or p.property_type = 'read_only_number' or p.property_type = 'integer')
                       left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
                       left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          where a.floating = 0 """.as[DynamicAssetRow].list
+          where a.floating = 0 """.as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -119,7 +119,7 @@ class DynamicLinearAssetDao {
   }
 
   implicit val getDynamicAssetRow = new GetResult[DynamicAssetRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : DynamicAssetRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val sideCode = r.nextInt()
@@ -154,7 +154,7 @@ class DynamicLinearAssetDao {
 
   def propertyDefaultValues(assetTypeId: Long): List[DynamicProperty] = {
     implicit val getDefaultValue = new GetResult[DynamicProperty] {
-      def apply(r: PositionedResult) = {
+      def apply(r: PositionedResult) : DynamicProperty = {
         DynamicProperty(publicId = r.nextString, propertyType = r.nextString(), required = r.nextBoolean(), values = List(DynamicPropertyValue(r.nextString)))
       }
     }
@@ -353,7 +353,7 @@ class DynamicLinearAssetDao {
           join property p on p.asset_type_id = $typeId and p.property_type = 'time_period'
           join #$idTableName i on i.id = vpp.asset_id
           where vpp.property_id = p.id
-        """.as[ValidityPeriodRow].list
+        """.as[ValidityPeriodRow](getValidityPeriodRow).list
     }
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>
@@ -374,7 +374,7 @@ class DynamicLinearAssetDao {
           join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
           join #$idTableName i on i.id = dp.asset_id
           where dp.property_id = p.id
-        """.as[DatePeriodRow].list
+        """.as[DatePeriodRow](getDatePeriodRow).list
     }
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>

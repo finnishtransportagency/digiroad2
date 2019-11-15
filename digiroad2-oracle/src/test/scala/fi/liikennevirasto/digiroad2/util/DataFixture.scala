@@ -28,7 +28,8 @@ import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
+import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -1414,7 +1415,7 @@ object DataFixture {
           roadLinks.find(_.linkId == ts.linkId) match {
             case Some(roadLink) =>
               val trafficType = trafficSignService.getProperty(ts, trafficSignService.typePublicId).get.propertyValue.toInt
-              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, ts.mValue, roadLink, Set()))
+              manoeuvreService.createBasedOnTrafficSign(TrafficSignInfo(ts.id, ts.linkId, ts.validityDirection, trafficType, roadLink))
               println(s"manoeuvre created for traffic sign with id: ${ts.id}")
             case _ =>
               println(s"No roadLink available to create manouvre")
@@ -1814,6 +1815,24 @@ object DataFixture {
       println("")
       println("Complete at time: " + DateTime.now())
     }
+  }
+
+  def normalizeOperatorRoles(): Unit ={
+    println("\nStart process to remove additional roles from operators users")
+    println(DateTime.now())
+
+    val userProvider: UserProvider = new OracleUserProvider
+    println("\nGetting operators with additional roles")
+    var operators: List[User] = Nil
+    OracleDatabase.withDynSession {
+      operators = Queries.getOperatorUsers().filter(user => user.configuration.roles.size > 1)
+    }
+      println("\nNormalizing operators")
+      operators.foreach(user =>
+        userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"))))
+      )
+
+    println("Completed at time: " + DateTime.now())
   }
 
   def removeRoadWorksCreatedLastYear(): Unit = {
@@ -2320,6 +2339,8 @@ object DataFixture {
         resolvingFrozenLinks()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
+      case Some("normalize_operator_roles") =>
+        normalizeOperatorRoles()
       case Some("get_state_roads_with_overridden_functional_class") =>
         getStateRoadWithFunctionalClassOverridden()
       case Some("get_state_roads_with_undefined_functional_class") =>
@@ -2337,7 +2358,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class")
+        " resolving_Frozen_Links| import_private_road_info | normalize_operator_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class")
     }
   }
 }

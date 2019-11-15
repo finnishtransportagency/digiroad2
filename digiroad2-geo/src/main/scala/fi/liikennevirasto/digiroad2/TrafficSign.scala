@@ -583,6 +583,8 @@ case object NoMotorSledges extends ProhibitionsAndRestrictionsType {
 case object NoVehiclesWithDangerGoods extends ProhibitionsAndRestrictionsType {
   override val OTHvalue = 20
   override val TRvalue = 318
+
+  override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(HazmatProhibitionA, HazmatProhibitionB)
 }
 
 case object NoBuses extends ProhibitionsAndRestrictionsType {

@@ -10,7 +10,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var selectedAsset;
   var movementPermissionConfirmed = false;
   var requestingMovePermission  = false;
-  var massTransitStopLayerStyles = MassTransitStopLayerStyles(roadLayer);
+  var massTransitStopLayerStyles = PointAssetLayerStyles(roadLayer);
   var visibleAssets;
   var overrideMessageAllow = true;
   var publicIds = {

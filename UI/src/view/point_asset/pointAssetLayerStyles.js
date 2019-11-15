@@ -1,5 +1,5 @@
 (function(root) {
-  root.MassTransitStopLayerStyles = function(roadLayer) {
+  root.PointAssetLayerStyles = function(roadLayer) {
     //TODO remove the roadlayer from here because we don't need it here
     var administrativeClassRules = [
       new StyleRule().where('administrativeClass').is('Private').use({ stroke: { color: '#01b' }, icon: { src: 'images/link-properties/arrow-drop-blue.svg' } }),

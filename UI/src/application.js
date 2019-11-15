@@ -128,7 +128,7 @@
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration, selectedMassTransitStopModel));
-    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit));
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit), backend);
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
@@ -136,6 +136,7 @@
     new MunicipalityWorkList().initialize(backend);
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
+    new PrivateRoadsWorkList().initialize(backend);
     new UserNotificationPopup(models.userNotificationCollection).initialize();
 
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
@@ -377,6 +378,7 @@
        allowGrouping: asset.allowGrouping,
        assetGrouping: new AssetGrouping(asset.groupingDistance),
        authorizationPolicy: asset.authorizationPolicy,
+       showRoadLinkInfo: asset.showRoadLinkInfo,
        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
      });
      return acc;
@@ -399,6 +401,7 @@
         allowGrouping: asset.allowGrouping,
         assetGrouping: new AssetGrouping(asset.groupingDistance),
         authorizationPolicy: asset.authorizationPolicy,
+        showRoadLinkInfo: asset.showRoadLinkInfo,
         assetTypeIds: asset.typeIds
       });
       return acc;
