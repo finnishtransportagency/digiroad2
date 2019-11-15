@@ -558,7 +558,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkId = positionParameters._3
     val bearing = positionParameters._4
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    val municipalityCode = (parsedBody \ "municipalityCode").extractOpt[Int]
+    val municipalityCode = (parsedBody \ "municipalityCode").extractOpt[BigInt]
     val roadLink = linkId match {
       case Some(id) => roadLinkService.getRoadLinkAndComplementaryFromVVH(id).getOrElse(throw new NoSuchElementException)
       case _ =>  RoadLink(0, Seq(Point(lon, lat)), FunctionalClass.Unknown, AdministrativeClass(99), 0, TrafficDirection(99), LinkType(99), None, None, Map("MUNICIPALITYCODE" -> municipalityCode.get))
