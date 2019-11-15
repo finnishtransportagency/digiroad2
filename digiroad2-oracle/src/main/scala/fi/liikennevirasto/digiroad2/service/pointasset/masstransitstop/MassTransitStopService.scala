@@ -135,7 +135,7 @@ trait MassTransitStopService extends PointAssetOperations {
   lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val servicePointBusStopStrategy = new ServicePointBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
   lazy val terminatedBusStopStrategy = new TerminatedBusStopStrategy(typeId, massTransitStopDao, roadLinkService, eventbus, geometryTransform)
-  val servicePointBusStopService = new ServicePointBusStopService(typeId, eventbus)
+  val servicePointBusStopService = new ServicePointBusStopService(typeId)
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
     getByMunicipality(municipalityCode, true)
@@ -315,7 +315,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
     strategy match {
       case serviceStrategy: ServicePointBusStopStrategy =>
-        val (persistedAsset, publishInfo) = servicePointBusStopService.create(newAsset, username, point)
+        val (persistedAsset, publishInfo) = servicePointBusStopService.create(newAsset, username, point, roadLink.municipalityCode)
         (persistedAsset, publishInfo, strategy)
       case _ =>
         val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
@@ -356,7 +356,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
           val newProperties = excludeProperties(properties.toSeq)
 
-          val (persistedServicePointAsset, publishInfo) = servicePointBusStopService.update(servicePointAsset, newProperties, username)
+          val (persistedServicePointAsset, publishInfo) = servicePointBusStopService.update(servicePointAsset, newProperties, username, municipalityValidation)
 
           val massTransitStopWithProperties = MassTransitStopWithProperties(persistedServicePointAsset.id, persistedServicePointAsset.nationalId,
                                               persistedServicePointAsset.stopTypes,persistedServicePointAsset.lon, persistedServicePointAsset.lat, None, None, None,

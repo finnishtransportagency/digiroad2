@@ -555,17 +555,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
-    val linkId = positionParameters._3.get
-    val bearing = positionParameters._4.get
+    val linkId = positionParameters._3
+    val bearing = positionParameters._4
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
+    val municipalityCode = (parsedBody \ "municipalityCode").extractOpt[Int]
+    val roadLink = linkId match {
+      case Some(id) => roadLinkService.getRoadLinkAndComplementaryFromVVH(id).getOrElse(throw new NoSuchElementException)
+      case _ =>  RoadLink(0, Seq(Point(lon, lat)), FunctionalClass.Unknown, AdministrativeClass(99), 0, TrafficDirection(99), LinkType(99), None, None, Map("MUNICIPALITYCODE" -> municipalityCode.get))
+    }
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {
-      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
-      massTransitStopService.getNormalAndComplementaryById(id, roadLink)
+      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId.getOrElse(0), bearing.getOrElse(0), properties), userProvider.getCurrentUser().username, roadLink)
+      linkId match{
+        case Some(link) => massTransitStopService.getNormalAndComplementaryById(id, roadLink)
+        case _ => Option(massTransitStopService.getServicePointById(id))
+      }
     } catch {
       case e: RoadAddressException =>
         logger.warn(e.getMessage)

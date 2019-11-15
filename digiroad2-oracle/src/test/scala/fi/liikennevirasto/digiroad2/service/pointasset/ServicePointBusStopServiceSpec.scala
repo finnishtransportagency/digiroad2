@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import fi.liikennevirasto.digiroad2.{DummyEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimpleProperty}
+import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, PropertyValue, SimpleProperty}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{NewMassTransitStop, ServicePointBusStopService}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -9,7 +9,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 class ServicePointBusStopServiceSpec extends FunSuite with Matchers with BeforeAndAfter{
   val assetType = 10
 
-  object TestMassTransitStopService extends ServicePointBusStopService(assetType, new DummyEventBus)
+  object TestMassTransitStopService extends ServicePointBusStopService(assetType)
 
   val assetLock = "Used to prevent deadlocks"
   def runWithRollback(test: => Unit): Unit = assetLock.synchronized {
@@ -29,7 +29,7 @@ class ServicePointBusStopServiceSpec extends FunSuite with Matchers with BeforeA
 
   test("Create new Service Point as mass transit stop"){
     runWithRollback{
-      val (servicePoint, publishInfo) = TestMassTransitStopService.create(dummyNewMassTransitStop, "ServicePointBusStopServiceSpec", dummyPoint)
+      val (servicePoint, publishInfo) = TestMassTransitStopService.create(dummyNewMassTransitStop, "ServicePointBusStopServiceSpec", dummyPoint, 749)
 
       servicePoint.propertyData.filter(_.publicId == "pysakin_tyyppi").head.values.head.propertyValue should be("7")
       servicePoint.propertyData.filter(_.publicId == "palvelu").head.values.head.propertyValue should be("11")
@@ -44,12 +44,14 @@ class ServicePointBusStopServiceSpec extends FunSuite with Matchers with BeforeA
 
   test("Update Service Point as mass transit stop"){
     runWithRollback{
-      val (servicePoint, publishInfo) = TestMassTransitStopService.create(dummyNewMassTransitStop, "ServicePointBusStopServiceSpec", dummyPoint)
+      val (servicePoint, publishInfo) = TestMassTransitStopService.create(dummyNewMassTransitStop, "ServicePointBusStopServiceSpec", dummyPoint, 749)
 
       val newProperty = SimpleProperty("palvelun_lisätieto", List(PropertyValue("updated info")))
       val newProperty1 = SimpleProperty("palvelun_nimi", List(PropertyValue("updated name")))
 
-      val (updatedServicePoint, updatedPublishInfo) = TestMassTransitStopService.update(servicePoint, Set(newProperty, newProperty1), "ServicePointBusStopServiceSpec")
+      def validateMunicipalityAuthorization(municipalityCode: Int, administrativeClass: AdministrativeClass): Unit = {}
+
+      val (updatedServicePoint, updatedPublishInfo) = TestMassTransitStopService.update(servicePoint, Set(newProperty, newProperty1), "ServicePointBusStopServiceSpec", validateMunicipalityAuthorization)
 
       updatedServicePoint.propertyData.filter(_.publicId == "pysakin_tyyppi").head.values.head.propertyValue should be(servicePoint.propertyData.filter(_.publicId == "pysakin_tyyppi").head.values.head.propertyValue)
       updatedServicePoint.propertyData.filter(_.publicId == "palvelu").head.values.head.propertyValue should be(servicePoint.propertyData.filter(_.publicId == "palvelu").head.values.head.propertyValue)
@@ -63,7 +65,7 @@ class ServicePointBusStopServiceSpec extends FunSuite with Matchers with BeforeA
 
   test("Delete Service Point as mass transit stop"){
     runWithRollback{
-      val (servicePoint, publishInfo) = TestMassTransitStopService.create(dummyNewMassTransitStop, "ServicePointBusStopServiceSpec", dummyPoint)
+      val (servicePoint, publishInfo) = TestMassTransitStopService.create(dummyNewMassTransitStop, "ServicePointBusStopServiceSpec", dummyPoint, 749)
 
       TestMassTransitStopService.delete(servicePoint, "ServicePointBusStopServiceSpec")
 
