@@ -77,7 +77,7 @@ class ServicePointBusStopDao {
 
   private def extractStopTypes(rows: Seq[ServicePointRow]): Seq[Int] = {
     rows
-      .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) }
+      .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) && row.property.propertyValue == "7" }
       .filterNot { row => row.property.propertyValue.isEmpty }
       .map { row => row.property.propertyValue.toInt }
   }

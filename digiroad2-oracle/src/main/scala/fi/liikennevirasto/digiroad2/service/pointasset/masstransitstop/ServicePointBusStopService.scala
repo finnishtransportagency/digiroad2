@@ -3,12 +3,15 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimpleProperty}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, Sequences, ServicePoint, ServicePointBusStopDao}
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.User
+import org.slf4j.LoggerFactory
 
 class ServicePointBusStopService(typeId : Int, eventbus: DigiroadEventBus, servicePointBusStopDao: ServicePointBusStopDao = new ServicePointBusStopDao, massTransitStopDao: MassTransitStopDao = new MassTransitStopDao) {
 
+  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   private val validityDirectionPublicId = "vaikutussuunta"
 
   def create(asset: NewMassTransitStop, username: String, point: Point): (ServicePoint, AbstractPublishInfo) = {
@@ -27,11 +30,11 @@ class ServicePointBusStopService(typeId : Int, eventbus: DigiroadEventBus, servi
   }
 
   def fetchAsset(id: Long): ServicePoint = {
-    servicePointBusStopDao.fetchAsset(massTransitStopDao.withId(id)).headOption.getOrElse(throw new NoSuchElementException)
+    servicePointBusStopDao.fetchAsset(massTransitStopDao.withIdAndNotExpired(id)).headOption.getOrElse(throw new NoSuchElementException)
   }
 
   def fetchAssetByNationalId(id: Long): Option[ServicePoint] = {
-    servicePointBusStopDao.fetchAsset(massTransitStopDao.withNationalId(id)).headOption
+    servicePointBusStopDao.fetchAsset(massTransitStopDao.withNationalIdAndNotExpired(id)).headOption
   }
 
   def delete(asset: ServicePoint, username: String): Option[AbstractPublishInfo] = {
@@ -39,7 +42,7 @@ class ServicePointBusStopService(typeId : Int, eventbus: DigiroadEventBus, servi
     None
   }
 
-  def update(asset: ServicePoint, properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): (ServicePoint, AbstractPublishInfo) = {
+  def update(asset: ServicePoint, properties: Set[SimpleProperty], username: String): (ServicePoint, AbstractPublishInfo) = {
 
     if (asset.propertyData.find(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId).get.values.exists(v => v.propertyValue != MassTransitStopOperations.ServicePointBusStopPropertyValue))
       throw new IllegalArgumentException
@@ -57,5 +60,17 @@ class ServicePointBusStopService(typeId : Int, eventbus: DigiroadEventBus, servi
 
   def enrichBusStop(asset: ServicePoint): (ServicePoint, Boolean) = {
     (asset.copy(propertyData = asset.propertyData), false)
+  }
+
+  def withFilter(filter: String)(query: String): String = {
+    query + " " + filter
+  }
+
+  def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[ServicePoint] = {
+    withDynSession {
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      servicePointBusStopDao.fetchAsset(withFilter(filter))
+    }
   }
 }

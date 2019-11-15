@@ -1,4 +1,3 @@
-
 -- LOCALIZED_STRING Values
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Palvelun Nimi', 'db_migration_v210', sysdate);
@@ -53,5 +52,7 @@ INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID, VALUE, NAME_FI, CREATED_DATE, CRE
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID, VALUE, NAME_FI, CREATED_DATE, CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'tarkenne'), 7, 'Maanalainen/metroasema', SYSDATE, 'db_migration_v210' );
 
+
+-- New multiple choice value for Pysakin Tyyppi
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID, VALUE, NAME_FI, CREATED_BY)
     VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'pysakin_tyyppi'), 7, 'Palvelupiste', 'db_migration_v210');

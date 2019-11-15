@@ -296,6 +296,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
         "linkSource" -> stop.linkSource.value)
+    } ++ massTransitStopService.getServicePointsByBoundingBox(user, bbox).map { stop =>
+      Map("id" -> stop.id,
+        "name" -> extractPropertyValue("nimi_suomeksi", stop.propertyData, values => values.headOption.getOrElse("")),
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "municipalityNumber" -> stop.municipalityCode,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "floating" -> stop.floating
+      )
     }
   }
 

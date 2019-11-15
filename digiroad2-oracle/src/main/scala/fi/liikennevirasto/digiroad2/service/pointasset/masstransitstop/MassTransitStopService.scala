@@ -233,6 +233,10 @@ trait MassTransitStopService extends PointAssetOperations {
     super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
   }
 
+  def getServicePointsByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[ServicePoint] = {
+    servicePointBusStopService.getByBoundingBox(user, bounds)
+  }
+
   override def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
     val roadLinks: Option[RoadLinkLike] = Some(roadLink)
@@ -352,7 +356,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
           val newProperties = excludeProperties(properties.toSeq)
 
-          val (persistedServicePointAsset, publishInfo) = servicePointBusStopService.update(servicePointAsset, newProperties, username, municipalityValidation)
+          val (persistedServicePointAsset, publishInfo) = servicePointBusStopService.update(servicePointAsset, newProperties, username)
 
           val massTransitStopWithProperties = MassTransitStopWithProperties(persistedServicePointAsset.id, persistedServicePointAsset.nationalId,
                                               persistedServicePointAsset.stopTypes,persistedServicePointAsset.lon, persistedServicePointAsset.lat, None, None, None,
