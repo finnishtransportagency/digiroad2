@@ -152,7 +152,7 @@ class ServicePointBusStopDao {
   private def queryToServicePoint(query: String): Seq[ServicePoint] = {
     val rows = Q.queryNA[ServicePointRow](query).iterator.toSeq
 
-    rows.groupBy(_.id).map { case (id, stopRows) =>
+    rows.groupBy(_.id).filter{case (id, stopRows) => extractStopTypes(stopRows).nonEmpty && extractStopTypes(stopRows).head == 7}.map { case (id, stopRows) =>
       val row = stopRows.head
       val commonProperties: Seq[Property] = AssetPropertyConfiguration.assetRowToCommonProperties(row)
       val properties: Seq[Property] = commonProperties ++ assetRowToProperty(stopRows)
