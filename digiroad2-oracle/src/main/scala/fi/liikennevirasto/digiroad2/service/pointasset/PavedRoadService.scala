@@ -147,7 +147,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String = "300279", username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Option[Long] = {
+  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Option[Long] = {
     //Get Old Asset
     val oldAsset =
     valueToUpdate match {
