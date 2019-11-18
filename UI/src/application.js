@@ -128,7 +128,7 @@
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration, selectedMassTransitStopModel));
-    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit), backend);
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit));
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
