@@ -215,7 +215,7 @@
     var createDirectionArrowStyle = function() {
       var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
       var directionArrowSrc, rotation;
-      if (data.stopTypes[0] == 6) {
+      if (data.stopTypes[0] == 6 || data.stopTypes[0] == 7 ) {
         directionArrowSrc = basePath + (data.floating ? 'no-direction-warning.svg' : 'no-direction.svg');
         rotation = 0;
       } else {

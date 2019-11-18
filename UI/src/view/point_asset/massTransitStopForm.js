@@ -2,13 +2,16 @@
 
   var poistaSelected = false;
   var authorizationPolicy;
+  var pointAssetToSave = false;
 
   var rootElement = $("#feature-attributes");
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
-      if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.requiredPropertiesMissing()) {
+      if (pointAssetToSave) {
+        element.hide();
+      }else if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.requiredPropertiesMissing()) {
         element.show();
       } else {
         element.hide();
@@ -104,7 +107,7 @@
     var updateStatus = function() {
       if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
         element.prop('disabled', false);
-      } else if(poistaSelected) {
+      } else if(poistaSelected || pointAssetToSave) {
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
@@ -154,6 +157,7 @@
       var roadAddressInfoLabel;
       authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
+      pointAssetToSave = false;
 
       var rootElement = $('#feature-attributes');
 
@@ -170,6 +174,7 @@
 
       var renderAssetForm = function() {
         poistaSelected = false;
+        pointAssetToSave = false;
 
         readOnly = authorizationPolicy.formEditModeAccess();
         var wrapper;
@@ -179,8 +184,17 @@
           wrapper = $('<div />').addClass('wrapper edit-mode');
         }
         streetViewHandler = getStreetView();
+
+        var componentes;
+        if (isTerminalBusStop == 7){
+          componentes = createNewServiceDropDown();
+          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: 7, propertyDisplayValue: "", checked: true}], "multiple_choice", true);
+        } else {
+          componentes = getAssetForm();
+        }
+
         wrapper.append(streetViewHandler.render())
-          .append($('<div />').addClass('form form-horizontal form-dark').attr('role', 'form').append(userInformationLog()).append(getAssetForm()));
+          .append($('<div />').addClass('form form-horizontal form-dark form-masstransitstop').attr('role', 'form').append(userInformationLog()).append(componentes));
 
         var buttons = function(isTerminalBusStop) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
@@ -311,7 +325,7 @@
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty_terminaaliin') {
+        if (property.propertyType === 'read_only_text' && ['yllapitajan_koodi','liitetty_terminaaliin','viranomaisdataa'].indexOf(property.publicId) < 0 ) {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
         } else {
           outer.append(createLabelElement(property));
@@ -371,8 +385,13 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          elementType = property.propertyType === 'long_text' ?
-            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
+
+          if (property.publicId === 'palvelun_lisätieto')
+            elementType = $('<textarea />').addClass('form-control large-input').attr('id', property.publicId);
+          else
+            elementType = property.propertyType === 'long_text' ?
+             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
+
           element = elementType.bind('input', function(target){
             if(property.numCharacterMax)
               validateTextElementMaxSize(target, property.numCharacterMax);
@@ -419,7 +438,9 @@
             element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
-          element = $('<select />').addClass('form-control').change(function(x){
+          element = $('<select />').addClass('form-control')
+              .addClass(property.publicId +'-select')
+              .change(function(x){
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: x.currentTarget.value}], property.propertyType, property.required);
           });
 
@@ -710,6 +731,21 @@
         });
       };
 
+      var sortAndFilterServicePointProperties = function(properties) {
+        var propertyOrdering = [
+            'palvelu',
+            'tarkenne',
+            'palvelun_nimi',
+            'palvelun_lisätieto',
+            'viranomaisdataa'];
+
+        return _.sortBy(properties, function(property) {
+          return _.indexOf(propertyOrdering, property.publicId);
+        }).filter(function(property){
+          return _.indexOf(propertyOrdering, property.publicId) >= 0;
+        });
+      };
+
       var floatingStatus = function(selectedAssetModel) {
         var text;
         switch (selectedMassTransitStopModel.getFloatingReason()){
@@ -747,9 +783,11 @@
         var allProperties = selectedMassTransitStopModel.getProperties();
         var properties;
 
-        if (isTerminalBusStop) {
+        if (isTerminalBusStop === '6') {
           properties = sortAndFilterTerminalProperties(allProperties);
-        } else {
+        } else if  (isTerminalBusStop === '7'){
+          properties = sortAndFilterServicePointProperties(allProperties);
+        }else{
           properties = sortAndFilterProperties(allProperties);
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
           disableFormIfTRMassTransitStopHasEndDate(properties);
@@ -758,6 +796,7 @@
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));
+
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];
           var propertyType = feature.propertyType;
@@ -924,11 +963,88 @@
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});
         }
+
+        if (property.publicId === 'palvelu') {
+          hideOrShowTarkenne();
+          updateViranomaisdataaValue();
+
+          pointAssetToSave = true;
+        }
+
       });
 
       eventbus.on('terminalBusStop:selected', function(value) {
         isTerminalBusStop = value;
       });
+
+
+
+      function isAuthorityData(selectedServiceType) {
+        return !(selectedServiceType === 10 || selectedServiceType === 17);
+      }
+
+
+      function createNewServiceDropDown()
+      {
+        var enumVals = _.find(enumeratedPropertyValues, function(choice){
+                           return choice.publicId === 'palvelu';
+                      }).values;
+
+        var result = $('<div />').addClass('form-group new-service');
+
+        result = result.append( $('<select />').addClass('form-control select').change(newServiceSelectOnChange)
+                        .append($('<option />').text('Lisää uusi rajoitus').addClass('empty').attr('disabled', true).attr('selected', true))
+                        .append( enumVals.map(function (enumVal) {
+                            return $('<option>').text(enumVal.propertyDisplayValue).attr('value', enumVal.propertyValue);
+                          })));
+
+        return result;
+      }
+
+        function newServiceSelectOnChange(event) {
+          var newServiceType = parseInt($(event.currentTarget).val(), 10);
+
+          selectedMassTransitStopModel.setProperty('palvelu',[{propertyValue: newServiceType}],'single_choice',undefined, undefined);
+          updateViranomaisdataaValue();
+
+          $('.form-group.new-service').remove();
+          $('.form-masstransitstop').append(getAssetForm());
+
+          hideOrShowTarkenne();
+
+        }
+
+        function getPropByPublicId(public_id){
+          var property;
+
+          property = selectedMassTransitStopModel.getCurrentAsset().payload.properties.find(function(prop){
+              if ( prop.publicId == public_id)
+                return prop;
+          });
+
+          return property;
+        }
+
+        function updateViranomaisdataaValue(){
+          var palveluProp = getPropByPublicId('palvelu' );
+          var value = isAuthorityData(palveluProp.values[0].propertyValue) ? 'Kyllä' : 'Ei';
+          selectedMassTransitStopModel.setProperty('viranomaisdataa',[{propertyDisplayValue: value}],'read_only_text',undefined, undefined);
+        }
+
+      function hideOrShowTarkenne(){
+        var palveluProp = getPropByPublicId('palvelu' );
+        var tarkeneProp =  getPropByPublicId('tarkenne');
+
+        if (palveluProp.values[0].propertyValue == "11" &&  $('.tarkenne-select').length === 0) { /* Rautatieasema */
+          tarkeneProp.localizedName = window.localizedStrings[tarkeneProp.publicId];
+          $('.palvelu-select').parent().after(singleChoiceHandler(tarkeneProp, enumeratedPropertyValues));
+
+        }else  if (palveluProp.values[0].propertyValue != "11") {
+          $('.tarkenne-select').parent().remove();
+          selectedMassTransitStopModel.setProperty('tarkenne',[],'single_choice',undefined, undefined);
+        }
+      }
+
 
       backend.getEnumeratedPropertyValues();
     }

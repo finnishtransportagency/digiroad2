@@ -165,7 +165,6 @@
         }
       });
       me.addVerificationIcon();
-
       eventbus.on('road-type:selected', toggleRoadType);
 
      eventbus.on('verificationInfo:fetched', function(visible) {

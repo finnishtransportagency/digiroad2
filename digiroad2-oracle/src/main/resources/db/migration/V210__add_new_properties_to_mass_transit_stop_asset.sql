@@ -28,7 +28,7 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, NA
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM ASSET_TYPE WHERE NAME = 'Bussipysäkit'), 'single_choice', 0, 'db_migration_v210', (SELECT ID FROM LOCALIZED_STRING where VALUE_FI = 'Palvelu') ,'palvelu');
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, NAME_LOCALIZED_STRING_ID, PUBLIC_ID)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM ASSET_TYPE WHERE NAME = 'Bussipysäkit'), 'text', 0, 'db_migration_v210', (SELECT ID FROM LOCALIZED_STRING where VALUE_FI = 'Viranomaisdataa') ,'viranomaisdataa');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM ASSET_TYPE WHERE NAME = 'Bussipysäkit'), 'read_only_text', 0, 'db_migration_v210', (SELECT ID FROM LOCALIZED_STRING where VALUE_FI = 'Viranomaisdataa') ,'viranomaisdataa');
 
 
 -- Single Choice values for Palvelu
