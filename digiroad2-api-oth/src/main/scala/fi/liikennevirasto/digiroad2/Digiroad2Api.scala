@@ -558,10 +558,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkId = positionParameters._3
     val bearing = positionParameters._4
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    val municipalityCode = (parsedBody \ "municipalityCode").extractOpt[BigInt]
     val roadLink = linkId match {
       case Some(id) => roadLinkService.getRoadLinkAndComplementaryFromVVH(id).getOrElse(throw new NoSuchElementException)
-      case _ =>  RoadLink(0, Seq(Point(lon, lat)), FunctionalClass.Unknown, AdministrativeClass(99), 0, TrafficDirection(99), LinkType(99), None, None, Map("MUNICIPALITYCODE" -> municipalityCode.get))
+      case _ =>
+        val vvhRoadlink = roadLinkService.getClosestRoadlinkFromVVH(userProvider.getCurrentUser(), Point(lon, lat)).getOrElse(throw new NoSuchElementException)
+        RoadLink(vvhRoadlink.linkId, vvhRoadlink.geometry, vvhRoadlink.length, vvhRoadlink.administrativeClass, FunctionalClass.Unknown, vvhRoadlink.trafficDirection, LinkType(99), None, None, Map("MUNICIPALITYCODE" -> BigInt(vvhRoadlink.municipalityCode)))
     }
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateBusStopMaintainerUser(properties)
