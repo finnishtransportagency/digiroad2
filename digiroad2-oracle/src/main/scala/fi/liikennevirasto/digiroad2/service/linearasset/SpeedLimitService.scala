@@ -208,17 +208,13 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
-  def getExistingAssetByRoadLink(roadLink: RoadLink): Option[SpeedLimit] ={
-    withDynTransaction {
-      val speedlimits = dao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
-
-      if (speedlimits.nonEmpty){
-        Some(speedlimits.head)
+  def getExistingAssetByRoadLink(roadLink: RoadLink, newTransaction: Boolean = true): Seq[SpeedLimit] = {
+    if (newTransaction)
+      withDynTransaction {
+        dao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
       }
-      else {
-        None
-      }
-    }
+    else
+      dao.getCurrentSpeedLimitsByLinkIds(Some(Set(roadLink.linkId)))
   }
 
   private def getByRoadLinks(roadLinks: Seq[RoadLink], change: Seq[ChangeInfo], showSpeedLimitsHistory: Boolean = false, roadFilterFunction: RoadLink => Boolean) = {
