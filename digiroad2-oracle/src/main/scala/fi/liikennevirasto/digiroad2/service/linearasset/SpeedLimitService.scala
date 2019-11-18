@@ -531,17 +531,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * This method was created for municipalityAPI, in future could be merge with the other create method.
     */
-  def createMultiple(newLimits: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(),  municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
-    withDynTransaction {
-      val createdIds = newLimits.flatMap { limit =>
+  def createMultiple(newLimits: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(), municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+    val createdIds = newLimits.flatMap { limit =>
       limit.value match {
         case NumericValue(intValue) => dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.apply(limit.sideCode), intValue, vvhTimeStamp, municipalityValidation)
         case _ => None
       }
     }
-      eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
-      createdIds
-    }
+
+    eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
+    createdIds
   }
 
   /**

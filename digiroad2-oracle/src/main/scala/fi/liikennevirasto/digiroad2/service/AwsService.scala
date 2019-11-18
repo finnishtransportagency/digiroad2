@@ -137,14 +137,16 @@ class AwsService(vvhClient: VVHClient,
       speedLimit match {
         case "" =>
         case _ =>
-          speedLimitService.getExistingAssetByRoadLink(link) match {
-            case Some(value) =>
-              val newSpeedLimitAsset = NewLinearAsset(link.linkId, value.startMeasure, value.endMeasure, NumericValue(speedLimit.toInt), properties("sideCode").asInstanceOf[BigInt].intValue(), vvhClient.roadLinkData.createVVHTimeStamp(), None)
-              speedLimitService.update(value.id, Seq(newSpeedLimitAsset), AwsUser)
-            case None =>
-              val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, NumericValue(speedLimit.toInt), properties("sideCode").asInstanceOf[BigInt].intValue(), vvhClient.roadLinkData.createVVHTimeStamp(), None)
-              speedLimitService.createMultiple(Seq(newSpeedLimitAsset), speedLimit.toInt, AwsUser, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
-          }
+          val speedLimitsOnRoadLink = speedLimitService.getExistingAssetByRoadLink(link, false)
+
+          if (speedLimitsOnRoadLink.isEmpty) {
+            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, NumericValue(speedLimit.toInt), properties("sideCode").asInstanceOf[BigInt].intValue(), vvhClient.roadLinkData.createVVHTimeStamp(), None)
+            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), speedLimit.toInt, AwsUser, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+          } else
+            speedLimitsOnRoadLink.foreach { sl =>
+              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, NumericValue(speedLimit.toInt), properties("sideCode").asInstanceOf[BigInt].intValue(), vvhClient.roadLinkData.createVVHTimeStamp(), None)
+              speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser)
+            }
       }
 
       pavementClass match {

@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2.service
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.{AssetService, DummyEventBus, Point}
 import fi.liikennevirasto.digiroad2.asset.{Freeway, LinkGeomSource, TrafficDirection}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.AwsDao
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLimit, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -18,12 +19,13 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 
 class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockOnOffLinearAssetService = MockitoSugar.mock[OnOffLinearAssetService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mocklinearAssetService = MockitoSugar.mock[LinearAssetService]
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
-  val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
+  val speedLimitService = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
   val mockPavedRoadService = MockitoSugar.mock[PavedRoadService]
   val mockRoadWidthService = MockitoSugar.mock[RoadWidthService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
@@ -32,7 +34,6 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockTrafficLightService = MockitoSugar.mock[TrafficLightService]
   val mockMassTransitLaneService = MockitoSugar.mock[MassTransitLaneService]
   val mockNumberOfLanesService = MockitoSugar.mock[NumberOfLanesService]
-  val speedLimitService = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
 
 
   lazy val dataSource = {
@@ -56,7 +57,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val communGeoJson: Map[String, Any] = Map(("type", "FeatureCollection"), ("features", List(linearFeatures, pointFeatures)))
 
 
-  object ServiceWithDao extends AwsService(mockVVHClient, mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService){
+  object ServiceWithDao extends AwsService(mockVVHClient, mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, speedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def awsDao: AwsDao = new AwsDao
@@ -199,10 +200,16 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("new speedlimit with valid value to be created") {
-//    val testSpeedLimitProvider = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
-
-    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
+
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
 
     val roadLinksList: List[List[BigInt]] = List(List(5000))
     val linaerPropertiesWrong = Map("name" -> "Mannerheimintie", "speedLimit" -> "100", "sideCode" -> BigInt(1), "id" -> BigInt(200000), "functionalClass" -> "Katu", "type" -> "Roadlink")
@@ -220,10 +227,18 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       datasetStatus should be(0)
       featuresStatus should be (List((200000,"0")))
 
-      val createdSpeedLimit = mockSpeedLimitService.getExistingAssetByRoadLink(newRoadLink, false)
+      ServiceWithDao.updateDataset(dataSet)
+      val datasetStatus2 = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
+      val featuresStatus2 = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val createdSpeedLimit = speedLimitService.getExistingAssetByRoadLink(newRoadLink, false)
 
-      createdSpeedLimit.size should be(1)
-      createdSpeedLimit.head.value should be(Some(100))
+      datasetStatus2 should be(3)
+      featuresStatus2 should be (List((200000,"0,2")))
+      createdSpeedLimit.head.linkId should be (5000)
+      createdSpeedLimit.head.value should be(Some(NumericValue(100)))
+      createdSpeedLimit.head.startMeasure should be (0.0)
+      createdSpeedLimit.head.endMeasure should be (100.0)
+      createdSpeedLimit.head.createdBy should be (Some("AwsUpdater"))
     }
   }
 
