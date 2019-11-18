@@ -57,12 +57,11 @@ class AwsService(vvhClient: VVHClient,
     6 -> "Invalid sideCode"
   )
 
-  private def linkIdValidation(linkIds: Set[Long]): Seq[RoadLink] = {
+  private def linkIdValidation(linkIds: Set[Long]): Unit = {
     val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIds)
     linkIds.foreach { linkId =>
       roadLinks.find(road => road.linkId == linkId && road.administrativeClass != State).get
     }
-    roadLinks
   }
 
   private def validatePoint(datasetId: String, featureId: Long, properties: Map[String, Any], assetType: String): Unit = {
@@ -179,46 +178,44 @@ class AwsService(vvhClient: VVHClient,
     awsDao.insertDataset(dataset.datasetId, write(dataset.geoJson), write(dataset.roadlinks), datasetStatus)
     if (datasetStatus != 1) {
       var roadlinksCount = 0
-      assets.foreach(feature => {
 
+      assets.foreach(feature => {
         val featureRoadlinks = roadlinks(roadlinksCount)
         roadlinksCount += 1
 
         val properties = feature.getOrElse("properties", "").asInstanceOf[Map[String, Any]]
-        val featureId = properties.getOrElse("id", 0)
+        properties.get("id") match {
+          case Some(featureId) =>
+            try {
+              awsDao.insertFeature(featureId.asInstanceOf[BigInt].longValue(), dataset.datasetId, 0)
 
-        if (featureId != 0) {
-          try {
-            awsDao.insertFeature(featureId.asInstanceOf[BigInt].longValue(), dataset.datasetId, 0)
+              linkIdValidation(featureRoadlinks.map(number => number.longValue()).toSet)
 
-            val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type")
-            linkIdValidation(featureRoadlinks.map(number => number.longValue()).toSet)
-
-            assetTypeGeometry match {
-              case "LineString" =>
-                properties("type").asInstanceOf[String] match {
-                  case "Roadlink" => validateRoadlink(dataset.datasetId, featureId.asInstanceOf[BigInt].longValue(), properties)
-                  case _ =>
-                    awsDao.updateFeatureStatus(featureId.asInstanceOf[BigInt].longValue(), "1")
-                    awsDao.updateDatasetStatus(dataset.datasetId, 2)
-                }
-              case "Point" => validatePoint(dataset.datasetId, featureId.asInstanceOf[BigInt].longValue(), properties, properties("type").asInstanceOf[String])
-              case _ =>
+              val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type")
+              assetTypeGeometry match {
+                case "LineString" =>
+                  properties("type").asInstanceOf[String] match {
+                    case "Roadlink" => validateRoadlink(dataset.datasetId, featureId.asInstanceOf[BigInt].longValue(), properties)
+                    case _ =>
+                      awsDao.updateFeatureStatus(featureId.asInstanceOf[BigInt].longValue(), "1")
+                      awsDao.updateDatasetStatus(dataset.datasetId, 2)
+                  }
+                case "Point" => validatePoint(dataset.datasetId, featureId.asInstanceOf[BigInt].longValue(), properties, properties("type").asInstanceOf[String])
+                case _ =>
+                  awsDao.updateFeatureStatus(featureId.asInstanceOf[BigInt].longValue(), "1")
+                  awsDao.updateDatasetStatus(dataset.datasetId, 2)
+              }
+            } catch {
+              case _: Throwable =>
                 awsDao.updateFeatureStatus(featureId.asInstanceOf[BigInt].longValue(), "1")
                 awsDao.updateDatasetStatus(dataset.datasetId, 2)
             }
-          } catch {
-            case _: Throwable =>
-              awsDao.updateFeatureStatus(featureId.asInstanceOf[BigInt].longValue(), "1")
-              awsDao.updateDatasetStatus(dataset.datasetId, 2)
-          }
-        } else {
-          featuresWithoutIds += 1
-          awsDao.updateDatasetStatus(dataset.datasetId, 2)
+          case None =>
+            featuresWithoutIds += 1
+            awsDao.updateDatasetStatus(dataset.datasetId, 2)
         }
       }
       )
-      awsDao.updateDatasetStatus(dataset.datasetId, datasetStatus)
     }
     featuresWithoutIds
   }

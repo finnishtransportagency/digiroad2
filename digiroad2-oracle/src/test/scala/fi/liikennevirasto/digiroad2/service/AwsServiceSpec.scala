@@ -38,6 +38,22 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     new BoneCPDataSource(cfg)
   }
 
+
+  val dataSetId = "ab70d6a9-9616-4cc4-abbe-6272c2344709"
+  val roadLinksList: List[List[BigInt]] = List(List(441062, 441063, 441070, 452512), List(445212))
+
+  val linaerGeometry = Map(("crs", Map(("type", "name"), ("properties", Map("name" -> "EPSG:3067")))), ("type", "LineString"), ("coordinates", List(List(384594.081, 6674141.478, 105.55299999999988), List(384653.656, 6674029.718, 106.02099999999336), List(384731.654, 6673901.8, 106.37600000000384), List(384919.538, 6673638.735, 106.51600000000326))))
+  val pointGeometry = Map(("crs", Map(("type", "name"), ("properties", Map("name" -> "EPSG:3067")))), ("type", "Point"), ("coordinates", List(List(385786, 6671390, 0))))
+
+  val linaerProperties = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "speedLimit" -> "100", "sideCode" -> 1, "id" -> 9, "functionalClass" -> "Katu", "type" -> "Roadlink")
+  val pointProperties = Map("id" -> BigInt(100000), "type" -> "obstacle", "class" -> 1)
+
+  val linearFeatures = Map(("type", "Feature"), ("geometry", linaerGeometry), ("properties", linaerProperties))
+  val pointFeatures = Map(("type", "Feature"), ("geometry", pointGeometry), ("properties", pointProperties))
+
+  val communGeoJson: Map[String, Any] = Map(("type", "FeatureCollection"), ("features", List(linearFeatures, pointFeatures)))
+
+
   object ServiceWithDao extends AwsService(mockVVHClient, mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
@@ -46,21 +62,48 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
 
-//  test("validate and insert Dataset on database") {
-//    val geoJson =
-//    val dataset = Dataset(Some("0a852cf2-15b3-4f33-bdbe-1af89751bfaf"), Option[Map[Any, Any]], Option[List[List[BigInt]]])
-//
-//    runWithRollback {
-//      ServiceWithDao.validateAndInsertDataset(dataset)
-//    }
-//
-//  }
-//
-//  test("create new linear asset") {
-//    runWithRollback {
-//
-//    }
+  test("number of features doesn't match with the number of list of road links give") {
+    val wrongRoadLinksList: List[List[BigInt]] = List(List(441062, 441063, 441070, 452512))
+    val dataSet = Dataset(dataSetId, communGeoJson, wrongRoadLinksList)
 
-//  }
+    runWithRollback {
+      ServiceWithDao.validateAndInsertDataset(dataSet)
+      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
+      datasetStatus should be(1)
+    }
+  }
+
+  test("validate if features have id key/value") {
+    val roadLinksList: List[List[BigInt]] = List(List(445212))
+    val pointPropertiesWhithoutID = Map("type" -> "obstacle", "class" -> 1)
+    val pointFeatures = Map(("type", "Feature"), ("geometry", pointGeometry), ("properties", pointPropertiesWhithoutID))
+    val geoJson: Map[String, Any] = Map(("type", "FeatureCollection"), ("features", List(pointFeatures)))
+    val dataSet = Dataset(dataSetId, geoJson, roadLinksList)
+
+    runWithRollback {
+      val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
+      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
+
+      numberOfFeaturesWithoutId should be (1)
+      datasetStatus should be(2)
+    }
+  }
+
+  //TODO: The return of this test need to be revied because doesn't make sence send (0 -> "Inserted successfuly", 1 -> "Errors while validating") at the same time. Need to send error because the Roadlink doesn't exist
+  test("validate if roadLink exists on VVH") {
+    val roadLinksList: List[List[BigInt]] = List(List(5))
+    val geoJson: Map[String, Any] = Map(("type", "FeatureCollection"), ("features", List(pointFeatures)))
+    val dataSet = Dataset(dataSetId, geoJson, roadLinksList)
+
+    runWithRollback {
+      val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
+      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+
+      numberOfFeaturesWithoutId should be(0)
+      datasetStatus should be(2)
+      featuresStatus should be ("0,1")
+    }
+  }
 
 }

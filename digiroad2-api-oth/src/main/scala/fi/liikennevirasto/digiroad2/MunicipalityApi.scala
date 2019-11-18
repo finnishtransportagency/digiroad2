@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, Manoeuvres, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, AwsService, Dataset, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
@@ -57,29 +58,31 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       )
 
       var datasetFeaturesWithoutIds = Map[String, Int]()
-      listDatasets.foreach(dataset =>
-        datasetFeaturesWithoutIds += (dataset.datasetId -> awsService.validateAndInsertDataset(dataset))
-      )
 
-      listDatasets.foreach(dataset =>
-        awsService.updateDataset(dataset)
-      )
+      OracleDatabase.withDynTransaction {
+        listDatasets.foreach(dataset =>
+          datasetFeaturesWithoutIds += (dataset.datasetId -> awsService.validateAndInsertDataset(dataset))
+        )
 
-      val response = listDatasets.map(dataset =>
-        if ((awsService.getDatasetStatusById(dataset.datasetId) == "Processed successfuly" || awsService.getDatasetStatusById(dataset.datasetId) == "Amount of features and roadlinks do not match") && datasetFeaturesWithoutIds(dataset.datasetId) == 0){
-          Map(
-            "DataSetId" -> dataset.datasetId,
-            "Status" -> awsService.getDatasetStatusById(dataset.datasetId)
-          )
-        } else {
-          Map(
-            "DataSetId" -> dataset.datasetId,
-            "Status" -> awsService.getDatasetStatusById(dataset.datasetId),
-            "Features with errors" -> awsService.getFeatureErrorsByDatasetId(dataset.datasetId, datasetFeaturesWithoutIds(dataset.datasetId))
-          )
-        }
-      )
+        listDatasets.foreach(dataset =>
+          awsService.updateDataset(dataset)
+        )
 
+        val response = listDatasets.map(dataset =>
+          if ((awsService.getDatasetStatusById(dataset.datasetId) == "Processed successfuly" || awsService.getDatasetStatusById(dataset.datasetId) == "Amount of features and roadlinks do not match") && datasetFeaturesWithoutIds(dataset.datasetId) == 0) {
+            Map(
+              "DataSetId" -> dataset.datasetId,
+              "Status" -> awsService.getDatasetStatusById(dataset.datasetId)
+            )
+          } else {
+            Map(
+              "DataSetId" -> dataset.datasetId,
+              "Status" -> awsService.getDatasetStatusById(dataset.datasetId),
+              "Features with errors" -> awsService.getFeatureErrorsByDatasetId(dataset.datasetId, datasetFeaturesWithoutIds(dataset.datasetId))
+            )
+          }
+        )
+      }
       response
     } catch {
       case cce: ClassCastException => halt(BadRequest("Error when extracting dataSet in JSON"))
