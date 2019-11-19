@@ -14,9 +14,10 @@ import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossin
 
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
+import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import slick.jdbc
 
 case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,
@@ -106,12 +107,12 @@ class OraclePedestrianCrossingDao() {
 
   def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAssetRow).iterator.toSeq
   }
 
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val queryWithFilter = queryFilter(query())
-    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAssetRow).iterator.toSeq
   }
 
   def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PedestrianCrossing] = {
@@ -128,7 +129,7 @@ class OraclePedestrianCrossingDao() {
 
       case _ => queryFilter(query())
     }
-    StaticQuery.queryNA[PedestrianCrossing](recordLimit)(getPointAsset).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](recordLimit)(getPointAssetRow).iterator.toSeq
   }
 
   private def query() = {
@@ -146,18 +147,18 @@ class OraclePedestrianCrossingDao() {
     val query =
       """
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
-        pos.link_source
+        case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
       """
     val queryWithFilter =
       query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.mkString(",")})" + filterExpired
-    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAssetRow).iterator.toSeq
   }
 
-  implicit val getPointAsset = new GetResult[PedestrianCrossing] {
-    def apply(r: PositionedResult) = {
+  implicit val getPointAssetRow = new GetResult[PedestrianCrossing] {
+    def apply(r: PositionedResult) : PedestrianCrossing = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
