@@ -116,7 +116,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val historicRoadLink = roadLinkService.getHistoryDataLinksFromVVH(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
+      ChangedPointAsset(asset,
+        roadLinks.find(_.linkId == asset.linkId) match {
+          case Some(roadLink) => roadLink
+          case _ =>
+            historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+            .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
+        })
+    }
   }
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
