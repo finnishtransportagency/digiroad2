@@ -31,28 +31,28 @@ class AwsDao {
       """.execute
   }
 
-  def checkDatasetStatus(dataset_id: String): String = {
+  def getDatasetStatus(dataset_id: String): Int = {
     sql"""select status
           from dataset
           where dataset_id = $dataset_id
-      """.as[String].first
+      """.as[Int].first
   }
 
-  def checkFeatureStatus(feature_id: Long, dataSetId: String): String = {
+  def getFeatureStatus(feature_id: Long, dataSetId: String): String = {
     sql"""select status
           from feature
           where feature_id = $feature_id and dataset_id = $dataSetId
       """.as[String].first
   }
 
-  def checkAllFeatureIdAndStatusByDataset(dataset_id: String): List[(Long, String)] = {
+  def getAllFeatureIdAndStatusByDataset(dataset_id: String): List[(Long, String)] = {
     sql"""select feature_id,status
           from feature
           where dataset_id = $dataset_id
       """.as[(Long, String)].list
   }
 
-  def checkProcessedDatasetFeaturesForErrors(dataset_id: String): Int = {
+  def getProcessedDatasetFeaturesForErrors(dataset_id: String): Int = {
     sql"""select count(*)
           from feature
           where dataset_id = $dataset_id and status != '0,2'

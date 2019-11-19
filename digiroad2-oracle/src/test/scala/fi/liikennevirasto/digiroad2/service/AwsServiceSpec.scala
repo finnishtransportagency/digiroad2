@@ -71,7 +71,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
       datasetStatus should be(1)
     }
   }
@@ -85,7 +85,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
 
       numberOfFeaturesWithoutId should be (1)
       datasetStatus should be(2)
@@ -102,8 +102,8 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
@@ -123,8 +123,8 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
@@ -146,8 +146,8 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
@@ -168,8 +168,8 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
@@ -190,8 +190,8 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
@@ -220,16 +220,16 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     runWithRollback {
       val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
-      val datasetStatus = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(0)
       featuresStatus should be (List((200000,"0")))
 
       ServiceWithDao.updateDataset(dataSet)
-      val datasetStatus2 = ServiceWithDao.awsDao.checkDatasetStatus(dataSetId).toInt
-      val featuresStatus2 = ServiceWithDao.awsDao.checkAllFeatureIdAndStatusByDataset(dataSetId)
+      val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId).toInt
+      val featuresStatus2 = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
       val createdSpeedLimit = speedLimitService.getExistingAssetByRoadLink(newRoadLink, false)
 
       datasetStatus2 should be(3)
