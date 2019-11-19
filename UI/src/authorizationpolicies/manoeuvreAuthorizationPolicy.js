@@ -5,7 +5,7 @@
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset) {
-      return ((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.get().municipalityCode)) || me.isOperator();
+      return (me.isOperator() || (me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.get().municipalityCode));
     };
 
     this.editModeAccessByLink = function(link) {
