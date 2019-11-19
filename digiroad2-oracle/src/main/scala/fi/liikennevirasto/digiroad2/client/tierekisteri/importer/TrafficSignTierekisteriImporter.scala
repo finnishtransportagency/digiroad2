@@ -34,6 +34,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  private val signPlacementPublicId = "opposite_side_sign"
 
   private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.ProhibitionsAndRestrictions, TrafficSignTypeGroup.AdditionalPanels, TrafficSignTypeGroup.InformationSigns)
 
@@ -44,13 +45,14 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
       case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
       case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
     }
+    val signSidePlacement = SimpleTrafficSignProperty(signPlacementPublicId, Seq(TextPropertyValue(trAssetData.signSidePlacement.get)))
 
     val additionalPanel = trafficSignService.additionalPanelProperties(additionalProperties)
 
     if(additionalPanel.nonEmpty)
-      Set(typeProperty, valueProperty) ++ additionalPanel
+      Set(typeProperty, valueProperty, signSidePlacement) ++ additionalPanel
     else
-      Set(typeProperty, valueProperty)
+      Set(typeProperty, valueProperty, signSidePlacement)
   }
 
   def converter(trafficType: TrafficSignType, value: String): String = {
