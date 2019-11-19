@@ -156,7 +156,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def getServicePointById(id: Long): ServicePoint = {
+  def getServicePointById(id: Long): Option[ServicePoint] = {
     withDynSession {
       servicePointBusStopService.fetchAsset(id)
     }
@@ -352,7 +352,7 @@ trait MassTransitStopService extends PointAssetOperations {
           (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
 
         case _ =>
-          val servicePointAsset = Option(servicePointBusStopService.fetchAsset(assetId)).getOrElse(throw new NoSuchElementException)
+          val servicePointAsset = servicePointBusStopService.fetchAsset(assetId).getOrElse(throw new NoSuchElementException)
 
           val newProperties = excludeProperties(properties.toSeq)
 

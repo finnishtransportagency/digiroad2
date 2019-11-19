@@ -25,11 +25,11 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
 
     massTransitStopDao.updateAssetProperties(assetId, asset.properties.filterNot(p =>  p.publicId == validityDirectionPublicId || p.publicId == "liitetyt_pysakit") ++ defaultValues.toSet)
     val resultAsset = fetchAsset(assetId)
-    (resultAsset,PublishInfo(None))
+    (resultAsset.get,PublishInfo(None))
   }
 
-  def fetchAsset(id: Long): ServicePoint = {
-    servicePointBusStopDao.fetchAsset(massTransitStopDao.withIdAndNotExpired(id)).headOption.getOrElse(throw new NoSuchElementException)
+  def fetchAsset(id: Long): Option[ServicePoint] = {
+    servicePointBusStopDao.fetchAsset(massTransitStopDao.withIdAndNotExpired(id)).headOption
   }
 
   def fetchAssetByNationalId(id: Long): Option[ServicePoint] = {
@@ -55,7 +55,7 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
     massTransitStopDao.updateAssetLastModified(id, username)
     massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  p.publicId == validityDirectionPublicId).toSeq)
 
-    val resultAsset = enrichBusStop(fetchAsset(id))._1
+    val resultAsset = enrichBusStop(fetchAsset(id).get)._1
     (resultAsset, PublishInfo(None))
   }
 
