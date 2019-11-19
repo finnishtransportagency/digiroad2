@@ -54,7 +54,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       val jsonDatasets: List[List[Any]] = parsedBody.extractOrElse[List[List[Any]]](throw new ClassCastException)
 
       val listDatasets = jsonDatasets.map(data =>
-        Dataset(data(0).asInstanceOf[String], data(1).asInstanceOf[Map[String, Any]], data(2).asInstanceOf[List[List[BigInt]]])
+        Dataset(data.head.asInstanceOf[String], data(1).asInstanceOf[Map[String, Any]], data(2).asInstanceOf[List[List[BigInt]]])
       )
 
       var datasetFeaturesWithoutIds = Map[String, Int]()
@@ -68,7 +68,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           awsService.updateDataset(dataset)
         )
 
-        val response = listDatasets.map(dataset =>
+        listDatasets.map(dataset =>
           if ((awsService.getDatasetStatusById(dataset.datasetId) == "Processed successfuly" || awsService.getDatasetStatusById(dataset.datasetId) == "Amount of features and roadlinks do not match") && datasetFeaturesWithoutIds(dataset.datasetId) == 0) {
             Map(
               "DataSetId" -> dataset.datasetId,
@@ -83,7 +83,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           }
         )
       }
-      response
     } catch {
       case cce: ClassCastException => halt(BadRequest("Error when extracting dataSet in JSON"))
       case e: Exception => halt(BadRequest("Could not process Datasets. Verify information provided"))

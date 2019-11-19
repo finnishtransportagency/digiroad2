@@ -49,7 +49,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val pointGeometry = Map(("crs", Map(("type", "name"), ("properties", Map("name" -> "EPSG:3067")))), ("type", "Point"), ("coordinates", List(List(385786, 6671390, 0))))
 
   val linaerProperties = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "speedLimit" -> "100", "sideCode" -> 1, "id" -> 9, "functionalClass" -> "Katu", "type" -> "Roadlink")
-  val pointProperties = Map("id" -> BigInt(100000), "type" -> "obstacle", "class" -> 1)
+  val pointProperties = Map("id" -> BigInt(100000), "type" -> "obstacle", "class" -> BigInt(1))
 
   val linearFeatures = Map(("type", "Feature"), ("geometry", linaerGeometry), ("properties", linaerProperties))
   val pointFeatures = Map(("type", "Feature"), ("geometry", pointGeometry), ("properties", pointProperties))
@@ -107,7 +107,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"0,1")))
+      featuresStatus should be (List((100000,"0,10")))
     }
   }
 
@@ -128,7 +128,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"0,1")))
+      featuresStatus should be (List((100000,"0,7")))
     }
   }
 
@@ -137,7 +137,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
 
-    val pointPropertiesWrong = Map("id" -> BigInt(100000), "type" -> "obstacle", "class" -> 9)
+    val pointPropertiesWrong = Map("id" -> BigInt(100000), "type" -> "obstacle", "class" -> BigInt(9))
     val roadLinksList: List[List[BigInt]] = List(List(5000))
     val pointGeometryWrong = Map(("crs", Map(("type", "name"), ("properties", Map("name" -> "EPSG:3067")))), ("type", "Point"), ("coordinates", List(List(50, 0, 0))))
     val pointFeaturesWrong = Map(("type", "Feature"), ("geometry", pointGeometryWrong), ("properties", pointPropertiesWrong))

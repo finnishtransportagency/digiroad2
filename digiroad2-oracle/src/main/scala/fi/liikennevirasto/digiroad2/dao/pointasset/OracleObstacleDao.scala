@@ -49,13 +49,12 @@ object OracleObstacleDao {
 
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String, withDynSession: Boolean = false): Seq[Obstacle] = {
+    val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
     if(withDynSession){
       OracleDatabase.withDynSession {
-        val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
         StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
       }
     } else {
-      val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
       StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
     }
   }
