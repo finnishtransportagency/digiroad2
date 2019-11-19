@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, PedestrianCrossing, RailwayCrossing, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, AwsService, Dataset, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.{AssetPropertyService, AwsService, Dataset, DatasetStatus, RoadLinkService}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import org.joda.time.DateTime
@@ -68,20 +68,22 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           awsService.updateDataset(dataset)
         )
 
-        listDatasets.map(dataset =>
-          if ((awsService.getDatasetStatusById(dataset.datasetId) == "Processed successfuly" || awsService.getDatasetStatusById(dataset.datasetId) == "Amount of features and roadlinks do not match") && datasetFeaturesWithoutIds(dataset.datasetId) == 0) {
+        listDatasets.map{dataset =>
+          val datasetId = dataset.datasetId
+          val datasetStatus = awsService.getDatasetStatusById(datasetId)
+          if ((datasetStatus == DatasetStatus.Processed.description || datasetStatus == DatasetStatus.FeatureRoadlinksDontMatch.description) && datasetFeaturesWithoutIds(datasetId) == 0) {
             Map(
-              "DataSetId" -> dataset.datasetId,
-              "Status" -> awsService.getDatasetStatusById(dataset.datasetId)
+              "DataSetId" -> datasetId,
+              "Status" -> datasetStatus
             )
           } else {
             Map(
-              "DataSetId" -> dataset.datasetId,
-              "Status" -> awsService.getDatasetStatusById(dataset.datasetId),
-              "Features with errors" -> awsService.getFeatureErrorsByDatasetId(dataset.datasetId, datasetFeaturesWithoutIds(dataset.datasetId))
+              "DataSetId" -> datasetId,
+              "Status" -> datasetStatus,
+              "Features with errors" -> awsService.getFeatureErrorsByDatasetId(datasetId, datasetFeaturesWithoutIds(datasetId))
             )
           }
-        )
+        }
       }
     } catch {
       case cce: ClassCastException => halt(BadRequest("Error when extracting dataSet in JSON"))

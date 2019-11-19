@@ -23,8 +23,8 @@ class AwsDao {
       """.execute
   }
 
-  def updateFeatureStatus(feature_id: Long, status: String) {
-    val statusText = "," + status
+  def updateFeatureStatus(feature_id: Long, status: Int) {
+    val statusText = "," + status.toString
     sqlu"""update feature
           set status = status || $statusText
           where feature_id = $feature_id

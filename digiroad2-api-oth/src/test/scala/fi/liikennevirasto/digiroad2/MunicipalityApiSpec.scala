@@ -775,3 +775,5 @@
 //    validityPeriod.find(_._1 == "endMinute").map(_._2).get should be (35)
 //  }
 //}
+
+//TODO check commented tests too see if there is anything useful we can use
