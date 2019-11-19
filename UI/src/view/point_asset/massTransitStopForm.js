@@ -186,9 +186,8 @@
         streetViewHandler = getStreetView();
 
         var componentes;
-        if (isTerminalBusStop == 7){
+        if (isTerminalBusStop == 7) {
           componentes = createNewServiceDropDown();
-          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: 7, propertyDisplayValue: "", checked: true}], "multiple_choice", true);
         } else {
           componentes = getAssetForm();
         }
@@ -787,6 +786,7 @@
           properties = sortAndFilterTerminalProperties(allProperties);
         } else if  (isTerminalBusStop === '7'){
           properties = sortAndFilterServicePointProperties(allProperties);
+
         }else{
           properties = sortAndFilterProperties(allProperties);
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
@@ -905,7 +905,22 @@
       };
 
       eventbus.on('asset:modified', function(){
+
+        if (isTerminalBusStop == 7) {
+          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{
+            propertyValue: "7",
+            propertyDisplayValue: "", checked: true
+          }], "multiple_choice", true);
+
+          //this property update will fire an event that will call renderAssetForm
+          selectedMassTransitStopModel.setProperty("tietojen_yllapitaja", [{
+            propertyValue: "1",
+            propertyDisplayValue: ""
+          }], "single_choice", true);
+        }
+        else{
         renderAssetForm();
+        }
       });
 
       eventbus.on('layer:selected application:initialized', function() {
@@ -1025,10 +1040,10 @@
           return property;
         }
 
-        function updateViranomaisdataaValue(){
+        function updateViranomaisdataaValue() {
           var palveluProp = getPropByPublicId('palvelu' );
           var value = isAuthorityData(palveluProp.values[0].propertyValue) ? 'Kyllä' : 'Ei';
-          selectedMassTransitStopModel.setProperty('viranomaisdataa',[{propertyDisplayValue: value}],'read_only_text',undefined, undefined);
+          selectedMassTransitStopModel.setProperty('viranomaisdataa',[{propertyDisplayValue: value, propertyValue: value}],'read_only_text',undefined, undefined);
         }
 
       function hideOrShowTarkenne(){

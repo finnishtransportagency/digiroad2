@@ -509,6 +509,7 @@ trait MassTransitStopService extends PointAssetOperations {
           val childFilters = massTransitStopDao.fetchByRadius(point, 200)
             .filter(a =>  a.terminalId.isEmpty)
             .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+            .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.ServicePoint))
           val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
             val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
             PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)

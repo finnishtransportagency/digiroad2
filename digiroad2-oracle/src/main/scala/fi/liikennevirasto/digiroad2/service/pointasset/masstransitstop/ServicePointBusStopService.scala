@@ -23,7 +23,7 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
     if (asset.properties.find(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId).get.values.exists(v => v.propertyValue != MassTransitStopOperations.ServicePointBusStopPropertyValue))
       throw new IllegalArgumentException
 
-    massTransitStopDao.updateAssetProperties(assetId, asset.properties.filterNot(p =>  p.publicId == validityDirectionPublicId) ++ defaultValues.toSet)
+    massTransitStopDao.updateAssetProperties(assetId, asset.properties.filterNot(p =>  p.publicId == validityDirectionPublicId || p.publicId == "liitetyt_pysakit") ++ defaultValues.toSet)
     val resultAsset = fetchAsset(assetId)
     (resultAsset,PublishInfo(None))
   }
