@@ -282,8 +282,8 @@ class AwsService(vvhClient: VVHClient,
                 assetTypeGeometry match {
                   case "LineString" => assetType match {
                     case "Roadlink" =>
-                      val links = roadLinkService.getRoadLinksAndComplementariesFromVVH(featureRoadlinks.map(_.longValue()).toSet, false)
-                        .filter(link => link.functionalClass != 99 && link.functionalClass != 7 && link.functionalClass != 8)
+                      val links = roadLinkService.getRoadsLinksFromVVH(featureRoadlinks.map(_.longValue()).toSet, false)
+                        .filter(link => !Set(7,8,99).contains(link.functionalClass))
 
                       updateRoadlink(properties, links)
                   }
@@ -291,7 +291,7 @@ class AwsService(vvhClient: VVHClient,
 
                   case "Point" =>
                     val assetCoordinates = feature("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]].head
-                    val link = roadLinkService.getRoadLinkAndComplementaryFromVVH(featureRoadlinks.head.longValue(), false).get
+                    val link = roadLinkService.getRoadLinkFromVVH(featureRoadlinks.head.longValue(), false).get
                     updatePoint(properties, link, assetType, assetCoordinates)
                     awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
                 }
