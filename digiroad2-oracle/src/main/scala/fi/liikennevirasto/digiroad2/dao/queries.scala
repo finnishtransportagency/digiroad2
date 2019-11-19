@@ -1,20 +1,28 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
+
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
+import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
+
 import scala.math.BigDecimal.RoundingMode
-import java.text.{NumberFormat, DecimalFormat}
+import java.text.{DecimalFormat, NumberFormat}
+
 import Q._
-import org.joda.time.{LocalDate, DateTime}
+import org.joda.time.{DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
+
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.read
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -44,6 +52,14 @@ object Queries {
   implicit val getAssetType = new GetResult[AssetType] {
     def apply(r: PositionedResult) = {
       AssetType(r.nextLong, r.nextString, r.nextString)
+    }
+  }
+
+  implicit val formats = Serialization.formats(NoTypeHints)
+
+  implicit val getUser = new GetResult[User] {
+    def apply(r: PositionedResult) = {
+      User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()), r.nextStringOption())
     }
   }
 
@@ -342,6 +358,7 @@ object Queries {
     """
   }
 
+  //Table external_road_private_info created using an shape file importer, does't exist on Flyway
   def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
     sql"""
       select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
@@ -350,6 +367,12 @@ object Queries {
 
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
+  }
+
+  def getOperatorUsers(): List[User] = {
+    sql"""
+      select id, username, configuration, name from service_user where configuration like '%operator%'
+    """.as[User].list
   }
 
 }

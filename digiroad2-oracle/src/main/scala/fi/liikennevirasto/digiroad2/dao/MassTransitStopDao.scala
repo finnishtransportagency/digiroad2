@@ -97,7 +97,7 @@ class MassTransitStopDao {
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
-    val rows = Q.queryNA[MassTransitStopRow](query).iterator.toSeq
+    val rows = Q.queryNA[MassTransitStopRow](query)(getMassTransitStopRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
@@ -125,7 +125,7 @@ class MassTransitStopDao {
   }
 
   private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : MassTransitStopRow = {
       val id = r.nextLong
       val externalId = r.nextLong
       val assetTypeId = r.nextLong
@@ -445,6 +445,7 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset_Link Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Terminal_Bus_Stop_Link where terminal_asset_id = $assetId or bus_stop_asset_id = $assetId""".execute
+    sqlu"""Delete From Vallu_Xml_Ids where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 

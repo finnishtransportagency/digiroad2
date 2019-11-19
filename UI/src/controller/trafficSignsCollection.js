@@ -128,10 +128,9 @@
           return _.isEqual(value, current[key]) ?
             result : result.concat(key);
         }, []);
-
-        //if traffic Signs moves or orientation changes, should be relevant to Manoeuvres
+        
        return _.some(diffProperties, function(prop) {
-            return _.includes(['validityDirection', 'lon', 'lat'], prop);
+            return _.includes(['validityDirection', 'lon', 'lat', 'propertyData'], prop);
         });
       } else
         return false;

@@ -832,7 +832,8 @@
         hasMunicipalityValidation: true,
         hasInaccurate: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
-        authorizationPolicy: new PointStateRoadAuthorizationPolicy()
+        authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.obstacles,
@@ -853,7 +854,8 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
         hasMunicipalityValidation: true,
-        roadCollection: ObstaclesRoadCollection
+        roadCollection: ObstaclesRoadCollection,
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.railwayCrossings,
@@ -876,7 +878,8 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: RailwayCrossingForm,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.directionalTrafficSigns,
@@ -895,7 +898,8 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: DirectionalTrafficSignForm,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.servicePoints,
@@ -917,10 +921,10 @@
           {symbolUrl: 'images/service_points/taxiStation.png', label: 'Taksiasema'},
           {symbolUrl: 'images/service_points/picnicSite.png', label: 'Lepoalue'},
           {symbolUrl: 'images/service_points/customsControl.png', label: 'Tulli'},
-          {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka'},
-          {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'label loading-terminal'},
-          {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'label parking-area'},
-          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste'}
+          {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka', cssClass: 'border-crossing'},
+          {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'loading-terminal'},
+          {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'parking-area'},
+          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste', cssClass: 'charging-point'}
 
         ],
         formLabels: {
@@ -931,7 +935,8 @@
         label: new ServicePointLabel(Math.pow(3, 2)),
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
-        hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.trafficLights,
@@ -949,7 +954,8 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
-        authorizationPolicy: new PointAssetAuthorizationPolicy()
+        authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.trafficSigns,
@@ -985,7 +991,8 @@
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           return functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
         },
-        readOnlyLayer: TrafficSignReadOnlyLayer
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.trHeightLimits,
@@ -1007,7 +1014,8 @@
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         form: HeightLimitForm,
-        label: new HeightLimitLabel(Math.pow(5, 2))
+        label: new HeightLimitLabel(Math.pow(5, 2)),
+        showRoadLinkInfo: true
       },
       {
         typeId: assetType.trWidthLimits,
@@ -1029,7 +1037,8 @@
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
         nonModifiableBox: true,
         form: WidthLimitForm,
-        label: new WidthLimitLabel(Math.pow(5, 2))
+        label: new WidthLimitLabel(Math.pow(5, 2)),
+        showRoadLinkInfo: true
       }
     ];
 
@@ -1058,7 +1067,8 @@
           {'propertyTypeId': assetType.trTrailerTruckWeightLimits, 'propertyType': 'number', 'publicId': "yhdistelman_suurin_sallittu_massa", values: []},
           {'propertyTypeId': assetType.trAxleWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_akselimassa", values: []},
           {'propertyTypeId': assetType.trBogieWeightLimits, 'propertyType': 'number', 'publicId': "suurin_sallittu_telimassa", values: []}
-        ]
+        ],
+        showRoadLinkInfo: true
       }
     ];
 

@@ -25,7 +25,7 @@
           '   </div>' +
           '  </div>' +
           '</div>';
-      }).join(''));
+      }).join('')) + '</div>';
     };
 
     var element = $('<div class="panel-group point-asset ' +  _.kebabCase(assetConfig.layerName) + '"/>');

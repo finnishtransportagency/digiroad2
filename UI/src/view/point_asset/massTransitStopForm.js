@@ -670,6 +670,7 @@
           'viimeinen_voimassaolopaiva',//end date
           'inventointipaiva',//Inventory date
           'pysakin_tyyppi',
+          'pysakin_palvelutaso',
           'korotettu',
           'katos',
           'mainoskatos',

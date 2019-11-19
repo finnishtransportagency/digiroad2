@@ -1,7 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao
 
-
-
 import fi.liikennevirasto.digiroad2.{ImportStatusInfo, Status}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -19,18 +17,18 @@ class ImportLogDAO {
       val status = r.nextInt()
       val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextStringOption()
-      val logType = r.nextString()
+      val jobName = r.nextString()
       val content = r.nextStringOption()
 
-      ImportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, logType, content)
+      ImportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, jobName, content)
     }
   }
 
-  def create(username: String, importType: String, fileName: String): Long = {
+  def create(username: String, fileName: String, importType: String): Long = {
     val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
     sqlu"""
-        insert into import_log(id, import_type, file_name, created_by)
-        values ($id, $importType, $fileName, $username)
+        insert into import_log(id, file_name, import_type, created_by)
+        values ($id, $fileName, $importType, $username)
       """.execute
     id
   }

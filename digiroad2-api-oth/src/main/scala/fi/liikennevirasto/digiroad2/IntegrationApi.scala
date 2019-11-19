@@ -87,6 +87,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             extractMvalue(massTransitStop),
             extractLinkSource(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
+            extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
@@ -364,11 +365,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       val dynamicMultiValueLinearAssetsMap = roadWork.value.map(_.asInstanceOf[DynamicValue]) match {
         case Some(value) =>
           val roadWorkProps = value.value.properties
+          val workId = roadWorkProps.find(_.publicId == "tyon_tunnus") match {
+            case Some(property) => property.values.head.value
+            case _ => ""
+          }
+
           Map(
             "estimated_duration" -> roadWorkProps.find(_.publicId == "arvioitu_kesto").map(_.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).map {
               period => Map("startDate" -> period.startDate, "endDate" -> period.endDate)
             }),
-            "work_id" -> roadWorkProps.find(_.publicId == "tyon_tunnus").map(_.values.map(_.value.toString.toInt)
+            "work_id" -> roadWorkProps.find(_.publicId == "tyon_tunnus").map(_.values.map(_.value.toString)
             ))
         case _ => Map()
       }

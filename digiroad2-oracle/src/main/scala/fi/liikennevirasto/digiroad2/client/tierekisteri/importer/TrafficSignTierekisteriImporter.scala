@@ -127,7 +127,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, mValue, roadLink, Set()), false)
+            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId,  trafficSign.validityDirection, signType, roadLink), false)
           }
           newId
       }
