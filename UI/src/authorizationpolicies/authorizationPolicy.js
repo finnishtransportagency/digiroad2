@@ -5,12 +5,14 @@
     me.municipalities = [];
     me.areas = [];
     me.username = {};
+    me.fetched = false;
 
     eventbus.on('roles:fetched', function(userInfo) {
       me.username = userInfo.username;
       me.userRoles = userInfo.roles;
       me.municipalities = userInfo.municipalities;
       me.areas = userInfo.areas;
+      me.fetched = true;
     });
 
     this.isUser = function(role) {

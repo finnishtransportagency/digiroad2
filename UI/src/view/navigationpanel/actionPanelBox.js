@@ -120,7 +120,9 @@
 
     this.addVerificationIcon = function(){
       $(me.expanded).find('.panel-header').css('display', 'flex');
-      $(me.expanded).find('.panel-header').append(me.verificationIcon());
+      var panel = $(me.expanded).find('.panel-header');
+      if(!panel.find('#right-panel').length)
+        panel.append(me.verificationIcon());
     };
 
     this.bindExternalEventHandlers = function() {
