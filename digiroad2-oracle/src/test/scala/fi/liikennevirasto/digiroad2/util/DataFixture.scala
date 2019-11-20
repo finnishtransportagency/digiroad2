@@ -1835,24 +1835,6 @@ object DataFixture {
     println("Completed at time: " + DateTime.now())
   }
 
-  def normalizeOperatorRoles(): Unit ={
-    println("\nStart process to remove additional roles from operators users")
-    println(DateTime.now())
-
-    val userProvider: UserProvider = new OracleUserProvider
-    println("\nGetting operators with additional roles")
-    var operators: List[User] = Nil
-    OracleDatabase.withDynSession {
-      operators = Queries.getOperatorUsers().filter(user => user.configuration.roles.size > 1)
-    }
-      println("\nNormalizing operators")
-      operators.foreach(user =>
-        userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"))))
-      )
-
-    println("Completed at time: " + DateTime.now())
-  }
-
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
