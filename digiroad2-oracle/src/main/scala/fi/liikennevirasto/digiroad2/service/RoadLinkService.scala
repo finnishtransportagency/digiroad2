@@ -1123,11 +1123,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
       vvhRoadLink.get.featureClass match {
         case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.DrivePath | FeatureClass.CarRoad_IIIb => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithoutGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.CarRoad_IIIa => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.CarRoad_IIIa => vvhRoadLink.get.administrativeClass match {
+          case State => roadLink.copy(functionalClass = 4, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+          case Municipality | Private => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+          case _ => roadLink
+        }
         case _ => roadLink //similar logic used in roadaddressbuilder
       }
     }
