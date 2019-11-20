@@ -161,7 +161,7 @@ object OracleTrafficSignDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,

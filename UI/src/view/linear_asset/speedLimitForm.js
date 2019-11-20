@@ -129,12 +129,8 @@
       }
   };
 
-  var bindEvents = function(selectedSpeedLimit, feedbackCollection, backend) {
+  var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
     new FeedbackDataTool(feedbackCollection, 'speedLimit', authorizationPolicy);
-
-    if (authorizationPolicy.userRoles.length === 0){
-      backend.getUserRoles();
-    }
 
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
@@ -183,7 +179,12 @@
     eventbus.on('layer:selected', function(layer) {
       if(layer === 'speedLimit') {
         $('ul[class=information-content]').empty();
-        renderLinktoWorkList();
+        if(!authorizationPolicy.fetched)
+            eventbus.on('roles:fetched', function() {
+                renderLinktoWorkList(authorizationPolicy);
+            });
+         else
+            renderLinktoWorkList(authorizationPolicy);
       }
     });
   };
@@ -196,8 +197,8 @@
   }
 
   root.SpeedLimitForm = {
-    initialize: function(selectedSpeedLimit, feedbackCollection, backend) {
-      bindEvents(selectedSpeedLimit, feedbackCollection, backend);
+    initialize: function(selectedSpeedLimit, feedbackCollection) {
+      bindEvents(selectedSpeedLimit, feedbackCollection);
     }
   };
 })(this);

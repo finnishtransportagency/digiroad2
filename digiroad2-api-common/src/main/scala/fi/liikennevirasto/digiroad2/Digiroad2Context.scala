@@ -283,12 +283,8 @@ class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSig
 class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: TrafficSignInfoUpdate =>
-       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
-                                trafficSignManager.createAssets(x.newSign)
-      case _ => println("Nonexistent traffic Sign Type")
-    }
-      trafficSignManager.createAssets(x.newSign)
+            trafficSignManager.deleteAssets(Seq(x.oldSign))
+            trafficSignManager.createAssets(x.newSign)
     case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
@@ -546,7 +542,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager(roadLinkService, eventbus)
+    new DataImportManager(vvhClient, roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
