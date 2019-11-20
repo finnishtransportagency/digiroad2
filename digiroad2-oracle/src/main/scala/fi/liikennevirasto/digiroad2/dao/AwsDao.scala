@@ -17,16 +17,15 @@ class AwsDao {
       """.execute
   }
 
-  def insertFeature(feature_id: Long, dataset_id: String, status: Int) {
+  def insertFeature(feature_id: Long, dataset_id: String, status: String) {
     sqlu"""insert into feature(feature_id, dataset_id, status)
           values ($feature_id, $dataset_id, $status)
       """.execute
   }
 
   def updateFeatureStatus(feature_id: Long, status: Int) {
-    val statusText = "," + status.toString
     sqlu"""update feature
-          set status = status || $statusText
+          set status = $status
           where feature_id = $feature_id
       """.execute
   }
@@ -55,7 +54,7 @@ class AwsDao {
   def getProcessedDatasetFeaturesForErrors(dataset_id: String): Int = {
     sql"""select count(*)
           from feature
-          where dataset_id = $dataset_id and status != '0,2'
+          where dataset_id = $dataset_id and status != '2'
       """.as[Int].first
   }
 }

@@ -57,12 +57,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         Dataset(data.head.asInstanceOf[String], data(1).asInstanceOf[Map[String, Any]], data(2).asInstanceOf[List[List[BigInt]]])
       )
 
-      var datasetFeaturesWithoutIds = Map[String, Int]()
-
       OracleDatabase.withDynTransaction {
-        listDatasets.foreach(dataset =>
-          datasetFeaturesWithoutIds += (dataset.datasetId -> awsService.validateAndInsertDataset(dataset))
-        )
+        val datasetFeaturesWithoutIds: Map[String, Int] = listDatasets.flatMap(dataset =>
+          Map(dataset.datasetId -> awsService.validateAndInsertDataset(dataset))).toMap
 
         listDatasets.foreach(dataset =>
           awsService.updateDataset(dataset)

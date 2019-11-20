@@ -26,7 +26,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
   val speedLimitService = new SpeedLimitService(new DummyEventBus, mockVVHClient, mockRoadLinkService)
-  val mockPavedRoadService = MockitoSugar.mock[PavedRoadService]
+  val pavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
   val mockRoadWidthService = MockitoSugar.mock[RoadWidthService]
   val mockManoeuvreService = MockitoSugar.mock[ManoeuvreService]
   val mockPedestrianCrossingService = MockitoSugar.mock[PedestrianCrossingService]
@@ -57,7 +57,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val communGeoJson: Map[String, Any] = Map(("type", "FeatureCollection"), ("features", List(linearFeatures, pointFeatures)))
 
 
-  object ServiceWithDao extends AwsService(mockVVHClient, mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, speedLimitService, mockPavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService){
+  object ServiceWithDao extends AwsService(mockVVHClient, mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, speedLimitService, pavedRoadService, mockRoadWidthService, mockManoeuvreService, mockAssetService, mockObstacleService, mockPedestrianCrossingService, mockRailwayCrossingService, mockTrafficLightService, mockMassTransitLaneService, mockNumberOfLanesService){
     override def withDynTransaction[T](f: => T): T = f
     override def withDynSession[T](f: => T): T = f
     override def awsDao: AwsDao = new AwsDao
@@ -92,7 +92,6 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  //TODO: The return of this test need to be revied because doesn't make sence send (0 -> "Inserted successfuly", 1 -> "Errors while validating") at the same time. Need to send error because the Roadlink doesn't exist
   test("validate if roadLink exists on VVH") {
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5), false)).thenReturn(Seq())
 
@@ -107,7 +106,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"0,10")))
+      featuresStatus should be (List((100000,"10")))
     }
   }
 
@@ -128,7 +127,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"0,7")))
+      featuresStatus should be (List((100000,"7")))
     }
   }
 
@@ -151,7 +150,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"0,5")))
+      featuresStatus should be (List((100000,"5")))
     }
   }
 
@@ -173,7 +172,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((200000,"0,3")))
+      featuresStatus should be (List((200000,"3")))
     }
   }
 
@@ -195,7 +194,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(0)
       datasetStatus should be(2)
-      featuresStatus should be (List((200000,"0,4")))
+      featuresStatus should be (List((200000,"4")))
     }
   }
 
@@ -233,7 +232,7 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val createdSpeedLimit = speedLimitService.getExistingAssetByRoadLink(newRoadLink, false)
 
       datasetStatus2 should be(3)
-      featuresStatus2 should be (List((200000,"0,2")))
+      featuresStatus2 should be (List((200000,"2")))
       createdSpeedLimit.head.linkId should be (5000)
       createdSpeedLimit.head.value should be(Some(NumericValue(100)))
       createdSpeedLimit.head.startMeasure should be (0.0)
@@ -242,12 +241,52 @@ class AwsServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("speed limit create and update") {
+  test("speed limit update") {
     //TODO
   }
 
-  test("pavement class create") {
-    //TODO
+  test("new pavementClass with valid value to be created") {
+    //TODO missing a mock
+    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
+
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+
+    val roadLinksList: List[List[BigInt]] = List(List(5000))
+    val linaerPropertiesWrong = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "sideCode" -> BigInt(1), "id" -> BigInt(200000), "functionalClass" -> "Katu", "type" -> "Roadlink")
+    val linaerGeometry = Map(("crs", Map(("type", "name"), ("properties", Map("name" -> "EPSG:3067")))), ("type", "LineString"), ("coordinates", List(List(0.0, 0.0, 0), List(100.0, 0.0, 0))))
+    val linearFeaturesWrong = Map(("type", "Feature"), ("geometry", linaerGeometry), ("properties", linaerPropertiesWrong))
+    val geoJson: Map[String, Any] = Map(("type", "FeatureCollection"), ("features", List(linearFeaturesWrong)))
+    val dataSet = Dataset(dataSetId, geoJson, roadLinksList)
+
+    runWithRollback {
+      val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
+
+      numberOfFeaturesWithoutId should be(0)
+      datasetStatus should be(0)
+      featuresStatus should be(List((200000, "0")))
+
+      ServiceWithDao.updateDataset(dataSet)
+      val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
+      val featuresStatus2 = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
+      val createdPavementClass = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newRoadLink.linkId), false)
+
+      datasetStatus2 should be(3)
+      featuresStatus2 should be(List((200000, "2")))
+      createdPavementClass.head.linkId should be(5000)
+      createdPavementClass.head.value should be(Some(NumericValue(1)))
+      createdPavementClass.head.startMeasure should be(0.0)
+      createdPavementClass.head.endMeasure should be(100.0)
+      createdPavementClass.head.createdBy should be(Some("AwsUpdater"))
+    }
   }
 
   test("pavement class update") {
