@@ -1,8 +1,6 @@
 package fi.liikennevirasto.digiroad2.process
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset._
+import java.sql.SQLIntegrityConstraintViolationException
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OraclePedestrianCrossingDao, PedestrianCrossing, PersistedTrafficSign}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -94,7 +92,13 @@ class PedestrianCrossingValidator extends AssetServiceValidatorOperations {
                   inaccurate =>
                     (inaccurate.assetId, inaccurate.linkId) match {
                       case (Some(assetId), _) => insertInaccurate(inaccurateAssetDAO.createInaccurateAsset, assetId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
-                      case (_, Some(linkId)) => insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                      case (_, Some(linkId)) =>
+                        try {
+                          insertInaccurate(inaccurateAssetDAO.createInaccurateLink, linkId, assetTypeInfo.typeId, inaccurate.municipalityCode, inaccurate.administrativeClass)
+                        } catch {
+                          case e: SQLIntegrityConstraintViolationException =>
+                            println(s"more than one for the same linkId: $linkId -> $e" )
+                        }
                       case _ => None
                     }
                 }
