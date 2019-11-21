@@ -54,7 +54,7 @@ class AwsDao {
   def getProcessedDatasetFeaturesForErrors(dataset_id: String): Int = {
     sql"""select count(*)
           from municipality_feature
-          where dataset_id = $dataset_id and status != '2'
+          where dataset_id = $dataset_id and status != '1'
       """.as[Int].first
   }
 }
