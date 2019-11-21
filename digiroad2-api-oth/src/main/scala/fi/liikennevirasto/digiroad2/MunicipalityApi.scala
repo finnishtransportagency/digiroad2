@@ -98,44 +98,44 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
   final val AwsUser = "AwsUpdater"
 
-  private def insertFeatureAndUpdateDataset(datasetId: String, featureId: Long, featureStatus: List[Int]) = {
-    val allFeatureStatus = featureStatus.distinct.filterNot(code => code == FeatureStatus.Inserted.value)
+  private def insertFeatureAndUpdateDataset(datasetId: String, featureId: Long, featureStatus: List[FeatureStatus]) = {
+    val allFeatureStatus = featureStatus.distinct.filterNot(feature => feature == FeatureStatus.Inserted)
 
     if (allFeatureStatus.isEmpty) {
       awsDao.insertFeature(featureId, datasetId, FeatureStatus.Inserted.value.toString)
     } else {
-      awsDao.insertFeature(featureId, datasetId, allFeatureStatus.mkString(","))
+      awsDao.insertFeature(featureId, datasetId, allFeatureStatus.map(feature => feature.value).mkString(","))
       awsDao.updateDatasetStatus(datasetId, DatasetStatus.ErrorsFeatures.value)
     }
   }
 
-  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long]): Int = {
+  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long]): FeatureStatus = {
     val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIds, false)
     if(!(linkIds.nonEmpty && roadLinks.count(road => road.administrativeClass != State) == linkIds.size))
     {
-      FeatureStatus.WrongRoadlinks.value
+      FeatureStatus.WrongRoadlinks
     } else {
-      FeatureStatus.Inserted.value
+      FeatureStatus.Inserted
     }
   }
 
-  private def validatePoint(datasetId: String, featureId: Long, properties: Map[String, Any], assetType: String): List[Int] = {
+  private def validatePoint(datasetId: String, featureId: Long, properties: Map[String, Any], assetType: String): List[FeatureStatus] = {
     assetType match {
       case "obstacle" =>
         properties.get("class") match {
           case Some(value) =>
             if (!Set(1, 2).contains(value.asInstanceOf[BigInt].intValue())) {
-              List(FeatureStatus.WrongObstacleClass.value)
+              List(FeatureStatus.WrongObstacleClass)
             } else {
-              List(FeatureStatus.Inserted.value)
+              List(FeatureStatus.Inserted)
             }
           case None =>
-            List(FeatureStatus.WrongObstacleClass.value)
+            List(FeatureStatus.WrongObstacleClass)
         }
     }
   }
 
-  private def validateLinearAssets(datasetId: String, featureId: Long, properties: Map[String, Any]): List[Int] = {
+  private def validateLinearAssets(datasetId: String, featureId: Long, properties: Map[String, Any]): List[FeatureStatus] = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
     val sideCode = properties.get("sideCode")
@@ -143,32 +143,32 @@ class MunicipalityApi(val vvhClient: VVHClient,
     val speedlimitStatus = speedLimit match {
       case Some(value) =>
         if (!Set("20", "30", "40", "50", "60", "70", "80", "90", "100", "120").contains(value.asInstanceOf[String])) {
-          FeatureStatus.WrongSpeedLimit.value
+          FeatureStatus.WrongSpeedLimit
         } else {
-          FeatureStatus.Inserted.value
+          FeatureStatus.Inserted
         }
-      case None => FeatureStatus.Inserted.value
+      case None => FeatureStatus.Inserted
     }
 
     val pavementClassStatus = pavementClass match {
       case Some(value) =>
         if (!Seq("1", "2", "10", "20", "30", "40", "50").contains(value.asInstanceOf[String])) {
-          FeatureStatus.WrongPavementClass.value
+          FeatureStatus.WrongPavementClass
         } else {
-          FeatureStatus.Inserted.value
+          FeatureStatus.Inserted
         }
-      case None => FeatureStatus.Inserted.value
+      case None => FeatureStatus.Inserted
     }
 
     val sideCodeStatus = sideCode match {
       case Some(value) =>
-        if (!Seq(1, 2, 3).contains(value.asInstanceOf[BigInt])) {
-          FeatureStatus.WrongSideCode.value
+        if (!Seq(SideCode.BothDirections.value, SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value).contains(value.asInstanceOf[BigInt])) {
+          FeatureStatus.WrongSideCode
         } else {
-          FeatureStatus.Inserted.value
+          FeatureStatus.Inserted
         }
       case None =>
-        FeatureStatus.WrongSideCode.value
+        FeatureStatus.WrongSideCode
     }
 
     List(speedlimitStatus, pavementClassStatus, sideCodeStatus)
@@ -241,16 +241,16 @@ class MunicipalityApi(val vvhClient: VVHClient,
                 val linkIdValidationStatus = linkIdValidation(dataset.datasetId, featureId, featureRoadlinks.toSet)
 
                 val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type")
-                val propertiesStatus: List[Int] = assetTypeGeometry match {
+                val propertiesStatus: List[FeatureStatus] = assetTypeGeometry match {
                   case "LineString" =>
                     properties("type").asInstanceOf[String] match {
                       case "Roadlink" => validateLinearAssets(dataset.datasetId, featureId, properties)
                       case _ =>
-                        List(FeatureStatus.RoadlinkNoTypeInProperties.value)
+                        List(FeatureStatus.RoadlinkNoTypeInProperties)
                     }
                   case "Point" => validatePoint(dataset.datasetId, featureId, properties, properties("type").asInstanceOf[String])
                   case _ =>
-                    List(FeatureStatus.NoGeometryType.value)
+                    List(FeatureStatus.NoGeometryType)
                 }
                 val featureStatus = linkIdValidationStatus :: propertiesStatus
 
