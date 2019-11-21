@@ -14,7 +14,7 @@ import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
-case class Dataset(datasetId: String, geoJson: Map[String, Any], roadlinks: List[List[BigInt]]) extends Serializable
+case class Dataset(datasetId: String, features: Map[String, Any], roadlinks: List[List[Long]]) extends Serializable
 
 sealed trait DatasetStatus{
   def value: Int
@@ -26,10 +26,6 @@ object DatasetStatus{
 
   def apply(intValue: Int): DatasetStatus= {
     values.find(_.value == intValue).getOrElse(ErrorsProcessing)
-  }
-
-  def apply(stringValue: String): DatasetStatus= {
-    values.find(_.description == stringValue).getOrElse(ErrorsProcessing)
   }
 
   case object Inserted extends DatasetStatus{ def value = 0; def description = "Inserted successfuly";}
@@ -50,10 +46,6 @@ object FeatureStatus{
 
   def apply(intValue: Int): FeatureStatus= {
     values.find(_.value == intValue).getOrElse(ErrorsWhileUpdating)
-  }
-
-  def apply(stringValue: String): FeatureStatus= {
-    values.find(_.description == stringValue).getOrElse(ErrorsWhileUpdating)
   }
 
   case object Inserted extends FeatureStatus{ def value = 0; def description = "Inserted successfuly";}
@@ -80,7 +72,21 @@ class MunicipalityApi(val vvhClient: VVHClient,
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
   protected val applicationDescription = "Municipality API "
-  protected implicit val jsonFormats: Formats = DefaultFormats
+
+  case object DatasetSerializer extends CustomSerializer[Dataset](format =>
+    ({
+      case jsonObj: JObject =>
+        val id = (jsonObj \ "datasetId").extract[String]
+        val roadlinks = (jsonObj \ "matchedRoadlinks").extract[List[List[Long]]]
+        val features = (jsonObj \ "geojson").extract[Map[String, Any]]
+
+        Dataset(id, features, roadlinks)
+    },
+      {
+        case tv : Dataset => Extraction.decompose(tv)
+      }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DatasetSerializer
 
   before() {
     basicAuth
@@ -92,66 +98,77 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
   final val AwsUser = "AwsUpdater"
 
-  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long]): (Int, Int) = {
-    val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIds, false)
-    if(!(linkIds.nonEmpty && roadLinks.count(road => road.administrativeClass != State) == linkIds.size))
-    {
-      (FeatureStatus.WrongRoadlinks.value, 0)
+  private def insertFeatureAndUpdateDataset(datasetId: String, featureId: Long, featureStatus: List[Int]) = {
+    val allFeatureStatus = featureStatus.distinct.filterNot(code => code == FeatureStatus.Inserted.value)
+
+    if (allFeatureStatus.isEmpty) {
+      awsDao.insertFeature(featureId, datasetId, FeatureStatus.Inserted.value.toString)
     } else {
-      (FeatureStatus.Inserted.value, 0)
+      awsDao.insertFeature(featureId, datasetId, allFeatureStatus.mkString(","))
+      awsDao.updateDatasetStatus(datasetId, DatasetStatus.ErrorsFeatures.value)
     }
   }
 
-  private def validatePoint(datasetId: String, featureId: Long, properties: Map[String, Any], assetType: String): List[(Int, Int)] = {
+  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long]): Int = {
+    val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIds, false)
+    if(!(linkIds.nonEmpty && roadLinks.count(road => road.administrativeClass != State) == linkIds.size))
+    {
+      FeatureStatus.WrongRoadlinks.value
+    } else {
+      FeatureStatus.Inserted.value
+    }
+  }
+
+  private def validatePoint(datasetId: String, featureId: Long, properties: Map[String, Any], assetType: String): List[Int] = {
     assetType match {
       case "obstacle" =>
         properties.get("class") match {
           case Some(value) =>
             if (!Set(1, 2).contains(value.asInstanceOf[BigInt].intValue())) {
-              List((FeatureStatus.WrongObstacleClass.value, 0))
+              List(FeatureStatus.WrongObstacleClass.value)
             } else {
-              List((FeatureStatus.Inserted.value, 0))
+              List(FeatureStatus.Inserted.value)
             }
           case None =>
-            List((FeatureStatus.WrongObstacleClass.value, 0))
+            List(FeatureStatus.WrongObstacleClass.value)
         }
     }
   }
 
-  private def validateRoadlink(datasetId: String, featureId: Long, properties: Map[String, Any]): List[(Int, Int)] = {
+  private def validateLinearAssets(datasetId: String, featureId: Long, properties: Map[String, Any]): List[Int] = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
     val sideCode = properties.get("sideCode")
 
-    val speedlimitStatus: (Int, Int) = speedLimit match {
+    val speedlimitStatus = speedLimit match {
       case Some(value) =>
         if (!Set("20", "30", "40", "50", "60", "70", "80", "90", "100", "120").contains(value.asInstanceOf[String])) {
-          (FeatureStatus.WrongSpeedLimit.value, 0)
+          FeatureStatus.WrongSpeedLimit.value
         } else {
-          (FeatureStatus.Inserted.value, 0)
+          FeatureStatus.Inserted.value
         }
-      case None => (FeatureStatus.Inserted.value, 0)
+      case None => FeatureStatus.Inserted.value
     }
 
-    val pavementClassStatus: (Int, Int) = pavementClass match {
+    val pavementClassStatus = pavementClass match {
       case Some(value) =>
         if (!Seq("1", "2", "10", "20", "30", "40", "50").contains(value.asInstanceOf[String])) {
-          (FeatureStatus.WrongPavementClass.value, 0)
+          FeatureStatus.WrongPavementClass.value
         } else {
-          (FeatureStatus.Inserted.value, 0)
+          FeatureStatus.Inserted.value
         }
-      case None => (FeatureStatus.Inserted.value, 0)
+      case None => FeatureStatus.Inserted.value
     }
 
-    val sideCodeStatus: (Int, Int) = sideCode match {
+    val sideCodeStatus = sideCode match {
       case Some(value) =>
-        if (!(value.asInstanceOf[BigInt] == 1)) {
-          (FeatureStatus.WrongSideCode.value, 0)
-        }else {
-          (FeatureStatus.Inserted.value, 0)
+        if (!Seq(1, 2, 3).contains(value.asInstanceOf[BigInt])) {
+          FeatureStatus.WrongSideCode.value
+        } else {
+          FeatureStatus.Inserted.value
         }
       case None =>
-        (FeatureStatus.WrongSideCode.value, 0)
+        FeatureStatus.WrongSideCode.value
     }
 
     List(speedlimitStatus, pavementClassStatus, sideCodeStatus)
@@ -166,7 +183,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
   }
 
-  private def updateRoadlink(properties: Map[String, Any], links: Seq[RoadLink]) = {
+  private def updateLinearAssets(properties: Map[String, Any], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
 
@@ -192,90 +209,75 @@ class MunicipalityApi(val vvhClient: VVHClient,
           val pavementClassValue = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue(value.asInstanceOf[String].toInt))))))
 
           val duplicate = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(link.linkId))
-          duplicate.isEmpty match {
-            case false =>
-              pavedRoadService.update(Seq(duplicate.head.id), pavementClassValue, AwsUser)
-            case true =>
-              val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").asInstanceOf[BigInt].intValue(), vvhClient.roadLinkData.createVVHTimeStamp(), None)
-              pavedRoadService.create(Seq(newPavementClassAsset), PavedRoad.typeId, AwsUser)
+          if(duplicate.isEmpty) {
+            val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").asInstanceOf[BigInt].intValue(), vvhClient.roadLinkData.createVVHTimeStamp(), None)
+            pavedRoadService.create(Seq(newPavementClassAsset), PavedRoad.typeId, AwsUser)
+          } else {
+            pavedRoadService.update(Seq(duplicate.head.id), pavementClassValue, AwsUser)
           }
         case None =>
       }
     }
   }
 
-  def validateAndInsertDataset(dataset: Dataset): Int = {
-    val assets = dataset.geoJson("features").asInstanceOf[List[Map[String, Any]]]
+  def validateAndInsertDataset(dataset: Dataset): Option[Int] = {
+    val assets = dataset.features("features").asInstanceOf[List[Map[String, Any]]]
     val roadlinks = dataset.roadlinks
 
-    if (assets.length != dataset.roadlinks.length) {
-      awsDao.insertDataset(dataset.datasetId, write(dataset.geoJson), write(dataset.roadlinks), DatasetStatus.FeatureRoadlinksDontMatch.value)
+    if (assets.length != roadlinks.length) {
+      awsDao.insertDataset(dataset.datasetId, write(dataset.features), write(dataset.roadlinks), DatasetStatus.FeatureRoadlinksDontMatch.value)
+      None
     }
     else{
-      awsDao.insertDataset(dataset.datasetId, write(dataset.geoJson), write(dataset.roadlinks), DatasetStatus.Inserted.value)
-    }
+      awsDao.insertDataset(dataset.datasetId, write(dataset.features), write(dataset.roadlinks), DatasetStatus.Inserted.value)
 
-    if (awsDao.getDatasetStatus(dataset.datasetId) != DatasetStatus.FeatureRoadlinksDontMatch.value) {
-      val featuresWithoutIds: Int = (roadlinks, assets).zipped.map((featureRoadlinks, feature) => {
-        val missingIds: Int = feature.get("properties") match {
+      val featuresWithoutIds: List[Option[Int]] = (roadlinks, assets).zipped.map((featureRoadlinks, feature) => {
+        feature.get("properties") match {
           case Some(prop) =>
             val properties = prop.asInstanceOf[Map[String, Any]]
-            val status: List[(Int, Int)] = properties.get("id") match {
+            properties.get("id") match {
               case Some(id) =>
                 val featureId = id.asInstanceOf[BigInt].longValue()
-                try {
-                  val linkIdValidationStatus = linkIdValidation(dataset.datasetId, featureId, featureRoadlinks.map(number => number.longValue()).toSet)
+                val linkIdValidationStatus = linkIdValidation(dataset.datasetId, featureId, featureRoadlinks.toSet)
 
-                  val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type")
-                  val propertiesStatus = assetTypeGeometry match {
-                    case "LineString" =>
-                      properties("type").asInstanceOf[String] match {
-                        case "Roadlink" => validateRoadlink(dataset.datasetId, featureId, properties)
-                        case _ =>
-                          List((FeatureStatus.RoadlinkNoTypeInProperties.value, 0))
-                      }
-                    case "Point" => validatePoint(dataset.datasetId, featureId, properties, properties("type").asInstanceOf[String])
-                    case _ =>
-                      List((FeatureStatus.NoGeometryType.value, 0))
-                  }
-                  linkIdValidationStatus :: propertiesStatus
-                } catch {
-                  case _: Throwable =>
-                    List((FeatureStatus.ErrorsWhileValidating.value, 0))
+                val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type")
+                val propertiesStatus: List[Int] = assetTypeGeometry match {
+                  case "LineString" =>
+                    properties("type").asInstanceOf[String] match {
+                      case "Roadlink" => validateLinearAssets(dataset.datasetId, featureId, properties)
+                      case _ =>
+                        List(FeatureStatus.RoadlinkNoTypeInProperties.value)
+                    }
+                  case "Point" => validatePoint(dataset.datasetId, featureId, properties, properties("type").asInstanceOf[String])
+                  case _ =>
+                    List(FeatureStatus.NoGeometryType.value)
                 }
-              case None =>
-                List((FeatureStatus.ErrorsWhileValidating.value, 1))
-            }
-            val (featureStatus, featuresWithoutIds): (List[Int], List[Int]) = status.unzip
+                val featureStatus = linkIdValidationStatus :: propertiesStatus
 
-            if (!featuresWithoutIds.contains(1)) {
-              val allFeatureStatus = featureStatus.distinct.filterNot(code => code == FeatureStatus.Inserted.value)
-              if (allFeatureStatus.isEmpty) {
-                awsDao.insertFeature(properties("id").asInstanceOf[BigInt].longValue(), dataset.datasetId, FeatureStatus.Inserted.value.toString)
-              } else {
-                awsDao.insertFeature(properties("id").asInstanceOf[BigInt].longValue(), dataset.datasetId, allFeatureStatus.mkString(","))
-                awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsFeatures.value)
-              }
-            } else {
-              awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsFeatures.value)
-            }
+                insertFeatureAndUpdateDataset(dataset.datasetId, featureId, featureStatus)
+                None
 
-            featuresWithoutIds.sum
+              case None => awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsFeatures.value)
+                Some(1)
+            }
           case None =>
             awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsFeatures.value)
-            1
+            None
         }
-        missingIds
-      }).sum
-      featuresWithoutIds
-    } else {
-      0
+      })
+      val totalFeaturesWithoutIds = featuresWithoutIds.flatten
+
+      if(totalFeaturesWithoutIds.isEmpty){
+        None
+      } else {
+        Some(totalFeaturesWithoutIds.sum)
+      }
     }
   }
 
   def updateDataset(dataset: Dataset) = {
     if (awsDao.getDatasetStatus(dataset.datasetId) != DatasetStatus.FeatureRoadlinksDontMatch.value) {
-      val assets = dataset.geoJson("features").asInstanceOf[List[Map[String, Any]]]
+      val assets = dataset.features("features").asInstanceOf[List[Map[String, Any]]]
       val roadlinks = dataset.roadlinks
 
       (roadlinks, assets).zipped.foreach((featureRoadlinks, feature) => {
@@ -285,32 +287,27 @@ class MunicipalityApi(val vvhClient: VVHClient,
           case Some(id) =>
             val featureId = id.asInstanceOf[BigInt].longValue()
             val status = awsDao.getFeatureStatus(featureId, dataset.datasetId)
-            try {
-              if (status == FeatureStatus.Inserted.value.toString) {
+            if (status == FeatureStatus.Inserted.value.toString) {
 
-                val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type").asInstanceOf[String]
-                val assetType = properties("type").asInstanceOf[String]
+              val assetTypeGeometry = feature("geometry").asInstanceOf[Map[String, Any]]("type").asInstanceOf[String]
+              val assetType = properties("type").asInstanceOf[String]
 
-                assetTypeGeometry match {
-                  case "LineString" => assetType match {
-                    case "Roadlink" =>
-                      val links = roadLinkService.getRoadsLinksFromVVH(featureRoadlinks.map(_.longValue()).toSet, false)
-                        .filter(link => !Set(7,8,99).contains(link.functionalClass))
+              assetTypeGeometry match {
+                case "LineString" => assetType match {
+                  case "Roadlink" =>
+                    val links = roadLinkService.getRoadsLinksFromVVH(featureRoadlinks.toSet, false)
+                      .filter(link => !Set(7,8,99).contains(link.functionalClass))
 
-                      updateRoadlink(properties, links)
-                  }
-                    awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
-
-                  case "Point" =>
-                    val assetCoordinates = feature("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]].head
-                    val link = roadLinkService.getRoadLinkFromVVH(featureRoadlinks.head.longValue(), false).get
-                    updatePoint(properties, link, assetType, assetCoordinates)
-                    awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
+                    updateLinearAssets(properties, links)
                 }
+                  awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
+
+                case "Point" =>
+                  val assetCoordinates = feature("geometry").asInstanceOf[Map[String, Any]]("coordinates").asInstanceOf[List[List[Double]]].head
+                  val link = roadLinkService.getRoadLinkFromVVH(featureRoadlinks.head.longValue(), false).get
+                  updatePoint(properties, link, assetType, assetCoordinates)
+                  awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
               }
-            } catch {
-              case _: Throwable =>
-                awsDao.updateFeatureStatus(featureId, FeatureStatus.ErrorsWhileUpdating.value)
             }
           case None =>
         }
@@ -333,12 +330,12 @@ class MunicipalityApi(val vvhClient: VVHClient,
   def getFeatureErrorsByDatasetId(datasetId: String, datasetFeaturesWithoutIds: Int): Any = {
     val featuresStatusCode = awsDao.getAllFeatureIdAndStatusByDataset(datasetId).filter { case (_, status) => status != DatasetStatus.ErrorsFeatures.value.toString}
 
-    val featuresStatusMap = featuresStatusCode.map(tuple =>
+    val featuresStatusMap = featuresStatusCode.map { case (featureId, status) =>
       Map(
-        "FeatureId" -> tuple._1.toString,
-        "Message" -> tuple._2.split(",").map(message => FeatureStatus(message.toInt).description)
+        "FeatureId" -> featureId.toString,
+        "Message" -> status.split(",").map(message => FeatureStatus(message.toInt).description)
       )
-    ) ++ {
+    } ++ {
       if (datasetFeaturesWithoutIds != 0) {
         Map("Features without ids" -> datasetFeaturesWithoutIds.toString)
       } else {
@@ -351,14 +348,10 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
   put("/assetUpdateFromAWS") {
     try {
-      val jsonDatasets: List[List[Any]] = parsedBody.extractOrElse[List[List[Any]]](throw new ClassCastException)
-
-      val listDatasets = jsonDatasets.map(data =>
-        Dataset(data.head.asInstanceOf[String], data(1).asInstanceOf[Map[String, Any]], data(2).asInstanceOf[List[List[BigInt]]])
-      )
+      val listDatasets: List[Dataset] = parsedBody.extractOrElse[List[Dataset]](throw new ClassCastException)
 
       OracleDatabase.withDynTransaction {
-        val datasetFeaturesWithoutIds: Map[String, Int] = listDatasets.flatMap(dataset =>
+        val datasetFeaturesWithoutIds: Map[String, Option[Int]] = listDatasets.flatMap(dataset =>
           Map(dataset.datasetId -> validateAndInsertDataset(dataset))).toMap
 
         listDatasets.foreach(dataset =>
@@ -368,7 +361,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
         listDatasets.map{dataset =>
           val datasetId = dataset.datasetId
           val datasetStatus = getDatasetStatusById(datasetId)
-          if ((datasetStatus == DatasetStatus.Processed.description || datasetStatus == DatasetStatus.FeatureRoadlinksDontMatch.description) && datasetFeaturesWithoutIds(datasetId) == 0) {
+          if ((datasetStatus == DatasetStatus.Processed.description || datasetStatus == DatasetStatus.FeatureRoadlinksDontMatch.description) && datasetFeaturesWithoutIds(datasetId).isEmpty) {
             Map(
               "DataSetId" -> datasetId,
               "Status" -> datasetStatus
@@ -377,7 +370,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
             Map(
               "DataSetId" -> datasetId,
               "Status" -> datasetStatus,
-              "Features with errors" -> getFeatureErrorsByDatasetId(datasetId, datasetFeaturesWithoutIds(datasetId))
+              "Features with errors" -> getFeatureErrorsByDatasetId(datasetId, datasetFeaturesWithoutIds(datasetId).get)
             )
           }
         }
