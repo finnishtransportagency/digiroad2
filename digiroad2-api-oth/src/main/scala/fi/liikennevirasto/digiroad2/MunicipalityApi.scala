@@ -85,7 +85,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
         Geometry(typee, coordinates, crs)
     },
       {
-        case tv : Geometry => Extraction.decompose(tv)
+        case g : Geometry => Extraction.decompose(g)
       }))
 
   case object FeatureSerializer extends CustomSerializer[Feature](format =>
@@ -228,6 +228,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def updateLinearAssets(properties: Map[String, String], links: Seq[RoadLink]) = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
+    val timeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
 
     links.foreach { link =>
       speedLimit match {
@@ -236,11 +237,11 @@ class MunicipalityApi(val vvhClient: VVHClient,
           val speedLimitsOnRoadLink = speedLimitService.getExistingAssetByRoadLink(link, false)
 
           if (speedLimitsOnRoadLink.isEmpty) {
-            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, NumericValue(speedLimitValue), properties("sideCode").toInt, vvhClient.roadLinkData.createVVHTimeStamp(), None)
-            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), speedLimitValue, AwsUser, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, NumericValue(speedLimitValue), properties("sideCode").toInt, timeStamp, None)
+            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), speedLimitValue, AwsUser, timeStamp, (_, _) => Unit)
           } else
             speedLimitsOnRoadLink.foreach { sl =>
-              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, NumericValue(speedLimitValue), properties("sideCode").toInt, vvhClient.roadLinkData.createVVHTimeStamp(), None)
+              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, NumericValue(speedLimitValue), properties("sideCode").toInt,timeStamp, None)
               speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser)
             }
         case None =>
@@ -252,8 +253,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
           val duplicate = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(link.linkId))
           if(duplicate.isEmpty) {
-            val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").toInt, vvhClient.roadLinkData.createVVHTimeStamp(), None)
-            pavedRoadService.create(Seq(newPavementClassAsset), PavedRoad.typeId, AwsUser)
+            val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").toInt, timeStamp, None)
+            pavedRoadService.create(Seq(newPavementClassAsset), PavedRoad.typeId, AwsUser, timeStamp)
           } else {
             pavedRoadService.update(Seq(duplicate.head.id), pavementClassValue, AwsUser)
           }
@@ -267,12 +268,10 @@ class MunicipalityApi(val vvhClient: VVHClient,
     val roadlinks = dataset.roadlinks
 
     if (assets.length != roadlinks.length) {
-      //TODO write geojson to db
-      awsDao.insertDataset(dataset.datasetId, "write(dataset.features)", write(dataset.roadlinks), DatasetStatus.FeatureRoadlinksDontMatch.value)
+      awsDao.insertDataset(dataset.datasetId, write(dataset.featuresCollection.toString), write(dataset.roadlinks), DatasetStatus.FeatureRoadlinksDontMatch.value)
       None
-    }
-    else{
-      awsDao.insertDataset(dataset.datasetId, "write(dataset.features)", write(dataset.roadlinks), DatasetStatus.Inserted.value)
+    } else {
+      awsDao.insertDataset(dataset.datasetId, write(dataset.featuresCollection.toString), write(dataset.roadlinks), DatasetStatus.Inserted.value)
 
       val featuresWithoutIds: List[Option[Int]] = (roadlinks, assets).zipped.map((featureRoadlinks, feature) => {
         val properties = feature.properties
@@ -412,7 +411,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
       }
     } catch {
       case cce: ClassCastException => halt(BadRequest("Error when extracting dataSet in JSON"))
-      case e: Exception => halt(BadRequest("Could not process Datasets. Verify information provided"))
+      case _: Throwable => halt(BadRequest("Could not process Datasets. Verify information provided"))
     }
   }
 }
