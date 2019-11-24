@@ -602,6 +602,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
         Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
       )
 
+      when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
+
       val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
       changes.length should be(0)
     }
