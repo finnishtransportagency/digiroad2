@@ -12,12 +12,14 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import javax.sql.DataSource
 import org.apache.commons.codec.binary.Base64
+import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import org.json4s.jackson.Serialization.write
 
 object sTestTransactions {
   def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
@@ -52,6 +54,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
+
+  protected implicit val jsonFormats: Formats = DefaultFormats
 
   def getAuthorizationHeader[A](username: String, password: String): Map[String, String] = {
     val credentials = username + ":" + password
@@ -124,7 +128,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"9"), (100001,"9")))
+      featuresStatus should be (List((100000,"6"), (100001,"6")))
     }
   }
 
@@ -146,7 +150,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"6")))
+      featuresStatus should be (List((100000,"3")))
     }
   }
 
@@ -168,7 +172,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"4")))
+      featuresStatus should be (List((100000,"2")))
     }
   }
 
@@ -212,7 +216,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((200000,"3")))
+      featuresStatus should be (List((200000,"2")))
     }
   }
 
@@ -259,10 +263,6 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
     }
   }
 
-//  test("new speedlimit with valid value to be updated") {
-      //TODO
-//  }
-//
   test("new pavementClass with valid value to be created") {
     val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
@@ -306,25 +306,49 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
       createdPavementClass.head.createdBy should be (Some("AwsUpdater"))
     }
   }
-//
-//  test("pavement class update") {
-//    //TODO
-//  }
-//
-//  test("new obstacle with valid value to be created") {
-//    //TODO
-//  }
-//
-//  test("obstacle update") {
-//    //TODO
-//  }
-//
-//  test("Correct json sent"){
-//    //TODO
-//  }
-//
+
+  test("new obstacle with valid value to be created") {
+    val newRoadLink = RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val newVVHroadLink = VVHRoadlink(5000L, 235, List(Point(0.0, 0.0), Point(100.0, 0.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(5000), false)).thenReturn(Seq(newRoadLink))
+    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(5000)).thenReturn(Some(newVVHroadLink))
+    when(mockRoadLinkService.getRoadLinkFromVVH(5000, false)).thenReturn(Some(newRoadLink))
+
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(newRoadLink), Seq()))
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp()
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.roadLinkData.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+
+    val roadLinksList: List[List[Long]] = List(List(5000))
+    val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(commonPointFeature))
+
+    val dataSet = Dataset(dataSetId, featureCollection, roadLinksList)
+
+    runWithRollback {
+      val numberOfFeaturesWithoutId = ServiceWithDao.validateAndInsertDataset(dataSet)
+      val datasetStatus = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
+      val featuresStatus = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
+
+      numberOfFeaturesWithoutId should be(None)
+      datasetStatus should be(0)
+      featuresStatus should be (List((100000,"0")))
+
+      ServiceWithDao.updateDataset(dataSet)
+      val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
+      val featuresStatus2 = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
+
+      datasetStatus2 should be(3)
+      featuresStatus2 should be (List((100000,"1")))
+    }
+  }
+
 //  test("Malformed json sent"){
-//    //TODO
+//    putJsonWithUserAuth("/municipality/assetUpdateFromAWS", write(List(49)), getAuthorizationHeader("kalpa", "kalpa"), "kalpa") {
+//      status should be (400)
+//    }
 //  }
 //
 //  test("Wrong user authentication"){

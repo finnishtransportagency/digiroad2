@@ -44,8 +44,8 @@ sealed trait FeatureStatus{
 }
 
 object FeatureStatus{
-  val values = Set[FeatureStatus](Inserted, Processed, WrongSpeedLimit, WrongPavementClass, WrongObstacleClass,
-    WrongSideCode, NoGeometryType, RoadlinkNoTypeInProperties, ErrorsWhileProcessing, WrongRoadlinks)
+  val values = Set[FeatureStatus](Inserted, Processed, WrongMandatoryValue,
+    NoGeometryType, RoadlinkNoTypeInProperties, ErrorsWhileProcessing, WrongRoadlinks)
 
   def apply(intValue: Int): FeatureStatus= {
     values.find(_.value == intValue).getOrElse(ErrorsWhileProcessing)
@@ -53,14 +53,11 @@ object FeatureStatus{
 
   case object Inserted extends FeatureStatus{ def value = 0; def description = "Inserted successfuly";}
   case object Processed extends FeatureStatus{ def value = 1; def description = "Processed successfuly";}
-  case object WrongSpeedLimit extends FeatureStatus{ def value = 2; def description = "SpeedLimit with invalid speed";}
-  case object WrongPavementClass extends FeatureStatus{ def value = 3; def description = "PavementClass with invalid pavement class";}
-  case object WrongObstacleClass extends FeatureStatus{ def value = 4; def description = "Obstacle with invalid class";}
-  case object WrongSideCode extends FeatureStatus{ def value = 5; def description = "Invalid sideCode";}
-  case object NoGeometryType extends FeatureStatus{ def value = 6; def description = "Geometry type not found";}
-  case object RoadlinkNoTypeInProperties extends FeatureStatus{ def value = 7; def description = "Roadlink with no type in properties";}
-  case object ErrorsWhileProcessing extends FeatureStatus{ def value = 8; def description = "Errors while updating";}
-  case object WrongRoadlinks extends FeatureStatus{ def value = 9; def description = "Wrong roadlinks";}
+  case object WrongMandatoryValue extends FeatureStatus{ def value = 2; def description = "Asset type or sideCode with wrong mandatory value";}
+  case object NoGeometryType extends FeatureStatus{ def value = 3; def description = "Geometry type not found";}
+  case object RoadlinkNoTypeInProperties extends FeatureStatus{ def value = 4; def description = "Roadlink with no type in properties";}
+  case object ErrorsWhileProcessing extends FeatureStatus{ def value = 5; def description = "Errors while processing";}
+  case object WrongRoadlinks extends FeatureStatus{ def value = 6; def description = "Wrong roadlinks";}
 }
 
 class MunicipalityApi(val vvhClient: VVHClient,
@@ -165,13 +162,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
     val status = assetType match {
       case "obstacle" =>
         properties.get("class") match {
-          case Some(value) =>
-            if (!Set(1, 2).contains(value.toInt)) {
-              FeatureStatus.WrongObstacleClass
-            } else {
-              FeatureStatus.Inserted
-            }
-          case None => FeatureStatus.WrongObstacleClass
+          case Some(value) if Set(1, 2).contains(value.toInt) => FeatureStatus.Inserted
+          case _ => FeatureStatus.WrongMandatoryValue
         }
     }
     List(status)
@@ -183,34 +175,18 @@ class MunicipalityApi(val vvhClient: VVHClient,
     val sideCode = properties.get("sideCode")
 
     val speedlimitStatus = speedLimit match {
-      case Some(value) =>
-        if (!Set("20", "30", "40", "50", "60", "70", "80", "90", "100", "120").contains(value)) {
-          FeatureStatus.WrongSpeedLimit
-        } else {
-          FeatureStatus.Inserted
-        }
-      case None => FeatureStatus.Inserted
+      case Some(value) if !Set("20", "30", "40", "50", "60", "70", "80", "90", "100", "120").contains(value) => FeatureStatus.WrongMandatoryValue
+      case _ => FeatureStatus.Inserted
     }
 
     val pavementClassStatus = pavementClass match {
-      case Some(value) =>
-        if (!Seq("1", "2", "10", "20", "30", "40", "50").contains(value)) {
-          FeatureStatus.WrongPavementClass
-        } else {
-          FeatureStatus.Inserted
-        }
-      case None => FeatureStatus.Inserted
+      case Some(value) if !Seq("1", "2", "10", "20", "30", "40", "50").contains(value) => FeatureStatus.WrongMandatoryValue
+      case _ => FeatureStatus.Inserted
     }
 
     val sideCodeStatus = sideCode match {
-      case Some(value) =>
-        if (!Seq(SideCode.BothDirections.value, SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value).contains(value.toInt)) {
-          FeatureStatus.WrongSideCode
-        } else {
-          FeatureStatus.Inserted
-        }
-      case None =>
-        FeatureStatus.WrongSideCode
+      case Some(value) if Seq(SideCode.BothDirections.value, SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value).contains(value.toInt) => FeatureStatus.Inserted
+      case _ => FeatureStatus.WrongMandatoryValue
     }
 
     List(speedlimitStatus, pavementClassStatus, sideCodeStatus)
