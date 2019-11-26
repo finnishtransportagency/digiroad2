@@ -166,7 +166,7 @@ class ServicePointBusStopDao {
   }
 
   def expire(id: Long, username: String) = {
-    Queries.updateAssetModified(id, username).first
-    sqlu"update asset set valid_to = sysdate where id = $id".first
+    Queries.updateAssetModified(id, username).execute
+    sqlu"update asset set valid_to = sysdate where id = $id".execute
   }
 }

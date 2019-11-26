@@ -116,7 +116,8 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
   override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
     val oldChildren = massTransitStopDao.getAllChildren(asset.id)
-    massTransitStopDao.deleteTerminalMassTransitStopData(asset.id)
+    //massTransitStopDao.deleteTerminalMassTransitStopData(asset.id)
+    massTransitStopDao.deleteAllMassTransitStopData(asset.id)
 
     Some(TerminalPublishInfo(None, Seq(), oldChildren))
   }

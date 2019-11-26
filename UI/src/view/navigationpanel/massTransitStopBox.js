@@ -44,7 +44,7 @@
         '    </div>',
         '    <div class="checkbox point-asset-checkbox">',
         '      <label>',
-        '        <input name="point-asset" type="checkbox"> Point Assets',
+        '        <input name="point-asset" type="checkbox"> Palvelupiste',
         '      </label>',
         '    </div>',
         '  </div>'].join('');
@@ -89,7 +89,6 @@
         ' </div>'
       ].join('');
 
-
       var pointAssetTypePanel = '   <div class="panel-section panel-legend limit-legend point-asset service-points point-asset-legend">';
 
       pointAssetTypePanel = pointAssetTypePanel.concat( pointAssetLegend.map(function (val) {
@@ -100,7 +99,6 @@
               '  </div>' +
               '</div>';
         }).join('')).concat( '</div>');
-
 
       return roadTypePanel.concat(constructionTypePanel).concat(pointAssetTypePanel);
     };
@@ -167,7 +165,7 @@
       me.addVerificationIcon();
       eventbus.on('road-type:selected', toggleRoadType);
 
-     eventbus.on('verificationInfo:fetched', function(visible) {
+      eventbus.on('verificationInfo:fetched', function(visible) {
         var img = me.expanded.find('#right-panel');
         if (visible)
           img.css('display','inline');

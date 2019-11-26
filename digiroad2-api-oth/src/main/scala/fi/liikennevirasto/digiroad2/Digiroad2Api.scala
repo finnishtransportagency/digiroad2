@@ -304,7 +304,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipalityNumber" -> stop.municipalityCode,
         "lat" -> stop.lat,
         "lon" -> stop.lon,
-        "floating" -> stop.floating
+        "floating" -> stop.floating,
+        "validityPeriod" -> "current",
+        "propertyData" -> stop.propertyData
       )
     }
   }
@@ -316,7 +318,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if(assets.isEmpty){
       val service = massTransitStopService.getServicePointById(assetId)
       validateUserMunicipalityAccessByMunicipality(user)(service.get.municipalityCode)
-      massTransitStopService.deleteServicePointById(service.get, user.username)
+      service.map{ a => massTransitStopService.deleteServicePointById(a, user.username) }
     }
     else{
       assets.headOption.map{ a =>
@@ -342,6 +344,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val nationalId = params("nationalId").toLong
     val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
     val massTransitStop = massTransitStopReturned._1.map { stop =>
+
+      val validityPeriod = {
+                if (stop.stopTypes.contains(7) ) {
+                  "current"
+                } else {
+                  stop.validityPeriod
+                }
+             }
+
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
@@ -349,7 +360,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "lon" -> stop.lon,
         "validityDirection" -> stop.validityDirection,
         "bearing" -> stop.bearing,
-        "validityPeriod" -> stop.validityPeriod,
+        "validityPeriod" -> validityPeriod,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
@@ -367,6 +378,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val id = params("id").toLong
     val massTransitStopReturned = massTransitStopService.getMassTransitStopByIdWithTRWarnings(id)
     val massTransitStop = massTransitStopReturned._1.map { stop =>
+
+      val validityPeriod = {
+        if (stop.stopTypes.contains(7) ) {
+          "current"
+        } else {
+          stop.validityPeriod
+        }
+      }
+
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
@@ -374,7 +394,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "lon" -> stop.lon,
         "validityDirection" -> stop.validityDirection,
         "bearing" -> stop.bearing,
-        "validityPeriod" -> stop.validityPeriod,
+        "validityPeriod" -> validityPeriod,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
@@ -395,6 +415,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
       massTransitStopReturned._1 match {
         case Some(stop) =>
+
+          val validityPeriod = {
+            if (stop.stopTypes.contains(7) ) {
+              "current"
+            } else {
+              stop.validityPeriod
+            }
+          }
+
+
           Map ("id" -> stop.id,
             "nationalId" -> stop.nationalId,
             "stopTypes" -> stop.stopTypes,
@@ -402,7 +432,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "lon" -> stop.lon,
             "validityDirection" -> stop.validityDirection,
             "bearing" -> stop.bearing,
-            "validityPeriod" -> stop.validityPeriod,
+            "validityPeriod" -> validityPeriod,
             "floating" -> stop.floating,
             "propertyData" -> stop.propertyData,
             "municipalityCode" -> massTransitStopReturned._3,
@@ -440,6 +470,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val massTransitStopReturned = massTransitStopService.getMassTransitStopByLiviId(liviId, validateMunicipalityAuthorization(liviId))
 
     val massTransitStop = massTransitStopReturned.map { stop =>
+
+      val validityPeriod = {
+        if (stop.stopTypes.contains(7) ) {
+          "current"
+        } else {
+          stop.validityPeriod
+        }
+      }
+
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
@@ -447,7 +486,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "lon" -> stop.lon,
         "validityDirection" -> stop.validityDirection,
         "bearing" -> stop.bearing,
-        "validityPeriod" -> stop.validityPeriod,
+        "validityPeriod" -> validityPeriod,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData,
         "success" -> true)

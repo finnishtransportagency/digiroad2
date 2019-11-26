@@ -10,6 +10,15 @@
     var EMPTY_IMAGE_TYPE = '99';
     var styleScale = 1;
 
+    var SERVICE_POINT_IMAGES = [
+        {value: 5, imgUrl: 'images/service_points/railwayStation2.png'},
+        {value: 6, imgUrl: 'images/service_points/railwayStation.png'},
+        {value: 7, imgUrl: 'images/service_points/subwayStation.png'},
+        {value: 8, imgUrl: 'images/service_points/airport.png' },
+        {value: 9, imgUrl: 'images/service_points/ferry.png' },
+        {value: undefined, imgUrl: 'images/service_points/' }
+    ];
+
     var roundRect = function(canvasContext, x, y, width, height, radius) {
       canvasContext.beginPath();
       canvasContext.moveTo(x + radius, y);
@@ -146,23 +155,81 @@
       return cacheImage(cachedImageKey, image, canvas.width, canvas.height );
     };
 
+    function extractServicePointsAuxiliarsValues() {
+      var resultValues = {palvelu: undefined, tarkenne: undefined};
+
+      if (data.propertyData !== undefined) {
+        resultValues.palvelu = data.propertyData.find(function (prop) { if (prop.publicId == "palvelu") return prop; });
+        resultValues.tarkenne = data.propertyData.find(function (prop) { if (prop.publicId == "tarkenne") return prop; });
+      }
+
+      if (resultValues.palvelu !== undefined) {
+        if (resultValues.palvelu.values.length > 0) {
+          resultValues.palvelu = resultValues.palvelu.values[0].propertyValue;
+        } else {
+          resultValues.palvelu = undefined;
+        }
+      }
+
+      if (resultValues.tarkenne !== undefined ) {
+        if (resultValues.tarkenne.values.length > 0) {
+          resultValues.tarkenne = resultValues.tarkenne.values[0].propertyValue;
+        } else {
+          resultValues.tarkenne = undefined;
+        }
+      }
+
+      return resultValues;
+    }
+
     var createStopTypeStyles = function(stopTypes, margin){
       var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       stopTypes.sort();
       var i = 0;
-      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function(stopType) {
-        i++;
-        return new ol.style.Style({
-          image: new ol.style.Icon(({
-            anchor: [-(IMAGE_PADDING+1+imgMargin), (i * IMAGE_HEIGHT)+ IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset],
-            anchorXUnits: 'pixels',
-            anchorYUnits: 'pixels',
-            src: 'images/mass-transit-stops/' + stopType + '.png',
-            scale: styleScale
-          }))
+
+      if (stopTypes.length > 0 && stopTypes[0] == 7) {
+
+        var auxServicePointInfo = extractServicePointsAuxiliarsValues();
+        var srcImg;
+
+        if (auxServicePointInfo.palvelu !== "11") {
+          srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.palvelu) return spi;});
+          srcImg = srcImg === undefined ? "": srcImg.imgUrl;
+        }
+        else if (auxServicePointInfo.tarkenne !== undefined ) {
+            srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.tarkenne ) return spi;});
+            srcImg = srcImg === undefined ? "": srcImg.imgUrl;
+        }
+
+        return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {
+          i++;
+          return new ol.style.Style({
+            image: new ol.style.Icon(({
+              anchor: [0, (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset+13],
+              anchorXUnits: 'pixels',
+              anchorYUnits: 'pixels',
+              src: srcImg,
+              scale: styleScale
+            }))
+          });
         });
-      });
+
+      } else {
+
+        return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {
+          i++;
+          return new ol.style.Style({
+            image: new ol.style.Icon(({
+              anchor: [-(IMAGE_PADDING + 1 + imgMargin), (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset],
+              anchorXUnits: 'pixels',
+              anchorYUnits: 'pixels',
+              src: 'images/mass-transit-stops/' + stopType + '.png',
+              scale: styleScale
+            }))
+          });
+        });
+      }
     };
 
     var createSelectionBackgroundStyle = function(stopTypes, text){
@@ -295,16 +362,25 @@
         }
       }
 
-      if(data.stopTypes[0] == 6)
+      if(data.stopTypes[0] == 6 || data.stopTypes[0] == 7 )
         direction = '';
 
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
-      styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
-      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
-      styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
-      styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
+
+      /* Due the impact of the order of the concats*/
+      if (data.stopTypes.length > 0 && data.stopTypes[0] == 7) {
+        styles = styles.concat(createStopTypeStyles(data.stopTypes));
+      }
+      else {
+        styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
+        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
+        styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
+        styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
+      }
+
+
       return styles;
     };
 
@@ -313,7 +389,11 @@
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
-      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
+
+      /* if it is a servicePoint don't add the background */
+     if (data.stopTypes.length > 0 && data.stopTypes[0] != 7) {
+        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
+      }
       styles = styles.concat(createStopTypeStyles(data.stopTypes));
       return styles;
     };

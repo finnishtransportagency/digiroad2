@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
-import java.util.NoSuchElementException
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, SimpleProperty}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, Sequences, ServicePoint, ServicePointBusStopDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
+
+case class ServicePointPublishInfo(asset: Option[PersistedMassTransitStop], detachAsset: Seq[Long], attachedAsset: Seq[Long]) extends AbstractPublishInfo
 
 class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePointBusStopDao = new ServicePointBusStopDao, massTransitStopDao: MassTransitStopDao = new MassTransitStopDao) {
 
@@ -38,7 +38,9 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
 
   def delete(asset: ServicePoint, username: String): Option[AbstractPublishInfo] = {
     servicePointBusStopDao.expire(asset.id, username)
-    None
+
+    Some(ServicePointPublishInfo(None, Seq(), Seq(asset.id)))
+    //None
   }
 
   def update(asset: ServicePoint, properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): (ServicePoint, AbstractPublishInfo) = {
@@ -70,7 +72,7 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
   def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[ServicePoint] = {
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter and ( a.valid_to is null or a.valid_to > sysdate)"
       servicePointBusStopDao.fetchAsset(withFilter(filter))
     }
   }

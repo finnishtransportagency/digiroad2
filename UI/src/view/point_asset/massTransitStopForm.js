@@ -69,7 +69,13 @@
   }
 
   var SaveButton = function(isTerminalActive) {
-    var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
+    var deleteMessage = 'pysäkin';
+
+    if ( isTerminalActive  == 6 )
+      deleteMessage = 'valitsemasi terminaalipysäkin';
+    else if ( isTerminalActive == 7 )
+      deleteMessage = 'palvelupiste';
+
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
         new GenericConfirmPopup('Haluatko varmasti poistaa ' + deleteMessage + '?', {
@@ -78,6 +84,8 @@
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
           }
         });
+      } else if (pointAssetToSave) {
+        saveStop();
       } else {
         if(optionalSave()){
           new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
@@ -178,28 +186,28 @@
 
         readOnly = authorizationPolicy.formEditModeAccess();
         var wrapper;
-        if(readOnly){
+        if (readOnly) {
           wrapper = $('<div />').addClass('wrapper read-only');
         } else {
           wrapper = $('<div />').addClass('wrapper edit-mode');
         }
         streetViewHandler = getStreetView();
 
-        var componentes;
-        if (isTerminalBusStop == 7) {
-          componentes = createNewServiceDropDown();
+        var components;
+        if (isTerminalBusStop == 7 && (applicationModel.getSelectedTool() == 'AddPointAsset') && selectedMassTransitStopModel.getCurrentAsset().id === undefined)  {
+          components = createNewServiceDropDown();
         } else {
-          componentes = getAssetForm();
+          components = getAssetForm();
         }
 
         wrapper.append(streetViewHandler.render())
-          .append($('<div />').addClass('form form-horizontal form-dark form-masstransitstop').attr('role', 'form').append(userInformationLog()).append(componentes));
+            .append($('<div />').addClass('form form-horizontal form-dark form-masstransitstop').attr('role', 'form').append(userInformationLog()).append(components));
 
-        var buttons = function(isTerminalBusStop) {
+        var buttons = function (isTerminalBusStop) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
-            .append(new ValidationErrorLabel().element)
-            .append(new SaveButton(isTerminalBusStop).element)
-            .append(new CancelButton().element);
+              .append(new ValidationErrorLabel().element)
+              .append(new SaveButton(isTerminalBusStop).element)
+              .append(new CancelButton().element);
         };
 
         function busStopHeader() {
@@ -219,6 +227,11 @@
         rootElement.find("#feature-attributes-form").html(wrapper);
         rootElement.find("#feature-attributes-footer").html($('<div />').addClass('mass-transit-stop form-controls').append(buttons(isTerminalBusStop)));
         addDatePickers();
+
+        /*After added the form to the html, validate if tarkenne is to show or not */
+        if (isTerminalBusStop == 7 ) {
+            hideOrShowTarkenne();
+        }
 
         if (readOnly) {
           $('#feature-attributes .form-controls').hide();
@@ -429,7 +442,7 @@
         var isTRReadOnlyEquipment = isTRMassTransitStop && isReadOnlyEquipment(property);
 
         if (readOnly || isTRReadOnlyEquipment) {
-          element = $('<p />').addClass('form-control-static');
+          element = $('<p />').addClass('form-control-static').addClass(property.publicId +'-select');
 
           if (property.values && property.values[0]) {
             element.text(property.values[0].propertyDisplayValue);
@@ -782,9 +795,11 @@
         var allProperties = selectedMassTransitStopModel.getProperties();
         var properties;
 
-        if (isTerminalBusStop === '6') {
+        /* don't change == to ===
+        * sometimes the value is int other times is string*/
+        if (isTerminalBusStop == 6 ) {
           properties = sortAndFilterTerminalProperties(allProperties);
-        } else if  (isTerminalBusStop === '7'){
+        } else if  (isTerminalBusStop == 7){
           properties = sortAndFilterServicePointProperties(allProperties);
 
         }else{
@@ -796,7 +811,6 @@
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
           .concat(_.drop(properties, 2));
-
         var components =_.map(contents, function(feature){
           feature.localizedName = window.localizedStrings[feature.publicId];
           var propertyType = feature.propertyType;
@@ -905,8 +919,10 @@
       };
 
       eventbus.on('asset:modified', function(){
+        readOnly = authorizationPolicy.formEditModeAccess();
 
-        if (isTerminalBusStop == 7) {
+        if (isTerminalBusStop == 7 && !readOnly && readOnly !== undefined &&
+              selectedMassTransitStopModel.getCurrentAsset() !== undefined && selectedMassTransitStopModel.getCurrentAsset().id === undefined) {
           selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{
             propertyValue: "7",
             propertyDisplayValue: "", checked: true
@@ -1049,14 +1065,21 @@
       function hideOrShowTarkenne(){
         var palveluProp = getPropByPublicId('palvelu' );
         var tarkeneProp =  getPropByPublicId('tarkenne');
+        var readOnly = authorizationPolicy.formEditModeAccess();
 
-        if (palveluProp.values[0].propertyValue == "11" &&  $('.tarkenne-select').length === 0) { /* Rautatieasema */
-          tarkeneProp.localizedName = window.localizedStrings[tarkeneProp.publicId];
-          $('.palvelu-select').parent().after(singleChoiceHandler(tarkeneProp, enumeratedPropertyValues));
+        if (palveluProp !== undefined && palveluProp.values.length > 0) {
+            if (palveluProp.values[0].propertyValue == "11" && $('.tarkenne-select').length === 0) { /* Rautatieasema */
+                tarkeneProp.localizedName = window.localizedStrings[tarkeneProp.publicId];
+                $('.palvelu-select').parent().after(singleChoiceHandler(tarkeneProp, enumeratedPropertyValues));
 
-        }else  if (palveluProp.values[0].propertyValue != "11") {
-          $('.tarkenne-select').parent().remove();
-          selectedMassTransitStopModel.setProperty('tarkenne',[],'single_choice',undefined, undefined);
+            } else if (palveluProp !== undefined && palveluProp.values.length > 0 && palveluProp.values[0].propertyValue != "11") {
+                if (readOnly) {
+                    $('.tarkenne-select').parent().hide();
+                } else {
+                    $('.tarkenne-select').parent().remove();
+                    selectedMassTransitStopModel.setProperty('tarkenne', [], 'single_choice', undefined, undefined);
+                }
+            }
         }
       }
 

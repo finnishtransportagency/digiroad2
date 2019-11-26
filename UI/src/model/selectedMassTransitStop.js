@@ -164,7 +164,15 @@
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
-      eventbus.trigger('terminalBusStop:selected', asset.stopTypes[0] == 6);
+
+      if (asset.stopTypes !== undefined && asset.stopTypes.length > 0)
+      {
+        eventbus.trigger('terminalBusStop:selected', asset.stopTypes[0]);
+      }
+      else {
+        eventbus.trigger('terminalBusStop:selected', false);
+      }
+
       eventbus.trigger('asset:modified');
     };
 
