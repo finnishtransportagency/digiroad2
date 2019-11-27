@@ -58,10 +58,10 @@ class AwsDao {
       """.as[(Long, String)].list
   }
 
-  def getProcessedDatasetFeaturesForErrors(dataset_id: String): Int = {
+  def getProcessedDatasetFeaturesForErrors(dataset_id: String, status: String): Int = {
     sql"""select count(*)
           from municipality_feature
-          where dataset_id = $dataset_id and status != '1'
+          where dataset_id = $dataset_id and status != $status
       """.as[Int].first
   }
 }

@@ -54,6 +54,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l, true)).thenReturn(Some(roadLinkForSeparation))
   val vvhRoadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleSpeedLimitDao = {
@@ -218,6 +219,13 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
   test("separation should call municipalityValidation") {
+    val municipalityCode = 235
+    val linkId = 388562360
+    val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
+    val vvhRoadLink = VVHRoadlink(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+
+    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+
     runWithRollback {
       intercept[IllegalArgumentException] {
         provider.separate(200097, 50, 40, "test", failingMunicipalityValidation)
@@ -236,6 +244,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if speed limit is one way") {
     val roadLink = RoadLink(1611445, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611445)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611445, true)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -247,6 +256,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if road link is one way") {
     val roadLink = RoadLink(1611388, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611388)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611388, true)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {

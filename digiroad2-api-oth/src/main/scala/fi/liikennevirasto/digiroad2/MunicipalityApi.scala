@@ -324,7 +324,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
         }
       })
 
-      val errors = awsDao.getProcessedDatasetFeaturesForErrors(dataset.datasetId)
+      val errors = awsDao.getProcessedDatasetFeaturesForErrors(dataset.datasetId, FeatureStatus.Processed.value.toString)
       if (errors == 0) {
         awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.Processed.value, true)
       } else {
