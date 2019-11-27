@@ -621,7 +621,7 @@
           })
           .map('values')
           .flatten()
-          .filter(function(x) { return !(x.propertyValue === '99' || x.propertyValue === '6'); })
+          .filter(function(x) { return ['99','6','7'].indexOf(x.propertyValue) < 0; })
           .value();
 
         if (readOnly) {
