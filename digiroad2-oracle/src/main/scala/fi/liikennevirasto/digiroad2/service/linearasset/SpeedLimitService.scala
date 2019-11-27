@@ -362,19 +362,24 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
     */
-  def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[Long] = {
+  def updateValues(ids: Seq[Long], value: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): Seq[Long] = {
+    if(newTransaction){
     withDynTransaction {
       ids.foreach( id => validateMunicipalities(id, municipalityValidation, newTransaction = false))
       ids.flatMap(dao.updateSpeedLimitValue(_, value, username))
     }
+  } else {
+      ids.foreach( id => validateMunicipalities(id, municipalityValidation, newTransaction = false))
+      ids.flatMap(dao.updateSpeedLimitValue(_, value, username))
+  }
   }
 
   /**
     * Create new speed limit when value received from UI changes and expire the old one. Used by SpeeedLimitsService.updateValues.
     */
 
-  def update(id: Long, newLimits: Seq[NewLinearAsset], username: String): Seq[Long] = {
-    val oldSpeedLimit = getPersistedSpeedLimitById(id).map(toSpeedLimit).get
+  def update(id: Long, newLimits: Seq[NewLinearAsset], username: String, newTransaction: Boolean = true): Seq[Long] = {
+    val oldSpeedLimit = getPersistedSpeedLimitById(id, newTransaction).map(toSpeedLimit(_, newTransaction)).get
 
     newLimits.flatMap (limit =>  limit.value match {
       case NumericValue(intValue) =>
@@ -382,7 +387,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         if ((validateMinDistance(limit.startMeasure, oldSpeedLimit.startMeasure) || validateMinDistance(limit.endMeasure, oldSpeedLimit.endMeasure)) || SideCode(limit.sideCode) != oldSpeedLimit.sideCode)
           updateSpeedLimitWithExpiration(id, intValue, username, Some(Measures(limit.startMeasure, limit.endMeasure)), Some(limit.sideCode), (_, _) => Unit)
         else
-          updateValues(Seq(id), intValue, username, (_, _) => Unit)
+          updateValues(Seq(id), intValue, username, (_, _) => Unit, newTransaction)
       case _ => Seq.empty[Long]
     })
   }
@@ -480,8 +485,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (existingId, createdId)
   }
 
-  private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(persistedSpeedLimit.linkId).get
+  private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit, newTransaction: Boolean = true): SpeedLimit = {
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(persistedSpeedLimit.linkId, newTransaction).get
 
     SpeedLimit(
       persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,
@@ -504,7 +509,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def separate(id: Long, valueTowardsDigitization: Int, valueAgainstDigitization: Int, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): Seq[SpeedLimit] = {
     val speedLimit = getPersistedSpeedLimitById(id)
-      .map(toSpeedLimit)
+      .map(toSpeedLimit(_))
       .map(isSeparableValidation)
       .get
 

@@ -11,7 +11,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit => _, WidthLimit => _, _}
 import javax.sql.DataSource
-import org.apache.commons.codec.binary.Base64
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -19,7 +18,6 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import org.json4s.jackson.Serialization.write
 
 object sTestTransactions {
   def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
@@ -40,7 +38,7 @@ object sTestTransactions {
   }
 }
 
-class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*with AuthenticatedApiSpec*/ {
+class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -56,14 +54,6 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
   }
 
   protected implicit val jsonFormats: Formats = DefaultFormats
-
-  def getAuthorizationHeader[A](username: String, password: String): Map[String, String] = {
-    val credentials = username + ":" + password
-    val encodedCredentials = Base64.encodeBase64URLSafeString(credentials.getBytes)
-    val authorizationToken = "Basic " + encodedCredentials
-    Map("Authorization" -> authorizationToken)
-  }
-
 
   val dataSetId = "ab70d6a9-9616-4cc4-abbe-6272c2344709"
   val roadLinksList: List[List[Long]] = List(List(441062, 441063, 441070, 452512), List(445212))
@@ -97,11 +87,13 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
   }
 
   test("validate if features have id key/value") {
+    val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
     val pointProperties: Map[String, String] = Map("type" -> "obstacle", "class" -> "1")
     val pointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)), Map(("type", "name")))
     val pointFeature: Feature = Feature("Feature", pointGeometry, pointProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(pointFeature))
-    val roadLinksList: List[List[Long]] = List(List(445212))
+    val roadLinksList: List[List[Long]] = List(List(5000))
 
     val dataSet = Dataset(dataSetId, featureCollection, roadLinksList)
 
@@ -115,8 +107,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
   }
 
   test("validate if roadLink exists on VVH") {
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5), false)).thenReturn(Seq())
-    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(10), false)).thenReturn(Seq())
+    when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5, 10), false)).thenReturn(Seq())
 
     val roadLinksList: List[List[Long]] = List(List(5),List(10))
     val dataSet = Dataset(dataSetId, commonFeatureCollection, roadLinksList)
@@ -128,7 +119,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"6"), (100001,"6")))
+      featuresStatus.sortBy(status => status._1) should be (List((100000,"6"), (100001,"6")))
     }
   }
 
@@ -295,12 +286,12 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
       ServiceWithDao.updateDataset(dataSet)
       val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
       val featuresStatus2 = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
-      val createdPavementClass = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newRoadLink.linkId))
+      val createdPavementClass = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newRoadLink.linkId), false)
 
       datasetStatus2 should be(3)
       featuresStatus2 should be (List((200000,"1")))
       createdPavementClass.head.linkId should be (5000)
-      createdPavementClass.head.value should be(Some(DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(1))))))))
+      createdPavementClass.head.value.toString should be(Some(DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(1))))))).toString)
       createdPavementClass.head.startMeasure should be (0.0)
       createdPavementClass.head.endMeasure should be (100.0)
       createdPavementClass.head.createdBy should be (Some("AwsUpdater"))
@@ -344,14 +335,4 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter /*w
       featuresStatus2 should be (List((100000,"1")))
     }
   }
-
-//  test("Malformed json sent"){
-//    putJsonWithUserAuth("/municipality/assetUpdateFromAWS", write(List(49)), getAuthorizationHeader("kalpa", "kalpa"), "kalpa") {
-//      status should be (400)
-//    }
-//  }
-//
-//  test("Wrong user authentication"){
-//    //TODO
-//  }
 }

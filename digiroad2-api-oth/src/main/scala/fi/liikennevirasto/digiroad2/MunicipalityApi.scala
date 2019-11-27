@@ -146,9 +146,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
   }
 
-  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long]): FeatureStatus = {
-    val roadLinks = roadLinkService.getRoadsLinksFromVVH(linkIds, false)
-    if(!(linkIds.nonEmpty && roadLinks.count(road => road.administrativeClass != State) == linkIds.size))
+  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long],  roadLinks: Seq[Long]): FeatureStatus = {
+    if(!(linkIds.nonEmpty && linkIds.forall(roadLinks.contains(_))))
     {
       FeatureStatus.WrongRoadlinks
     } else {
@@ -218,7 +217,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
           } else
             speedLimitsOnRoadLink.foreach { sl =>
               val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, NumericValue(speedLimitValue), properties("sideCode").toInt,timeStamp, None)
-              speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser)
+              speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser, false)
             }
         case None =>
       }
@@ -227,12 +226,12 @@ class MunicipalityApi(val vvhClient: VVHClient,
         case Some(value) =>
           val pavementClassValue = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("paallysteluokka", "single_choice", required = false, Seq(DynamicPropertyValue(value.toInt))))))
 
-          val duplicate = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(link.linkId))
+          val duplicate = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(link.linkId), false)
           if(duplicate.isEmpty) {
             val newPavementClassAsset = NewLinearAsset(link.linkId, 0, link.length, pavementClassValue, properties("sideCode").toInt, timeStamp, None)
-            pavedRoadService.create(Seq(newPavementClassAsset), PavedRoad.typeId, AwsUser, timeStamp)
+            pavedRoadService.createWithoutTransaction(PavedRoad.typeId, newPavementClassAsset.linkId, newPavementClassAsset.value, newPavementClassAsset.sideCode, Measures(newPavementClassAsset.startMeasure, newPavementClassAsset.endMeasure), AwsUser, timeStamp, None, informationSource = Some(MunicipalityMaintenainer.value))
           } else {
-            pavedRoadService.update(Seq(duplicate.head.id), pavementClassValue, AwsUser)
+            pavedRoadService.updateWithoutTransaction(Seq(duplicate.head.id), pavementClassValue, AwsUser)
           }
         case None =>
       }
@@ -248,13 +247,14 @@ class MunicipalityApi(val vvhClient: VVHClient,
       None
     } else {
       awsDao.insertDataset(dataset.datasetId, write(dataset.featuresCollection.toString), write(dataset.roadlinks), DatasetStatus.Inserted.value)
+      val vvhRoadLinksIds = roadLinkService.getRoadsLinksFromVVH(roadlinks.flatten.toSet, false).filter(road => road.administrativeClass != State).map(road => road.linkId)
 
       val featuresWithoutIds: List[Option[Int]] = (roadlinks, assets).zipped.map((featureRoadlinks, feature) => {
         val properties = feature.properties
         properties.get("id") match {
           case Some(id) =>
             val featureId = id.toLong
-            val linkIdValidationStatus = linkIdValidation(dataset.datasetId, featureId, featureRoadlinks.toSet)
+            val linkIdValidationStatus = linkIdValidation(dataset.datasetId, featureId, featureRoadlinks.toSet, vvhRoadLinksIds)
             val assetTypeGeometry = feature.geometry.typee
             val propertiesStatus: List[FeatureStatus] = assetTypeGeometry match {
               case "LineString" =>
@@ -290,6 +290,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     if (awsDao.getDatasetStatus(dataset.datasetId) != DatasetStatus.FeatureRoadlinksDontMatch.value) {
       val assets = dataset.featuresCollection.features
       val roadlinks = dataset.roadlinks
+      val vvhRoadLinksIds = roadLinkService.getRoadsLinksFromVVH(roadlinks.flatten.toSet, false).filter(road => road.administrativeClass != State)
 
       (roadlinks, assets).zipped.foreach((featureRoadlinks, feature) => {
         val properties = feature.properties
@@ -306,8 +307,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
               assetTypeGeometry match {
                 case "LineString" => assetType match {
                   case "Roadlink" =>
-                    val links = roadLinkService.getRoadsLinksFromVVH(featureRoadlinks.toSet, false)
-                      .filter(link => !Set(7,8,99).contains(link.functionalClass))
+                    val links = vvhRoadLinksIds.filter(road => featureRoadlinks.contains(road.linkId))
 
                     updateLinearAssets(properties, links)
                 }
@@ -315,7 +315,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
                 case "Point" =>
                   val assetCoordinates = feature.geometry.coordinates.head
-                  val link = roadLinkService.getRoadLinkFromVVH(featureRoadlinks.head, false).get
+                  val link = vvhRoadLinksIds.find(road => road.linkId == featureRoadlinks.head).get
                   updatePoint(properties, link, assetType, assetCoordinates)
                   awsDao.updateFeatureStatus(featureId, FeatureStatus.Processed.value)
               }
@@ -326,9 +326,9 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
       val errors = awsDao.getProcessedDatasetFeaturesForErrors(dataset.datasetId)
       if (errors == 0) {
-        awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.Processed.value)
+        awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.Processed.value, true)
       } else {
-        awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsProcessing.value)
+        awsDao.updateDatasetStatus(dataset.datasetId, DatasetStatus.ErrorsProcessing.value, true)
       }
     }
   }
@@ -338,7 +338,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   }
 
   def getFeatureErrorsByDatasetId(datasetId: String, datasetFeaturesWithoutIds: Int): Any = {
-    val featuresStatusCode = awsDao.getAllFeatureIdAndStatusByDataset(datasetId).filter { case (_, status) => status != DatasetStatus.ErrorsFeatures.value.toString}
+    val featuresStatusCode = awsDao.getAllFeatureIdAndStatusByDataset(datasetId).filter { case (_, status) => status != FeatureStatus.Processed.value.toString}
 
     val featuresStatusMap = featuresStatusCode.map { case (featureId, status) =>
       Map(

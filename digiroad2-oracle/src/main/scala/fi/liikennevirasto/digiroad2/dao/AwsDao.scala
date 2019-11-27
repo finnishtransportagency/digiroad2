@@ -10,11 +10,18 @@ class AwsDao {
       """.execute
   }
 
-  def updateDatasetStatus(dataset_id: String, status: Int) {
-    sqlu"""update municipality_dataset
+  def updateDatasetStatus(dataset_id: String, status: Int, processed: Boolean = false) {
+    if(processed){
+      sqlu"""update municipality_dataset
+          set status = $status, processed_date = current_timestamp
+          where dataset_id = $dataset_id
+      """.execute
+    } else{
+      sqlu"""update municipality_dataset
           set status = $status
           where dataset_id = $dataset_id
       """.execute
+    }
   }
 
   def insertFeature(feature_id: Long, dataset_id: String, status: String) {
