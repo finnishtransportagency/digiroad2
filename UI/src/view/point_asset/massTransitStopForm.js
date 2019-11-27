@@ -337,7 +337,7 @@
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text' && ['yllapitajan_koodi','liitetty_terminaaliin','viranomaisdataa'].indexOf(property.publicId) < 0 ) {
+        if (property.propertyType === 'read_only_text' && ['yllapitajan_koodi','liitetty_terminaaliin'].indexOf(property.publicId) < 0 ) {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + informationLog(propertyVal) ));
         } else {
           outer.append(createLabelElement(property));
@@ -400,7 +400,18 @@
 
           if (property.publicId === 'palvelun_lisätieto')
             elementType = $('<textarea />').addClass('form-control large-input').attr('id', property.publicId);
-          else
+
+          /*special case
+          we want to send and receive the value of viranomaisdataa from/to server
+           */
+          else if (property.publicId === 'viranomaisdataa') {
+            elementType = $('<p />').addClass('form-control-static').attr('id', property.publicId);
+
+            if(property.values[0]) {
+              elementType.text(property.values[0].propertyDisplayValue);
+            }
+
+          }else
             elementType = property.propertyType === 'long_text' ?
              $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
 
@@ -1058,8 +1069,8 @@
 
         function updateViranomaisdataaValue() {
           var palveluProp = getPropByPublicId('palvelu' );
-          var value = isAuthorityData(palveluProp.values[0].propertyValue) ? 'Kyllä' : 'Ei';
-          selectedMassTransitStopModel.setProperty('viranomaisdataa',[{propertyDisplayValue: value, propertyValue: value}],'read_only_text',undefined, undefined);
+            var value = isAuthorityData(palveluProp.values[0].propertyValue) ? 'Kyllä' : 'Ei';
+          selectedMassTransitStopModel.setProperty('viranomaisdataa',[{propertyDisplayValue: value, propertyValue: value}],'text',undefined, undefined);
         }
 
       function hideOrShowTarkenne(){
