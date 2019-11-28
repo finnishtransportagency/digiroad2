@@ -166,13 +166,13 @@ class VKMGeometryTransform {
   private def vkmUrl = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/vkm/tieosoite?"
+    properties.getProperty("digiroad2.VKMUrl") + "/vkm-api/tieosoite?"
   }
 
   private def vkmPostUrl = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/vkm/muunnos"
+    properties.getProperty("digiroad2.VKMUrl") + "/vkm-api/muunnin"
   }
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {

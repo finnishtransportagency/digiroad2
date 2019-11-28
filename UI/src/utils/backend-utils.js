@@ -606,7 +606,7 @@
     };
 
     this.getGeocode = function(address) {
-      return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
+      return $.post("vkm-api/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
 
     this.getRoadLinkToPromise= function(linkid)
@@ -615,12 +615,12 @@
     };
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
-      return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
+      return $.get("vkm-api/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
     };
 
     var returnedMunicipality = _.debounce(function(lon, lat, onSuccess, onFailure) {
-      return $.get("vkm/reversegeocode", {x: lon, y: lat})
+      return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
           .then(
               function (result) {
                 return onSuccess(JSON.parse(result));
