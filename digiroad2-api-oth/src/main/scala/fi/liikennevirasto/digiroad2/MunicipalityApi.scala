@@ -357,7 +357,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   }
 
   put("/assetUpdateFromAWS") {
-    try {
+//    try {
       val listDatasets: List[Dataset] = parsedBody.extractOrElse[List[Dataset]](throw new ClassCastException)
 
       OracleDatabase.withDynTransaction {
@@ -385,9 +385,9 @@ class MunicipalityApi(val vvhClient: VVHClient,
           }
         }
       }
-    } catch {
-      case cce: ClassCastException => halt(BadRequest("Error when extracting dataSet in JSON"))
-      case _: Throwable => halt(BadRequest("Could not process Datasets. Verify information provided"))
-    }
+//    } catch {
+//      case cce: ClassCastException => halt(BadRequest("Error when extracting dataSet in JSON"))
+//      case _: Throwable => halt(BadRequest("Could not process Datasets. Verify information provided"))
+//    }
   }
 }
