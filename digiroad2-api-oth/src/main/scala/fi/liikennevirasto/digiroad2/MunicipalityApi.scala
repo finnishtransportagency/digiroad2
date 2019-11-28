@@ -380,7 +380,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
             Map(
               "DataSetId" -> datasetId,
               "Status" -> datasetStatus,
-              "Features with errors" -> getFeatureErrorsByDatasetId(datasetId, datasetFeaturesWithoutIds(datasetId).get)
+              "Features with errors" -> getFeatureErrorsByDatasetId(datasetId, datasetFeaturesWithoutIds(datasetId).getOrElse(0))
             )
           }
         }
