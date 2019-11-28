@@ -138,7 +138,7 @@ trait MassTransitStopService extends PointAssetOperations {
   val servicePointBusStopService = new ServicePointBusStopService(typeId)
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
-    getByMunicipality(municipalityCode, true)
+    getByMunicipality(municipalityCode, true) ++ servicePointsToPersistedAssetByMunicipality(municipalityCode)
   }
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssets(queryFilter)
@@ -156,7 +156,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def getServicePointById(id: Long): Option[ServicePoint] = {
+  def getServicePointById(id: Long): ServicePoint = {
     withDynSession {
       servicePointBusStopService.fetchAsset(id)
     }
@@ -352,7 +352,7 @@ trait MassTransitStopService extends PointAssetOperations {
           (currentStrategy, publishInfo, withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(enrichPersistedAsset))
 
         case _ =>
-          val servicePointAsset = servicePointBusStopService.fetchAsset(assetId).getOrElse(throw new NoSuchElementException)
+          val servicePointAsset = Option(servicePointBusStopService.fetchAsset(assetId)).getOrElse(throw new NoSuchElementException)
 
           val newProperties = excludeProperties(properties.toSeq)
 
@@ -480,6 +480,27 @@ trait MassTransitStopService extends PointAssetOperations {
       }
     else
       assets
+  }
+
+  def servicePointsToPersistedAssetByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
+    val servicePoints = servicePointBusStopService.getByMunicipality(municipalityCode)
+
+    servicePoints.map { service =>
+      val serviceType = service.propertyData.find(property => property.publicId == "palvelu").head.values.head
+      val subTypeValues = service.propertyData.find(property => property.publicId == "tarkenne").head.values
+
+      val subTypeName = if(subTypeValues.isEmpty) {""} else {subTypeValues.head.propertyDisplayValue.get}
+      val serviceName = serviceType.propertyDisplayValue.get
+
+      val newNameProperty = service.propertyData.find(property => property.publicId == "nimi_suomeksi").get.copy(values = Seq(PropertyValue(serviceName)))
+      val newSubTypeNameProperty = service.propertyData.find(property => property.publicId == "tarkenne").get.copy(values = Seq(PropertyValue(subTypeName)))
+
+      val updatedProperties = service.propertyData.filterNot(property => property.publicId == "nimi_suomeksi" || property.publicId == "tarkenne") ++ Set(newNameProperty, newSubTypeNameProperty)
+
+      PersistedMassTransitStop(service.id, serviceType.propertyValue.toInt, 0, service.stopTypes,
+        service.municipalityCode, service.lon, service.lat, 0, None, None, None,
+        false, 0, service.created, service.modified, updatedProperties, LinkGeomSource.Unknown, None)
+    }
   }
 
   def getFloatingAssetsWithReason(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Map[String, Map[String, Seq[Map[String, Long]]]] = {

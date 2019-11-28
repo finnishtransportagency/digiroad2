@@ -66,8 +66,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
-    def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = { "m_value" -> Some(massTransitStop.mValue) }
+    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { if(Some(massTransitStop.linkId).contains(0)) "link_id" -> None else "link_id" -> Some(massTransitStop.linkId) }
+    def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = {if(Some(massTransitStop.mValue).contains(0)) "m_value" -> None else "m_value" -> Some(massTransitStop.mValue) }
     def extractLinkSource(massTransitStop: PersistedMassTransitStop) : (String, Option[Int]) = { "linkSource" -> Some(massTransitStop.linkSource.value) }
     Map(
       "type" -> "FeatureCollection",
@@ -119,7 +119,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
             extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString)
+            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString)
           ))
       })
   }
