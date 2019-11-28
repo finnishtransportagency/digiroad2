@@ -242,7 +242,7 @@
     }
 
     this.layerStarted = function(eventListener) {
-      bindEvents(eventListener);
+      this.bindEvents(eventListener);
       showRoadLinkInformation();
     };
 
@@ -254,8 +254,8 @@
       }
     }
 
-    function bindEvents(eventListener) {
-      eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
+    this.bindEvents = function(eventListener) {
+      eventListener.listenTo(eventbus, 'map:clicked', this.handleMapClick);
       eventListener.listenTo(eventbus, layerName + ':saved ' + layerName + ':cancelled', handleSavedOrCancelled);
       eventListener.listenTo(eventbus, layerName + ':creationCancelled', handleCreationCancelled);
       eventListener.listenTo(eventbus, layerName + ':selected', handleSelected);
@@ -320,15 +320,7 @@
 
     }
 
-    function handleMapClick(coordinates) {
-      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
-        createNewAsset(coordinates);
-      } else if (selectedAsset.isDirty()) {
-        me.displayConfirmMessage();
-      }
-    }
-
-    function createNewAsset(coordinates) {
+    this.createNewAsset =  function(coordinates) {
       var selectedLon = coordinates.x;
       var selectedLat = coordinates.y;
       var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), selectedLon, selectedLat);
@@ -343,7 +335,15 @@
         selectedAsset.place(asset);
         mapOverlay.show();
       }
-    }
+    };
+
+    this.handleMapClick = function(coordinates) {
+      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
+        me.createNewAsset(coordinates);
+      } else if (selectedAsset.isDirty()) {
+        me.displayConfirmMessage();
+      }
+    };
 
     function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {
       var isServicePoint = newAsset.services;
