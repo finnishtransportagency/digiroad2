@@ -111,18 +111,6 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/vionice',
-            port: '443',
-            host: 'map.vionice.io',
-            https: true,
-            changeOrigin: true,
-            xforward: false,
-            rewrite: {
-              '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
-            },
-            headers: {Host: 'map.vionice.io:443'}
-          },
-          {
             context: '/vkm',
             host: 'localhost',
             port: '8997',
