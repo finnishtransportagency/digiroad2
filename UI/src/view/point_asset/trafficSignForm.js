@@ -45,7 +45,9 @@
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
       function getSidePlacement() {
-        return _.head(getProperties(asset.propertyData, "opposite_side_sign").values);
+        var prop = getProperties(asset.propertyData, "opposite_side_sign");
+
+        return _.head(prop.values);
       }
 
       var panelCheckbox =

@@ -334,7 +334,7 @@
 
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
-      var parameters ={
+      var parameters = {
        map: map,
        application: applicationModel,
        collection: asset.collection,
@@ -362,26 +362,29 @@
     }, {});
 
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
-     acc[asset.layerName] = new PointAssetLayer({
-       roadLayer: roadLayer,
-       application: applicationModel,
-       roadCollection: asset.roadCollection,
-       collection: asset.collection,
-       map: map,
-       selectedAsset: asset.selectedPointAsset,
-       style: PointAssetStyle(asset.layerName),
-       mapOverlay: mapOverlay,
-       layerName: asset.layerName,
-       assetLabel: asset.label,
-       newAsset: asset.newAsset,
-       roadAddressInfoPopup: roadAddressInfoPopup,
-       allowGrouping: asset.allowGrouping,
-       assetGrouping: new AssetGrouping(asset.groupingDistance),
-       authorizationPolicy: asset.authorizationPolicy,
-       showRoadLinkInfo: asset.showRoadLinkInfo,
-       readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
-     });
+      var parameters = {
+        roadLayer: roadLayer,
+        application: applicationModel,
+        roadCollection: asset.roadCollection,
+        collection: asset.collection,
+        map: map,
+        selectedAsset: asset.selectedPointAsset,
+        style: PointAssetStyle(asset.layerName),
+        mapOverlay: mapOverlay,
+        layerName: asset.layerName,
+        assetLabel: asset.label,
+        newAsset: asset.newAsset,
+        roadAddressInfoPopup: roadAddressInfoPopup,
+        allowGrouping: asset.allowGrouping,
+        assetGrouping: new AssetGrouping(asset.groupingDistance),
+        authorizationPolicy: asset.authorizationPolicy,
+        showRoadLinkInfo: asset.showRoadLinkInfo,
+        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false
+      };
+
+     acc[asset.layerName] = asset.layer ? new asset.layer(parameters) : new PointAssetLayer(parameters);
      return acc;
+
     }, {});
 
     var groupedPointAssetLayers = _.reduce(groupedPointAssets, function(acc, asset) {
