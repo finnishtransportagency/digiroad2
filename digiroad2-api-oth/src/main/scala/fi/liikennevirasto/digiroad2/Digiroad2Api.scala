@@ -216,13 +216,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
 
   get("/startupParameters") {
-    val massTransitStopId = 10
-    val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, massTransitStopId)
+    val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, MassTransitStopAsset.typeId)
     val user = userProvider.getCurrentUser()
 
     val assetTypeId = user.configuration.assetType match {
       case Some(assetType) => assetType
-      case _  => massTransitStopId
+      case _  => MassTransitStopAsset.typeId
     }
 
     val userPreferences: Option[(Long, Long, Int, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom) match {
