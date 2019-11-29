@@ -84,7 +84,7 @@ case class PrivateRoadInfoStructure(privateRoadName: Option[String], association
   * @param vvhSerializer
   */
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
-  lazy val municipalityService = new MunicipalityService(eventbus, RoadLinkService.this)
+  lazy val municipalityService = new MunicipalityService
 
   val logger = LoggerFactory.getLogger(getClass)
 

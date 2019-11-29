@@ -368,11 +368,4 @@ object Queries {
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
-
-  def getOperatorUsers(): List[User] = {
-    sql"""
-      select id, username, configuration, name from service_user where configuration like '%operator%'
-    """.as[User].list
-  }
-
 }

@@ -33,7 +33,6 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   }
 
   post("/user") {
-    // TODO: create user atomically in provider
     val user = parsedBody.extract[User]
     userProvider.getUser(user.username) match {
       case Some(name) => Conflict("User already exists: " + name)
@@ -44,7 +43,6 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   }
 
   put("/user/:username/municipalities") {
-    // TODO: when implementing UI, use municipalities of client to determine authorization, only modify (add/remove) authorized municipalities
     val municipalities = parsedBody.extract[List[Int]].toSet
     params.get("username").flatMap {
       userProvider.getUser
@@ -125,7 +123,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
     }
     val municipalityNumbers =  municipalitiesOfEly ++ splitToInts(municipalities).getOrElse(Set())
 
-    val availableRoles = Set(Role.BusStopMaintainer, Role.Operator, Role.ServiceRoadMaintainer)
+    val availableRoles = Set(Role.ElyMaintainer, Role.Operator, Role.ServiceRoadMaintainer)
     val roles: Set[String] = roleName.filter(availableRoles.contains).toSet
 
     val authorizedAreas = splitToInts(authorizationArea) match {

@@ -10,6 +10,11 @@ class DummyUserProvider extends UserProvider {
   def getUser(username: String): Option[User] = {
     Some(User(0, username, Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235), authorizedMunicipalities = Set(235)), Some("John Tester")))
   }
+
+  def getUsers(): Seq[User] = {
+    Seq(User(0, "", Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235), authorizedMunicipalities = Set(235)), Some("John Tester")))
+  }
+
   def getAuthenticatedUser(username: String, password: String): Option[User] = getUser(username)
 
   def getUserConfiguration(): Configuration = {
