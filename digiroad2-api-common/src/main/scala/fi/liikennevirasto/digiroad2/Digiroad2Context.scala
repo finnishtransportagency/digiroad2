@@ -475,7 +475,7 @@ object Digiroad2Context {
   }
 
   lazy val municipalityService: MunicipalityService = {
-    new MunicipalityService(eventbus, roadLinkService)
+    new MunicipalityService
   }
 
   lazy val dynamicLinearAssetService: DynamicLinearAssetService = {
