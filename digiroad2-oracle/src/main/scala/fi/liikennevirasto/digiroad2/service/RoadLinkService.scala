@@ -925,7 +925,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
   }
 
-  def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point): Seq[VVHRoadlink] = {
+  def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point, forCarTraffic: Boolean = true): Seq[VVHRoadlink] = {
     val diagonal = Vector3d(10, 10, 0)
 
     val roadLinks = user.isOperator() match {
@@ -933,12 +933,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case false => getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
       }
 
-    roadLinks.isEmpty match {
+    val closestRoadLinks = roadLinks.isEmpty match {
       case true => Seq.empty[VVHRoadlink]
-      case false => roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0).filter(_.featureClass != FeatureClass.CycleOrPedestrianPath)
+      case false => roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0)
     }
-  }
 
+    if(forCarTraffic) closestRoadLinks.filter(_.featureClass != FeatureClass.CycleOrPedestrianPath) else closestRoadLinks
+  }
 
   protected def removeIncompleteness(linkId: Long): Unit = {
     sqlu"""delete from incomplete_link where link_id = $linkId""".execute

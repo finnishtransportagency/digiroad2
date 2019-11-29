@@ -4,7 +4,7 @@ import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, GeometryUtils, IncompleteRow, MalformedRow, Point, Status, TrafficSignType}
+import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, GeometryUtils, IncompleteRow, MalformedRow, Point, Status, TrafficSignType, TrafficSignTypeGroup}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, SimpleTrafficSignProperty, State, TextPropertyValue}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -89,6 +89,28 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
+  override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
+    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[Int]]
+
+    (optLon, optLat) match {
+      case (Some(lon), Some(lat)) =>
+
+        val roadLinks = optTrafficSignType match{
+          case Some(signType) if TrafficSignType.applyAdditionalGroup(TrafficSignTypeGroup.CycleAndWalkwaySigns).contains(signType) => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+          case _ => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
+        }
+
+        if (roadLinks.isEmpty) {
+          (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+        } else {
+          (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+        }
+      case _ =>
+        (Nil, Nil)
+    }
+  }
 
   private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimpleTrafficSignProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
