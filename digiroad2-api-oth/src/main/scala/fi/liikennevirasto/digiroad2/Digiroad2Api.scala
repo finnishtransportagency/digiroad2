@@ -477,7 +477,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    elyMaintainerUser(properties)
+    validateElyMaintainerUser(properties)
     val id = params("id").toLong
 
     validatePropertiesMaxSize(properties)
@@ -495,7 +495,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def elyMaintainerUser(properties: Seq[SimpleProperty]) = {
+  private def validateElyMaintainerUser(properties: Seq[SimpleProperty]) = {
     val user = userProvider.getCurrentUser()
     val propertyToValidation = properties.find {
       property => property.publicId.equals("tietojen_yllapitaja") && property.values.exists(p => p.propertyValue.equals("2"))
@@ -542,7 +542,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
-    elyMaintainerUser(properties)
+    validateElyMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {

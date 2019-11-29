@@ -1828,9 +1828,12 @@ object DataFixture {
     val users: Seq[User] = OracleDatabase.withDynSession {
       userProvider.getUsers()
     }
-
     users.foreach { user =>
-      println(s" id -> ${user.id}; username -> ${user.username}; configuration ${user.configuration.toString} ")
+      val configuration = user.configuration
+      println(s" id -> ${user.id}; username -> ${user.username}; " +
+        s"configuration {  ${configuration.zoom.map(zoom => s"zoom = $zoom")} ${configuration.east.map(east => s"east = east")} north = ${configuration.north} municipalityNumber = ${configuration.municipalityNumber.mkString(",")} " +
+        s"authorizedMunicipalities = ${configuration.authorizedMunicipalities.mkString(",")} authorizedAreas = ${configuration.authorizedAreas.mkString(",")} roles = ${configuration.roles.mkString(",")}" +
+       s"lastNotificationDate = ${configuration.lastNotificationDate}  lastLoginDate = ${configuration.lastLoginDate}}")
       if (user.isOperator() && user.configuration.roles.size > 1) {
         println("update -> user to operator and clean authorizedMunicipalities and authorizedAreas")
         //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
