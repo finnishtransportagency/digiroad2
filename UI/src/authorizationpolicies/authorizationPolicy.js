@@ -28,7 +28,7 @@
     };
 
     this.isElyMaintainer = function(){
-      return me.isUser('busStopMaintainer');
+      return me.isUser('elyMaintainer');
     };
 
     this.isOperator = function(){

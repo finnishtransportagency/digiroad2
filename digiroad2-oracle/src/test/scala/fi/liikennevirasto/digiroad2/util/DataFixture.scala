@@ -200,6 +200,7 @@ object DataFixture {
     new TrafficSignParkingProhibitionGenerator(roadLinkService)
   }
 
+  lazy val municipalityService: MunicipalityService = new MunicipalityService
 
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
@@ -1817,22 +1818,58 @@ object DataFixture {
     }
   }
 
-  def normalizeOperatorRoles(): Unit ={
+  def normalizeOperatorRoles(): Unit = {
     println("\nStart process to remove additional roles from operators users")
     println(DateTime.now())
 
     val userProvider: UserProvider = new OracleUserProvider
     println("\nGetting operators with additional roles")
-    var operators: List[User] = Nil
-    OracleDatabase.withDynSession {
-      operators = Queries.getOperatorUsers().filter(user => user.configuration.roles.size > 1)
-    }
-      println("\nNormalizing operators")
-      operators.foreach(user =>
-        userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"))))
-      )
 
-    println("Completed at time: " + DateTime.now())
+    val users: Seq[User] = OracleDatabase.withDynSession {
+      userProvider.getUsers()
+    }
+
+    users.foreach { user =>
+      println(s" id -> ${user.id}; username -> ${user.username}; configuration ${user.configuration.toString} ")
+      if (user.isOperator() && user.configuration.roles.size > 1) {
+        println("update -> user to operator and clean authorizedMunicipalities and authorizedAreas")
+        //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
+      }
+      else if (user.configuration.roles.size == 1 && (user.configuration.roles("busStopMaintainer") || user.isServiceRoadMaintainer()) || user.configuration.roles.size == 2) {
+        if (user.configuration.roles.size == 2 && user.configuration.roles("busStopMaintainer") && user.isServiceRoadMaintainer())
+          println(s"Wrong users combination -> ${user.configuration}")
+
+        //Check busStopMaintainer and convert to ElyMaintainer
+        if (user.configuration.roles("busStopMaintainer")) {
+          val municipalities: Set[Int] = user.configuration.authorizedMunicipalities
+
+          if (user.configuration.authorizedMunicipalities.nonEmpty) {
+            val municipalityInfo = municipalityService.getMunicipalitiesNameAndIdByCode(municipalities)
+            val elyMunicipalities: Set[Int] = municipalityService.getMunicipalitiesNameAndIdByEly(municipalityInfo.map(_.ely).toSet).map(_.id).toSet
+
+            if (elyMunicipalities.diff(municipalities).nonEmpty || municipalities.diff(elyMunicipalities).nonEmpty)
+              println("inaccurate authorizedMunicipalities for elys")
+            //Normally the user shouldn't have more than 4 ely
+            if (municipalityInfo.map(_.ely).toSet.size > 4)
+              println("inaccurate authorizedMunicipalities for elys")
+
+            println("update -> user to elyMaintainer")
+            //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("elyMaintainer"))))
+          }
+        }
+        //Check serviceRoadMaintainer
+        if (user.isServiceRoadMaintainer()) {
+          if (user.configuration.authorizedAreas.isEmpty) {
+            println(s"wrong configuration for serviceRoadMaintainer -> ${user.configuration}")
+          }
+        }
+      }
+
+      if (user.configuration.roles.isEmpty && user.configuration.authorizedMunicipalities.nonEmpty)
+        println(s"wrong configuration for serviceRoadMaintainer -> ${user.configuration}")
+
+      println("Completed at time: " + DateTime.now())
+    }
   }
 
   def removeRoadWorksCreatedLastYear(): Unit = {
