@@ -26,7 +26,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, LinkAttributesDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -1773,7 +1773,14 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
-  def normalizeOperatorRoles(): Unit ={
+  def normalizeUserRoles(): Unit = {
+    def printUser(user: User): Unit = {
+      val configuration = user.configuration
+      println(s" id -> ${user.id}; username -> ${user.username}; " +
+        s"configuration {  ${configuration.zoom.map(zoom => s"zoom = $zoom")} ${configuration.east.map(east => s"east = $east")} north = ${configuration.north.map(north => s"north = $north ")} " +
+        s"municipalityNumber = ${configuration.municipalityNumber.mkString(",")} authorizedMunicipalities = ${configuration.authorizedMunicipalities.mkString(",")} authorizedAreas = ${configuration.authorizedAreas.mkString(",")} " +
+        s"roles = ${configuration.roles.mkString(",")} lastNotificationDate = ${configuration.lastNotificationDate}  lastLoginDate = ${configuration.lastLoginDate}}")
+    }
     println("\nStart process to remove additional roles from operators users")
     println(DateTime.now())
 
@@ -1785,10 +1792,11 @@ object DataFixture {
     }
 
     users.foreach { user =>
-      println(s" id -> ${user.id}; username -> ${user.username}; configuration ${user.configuration.toString} ")
+      val configuration = user.configuration
       if (user.isOperator() && user.configuration.roles.size > 1) {
         println("update -> user to operator and clean authorizedMunicipalities and authorizedAreas")
-        //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
+        printUser(user)
+        userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
       }
       else if (user.configuration.roles.size == 1 && (user.configuration.roles("busStopMaintainer") || user.isServiceRoadMaintainer()) || user.configuration.roles.size == 2) {
         if (user.configuration.roles.size == 2 && user.configuration.roles("busStopMaintainer") && user.isServiceRoadMaintainer())
@@ -1802,29 +1810,34 @@ object DataFixture {
             val municipalityInfo = municipalityService.getMunicipalitiesNameAndIdByCode(municipalities)
             val elyMunicipalities: Set[Int] = municipalityService.getMunicipalitiesNameAndIdByEly(municipalityInfo.map(_.ely).toSet).map(_.id).toSet
 
-            if (elyMunicipalities.diff(municipalities).nonEmpty || municipalities.diff(elyMunicipalities).nonEmpty)
-              println("inaccurate authorizedMunicipalities for elys")
+            val diffMunicipalities = elyMunicipalities.diff(municipalities) ++ municipalities.diff(elyMunicipalities)
+            if(diffMunicipalities.nonEmpty)
+              println("inaccurate authorizedMunicipalities for elys ")
+              if (elyMunicipalities.diff(municipalities).nonEmpty) print(s"missing user municipalities -> ${elyMunicipalities.diff(municipalities)}" )
+              if (municipalities.diff(elyMunicipalities).nonEmpty) print(s"exceeded user municipalities -> ${municipalities.diff(elyMunicipalities)}" )
+
             //Normally the user shouldn't have more than 4 ely
             if (municipalityInfo.map(_.ely).toSet.size > 4)
               println("inaccurate authorizedMunicipalities for elys")
 
             println("update -> user to elyMaintainer")
-            //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("elyMaintainer"))))
+            printUser(user)
+            userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("elyMaintainer"))))
           }
         }
         //Check serviceRoadMaintainer
-        if (user.isServiceRoadMaintainer()) {
-          if (user.configuration.authorizedAreas.isEmpty) {
-            println(s"wrong configuration for serviceRoadMaintainer -> ${user.configuration}")
-          }
+        if (user.isServiceRoadMaintainer() && user.configuration.authorizedAreas.isEmpty) {
+          println(s"wrong configuration for serviceRoadMaintainer -> ${user.id}")
         }
       }
 
-      if (user.configuration.roles.isEmpty && user.configuration.authorizedMunicipalities.nonEmpty)
-        println(s"wrong configuration for serviceRoadMaintainer -> ${user.configuration}")
+      if (user.configuration.roles.nonEmpty && user.configuration.roles.head == "premium")
+        println(s"premium configuration -> ${user.id}")
 
-      println("Completed at time: " + DateTime.now())
+      if (user.configuration.roles.isEmpty && user.configuration.authorizedMunicipalities.isEmpty)
+        println(s"wrong configuration  ${user.id}")
     }
+    println("Completed at time: " + DateTime.now())
   }
 
   def removeRoadWorksCreatedLastYear(): Unit = {
@@ -2309,7 +2322,7 @@ object DataFixture {
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
       case Some("normalize_operator_roles") =>
-        normalizeOperatorRoles()
+        normalizeUserRoles()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2323,7 +2336,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | normalize_operator_roles")
+        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles")
     }
   }
 }
