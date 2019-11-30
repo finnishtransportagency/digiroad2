@@ -32,7 +32,8 @@ pipeline {
         								'import_private_road_info',
         								'load_municipalities_verification_info',
         								'create_parking_prohibition_using_traffic_signs',
-        								'normalize_operator_roles'
+        								'normalize_operator_roles',
+        								'resolving_Frozen_Links'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
