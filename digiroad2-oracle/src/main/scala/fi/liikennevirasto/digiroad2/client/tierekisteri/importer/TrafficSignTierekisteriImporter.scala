@@ -14,6 +14,8 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{SpeedLimitTrafficSignClient, TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
 
+import scala.util.Try
+
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventbus)
@@ -154,6 +156,15 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
     }
   }
 
+  def getAllAllTrAddressSections(roadNumber: Long, trAddressSections: Try[Seq[(AddressSection, TierekisteriAssetData)]]): Seq[(AddressSection, TierekisteriAssetData)] = {
+    if (!trAddressSections.isSuccess) {
+      roadAddressService.getAllByRoadNumber(roadNumber).flatMap { road =>
+        getAllTierekisteriAddressSections(road.roadNumber, road.roadPartNumber)
+      }
+    } else
+      trAddressSections.get
+  }
+
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
     expireAssets()
@@ -166,7 +177,10 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         //For example if Tierekisteri returns
         //One asset with start part = 2, end part = 5, start address = 10, end address 20
         //We will generate the middle parts and return a AddressSection for each one
-        val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
+
+        //TODO revert this code when fixed it on TR side
+        //val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
+        val trAddressSections = getAllAllTrAddressSections(roadNumber, Try(getAllTierekisteriAddressSections(roadNumber)))
 
         val (trProperties, trAssetsSections) = trAddressSections.partition(_._2.assetType.group == TrafficSignTypeGroup.AdditionalPanels)
 
