@@ -168,10 +168,10 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
         //For example if Tierekisteri returns
         //One asset with start part = 2, end part = 5, start address = 10, end address 20
         //We will generate the middle parts and return a AddressSection for each one
+
         //TODO revert this code when fixed it on TR side
         //val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
         val trAddressSections = getAllAllTrAddressSections(roadNumber, Try(getAllTierekisteriAddressSections(roadNumber)))
-
 
         val (trProperties, trAssetsSections) = trAddressSections.partition(_._2.assetType.group == TrafficSignTypeGroup.AdditionalPanels)
 

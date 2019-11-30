@@ -19,6 +19,8 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, GeometryUti
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
+import scala.util.Try
+
 case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Option[Long])
 case class TrAssetInfo(trAsset: TierekisteriAssetData, roadLink: Option[VVHRoadlink], linkType: Option[LinkType] = None)
 
