@@ -2086,11 +2086,11 @@ object DataFixture {
         //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
       })
 
-      val missingFrozenRoadLinks = frozenRoadLinks.filter(frozen => toCreate.flatMap(_.toCreate.map(_.linkId)).contains(frozen.linkId))
+      val missingFrozenRoadLinks = frozenRoadLinks.filterNot(frozen => toCreate.flatMap(_.toCreate.map(_.linkId)).contains(frozen.linkId))
 
       if (toCreate.flatMap(_.toCreate).nonEmpty) {
         println(s"retry  created - ${toCreate.flatMap(_.toCreate).size} missing - ${missingFrozenRoadLinks.size}")
-        retry((mappedAddresses ++ toCreate.flatMap(_.toCreate)), missingFrozenRoadLinks: Seq[RoadLink], roadLinks)
+        retry(mappedAddresses ++ toCreate.flatMap(_.toCreate), missingFrozenRoadLinks: Seq[RoadLink], roadLinks)
       } else
         Seq()
     }
