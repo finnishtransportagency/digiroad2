@@ -2143,36 +2143,52 @@ object DataFixture {
       }
     }
 
-    def cleaning(incompleteVKMInfo: Seq[RoadAddressTEMP]): Unit = {
-      println(s"Try to solve ${incompleteVKMInfo.size}")
+    def retry(mappedAddresses : Seq[RoadAddressTEMP], frozenRoadLinks: Seq[RoadLink], roadLinks: Seq[RoadLink]) : Seq[RoadAddressTEMP] = {
 
-      val adjRoadLinks = incompleteVKMInfo.flatMap(x => roadLinkService.getAdjacent(x.linkId, false))
+      val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
+        val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
 
-      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(incompleteVKMInfo.map(_.linkId).toSet , false) ++ adjRoadLinks
-
-      val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
-      val vkmRoadAddress = roadLinkTempDao.getByLinkIds(adjRoadLinks.map(_.linkId).toSet).filterNot(_.track == Track.Unknown)
-
-      val mappedAddresses = allRoadAddress.map { address =>
-        RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
-      } ++ vkmRoadAddress
-
-      val result = recalculateTrackAndSideCode(mappedAddresses, incompleteVKMInfo, incompleteVKMInfo.size, roadLinks.filter(_.administrativeClass == State), Seq())
-
-      val toCreate = result.flatMap(_.possibleToCreate).map { roadAddr =>
-        val roadLink = roadLinks.find(_.linkId == roadAddr.linkId).get
-
-        val track = if(Seq(CycleOrPedestrianPath, PedestrianZone, CableFerry).contains( roadLink.linkType)) Track.Combined else Track.Unknown
-        val sideCode = mappedAddresses.find(_.linkId == roadAddr.linkId).flatMap{ mappedAddress =>
-           getSideCode(mappedAddress, roadAddr, roadLinks)
+        try {
+          val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
+          if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
+            println("problems in wonderland")
+            Seq()
+          } else {
+            val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
+            if (grouped.keys.size > 1) {
+              val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
+              if (recalculateAddresses.size == 1)
+                Some(recalculateAddresses.head)
+              else {
+                recalculateAddresses.foreach { recalc =>
+                  println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
+                }
+              }
+              None
+            } else {
+              val orderedAddress = address.sortBy(_.addrM)
+              Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
+            }
+          }
+        } catch {
+          case ex: Exception =>
+            println(s"Exception in VKM for linkId ${frozen.linkId}")
+            None
         }
-        roadAddr.copy(track = track, sideCode = sideCode)
       }
-
-      toCreate.distinct.foreach { frozen =>
+      val toCreate = calculateTrackAndSideCode(mappedAddresses, frozenAddresses, roadLinks, Seq())
+      toCreate.foreach(_.toCreate.distinct.foreach { frozen =>
         roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
         //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
-      }
+      })
+
+      val missingFrozenRoadLinks = frozenRoadLinks.filter(frozen => toCreate.flatMap(_.toCreate.map(_.linkId)).contains(frozen.linkId))
+
+      if (toCreate.flatMap(_.toCreate).nonEmpty) {
+        println(s"retry  created - ${toCreate.flatMap(_.toCreate).size} missing - ${missingFrozenRoadLinks.size}")
+        retry((mappedAddresses ++ toCreate.flatMap(_.toCreate)), missingFrozenRoadLinks: Seq[RoadLink], roadLinks)
+      } else
+        Seq()
     }
 
     println("\nRefreshing information on municipality verification")
@@ -2181,62 +2197,23 @@ object DataFixture {
     //Get All Municipalities
     val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
-    val possibleToCreate = OracleDatabase.withDynTransaction {
-      val toCreate = municipalities.flatMap { municipality =>
+    OracleDatabase.withDynTransaction {
+      municipalities.map { municipality =>
         roadLinkTempDao.deleteInfoByMunicipality(municipality)
 
         println(s"Working on municipality : $municipality")
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
 
         val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
-        val frozenRoadLinks = roadLinks.filterNot(road => allRoadAddress.map(_.linkId).contains(road.linkId))
 
         val mappedAddresses = allRoadAddress.map { address =>
           RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
         }
 
-        val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
-          val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
+        val frozenRoadLinks = roadLinks.filterNot(road => allRoadAddress.map(_.linkId).contains(road.linkId))
 
-          try {
-            val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
-            if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-              println("problems in wonderland")
-              Seq()
-            } else {
-              val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
-              if(grouped.keys.size > 1) {
-                val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
-                if(recalculateAddresses.size == 1)
-                  Some(recalculateAddresses.head)
-                else {
-                  recalculateAddresses.foreach { recalc =>
-                    println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
-                  }}
-                    None
-              } else {
-                val orderedAddress = address.sortBy(_.addrM)
-                Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry,  municipalityCode = Some(frozen.municipalityCode)))
-              }
-            }
-          } catch {
-            case ex: Exception =>
-              println(s"Exception in VKM for linkId ${frozen.linkId}")
-            None
-          }
-        }
-        calculateTrackAndSideCode(mappedAddresses, frozenAddresses, roadLinks, Seq())
+        retry(mappedAddresses, frozenRoadLinks, roadLinks)
       }
-      toCreate.foreach(_.toCreate.distinct.foreach { frozen =>
-        roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
-        //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
-      })
-
-      toCreate.flatMap(_.possibleToCreate)
-    }
-
-    OracleDatabase.withDynTransaction {
-      cleaning(possibleToCreate)
     }
 
     println("\n")
@@ -2273,7 +2250,8 @@ object DataFixture {
           }
         }
       }
-    }
+    } else
+      println("")
 
     args.headOption match {
       case Some("test") =>
