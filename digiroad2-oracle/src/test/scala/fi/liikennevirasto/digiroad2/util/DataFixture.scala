@@ -32,9 +32,11 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.scalatest.prop.PropertyCheckResult.{Failure, Success}
 import slick.jdbc.{StaticQuery => Q}
 
 import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 
 object DataFixture {
@@ -2028,37 +2030,76 @@ object DataFixture {
       }
     }
 
+    def vkmSearch(frozen: RoadLink, mappedAddresses: Seq[RoadAddressTEMP], first: Point, last: Point) : Try[Option[RoadAddressTEMP]] = {
+      Try {
+        val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
+        if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
+          println("problems in wonderland")
+          None
+        } else {
+          val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
+          if (grouped.keys.size > 1) {
+            val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
+            if (recalculateAddresses.size == 1)
+              Some(recalculateAddresses.head)
+            else {
+              recalculateAddresses.foreach { recalc =>
+                println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
+              }
+            }
+            None
+          } else {
+            val orderedAddress = address.sortBy(_.addrM)
+            Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
+          }
+        }
+      }
+    }
+
+    def failVkmSearch(frozen: RoadLink, mappedAddresses : Seq[RoadAddressTEMP], first: Point, last: Point, roadLinks: Seq[RoadLink]) : Option[RoadAddressTEMP] = {
+      val addressStart = mappedAddresses.flatMap { address =>
+      val road = roadLinks.find(_.linkId == address.linkId).get
+      val (optFirst, optLast) = GeometryUtils.geometryEndpoints(road.geometry)
+
+      if(GeometryUtils.areAdjacent(first, optFirst))
+        Some(address.road, address.roadPart, address.startAddressM, address.startMValue)
+      else if(GeometryUtils.areAdjacent(first, optLast))
+        Some(address.road, address.roadPart, address.endAddressM, address.endMValue)
+      else
+        None
+    }
+
+    val addressEnd = if(addressStart.size == 1) {
+      mappedAddresses.filter(address => address.road == addressStart.head._1 && address.roadPart == addressStart.head._2).flatMap { address =>
+        val road = roadLinks.find(_.linkId == address.linkId).get
+        val (optFirst, optLast) = GeometryUtils.geometryEndpoints(road.geometry)
+
+        if (GeometryUtils.areAdjacent(last, optFirst))
+          Some(address.road, address.roadPart, address.startAddressM)
+        else if (GeometryUtils.areAdjacent(last, optLast))
+          Some(address.road, address.roadPart, address.endAddressM)
+        else
+          None
+      }
+    } else Seq()
+
+    if(addressEnd.size == 1) {
+      Some(RoadAddressTEMP(frozen.linkId, addressStart.head._1,  addressStart.head._2, Track.Unknown, addressStart.head._3, addressEnd.head._3, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
+    } else
+      None
+  }
+
     def retry(mappedAddresses : Seq[RoadAddressTEMP], frozenRoadLinks: Seq[RoadLink], roadLinks: Seq[RoadLink]) : Seq[RoadAddressTEMP] = {
 
       val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
         val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
 
-        try {
-          val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
-          if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-            println("problems in wonderland")
-            Seq()
-          } else {
-            val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
-            if (grouped.keys.size > 1) {
-              val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
-              if (recalculateAddresses.size == 1)
-                Some(recalculateAddresses.head)
-              else {
-                recalculateAddresses.foreach { recalc =>
-                  println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
-                }
-              }
-              None
-            } else {
-              val orderedAddress = address.sortBy(_.addrM)
-              Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
-            }
-          }
-        } catch {
-          case ex: Exception =>
-            println(s"Exception in VKM for linkId ${frozen.linkId}")
-            None
+        val vkmResult = vkmSearch(frozen, mappedAddresses, first, last)
+        if(vkmResult.isSuccess)
+          vkmResult.get
+        else {
+          println(s"Exception in VKM for linkId ${frozen.linkId}")
+          failVkmSearch(frozen, mappedAddresses, first, last, roadLinks)
         }
       }
       val toCreate = calculateTrackAndSideCode(mappedAddresses, frozenAddresses, roadLinks, Seq())
@@ -2080,7 +2121,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = Seq(10) //OracleDatabase.withDynSession { Queries.getMunicipalities  }
 
     OracleDatabase.withDynTransaction {
       municipalities.map { municipality =>
