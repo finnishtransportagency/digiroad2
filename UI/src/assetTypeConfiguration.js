@@ -955,7 +955,8 @@
         },
         hasMunicipalityValidation: true,
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
-        showRoadLinkInfo: true
+        showRoadLinkInfo: true,
+        layer : TrafficLayer
       },
       {
         typeId: assetType.trafficSigns,
@@ -978,7 +979,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        layer : TrafficSignLayer,
+        layer : TrafficLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
