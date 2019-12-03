@@ -273,9 +273,7 @@ object ServicePointsClass {
   case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true; val labelName = "Linja-autoasema";}
   case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false; val labelName = "Taksiasema";}
   case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false; val labelName = "Sähköautojen latauspiste";}
-  case object Culvert extends ServicePointsClass { val labelName = "Tierumpu";
-def value = 19;
-def isAuthorityData = false;}
+  case object Culvert extends ServicePointsClass { def value = 19; def isAuthorityData = false; val labelName = "Tierumpu";}
   case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true; val labelName = "Unknown";}
 }
 
