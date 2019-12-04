@@ -1792,7 +1792,7 @@ object DataFixture {
 
     users.foreach { user =>
       val configuration = user.configuration
-      if (user.isOperator() && user.configuration.roles.size > 1) {
+      if ((user.isOperator() || user.configuration.roles("premium")) && user.configuration.roles.size > 1) {
         println("update -> user to operator and clean authorizedMunicipalities and authorizedAreas")
         printUser(user)
         userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
@@ -1813,7 +1813,10 @@ object DataFixture {
             if(diffMunicipalities.nonEmpty)
               println("inaccurate authorizedMunicipalities for elys ")
               if (elyMunicipalities.diff(municipalities).nonEmpty) print(s"missing user municipalities -> ${elyMunicipalities.diff(municipalities)}" )
-              if (municipalities.diff(elyMunicipalities).nonEmpty) print(s"exceeded user municipalities -> ${municipalities.diff(elyMunicipalities)}" )
+              if (municipalities.diff(elyMunicipalities).nonEmpty) {
+                print(s"exceeded user municipalities -> ${municipalities.diff(elyMunicipalities)}" )
+                userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(authorizedMunicipalities = elyMunicipalities)))
+              }
 
             //Normally the user shouldn't have more than 4 ely
             if (municipalityInfo.map(_.ely).toSet.size > 4)
@@ -1829,9 +1832,6 @@ object DataFixture {
           println(s"wrong configuration for serviceRoadMaintainer -> ${user.id}")
         }
       }
-
-      if (user.configuration.roles.nonEmpty && user.configuration.roles.head == "premium")
-        println(s"premium configuration -> ${user.id}")
 
       if (user.configuration.roles.isEmpty && user.configuration.authorizedMunicipalities.isEmpty)
         println(s"wrong configuration  ${user.id}")
