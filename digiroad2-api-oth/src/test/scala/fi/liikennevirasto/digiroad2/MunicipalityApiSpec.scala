@@ -61,8 +61,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
   val commonLinearProperties: Map[String, String] = Map("name" -> "Mannerheimintie", "pavementClass" -> "1", "speedLimit" -> "100", "sideCode" -> "1", "id" -> "100001", "functionalClass" -> "Katu", "type" -> "Roadlink")
   val commonPointProperties: Map[String, String] = Map("id" -> "100000", "type" -> "obstacle", "class" -> "1")
 
-  val commonLinearGeometry: Geometry = Geometry("LineString", List(List(384594.081, 6674141.478, 105.55299999999988), List(384653.656, 6674029.718, 106.02099999999336), List(384731.654, 6673901.8, 106.37600000000384), List(384919.538, 6673638.735, 106.51600000000326)), Map(("type", "name")))
-  val commonPointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)), Map(("type", "name")))
+  val commonLinearGeometry: Geometry = Geometry("LineString", List(List(384594.081, 6674141.478, 105.55299999999988), List(384653.656, 6674029.718, 106.02099999999336), List(384731.654, 6673901.8, 106.37600000000384), List(384919.538, 6673638.735, 106.51600000000326)))
+  val commonPointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)))
 
   val commonPointFeature: Feature = Feature("Feature", commonPointGeometry, commonPointProperties)
   val commonLinearFeature: Feature = Feature("Feature", commonLinearGeometry, commonLinearProperties)
@@ -90,7 +90,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     val newRoadLinks = Seq(RoadLink(5000L, List(Point(0.0, 0.0), Point(100.0, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
     val pointProperties: Map[String, String] = Map("type" -> "obstacle", "class" -> "1")
-    val pointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)), Map(("type", "name")))
+    val pointGeometry: Geometry = Geometry("Point", List(List(385786, 6671390, 0)))
     val pointFeature: Feature = Feature("Feature", pointGeometry, pointProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(pointFeature))
     val roadLinksList: List[List[Long]] = List(List(5000))
@@ -128,7 +128,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getRoadsLinksFromVVH(Set(5000), false)).thenReturn(newRoadLinks)
 
     val roadLinksList: List[List[Long]] = List(List(5000))
-    val pointGeometry: Geometry = Geometry("WrongGeometryType", List(List(385786, 6671390, 0)), Map(("type", "name")))
+    val pointGeometry: Geometry = Geometry("WrongGeometryType", List(List(385786, 6671390, 0)))
     val pointFeature: Feature = Feature("Feature", pointGeometry, commonPointProperties)
     val featureCollection: FeatureCollection = FeatureCollection("FeatureCollection", List(pointFeature))
 

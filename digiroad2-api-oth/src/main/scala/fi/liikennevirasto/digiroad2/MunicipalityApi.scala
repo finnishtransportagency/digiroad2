@@ -15,9 +15,9 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 case class Dataset(datasetId: String, featuresCollection: FeatureCollection, roadlinks: List[List[Long]])
-case class FeatureCollection(typee: String, features: List[Feature])
+case class FeatureCollection(typee: String, features: List[Feature], crs: Option[Map[String, Any]] = None)
 case class Feature(typee: String, geometry: Geometry, properties: Map[String, String])
-case class Geometry(typee: String, coordinates: List[List[Double]], crs: Map[String, Any])
+case class Geometry(typee: String, coordinates: List[List[Double]])
 
 sealed trait DatasetStatus{
   def value: Int
@@ -51,8 +51,8 @@ object FeatureStatus{
     values.find(_.value == intValue).getOrElse(ErrorsWhileProcessing)
   }
 
-  case object Inserted extends FeatureStatus{ def value = 0; def description = "Inserted successfuly";}
-  case object Processed extends FeatureStatus{ def value = 1; def description = "Processed successfuly";}
+  case object Inserted extends FeatureStatus{ def value = 0; def description = "Inserted successfully";}
+  case object Processed extends FeatureStatus{ def value = 1; def description = "Processed successfully";}
   case object WrongMandatoryValue extends FeatureStatus{ def value = 2; def description = "Asset type or sideCode with wrong mandatory value";}
   case object NoGeometryType extends FeatureStatus{ def value = 3; def description = "Geometry type not found";}
   case object RoadlinkNoTypeInProperties extends FeatureStatus{ def value = 4; def description = "Roadlink with no type in properties";}
@@ -77,9 +77,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
       case jsonObj: JObject =>
         val typee = (jsonObj \ "type").extract[String]
         val coordinates = (jsonObj \ "coordinates").extract[List[List[Double]]]
-        val crs = (jsonObj \ "crs").extract[Map[String, Any]]
-
-        Geometry(typee, coordinates, crs)
+        Geometry(typee, coordinates)
     },
       {
         case g : Geometry => Extraction.decompose(g)
@@ -103,8 +101,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
       case jsonObj: JObject =>
         val typee = (jsonObj \ "type").extract[String]
         val featuresCollection = (jsonObj \ "features").extract[List[Feature]]
-
-        FeatureCollection(typee, featuresCollection)
+        val crs = (jsonObj \ "crs").extractOpt[Map[String, Any]]
+        FeatureCollection(typee, featuresCollection, crs)
     },
       {
         case tv : FeatureCollection => Extraction.decompose(tv)
