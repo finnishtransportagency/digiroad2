@@ -2,15 +2,6 @@
   root.CsvBackend = function() {
     var self = this;
 
-    this.getMunicipalities = function(success, failure) {
-      $.ajax({
-        url: "api/municipalities/byUser",
-        type: "get",
-        success: success,
-        error: failure
-      });
-    };
-
     this.uploadFile = function(formData, assetType, success, failure) {
       $.ajax({
         url: 'api/import/' + assetType,
