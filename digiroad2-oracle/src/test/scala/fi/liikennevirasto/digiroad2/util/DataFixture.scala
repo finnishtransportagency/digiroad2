@@ -1837,8 +1837,7 @@ object DataFixture {
     }
 
     users.foreach { user =>
-      val configuration = user.configuration
-      if ((user.isOperator() || user.configuration.roles("premium")) && user.configuration.roles.size > 1) {
+      if ((user.isOperator() && user.configuration.roles.size > 1) || user.configuration.roles("premium")) {
         println("update -> user to operator and clean authorizedMunicipalities and authorizedAreas")
         printUser(user)
         userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
