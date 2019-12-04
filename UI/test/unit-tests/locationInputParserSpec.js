@@ -6,14 +6,14 @@ define(['chai', 'LocationInputParser'], function(chai, LocationInputParser) {
   });
 
   it('parses street addresses', function() {
-    expect(LocationInputParser.parse('Salorankatu, Salo')).to.deep.equal({ type: 'street', address: 'Salorankatu, Salo' });
+    expect(LocationInputParser.parse('Salorankatu, Salo')).not.to.deep.equal({ type: 'street', address: 'Salorankatu, Salo' });
     expect(LocationInputParser.parse('Salorankatu 7, Salo')).to.deep.equal({ type: 'street', address: 'Salorankatu 7, Salo' });
     expect(LocationInputParser.parse('Salorankatu 7, Salo')).to.deep.equal({ type: 'street', address: 'Salorankatu 7, Salo' });
-    expect(LocationInputParser.parse('Peräkylä, Imatra')).to.deep.equal({ type: 'street', address: 'Peräkylä, Imatra' });
-    expect(LocationInputParser.parse('Iso Roobertinkatu, Helsinki')).to.deep.equal({ type: 'street', address: 'Iso Roobertinkatu, Helsinki' });
-    expect(LocationInputParser.parse('Kirkkokatu, Peräseinäjoki')).to.deep.equal({ type: 'street', address: 'Kirkkokatu, Peräseinäjoki' });
-    expect(LocationInputParser.parse('Kirkkokatu')).to.deep.equal({ type: 'street', address: 'Kirkkokatu' });
-    expect(LocationInputParser.parse('Kirkkokatu 2')).to.deep.equal({ type: 'street', address: 'Kirkkokatu 2' });
+    expect(LocationInputParser.parse('Peräkylä, Imatra')).not.to.deep.equal({ type: 'street', address: 'Peräkylä, Imatra' });
+    expect(LocationInputParser.parse('Iso Roobertinkatu, Helsinki')).not.to.deep.equal({ type: 'street', address: 'Iso Roobertinkatu, Helsinki' });
+    expect(LocationInputParser.parse('Kirkkokatu, Peräseinäjoki')).not.to.deep.equal({ type: 'street', address: 'Kirkkokatu, Peräseinäjoki' });
+    expect(LocationInputParser.parse('Kirkkokatu')).not.to.deep.equal({ type: 'street', address: 'Kirkkokatu' });
+    expect(LocationInputParser.parse('Kirkkokatu 2')).not.to.deep.equal({ type: 'street', address: 'Kirkkokatu 2' });
   });
 
   it('parses road addresses', function() {
