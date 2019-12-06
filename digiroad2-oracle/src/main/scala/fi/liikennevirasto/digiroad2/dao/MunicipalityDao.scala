@@ -45,7 +45,7 @@ class MunicipalityDao {
     sql"""
       select id, ely_nro, name_fi
       from municipality
-      where LOWER(name_fi) = $municipalityName"""
+      where LOWER(name_fi) = LOWER($municipalityName)"""
       .as[(Int, Int, String)].list
       .map{ case(id, ely, name) =>
         MunicipalityInfo(id, ely, name)}
