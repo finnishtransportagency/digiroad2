@@ -147,6 +147,13 @@
         var newServiceType = parseInt($(event.currentTarget).val(), 10);
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
         var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
+
+        var currentService = services.filter(function(elem) { if ( elem.id == serviceId) return elem;});
+
+        if (newServiceType !== 19 && currentService.length > 0 && currentService[0].weightLimit !== undefined) {
+          currentService[0].weightLimit = undefined;
+        }
+
         selectedAsset.set({services: services});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
         me.toggleMode(rootElement, !authorizationPolicy.formEditModeAccess(selectedAsset, me.roadCollection) || me.applicationModel.isReadOnly());

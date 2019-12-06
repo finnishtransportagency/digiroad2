@@ -1029,8 +1029,15 @@
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         saveCondition: function (selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return selected.services.length > 0 && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isOperator());
+          var services = selectedAsset.get().services;
+          var totalSerices = services.length;
+
+          var wrongWeightLimitValueServices = services.filter(function(serv) {
+            if (serv.serviceType === 19 && ( [NaN, undefined].indexOf(serv.weightLimit) >= 0 || !(/^\d+$/.test(serv.weightLimit)) ))
+              return serv;
+          });
+
+          return wrongWeightLimitValueServices.length === 0 && totalSerices > 0 && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isOperator());
         },
         isSuggestedAsset: true,
         hasMunicipalityValidation: true,
