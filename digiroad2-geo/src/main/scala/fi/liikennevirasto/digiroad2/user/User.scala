@@ -26,24 +26,11 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
 
   def isServiceRoadMaintainer(): Boolean = configuration.roles(Role.ServiceRoadMaintainer)
 
-  def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
+  def isOperator(): Boolean = configuration.roles(Role.Operator)
 
-  def hasViiteWriteAccess(): Boolean = configuration.roles(Role.ViiteUser)
+  def isELYMaintainer(): Boolean = configuration.roles(Role.ElyMaintainer)
 
-  def isOperator(): Boolean = {
-    configuration.roles(Role.Operator)
-  }
-
-  //Todo change to ELY Maintainer
-  def isBusStopMaintainer(): Boolean = {
-    configuration.roles(Role.BusStopMaintainer)
-  }
-
-  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty || (configuration.roles(Role.Premium) && configuration.roles.size == 1)
-
-  def hasEarlyAccess(): Boolean = {
-    configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
-  }
+  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty && configuration.authorizedMunicipalities.nonEmpty
 
   def isAuthorizedToRead(municipalityCode: Int): Boolean = true
 
@@ -57,22 +44,15 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
   private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
-    (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isBusStopMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
+    (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isELYMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
 
   private def isAuthorizedForArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean =
     isOperator() || (isServiceRoadMaintainer() && configuration.authorizedAreas.contains(areaCode))
 }
 
 object Role {
-  // TODO note this role should be change in newuser.html too
   val Operator = "operator"
-  // TODO Could be deleted
-  val Administrator = "administrator"
-  // TODO Rename to municipality Maintainer
-  val Premium = "premium"
   val Viewer = "viewer"
-  val ViiteUser = "viite"
-  //TODO change to ELY Maintainer and replace DBase
-  val BusStopMaintainer = "busStopMaintainer"
+  val ElyMaintainer = "elyMaintainer"
   val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }

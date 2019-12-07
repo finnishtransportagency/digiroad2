@@ -201,6 +201,7 @@ object DataFixture {
     new TrafficSignParkingProhibitionGenerator(roadLinkService)
   }
 
+  lazy val municipalityService: MunicipalityService = new MunicipalityService
 
   def getProperty(name: String) = {
     val property = dr2properties.getProperty(name)
@@ -1772,6 +1773,60 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def normalizeOperatorRoles(): Unit ={
+    println("\nStart process to remove additional roles from operators users")
+    println(DateTime.now())
+
+    val userProvider: UserProvider = new OracleUserProvider
+    println("\nGetting operators with additional roles")
+
+    val users: Seq[User] = OracleDatabase.withDynSession {
+      userProvider.getUsers()
+    }
+
+    users.foreach { user =>
+      println(s" id -> ${user.id}; username -> ${user.username}; configuration ${user.configuration.toString} ")
+      if (user.isOperator() && user.configuration.roles.size > 1) {
+        println("update -> user to operator and clean authorizedMunicipalities and authorizedAreas")
+        //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("operator"), authorizedMunicipalities = Set(), authorizedAreas = Set())))
+      }
+      else if (user.configuration.roles.size == 1 && (user.configuration.roles("busStopMaintainer") || user.isServiceRoadMaintainer()) || user.configuration.roles.size == 2) {
+        if (user.configuration.roles.size == 2 && user.configuration.roles("busStopMaintainer") && user.isServiceRoadMaintainer())
+          println(s"Wrong users combination -> ${user.configuration}")
+
+        //Check busStopMaintainer and convert to ElyMaintainer
+        if (user.configuration.roles("busStopMaintainer")) {
+          val municipalities: Set[Int] = user.configuration.authorizedMunicipalities
+
+          if (user.configuration.authorizedMunicipalities.nonEmpty) {
+            val municipalityInfo = municipalityService.getMunicipalitiesNameAndIdByCode(municipalities)
+            val elyMunicipalities: Set[Int] = municipalityService.getMunicipalitiesNameAndIdByEly(municipalityInfo.map(_.ely).toSet).map(_.id).toSet
+
+            if (elyMunicipalities.diff(municipalities).nonEmpty || municipalities.diff(elyMunicipalities).nonEmpty)
+              println("inaccurate authorizedMunicipalities for elys")
+            //Normally the user shouldn't have more than 4 ely
+            if (municipalityInfo.map(_.ely).toSet.size > 4)
+              println("inaccurate authorizedMunicipalities for elys")
+
+            println("update -> user to elyMaintainer")
+            //userProvider.updateUserConfiguration(user.copy(configuration = user.configuration.copy(roles = Set("elyMaintainer"))))
+          }
+        }
+        //Check serviceRoadMaintainer
+        if (user.isServiceRoadMaintainer()) {
+          if (user.configuration.authorizedAreas.isEmpty) {
+            println(s"wrong configuration for serviceRoadMaintainer -> ${user.configuration}")
+          }
+        }
+      }
+
+      if (user.configuration.roles.isEmpty && user.configuration.authorizedMunicipalities.nonEmpty)
+        println(s"wrong configuration for serviceRoadMaintainer -> ${user.configuration}")
+
+      println("Completed at time: " + DateTime.now())
+    }
+  }
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -2030,76 +2085,37 @@ object DataFixture {
       }
     }
 
-    def vkmSearch(frozen: RoadLink, mappedAddresses: Seq[RoadAddressTEMP], first: Point, last: Point) : Try[Option[RoadAddressTEMP]] = {
-      Try {
-        val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
-        if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-          println("problems in wonderland")
-          None
-        } else {
-          val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
-          if (grouped.keys.size > 1) {
-            val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
-            if (recalculateAddresses.size == 1)
-              Some(recalculateAddresses.head)
-            else {
-              recalculateAddresses.foreach { recalc =>
-                println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
-              }
-            }
-            None
-          } else {
-            val orderedAddress = address.sortBy(_.addrM)
-            Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
-          }
-        }
-      }
-    }
-
-    def failVkmSearch(frozen: RoadLink, mappedAddresses : Seq[RoadAddressTEMP], first: Point, last: Point, roadLinks: Seq[RoadLink]) : Option[RoadAddressTEMP] = {
-      val addressStart = mappedAddresses.flatMap { address =>
-      val road = roadLinks.find(_.linkId == address.linkId).get
-      val (optFirst, optLast) = GeometryUtils.geometryEndpoints(road.geometry)
-
-      if(GeometryUtils.areAdjacent(first, optFirst))
-        Some(address.road, address.roadPart, address.startAddressM, address.startMValue)
-      else if(GeometryUtils.areAdjacent(first, optLast))
-        Some(address.road, address.roadPart, address.endAddressM, address.endMValue)
-      else
-        None
-    }
-
-    val addressEnd = if(addressStart.size == 1) {
-      mappedAddresses.filter(address => address.road == addressStart.head._1 && address.roadPart == addressStart.head._2).flatMap { address =>
-        val road = roadLinks.find(_.linkId == address.linkId).get
-        val (optFirst, optLast) = GeometryUtils.geometryEndpoints(road.geometry)
-
-        if (GeometryUtils.areAdjacent(last, optFirst))
-          Some(address.road, address.roadPart, address.startAddressM)
-        else if (GeometryUtils.areAdjacent(last, optLast))
-          Some(address.road, address.roadPart, address.endAddressM)
-        else
-          None
-      }
-    } else Seq()
-
-    if(addressEnd.size == 1) {
-      Some(RoadAddressTEMP(frozen.linkId, addressStart.head._1,  addressStart.head._2, Track.Unknown, addressStart.head._3, addressEnd.head._3, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
-    } else
-      None
-  }
-
     def retry(mappedAddresses : Seq[RoadAddressTEMP], frozenRoadLinks: Seq[RoadLink], roadLinks: Seq[RoadLink]) : Seq[RoadAddressTEMP] = {
 
       val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
         val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
 
-        val vkmResult = vkmSearch(frozen, mappedAddresses, first, last)
-        if(vkmResult.isSuccess)
-          vkmResult.get
-        else {
-          println(s"Exception in VKM for linkId ${frozen.linkId}")
-          failVkmSearch(frozen, mappedAddresses, first, last, roadLinks)
+        try {
+          val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
+          if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
+            println("problems in wonderland")
+            Seq()
+          } else {
+            val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
+            if (grouped.keys.size > 1) {
+              val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
+              if (recalculateAddresses.size == 1)
+                Some(recalculateAddresses.head)
+              else {
+                recalculateAddresses.foreach { recalc =>
+                  println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
+                }
+              }
+              None
+            } else {
+              val orderedAddress = address.sortBy(_.addrM)
+              Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry, municipalityCode = Some(frozen.municipalityCode)))
+            }
+          }
+        } catch {
+          case ex: Exception =>
+            println(s"Exception in VKM for linkId ${frozen.linkId}")
+            None
         }
       }
       val toCreate = calculateTrackAndSideCode(mappedAddresses, frozenAddresses, roadLinks, Seq())
@@ -2292,6 +2308,8 @@ object DataFixture {
         resolvingFrozenLinks()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
+      case Some("normalize_operator_roles") =>
+        normalizeOperatorRoles()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2305,7 +2323,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info")
+        " resolving_Frozen_Links| import_private_road_info | normalize_operator_roles")
     }
   }
 }

@@ -56,6 +56,16 @@ class MunicipalityDao {
         MunicipalityInfo(id, ely, name)}
   }
 
+  def getMunicipalitiesNameAndIdByEly(ely: Set[Int]): List[MunicipalityInfo] = {
+    val filter = if (ely.nonEmpty) {"where ely_nro in (" + ely.mkString(",") + ")" } else ""
+
+    sql"""
+      select id, ely_nro, name_fi from municipality
+      #$filter
+    """.as[(Int, Int, String)].list
+      .map{ case(id, ely, name) =>
+        MunicipalityInfo(id, ely, name)}
+  }
 
   def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] =  {
     OracleDatabase.withDynSession {
