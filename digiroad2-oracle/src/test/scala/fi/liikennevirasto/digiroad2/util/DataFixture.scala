@@ -2320,7 +2320,7 @@ object DataFixture {
         resolvingFrozenLinks()
       case Some("import_private_road_info") =>
         importPrivateRoadInformation()
-      case Some("normalize_operator_roles") =>
+      case Some("normalize_user_roles") =>
         normalizeUserRoles()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
