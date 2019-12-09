@@ -498,7 +498,8 @@
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat([winterSpeedLimits])
-          .concat(getLinearAsset(assetType.trafficVolume)),
+          .concat(getLinearAsset(assetType.trafficVolume))
+          .concat(getLinearAsset(assetType.cyclingAndWalking)),
       []
           .concat(trSpeedLimitBox)
     ];

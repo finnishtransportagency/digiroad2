@@ -44,7 +44,8 @@
       careClass: 390,
       carryingCapacity: 400,
       roadWorksAsset: 420,
-      parkingProhibition: 430
+      parkingProhibition: 430,
+      cyclingAndWalking: 440
     };
 
     var assetGroups = {
@@ -780,6 +781,57 @@
               ]
             },
             {label: "", type: 'time_period', publicId: "parking_validity_period", weight: 2}
+          ]
+        }),
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        minZoomForContent: oneKmZoomLvl
+      },
+      {
+        typeId: assetType.cyclingAndWalking,
+        defaultValue: 1,
+        singleElementEventCategory: 'cyclingAndWalking',
+        multiElementEventCategory: 'cyclingAndWalkings',
+        layerName: 'cyclingAndWalking',
+        title: 'Käpy tietolaji',
+        newTitle: 'Uusi Käpy tietolaji',
+        className: 'cycling-and-walking',
+        isSeparable: true,
+        allowComplementaryLinks: false,
+        editControlLabels: {
+          title: 'Käpy tietolaji',
+          enabled: 'Käpy tietolaji',
+          disabled: 'Ei käpy tietolaji'
+        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        isVerifiable: false,
+        style: new ParkingProhibitionStyle(),
+        form: new DynamicAssetForm ( {
+          fields : [
+            {
+              label: 'Käpy tietolaji', required: 'required', type: 'single_choice', publicId: "cyclingAndWalking_type", defaultValue: "1", weight: 1,
+              values: [
+                {id: 1 , label:'Pyöräily kielletty'},
+                {id: 2 , label:'Jalankulun ja pyöräilyn väylä'},
+                {id: 3 , label:'Maantie tai yksityistie'},
+                {id: 4 , label:'Katu'},
+                {id: 5 , label:'Pyöräkatu'},
+                {id: 6 , label:'Kylätie'},
+                {id: 7 , label:'Kävelykatu'},
+                {id: 8 , label:'Pihakatu'},
+                {id: 9 , label:'Pyöräkaista'},
+                {id: 10 , label:'Pyörätie'},
+                {id: 11 , label:'Kaksisuuntainen pyörätie'},
+                {id: 12 , label:'Yhdistetty pyörätie ja jalkakäytävä, yksisuuntainen pyörille'},
+                {id: 13 , label:'Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille'},
+                {id: 14 , label:'Jalkakäytävä'},
+                {id: 15 , label:'Puistokäytävä'},
+                {id: 16 , label:'Pururata'},
+                {id: 17 , label:'Ajopolku'},
+                {id: 18 , label:'Polku'}
+              ]
+            }
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
