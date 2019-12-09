@@ -51,7 +51,7 @@ class ServicePointBusStopServiceSpec extends FunSuite with Matchers with BeforeA
 
       def validateMunicipalityAuthorization(municipalityCode: Int, administrativeClass: AdministrativeClass): Unit = {}
 
-      val (updatedServicePoint, updatedPublishInfo) = TestMassTransitStopService.update(servicePoint, Set(newProperty, newProperty1), "ServicePointBusStopServiceSpec", validateMunicipalityAuthorization)
+      val (updatedServicePoint, updatedPublishInfo) = TestMassTransitStopService.update(servicePoint, Set(newProperty, newProperty1), "ServicePointBusStopServiceSpec", validateMunicipalityAuthorization, None, None)
 
       updatedServicePoint.propertyData.filter(_.publicId == "pysakin_tyyppi").head.values.head.propertyValue should be(servicePoint.propertyData.filter(_.publicId == "pysakin_tyyppi").head.values.head.propertyValue)
       updatedServicePoint.propertyData.filter(_.publicId == "palvelu").head.values.head.propertyValue should be(servicePoint.propertyData.filter(_.publicId == "palvelu").head.values.head.propertyValue)

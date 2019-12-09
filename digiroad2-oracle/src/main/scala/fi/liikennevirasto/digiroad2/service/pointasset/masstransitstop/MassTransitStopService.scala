@@ -356,7 +356,12 @@ trait MassTransitStopService extends PointAssetOperations {
 
           val newProperties = excludeProperties(properties.toSeq)
 
-          val (persistedServicePointAsset, publishInfo) = servicePointBusStopService.update(servicePointAsset, newProperties, username, municipalityValidation)
+          val optRoadLink = optionalPosition match {
+            case Some(position) => roadLinkService.getRoadLinkAndComplementaryFromVVH(position.linkId, false)
+            case _ => None
+          }
+
+          val (persistedServicePointAsset, publishInfo) = servicePointBusStopService.update(servicePointAsset, newProperties, username, municipalityValidation, optionalPosition, optRoadLink)
 
           val massTransitStopWithProperties = MassTransitStopWithProperties(persistedServicePointAsset.id, persistedServicePointAsset.nationalId,
                                               persistedServicePointAsset.stopTypes,persistedServicePointAsset.lon, persistedServicePointAsset.lat, None, None, None,

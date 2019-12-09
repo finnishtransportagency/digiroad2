@@ -1,8 +1,10 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Position, SimpleProperty}
+import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, Sequences, ServicePoint, ServicePointBusStopDao}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 
@@ -42,7 +44,17 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
     Some(ServicePointPublishInfo(None, Seq(), Seq(asset.id)))
   }
 
-  def update(asset: ServicePoint, properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit): (ServicePoint, AbstractPublishInfo) = {
+  private def updatePosition(id: Long, optionalRoadlink: Option[RoadLink])(position: Position) = {
+    val point = Point(position.lon, position.lat)
+    updateAssetGeometry(id, point)
+
+    optionalRoadlink match {
+      case Some(roadlink) => massTransitStopDao.updateMunicipality(id, roadlink.municipalityCode)
+      case _ =>
+    }
+  }
+
+  def update(asset: ServicePoint, properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, optionalPosition: Option[Position], optionalRoadlink: Option[RoadLink]): (ServicePoint, AbstractPublishInfo) = {
 
     if (asset.propertyData.find(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId).get.values.exists(v => v.propertyValue != MassTransitStopOperations.ServicePointBusStopPropertyValue))
       throw new IllegalArgumentException
@@ -55,6 +67,8 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
     val id = asset.id
     massTransitStopDao.updateAssetLastModified(id, username)
     massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  p.publicId == validityDirectionPublicId).toSeq)
+
+    optionalPosition.map(updatePosition(id, optionalRoadlink))
 
     val resultAsset = enrichBusStop(fetchAsset(id))._1
     (resultAsset, PublishInfo(None))

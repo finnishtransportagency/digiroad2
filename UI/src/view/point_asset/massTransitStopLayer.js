@@ -608,7 +608,15 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var movementLimit = 50; //50 meters
     var popupMessageToShow;
     //The method geometrycalculator.getSquaredDistanceBetweenPoints() will return the distance in Meters so we multiply the result for this
-    var distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(coordinates, originalCoordinates));
+    var feature = event.features.getArray()[0];
+    var properties = feature.getProperties();
+
+    var distance;
+    if(properties.data.stopTypes[0] != 7) {
+      distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(coordinates, originalCoordinates));
+    }else{
+      distance = Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints({ x: event.coordinate[0], y: event.coordinate[1]}, originalCoordinates));
+    }
 
     if (distance > movementLimit && !movementPermissionConfirmed)
     {
@@ -653,6 +661,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var feature = event.features.getArray()[0];
     var properties = feature.getProperties();
 
+    if (properties.data.stopTypes[0] != 7) {
+
     properties.data.bearing = angle;
     properties.data.roadDirection = angle;
 
@@ -671,6 +681,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       linkId: nearestLine.linkId,
       validityDirection: selectedAsset.data.validityDirection
     });
+
+    }else{
+      properties.data.lon = event.coordinate[0];
+      properties.data.lat = event.coordinate[1];
+
+      feature.getGeometry().setCoordinates([event.coordinate[0], event.coordinate[1]]);
+      selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
+
+      selectedMassTransitStopModel.move({
+        lon: event.coordinate[0],
+        lat: event.coordinate[1]
+      });
+    }
   };
 
   var toolSelectionChange = function(action) {

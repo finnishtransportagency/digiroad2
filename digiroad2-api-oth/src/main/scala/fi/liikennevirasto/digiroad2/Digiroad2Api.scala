@@ -540,6 +540,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
+      case (Some(lon), Some(lat), None) => Some(Position(lon, lat, roadLinkService.getClosestRoadlinkFromVVH(userProvider.getCurrentUser(), Point(lon, lat)).getOrElse(throw new NoSuchElementException).linkId, bearing))
       case _ => None
     }
     try {
