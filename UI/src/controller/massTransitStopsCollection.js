@@ -8,6 +8,7 @@
       future: false,
       past: false
     };
+    var showServicePoints = true;
 
     var filterComplementaries = function(assets){
       if(isComplementaryActive)
@@ -116,6 +117,13 @@
       },
       getValidityPeriods: function() {
         return validityPeriods;
+      },
+      getShowHideServicePoints: function() {
+        return showServicePoints;
+      },
+      showHideServicePoints: function(checked) {
+        showServicePoints = checked;
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       },
       selectedValidityPeriodsContain: function(validityPeriod) {
         return validityPeriods[validityPeriod];

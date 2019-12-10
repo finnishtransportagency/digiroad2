@@ -218,6 +218,7 @@
       expandedPointAssetCheckboxSelector.change( function (e){
         var checked = e.currentTarget.checked;
         togglePointAsset(checked);
+        massTransitStopsCollection.showHideServicePoints(checked);
           }
       );
     };

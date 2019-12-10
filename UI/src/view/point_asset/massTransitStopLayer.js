@@ -197,7 +197,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     asset.massTransitStop = massTransitStop;
     marker.feature.setProperties(asset);
 
-    if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod))
+    if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && (asset.data.stopTypes[0] != 7 || (asset.data.stopTypes[0] == 7 && massTransitStopsCollection.getShowHideServicePoints())))
       assetSource.addFeature(marker.feature);
 
     return asset;
@@ -294,7 +294,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     assetSource.clear();
     _.each(massTransitStopsCollection.getAssets(), function(asset) {
       var marker = asset.massTransitStop.getMarker();
-      if (massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
+      if (massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map)) && (asset.data.stopTypes[0] != 7 || (asset.data.stopTypes[0] == 7 && massTransitStopsCollection.getShowHideServicePoints()))) {
         assetSource.addFeature(marker.feature);
       }
     });
