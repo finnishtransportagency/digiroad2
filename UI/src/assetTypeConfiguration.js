@@ -806,7 +806,7 @@
         },
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
-        style: new ParkingProhibitionStyle(),
+        style: new CyclingAndWalkingStyle(),
         form: new DynamicAssetForm ( {
           fields : [
             {
