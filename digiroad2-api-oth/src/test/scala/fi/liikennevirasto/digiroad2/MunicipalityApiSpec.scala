@@ -119,7 +119,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus.sortBy(status => status._1) should be (List((100000,"6"), (100001,"6")))
+      featuresStatus.sortBy(status => status._1) should be (List(("100000","6"), ("100001","6")))
     }
   }
 
@@ -141,7 +141,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"3")))
+      featuresStatus should be (List(("100000","3")))
     }
   }
 
@@ -163,7 +163,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((100000,"2")))
+      featuresStatus should be (List(("100000","2")))
     }
   }
 
@@ -185,7 +185,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((200000,"2")))
+      featuresStatus should be (List(("200000","2")))
     }
   }
 
@@ -207,7 +207,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(2)
-      featuresStatus should be (List((200000,"2")))
+      featuresStatus should be (List(("200000","2")))
     }
   }
 
@@ -237,7 +237,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(0)
-      featuresStatus should be (List((200000,"0")))
+      featuresStatus should be (List(("200000","0")))
 
       ServiceWithDao.updateDataset(dataSet)
       val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
@@ -245,7 +245,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
       val createdSpeedLimit = speedLimitService.getExistingAssetByRoadLink(newRoadLink, false)
 
       datasetStatus2 should be(3)
-      featuresStatus2 should be (List((200000,"1")))
+      featuresStatus2 should be (List(("200000","1")))
       createdSpeedLimit.head.linkId should be (5000)
       createdSpeedLimit.head.value should be(Some(NumericValue(100)))
       createdSpeedLimit.head.startMeasure should be (0.0)
@@ -281,7 +281,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(0)
-      featuresStatus should be (List((200000,"0")))
+      featuresStatus should be (List(("200000","0")))
 
       ServiceWithDao.updateDataset(dataSet)
       val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
@@ -289,7 +289,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
       val createdPavementClass = pavedRoadService.getPersistedAssetsByLinkIds(PavedRoad.typeId, Seq(newRoadLink.linkId), false)
 
       datasetStatus2 should be(3)
-      featuresStatus2 should be (List((200000,"1")))
+      featuresStatus2 should be (List(("200000","1")))
       createdPavementClass.head.linkId should be (5000)
       createdPavementClass.head.value.toString should be(Some(DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(1))))))).toString)
       createdPavementClass.head.startMeasure should be (0.0)
@@ -325,14 +325,14 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       numberOfFeaturesWithoutId should be(None)
       datasetStatus should be(0)
-      featuresStatus should be (List((100000,"0")))
+      featuresStatus should be (List(("100000","0")))
 
       ServiceWithDao.updateDataset(dataSet)
       val datasetStatus2 = ServiceWithDao.awsDao.getDatasetStatus(dataSetId)
       val featuresStatus2 = ServiceWithDao.awsDao.getAllFeatureIdAndStatusByDataset(dataSetId)
 
       datasetStatus2 should be(3)
-      featuresStatus2 should be (List((100000,"1")))
+      featuresStatus2 should be (List(("100000","1")))
     }
   }
 }
