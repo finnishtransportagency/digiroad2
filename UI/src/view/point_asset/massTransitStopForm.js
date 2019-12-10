@@ -439,6 +439,12 @@
           return choice.publicId === property.publicId;
         }).values;
 
+        if(property.publicId == "tarkenne") {
+          enumValues = _.filter(enumValues, function (value) {
+            return value.propertyValue != '99';
+          });
+        }
+
         if(authorizationPolicy.reduceChoices(property)){
           enumValues = _.filter(enumValues, function(value){
             return value.propertyValue != '2';

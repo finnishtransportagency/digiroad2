@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Position, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Position, PropertyValue, SimpleProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, Sequences, ServicePoint, ServicePointBusStopDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -14,6 +14,7 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   private val validityDirectionPublicId = "vaikutussuunta"
+  private val subtypePublicId = "tarkenne"
 
   def create(asset: NewMassTransitStop, username: String, point: Point, municipalityCode: Int): (ServicePoint, AbstractPublishInfo) = {
     val assetId = Sequences.nextPrimaryKeySeqValue
@@ -66,7 +67,12 @@ class ServicePointBusStopService(typeId : Int, servicePointBusStopDao: ServicePo
 
     val id = asset.id
     massTransitStopDao.updateAssetLastModified(id, username)
-    massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  p.publicId == validityDirectionPublicId).toSeq)
+    if(verifiedProperties.exists(p =>  p.publicId == subtypePublicId && p.values.isEmpty)){
+      val subTypeProperty = verifiedProperties.find(p =>  p.publicId == subtypePublicId && p.values.isEmpty).get.copy(values = Seq(PropertyValue("99")))
+      massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  p.publicId == validityDirectionPublicId).toSeq :+ subTypeProperty)
+    }else{
+      massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  p.publicId == validityDirectionPublicId).toSeq)
+    }
 
     optionalPosition.map(updatePosition(id, optionalRoadlink))
 
