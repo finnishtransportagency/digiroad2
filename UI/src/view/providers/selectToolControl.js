@@ -22,10 +22,12 @@
             filterGeometry : function(feature){
                 return feature.getGeometry() instanceof ol.geom.LineString;
             },
-            layers: []
+            layers: [],
+            editableLayers: []
         }, options);
 
       var layerName = settings.layerName ? settings.layerName : layer.get('name');
+      settings.editableLayers.push(layer);
 
       var dragBoxInteraction = new ol.interaction.DragBox({
             condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) && settings.enableBoxSelect(); }
@@ -45,7 +47,7 @@
         });
 
         var selectInteraction = new ol.interaction.Select({
-            layers: [layer],
+            layers: settings.editableLayers,
             condition: function(events){
                 return !isPolygonActive && !isRectangleActive && enabled && !ol.events.condition.platformModifierKeyOnly(events) && (ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
@@ -62,7 +64,7 @@
         });
 
         var multiSelectInteraction = new ol.interaction.Select({
-            layers: [layer],
+            layers: settings.editableLayers,
             condition: function (events) {
                 return enabled && ol.events.condition.click(events) && isMultipleLinkSelectionAllowed && ol.events.condition.platformModifierKeyOnly(events) && !application.isReadOnly();
             },

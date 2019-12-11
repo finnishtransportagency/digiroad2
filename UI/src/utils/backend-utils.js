@@ -112,18 +112,29 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox, filter) {
+    this.getAssets = function (boundingBox, filter, checkbox) {
       if(!filter)
         filter = function(assets){return assets;};
 
-      self.getAssetsWithCallback(boundingBox, function (assets) {
+      var assetsFetched = function (assets) {
         eventbus.trigger('assets:fetched',filter(assets));
-      });
+      };
+
+      if(checkbox){
+        self.getAssetsWithCallbackServiceStops(boundingBox, assetsFetched);
+      }
+      self.getAssetsWithCallback(boundingBox, assetsFetched);
     };
 
     this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/massTransitStops?bbox=' + boundingBox
+      };
+    });
+
+    this.getAssetsWithCallbackServiceStops = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/massServiceStops?bbox=' + boundingBox
       };
     });
 

@@ -29,14 +29,35 @@
     };
 
     var refreshAssets = function(mapMoveEvent) {
-      backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
+      var treatAssets = function (backendAssets) {
         backendAssets = filterComplementaries(backendAssets);
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
           eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
         }
-      });
+      };
+
+      if(showServicePoints) {
+        backend.getAssetsWithCallbackServiceStops(mapMoveEvent.bbox, treatAssets);
+      }
+      backend.getAssetsWithCallback(mapMoveEvent.bbox, treatAssets);
+      verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
+    };
+
+    var refreshAssetsServiceStops = function(mapMoveEvent) {
+      var treatAssets = function (backendAssets) {
+        backendAssets = filterComplementaries(backendAssets);
+        if (mapMoveEvent.hasZoomLevelChanged) {
+          eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
+        } else {
+          eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
+        }
+      };
+
+      if(showServicePoints) {
+        backend.getAssetsWithCallbackServiceStops(mapMoveEvent.bbox, treatAssets);
+      }
       verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
     };
 
@@ -91,9 +112,10 @@
       fetchAssets: function(boundingBox) {
         backend.getAssets(boundingBox, function(assets){
           return filterComplementaries(assets);
-        });
+        }, showServicePoints);
       },
       refreshAssets: refreshAssets,
+      refreshAssetsServiceStops: refreshAssetsServiceStops,
       fetchLightAssets: fetchLightAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
@@ -122,6 +144,10 @@
         return showServicePoints;
       },
       showHideServicePoints: function(checked) {
+        if(!showServicePoints && checked){
+          showServicePoints = checked;
+          eventbus.trigger('servicePointCheckbox:changed', showServicePoints);
+        }
         showServicePoints = checked;
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       },

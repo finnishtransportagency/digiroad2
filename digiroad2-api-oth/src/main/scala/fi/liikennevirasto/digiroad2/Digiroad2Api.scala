@@ -278,6 +278,25 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
+  get("/massServiceStops") {
+    val user = userProvider.getCurrentUser()
+    val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
+    validateBoundingBox(bbox)
+    massTransitStopService.getServicePointsByBoundingBox(user, bbox).map { stop =>
+      Map("id" -> stop.id,
+        "name" -> extractPropertyValue("nimi_suomeksi", stop.propertyData, values => values.headOption.getOrElse("")),
+        "nationalId" -> stop.nationalId,
+        "stopTypes" -> stop.stopTypes,
+        "municipalityNumber" -> stop.municipalityCode,
+        "lat" -> stop.lat,
+        "lon" -> stop.lon,
+        "floating" -> stop.floating,
+        "validityPeriod" -> "current",
+        "propertyData" -> stop.propertyData
+      )
+    }
+  }
+
   get("/massTransitStops") {
     val user = userProvider.getCurrentUser()
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
@@ -296,18 +315,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
         "linkSource" -> stop.linkSource.value)
-    } ++ massTransitStopService.getServicePointsByBoundingBox(user, bbox).map { stop =>
-      Map("id" -> stop.id,
-        "name" -> extractPropertyValue("nimi_suomeksi", stop.propertyData, values => values.headOption.getOrElse("")),
-        "nationalId" -> stop.nationalId,
-        "stopTypes" -> stop.stopTypes,
-        "municipalityNumber" -> stop.municipalityCode,
-        "lat" -> stop.lat,
-        "lon" -> stop.lon,
-        "floating" -> stop.floating,
-        "validityPeriod" -> "current",
-        "propertyData" -> stop.propertyData
-      )
     }
   }
 

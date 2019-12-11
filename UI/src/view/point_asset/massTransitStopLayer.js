@@ -19,6 +19,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
   var clusterView;
 
+  var showOrHideServicePointLayer = function (showOrHide) {
+    servicePointLayer.setVisible(showOrHide);
+  };
+
   var selectedControl = 'Select';
 
   var assetSource = new ol.source.Vector();
@@ -42,6 +46,17 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
               return properties.massTransitStop.getMarkerDefaultStyles();
           return [];
       }
+  });
+
+  var servicePointSource = new ol.source.Vector();
+  var servicePointLayer = new ol.layer.Vector({
+    source : servicePointSource,
+    style : function(feature) {
+      var properties = feature.getProperties();
+      if(properties.massTransitStop)
+        return properties.massTransitStop.getMarkerDefaultStyles();
+      return [];
+    }
   });
 
   if(isExperimental) {
@@ -98,6 +113,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   terminalLayer.setVisible(true);
   map.addLayer(terminalLayer);
 
+  servicePointLayer.set('name', 'servicePointLayer');
+  servicePointLayer.setOpacity(1);
+  showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
+  map.addLayer(servicePointLayer);
+
   function onSelectMassTransitStop(event) {
     if(event.selected.length > 0){
       _.each(event.selected, function(feature){
@@ -130,7 +150,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     draggable : false,
     filterGeometry : function(feature){
       return feature.getGeometry() instanceof ol.geom.Point && !_.isUndefined(feature.getProperties().data);
-    }
+    },
+    editableLayers: [servicePointLayer]
   });
 
   this.selectControl = selectControl;
@@ -196,9 +217,15 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     asset.data = assetData;
     asset.massTransitStop = massTransitStop;
     marker.feature.setProperties(asset);
+    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
 
-    if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && (asset.data.stopTypes[0] != 7 || (asset.data.stopTypes[0] == 7 && massTransitStopsCollection.getShowHideServicePoints())))
-      assetSource.addFeature(marker.feature);
+    if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod)){
+      if(asset.data.stopTypes[0] == 7){
+        servicePointSource.addFeature(marker.feature);
+      }else{
+        assetSource.addFeature(marker.feature);
+      }
+    }
 
     return asset;
   };
@@ -208,6 +235,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     massTransitStopsCollection.destroyAsset(asset.data.id);
     if(_.some(assetSource.getFeatures(), function(f){ return f == feature; }))
       assetSource.removeFeature(feature);
+    if(_.some(servicePointSource.getFeatures(), function(f){ return f == feature; }))
+      servicePointSource.removeFeature(feature);
   };
 
   this.removeLayerFeatures = function () {
@@ -240,6 +269,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var renderAssets = function(assetDatas) {
     assetLayer.setVisible(true);
+    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
     _.each(massTransitStopsCollection.getComplementaryAssets(), removeAssetFromMap);
     _.each(assetDatas, function(assetGroup) {
       assetGroup = _.sortBy(assetGroup, 'id');
@@ -292,10 +322,17 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleValidityPeriodChanged = function() {
     assetSource.clear();
+    servicePointSource.clear();
+    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
     _.each(massTransitStopsCollection.getAssets(), function(asset) {
       var marker = asset.massTransitStop.getMarker();
-      if (massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map)) && (asset.data.stopTypes[0] != 7 || (asset.data.stopTypes[0] == 7 && massTransitStopsCollection.getShowHideServicePoints()))) {
-        assetSource.addFeature(marker.feature);
+
+      if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))){
+        if(asset.data.stopTypes[0] == 7){
+          servicePointSource.addFeature(marker.feature);
+        }else{
+          assetSource.addFeature(marker.feature);
+        }
       }
     });
     if (selectedAsset && selectedAsset.data.validityPeriod === undefined) {
@@ -784,6 +821,20 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
+  var handleServicePointCheckboxChanged = function() {
+    var extent = map.getView().calculateExtent(map.getSize());
+    var center = map.getView().getCenter();
+
+    if (zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
+      massTransitStopsCollection.refreshAssetsServiceStops({bbox: extent, hasZoomLevelChanged: true, center: center});
+      if (massTransitStopsCollection.isComplementaryActive()) {
+        roadCollection.fetchWithComplementary(extent);
+      } else {
+        roadCollection.fetch(extent);
+      }
+    }
+  };
+
   this.refreshView = function() {
     var extent = map.getView().calculateExtent(map.getSize());
     var center = map.getView().getCenter();
@@ -824,12 +875,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     } else {
       if (applicationModel.getSelectedLayer() === 'massTransitStop') {
           assetSource.clear();
+          servicePointSource.clear();
       }
     }
   };
 
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'validityPeriod:changed', handleValidityPeriodChanged);
+    eventListener.listenTo(eventbus, 'servicePointCheckbox:changed', handleServicePointCheckboxChanged);
     eventListener.listenTo(eventbus, 'tool:changed', toolSelectionChange);
     eventListener.listenTo(eventbus, 'assetPropertyValue:saved', updateAsset);
     eventListener.listenTo(eventbus, 'assetPropertyValue:changed', handleAssetPropertyValueChanged);
@@ -918,6 +971,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectedControl = 'Select';
     startListening();
     assetLayer.setVisible(true);
+    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
     registerRoadLinkFetched();
     roadAddressInfoPopup.start();
     hideClusterLayer();
@@ -942,6 +996,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectedMassTransitStopModel.close();
     selectControl.clear();
     assetLayer.setVisible(false);
+    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
     stopListening();
     roadAddressInfoPopup.stop();
     me.stop();
