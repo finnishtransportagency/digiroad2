@@ -18,6 +18,7 @@
       careClass: function() {return true; },
       bogieWeightLimit: function() { return true; },
       parkingProhibition: function() { return true; },
+      cyclingAndWalking: function() { return true; },
       default: function(val) {
         if(_.isUndefined(val)) { return true; }
         else if(val > 0) { return true; }

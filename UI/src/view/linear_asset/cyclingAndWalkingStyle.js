@@ -76,6 +76,12 @@
             new StyleRule().where('type').is('cutter').use({ icon: { src: 'images/cursor-crosshair.svg' } })
         ];
 
+        var linkStatusRules = [
+            new StyleRule().where('constructionType').is(1).use({ stroke: { color: '#ff9900'} }),
+            new StyleRule().where('constructionType').is(3).use({ stroke: { color: '#cc99ff'} })
+        ];
+
+
         var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
         var overlayStyleRules = [
             overlayStyleRule(9, {stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1, lineDash: [1, 6]}}),
@@ -98,10 +104,12 @@
         ];
 
         me.browsingStyleProvider = new StyleRuleProvider({});
+        me.browsingStyleProvider.addRules(linkStatusRules);
         me.browsingStyleProvider.addRules(cyclingAndWalkingStyleRules);
         me.browsingStyleProvider.addRules(cyclingAndWalkingSizeRules);
         me.browsingStyleProvider.addRules(featureTypeRules);
         me.browsingStyleProvider.addRules(overlayStyleRules);
+
 
     };
 })(this);

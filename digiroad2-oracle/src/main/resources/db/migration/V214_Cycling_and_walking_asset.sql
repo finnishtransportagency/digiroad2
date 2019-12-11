@@ -20,17 +20,17 @@ INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),2,'Jalankulun ja pyöräilyn väylä',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),3,'Maantie tai yksityistie',Sysdate,'db_migration_v214');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),3,'Katu',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),4,'Katu',Sysdate,'db_migration_v214');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),4,'Maantie tai yksityistie',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),5,'Pyöräkatu',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),6,'Kylätie',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),7,'Kävelykatu',Sysdate,'db_migration_v214');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),7,'Pihakatu',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),8,'Pihakatu',Sysdate,'db_migration_v214');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),8,'Kävelykatu',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),9,'Pyöräkaista',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
@@ -42,9 +42,9 @@ INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),13,'Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),14,'Jalkakäytävä',Sysdate,'db_migration_v214');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),14,'Puistokäytävä',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
-	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),15,'Puistokäytävä',Sysdate,'db_migration_v214');
+	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),15,'Jalkakäytävä',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)
 	VALUES (primary_key_seq.nextval, (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'cyclingAndWalking_type'),16,'Pururata',Sysdate,'db_migration_v214');
 INSERT INTO ENUMERATED_VALUE (ID, PROPERTY_ID,VALUE,NAME_FI,CREATED_DATE,CREATED_BY)

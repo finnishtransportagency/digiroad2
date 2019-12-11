@@ -469,13 +469,14 @@
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
+    var cyclingAndWalking = new CyclingAndWalkingBox(_.find(linearAssets, {typeId: assetType.cyclingAndWalking}));
     return [
       [roadLinkBox]
           .concat([speedLimitBox])
           .concat([manoeuvreBox])
           .concat(getLinearAsset(assetType.prohibition))
           .concat([parkingProhibitionBox])
-        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
+          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
       []
           .concat(getLinearAsset(assetType.totalWeightLimit))
           .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
@@ -499,7 +500,7 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat([winterSpeedLimits])
           .concat(getLinearAsset(assetType.trafficVolume))
-          .concat(getLinearAsset(assetType.cyclingAndWalking)),
+          .concat([cyclingAndWalking]),
       []
           .concat(trSpeedLimitBox)
     ];

@@ -790,7 +790,6 @@
       },
       {
         typeId: assetType.cyclingAndWalking,
-        defaultValue: 1,
         singleElementEventCategory: 'cyclingAndWalking',
         multiElementEventCategory: 'cyclingAndWalkings',
         layerName: 'cyclingAndWalking',
@@ -798,7 +797,7 @@
         newTitle: 'Uusi Käpy tietolaji',
         className: 'cycling-and-walking',
         isSeparable: true,
-        allowComplementaryLinks: false,
+        allowComplementaryLinks: true,
         editControlLabels: {
           title: 'Käpy tietolaji',
           enabled: 'Käpy tietolaji',
@@ -810,8 +809,9 @@
         form: new DynamicAssetForm ( {
           fields : [
             {
-              label: 'Käpy tietolaji', required: 'required', type: 'single_choice', publicId: "cyclingAndWalking_type", defaultValue: "1", weight: 1,
+              label: 'Käpy tietolaji', required: 'required', type: 'single_choice', publicId: "cyclingAndWalking_type", defaultValue: "99", weight: 1,
               values: [
+                {id: 99, label: 'Ei tietoa', disabled: true },
                 {id: 1 , label:'Pyöräily kielletty'},
                 {id: 2 , label:'Jalankulun ja pyöräilyn väylä'},
                 {id: 3 , label:'Maantie tai yksityistie'},
@@ -837,7 +837,13 @@
         isMultipleLinkSelectionAllowed: true,
         hasMunicipalityValidation: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
-        minZoomForContent: oneKmZoomLvl
+        minZoomForContent: oneKmZoomLvl,
+        saveCondition: function (fields) {
+          var cyclingAndWalkingValue = _.map(fields, function(field) { if ( field.getPropertyValue().publicId === 'cyclingAndWalking_type') return field.getValue();  });
+
+          return !_.isUndefined(cyclingAndWalkingValue) && cyclingAndWalkingValue.length > 0 && cyclingAndWalkingValue[0] !== "99";
+
+        }
       }
     ];
 
