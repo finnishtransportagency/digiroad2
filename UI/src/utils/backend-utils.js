@@ -464,7 +464,7 @@
     });
 
     this.getUnverifiedMunicipalities = function(municipalityCode) {
-      return $.getJSON('api/municipality/?municipalityCode=' + municipalityCode);
+      return $.getJSON('api/municipality?municipalityCode=' + municipalityCode);
     };
 
     this.getMunicipalities = function() {
