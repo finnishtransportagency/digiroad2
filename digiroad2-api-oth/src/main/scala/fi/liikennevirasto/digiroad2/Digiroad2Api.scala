@@ -981,7 +981,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "track" -> link.attributes.getOrElse("VIITE_TRACK",  link.attributes.get("TEMP_TRACK")),
           "startAddrMValue" -> link.attributes.getOrElse("VIITE_START_ADDR", link.attributes.get("TEMP_START_ADDR")),
           "endAddrMValue" ->  link.attributes.getOrElse("VIITE_END_ADDR", link.attributes.get("TEMP_END_ADDR")),
-          "administrativeClass" -> link.administrativeClass.value
+          "administrativeClass" -> link.administrativeClass.value,
+          "constructionType" -> extractIntValue(link.attributes, "constructionType")
         )
       }
     }

@@ -247,7 +247,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | CyclingAndWalking.typeId =>  dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -823,6 +823,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
+        case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
