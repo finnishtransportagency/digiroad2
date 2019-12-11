@@ -177,7 +177,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
 
     val pavementClassStatus = pavementClass match {
-      case Some(value) if !Seq("1", "2", "10", "20", "30", "40", "50").contains(value) => FeatureStatus.WrongMandatoryValue
+      case Some(value) if !Seq("1", "2", "10", "20", "30", "40", "50", "99").contains(value) => FeatureStatus.WrongMandatoryValue
       case _ => FeatureStatus.Inserted
     }
 
