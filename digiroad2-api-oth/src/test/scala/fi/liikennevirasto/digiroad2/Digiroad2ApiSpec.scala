@@ -165,7 +165,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testNumberOfLanesService = new NumberOfLanesService(mockRoadLinkService, new DummyEventBus)
   val testMassTransitLaneService = new MassTransitLaneService(mockRoadLinkService, new DummyEventBus)
-  
+
   addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavedRoadService, testRoadWidthService, linearTotalWeightLimitService = testLinearTotalWeightLimitService, numberOfLanesService = testNumberOfLanesService, massTransitLaneService = testMassTransitLaneService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")

@@ -353,4 +353,8 @@ object Queries {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
 
+  def getPublicTransporType(assetId: Int): Unit = {
+
+  }
+
 }

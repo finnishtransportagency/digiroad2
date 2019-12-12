@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicat
 import fi.liikennevirasto.digiroad2.service.{pointasset, _}
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop, ServicePointStopService}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.HttpStatus
@@ -89,7 +89,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback,
                    val damagedByThawService: DamagedByThawService = Digiroad2Context.damagedByThawService,
                    val roadWorkService: RoadWorkService = Digiroad2Context.roadWorkService,
-                   val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService)
+                   val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
+                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -278,11 +279,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
-  get("/massServiceStops") {
+  get("/servicePointStops") {
     val user = userProvider.getCurrentUser()
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-    massTransitStopService.getServicePointsByBoundingBox(user, bbox).map { stop =>
+
+    servicePointStopService.getByBoundingBox(user, bbox).map { stop =>
       Map("id" -> stop.id,
         "name" -> extractPropertyValue("nimi_suomeksi", stop.propertyData, values => values.headOption.getOrElse("")),
         "nationalId" -> stop.nationalId,
@@ -290,8 +292,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipalityNumber" -> stop.municipalityCode,
         "lat" -> stop.lat,
         "lon" -> stop.lon,
-        "floating" -> stop.floating,
-        "validityPeriod" -> "current",
+        //"validityPeriod" -> "current", ???
         "propertyData" -> stop.propertyData
       )
     }
@@ -321,20 +322,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   delete("/massTransitStops/removal") {
     val user = userProvider.getCurrentUser()
     val assetId = (parsedBody \ "assetId").extractOpt[Int].get
-    val assets = massTransitStopService.getPersistedAssetsByIds(Set(assetId))
-    if(assets.isEmpty){
-      val service = Option(massTransitStopService.getServicePointById(assetId))
-      validateUserMunicipalityAccessByMunicipality(user)(service.get.municipalityCode)
-      service.map{ a => massTransitStopService.deleteServicePointById(a, user.username) }
-    }
-    else{
-      assets.headOption.map{ a =>
-        a.linkId match {
-          case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
-          case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
-        }
-        massTransitStopService.deleteMassTransitStopData(assetId)
+    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
+      a.linkId match {
+        case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
+        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
       }
+      massTransitStopService.deleteMassTransitStopData(assetId)
+    }
+  }
+
+  delete("/massTransitStops/removal") {
+    val user = userProvider.getCurrentUser()
+    val assetId = (parsedBody \ "assetId").extractOpt[Int].get
+    massTransitStopService.getPersistedAssetsByIds(Set(assetId)).headOption.map{ a =>
+      a.linkId match {
+        case 0 => validateUserMunicipalityAccessByMunicipality(user)(a.municipalityCode)
+        case _ => validateUserMunicipalityAccessByLinkId(user, a.linkId, a.municipalityCode)
+      }
+      massTransitStopService.deleteMassTransitStopData(assetId)
     }
   }
 
@@ -547,7 +552,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
-      case (Some(lon), Some(lat), None) => Some(Position(lon, lat, roadLinkService.getClosestRoadlinkFromVVH(userProvider.getCurrentUser(), Point(lon, lat)).getOrElse(throw new NoSuchElementException).linkId, bearing))
       case _ => None
     }
     try {
@@ -557,6 +561,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case e: RoadAddressException =>
         logger.warn("RoadAddress error: " + e.getMessage)
         PreconditionFailed("Unable to find target road link")
+    }
+  }
+
+  put("/servicePointStop/:id") {
+    val user = userProvider.getCurrentUser()
+    val lon = (parsedBody \ "lon").extract[Double]
+    val lat = (parsedBody \ "lat").extract[Double]
+    val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
+    val id = params("id").toLong
+
+    roadLinkService.getClosestRoadlinkFromVVH(user, Point(lon, lat)) match {
+      case None =>
+        halt(Conflict(s"Can not find nearby road link for given municipalities " + user.configuration.authorizedMunicipalities))
+      case Some(link) =>
+        validateUserAccess(user, Some(ServicePoints.typeId))(link.municipalityCode, link.administrativeClass)
+        try {
+          servicePointStopService.update(id, PositionCoordinates(lon, lat), properties.toSet, user.username, link.municipalityCode)
+        } catch {
+          case e: ServicePointException => halt(BadRequest( e.servicePointException.mkString(",")))
+        }
     }
   }
 
@@ -602,29 +626,41 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
     val lat = positionParameters._2.get
-    val linkId = positionParameters._3
-    val bearing = positionParameters._4
+    val linkId = positionParameters._3.get
+    val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    val roadLink = linkId match {
-      case Some(id) => roadLinkService.getRoadLinkAndComplementaryFromVVH(id).getOrElse(throw new NoSuchElementException)
-      case _ =>
-        val vvhRoadlink = roadLinkService.getClosestRoadlinkFromVVH(userProvider.getCurrentUser(), Point(lon, lat)).getOrElse(throw new NoSuchElementException)
-        RoadLink(vvhRoadlink.linkId, vvhRoadlink.geometry, vvhRoadlink.length, vvhRoadlink.administrativeClass, FunctionalClass.Unknown, vvhRoadlink.trafficDirection, LinkType(99), None, None, Map("MUNICIPALITYCODE" -> BigInt(vvhRoadlink.municipalityCode)))
-    }
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {
-      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId.getOrElse(0), bearing.getOrElse(0), properties), userProvider.getCurrentUser().username, roadLink)
-      Option(massTransitStopService.getServicePointById(id)) match {
-        case Some(service) => service
-        case None => massTransitStopService.getNormalAndComplementaryById(id, roadLink)
-      }
+      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
+      massTransitStopService.getNormalAndComplementaryById(id, roadLink)
     } catch {
       case e: RoadAddressException =>
         logger.warn(e.getMessage)
         PreconditionFailed("Unable to find target road link")
+    }
+  }
+
+  post("/servicePointStop") {
+    val user = userProvider.getCurrentUser()
+    val positionParameters = massTransitStopPositionParameters(parsedBody)
+    val lon = positionParameters._1.get
+    val lat = positionParameters._2.get
+    val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
+    val roadLink = roadLinkService.getClosestRoadlinkFromVVH(user, Point(lon, lat)).getOrElse(throw new NoSuchElementException)
+
+    validateUserMunicipalityAccessByMunicipality(user)(roadLink.municipalityCode)
+    validatePropertiesMaxSize(properties)
+    try {
+      val id = servicePointStopService.create(lon, lat, properties, user.username, roadLink.municipalityCode)
+      servicePointStopService.getById(id)
+    } catch {
+      case e: RoadAddressException =>
+        logger.warn(e.getMessage)
+        PreconditionFailed("Unable to find nearest road link")
     }
   }
 

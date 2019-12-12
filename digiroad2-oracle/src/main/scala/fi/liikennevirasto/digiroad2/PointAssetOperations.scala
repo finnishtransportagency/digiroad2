@@ -94,7 +94,7 @@ trait LightGeometry {
   val lat: Double
 }
 
-trait PointAssetOperations {
+trait  PointAssetOperations{
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
 
@@ -487,7 +487,7 @@ object PointAssetOperations {
           }
         }
     }
-    return (false, None)
+    (false, None)
   }
 
   def calculateBearing(persistedPointAsset: PersistedPointAsset, geometry: Seq[Point]): Int = {

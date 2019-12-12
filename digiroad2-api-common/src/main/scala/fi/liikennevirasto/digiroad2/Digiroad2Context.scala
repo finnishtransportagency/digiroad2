@@ -7,7 +7,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
@@ -67,6 +67,25 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
         ValluSender.postToVallu(massTransitStop)
         massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
+    }
+  }
+}
+
+class ValluPublicStops(massTransitStopService: MassTransitStopService, publicStopService: MassTransitStopService) extends Actor {
+  val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
+  def withDynSession[T](f: => T): T = publicStopService.withDynSession(f)
+  def receive = {
+    case publicStop: ServicePoint => persistedAssetChanges(publicStop)
+    case _      => println("received unknown message")
+  }
+
+  def persistedAssetChanges(publicStop: ServicePoint) = {
+    withDynSession {
+      val municipalityName = municipalityService.getMunicipalityNameByCode(publicStop.municipalityCode, false)
+      val massTransitStop = EventBusMassTransitStop(publicStop.municipalityCode, municipalityName, publicStop.nationalId,
+        publicStop.lon, publicStop.lat, None, None, publicStop.created, publicStop.modified, publicStop.propertyData)
+      ValluSender.postToVallu(massTransitStop)
+      massTransitStopService.saveIdPrintedOnValluLog(publicStop.id)
     }
   }
 }
@@ -326,6 +345,9 @@ object Digiroad2Context {
 
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
   eventbus.subscribe(valluTerminal, "terminal:saved")
+//
+//  val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
+//  eventbus.subscribe(valluTerminal, "public:saved")
 
   val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
   eventbus.subscribe(importCSVDataUpdater, "importCSVData")
@@ -543,6 +565,10 @@ object Digiroad2Context {
       override val geometryTransform: GeometryTransform = new GeometryTransform(roadAddressService)
     }
     new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressService)
+  }
+
+  lazy val servicePointStopService: ServicePointStopService = {
+    new ServicePointStopService(eventbus)
   }
 
   lazy val dataImportManager: DataImportManager = {

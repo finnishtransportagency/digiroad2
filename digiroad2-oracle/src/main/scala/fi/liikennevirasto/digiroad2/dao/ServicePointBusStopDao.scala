@@ -1,5 +1,22 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import fi.liikennevirasto.digiroad2.asset.{Modification, Property}
+import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
+import fi.liikennevirasto.digiroad2.dao.Queries._
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations
+import org.joda.time.{DateTime, LocalDate}
+import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.dao.Queries._
+import org.joda.time.DateTime
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.Point
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult}
+import scala.language.reflectiveCalls
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Modification, Property}
 import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
@@ -22,9 +39,8 @@ import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import scala.language.reflectiveCalls
 
-
 case class ServicePoint(id: Long, nationalId: Long, stopTypes: Seq[Int],
-                        municipalityCode: Int, lon: Double, lat: Double, floating: Boolean,
+                        municipalityCode: Int, lon: Double, lat: Double,
                         created: Modification, modified: Modification, propertyData: Seq[Property])
 
 case class ServicePointRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point],
@@ -33,8 +49,8 @@ case class ServicePointRow(id: Long, externalId: Long, assetTypeId: Long, point:
 
 class ServicePointBusStopDao {
   val logger = LoggerFactory.getLogger(getClass)
-  def typeId: Int = 10
-  val idField = "external_id"
+  def typeId: Int = MassTransitStopAsset.typeId
+  val idField = "external_id" //???
 
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
     def apply(r: PositionedResult) = {
@@ -75,13 +91,6 @@ class ServicePointBusStopDao {
     }
   }
 
-  private def extractStopTypes(rows: Seq[ServicePointRow]): Seq[Int] = {
-    rows
-      .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) && row.property.propertyValue == "7" }
-      .filterNot { row => row.property.propertyValue.isEmpty }
-      .map { row => row.property.propertyValue.toInt }
-  }
-
   def assetRowToProperty(assetRows: Iterable[ServicePointRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
@@ -103,35 +112,37 @@ class ServicePointBusStopDao {
     Option(assetRow.property.propertyDisplayValue)
   }
 
-  private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
-    (validFrom, validTo) match {
-      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { MassTransitStopValidityPeriod.
-        Future }
-      else { MassTransitStopValidityPeriod.
-        Current }
-      case (None, Some(to)) => if (LocalDate.now().isAfter(to
-      )) { MassTransitStopValidityPeriod
-        .Past }
-      else { MassTransitStopValidityPeriod.
-        Current }
-      case (Some(from), Some(to)) =>
-        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
-        if (interval.
-          containsNow()) { MassTransitStopValidityPeriod
-          .Current }
-        else if (interval.
-          isBeforeNow) {
-          MassTransitStopValidityPeriod.Past }
-        else {
-          MassTransitStopValidityPeriod.Future }
-      case _ => MassTransitStopValidityPeriod.Current
-    }
-  }
+//  private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
+//    (validFrom, validTo) match {
+//      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { MassTransitStopValidityPeriod.
+//        Future }
+//      else { MassTransitStopValidityPeriod.
+//        Current }
+//      case (None, Some(to)) => if (LocalDate.now().isAfter(to
+//      )) { MassTransitStopValidityPeriod
+//        .Past }
+//      else { MassTransitStopValidityPeriod.
+//        Current }
+//      case (Some(from), Some(to)) =>
+//        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
+//        if (interval.
+//          containsNow()) { MassTransitStopValidityPeriod
+//          .Current }
+//        else if (interval.
+//          isBeforeNow) {
+//          MassTransitStopValidityPeriod.Past }
+//        else {
+//          MassTransitStopValidityPeriod.Future }
+//      case _ => MassTransitStopValidityPeriod.Current
+//    }
+//  }
+
+
 
   def fetchAsset(queryFilter: String => String): Seq[ServicePoint] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id,
-        a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
+        a.valid_from, a.valid_to, geometry, a.municipality_code,
         p.id, p.public_id, p.property_type, p.required, p.max_value_length, e.value,
         case
           when e.name_fi is not null then e.name_fi
@@ -144,7 +155,7 @@ class ServicePointBusStopDao {
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+          left join enumerated_value e on (mc.enumerated_value_id = e.id and e.value = '7') or s.enumerated_value_id = e.id
       """
     queryToServicePoint(queryFilter(query))
   }
@@ -152,7 +163,7 @@ class ServicePointBusStopDao {
   private def queryToServicePoint(query: String): Seq[ServicePoint] = {
     val rows = Q.queryNA[ServicePointRow](query).iterator.toSeq
 
-    rows.groupBy(_.id).filter{case (id, stopRows) => extractStopTypes(stopRows).nonEmpty && extractStopTypes(stopRows).head == 7}.map { case (id, stopRows) =>
+    rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
       val commonProperties: Seq[Property] = AssetPropertyConfiguration.assetRowToCommonProperties(row)
       val properties: Seq[Property] = commonProperties ++ assetRowToProperty(stopRows)
@@ -160,13 +171,113 @@ class ServicePointBusStopDao {
       val stopTypes = extractStopTypes(stopRows)
 
       id -> ServicePoint(id = row.id, nationalId = row.externalId, stopTypes = stopTypes,
-        municipalityCode = row.municipalityCode, lon = point.x, lat = point.y,
-        floating = row.persistedFloating, created = row.created, modified = row.modified, propertyData = properties)
+        municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, created = row.created, modified = row.modified, propertyData = properties)
     }.values.toSeq
+  }
+
+  private def extractStopTypes(rows: Seq[ServicePointRow]): Seq[Int] = {
+    rows.filter(_.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId)).map { row => row.property.propertyValue.toInt }
   }
 
   def expire(id: Long, username: String) = {
     Queries.updateAssetModified(id, username).execute
     sqlu"update asset set valid_to = sysdate where id = $id".execute
+  }
+
+  def update(assetId: Long, properties: Seq[SimpleProperty], user: String) = {
+    sqlu"""
+           UPDATE asset
+            SET modified_by = $user, modified_date = sysdate
+            WHERE id = $assetId""".execute
+
+    updateAssetProperties(assetId, properties)
+    assetId
+  }
+
+  def insertAsset(id: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int): Unit = {
+    val typeId = 10
+    sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry)
+           select ($id, national_bus_stop_id_seq.nextval, $typeId, $creator, $municipalityCode,
+           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)))
+           from dual
+      """.execute
+  }
+
+  def updateMunicipality(id: Long, municipalityCode: Int) {
+    sqlu"""
+           update asset
+           set municipality_code = $municipalityCode
+           where id = $id
+      """.execute
+  }
+
+  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
+    val newValues = propertyValues.map(_.propertyValue.toLong)
+    val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
+    val currentValues = currentIdsAndValues.map(_._2)
+    // remove values as necessary
+    currentIdsAndValues.foreach {
+      case (multipleChoiceId, enumValue) =>
+        if (!newValues.contains(enumValue)) {
+          deleteMultipleChoiceValue(multipleChoiceId).execute
+        }
+    }
+    // add values as necessary
+    newValues.filter {
+      !currentValues.contains(_)
+    }.foreach {
+      v =>
+        insertMultipleChoiceValue(assetId, propertyId, v).execute
+    }
+  }
+
+  def updateAssetLastModified(assetId: Long, modifier: String) {
+    updateAssetModified(assetId, modifier).execute
+  }
+
+  private def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
+    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+    (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
+  }
+
+  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+    properties.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+      updateProperties(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+    }
+  }
+
+  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def updateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
+    propertyType match {
+      case Text | LongText =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteTextProperty(assetId, propertyId).execute
+        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+        } else {
+          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+        }
+
+      case MultipleChoice =>
+        createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
+
+      case SingleChoice =>
+        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
+        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+        } else {
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+        }
+
+      case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
   }
 }
