@@ -29,9 +29,15 @@
     eventbus.on('tool:changed', function(tool) {
       /* if ((tool !== 'Add' && tool !== 'AddTerminal')  && exists()) { */
       if ( ['Add','AddTerminal','AddPointAsset'].indexOf(tool) < 0 && exists() )  {
-        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-          if (exists()) { eventbus.trigger('asset:fetched', asset); }
-        });
+        if(isServiceStop(currentAsset.payload.properties)){
+          backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+            if (exists()) { eventbus.trigger('asset:fetched', asset); }
+          });
+        }else{
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+            if (exists()) { eventbus.trigger('asset:fetched', asset); }
+          });
+        }
       }
     });
 
@@ -125,9 +131,15 @@
       changedProps = [];
       assetHasBeenModified = false;
       if (currentAsset.id) {
-        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-          eventbus.trigger('asset:updateCancelled', asset);
-        });
+        if(isServiceStop(currentAsset.payload.properties)){
+          backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+            eventbus.trigger('asset:updateCancelled', asset);
+          });
+        }else{
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+            eventbus.trigger('asset:updateCancelled', asset);
+          });
+        }
       } else {
         currentAsset = {};
         eventbus.trigger('asset:creationCancelled');
@@ -137,9 +149,15 @@
 
     eventbus.on('application:readOnly', function() {
       if (exists()) {
-        backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-          if (exists()) { eventbus.trigger('asset:fetched', asset); }
-        });
+        if(isServiceStop(currentAsset.payload.properties)){
+          backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+            if (exists()) { eventbus.trigger('asset:fetched', asset); }
+          });
+        }else{
+          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
+            if (exists()) { eventbus.trigger('asset:fetched', asset); }
+          });
+        }
       }
     });
 
@@ -244,43 +262,64 @@
 
     var save = function () {
       if (currentAsset.id === undefined) {
-        backend.createAsset(currentAsset.payload, function (errorObject) {
-          if (errorObject.status == FAILED_DEPENDENCY_424) {
-            eventbus.trigger('asset:creationTierekisteriFailed');
-          } else if (errorObject.status == PRECONDITION_FAILED_412) {
-            eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
-          } else {
+        if (currentAsset.stopTypes[0] == "7") {
+          backend.createServiceStopAsset(currentAsset.payload, function () {
             eventbus.trigger('asset:creationFailed');
-          }
-          close();
-        });
+            close();
+          });
+        }else{
+          backend.createAsset(currentAsset.payload, function (errorObject) {
+            if (errorObject.status == FAILED_DEPENDENCY_424) {
+              eventbus.trigger('asset:creationTierekisteriFailed');
+            } else if (errorObject.status == PRECONDITION_FAILED_412) {
+              eventbus.trigger('asset:creationNotFoundRoadAddressVKM');
+            } else {
+              eventbus.trigger('asset:creationFailed');
+            }
+            close();
+          });
+        }
       } else {
         currentAsset.payload.id = currentAsset.id;
-        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"], ["trSave"]);
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"], ["osoite_suomeksi"], ["osoite_ruotsiksi"], ["trSave"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
-        backend.updateAsset(currentAsset.id, payload, function (asset) {
-          changedProps = [];
-          assetHasBeenModified = false;
-          if (currentAsset.id != asset.id) {
-            eventbus.trigger('massTransitStop:expired', currentAsset);
-            eventbus.trigger('asset:created', asset);
-          } else {
-            open(asset);
-            eventbus.trigger('asset:saved', asset, positionUpdated);
-          }
-        }, function (errorObject) {
-          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
-            open(asset);
-            if (errorObject.status == FAILED_DEPENDENCY_424) {
-              eventbus.trigger('asset:updateTierekisteriFailed', asset);
-            } else if (errorObject.status == PRECONDITION_FAILED_412) {
-              eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
+
+        if (isServiceStop(payload.properties)) {
+          backend.updateServiceStopAsset(currentAsset.id, payload, function (asset) {
+            changedProps = [];
+            assetHasBeenModified = false;
+            if (currentAsset.id != asset.id) {
+              eventbus.trigger('massTransitStop:expired', currentAsset);
+              eventbus.trigger('asset:created', asset);
             } else {
-              eventbus.trigger('asset:updateFailed', asset);
+              open(asset);
+              eventbus.trigger('asset:saved', asset, positionUpdated);
             }
+          }, function () {
+            backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function (asset) {
+              open(asset);
+              eventbus.trigger('asset:updateFailed', asset);
+            });
           });
-        });
+        }else{
+          backend.updateAsset(currentAsset.id, payload, function (asset) {
+            changedProps = [];
+            assetHasBeenModified = false;
+            if (currentAsset.id != asset.id) {
+              eventbus.trigger('massTransitStop:expired', currentAsset);
+              eventbus.trigger('asset:created', asset);
+            } else {
+              open(asset);
+              eventbus.trigger('asset:saved', asset, positionUpdated);
+            }
+          }, function () {
+            backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
+              open(asset);
+              eventbus.trigger('asset:updateFailed', asset);
+            });
+          });
+        }
       }
     };
 
@@ -359,6 +398,9 @@
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
+        backend.getMassServiceStopByNationalId(assetNationalId, function (asset) {
+          eventbus.trigger('asset:fetched', asset);
+        });
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
             if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
@@ -374,11 +416,14 @@
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.id !== id && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
+        backend.getMassServiceStopById(id, function (asset) {
+          eventbus.trigger('asset:fetched', asset);
+        });
         backend.getMassTransitStopById(id, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
-              if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
-                  eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
-              }
+            if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
+              eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
+            }
           }
           eventbus.trigger('asset:fetched', asset);
         });
@@ -441,14 +486,22 @@
     var deleteMassTransitStop = function (poistaSelected) {
       if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
-        backend.deleteAllMassTransitStopData(currAsset.id, function () {
-          eventbus.trigger('massTransitStopDeleted', currAsset);
-        }, function (errorObject) {
-          cancel();
-          if (errorObject.status == FAILED_DEPENDENCY_424) {
-            eventbus.trigger('asset:deleteTierekisteriFailed');
-          }
-        });
+        if(isServiceStop(currAsset.payload.properties)){
+          backend.deleteAllMassServiceStopData(currAsset.id, function () {
+            eventbus.trigger('massTransitStopDeleted', currAsset);
+          }, function () {
+            cancel();
+          });
+        }else{
+          backend.deleteAllMassTransitStopData(currAsset.id, function () {
+            eventbus.trigger('massTransitStopDeleted', currAsset);
+          }, function (errorObject) {
+            cancel();
+            if (errorObject.status == FAILED_DEPENDENCY_424) {
+              eventbus.trigger('asset:deleteTierekisteriFailed');
+            }
+          });
+        }
       }
     };
 
@@ -527,6 +580,14 @@
       return _.some(properties, function(property) {
         return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
           return value.propertyValue == "6";
+        });
+      });
+    }
+
+    function isServiceStop(properties) {
+      return _.some(properties, function(property) {
+        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
+          return value.propertyValue == "7";
         });
       });
     }

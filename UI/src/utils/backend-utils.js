@@ -377,12 +377,32 @@
       });
     };
 
+    this.deleteAllMassServiceStopData = function(assetId,success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/massServiceStops/removal",
+        data: JSON.stringify({assetId: assetId}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
+    this.getMassServiceStopByNationalId = function(nationalId, callback) {
+      $.get('api/massServiceStops/' + nationalId, callback);
+    };
+
     this.getMassTransitStopById = function(id, callback) {
       $.get('api/massTransitStop/' + id, callback);
+    };
+
+    this.getMassServiceStopById = function(id, callback) {
+      $.get('api/massServiceStops/' + id, callback);
     };
 
     this.getPrivateRoadAssociationNames = function() {
@@ -555,6 +575,21 @@
       });
     };
 
+    this.createServiceStopAsset = function (data, errorCallback) {
+      eventbus.trigger('asset:creating');
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/massServiceStops",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: function (asset) {
+          eventbus.trigger('asset:created', asset);
+        },
+        error: errorCallback
+      });
+    };
+
     this.updateAsset = function (id, data, successCallback, errorCallback) {
       eventbus.trigger('asset:saving');
       $.ajax({
@@ -568,6 +603,18 @@
       });
     };
 
+    this.updateServiceStopAsset = function (id, data, successCallback, errorCallback) {
+      eventbus.trigger('asset:saving');
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/massServiceStops/" + id,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: successCallback,
+        error: errorCallback
+      });
+    };
 
     this.getMassTransitStopStreetViewUrl = function test(lati,longi,heading) {
       function getJson(){
