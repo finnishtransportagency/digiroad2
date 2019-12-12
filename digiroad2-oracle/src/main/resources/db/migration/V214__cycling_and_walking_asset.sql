@@ -5,8 +5,8 @@ INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
 
 
 -- LOCALIZED_STRING VALUE
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY)
-	VALUES( primary_key_seq.nextval, 'Käpy tietolaji', 'db_migration_v214' );
+INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+	VALUES( primary_key_seq.nextval, 'Käpy tietolaji', 'db_migration_v214', SYSDATE );
 
 
 -- PROPERTY VALUE
