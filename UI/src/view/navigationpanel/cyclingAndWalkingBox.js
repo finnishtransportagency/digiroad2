@@ -8,24 +8,26 @@
         };
 
         var auxLegend =  [
-            {index: 1, text: 'Pyöräily kielletty' },
-            {index: 2, text: 'Jalankulun ja pyöräilyn väylä' },
-            {index: 3, text: 'Katu' },
-            {index: 4, text: 'Maantie tai yksityistie' },
-            {index: 5, text: 'Pyöräkatu'},
-            {index: 6, text: 'Kylätie'},
-            {index: 7, text: 'Pihakatu'},
-            {index: 8, text: 'Kävelykatu'},
-            {index: 9, text: 'Pyöräkaista'},
-            {index: 10, text: 'Pyörätie'},
-            {index: 11, text: 'Kaksisuuntainen pyörätie'},
-            {index: 12, text: 'Yhdistetty pyörätie ja jalkakäytävä, yksisuuntainen pyörille'},
-            {index: 13, text: 'Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille'},
-            {index: 14, text: 'Puistokäytävä'},
-            {index: 15, text: 'Jalkakäytävä'},
-            {index: 16, text: 'Pururata'},
-            {index: 17, text: 'Ajopolku'},
-            {index: 18, text: 'Polku'}
+            {index: 1, text: 'Pyöräily ja kävely kielletty' },
+            {index: 2, text: 'Pyöräily kielletty' },
+            {index: 3, text: 'Jalankulun ja pyöräilyn väylä' },
+            {index: 4, text: 'Katu' },
+            {index: 5, text: 'Maantie tai yksityistie' },
+            {index: 6, text: 'Pyöräkatu'},
+            {index: 7, text: 'Kylätie'},
+            {index: 8, text: 'Pihakatu'},
+            {index: 9, text: 'Kävelykatu'},
+            {index: 10, text: 'Pyöräkaista'},
+            {index: 11, text: 'Pyörätie'},
+            {index: 12, text: 'Kaksisuuntainen pyörätie'},
+            {index: 13, text: 'Yhdistetty pyörätie ja jalkakäytävä, yksisuuntainen pyörille'},
+            {index: 14, text: 'Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille'},
+            {index: 15, text: 'Puistokäytävä'},
+            {index: 16, text: 'Jalkakäytävä'},
+            {index: 17, text: 'Pururata'},
+            {index: 18, text: 'Ajopolku'},
+            {index: 19, text: 'Polku'},
+            {index: 20, text: 'Lossi tai lautta'}
         ];
 
         var constructionTypeLegend = '<div class="panel-section panel-legend linear-asset-legend construction-type-legend">';
