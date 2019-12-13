@@ -365,6 +365,13 @@ object Queries {
     """.as[(Long, Long, Int, Option[String], Option[String])].list
   }
 
+
+  def getCyclingAndWalkingInfo(): Seq[(Long, Option[String])] = {
+    sql"""
+      select LINK_ID, cycling_walking_value from external_cycling_walking_info
+    """.as[(Long, Option[String])].list
+  }
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }

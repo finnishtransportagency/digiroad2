@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import java.sql.SQLIntegrityConstraintViolationException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.util.{Date, Properties}
+import java.util.{Date, NoSuchElementException, Properties}
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
@@ -175,6 +175,11 @@ object DataFixture {
   lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
     new DynamicLinearAssetDao()
   }
+
+  lazy val dynamicLinearAssetService : DynamicLinearAssetService = {
+    new DynamicLinearAssetService(roadLinkService, new DummyEventBus)
+  }
+
 
   lazy val speedLimitDao: OracleSpeedLimitDao = {
     new OracleSpeedLimitDao(null, null)
@@ -1818,6 +1823,57 @@ object DataFixture {
     }
   }
 
+  def getCyclingAndWalkingInfo(): Unit = {
+    println("\nStart process to insert all cycling and walking info")
+    println(DateTime.now())
+
+    val username = "batch_to_import_cycling_walking"
+
+    //Get All Cycling and walking to insert
+    // _1 = LINK_ID, _2 = cycling_walking_value
+    val allCyclingAndWalkingInfo: Seq[(Long, Option[String])] =
+      OracleDatabase.withDynSession {
+        Queries.getCyclingAndWalkingInfo
+      }
+
+    allCyclingAndWalkingInfo.foreach { case (linkid, value)  =>
+      if (value.nonEmpty) {
+
+        val valueToInsert = DynamicValue( DynamicAssetValue( Seq (DynamicProperty( "cyclingAndWalking_type",  "single_choice",  true, Seq( DynamicPropertyValue(value) )))) )
+
+        try {
+          withDynTransaction {
+            val roadlinks = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkid, false)
+            val roadlink = roadlinks.find(_.linkId == linkid).getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
+
+            dynamicLinearAssetService.createWithoutTransaction(typeId = CyclingAndWalking.typeId,
+              linkId = linkid,
+              value = valueToInsert,
+              sideCode = SideCode.BothDirections.value,
+              measures = Measures(0, GeometryUtils.geometryLength(roadlink.geometry)),
+              username = username,
+              vvhTimeStamp = roadlink.vvhTimeStamp,
+              roadLink = Some(roadlink),
+              //fromUpdate = false,
+              createdByFromUpdate = Some(""),
+              createdDateTimeFromUpdate = Some(DateTime.now()),
+              verifiedBy = None,
+              informationSource = None)
+
+          }
+        }  catch {
+          case nsee: NoSuchElementException =>
+            println(s"${nsee.getMessage} [ linkid: ${linkid} ]")
+
+          case _ =>
+            println("Non expected error occurred")
+        }
+      }
+    }
+
+
+  }
+
   def normalizeUserRoles(): Unit = {
     def printUser(user: User): Unit = {
       val configuration = user.configuration
@@ -2371,6 +2427,8 @@ object DataFixture {
         getStateRoadWithFunctionalClassOverridden()
       case Some("get_state_roads_with_undefined_functional_class") =>
         getStateRoadWithFunctionalClassUndefined()
+      case Some("import_cycling_walking_info") =>
+        getCyclingAndWalkingInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2384,7 +2442,8 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class")
+        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class |"+
+        " get_state_roads_with_undefined_functional_class | import_cycling_walking_info")
     }
   }
 }
