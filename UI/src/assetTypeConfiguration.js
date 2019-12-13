@@ -749,7 +749,8 @@
             return date.hasValue() ? isEndDateAfterStartdate(date) : true;
           });
         },
-        hasMunicipalityValidation: false
+        hasMunicipalityValidation: false,
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.parkingProhibition,
