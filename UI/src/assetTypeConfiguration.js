@@ -1029,15 +1029,11 @@
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         saveCondition: function (selectedAsset, authorizationPolicy) {
-          var services = selectedAsset.get().services;
-          var totalSerices = services.length;
-
-          var wrongWeightLimitValueServices = services.filter(function(serv) {
-            if (serv.serviceType === 19 && ( [NaN, undefined].indexOf(serv.weightLimit) >= 0 || !(/^\d+$/.test(serv.weightLimit)) ))
-              return serv;
-          });
-
-          return wrongWeightLimitValueServices.length === 0 && totalSerices > 0 && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isOperator());
+          return  saveConditionWithSuggested(selectedAsset, authorizationPolicy) &&
+                 _.chain(selectedAsset.get().services)
+                  .filter(function(x) {return x.serviceType === 19;})
+                  .value()
+                  .every(function (x) {return _.isUndefined(x.weightLimit) || !_.isNaN(x.weightLimit) && !!parseInt(x.weightLimit);});
         },
         isSuggestedAsset: true,
         hasMunicipalityValidation: true,

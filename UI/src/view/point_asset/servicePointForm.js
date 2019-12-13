@@ -138,7 +138,7 @@
         selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
       });
 
-      rootElement.find('.weightLimit').on('input change', function (event) {
+      rootElement.find('.service-weightLimit').on('input change', function (event) {
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
         selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {weightLimit: parseInt($(event.currentTarget).val(), 10)})});
       });
@@ -147,12 +147,6 @@
         var newServiceType = parseInt($(event.currentTarget).val(), 10);
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
         var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType, isAuthorityData: isAuthorityData(newServiceType)});
-
-        var currentService = services.filter(function(elem) { if ( elem.id == serviceId) return elem;});
-
-        if (newServiceType !== 19 && currentService.length > 0 && currentService[0].weightLimit !== undefined) {
-          currentService[0].weightLimit = undefined;
-        }
 
         selectedAsset.set({services: services});
         me.renderForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, me.roadCollection);
@@ -212,7 +206,7 @@
       var weightElement = '' +
         '<div><label class="control-label">Painorajoitus</label>' +
         '<p class="form-control-static">' + (_.isUndefined(service.weightLimit) ? '–' : service.weightLimit + ' Kg') + '</p>' +
-        '<input type="text" class="form-control weightLimit" data-service-id="' + service.id + '" value="' + (service.weightLimit || '')  + '">' +
+        '<input type="text" class="form-control service-weightLimit" data-service-id="' + service.id + '" value="' + (service.weightLimit || '')  + '">' +
         '<span class="form-control kg-unit-addon">Kg</span></div>';
 
       var nameElement = '' +
@@ -221,8 +215,8 @@
         '<input type="text" class="form-control service-name" data-service-id="' + service.id + '" value="' + (service.name || '')  + '"></div>';
 
       return '<li>' +
-        '  <div class="form-group service-point editable">' +
-        '  <div class="form-group">' +
+        '   <div class="form-group service-point editable">' +
+        '   <div class="form-group">' +
         '      <button class="delete btn-delete">x</button>' +
         '      <h4 class="form-control-static"> ' + (selectedServiceType ? selectedServiceType.label : '') + '</h4>' +
         '      <select class="form-control select-service-type" data-service-id="' + service.id + '">  ' +
@@ -249,6 +243,18 @@
       var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
       if(!serviceTypeExtensions[serviceType])
         delete service.typeExtension;
+    }
+
+    function checkWeightField(service, modifications)  {
+      var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
+      if(!isCulvert(serviceType))
+        delete service.weightLimit;
+    }
+
+    function checkNimiField(service, modifications)  {
+      var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
+      if(isCulvert(serviceType))
+        delete service.nimi;
     }
 
     function isCulvert(selectedServiceType) {
@@ -296,6 +302,8 @@
       return _.map(services, function(service) {
         if (service.id === id) {
           checkTypeExtension(service, modifications);
+          checkWeightField(service, modifications);
+          checkNimiField(service, modifications);
           return _.merge({}, service, modifications);
         }
         return service;
