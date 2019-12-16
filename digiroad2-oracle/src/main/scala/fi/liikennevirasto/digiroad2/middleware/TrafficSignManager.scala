@@ -38,6 +38,11 @@ object TrafficSignManager {
   def belongsToParking(intValue: Int) : Boolean = {
     parkingRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
   }
+
+  val roadWorkRelatedSigns : Seq[TrafficSignType] = Seq(RoadWorks)
+  def belongsToRoadwork(intValue: Int) : Boolean = {
+    roadWorkRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
 }
 
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
@@ -75,6 +80,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
       case trSign if TrafficSignManager.belongsToParking(trSign.signType) =>
         insertTrafficSignToProcess(trSign.id, ParkingProhibition)
 
+      case trSign if TrafficSignManager.belongsToRoadwork(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, RoadWorksAsset)
+
       case _ => None
     }
   }
@@ -96,6 +104,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
 
         case signType if TrafficSignManager.belongsToParking(signType) =>
           insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign))
+
+        case signType if TrafficSignManager.belongsToRoadwork(signType) =>
+          insertTrafficSignToProcess(trSign.id, RoadWorksAsset, Some(trSign))
 
         case _ => None
       }
