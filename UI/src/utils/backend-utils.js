@@ -645,7 +645,7 @@
       return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
           .then(
               function (result) {
-                return _.head(result);
+                return onSuccess(_.head(result));
               },
               function (fail) {
                 return onFailure(fail.code);

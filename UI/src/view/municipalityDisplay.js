@@ -12,7 +12,7 @@
       if (zoomlevels.getViewZoom(map) >= 5) {
         var centerLonLat = map.getView().getCenter();
         backend.getMunicipalityFromCoordinates(centerLonLat[0], centerLonLat[1], function (vkmResult) {
-              var municipalityInfo = vkmResult.kunta ? vkmResult.kunta : "Tuntematon";
+              var municipalityInfo = !_.isEmpty(vkmResult) && vkmResult.kuntaNimi ? vkmResult.kuntaNimi : "Tuntematon";
               container.find('.municipality-wrapper').text(municipalityInfo);
             }, function () {
               container.find('.municipality-wrapper').text('');

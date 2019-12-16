@@ -6,7 +6,7 @@
                 eventbus.trigger('verificationInfo:fetched', false);
             else {
                 backend.getMunicipalityFromCoordinates(center[0], center[1], function (vkmResult) {
-                    if (vkmResult.kuntakoodi)
+                    if (!_.isEmpty(vkmResult) && vkmResult.kuntakoodi)
                         getVerificationInfo(vkmResult.kuntakoodi, typeId);
                     else
                         setMunicipalityInfo(boundingBox, typeId);
