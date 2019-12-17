@@ -185,7 +185,7 @@ class VKMGeometryTransform {
       if (response.getStatusLine.getStatusCode >= 400)
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val aux = response.getEntity.getContent
-      val content:List[Map[String, Any]] = parse(StreamInput(aux)).values.asInstanceOf[List[Map[String, Any]]] //asInstanceOf[Map[String, Any]]
+      val content:List[Map[String, Any]] = parse(StreamInput(aux)).values.asInstanceOf[List[Map[String, Any]]]
       Left(content)
     } catch {
       case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
