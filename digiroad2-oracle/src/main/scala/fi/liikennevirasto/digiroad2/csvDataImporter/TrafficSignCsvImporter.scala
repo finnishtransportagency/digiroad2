@@ -113,27 +113,20 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
       SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(value.toString)))}
 
-    val additionalInfo = getPropertyValue(trafficSignAttributes, "additionalInfo").toString
-    val additionalProperty = if(additionalInfo.nonEmpty)
-      Some(SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(additionalInfo))))
-    else
-      None
-
     val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
 
-    val startDateInfo = getPropertyValue(trafficSignAttributes, "startDate").toString
-    val startDateProperty = if(startDateInfo.nonEmpty)
-      Some(SimpleTrafficSignProperty(startDatePublicId, Seq(TextPropertyValue(startDateInfo))))
-    else
-      None
+    val listPublicIds = Set(infoPublicId, startDatePublicId, endDatePublicId)
+    val listFieldsNames = Set("additionalInfo", "startDate", "endDate")
 
-    val endDateInfo = getPropertyValue(trafficSignAttributes, "endDate").toString
-    val endDateProperty = if(endDateInfo.nonEmpty)
-      Some(SimpleTrafficSignProperty(endDatePublicId, Seq(TextPropertyValue(endDateInfo))))
-    else
-      None
+    val propertiesValues = (listPublicIds, listFieldsNames).zipped.map{(publicId, fieldName) =>
+      val propertyInfo = getPropertyValue(trafficSignAttributes, fieldName).toString
+      if(propertyInfo.nonEmpty)
+        Some(SimpleTrafficSignProperty(publicId, Seq(TextPropertyValue(propertyInfo))))
+      else
+        None
+    }
 
-    Set(Some(typeProperty), valueProperty, additionalProperty, startDateProperty, endDateProperty).flatten
+    (Set(Some(typeProperty), valueProperty) ++ propertiesValues).flatten
   }
 
   def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {
