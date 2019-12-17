@@ -4,7 +4,7 @@ import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, GeometryUtils, IncompleteRow, MalformedRow, Point, Status, TrafficSignType}
+import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, GeometryUtils, IncompleteRow, MalformedRow, Point, RoadWorks, Status, TrafficSignType}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, SimpleTrafficSignProperty, State, TextPropertyValue}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -26,6 +26,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  private val startDatePublicId = "trafficSign_start_date"
+  private val endDatePublicId = "trafficSign_end_date"
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
@@ -33,13 +35,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   private val longValueFieldMappings = coordinateMappings
 
+  //mandatory for the sign 142 (RoadWorks)
+  override val dateFieldsMapping = Map(
+    "alkupäivämäärä" -> "startDate",
+    "loppupäivämäärä" -> "endDate"
+  )
+
   private val nonMandatoryMappings = Map(
     "arvo" -> "value",
     "kaksipuolinen merkki" -> "twoSided",
     "liikennevirran suunta" -> "trafficDirection",
     "suuntima" -> "bearing",
     "lisatieto" -> "additionalInfo"
-  )
+  ) ++ dateFieldsMapping
 
   private val codeValueFieldMappings = Map(
     "liikennemerkin tyyppi" -> "trafficSignType"
@@ -62,6 +70,14 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     Try(propertyValue.toInt).toOption
   }
 
+  override def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
+    val code = csvRoadWithHeaders.get("liikennemerkin tyyppi")
+    code match {
+      case Some(value) if TrafficSignType.applyTRValue(value.toInt) == RoadWorks =>
+        mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList ++ dateFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
+      case _ => mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
+    }
+  }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
@@ -80,6 +96,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (codeValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueCode(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        }else if (dateFieldsMapping.contains(key)){
+          val (malformedParameters, properties) = verifyDateType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
@@ -102,7 +121,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
 
-    Set(Some(typeProperty), valueProperty, additionalProperty).flatten
+    val startDateInfo = getPropertyValue(trafficSignAttributes, "startDate").toString
+    val startDateProperty = if(startDateInfo.nonEmpty)
+      Some(SimpleTrafficSignProperty(startDatePublicId, Seq(TextPropertyValue(startDateInfo))))
+    else
+      None
+
+    val endDateInfo = getPropertyValue(trafficSignAttributes, "endDate").toString
+    val endDateProperty = if(endDateInfo.nonEmpty)
+      Some(SimpleTrafficSignProperty(endDatePublicId, Seq(TextPropertyValue(endDateInfo))))
+    else
+      None
+
+    Set(Some(typeProperty), valueProperty, additionalProperty, startDateProperty, endDateProperty).flatten
   }
 
   def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {

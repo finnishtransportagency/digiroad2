@@ -13,6 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import org.joda.time.format.DateTimeFormat
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -47,6 +48,7 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           expired: Boolean = false)
 
 object OracleTrafficSignDao {
+  val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   private def query() =
     """
@@ -387,6 +389,10 @@ object OracleTrafficSignDao {
     StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
+  private def datePropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    StaticQuery.query[(Long, Long), Long](existsDateProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
       case Text | LongText =>
@@ -410,6 +416,15 @@ object OracleTrafficSignDao {
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
           insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
+        }
+      case Date =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteDateProperty(assetId, propertyId).execute
+        } else if (datePropertyValueDoesNotExist(assetId, propertyId)) {
+          insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
+        } else {
+          updateDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

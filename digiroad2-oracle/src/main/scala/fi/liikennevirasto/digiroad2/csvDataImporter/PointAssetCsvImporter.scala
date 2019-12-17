@@ -32,6 +32,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   val codeValueFieldsMapping: Map[String, String] = Map()
   val stringValueFieldsMapping: Map[String, String] = Map()
   val intValueFieldsMapping: Map[String, String] = Map()
+  val dateFieldsMapping: Map[String, String] = Map()
 
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
@@ -50,6 +51,14 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   def verifyDoubleType(parameterName: String, parameterValue: String): ParsedRow = {
     if (parameterValue.matches("[0-9.]*")) {
       (Nil, List(AssetProperty(columnName = longValueFieldsMapping(parameterName), value = BigDecimal(parameterValue))))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
+  def verifyDateType(parameterName: String, parameterValue: String): ParsedRow = {
+    if (parameterValue.matches("(0?[1-9]|[12][0-9]|3[01]).(0?[1-9]|1[0-2]).[0-9]{4}")) {
+      (Nil, List(AssetProperty(columnName = dateFieldsMapping(parameterName), value = parameterValue)))
     } else {
       (List(parameterName), Nil)
     }
