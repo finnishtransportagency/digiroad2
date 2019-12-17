@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, E
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.joda.time.format.DateTimeFormat
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
   case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[VVHRoadlink])
@@ -21,6 +22,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
   type ImportResultData = ImportResultPointAsset
 
+  val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
   val coordinateMappings = Map(
@@ -57,10 +59,11 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   }
 
   def verifyDateType(parameterName: String, parameterValue: String): ParsedRow = {
-    if (parameterValue.matches("(0?[1-9]|[12][0-9]|3[01]).(0?[1-9]|1[0-2]).[0-9]{4}")) {
+    try {
+      dateFormatter.parseDateTime(parameterValue)
       (Nil, List(AssetProperty(columnName = dateFieldsMapping(parameterName), value = parameterValue)))
-    } else {
-      (List(parameterName), Nil)
+    } catch {
+      case _: Throwable => (List(parameterName), Nil)
     }
   }
 
