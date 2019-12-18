@@ -73,7 +73,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   override def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
     val code = csvRoadWithHeaders.get("liikennemerkin tyyppi")
     code match {
-      case Some(value) if TrafficSignType.applyTRValue(value.toInt) == RoadWorks =>
+      case Some(value) if value.nonEmpty && value.forall(_.isDigit) && TrafficSignType.applyTRValue(value.toInt) == RoadWorks =>
         mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList ++ dateFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
       case _ => mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
     }
