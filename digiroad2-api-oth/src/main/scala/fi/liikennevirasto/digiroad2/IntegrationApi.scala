@@ -688,7 +688,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "type" -> TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).TRvalue,
           "trafficDirection" -> SideCode.toTrafficDirection(SideCode(trafficSign.validityDirection)).value,
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
-          "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel]))
+          "additionalPanels" -> mapAdditionalPanels(trafficSignService.getAllProperties(trafficSign, "additional_panel").map(_.asInstanceOf[AdditionalPanel])),
+          "start_date" -> trafficSignService.getProperty(trafficSign, "trafficSign_start_date").map(_.propertyDisplayValue.getOrElse("")),
+          "end_date" -> trafficSignService.getProperty(trafficSign, "trafficSign_end_date").map(_.propertyDisplayValue.getOrElse(""))
      )
     }
   }
