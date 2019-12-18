@@ -93,7 +93,7 @@
 
         function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
-            var nearestLine = geometrycalculator.findNearestLine(me.excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), feature.coordinate[0], feature.coordinate[1]);
+            var nearestLine = geometrycalculator.findNearestLine(me.excludeRoads(roadCollection, feature), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
               var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
@@ -410,9 +410,13 @@
       }
     };
 
-    this.excludeRoadByAdminClass = function(roadCollection) {
-      return _.filter(roadCollection, function (roads) {
-        return authorizationPolicy.filterRoadLinks(roads);
+    this.excludeRoads = function(roadCollection) {
+      return me.excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets());
+    };
+
+    this.excludeRoadByAdminClass = function(roads) {
+      return _.filter(roads, function (road) {
+        return authorizationPolicy.filterRoadLinks(road);
       });
     };
 

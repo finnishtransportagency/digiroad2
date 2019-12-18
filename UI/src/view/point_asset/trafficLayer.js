@@ -34,6 +34,12 @@
             }
         };
 
+        this.excludeRoads = function(roadCollection, feature) {
+           var signType = _.head(_.find(feature.features.getArray()[0].getProperties().propertyData, function(prop) {return prop.publicId === "trafficSigns_type";}).values).propertyValue;
+           var roads = _.includes(['70','71','72'], signType) ? roadCollection.getRoadsForCarPedestrianCycling() : roadCollection.getRoadsForPointAssets();
+           return me.excludeRoadByAdminClass(roads);
+        };
+
         function obtainAdministrativeClass(asset){
             return selectedAsset.getAdministrativeClass(asset.linkId);
         }
