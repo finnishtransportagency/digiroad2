@@ -192,6 +192,10 @@ object DataFixture {
     new TrafficSignProhibitionGenerator(roadLinkService)
   }
 
+  lazy val trafficSignRoadWorkGenerator: TrafficSignRoadWorkGenerator = {
+    new TrafficSignRoadWorkGenerator(roadLinkService)
+  }
+
   lazy val trafficSignHazmatTransportProhibitionGenerator: TrafficSignHazmatTransportProhibitionGenerator = {
     new TrafficSignHazmatTransportProhibitionGenerator(roadLinkService)
   }
@@ -1884,6 +1888,7 @@ object DataFixture {
     println("Completed at time: " + DateTime.now())
   }
 
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -1935,7 +1940,6 @@ object DataFixture {
       println("Complete at time: " + DateTime.now())
     }
   }
-
   def loadMunicipalitiesVerificationInfo(): Unit = {
     println("\nRefreshing information on municipality verification")
     println(DateTime.now())
@@ -1984,6 +1988,58 @@ object DataFixture {
           println(s"${sign.linkId};${sign.lon};${sign.lat};$signType;$signValue;$signInfo;${sign.linkSource};$lastModified;${sign.id};${SideCode.toTrafficDirection(SideCode(sign.validityDirection))};${sign.mValue}")
         }
       }
+    }
+  }
+
+  def createRoadWorksCreatedLastYear(): Unit = {
+    println("\nStart process to remove all road works assets created during the last year")
+    println(DateTime.now())
+
+    val actualYear = DateTime.now().getYear
+    val username = "batch_to_expire_roadworks_on_previous_year"
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+        println("Fetching assets")
+        val existingAssets =
+          roadWorkService.enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(RoadWorksAsset.typeId, roadLinks.map(_.linkId))).filterNot(_.expired)
+
+        val existingAssetsOnLastYear = existingAssets.filter { asset =>
+          asset.value.map(_.asInstanceOf[DynamicValue]) match {
+            case Some(value) =>
+              val roadWorkProps = value.value.properties
+              roadWorkProps.find(_.publicId == "arvioitu_kesto") match {
+                case Some(dateProperty) =>
+                  dateProperty.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).exists { property =>
+                    val endDateYear = DateParser.stringToDate(property.endDate, DateParser.DatePropertyFormat).getYear
+                    endDateYear < actualYear
+                  }
+                case _ => false
+              }
+            case _ => false
+          }
+        }
+
+        println(s"Number of existing assets: ${existingAssetsOnLastYear.length}")
+        println(s"Start expiring valid roadWorks assets")
+
+
+        existingAssetsOnLastYear.foreach { asset =>
+          roadWorkService.expireAsset(RoadWorksAsset.typeId, asset.id, username, true, false)
+          println(s"Asset id ${asset.id} expired. ")
+        }
+      }
+      println("Complete at time: " + DateTime.now())
     }
   }
 
@@ -2347,6 +2403,8 @@ object DataFixture {
         addGeometryToLinearAssets()
       case Some("remove_roadWorks_created_last_year") =>
         removeRoadWorksCreatedLastYear()
+      case Some("create_roadWorks_using_traffic_signs") =>
+        trafficSignRoadWorkGenerator.createLinearAssetUsingTrafficSigns()
       case Some("traffic_sign_extract") =>
         extractTrafficSigns(args.lastOption)
       case Some("remove_unnecessary_unknown_speedLimits") =>
@@ -2384,7 +2442,8 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class")
+        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class |" +
+        " get_state_roads_with_undefined_functional_class | create_roadWorks_using_traffic_signs")
     }
   }
 }

@@ -402,6 +402,34 @@ object HazmatTransportProhibitionClass {
   }
 }
 
+
+sealed trait RoadWorksClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object RoadWorksClass {
+  val values = Set(RoadWorksType, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[RoadWorksClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): RoadWorksClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    RoadWorksClass.apply(prohibitionValue).trafficSign
+
+  case object RoadWorksType extends RoadWorksClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = RoadWorks
+  }
+
+  case object Unknown extends RoadWorksClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
 sealed trait ProhibitionClass {
   def value: Int
   def typeDescription: String
