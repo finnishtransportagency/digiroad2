@@ -937,7 +937,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       case true => Seq.empty[RoadLink]
       case false => enrichRoadLinksFromVVH(roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0))
     }
-    if (forCarTraffic) closestRoadLinks.filter(_.linkType != CycleOrPedestrianPath ) else closestRoadLinks.filter(_.linkType == CycleOrPedestrianPath)
+    if (forCarTraffic) closestRoadLinks.filter(_.linkType != CycleOrPedestrianPath ) else closestRoadLinks
   }
 
   protected def removeIncompleteness(linkId: Long): Unit = {
