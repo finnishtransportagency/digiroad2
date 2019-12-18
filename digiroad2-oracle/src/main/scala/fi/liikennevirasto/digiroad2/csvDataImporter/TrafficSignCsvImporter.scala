@@ -155,18 +155,13 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _ => false
       }
       val point = getCoordinatesFromProperties(props)
-
       val (assetBearing, assetValidityDirection) = recalculateBearing(optBearing)
-
-      val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-
-      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, closestRoadLinks)
-
+      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
       val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
       val roadLink = if (roadLinks.nonEmpty) {
         possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
       } else
-        closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
+        nearbyLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
 
       val validityDirection = if(assetBearing.isEmpty) {
         trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided)

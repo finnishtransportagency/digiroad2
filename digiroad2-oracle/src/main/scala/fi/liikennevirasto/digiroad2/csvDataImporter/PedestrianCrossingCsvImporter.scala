@@ -27,8 +27,7 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
 
       val position = getCoordinatesFromProperties(csvProperties)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val nearestRoadLink = nearbyLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 

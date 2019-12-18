@@ -50,11 +50,8 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     val incomingServicePoint = pointAssetAttributes.map { servicePointAttribute =>
       val csvProperties = servicePointAttribute.properties
       val nearbyLinks = servicePointAttribute.roadLink
-
       val position = getCoordinatesFromProperties(csvProperties)
-
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val nearestRoadLink = nearbyLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val serviceType = getPropertyValue(csvProperties, "type").asInstanceOf[String]
       val typeExtension = getPropertyValueOption(csvProperties, "type extension").map(_.toString)

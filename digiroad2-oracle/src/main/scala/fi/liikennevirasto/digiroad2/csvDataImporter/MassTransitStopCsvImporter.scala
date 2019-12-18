@@ -252,7 +252,7 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
-  def getNearestRoadLink(lon: Double, lat: Double, user: User, roadTypeLimitations: Set[AdministrativeClass]): Seq[VVHRoadlink] = {
+  def getNearestRoadLink(lon: Double, lat: Double, user: User, roadTypeLimitations: Set[AdministrativeClass]): Seq[RoadLink] = {
     val closestRoadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon, lat)).
       filterNot(road => roadTypeLimitations.contains(road.administrativeClass))
     if(closestRoadLinks.nonEmpty)
@@ -382,14 +382,11 @@ class Creator(vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkService, ev
     println("Creating busStop")
     val lon = getPropertyValue(properties, "maastokoordinaatti_x").asInstanceOf[BigDecimal].toDouble
     val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
+    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
 
-    val nearestRoadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
-
-    if(nearestRoadLink.isEmpty)
+    if(roadLink.isEmpty)
       List(ExcludedRow(affectedRows = "RoadLink no longer available", csvRow = rowToString(row)))
     else {
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearestRoadLink)
-
       val prop = convertProperties(getDirection(roadLink.head) ++ properties)
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(lon, lat), roadLink.head.geometry)
       val bearing = GeometryUtils.calculateBearing(roadLink.head.geometry, Some(mValue))
@@ -426,7 +423,7 @@ class PositionUpdater (vvhClientImpl: VVHClient, roadLinkServiceImpl: RoadLinkSe
     val lat = getPropertyValue(properties, "maastokoordinaatti_y").asInstanceOf[BigDecimal].toDouble
     val externalId = getPropertyValue(properties, "external_id").toString.toInt
 
-    val roadLink = roadLinkService.enrichRoadLinksFromVVH(getNearestRoadLink(lon, lat, user, roadTypeLimitations))
+    val roadLink = getNearestRoadLink(lon, lat, user, roadTypeLimitations)
 
     if (roadLink.isEmpty)
       List(ExcludedRow(affectedRows = "roadLink no longer available", csvRow = rowToString(row)))

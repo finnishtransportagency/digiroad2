@@ -35,8 +35,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       val safetyEquipment = getPropertyValue(csvProperties, "safety equipment").asInstanceOf[String].toInt
       val name = getPropertyValueOption(csvProperties, "name").map(_.toString)
 
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val nearestRoadLink = nearbyLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 

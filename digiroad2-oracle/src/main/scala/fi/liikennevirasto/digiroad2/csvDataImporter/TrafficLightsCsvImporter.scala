@@ -39,11 +39,8 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
     pointAssetAttributes.foreach { trafficLightAttribute =>
       val csvProperties = trafficLightAttribute.properties
       val nearbyLinks = trafficLightAttribute.roadLink
-
       val position = getCoordinatesFromProperties(csvProperties)
-
-      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+      val nearestRoadLink = nearbyLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 
