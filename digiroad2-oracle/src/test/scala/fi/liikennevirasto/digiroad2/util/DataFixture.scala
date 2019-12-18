@@ -2150,7 +2150,7 @@ object DataFixture {
         try {
           val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
           if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-            println("problems in wonderland")
+            println("Problems in addresses")
             Seq()
           } else {
             val grouped = address.groupBy(addr => (addr.road, addr.roadPart))

@@ -140,30 +140,19 @@ class VKMGeometryTransform {
   private def VkmRoad = "tie"
   private def VkmRoadPart = "osa"
   private def VkmDistance = "etaisyys"
-  private def VkmTrackCode = "ajoradat"
+  private def VkmTrackCodes = "ajoradat"
+  private def VkmTrackCode = "ajorata"
   private def VkmSearchRadius = "sade"
   private def VkmQueryIdentifier = "tunniste"
-  private def VkmMunicipalityCode = "kuntanro"
-  private def VkmError = "virhe"
-  private def VkmReturnErrorMessage = "virheteksti"
-  private def VkmReturnCode = "palautusarvo"
-  private def VkmReturnCodeOk = 1
-  private def VkmReturnCodeError = 0
-  // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
+  private def VkmMunicipalityCode = "kuntakoodi"
   private def NonPedestrianRoadNumbers = "1-62999"
   private def AllRoadNumbers = "1-99999"
   private def DefaultToleranceMeters = 20.0
 
-  private def vkmUrlMuunnin = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/vkm-api/muunnin?"
-  }
-
   private def vkmBaseUrl = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/vkm-api/"
+    properties.getProperty("digiroad2.VKMUrl") + "vkm-api/"
   }
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
@@ -210,7 +199,7 @@ class VKMGeometryTransform {
     val params = Map(
             VkmRoad -> road,
             VkmRoadPart -> roadPart,
-            VkmTrackCode -> track.map(_.value),
+            VkmTrackCodes -> track.map(_.value),
             "x" -> Option(coord.x),
             "y" -> Option(coord.y),
             VkmSearchRadius -> Some(searchDistance.getOrElse(DefaultToleranceMeters))
@@ -228,13 +217,13 @@ class VKMGeometryTransform {
                         includePedestrian: Option[Boolean] = Option(false)) = {
     val indexedCoords = coords.zipWithIndex
     val params = indexedCoords.map {
-      case (coord, index) => Map(VkmRoad -> road, VkmRoadPart -> roadPart,  VkmTrackCode -> track.map(_.value),
+      case (coord, index) => Map(VkmRoad -> road, VkmRoadPart -> roadPart,  VkmTrackCodes -> track.map(_.value),
         "x" -> Option(coord.x), "y" -> Option(coord.y),
         VkmQueryIdentifier -> Option(index),  VkmSearchRadius -> searchDistance
       )
     }
 
-    request(vkmBaseUrl + "xyhaku?" + urlParamsReverse(params.head)) match {
+    request(vkmBaseUrl + "xyhaku?" + urlParams(params.head)) match {
       case Left(addresses) => extractRoadAddresses(addresses)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
@@ -245,13 +234,13 @@ class VKMGeometryTransform {
     val params = Map(
       VkmRoad -> roadAddress.road,
       VkmRoadPart -> roadAddress.roadPart,
-      VkmTrackCode -> roadAddress.track.value,
+      VkmTrackCodes -> roadAddress.track.value,
       VkmDistance -> roadAddress.addrM
     )
 
     request(vkmBaseUrl + "tieosoitehaku?" + urlParamsReverse(params)) match  {
       case Left(addressData) =>
-        if( !addressData.isEmpty)
+        if (addressData.nonEmpty)
           mapCoordinates(addressData)
         else
           throw new RoadAddressException("empty response")
@@ -303,10 +292,6 @@ class VKMGeometryTransform {
   }
 
   private def mapFields(data: Map[String, Any]) = {
-    val returnCode = data.getOrElse(VkmReturnCode, VkmReturnCodeOk)
-    val error = data.get(VkmError)
-    if (returnCode.toString.toInt == VkmReturnCodeError || error.nonEmpty)
-      throw new RoadAddressException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
     val municipalityCode = data.get(VkmMunicipalityCode)
     val road = validateAndConvertToInt(VkmRoad, data)
     val roadPart = validateAndConvertToInt(VkmRoadPart, data)
