@@ -641,7 +641,7 @@
         .then(function(x) { return x; });
     };
 
-    var returnedMunicipality = _.debounce(function(lon, lat, onSuccess, onFailure) {
+    var returnedMunicipality = function(lon, lat, onSuccess, onFailure) {
       return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
           .then(
               function (result) {
@@ -650,7 +650,7 @@
               function (fail) {
                 return onFailure(fail.code);
               });
-    }, 250);
+    };
 
     this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
       return returnedMunicipality(lon, lat, onSuccess, onFailure);

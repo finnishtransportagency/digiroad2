@@ -1,18 +1,20 @@
 (function(root) {
     root.AssetsVerificationCollection = function(backend) {
 
+        var getMunicipalityInfo = _.debounce(function(lon, lat, boundingBox, typeId){backend.getMunicipalityFromCoordinates(lon, lat, function (vkmResult) {
+            if (!_.isEmpty(vkmResult) && vkmResult.kuntakoodi)
+                getVerificationInfo(vkmResult.kuntakoodi, typeId);
+            else
+                setMunicipalityInfo(boundingBox, typeId);
+        }, function () {
+            setMunicipalityInfo(boundingBox, typeId);
+        })}, 250);
+
         this.fetch = function (boundingBox, center, typeId, hasMunicipalityValidation) {
             if(!hasMunicipalityValidation)
                 eventbus.trigger('verificationInfo:fetched', false);
             else {
-                backend.getMunicipalityFromCoordinates(center[0], center[1], function (vkmResult) {
-                    if (!_.isEmpty(vkmResult) && vkmResult.kuntakoodi)
-                        getVerificationInfo(vkmResult.kuntakoodi, typeId);
-                    else
-                        setMunicipalityInfo(boundingBox, typeId);
-                }, function () {
-                    setMunicipalityInfo(boundingBox, typeId);
-                });
+                getMunicipalityInfo(center[0], center[1], boundingBox, typeId);
             }
         };
 
