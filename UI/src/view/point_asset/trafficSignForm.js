@@ -167,6 +167,9 @@
 
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+      rootElement.find('.form-traffic-sign').on('change', function() {
+        selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
+      });
 
       rootElement.find('.form-traffic-sign').on('change', function(event) {
         // force the field to be filled
