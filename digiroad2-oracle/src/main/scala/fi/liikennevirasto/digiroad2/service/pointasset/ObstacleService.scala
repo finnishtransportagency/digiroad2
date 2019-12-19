@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, OracleDirectionalTrafficSignDao, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, ObstacleShapefile, OracleDirectionalTrafficSignDao, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
@@ -138,6 +138,10 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
      GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
        point =>  IncomingObstacle(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingObstacleAsset].obstacleType)
      }
+  }
+
+  def getObstaclesFromShapefileTable(): Seq[ObstacleShapefile] = {
+    OracleObstacleDao.getObstaclesFromShapefileTable()
   }
 }
 

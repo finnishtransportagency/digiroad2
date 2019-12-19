@@ -34,8 +34,9 @@ pipeline {
         								'create_parking_prohibition_using_traffic_signs',
         								'normalize_user_roles',
         								'get_state_roads_with_overridden_functional_class',
-        								'get_state_roads_with_undefined_functional_class'
-        								'resolving_Frozen_Links'
+        								'get_state_roads_with_undefined_functional_class',
+        								'resolving_Frozen_Links',
+        								'add_obstacles_shapefile'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [

@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, ObstacleShapefile}
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -1772,6 +1772,53 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def addObstaclesShapefile(): Unit = {
+    println("\nStart process to add new obstacles by using the table created by the shapefile import")
+    println(DateTime.now())
+    println("")
+    val userProvider: UserProvider = new OracleUserProvider
+    val user = userProvider.getUser("k903846").get
+    val minimumDistanceFromRoadLink: Double = 3.0
+
+    println("\nGetting all obstacles information from the table created by the shapefile import")
+    val obstaclesInformation: Seq[ObstacleShapefile] = OracleDatabase.withDynSession {
+      obstacleService.getObstaclesFromShapefileTable()
+    }
+
+    OracleDatabase.withDynTransaction {
+      obstaclesInformation.foreach { obstacle =>
+        println("")
+        println("Creating a obstacle with coordinates -> " + "x:" + obstacle.lon + " y:" + obstacle.lat)
+        val pointObstacle = Point(obstacle.lon, obstacle.lat)
+
+        roadLinkService.getClosestRoadlinkFromVVH(user, pointObstacle, 10) match {
+          case Some(link) =>
+            val nearestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(Seq(link))
+
+            if(nearestRoadLinks.nonEmpty){
+              val nearestRoadLink = nearestRoadLinks.head
+              println("Nearest roadLink -> " + nearestRoadLink.linkId)
+
+              val floating = GeometryUtils.minimumDistance(pointObstacle, nearestRoadLink.geometry) >= minimumDistanceFromRoadLink
+              val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId, obstacle.obstacleType)
+
+              val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, user.username, floating)
+              println("Obstacle created with id " + id)
+            }else{
+              println("No roadlink found when enrich the road link -> " + link)
+              println("Obstacle not created")
+            }
+
+          case _ =>
+            println("Closest roadlink not found")
+            println("Obstacle not created")
+        }
+      }
+    }
+    println("")
+    println("Complete at time: " + DateTime.now())
+  }
+
   def normalizeUserRoles(): Unit = {
     def printUser(user: User): Unit = {
       val configuration = user.configuration
@@ -2321,6 +2368,8 @@ object DataFixture {
         importPrivateRoadInformation()
       case Some("normalize_user_roles") =>
         normalizeUserRoles()
+      case Some("add_obstacles_shapefile") =>
+        addObstaclesShapefile()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2334,7 +2383,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles")
+        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | add_obstacles_shapefile")
     }
   }
 }

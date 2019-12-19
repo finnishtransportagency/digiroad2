@@ -908,10 +908,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
 
   /**
-    * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints.
+    * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints and add_obstacles_shapefile batch.
     */
-  def getClosestRoadlinkFromVVH(user: User, point: Point): Option[VVHRoadlink] = {
-    val diagonal = Vector3d(500, 500, 0)
+  def getClosestRoadlinkFromVVH(user: User, point: Point, vectorRadius: Int = 500): Option[VVHRoadlink] = {
+    val diagonal = Vector3d(vectorRadius, vectorRadius, 0)
 
     val roadLinks =
       if (user.isOperator())
