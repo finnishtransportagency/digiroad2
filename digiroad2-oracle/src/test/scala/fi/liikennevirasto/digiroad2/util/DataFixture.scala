@@ -1828,50 +1828,41 @@ object DataFixture {
     println(DateTime.now())
 
     val username = "batch_to_import_cycling_walking"
+    val assetType = asset.CyclingAndWalking.typeId
 
-    //Get All Cycling and walking to insert
-    // _1 = LINK_ID, _2 = cycling_walking_value
-    val allCyclingAndWalkingInfo: Seq[(Long, Option[String])] =
-      OracleDatabase.withDynSession {
-        Queries.getCyclingAndWalkingInfo
-      }
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
 
-    allCyclingAndWalkingInfo.foreach { case (linkid, value)  =>
-      if (value.nonEmpty) {
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Working on municipality : $municipality")
+        val cyclingAndWalkingInfo = ImportShapeFileDAO.getCyclingAndWalkingInfo(municipality)
 
-        val valueToInsert = DynamicValue( DynamicAssetValue( Seq (DynamicProperty( "cyclingAndWalking_type",  "single_choice",  true, Seq( DynamicPropertyValue(value) )))) )
+        if (cyclingAndWalkingInfo.nonEmpty) {
+          println(s"Number of records to update ${cyclingAndWalkingInfo.size}")
 
-        try {
-          withDynTransaction {
-            val roadlinks = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkid, false)
-            val roadlink = roadlinks.find(_.linkId == linkid).getOrElse(throw new NoSuchElementException("Roadlink Not Found"))
+          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass != State)
 
-            dynamicLinearAssetService.createWithoutTransaction(typeId = CyclingAndWalking.typeId,
-              linkId = linkid,
-              value = valueToInsert,
-              sideCode = SideCode.BothDirections.value,
-              measures = Measures(0, GeometryUtils.geometryLength(roadlink.geometry)),
-              username = username,
-              vvhTimeStamp = roadlink.vvhTimeStamp,
-              roadLink = Some(roadlink),
-              //fromUpdate = false,
-              createdByFromUpdate = Some(""),
-              createdDateTimeFromUpdate = Some(DateTime.now()),
-              verifiedBy = None,
-              informationSource = None)
+            cyclingAndWalkingInfo.foreach{asset =>
+              val roadlink = roadLinks.find(_.linkId == asset.linkId)
 
-          }
-        }  catch {
-          case nsee: NoSuchElementException =>
-            println(s"${nsee.getMessage} [ linkid: ${linkid} ]")
-
-          case _ =>
-            println("Non expected error occurred")
+              if(roadlink.isDefined) {
+                val id = dynamicLinearAssetService.createWithoutTransaction(typeId = assetType,
+                  linkId = asset.linkId,
+                  value = NumericValue(asset.value),
+                  sideCode = SideCode.BothDirections.value,
+                  measures = Measures(0, GeometryUtils.geometryLength(roadlink.get.geometry)),
+                  username = username,
+                  roadLink = roadlink)
+                println(s"Asset created with $id")
+              } else {
+                println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
+              }
+            }
         }
       }
     }
-
-
   }
 
   def normalizeUserRoles(): Unit = {
