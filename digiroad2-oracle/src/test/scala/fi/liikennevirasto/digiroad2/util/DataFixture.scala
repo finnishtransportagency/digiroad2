@@ -1779,6 +1779,7 @@ object DataFixture {
     val userProvider: UserProvider = new OracleUserProvider
     val user = userProvider.getUser("k903846").get
     val minimumDistanceFromRoadLink: Double = 3.0
+    val username = "batch_to_add_obstacles"
 
     println("\nGetting all obstacles information from the table created by the shapefile import")
     val obstaclesInformation: Seq[ObstacleShapefile] = OracleDatabase.withDynSession {
@@ -1802,7 +1803,7 @@ object DataFixture {
               val floating = GeometryUtils.minimumDistance(pointObstacle, nearestRoadLink.geometry) >= minimumDistanceFromRoadLink
               val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId, obstacle.obstacleType)
 
-              val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, user.username, floating)
+              val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, username, floating)
               println("Obstacle created with id " + id)
             }else{
               println("No roadlink found when enrich the road link -> " + link)
