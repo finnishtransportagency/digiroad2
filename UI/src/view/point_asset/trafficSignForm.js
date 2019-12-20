@@ -283,7 +283,10 @@
 
     var dateHandler = function(property) {
 
-      var propertyValue = _.isEmpty(property.values) ? '' : property.values[0].propertyDisplayValue;
+      var propertyValue = '';
+
+      if ( !_.isEmpty(property.values) && !_.isEmpty(property.values[0].propertyDisplayValue) )
+          propertyValue = property.values[0].propertyDisplayValue;
 
       var result = $('<div><div class="form-group editable form-traffic-sign">' +
           '        <label class="control-label">' + property.localizedName + '</label>' +
