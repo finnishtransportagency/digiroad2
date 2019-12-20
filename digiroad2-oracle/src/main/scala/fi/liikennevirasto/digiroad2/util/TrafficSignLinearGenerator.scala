@@ -840,12 +840,6 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
 
 trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
 
-  override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
-    if (debbuger) println("signBelongTo")
-    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
-    TrafficSignManager.belongsToParking(signType)
-  }
-
   override def mappingValue(segment: Seq[TrafficSignToLinear]): DynamicValue = {
     DynamicValue(DynamicAssetValue(segment.flatMap(_.value.asInstanceOf[DynamicValue].value.properties).distinct))
   }
@@ -1104,15 +1098,20 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
 
   override val assetType: Int = RoadWorksAsset.typeId
+  private val MAX_DISTANCE: Int = 1000
 
   lazy val roadWorkService: RoadWorkService = {
     new RoadWorkService(roadLinkService, eventbus)
+  }
+  override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
+    if (debbuger) println("signBelongTo")
+    val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
+    TrafficSignManager.belongsToRoadwork(signType)
   }
 
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[DynamicValue] = {
     if (debbuger) println("createValue")
     val value = trafficSigns.flatMap { trafficSign =>
-      val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
       val startDate = trafficSignService.getProperty(trafficSign, trafficSignService.startDatePublicId).get.propertyValue
       val endDate = trafficSignService.getProperty(trafficSign, trafficSignService.endDatePublicId).get.propertyValue
 
@@ -1182,49 +1181,66 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   }
 
   def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double] = {
-    // Find another signal point in oposite direction
-    // No signal found in a 1000m range
+    // STOP CONDITIONS:
+    //  a) Find another signal point in oposite direction
+    //  b) No signal found in a 1000m range
+
     val mainSignRoadLink = (result.map(_.roadLink) :+ actualRoadLink).find(_.linkId == mainSign.linkId).get
     val (start, end) = GeometryUtils.geometryEndpoints(mainSignRoadLink.geometry)
     val x = getPointOfInterest(start, end, SideCode.apply(mainSign.validityDirection))
 
-    val distance = if(mainSign.linkId == actualRoadLink.linkId) 0 else (if (x._2.nonEmpty) GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue else mainSign.mValue) +
-      result.filterNot(_.roadLink.linkId == mainSign.linkId).map(res => Math.abs(res.endMeasure - res.startMeasure)).sum
+    // Calculate the length of the effect the sign in the roadlink
+    val mainSignLengthEffect = if (x._2.nonEmpty)
+                                GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue
+                              else
+                                mainSign.mValue
 
+    // calculate the distance of effect the main sign when
+    // we are not in the same linkid as the main sign linkid
+    val distance = if(mainSign.linkId == actualRoadLink.linkId) 0
+                    else mainSignLengthEffect
+
+    // sum all lengths of the roadliks except the roadlink with the main signal
+    val sumPrevRoadlinks = result.filterNot(_.roadLink.linkId == mainSign.linkId)
+                                .map(res => Math.abs(res.endMeasure - res.startMeasure))
+                                .sum
+
+    // Get the total length of the current roadlink
     val length = GeometryUtils.geometryLength(actualRoadLink.geometry)
-    //val distanceLeft = if(mainSign.linkId == actualRoadLink.linkId) if(x._2.nonEmpty) GeometryUtils.geometryLength(mainSignRoadLink.geometry) - mainSign.mValue else mainSign.mValue else length
 
-    val mainType = trafficSignService.getProperty(mainSign, trafficSignService.typePublicId).get.propertyValue
-
-    val exceedDistance = Seq(10000.toDouble) /*trafficSignService.getAllProperties(mainSign, trafficSignService.additionalPublicId).map(_.asInstanceOf[AdditionalPanel]).find(_.panelType == DistanceWhichSignApplies.OTHvalue).
-      filter(distancePanel =>Try(distancePanel.panelValue.toDouble < distance + distanceLeft).getOrElse(false)).map( panel =>
-      if(actualRoadLink.linkId == mainSign.linkId)
-        if(x._1.nonEmpty) mainSign.mValue - panel.panelValue.toDouble else mainSign.mValue + panel.panelValue.toDouble
-      else
-        panel.panelValue.toDouble - distance)*/
-
+    // Get the oposite sign of roadwork in the current linkid if exists
     val existingSigns = allSignsRelated.filterNot(_.id == mainSign.id)
-                                        .filter(_.linkId == actualRoadLink.linkId)
-                                        .filter { sign =>
-                                          val innerSignType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue
-                                          val innerSignDirection = (if(direction == TowardsDigitizing.value) mainSign.mValue <= sign.mValue else mainSign.mValue >= sign.mValue)
+                                    .filter( _.linkId == actualRoadLink.linkId)
+                                    .filter( sign => compareValue(createValue(Seq(mainSign)).get, createValue(Seq(sign)).get) && sign.validityDirection != direction )
 
-                                        innerSignType != mainType && sign.validityDirection == direction && innerSignDirection || (innerSignType == mainType && sign.validityDirection == direction)
-    }.map(_.mValue)
+    // Calculate the length of the effect the oposite sign in the current roadlink
+    val existingSignLengthEffect =  if (existingSigns.nonEmpty) {
+                                      val auxSign = existingSigns.head
+                                      if (SideCode.apply(direction) == TowardsDigitizing)
+                                        auxSign.mValue
+                                      else
+                                        Math.abs(length - auxSign.mValue)
+                                    } else // In case we don't have sign pointing in oposite
+                                      0
 
-    val position = exceedDistance ++ existingSigns
+    // calculate the correct distance of effect for the current linkid
+    val distanceLeft = if(mainSign.linkId == actualRoadLink.linkId)
+                         mainSignLengthEffect
+                      else if (existingSigns.nonEmpty)
+                        existingSignLengthEffect
+                      else
+                        length
 
-    if(position.nonEmpty)
-      Some(position.min)
-    else {
-      val (first, last) = GeometryUtils.geometryEndpoints(actualRoadLink.geometry)
-      val pointOfInterest = getPointOfInterest(first, last, SideCode.apply(direction))
-      val getAdjacents = roadLinkService.getAdjacent(actualRoadLink.linkId, Seq(pointOfInterest._1.getOrElse(pointOfInterest._2.get)), false)
-      if (getAdjacents.size > 1)
-        if(pointOfInterest._1.nonEmpty) Some(0) else Some(length)
-      else
-        None
-    }
+    // Sum all distances calculated above
+    val totalDistance = distance + distanceLeft + sumPrevRoadlinks
+
+    // if the sum of distances are higher than MAX_DISTANCE then cut to the MAX_DISTANCE allowed
+    if(totalDistance > MAX_DISTANCE)
+      Some(length - Math.abs(totalDistance - MAX_DISTANCE) )
+    else if (existingSigns.nonEmpty)  // if we find a sign pointing to oposite side
+        Some(distanceLeft)
+    else
+      None
 
   }
 

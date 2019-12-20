@@ -2403,8 +2403,6 @@ object DataFixture {
         addGeometryToLinearAssets()
       case Some("remove_roadWorks_created_last_year") =>
         removeRoadWorksCreatedLastYear()
-      case Some("create_roadWorks_using_traffic_signs") =>
-        trafficSignRoadWorkGenerator.createLinearAssetUsingTrafficSigns()
       case Some("traffic_sign_extract") =>
         extractTrafficSigns(args.lastOption)
       case Some("remove_unnecessary_unknown_speedLimits") =>
@@ -2417,6 +2415,8 @@ object DataFixture {
         trafficSignHazmatTransportProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("create_parking_prohibition_using_traffic_signs") =>
         trafficSignParkingProhibitionGenerator.createLinearAssetUsingTrafficSigns()
+      case Some("create_roadWorks_using_traffic_signs") =>
+        trafficSignRoadWorkGenerator.createLinearAssetUsingTrafficSigns()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
