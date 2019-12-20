@@ -1806,7 +1806,7 @@ object DataFixture {
               val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, username, floating)
               println("Obstacle created with id " + id)
             }else{
-              println("No roadlink found when enrich the road link -> " + link)
+              println("No roadlink found when enrich the road link -> " + link.linkId)
               println("Obstacle not created")
             }
 
