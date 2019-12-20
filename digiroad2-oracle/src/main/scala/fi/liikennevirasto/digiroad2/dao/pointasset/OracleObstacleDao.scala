@@ -206,8 +206,9 @@ object OracleObstacleDao {
   }
 
   def getObstaclesFromShapefileTable(): Seq[ObstacleShapefile] = {
-    val query = """SELECT X_KOORDI, Y_KOORDI FROM DRSTA_PUUTTUVAT_VVH_ESTEET"""
-    StaticQuery.queryNA[ObstacleShapefile](query).iterator.toSeq
+    sql"""
+           SELECT X_KOORDI, Y_KOORDI FROM DRSTA_PUUTTUVAT_VVH_ESTEET
+           """.as[ObstacleShapefile].list
   }
 }
 
