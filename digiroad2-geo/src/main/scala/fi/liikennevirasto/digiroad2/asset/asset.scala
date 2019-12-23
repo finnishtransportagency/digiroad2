@@ -785,7 +785,7 @@ object AssetTypeInfo {
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
                     TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, TrHeightLimit, TrWidthLimit,
-                    CareClass, CarryingCapacity, AnimalWarnings, RoadWorksAsset, UnknownAssetTypeId)
+                    CareClass, CarryingCapacity, AnimalWarnings, RoadWorksAsset, CyclingAndWalking, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)

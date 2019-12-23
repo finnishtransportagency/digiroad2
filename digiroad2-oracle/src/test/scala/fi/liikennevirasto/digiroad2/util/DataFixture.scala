@@ -1738,7 +1738,7 @@ object DataFixture {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
 
-        val privateRoadInfo = Queries.getPrivateRoadExternalInfo(municipality).groupBy(_._1)
+        val privateRoadInfo = ImportShapeFileDAO.getPrivateRoadExternalInfo(municipality).groupBy(_._1)
 
         if (privateRoadInfo.nonEmpty) {
           println(s"Number of records to update ${privateRoadInfo.keySet.size}")
@@ -1823,7 +1823,7 @@ object DataFixture {
     }
   }
 
-  def getCyclingAndWalkingInfo(): Unit = {
+  def importCyclingAndWalkingInfo(): Unit = {
     println("\nStart process to insert all cycling and walking info")
     println(DateTime.now())
 
@@ -1842,27 +1842,30 @@ object DataFixture {
         if (cyclingAndWalkingInfo.nonEmpty) {
           println(s"Number of records to update ${cyclingAndWalkingInfo.size}")
 
-          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass != State)
+          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
 
-            cyclingAndWalkingInfo.foreach{asset =>
-              val roadlink = roadLinks.find(_.linkId == asset.linkId)
+          cyclingAndWalkingInfo.foreach { asset =>
+            val roadlink = roadLinks.find(_.linkId == asset.linkId)
+            val value = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("cyclingAndWalking_type", "single_choice", true, Seq(DynamicPropertyValue(asset.value))))))
 
-              if(roadlink.isDefined) {
+            roadlink match {
+              case Some(link) =>
                 val id = dynamicLinearAssetService.createWithoutTransaction(typeId = assetType,
                   linkId = asset.linkId,
-                  value = NumericValue(asset.value),
+                  value = value,
                   sideCode = SideCode.BothDirections.value,
-                  measures = Measures(0, GeometryUtils.geometryLength(roadlink.get.geometry)),
+                  measures = Measures(0, GeometryUtils.geometryLength(link.geometry)),
                   username = username,
                   roadLink = roadlink)
-                println(s"Asset created with $id")
-              } else {
-                println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
-              }
+                println(s"Asset created with id $id")
+              case _ => println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
             }
+          }
         }
+        println()
       }
     }
+    println("Complete at time: " + DateTime.now())
   }
 
   def normalizeUserRoles(): Unit = {
@@ -2419,7 +2422,7 @@ object DataFixture {
       case Some("get_state_roads_with_undefined_functional_class") =>
         getStateRoadWithFunctionalClassUndefined()
       case Some("import_cycling_walking_info") =>
-        getCyclingAndWalkingInfo()
+        importCyclingAndWalkingInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +

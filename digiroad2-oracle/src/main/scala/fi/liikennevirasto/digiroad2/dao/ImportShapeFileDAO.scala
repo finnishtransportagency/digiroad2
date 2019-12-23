@@ -1,27 +1,11 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import java.sql.Connection
-
 import slick.driver.JdbcDriver.backend.Database
-import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset._
-import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery}
 import Database.dynamicSession
-import _root_.oracle.spatial.geometry.JGeometry
-import _root_.oracle.sql.STRUCT
-import com.jolbox.bonecp.ConnectionHandle
-
-import scala.math.BigDecimal.RoundingMode
-import java.text.{DecimalFormat, NumberFormat}
-
-import org.joda.time.{DateTime, LocalDate}
-import com.github.tototoshi.slick.MySQLJodaSupport._
+import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult}
+import java.text.NumberFormat
 import java.util.Locale
-
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.read
 
 case class CyclingAndWalking(linkId: Long, value: Int)
 
@@ -39,11 +23,14 @@ object ImportShapeFileDAO {
   }
 
   def getCyclingAndWalkingInfo(municipalityCode: Int): Seq[CyclingAndWalking] = {
-    val query = """
-      select distinct LINK_ID, KAPY_POHJA from KAPY_POHJADATA_GEOMETRY where LINK_ID IS NOT NULL and KAPY_POHJA IS NOT NULL
-    """
-    val queryWithFilter = query + s"and KUNTAKOODI = $municipalityCode"
-    StaticQuery.queryNA[CyclingAndWalking](queryWithFilter).iterator.toSeq
+    sql"""
+      select distinct LINK_ID, KAPY_POHJA from KAPY_POHJADATA_GEOMETRY where KUNTAKOODI = $municipalityCode and KAPY_POHJA IS NOT NULL
+    """.as[CyclingAndWalking].list
   }
 
+  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
+    sql"""
+      select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
+    """.as[(Long, Long, Int, Option[String], Option[String])].list
+  }
 }
