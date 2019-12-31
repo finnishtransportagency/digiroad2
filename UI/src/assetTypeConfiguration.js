@@ -53,10 +53,7 @@
 
     var dateValueExtract = function (date) {
       var dateValue = _.head(date).values;
-      var auxDate =  _.head(dateValue).propertyValue ;
-      var extractedDate = new Date(auxDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-
-      return extractedDate;
+      return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : undefined;
     };
 
     var datePeriodValueExtract = function (date) {
@@ -974,7 +971,7 @@
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
-          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [] },
+          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : "" }},
           {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
           {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] }
         ]},
@@ -998,6 +995,7 @@
           ];
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
+          var isValidFunc = functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
 
           /* Begin: Special validate for roadwork sign */
           var fields = selectedAsset.get().propertyData;
@@ -1005,24 +1003,19 @@
           var dateValueEndField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_end_date'; });
           var trafficSignTypeField = _.filter(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
 
-          var trafficSignTypeExtracted = _.head(_.head(trafficSignTypeField).values).propertyValue
+          var trafficSignTypeExtracted = _.head(_.head(trafficSignTypeField).values).propertyValue;
           var startDateExtracted = dateValueExtract(dateValueStartField);
           var endDateExtracted = dateValueExtract(dateValueEndField);
 
-
-          var isValidaRoadWorkInfo = trafficSignTypeExtracted === "85" ? endDateExtracted >= startDateExtracted: true;
-          /* End: Special validate for roadwork sign */
-
-          var isValidDate = true;
-          if( (_.isEmpty(startDateExtracted) && !_.isEmpty(endDateExtracted)) || (!_.isEmpty(startDateExtracted) && _.isEmpty(endDateExtracted) ))
-            isValidDate = false;
-          else if( !_.isEmpty(startDateExtracted) && !_.isEmpty(endDateExtracted) && endDateExtracted < startDateExtracted )
-            isValidDate = false;
-
-          var isValidFunc = functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
+          var isValidaRoadWorkInfo = trafficSignTypeExtracted === "85" && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
 
           if (trafficSignTypeExtracted === "85")
             return isValidFunc && isValidaRoadWorkInfo;
+          /* End: Special validate for roadwork sign */
+
+          var isValidDate = true;
+          if( !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) && endDateExtracted < startDateExtracted )
+            isValidDate = false;
 
           return isValidFunc && isValidDate;
         },

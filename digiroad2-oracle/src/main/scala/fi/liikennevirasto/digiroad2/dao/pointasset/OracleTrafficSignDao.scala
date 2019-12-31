@@ -419,8 +419,10 @@ object OracleTrafficSignDao {
         }
       case Date =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
+        if (!datePropertyValueDoesNotExist(assetId, propertyId) && propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty) {
           deleteDateProperty(assetId, propertyId).execute
+        } else if (datePropertyValueDoesNotExist(assetId, propertyId) && propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty) {
+          //dont do anything
         } else if (datePropertyValueDoesNotExist(assetId, propertyId)) {
           insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
         } else {
