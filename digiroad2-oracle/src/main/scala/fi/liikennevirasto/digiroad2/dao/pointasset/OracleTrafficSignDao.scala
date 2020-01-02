@@ -421,7 +421,7 @@ object OracleTrafficSignDao {
         }
       case Date =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
-        val isBlank =  propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty
+        val isBlank =  propertyValues.isEmpty || propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty
         if (!datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
           deleteDateProperty(assetId, propertyId).execute
         } else if (datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
