@@ -419,13 +419,12 @@ object OracleTrafficSignDao {
         }
       case Date =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
-        if (!datePropertyValueDoesNotExist(assetId, propertyId) && propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty) {
+        val isBlank =  propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty
+        if (!datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
           deleteDateProperty(assetId, propertyId).execute
-        } else if (datePropertyValueDoesNotExist(assetId, propertyId) && propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty) {
-          //dont do anything
-        } else if (datePropertyValueDoesNotExist(assetId, propertyId)) {
+        } else if (datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
           insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
-        } else {
+        } else if (!datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank){
           updateDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
