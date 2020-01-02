@@ -108,6 +108,48 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
+  override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
+    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+
+    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[Int]]
+    val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
+    val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
+
+    val isValidDate = optTrafficSignType match {
+      case Some(value) =>
+        val isRoadworks = TrafficSignType.applyTRValue(value) == RoadWorks
+          (optStartDate, optEndDate) match {
+            case (Some(startDate), Some(endDate)) =>
+                  try {
+                    val startDateFormat = dateFormatter.parseDateTime(startDate)
+                    val endDateFormat = dateFormatter.parseDateTime(endDate)
+
+                    endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+                  } catch {
+                    case _: Throwable => !isRoadworks
+                  }
+            case _ => !isRoadworks
+          }
+      case _ => true
+    }
+
+    if(isValidDate) {
+      (optLon, optLat) match {
+        case (Some(lon), Some(lat)) =>
+          val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
+          roadLinks.isEmpty match {
+            case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+            case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+          }
+        case _ =>
+          (Nil, Nil)
+      }
+    } else {
+      (List("Invalid Dates"), Seq())
+    }
+  }
+
 
   private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimpleTrafficSignProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
@@ -119,9 +161,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val listFieldsNames = Set("additionalInfo", "startDate", "endDate")
 
     val propertiesValues = (listPublicIds, listFieldsNames).zipped.map{(publicId, fieldName) =>
-      val propertyInfo = getPropertyValue(trafficSignAttributes, fieldName).toString
+      val propertyInfo = getPropertyValueOption(trafficSignAttributes, fieldName)
       if(propertyInfo.nonEmpty)
-        Some(SimpleTrafficSignProperty(publicId, Seq(TextPropertyValue(propertyInfo))))
+        Some(SimpleTrafficSignProperty(publicId, Seq(TextPropertyValue(propertyInfo.get.toString))))
       else
         None
     }

@@ -52,35 +52,27 @@
       }
 
       var panelCheckbox =
-          $(''+
-          '   <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
-          '      <div class="checkbox" >' +
-          '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
-          '      </div>' +
-          '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
-          '    </div>');
+        '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
+        '      <div class="checkbox" >' +
+        '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
+        '      </div>' +
+        '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
+        '    </div>';
 
       var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
-          $(''+
-          '    <div class="form-group form-directional-traffic-sign">' +
-          '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
-          '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
-          '    </div>') : '';
+        '    <div class="form-group form-directional-traffic-sign">' +
+        '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
+        '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
+        '    </div>' : '';
 
-      var result = $('<div />').append(components);
+      if(asset.validityDirection)
+        return components +
+          '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+          '      <label class="control-label">Vaikutussuunta</label>' +
+          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+          '    </div>' + wrongSideInfo + panelCheckbox + renderedPanels;
 
-      if(asset.validityDirection) {
-        var validityDirectionElement = $(''+
-            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
-            '      <label class="control-label">Vaikutussuunta</label>' +
-            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-            '    </div>');
-
-       result = result.append( validityDirectionElement ); //.append(wrongSideInfo).append(panelCheckbox).append(renderedPanels);
-      }
-
-      result = result.append(wrongSideInfo).append(panelCheckbox).append(renderedPanels);
-      return result.children();
+      return components + wrongSideInfo + panelCheckbox + renderedPanels;
     };
 
     this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
@@ -134,14 +126,12 @@
       rootElement.find("#feature-attributes-form").html(form);
       rootElement.find("#feature-attributes-footer").html(footer);
 
-      dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
-
       rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
         var eventTarget = $(event.currentTarget);
         selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
       });
 
-      rootElement.find('input[type="text"]').on('input change', function (event) {
+      rootElement.find('input[type="text"]').not('#trafficSign_start_date, #trafficSign_end_date').on('input change', function (event) {
         var eventTarget = $(event.currentTarget);
         var obj = {};
         obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
@@ -167,13 +157,13 @@
 
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+      dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
 
-      rootElement.find('.form-traffic-sign').on('change', function(event) {
-        // force the field to be filled
-        selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');
+      rootElement.find('.form-traffic-sign').on('change', function() {
+        selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
       });
 
-      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input', function (event) {
+      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input, datechange', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
         var propertyValue = $(event.currentTarget).val();
@@ -280,26 +270,17 @@
 
     var dateHandler = function(property) {
 
-      var propertyValue = _.isEmpty(property.values) ? '' : property.values[0].propertyDisplayValue;
+      var propertyValue = '';
 
-      var result = $('<div><div class="form-group editable form-traffic-sign">' +
+      if ( !_.isEmpty(property.values) && !_.isEmpty(property.values[0].propertyDisplayValue) )
+          propertyValue = property.values[0].propertyDisplayValue;
+
+      return '' +
+          '<div><div class="form-group editable form-traffic-sign">' +
           '        <label class="control-label">' + property.localizedName + '</label>' +
           '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
           '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
-          '    </div></div>');
-
-        result.on('keyup datechange', _.debounce(function(target){
-          // tab press
-          if(target.keyCode === 9){
-            return;
-          }
-
-          var propertyValue = _.isEmpty(target.currentTarget.value) ? '' : dateutil.finnishToIso8601(target.currentTarget.value);
-          selectedAsset.get().setProperty(property.publicId, [{ propertyValue: propertyValue, propertyDisplayValue: propertyValue }], property.propertyType, property.required);
-
-          },500));
-
-        return result.html();
+          '    </div></div>';
     };
 
     var textHandler = function (property) {
