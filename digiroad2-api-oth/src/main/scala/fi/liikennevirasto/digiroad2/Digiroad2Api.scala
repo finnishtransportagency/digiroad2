@@ -279,7 +279,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
-  get("/servicePointStops") {
+  get("/massServiceStops") {
     val user = userProvider.getCurrentUser()
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
@@ -292,7 +292,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipalityNumber" -> stop.municipalityCode,
         "lat" -> stop.lat,
         "lon" -> stop.lon,
-        //"validityPeriod" -> "current", ???
         "propertyData" -> stop.propertyData
       )
     }
@@ -357,14 +356,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
     val massTransitStop = massTransitStopReturned._1.map { stop =>
 
-      val validityPeriod = {
-                if (stop.stopTypes.contains(7) ) {
-                  "current"
-                } else {
-                  stop.validityPeriod
-                }
-             }
-
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
@@ -372,7 +363,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "lon" -> stop.lon,
         "validityDirection" -> stop.validityDirection,
         "bearing" -> stop.bearing,
-        "validityPeriod" -> validityPeriod,
+        "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
@@ -385,19 +376,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   get("/massTransitStop/:id") {
     val id = params("id").toLong
     val massTransitStopReturned = massTransitStopService.getMassTransitStopByIdWithTRWarnings(id)
     val massTransitStop = massTransitStopReturned._1.map { stop =>
 
-      val validityPeriod = {
-        if (stop.stopTypes.contains(7) ) {
-          "current"
-        } else {
-          stop.validityPeriod
-        }
-      }
 
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
@@ -406,16 +389,27 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "lon" -> stop.lon,
         "validityDirection" -> stop.validityDirection,
         "bearing" -> stop.bearing,
-        "validityPeriod" -> validityPeriod,
+        "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
     }
+  }
 
-    if (massTransitStopReturned._2) {
-      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found")))
-    } else {
-      massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found"))
+  get("/massServiceStops/:nationalId") {
+    val id = params("nationalId").toLong
+    servicePointStopService.getByNationalId(id) match {
+      case Some(stop) =>
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "propertyData" -> stop.propertyData,
+          "municipalityCode" -> stop.municipalityCode)
+
+      case _ =>
+        Map("success" -> false)
     }
   }
 
@@ -427,16 +421,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId)
       massTransitStopReturned._1 match {
         case Some(stop) =>
-
-          val validityPeriod = {
-            if (stop.stopTypes.contains(7) ) {
-              "current"
-            } else {
-              stop.validityPeriod
-            }
-          }
-
-
           Map ("id" -> stop.id,
             "nationalId" -> stop.nationalId,
             "stopTypes" -> stop.stopTypes,
@@ -444,7 +428,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "lon" -> stop.lon,
             "validityDirection" -> stop.validityDirection,
             "bearing" -> stop.bearing,
-            "validityPeriod" -> validityPeriod,
+            "validityPeriod" -> stop.validityPeriod,
             "floating" -> stop.floating,
             "propertyData" -> stop.propertyData,
             "municipalityCode" -> massTransitStopReturned._3,
@@ -564,7 +548,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  put("/servicePointStop/:id") {
+  put("/massServiceStops/:id") {
     val user = userProvider.getCurrentUser()
     val lon = (parsedBody \ "lon").extract[Double]
     val lat = (parsedBody \ "lat").extract[Double]
@@ -644,7 +628,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  post("/servicePointStop") {
+  post("/massServiceStops") {
     val user = userProvider.getCurrentUser()
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get

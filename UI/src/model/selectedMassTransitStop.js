@@ -91,6 +91,13 @@
         });
     };
 
+    var propertyForMassServiceStops = [
+      'palvelu',
+      'tarkenne',
+      'palvelun_nimi',
+      'palvelun_lisätieto',
+      'viranomaisdataa'];
+
     var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);
       currentAsset = asset;
@@ -105,6 +112,10 @@
           value.propertyDisplayValue = String(currentAsset.validityDirection);
           return value;
         });
+
+        if(!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '7')
+          properties =  _.filter(properties, function(prop) { return _.includes(propertyForMassServiceStops, prop.publicId);});
+
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
         changedProps = extractPublicIds(currentAsset.payload.properties);
@@ -241,10 +252,12 @@
       var isRequiredProperty = function(publicId) {
         //ignore if it is a terminal
         //TODO we need to get a way to know the mandatory fields depending on the bus stop type (this was code after merging)
-        if(currentAsset.stopTypes && ( currentAsset.stopTypes[0] == 6 || currentAsset.stopTypes[0] == 7 ) && _.some())
+        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 6 && _.some())
           return 'liitetyt_pysakit' == publicId;
         if(currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties))
           return 'liitetyt_pysakit' == publicId;
+        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 7 || isServiceStop(currentAsset.payload.properties))
+          return 'palvelu' == publicId;
         return getPropertyMetadata(publicId).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {
@@ -585,8 +598,8 @@
     }
 
     function isServiceStop(properties) {
-      return _.some(properties, function(property) {
-        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
+      return _.some(properties, function (property) {
+        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function (value) {
           return value.propertyValue == "7";
         });
       });

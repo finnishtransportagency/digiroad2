@@ -45,7 +45,7 @@ case class ServicePoint(id: Long, nationalId: Long, stopTypes: Seq[Int],
 
 case class ServicePointRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point],
                            validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
-                           created: Modification, modified: Modification, municipalityCode: Int, persistedFloating: Boolean)
+                           created: Modification, modified: Modification, municipalityCode: Int)
 
 class ServicePointBusStopDao {
   val logger = LoggerFactory.getLogger(getClass)
@@ -53,13 +53,13 @@ class ServicePointBusStopDao {
   val idField = "external_id" //???
 
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : Option[LocalDate] = {
       r.nextDateOption().map(new LocalDate(_))
     }
   }
 
   private implicit val getServicePointRow = new GetResult[ServicePointRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): ServicePointRow = {
       val id = r.nextLong
       val externalId = r.nextLong
       val assetTypeId = r.nextLong
@@ -67,7 +67,6 @@ class ServicePointBusStopDao {
       val validTo = r.nextDateOption.map(new LocalDate(_))
       val point = r.nextBytesOption.map(bytesToPoint)
       val municipalityCode = r.nextInt()
-      val persistedFloating = r.nextBoolean()
       val propertyId = r.nextLong
       val propertyPublicId = r.nextString
       val propertyType = r.nextString
@@ -85,9 +84,8 @@ class ServicePointBusStopDao {
         propertyMaxCharacters = propertyMaxCharacters)
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
-      ServicePointRow(id, externalId, assetTypeId, point,
-        validFrom, validTo, property, created, modified,
-        municipalityCode = municipalityCode, persistedFloating = persistedFloating)
+
+      ServicePointRow(id, externalId, assetTypeId, point, validFrom, validTo, property, created, modified, municipalityCode = municipalityCode)
     }
   }
 
@@ -112,33 +110,6 @@ class ServicePointBusStopDao {
     Option(assetRow.property.propertyDisplayValue)
   }
 
-//  private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
-//    (validFrom, validTo) match {
-//      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { MassTransitStopValidityPeriod.
-//        Future }
-//      else { MassTransitStopValidityPeriod.
-//        Current }
-//      case (None, Some(to)) => if (LocalDate.now().isAfter(to
-//      )) { MassTransitStopValidityPeriod
-//        .Past }
-//      else { MassTransitStopValidityPeriod.
-//        Current }
-//      case (Some(from), Some(to)) =>
-//        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
-//        if (interval.
-//          containsNow()) { MassTransitStopValidityPeriod
-//          .Current }
-//        else if (interval.
-//          isBeforeNow) {
-//          MassTransitStopValidityPeriod.Past }
-//        else {
-//          MassTransitStopValidityPeriod.Future }
-//      case _ => MassTransitStopValidityPeriod.Current
-//    }
-//  }
-
-
-
   def fetchAsset(queryFilter: String => String): Seq[ServicePoint] = {
     val query = """
         select a.id, a.external_id, a.asset_type_id,
@@ -155,7 +126,12 @@ class ServicePointBusStopDao {
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
-          left join enumerated_value e on (mc.enumerated_value_id = e.id and e.value = '7') or s.enumerated_value_id = e.id
+          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+        where exists (
+            select '1'
+            from multiple_choice_value aux_mc
+            join enumerated_value aux_e on aux_mc.enumerated_value_id = aux_e.id and aux_e.value = '7'
+            where aux_mc.asset_id = a.id)
       """
     queryToServicePoint(queryFilter(query))
   }
@@ -195,10 +171,9 @@ class ServicePointBusStopDao {
   }
 
   def insertAsset(id: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int): Unit = {
-    val typeId = 10
     sqlu"""insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry)
-           select ($id, national_bus_stop_id_seq.nextval, $typeId, $creator, $municipalityCode,
-           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)))
+           select $id, national_bus_stop_id_seq.nextval, $typeId, $creator, $municipalityCode,
+           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0))
            from dual
       """.execute
   }
@@ -235,9 +210,13 @@ class ServicePointBusStopDao {
     updateAssetModified(assetId, modifier).execute
   }
 
-  private def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
-    val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
-    (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
+  private def propertyWithTypeAndId(property: SimpleProperty): (String, Option[Long], SimpleProperty) = {
+    if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
+      (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
+    } else {
+      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
+    }
   }
 
   def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {

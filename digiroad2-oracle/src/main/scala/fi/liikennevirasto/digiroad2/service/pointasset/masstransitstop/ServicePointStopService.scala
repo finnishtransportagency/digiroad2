@@ -20,22 +20,32 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withId(id: Long)(query: String): String = {
-    query + s" where a.id = $id"
+    query + s" and a.id = $id"
+  }
+
+  def withNationalId(id: Long)(query: String): String = {
+    query + s" and a.external_id = $id"
   }
 
   def create(lon: Double, lat: Double, properties: Seq[SimpleProperty], username: String, municipalityCode: Int): Long = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    servicePointBusStopDao.insertAsset(assetId, lon, lat, username, municipalityCode)
-    servicePointBusStopDao.updateAssetProperties(assetId, properties)
+    withDynTransaction {
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      servicePointBusStopDao.insertAsset(assetId, lon, lat, username, municipalityCode)
+      servicePointBusStopDao.updateAssetProperties(assetId, properties)
 
-    assetId
-    //eventbus.publish("service_point:saved", resultAsset)
-//    resultAsset
+      assetId
+    }
   }
 
   def getById(id: Long): Option[ServicePoint] = {
     withDynSession {
       servicePointBusStopDao.fetchAsset(withId(id)).headOption
+    }
+  }
+
+  def getByNationalId(nationalId: Long): Option[ServicePoint] = {
+    withDynSession {
+      servicePointBusStopDao.fetchAsset(withNationalId(nationalId)).headOption
     }
   }
 
@@ -72,14 +82,14 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[ServicePoint] = {
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-      val filter = s"where a.asset_type_id = ${MassTransitStopAsset.typeId} and $boundingBoxFilter and ( a.valid_to is null or a.valid_to > sysdate)"
+      val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId} and $boundingBoxFilter and ( a.valid_to is null or a.valid_to > sysdate)"
       servicePointBusStopDao.fetchAsset(withFilter(filter))
     }
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[ServicePoint] = {
     withDynSession {
-      val filter = s"where a.asset_type_id = ${MassTransitStopAsset.typeId}  and a.municipality_code = $municipalityCode and ( a.valid_to is null or a.valid_to > sysdate)"
+      val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId}  and a.municipality_code = $municipalityCode and ( a.valid_to is null or a.valid_to > sysdate)"
       servicePointBusStopDao.fetchAsset(withFilter(filter))
     }
   }
