@@ -11,20 +11,19 @@ pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: "25"))
         disableConcurrentBuilds()
-        timeout(time: 1, unit: 'HOURS')
     }
     stages {
         stage("Setup") {
             steps {
                     withCredentials([
                        string(credentialsId: 'TN_ITS_CONVERSION', variable: 'TN_ITS_CONVERSION')]) {
-                             def ret = sh(script {
+                             script {
                                 STAGE_RUN_ROSATTE_CONVERSION = [
                                     "mkdir -p ${WORKSPACE}/dev/fd/ &&",
                                     "curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its-test.herokuapp.com/conversion/${CONVERTER_END_DATE} | tee ${WORKSPACE}/dev/fd/3 | tail -n 1 | grep OK"
                                 ].join(" ")
-                            }, returnStdout: true)
-                            println ret
+                            }
+
                     }
             }
         }
