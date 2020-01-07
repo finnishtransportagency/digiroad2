@@ -15,8 +15,7 @@
         {value: 6, imgUrl: 'images/service_points/railwayStation.png'},
         {value: 7, imgUrl: 'images/service_points/subwayStation.png'},
         {value: 8, imgUrl: 'images/service_points/airport.png' },
-        {value: 9, imgUrl: 'images/service_points/ferry.png' },
-        {value: undefined, imgUrl: 'images/service_points/' }
+        {value: 9, imgUrl: 'images/service_points/ferry.png' }
     ];
 
     var roundRect = function(canvasContext, x, y, width, height, radius) {
@@ -195,11 +194,11 @@
 
         if (auxServicePointInfo.palvelu !== "11") {
           srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.palvelu) return spi;});
-          srcImg = srcImg === undefined ? "": srcImg.imgUrl;
+          srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE]: srcImg.imgUrl;
         }
         else if (auxServicePointInfo.tarkenne !== undefined ) {
             srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.tarkenne ) return spi;});
-            srcImg = srcImg === undefined ? "": srcImg.imgUrl;
+            srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE]: srcImg.imgUrl;
         }
 
         return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {

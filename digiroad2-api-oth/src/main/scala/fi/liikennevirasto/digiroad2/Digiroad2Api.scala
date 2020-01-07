@@ -292,7 +292,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "municipalityNumber" -> stop.municipalityCode,
         "lat" -> stop.lat,
         "lon" -> stop.lon,
-        "propertyData" -> stop.propertyData
+        "propertyData" -> stop.propertyData,
+        "validityPeriod" -> "current",
+        "floating" -> false
       )
     }
   }
