@@ -412,7 +412,7 @@
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
         backend.getMassServiceStopByNationalId(assetNationalId, function (asset) {
-          eventbus.trigger('asset:fetched', asset);
+          if (_.isUndefined(asset.success)) { eventbus.trigger('asset:fetched', asset); }
         });
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
@@ -420,7 +420,7 @@
               eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
             }
           }
-          eventbus.trigger('asset:fetched', asset);
+          if (statusMessage == "success") { eventbus.trigger('asset:fetched', asset); }
         });
       }
     };

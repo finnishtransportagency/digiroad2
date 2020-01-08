@@ -5,12 +5,35 @@
   var pointAssetToSave = false;
 
   var rootElement = $("#feature-attributes");
+
+  function isValidServicePoint(){
+    var palveluProp = getPropByPublicId('palvelu' );
+    var tarkeneProp =  getPropByPublicId('tarkenne');
+
+    if(_.isEmpty(palveluProp.values) || _.isEmpty(tarkeneProp.values) || palveluProp.values[0].propertyValue != "11"){
+      return true;
+    }else{
+      return tarkeneProp.values[0].propertyValue != "99";
+    }
+  }
+
+  function getPropByPublicId(public_id){
+    var property;
+
+    property = selectedMassTransitStopModel.getCurrentAsset().payload.properties.find(function(prop){
+      if ( prop.publicId == public_id)
+        return prop;
+    });
+
+    return property;
+  }
+
   var ValidationErrorLabel = function() {
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
-      if (pointAssetToSave) {
-        element.hide();
+      if (pointAssetToSave && !isValidServicePoint()) {
+        element.show();
       }else if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.requiredPropertiesMissing()) {
         element.show();
       } else {
@@ -113,9 +136,11 @@
     }
 
     var updateStatus = function() {
-      if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
+      if(pointAssetToSave && !isValidServicePoint()){
+        element.prop('disabled', true);
+      } else if (selectedMassTransitStopModel.isDirty() && !selectedMassTransitStopModel.requiredPropertiesMissing() && !selectedMassTransitStopModel.hasMixedVirtualAndRealStops() && !selectedMassTransitStopModel.pikavuoroIsAlone()){
         element.prop('disabled', false);
-      } else if(poistaSelected || pointAssetToSave) {
+      } else if(poistaSelected) {
         element.prop('disabled', false);
       } else {
         element.prop('disabled', true);
@@ -839,7 +864,7 @@
             return directionChoiceHandler(feature);
           } else if (propertyType === "single_choice") {
             return singleChoiceHandler(feature, enumeratedPropertyValues);
-          } else if (feature.propertyType === "multiple_choice" && isTerminalBusStop) {
+          } else if (feature.propertyType === "multiple_choice" && isTerminalBusStop == 6) {
             return terminalMultiChoiceHandler(feature);
           } else if (feature.propertyType === "multiple_choice") {
             return multiChoiceHandler(feature, enumeratedPropertyValues);
@@ -1062,17 +1087,6 @@
 
         }
 
-        function getPropByPublicId(public_id){
-          var property;
-
-          property = selectedMassTransitStopModel.getCurrentAsset().payload.properties.find(function(prop){
-              if ( prop.publicId == public_id)
-                return prop;
-          });
-
-          return property;
-        }
-
         function updateViranomaisdataaValue() {
           var palveluProp = getPropByPublicId('palvelu' );
             var value = isAuthorityData(palveluProp.values[0].propertyValue) ? 'Kyllä' : 'Ei';
@@ -1094,7 +1108,7 @@
                     $('.tarkenne-select').parent().hide();
                 } else {
                     $('.tarkenne-select').parent().remove();
-                    selectedMassTransitStopModel.setProperty('tarkenne', [], 'single_choice', undefined, undefined);
+                    selectedMassTransitStopModel.setProperty('tarkenne', [{propertyValue: "99"}], 'single_choice', undefined, undefined);
                 }
             }
         }

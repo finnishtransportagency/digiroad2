@@ -249,11 +249,11 @@ class ServicePointBusStopDao {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
 
       case SingleChoice =>
-        val singleChoiceValue = if (propertyValues.size != 1) 99 else propertyValues.head.propertyValue.toLong
+        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, singleChoiceValue).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, singleChoiceValue).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         }
 
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
