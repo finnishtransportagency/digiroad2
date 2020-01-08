@@ -88,6 +88,10 @@ trait TrafficSignLinearGenerator {
     new LinearAssetService(roadLinkService, new DummyEventBus)
   }
 
+  lazy val dynamicLinearAssetService: DynamicLinearAssetService = {
+    new DynamicLinearAssetService(roadLinkService, new DummyEventBus)
+  }
+
   lazy val manoeuvreService: ManoeuvreService = {
     new ManoeuvreService(roadLinkService, new DummyEventBus)
   }
@@ -857,11 +861,11 @@ trait TrafficSignDynamicAssetGenerator extends TrafficSignLinearGenerator  {
     if (withTransaction) {
       withDynTransaction {
         val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
-        dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(assetIds.toSet)
+        dynamicLinearAssetService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
       }
     } else {
       val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
-      dynamicLinearAssetDao.fetchDynamicLinearAssetsByIds(assetIds.toSet)
+      dynamicLinearAssetService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
     }
   }
 
@@ -1103,6 +1107,20 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   lazy val roadWorkService: RoadWorkService = {
     new RoadWorkService(roadLinkService, eventbus)
   }
+
+  override def fetchTrafficSignRelatedAssets(trafficSignId: Long, withTransaction: Boolean = false): Seq[PersistedLinearAsset] = {
+    if (debbuger) println("fetchTrafficSignRelatedAssets")
+    if (withTransaction) {
+      withDynTransaction {
+        val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+        roadWorkService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
+      }
+    } else {
+      val assetIds = oracleLinearAssetDao.getConnectedAssetFromTrafficSign(trafficSignId)
+      roadWorkService.getPersistedAssetsByIds(assetType, assetIds.toSet, false)
+    }
+  }
+
   override def signBelongTo(trafficSign: PersistedTrafficSign): Boolean = {
     if (debbuger) println("signBelongTo")
     val signType = trafficSignService.getProperty(trafficSign, trafficSignService.typePublicId).get.propertyValue.toInt
@@ -1216,18 +1234,23 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     // Calculate the length of the effect the oposite sign in the current roadlink
     val existingSignLengthEffect =  if (existingSigns.nonEmpty) {
                                       val auxSign = existingSigns.head
-                                      if (SideCode.apply(direction) == TowardsDigitizing)
+
+                                      if (auxSign.linkId == mainSign.linkId)  //signal in same linkid
                                         auxSign.mValue
-                                      else
-                                        Math.abs(length - auxSign.mValue)
-                                    } else // In case we don't have sign pointing in oposite
-                                      0
+                                      else { // validate the direction to do some math
+                                         if (SideCode.apply(direction) == TowardsDigitizing)
+                                           auxSign.mValue
+                                        else
+                                         Math.abs(length - auxSign.mValue)
+                                      }
+                                    } else 0 // In case we don't have sign pointing in oposite
+
 
     // calculate the correct distance of effect for the current linkid
-    val distanceLeft = if(mainSign.linkId == actualRoadLink.linkId)
-                         mainSignLengthEffect
-                      else if (existingSigns.nonEmpty)
+    val distanceLeft = if (existingSigns.nonEmpty)
                         existingSignLengthEffect
+                      else if(mainSign.linkId == actualRoadLink.linkId)
+                        mainSignLengthEffect
                       else
                         length
 
