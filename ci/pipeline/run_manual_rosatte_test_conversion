@@ -66,7 +66,11 @@ pipeline {
             }
             steps {
                 script {
-                    def ret = sh(returnStdout: true, STAGE_RUN_ROSATTE_CONVERSION)
+                    def ret = sh(
+                        returnStdout: true,
+                        script: ''' mkdir -p ${WORKSPACE}/dev/fd/ &&;
+                                    curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its-test.herokuapp.com/conversion/${CONVERTER_END_DATE} | tee ${WORKSPACE}/dev/fd/3 | tail -n 1 | grep OK '''
+                        )
                     println ret
                 }
             }
