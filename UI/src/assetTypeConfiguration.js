@@ -841,10 +841,11 @@
         readOnlyLayer: TrafficSignReadOnlyLayer,
         minZoomForContent: oneKmZoomLvl,
         saveCondition: function (fields) {
-          var cyclingAndWalkingValue = _.map(fields, function(field) { if ( field.getPropertyValue().publicId === 'cyclingAndWalking_type') return field.getValue();  });
 
-          return !_.isUndefined(cyclingAndWalkingValue) && cyclingAndWalkingValue.length > 0 && cyclingAndWalkingValue[0] !== "99";
-
+            return _.isEmpty(fields) ||  _.some(fields, function (field) {
+              var publicId = field.getPropertyValue().publicId;
+              return field.hasValue() && (publicId === "cyclingAndWalking_type" && field.getValue() !== "99");
+            });
         }
       }
     ];
