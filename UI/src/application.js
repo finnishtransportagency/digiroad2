@@ -476,7 +476,8 @@
           .concat([manoeuvreBox])
           .concat(getLinearAsset(assetType.prohibition))
           .concat([parkingProhibitionBox])
-          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
+          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
+          .concat([cyclingAndWalking]),
       []
           .concat(getLinearAsset(assetType.totalWeightLimit))
           .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
@@ -499,8 +500,7 @@
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat([winterSpeedLimits])
-          .concat(getLinearAsset(assetType.trafficVolume))
-          .concat([cyclingAndWalking]),
+          .concat(getLinearAsset(assetType.trafficVolume)),
       []
           .concat(trSpeedLimitBox)
     ];
