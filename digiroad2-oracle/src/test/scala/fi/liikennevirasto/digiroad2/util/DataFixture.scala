@@ -1905,7 +1905,7 @@ object DataFixture {
                   measures = Measures(0, GeometryUtils.geometryLength(link.geometry)),
                   username = username,
                   roadLink = roadlink)
-                println(s"Asset created with id $id")
+                println(s"Asset created with id $id in the roadlink ${asset.linkId}")
               case _ => println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
             }
           }

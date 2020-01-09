@@ -36,7 +36,8 @@ pipeline {
         								'get_state_roads_with_overridden_functional_class',
         								'get_state_roads_with_undefined_functional_class',
         								'add_obstacles_shapefile',
-        								'remove_roadWorks_created_last_year'
+        								'remove_roadWorks_created_last_year',
+        								'import_cycling_walking_info'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
