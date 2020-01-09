@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
+import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, ObstacleShapefile}
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -1823,6 +1823,54 @@ object DataFixture {
     }
   }
 
+  def addObstaclesShapefile(): Unit = {
+    println("\nStart process to add new obstacles by using the table created by the shapefile import")
+    println(DateTime.now())
+    println("")
+    val userProvider: UserProvider = new OracleUserProvider
+    val user = userProvider.getUser("k903846").get
+    val minimumDistanceFromRoadLink: Double = 3.0
+    val username = "batch_to_add_obstacles"
+
+    println("\nGetting all obstacles information from the table created by the shapefile import")
+    val obstaclesInformation: Seq[ObstacleShapefile] = OracleDatabase.withDynSession {
+      obstacleService.getObstaclesFromShapefileTable()
+    }
+
+    OracleDatabase.withDynTransaction {
+      obstaclesInformation.foreach { obstacle =>
+        println("")
+        println("Creating a obstacle with coordinates -> " + "x:" + obstacle.lon + " y:" + obstacle.lat)
+        val pointObstacle = Point(obstacle.lon, obstacle.lat)
+
+        roadLinkService.getClosestRoadlinkFromVVH(user, pointObstacle, 10) match {
+          case Some(link) =>
+            val nearestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(Seq(link))
+
+            if(nearestRoadLinks.nonEmpty){
+              val nearestRoadLink = nearestRoadLinks.head
+              println("Nearest roadLink -> " + nearestRoadLink.linkId)
+
+              val floating = GeometryUtils.minimumDistance(pointObstacle, nearestRoadLink.geometry) >= minimumDistanceFromRoadLink
+              val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId, obstacle.obstacleType)
+
+              val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, username, floating)
+              println("Obstacle created with id " + id)
+            }else{
+              println("No roadlink found when enrich the road link -> " + link.linkId)
+              println("Obstacle not created")
+            }
+
+          case _ =>
+            println("Closest roadlink not found")
+            println("Obstacle not created")
+        }
+      }
+    }
+    println("")
+    println("Complete at time: " + DateTime.now())
+  }
+
   def importCyclingAndWalkingInfo(): Unit = {
     println("\nStart process to insert all cycling and walking info")
     println(DateTime.now())
@@ -2421,6 +2469,8 @@ object DataFixture {
         getStateRoadWithFunctionalClassOverridden()
       case Some("get_state_roads_with_undefined_functional_class") =>
         getStateRoadWithFunctionalClassUndefined()
+      case Some("add_obstacles_shapefile") =>
+        addObstaclesShapefile()
       case Some("import_cycling_walking_info") =>
         importCyclingAndWalkingInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -2436,8 +2486,8 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
         " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class |"+
-        " get_state_roads_with_undefined_functional_class | import_cycling_walking_info")
+        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
+        " add_obstacles_shapefile | import_cycling_walking_info")
     }
   }
 }

@@ -52,7 +52,9 @@ pipeline {
         								'load_municipalities_verification_info',
         								'create_parking_prohibition_using_traffic_signs',
         								'get_state_roads_with_overridden_functional_class',
-        								'get_state_roads_with_undefined_functional_class'
+        								'get_state_roads_with_undefined_functional_class',
+        								'add_obstacles_shapefile',
+        								'remove_roadWorks_created_last_year'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [

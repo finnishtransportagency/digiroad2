@@ -15,9 +15,9 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 case class Dataset(datasetId: String, featuresCollection: FeatureCollection, roadlinks: List[List[Long]])
-case class FeatureCollection(typee: String, features: List[Feature])
+case class FeatureCollection(typee: String, features: List[Feature], crs: Option[Map[String, Any]] = None)
 case class Feature(typee: String, geometry: Geometry, properties: Map[String, String])
-case class Geometry(typee: String, coordinates: List[List[Double]], crs: Map[String, Any])
+case class Geometry(typee: String, coordinates: List[List[Double]])
 
 sealed trait DatasetStatus{
   def value: Int
@@ -51,8 +51,8 @@ object FeatureStatus{
     values.find(_.value == intValue).getOrElse(ErrorsWhileProcessing)
   }
 
-  case object Inserted extends FeatureStatus{ def value = 0; def description = "Inserted successfuly";}
-  case object Processed extends FeatureStatus{ def value = 1; def description = "Processed successfuly";}
+  case object Inserted extends FeatureStatus{ def value = 0; def description = "Inserted successfully";}
+  case object Processed extends FeatureStatus{ def value = 1; def description = "Processed successfully";}
   case object WrongMandatoryValue extends FeatureStatus{ def value = 2; def description = "Asset type or sideCode with wrong mandatory value";}
   case object NoGeometryType extends FeatureStatus{ def value = 3; def description = "Geometry type not found";}
   case object RoadlinkNoTypeInProperties extends FeatureStatus{ def value = 4; def description = "Roadlink with no type in properties";}
@@ -77,9 +77,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
       case jsonObj: JObject =>
         val typee = (jsonObj \ "type").extract[String]
         val coordinates = (jsonObj \ "coordinates").extract[List[List[Double]]]
-        val crs = (jsonObj \ "crs").extract[Map[String, Any]]
-
-        Geometry(typee, coordinates, crs)
+        Geometry(typee, coordinates)
     },
       {
         case g : Geometry => Extraction.decompose(g)
@@ -103,8 +101,8 @@ class MunicipalityApi(val vvhClient: VVHClient,
       case jsonObj: JObject =>
         val typee = (jsonObj \ "type").extract[String]
         val featuresCollection = (jsonObj \ "features").extract[List[Feature]]
-
-        FeatureCollection(typee, featuresCollection)
+        val crs = (jsonObj \ "crs").extractOpt[Map[String, Any]]
+        FeatureCollection(typee, featuresCollection, crs)
     },
       {
         case tv : FeatureCollection => Extraction.decompose(tv)
@@ -135,7 +133,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
   final val AwsUser = "AwsUpdater"
 
-  private def insertFeatureAndUpdateDataset(datasetId: String, featureId: Long, featureStatus: List[FeatureStatus]) = {
+  private def insertFeatureAndUpdateDataset(datasetId: String, featureId: String, featureStatus: List[FeatureStatus]) = {
     val allFeatureStatus = featureStatus.distinct.filterNot(feature => feature == FeatureStatus.Inserted)
 
     if (allFeatureStatus.isEmpty) {
@@ -146,7 +144,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
   }
 
-  private def linkIdValidation(datasetId: String, featureId: Long, linkIds: Set[Long],  roadLinks: Seq[Long]): FeatureStatus = {
+  private def linkIdValidation(linkIds: Set[Long],  roadLinks: Seq[Long]): FeatureStatus = {
     if(!(linkIds.nonEmpty && linkIds.forall(roadLinks.contains(_))))
     {
       FeatureStatus.WrongRoadlinks
@@ -155,7 +153,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
   }
 
-  private def validatePoint(datasetId: String, featureId: Long, properties: Map[String, String]): List[FeatureStatus] = {
+  private def validatePoint(properties: Map[String, String]): List[FeatureStatus] = {
     val assetType = properties("type")
 
     val status = assetType match {
@@ -168,7 +166,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     List(status)
   }
 
-  private def validateLinearAssets(datasetId: String, featureId: Long, properties: Map[String, String]): List[FeatureStatus] = {
+  private def validateLinearAssets(properties: Map[String, String]): List[FeatureStatus] = {
     val speedLimit = properties.get("speedLimit")
     val pavementClass = properties.get("pavementClass")
     val sideCode = properties.get("sideCode")
@@ -179,7 +177,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
     }
 
     val pavementClassStatus = pavementClass match {
-      case Some(value) if !Seq("1", "2", "10", "20", "30", "40", "50").contains(value) => FeatureStatus.WrongMandatoryValue
+      case Some(value) if !Seq("1", "2", "10", "20", "30", "40", "50", "99").contains(value) => FeatureStatus.WrongMandatoryValue
       case _ => FeatureStatus.Inserted
     }
 
@@ -253,17 +251,17 @@ class MunicipalityApi(val vvhClient: VVHClient,
         val properties = feature.properties
         properties.get("id") match {
           case Some(id) =>
-            val featureId = id.toLong
-            val linkIdValidationStatus = linkIdValidation(dataset.datasetId, featureId, featureRoadlinks.toSet, vvhRoadLinksIds)
+            val featureId = id
+            val linkIdValidationStatus = linkIdValidation(featureRoadlinks.toSet, vvhRoadLinksIds)
             val assetTypeGeometry = feature.geometry.typee
             val propertiesStatus: List[FeatureStatus] = assetTypeGeometry match {
               case "LineString" =>
                 properties("type") match {
-                  case "Roadlink" => validateLinearAssets(dataset.datasetId, featureId, properties)
+                  case "Roadlink" => validateLinearAssets(properties)
                   case _ =>
                     List(FeatureStatus.RoadlinkNoTypeInProperties)
                 }
-              case "Point" => validatePoint(dataset.datasetId, featureId, properties)
+              case "Point" => validatePoint(properties)
               case _ =>
                 List(FeatureStatus.NoGeometryType)
             }
@@ -297,7 +295,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
         properties.get("id") match {
           case Some(id) =>
-            val featureId = id.toLong
+            val featureId = id
             val status = awsDao.getFeatureStatus(featureId, dataset.datasetId)
             if (status == FeatureStatus.Inserted.value.toString) {
 
@@ -342,7 +340,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
 
     val featuresStatusMap = featuresStatusCode.map { case (featureId, status) =>
       Map(
-        "FeatureId" -> featureId.toString,
+        "FeatureId" -> featureId,
         "Message" -> status.split(",").map(message => FeatureStatus(message.toInt).description)
       )
     } ++ {

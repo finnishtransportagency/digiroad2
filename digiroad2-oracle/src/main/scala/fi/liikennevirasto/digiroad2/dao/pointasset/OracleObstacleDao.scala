@@ -27,6 +27,8 @@ case class Obstacle(id: Long, linkId: Long,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource) extends PersistedPoint
 
+case class ObstacleShapefile(lon: Double, lat: Double, obstacleType: Int = 1)
+
 object OracleObstacleDao {
 
   private def query() = {
@@ -192,6 +194,21 @@ object OracleObstacleDao {
 
   private def getPropertyId: Long = {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
+  }
+
+  implicit val getObstacleShapefile = new GetResult[ObstacleShapefile] {
+    def apply(r: PositionedResult) = {
+      val lon = r.nextDouble()
+      val lat = r.nextDouble()
+
+      ObstacleShapefile(lon, lat)
+    }
+  }
+
+  def getObstaclesFromShapefileTable(): Seq[ObstacleShapefile] = {
+    sql"""
+           SELECT X_KOORDI, Y_KOORDI FROM DRSTA_PUUTTUVAT_VVH_ESTEET
+           """.as[ObstacleShapefile].list
   }
 }
 

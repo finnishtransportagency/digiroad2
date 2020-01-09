@@ -17,12 +17,13 @@ pipeline {
             steps {
                     withCredentials([
                        string(credentialsId: 'TN_ITS_CONVERSION', variable: 'TN_ITS_CONVERSION')]) {
-                            script {
+                             script {
                                 STAGE_RUN_ROSATTE_CONVERSION = [
                                     "mkdir -p ${WORKSPACE}/dev/fd/ &&",
                                     "curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its-test.herokuapp.com/conversion/${CONVERTER_END_DATE} | tee ${WORKSPACE}/dev/fd/3 | tail -n 1 | grep OK"
                                 ].join(" ")
                             }
+
                     }
             }
         }
@@ -64,7 +65,14 @@ pipeline {
                 }
             }
             steps {
-                sh STAGE_RUN_ROSATTE_CONVERSION
+                script {
+                    def ret = sh(
+                        returnStdout: true,
+                        script: ''' mkdir -p ${WORKSPACE}/dev/fd/ &&
+                                    curl -s -v -X POST https://${TN_ITS_CONVERSION}:${TN_ITS_CONVERSION}@tn-its-test.herokuapp.com/conversion/${CONVERTER_END_DATE} | tee ${WORKSPACE}/dev/fd/3 | tail -n 1 | grep OK '''
+                        )
+                    println ret
+                }
             }
             post {
                 failure {
