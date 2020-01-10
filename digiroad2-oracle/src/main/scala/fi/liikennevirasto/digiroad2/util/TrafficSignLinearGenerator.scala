@@ -371,7 +371,7 @@ trait TrafficSignLinearGenerator {
       oracleLinearAssetDao.expireConnectedByLinearAsset(asset.id)
     }
 
-    assetToUpdate(toUpdate, trafficSign, createdValue.get, username)
+    assetToUpdate(toUpdate, trafficSign, createdValue.get, userUpdate)
   }
 
   def getAdjacents(previousInfo: (Option[Point], Option[Point], Option[Int]), roadLinks: Seq[RoadLink]): Seq[(RoadLink, (Option[Point], Option[Point], Option[Int]))] = {
@@ -1156,6 +1156,25 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String): Seq[Long] = {
     if (debbuger) println("updateLinearAsset")
     roadWorkService.updateWithoutTransaction(Seq(oldAssetId), newValue, username)
+  }
+
+  override def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign): Unit = {
+    val username = "automatic_trafficSign_deleted"
+    val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
+    val createdValue = createValue(Seq(trafficSign))
+
+    val (toDelete, toUpdate) = trafficSignRelatedAssets.partition { asset =>
+      if (createdValue.isEmpty) true
+      else if (trafficSign.expired) true
+      else compareValue(asset.value.get, createdValue.get)
+    }
+
+    toDelete.foreach { asset =>
+      linearAssetService.expireAsset(assetType, asset.id, username, true, false)
+      oracleLinearAssetDao.expireConnectedByLinearAsset(asset.id)
+    }
+
+    assetToUpdate(toUpdate, trafficSign, createdValue.get, userUpdate)
   }
 
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
