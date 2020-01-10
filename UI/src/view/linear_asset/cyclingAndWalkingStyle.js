@@ -22,8 +22,18 @@
             return properties ?  !_.isUndefined(asset.id) && _.isEmpty(properties.values): !_.isUndefined(asset.id) ;
         };
 
+
+        this.renderOverlays = function(linearAssets){
+           var roadworksWithType = _.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'other' }); });
+            var offsetBySideCode = function(linearAsset) {
+                return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+            };
+            var roadworksWithAdjustments = _.map(roadworksWithType, offsetBySideCode);
+            return me.dottedLineFeatures(roadworksWithAdjustments);
+        };
+
         me.renderFeatures = function(linearAssets) {
-            return me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.dottedLineFeatures(linearAssets));
+            return me.lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(me.renderOverlays(linearAssets));
         };
 
         function isOverlayValue (linearAsset) {
@@ -45,7 +55,7 @@
 
         this.dottedLineFeatures = function(linearAssets) {
             var solidLines = me.lineFeatures(linearAssets);
-            var dottedOverlay = me.lineFeatures( _.map(linearAssets, function(linearAsset) { return isOverlayValue(linearAsset) ?  _.merge({}, linearAsset, { type: 'overlay' }) :  _.merge({}, linearAsset, { type: 'normal' });}));
+            var dottedOverlay = me.lineFeatures( _.map(linearAssets, function(linearAsset) { return isOverlayValue(linearAsset) ?  _.merge({}, linearAsset, { type: 'overlay' }) :   _.merge({}, linearAsset, { type: 'normal' });}));
             return solidLines.concat(dottedOverlay);
         };
 
@@ -75,6 +85,8 @@
         ];
 
         var featureTypeRules = [
+            new StyleRule().where('type').is('overlay').use({ stroke: {opacity: 0.8}}),
+            new StyleRule().where('type').is('other').use({stroke: {opacity: 0.5}}),
             new StyleRule().where('type').is('cutter').use({ icon: { src: 'images/cursor-crosshair.svg' } })
         ];
 
@@ -86,6 +98,7 @@
 
         var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
         var overlayStyleRules = [
+            overlayStyleRule(8, {stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1,  lineDash: [1,6] }}),
             overlayStyleRule(9, {stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 1, lineDash: [1, 6]}}),
             overlayStyleRule(10, {stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 3, lineDash: [1, 10]}}),
             overlayStyleRule(11, {stroke: {opacity: 1.0, color: '#ffffff', lineCap: 'square', width: 5, lineDash: [1, 15]}}),
@@ -107,11 +120,10 @@
 
         me.browsingStyleProvider = new StyleRuleProvider({});
         me.browsingStyleProvider.addRules(linkStatusRules);
-        me.browsingStyleProvider.addRules(cyclingAndWalkingStyleRules);
         me.browsingStyleProvider.addRules(cyclingAndWalkingSizeRules);
         me.browsingStyleProvider.addRules(featureTypeRules);
+        me.browsingStyleProvider.addRules(cyclingAndWalkingStyleRules);
         me.browsingStyleProvider.addRules(overlayStyleRules);
-
 
     };
 })(this);
