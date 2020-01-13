@@ -50,7 +50,8 @@ pipeline {
         								'create_hazmat_transport_prohibition_using_traffic_signs',
         								'import_private_road_info',
         								'load_municipalities_verification_info',
-        								'create_parking_prohibition_using_traffic_signs'
+        								'create_parking_prohibition_using_traffic_signs',
+        								'merge_municipalities'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [

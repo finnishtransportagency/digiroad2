@@ -2175,7 +2175,7 @@ object DataFixture {
     println("\n")
   }
 
-  def mergeMunicipalities(): Unit ={
+  def mergeMunicipalities(): Unit = {
     val municipalityToDelete = 911
     val municipalityToMerge = 541
 

@@ -379,12 +379,10 @@ object Queries {
     // confirm this
     sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete; """.execute
 
-    // Update on municipalityToMerge should be daily/weekly so no need to update that here only delete the municipalityToDelete rows
+    // Update on municipalityToMerge should be in daily batch so no need to update that here only delete the municipalityToDelete rows
     // confirm this
     sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete;""".execute
 
     sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete;""".execute
-
-    //MUNICIPALITY(update center point geometry) sqlu"""UPDATE MUNICIPALITY SET coordinates = ??? WHERE ID = municipalityToMerge;""".execute
   }
 }
