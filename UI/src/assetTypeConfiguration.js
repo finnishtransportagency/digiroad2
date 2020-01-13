@@ -795,25 +795,16 @@
         title: 'Kaistan mallinnustyökalu',
         newTitle: 'Uusi kaistan mallinnustyökalu',
         className: 'lane-modelling-tool',
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         editControlLabels: {
-          mainLane: 'Pääkaista',
-          additionalLane: 'Lisäkaista'
+          title: 'Kaistan mallinnustyökalu',
         },
-        authorizationPolicy: new SpeedLimitAuthorizationPolicy(),   // check this
-        // isVerifiable: false,   // check this
-        // style: new ParkingProhibitionStyle(),    // new
-        // form: new DynamicAssetForm ( {   // new
-        //   fields : [
-        //     {
-        //       label: 'Rajoitus', required: 'required', type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
-        //       values: [
-        //         {id: 1, label: 'Pysähtyminen kielletty'},
-        //         {id: 2, label: 'Pysäköinti kielletty'}
-        //       ]
-        //     },
-        //     {label: "", type: 'time_period', publicId: "parking_validity_period", weight: 2}
-        //   ]
-        // }),
+        isSeparable: false,
+        allowComplementaryLinks: true,
+        isVerifiable: false,
+        // style: new LaneModellingToolStyle(), // new
+        // form: new LaneModellingToolForm (),  // new
+        // label: new LinearAssetLabel(), //new
          hasMunicipalityValidation: true
       }
     ];
