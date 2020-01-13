@@ -10,9 +10,11 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
+import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import slick.jdbc
 
 case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  lon: Double, lat: Double,
@@ -167,7 +169,7 @@ class OraclePedestrianCrossingDao() {
             when ev.name_fi is not null then ev.name_fi
             else null
           end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date,
-          pos.link_source
+          case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -181,8 +183,8 @@ class OraclePedestrianCrossingDao() {
     queryToPedestrian(queryWithFilter)
   }
 
-  implicit val getPointAsset = new GetResult[PedestrianCrossingRow] {
-    def apply(r: PositionedResult) = {
+  implicit val getPointAssetRow = new GetResult[PedestrianCrossingRow] {
+    def apply(r: PositionedResult) : PedestrianCrossing = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
@@ -229,7 +231,7 @@ class OraclePedestrianCrossingDao() {
   }
 
   private def queryToPedestrian(query: String): Seq[PedestrianCrossing] = {
-    val rows = StaticQuery.queryNA[PedestrianCrossingRow](query).iterator.toSeq
+    val rows = StaticQuery.queryNA[PedestrianCrossingRow](query)(getPointAssetRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head

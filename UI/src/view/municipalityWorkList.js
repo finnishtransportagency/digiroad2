@@ -103,7 +103,7 @@
       };
 
       var tableHeaderRow = function () {
-        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä u/ Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
+        return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
           '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th> <th id="suggestedAssets">Vihjetieto</th></tr></thead>';
       };
       var tableBodyRows = function (values) {

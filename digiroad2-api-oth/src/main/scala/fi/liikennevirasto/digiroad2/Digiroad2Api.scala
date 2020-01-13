@@ -227,7 +227,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         else {
           if (user.isServiceRoadMaintainer() && user.configuration.authorizedAreas.nonEmpty)
             getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
-          else if (user.isBusStopMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty) //case ely maintainer
+          else if (user.isELYMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty) //case ely maintainer
             getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
           else
             None
@@ -475,7 +475,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimplePointAssetProperty]].getOrElse(Seq())
-    validateBusStopMaintainerUser(properties)
+    validateElyMaintainerUser(properties)
     val id = params("id").toLong
 
     validatePropertiesMaxSize(properties)
@@ -493,13 +493,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def validateBusStopMaintainerUser(properties: Seq[SimplePointAssetProperty]) = {
+  private def validateElyMaintainerUser(properties: Seq[SimplePointAssetProperty]) = {
     val user = userProvider.getCurrentUser()
     val propertyToValidation = properties.find {
       property => property.publicId.equals("tietojen_yllapitaja") && property.values.exists(p => p.asInstanceOf[PropertyValue].propertyValue.equals("2"))
     }
-    if ((propertyToValidation.size >= 1) && (!user.isBusStopMaintainer() && !user.isOperator)) {
-      halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
+    if (propertyToValidation.isDefined && (!user.isELYMaintainer() && !user.isOperator)) {
+      halt(MethodNotAllowed("User not authorized, User needs to be elyMaintainer for do that action."))
     }
   }
 
@@ -540,7 +540,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val properties = (parsedBody \ "properties").extract[Seq[SimplePointAssetProperty]]
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
     validateUserAccess(userProvider.getCurrentUser())(roadLink.municipalityCode, roadLink.administrativeClass)
-    validateBusStopMaintainerUser(properties)
+    validateElyMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
     try {
@@ -1637,7 +1637,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   get("/municipalities") {
       municipalityService.getMunicipalities.map { municipality =>
         Map("id" -> municipality._1,
@@ -1645,16 +1644,23 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
+  get("/municipality") {
+    val municipalityCode = params("municipalityCode")
+    municipalityService.getMunicipalitiesNameAndIdByCode(Set(municipalityCode.toInt)).sortBy(_.name).map { municipality =>
+      Map("id" -> municipality.id,
+        "name" -> municipality.name)
+    }
+  }
 
   get("/municipalities/byUser") {
     val municipalityCode = try {
       params("municipalityCode").asInstanceOf[Option[Int]]
-    }catch{
+    } catch {
       case _: Exception => None
     }
 
     val user = userProvider.getCurrentUser()
-    val municipalities: Set[Int] = if(municipalityCode.isDefined) Set(municipalityCode.get) else { if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities }
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     municipalityService.getMunicipalitiesNameAndIdByCode(municipalities).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,
         "name" -> municipality.name)

@@ -20,6 +20,15 @@ sealed trait RoadLinkDAO{
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
   }
 
+  def getLinkIdByValue(value: Int, since: Option[String]): Seq[Long] = {
+    val sinceDateQuery = since match {
+      case Some(date) => " AND modified_date >= to_date('" + date + "', 'YYYYMMDD')"
+      case _ =>""
+    }
+
+    sql"""select link_id from #$table where #$column = $value #$sinceDateQuery""".as[Long].list
+  }
+
 
   def insertValues(linkProperty: LinkProperties, vvhRoadlink: VVHRoadlink, username: Option[String], value: Int, mmlId: Option[Long]): Unit = {
     insertValues(linkProperty, username, value)
@@ -120,6 +129,11 @@ object RoadLinkDAO{
   def getVVHValue(propertyName: String, vvhRoadLink: VVHRoadlink): Option[Int] = {
     val dao = getDao(propertyName)
     dao.getVVHValue(vvhRoadLink)
+  }
+
+  def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[Long] = {
+    val dao = getDao(propertyName)
+    dao.getLinkIdByValue(value, since)
   }
 
 

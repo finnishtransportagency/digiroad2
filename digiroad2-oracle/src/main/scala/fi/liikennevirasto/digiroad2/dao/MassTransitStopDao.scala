@@ -125,7 +125,7 @@ class MassTransitStopDao {
   }
 
   private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : MassTransitStopRow = {
       val id = r.nextLong
       val externalId = r.nextLong
       val assetTypeId = r.nextLong

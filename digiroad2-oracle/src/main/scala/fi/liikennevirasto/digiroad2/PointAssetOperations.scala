@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
@@ -142,9 +143,15 @@ trait PointAssetOperations {
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val historicRoadLink = roadLinkService.getHistoryDataLinksFromVVH(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId) match {
+        case Some(roadLink) => roadLink
+        case _ => historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+          .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
+      })
+    }
   }
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],

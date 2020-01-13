@@ -461,7 +461,7 @@
       },
 
       municipalityWorkList: function (municipalityCode) {
-        eventbus.trigger('municipality:select', backend.getUnverifiedMunicipalities(null), municipalityCode);
+        eventbus.trigger('municipality:select', backend.getMunicipalities(), municipalityCode);
       },
 
       suggestedAssetsWorkList: function (municipalityCode, assetTypeId) {
@@ -655,7 +655,7 @@
     });
 
     eventbus.on('roles:fetched', function(userInfo) {
-      if(_.includes(userInfo.roles, "serviceRoadMaintainer") && !_.includes(userInfo.roles, "busStopMaintainer"))
+      if(_.includes(userInfo.roles, "serviceRoadMaintainer") && !_.includes(userInfo.roles, "elyMaintainer"))
           applicationModel.selectLayer('maintenanceRoad');
     });
 

@@ -155,7 +155,7 @@ class DynamicLinearAssetDao {
 
   def propertyDefaultValues(assetTypeId: Long): List[DynamicProperty] = {
     implicit val getDefaultValue = new GetResult[DynamicProperty] {
-      def apply(r: PositionedResult) = {
+      def apply(r: PositionedResult) : DynamicProperty = {
         DynamicProperty(publicId = r.nextString, propertyType = r.nextString(), required = r.nextBoolean(), values = List(DynamicPropertyValue(r.nextString)))
       }
     }

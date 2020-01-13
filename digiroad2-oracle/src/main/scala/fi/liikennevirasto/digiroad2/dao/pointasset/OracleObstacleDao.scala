@@ -40,6 +40,8 @@ case class Obstacle(id: Long, linkId: Long,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource) extends PersistedPoint
 
+case class ObstacleShapefile(lon: Double, lat: Double, obstacleType: Int = 1)
+
 object OracleObstacleDao {
 
   private def query() = {
@@ -65,9 +67,15 @@ object OracleObstacleDao {
   }
 
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
-  def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
+  def fetchByFilter(queryFilter: String => String, withDynSession: Boolean = false): Seq[Obstacle] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    queryToObstacle(queryWithFilter)
+    if (withDynSession) {
+      OracleDatabase.withDynSession {
+        queryToObstacle(queryWithFilter)
+      }
+    } else {
+      queryToObstacle(queryWithFilter)
+    }
   }
 
   def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[Property] = {
@@ -296,5 +304,20 @@ object OracleObstacleDao {
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
+  }
+
+  implicit val getObstacleShapefile = new GetResult[ObstacleShapefile] {
+    def apply(r: PositionedResult) = {
+      val lon = r.nextDouble()
+      val lat = r.nextDouble()
+
+      ObstacleShapefile(lon, lat)
+    }
+  }
+
+  def getObstaclesFromShapefileTable(): Seq[ObstacleShapefile] = {
+    sql"""
+           SELECT X_KOORDI, Y_KOORDI FROM DRSTA_PUUTTUVAT_VVH_ESTEET
+           """.as[ObstacleShapefile].list
   }
 }

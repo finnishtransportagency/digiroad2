@@ -469,6 +469,7 @@
         DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
+        var dayLabels = {1: "Su", 2: "Ma–Pe", 7: "La"};
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
 
@@ -480,19 +481,17 @@
 
             function newValidityPeriodElement() {
                 return '' +
-                  '<li><div class="form-group new-validity-period">' +
-                  '  <select class="form-control select" ' + me.disabled() + '>' +
-                  '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-                  '    <option value="0">Ma–Pe</option>' +
-                  '    <option value="1">La</option>' +
-                  '    <option value="2">Su</option>' +
-                  '  </select>' +
-                  '</div></li>';
+                    '<li><div class="form-group new-validity-period">' +
+                    '  <select class="form-control select" ' + me.disabled() + '>' +
+                    '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+                    '    <option value="1">Su</option>' +
+                    '    <option value="2">Ma–Pe</option>' +
+                    '    <option value="7">La</option>' +
+                    '  </select>' +
+                    '</div></li>';
             }
 
             function validityPeriodElement(period) {
-                var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
-
                 return '' +
                   '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
                   '  <button class="delete btn-delete"' + me.disabled() + '>x</button>' +
@@ -613,7 +612,6 @@
             var validityPeriodLabel = _.isEmpty(currentValue) ? '' : '<label>Voimassaoloaika (lisäkilvessä):</label>';
 
             var validityPeriodTable = _.map(currentValue, function(value) {
-                var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
                 var period = value.value;
                 return '' +
                     '<li>' + dayLabels[period.days] + " " + period.startHour + ":" + ("0" + period.startMinute).slice(-2)  + " - " + period.endHour + ":" + ("0" + period.endMinute).slice(-2) + '</li>';
@@ -1226,7 +1224,7 @@
                 return field.isValid();
             })&& otherSaveCondition();
         };
-        
+
         function events() {
             return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
         }
@@ -1240,7 +1238,7 @@
                     });
                     selectedAsset.setAValue({properties: propertiesA.concat(currentPropertyValue)});
                     field.element.hide();
-    
+
                     var propertiesB = _.filter(selectedAsset.getBValue() ? selectedAsset.getBValue().properties : selectedAsset.getBValue(), function (property) {
                         return property.publicId !== field.getPublicId();
                     });
