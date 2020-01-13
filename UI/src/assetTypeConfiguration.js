@@ -44,7 +44,8 @@
       careClass: 390,
       carryingCapacity: 400,
       roadWorksAsset: 420,
-      parkingProhibition: 430
+      parkingProhibition: 430,
+      laneModellingTool: 440
     };
 
     var assetGroups = {
@@ -786,6 +787,34 @@
         hasMunicipalityValidation: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         minZoomForContent: oneKmZoomLvl
+      },
+      {
+        typeId: assetType.laneModellingTool,
+        singleElementEventCategory: 'laneModellingTool',
+        layerName: 'laneModellingTool',
+        title: 'Kaistan mallinnustyökalu',
+        newTitle: 'Uusi kaistan mallinnustyökalu',
+        className: 'lane-modelling-tool',
+        editControlLabels: {
+          mainLane: 'Pääkaista',
+          additionalLane: 'Lisäkaista'
+        },
+        authorizationPolicy: new SpeedLimitAuthorizationPolicy(),   // check this
+        // isVerifiable: false,   // check this
+        // style: new ParkingProhibitionStyle(),    // new
+        // form: new DynamicAssetForm ( {   // new
+        //   fields : [
+        //     {
+        //       label: 'Rajoitus', required: 'required', type: 'single_choice', publicId: "parking_prohibition", defaultValue: "1", weight: 1,
+        //       values: [
+        //         {id: 1, label: 'Pysähtyminen kielletty'},
+        //         {id: 2, label: 'Pysäköinti kielletty'}
+        //       ]
+        //     },
+        //     {label: "", type: 'time_period', publicId: "parking_validity_period", weight: 2}
+        //   ]
+        // }),
+         hasMunicipalityValidation: true
       }
     ];
 
