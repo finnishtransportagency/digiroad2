@@ -192,7 +192,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def updatePoint(properties: Map[String, String], link: RoadLink, assetType: String, assetCoordinates: List[Double]): Unit = {
     assetType match {
       case "obstacle" =>
-        val obstacleType = properties("class").toInt
+        val obstacleType = Set(SimplePointAssetProperty(obstacleService.typePublicId, Seq(PropertyValue(properties("class")))))
         val newObstacle = IncomingObstacle(assetCoordinates.head, assetCoordinates(1), link.linkId, obstacleType)
         obstacleService.createFromCoordinates(newObstacle, link, AwsUser, false)
     }

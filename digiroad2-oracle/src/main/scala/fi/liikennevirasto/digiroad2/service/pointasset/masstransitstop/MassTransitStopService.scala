@@ -645,7 +645,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getProperty(propertyData: Seq[AbstractProperty], property: String) : Seq[String] = {
     propertyData.find(p => p.publicId == property) match {
-      case Some(prop) => prop.values.map(_.propertyValue)
+      case Some(prop) => prop.values.map(_.asInstanceOf[PropertyValue].propertyValue)
       case _ => Seq()
     }
   }

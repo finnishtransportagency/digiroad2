@@ -184,7 +184,7 @@ class OraclePedestrianCrossingDao() {
   }
 
   implicit val getPointAssetRow = new GetResult[PedestrianCrossingRow] {
-    def apply(r: PositionedResult) : PedestrianCrossing = {
+    def apply(r: PositionedResult) : PedestrianCrossingRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get

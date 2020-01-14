@@ -1847,7 +1847,8 @@ object DataFixture {
               println("Nearest roadLink -> " + nearestRoadLink.linkId)
 
               val floating = GeometryUtils.minimumDistance(pointObstacle, nearestRoadLink.geometry) >= minimumDistanceFromRoadLink
-              val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId, obstacle.obstacleType)
+              val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId,
+                Set(SimplePointAssetProperty(obstacleService.typePublicId, Seq(PropertyValue(obstacle.obstacleType.toString)))))
 
               val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, username, floating)
               println("Obstacle created with id " + id)

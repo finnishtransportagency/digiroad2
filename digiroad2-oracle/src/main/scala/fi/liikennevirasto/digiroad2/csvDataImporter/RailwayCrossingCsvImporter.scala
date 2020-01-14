@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import fi.liikennevirasto.digiroad2.asset.State
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
@@ -33,7 +33,7 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
       val position = getCoordinatesFromProperties(csvProperties)
       val code = getPropertyValue(csvProperties, "id").asInstanceOf[String]
       val safetyEquipment = getPropertyValue(csvProperties, "safety equipment").asInstanceOf[String].toInt
-      val name = getPropertyValueOption(csvProperties, "name").map(_.toString)
+      val optName = getPropertyValueOption(csvProperties, "name").map(_.toString)
 
       val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
       val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
@@ -46,9 +46,14 @@ class RailwayCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
         else
           Seq()
 
-      if(validData.isEmpty)
-        railwayCrossingService.createFromCoordinates(IncomingRailwayCrossing(position.x, position.y, nearestRoadLink.linkId, safetyEquipment, name, code), nearestRoadLink, user.username, floating)
+      if (validData.isEmpty) {
+        val name =  if (optName.nonEmpty) Seq(SimplePointAssetProperty(railwayCrossingService.namePublicId, Seq(PropertyValue(optName.get)))) else Seq()
 
+        val propertyData = Set(SimplePointAssetProperty(railwayCrossingService.codePublicId, Seq(PropertyValue(code))),
+          SimplePointAssetProperty(railwayCrossingService.safetyEquipmentPublicId, Seq(PropertyValue(safetyEquipment.toString)))) ++ name
+
+        railwayCrossingService.createFromCoordinates(IncomingRailwayCrossing(position.x, position.y, nearestRoadLink.linkId, propertyData), nearestRoadLink, user.username, floating)
+      }
       validData
     }
 

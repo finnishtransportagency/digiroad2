@@ -362,11 +362,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Saves speed limit value changes received from UI. Used by Digiroad2Api /speedlimits PUT endpoint.
     */
-  def updateValues(ids: Seq[Long], values: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): Seq[Long] = {
+  def updateValues(ids: Seq[Long], value: SpeedLimitValue, username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): Seq[Long] = {
     if (newTransaction) {
       withDynTransaction {
         ids.foreach(id => validateMunicipalities(id, municipalityValidation, newTransaction = false))
-        ids.flatMap(dao.updateSpeedLimitValue(_, values, username))
+        ids.flatMap(dao.updateSpeedLimitValue(_, value, username))
       }
     } else {
       ids.foreach(id => validateMunicipalities(id, municipalityValidation, newTransaction = false))

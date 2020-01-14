@@ -59,7 +59,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
     trAssetData.signSidePlacement match {
       case Some(signSidePlacement) =>
-        defaultProperties ++ Set(SimpleTrafficSignProperty(signPlacementPublicId, Seq(TextPropertyValue(signSidePlacement))))
+        defaultProperties ++ Set(SimplePointAssetProperty(signPlacementPublicId, Seq(PropertyValue(signSidePlacement))))
       case _ => defaultProperties
     }
   }

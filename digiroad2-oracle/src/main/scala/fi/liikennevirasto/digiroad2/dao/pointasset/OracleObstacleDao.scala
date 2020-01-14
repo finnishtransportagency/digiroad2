@@ -13,6 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 case class ObstacleRow(id: Long, linkId: Long,
                        lon: Double, lat: Double,
