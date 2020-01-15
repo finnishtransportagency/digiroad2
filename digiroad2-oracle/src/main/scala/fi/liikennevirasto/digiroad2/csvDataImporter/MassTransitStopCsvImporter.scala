@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, SimpleProperty, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
@@ -136,13 +136,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
-  def convertProperties(properties: Seq[AssetProperty]) : Seq[SimpleProperty] = {
+  def convertProperties(properties: Seq[AssetProperty]) : Seq[SimplePointAssetProperty] = {
     properties.map { prop =>
       prop.value match {
         case values if values.isInstanceOf[List[_]] =>
-          SimpleProperty(prop.columnName, values.asInstanceOf[List[PropertyValue]])
+          SimplePointAssetProperty(prop.columnName, values.asInstanceOf[List[PropertyValue]])
         case _ =>
-          SimpleProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))
+          SimplePointAssetProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))
       }
     }
   }

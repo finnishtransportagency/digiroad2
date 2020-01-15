@@ -17,7 +17,7 @@
         return style.browsingStyleProviderReadOnly.getStyle(feature, {zoomLevel: uiState.zoomLevel});
       }
     });
-
+    
     vectorLayer.set('name', 'GroupedLinearAssetLayer');
     vectorLayer.setOpacity(1);
     vectorLayer.setVisible(false);

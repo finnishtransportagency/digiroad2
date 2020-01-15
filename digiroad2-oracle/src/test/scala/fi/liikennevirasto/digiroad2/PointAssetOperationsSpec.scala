@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.Persisted
 
 class PointAssetOperationsSpec extends FunSuite with Matchers {
 
-  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: Long, mValue: Double, floating: Boolean, vvhTimeStamp: Long, linkSource: LinkGeomSource) extends PersistedPointAsset
+  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: Long, mValue: Double, floating: Boolean, vvhTimeStamp: Long, linkSource: LinkGeomSource, propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
   test ("Calculate bearing for point: horizontal") {
     val bearing = calculateBearing(Point(0,0,0), Seq(Point(1,-1,0), Point(1,1,0)))

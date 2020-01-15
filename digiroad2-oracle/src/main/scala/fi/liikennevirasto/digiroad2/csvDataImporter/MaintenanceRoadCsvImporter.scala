@@ -4,9 +4,9 @@ import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status}
-import fi.liikennevirasto.digiroad2.asset.{MaintenanceRoadAsset, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue, MaintenanceRoadAsset, SideCode}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, Properties}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.{MaintenanceService, Measures}
@@ -76,11 +76,11 @@ class MaintenanceRoadCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusI
 
   def createMaintenanceRoads(maintenanceRoadAttributes: CsvAssetRow, username: String): Unit = {
     val linkId = getPropertyValue(maintenanceRoadAttributes, "linkid").asInstanceOf[Integer].toLong
-    val newKoProperty = Properties("huoltotie_kayttooikeus", "single_choice", getPropertyValue(maintenanceRoadAttributes, "rightOfUse").toString)
-    val orAccessProperty = Properties("huoltotie_huoltovastuu", "single_choice", getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility").toString)
+    val newKoProperty = DynamicProperty("huoltotie_kayttooikeus", "single_choice", false, Seq(DynamicPropertyValue(getPropertyValue(maintenanceRoadAttributes, "rightOfUse"))))
+    val orAccessProperty = DynamicProperty("huoltotie_huoltovastuu", "single_choice", false, Seq(DynamicPropertyValue(getPropertyValue(maintenanceRoadAttributes, "maintenanceResponsibility"))))
 
     roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(linkId)).map { roadlink =>
-      val values = MaintenanceRoad(Seq(newKoProperty, orAccessProperty))
+      val values = DynamicValue(DynamicAssetValue(Seq(newKoProperty, orAccessProperty)))
 
       maintenanceService.createWithHistory(MaintenanceRoadAsset.typeId, linkId, values,
         SideCode.BothDirections.value, Measures(0, roadlink.length), username, Some(roadlink))

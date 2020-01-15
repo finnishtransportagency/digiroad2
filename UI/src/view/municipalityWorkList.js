@@ -104,7 +104,7 @@
 
       var tableHeaderRow = function () {
         return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
-               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
+          '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th> <th id="suggestedAssets">Vihjetieto</th></tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
@@ -122,6 +122,10 @@
         _.forEach(values, function (asset) {
           asset.assetName = _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  asset.typeId; }).title ;
         });
+      };
+
+      var suggestedAssetsButton = function(counter, typeId) {
+        return counter > 0 ? '<a class="btn btn-suggested-list" href="#work-list/suggestedAssets/' + municipalityId + '/'+ typeId + '">' + counter + '</a>' : "";
       };
 
       var sortAssets = function (values) {
@@ -167,6 +171,7 @@
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
           '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
+          '<td headers="suggestedAssets">' + suggestedAssetsButton(asset.countSuggested, asset.typeId) + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
@@ -228,7 +233,8 @@
 
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
-        if (limits.length == 1){
+        if (limits.length === 1){
+          showFormBtnVisible = false;
           me.createVerificationForm(_.head(limits));
         }
         else {

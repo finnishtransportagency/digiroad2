@@ -42,10 +42,10 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   private def generateProperties(trAssetData: TierekisteriAssetData, additionalProperties: Set[AdditionalPanelInfo] = Set()) = {
     val trafficType = trAssetData.assetType
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(trafficType.OTHvalue.toString)))
+    val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(trafficType.OTHvalue.toString)))
     val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
-      case true => SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
-      case _ => SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(trAssetData.assetValue)))
+      case true => SimplePointAssetProperty(infoPublicId, Seq(PropertyValue(trAssetData.assetValue)))
+      case _ => SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(trAssetData.assetValue)))
     }
 
     val additionalPanel = trafficSignService.additionalPanelProperties(additionalProperties)
@@ -59,7 +59,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
     trAssetData.signSidePlacement match {
       case Some(signSidePlacement) =>
-        defaultProperties ++ Set(SimpleTrafficSignProperty(signPlacementPublicId, Seq(TextPropertyValue(signSidePlacement))))
+        defaultProperties ++ Set(SimplePointAssetProperty(signPlacementPublicId, Seq(PropertyValue(signSidePlacement))))
       case _ => defaultProperties
     }
   }

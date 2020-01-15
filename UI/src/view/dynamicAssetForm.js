@@ -25,6 +25,11 @@
             return me.createPropertyValue([{ value: value }]);
         };
 
+        me.getPublicId = function(){
+            return fieldSettings.publicId;
+        };
+
+
         me.getPropertyDefaultValue = function(){
             return me.createPropertyValue([{ value: fieldSettings.defaultValue}]);
         };
@@ -57,6 +62,10 @@
             return fieldSettings.required ? fieldSettings.required : false;
         };
 
+        me.isUnSet =  function(selectedAsset) {
+            return fieldSettings.isUnSet ? fieldSettings.isUnSet(selectedAsset) : false;
+        };
+
         me.viewModeRender = function (field, propertyValues) {
             var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
             var unit = field.unit ? ' ' + field.unit : '';
@@ -71,6 +80,10 @@
         };
 
         me.editModeRender = function (currentValue, sideCode, setValue, getValue){};
+
+        me.showAndHide = function(element, assetConfig, value, layerMode) {
+            return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value, layerMode) ? '' : element.hide();
+        };
 
         me.setSelectedValue = function(setValue, getValue){
 
@@ -394,17 +407,21 @@
 
             var checkBoxElement = "input[name = '" + field.publicId + '-' + sideCode + "']";
 
+            var checkSpecialClass = field.publicId === "suggest_box" ? "suggestion" : "";
+
             me.element = $('' +
-                '<div class="form-group">' +
-                '<label class="control-label">'+ field.label+'</label>' +
-                '<div class="choice-group"> ' +
-                '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice-' + sideCode + '" name = "' + field.publicId + '-' + sideCode + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
-                '</div>'+
-                '</div>');
+              '<div class="form-group ' + checkSpecialClass + '">' +
+              '<label class="control-label">'+ field.label+'</label>' +
+              '<div class="choice-group">' +
+              '<input type = "checkbox" fieldType = "' + field.type + '" '+ me.required() +' class="multiChoice-' + sideCode + '" name = "' + field.publicId + '-' + sideCode + '" value=' + _value +' '+ me.disabled() +' '+  checked +'>' +
+              '</div>'+
+              '</div>');
 
             me.getValue = function() {
                 return $(checkBoxElement).prop('checked') ? 1: 0;
             };
+
+            me.showAndHide(me.element, assetTypeConfiguration, _value, 'editMode');
 
             me.hasValue = function(){
                 return true;
@@ -431,15 +448,20 @@
             var curr = _.isEmpty(currentValue) ? '0' : currentValue[0].value;
 
             var template = _.template('<div class="form-group">' +
-                '   <label class="control-label">' + field.label + '</label>' +
-                '   <p class="form-control-static">' +
-                ' <%= divCheckBox %>  ' +
-                '</p>' +
-                '</div>' );
+              '   <label class="control-label">' + field.label + '</label>' +
+              '   <p class="form-control-static">' +
+              ' Kyllä ' +
+              '</p>' +
+              '</div>' );
 
             var someValue = _.find(field.values, function(value) {return String(value.id) === curr; });
             var value = someValue ? someValue.label : '-';
-            return $(template({divCheckBox : value}));
+
+            me.element = $(template({divCheckBox : value}));
+
+            me.showAndHide(me.element, assetTypeConfiguration, curr, 'readOnly');
+
+            return me.element;
         };
     };
 
@@ -452,10 +474,10 @@
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
 
             var existingValidityPeriodElements =
-                _(_.map(fieldValue, function(values) { return values.value ; }))
-                    .sortBy('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
-                    .map(validityPeriodElement)
-                    .join('');
+              _(_.map(fieldValue, function(values) { return values.value ; }))
+                .sortBy('days', 'startHour', 'startMinute', 'endHour', 'endMinute')
+                .map(validityPeriodElement)
+                .join('');
 
             function newValidityPeriodElement() {
                 return '' +
@@ -471,35 +493,35 @@
 
             function validityPeriodElement(period) {
                 return '' +
-                    '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
-                    '  <button class="delete btn-delete"' + me.disabled() + '>x</button>' +
-                    '  <label class="control-label daysf">' +
-                    dayLabels[period.days] +
-                    '  </label>' +
-                    hourElement(period.startHour, 'start') +
-                    '  <span class="minute-separator"></span>' +
-                    minutesElement(period.startMinute, 'start') +
-                    '  <span class="hour-separator"> - </span>' +
-                    hourElement(period.endHour, 'end') +
-                    '  <span class="minute-separator"></span>' +
-                    minutesElement(period.endMinute, 'end') +
-                    '</div></li>';
+                  '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
+                  '  <button class="delete btn-delete"' + me.disabled() + '>x</button>' +
+                  '  <label class="control-label daysf">' +
+                  dayLabels[period.days] +
+                  '  </label>' +
+                  hourElement(period.startHour, 'start') +
+                  '  <span class="minute-separator"></span>' +
+                  minutesElement(period.startMinute, 'start') +
+                  '  <span class="hour-separator"> - </span>' +
+                  hourElement(period.endHour, 'end') +
+                  '  <span class="minute-separator"></span>' +
+                  minutesElement(period.endMinute, 'end') +
+                  '</div></li>';
             }
 
             function hourElement(selectedHour, type) {
                 var className = type + '-hour';
                 return '' +
-                    '<select class="form-control sub-control select ' + className + '"' + me.disabled()+ '>' +
-                    hourOptions(selectedHour, type) +
-                    '</select>';
+                  '<select class="form-control sub-control select ' + className + '"' + me.disabled()+ '>' +
+                  hourOptions(selectedHour, type) +
+                  '</select>';
             }
 
             function minutesElement(selectedMinute, type) {
                 var className = type + '-minute';
                 return '' +
-                    '<select class="form-control sub-control select ' + className + '"' + me.disabled()+ '>' +
-                    minutesOptions(selectedMinute) +
-                    '</select>';
+                  '<select class="form-control sub-control select ' + className + '"' + me.disabled()+ '>' +
+                  minutesOptions(selectedMinute) +
+                  '</select>';
             }
 
             function hourOptions(selectedOption, type) {
@@ -519,12 +541,12 @@
             }
 
             var template = _.template('' +
-                '<div class="validity-period-group">' +
-                '<label>Voimassaoloaika (lisäkilvessä):</label>' +
-                ' <ul>' +
-                '   <%= existingValidityPeriodElements %>' +
-                newValidityPeriodElement() +
-                ' </ul>');
+              '<div class="validity-period-group">' +
+              '<label>Voimassaoloaika (lisäkilvessä):</label>' +
+              ' <ul>' +
+              '   <%= existingValidityPeriodElements %>' +
+              newValidityPeriodElement() +
+              ' </ul>');
 
             me.element = $(template({existingValidityPeriodElements: existingValidityPeriodElements}));
 
@@ -929,6 +951,11 @@
                 fieldGroupElement.append(fieldElement);
 
             });
+
+            fieldGroupElement.find('input, select').one('click', function() {
+                me.unSetElement(_assetTypeConfiguration.selectedLinearAsset);
+            });
+
             return fieldGroupElement;
         };
 
@@ -1006,10 +1033,10 @@
         function renderSeparateButtonElement(selectedAsset, body, isMassUpdate){
             if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset) && !isMassUpdate){
                 var separateElement = $(''+
-                    '<div class="form-group editable">' +
-                    '  <label class="control-label"></label>' +
-                    '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
-                    '</div>');
+                  '<div class="form-group editable">' +
+                  '  <label class="control-label"></label>' +
+                  '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
+                  '</div>');
 
                 separateElement.find('#separate-limit').on('click', function() { _assetTypeConfiguration.selectedLinearAsset.separate(); });
 
@@ -1023,34 +1050,34 @@
             var unit = asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
-                '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
-                '  <label class="control-label">' + _assetTypeConfiguration.editControlLabels.title + '</label>' +
-                '  <p class="form-control-static ' + _assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
-                '</div>');
+              '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
+              '  <label class="control-label">' + _assetTypeConfiguration.editControlLabels.title + '</label>' +
+              '  <p class="form-control-static ' + _assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
+              '</div>');
 
             var disableChecked = isDisabled ? 'checked' : '';
             var enableChecked = isDisabled ? '' : 'checked';
 
             var toggleElement = $('' +
-                createSideCodeMarker(sideCode) +
-                '<div class="edit-control-group choice-group">' +
-                '  <div class="radio">' +
-                '    <label>' + _assetTypeConfiguration.editControlLabels.disabled +
-                '      <input ' +
-                '      class= "' + sideCodeClass + '"' +
-                '      type="radio" name="' + sideCodeClass + '" ' +
-                '      value="disabled" ' + disableChecked + '/>' +
-                '    </label>' +
-                '  </div>' +
-                '  <div class="radio">' +
-                '    <label>' + _assetTypeConfiguration.editControlLabels.enabled +
-                '      <input ' +
-                '      class= "' + sideCodeClass + '"' +
-                '      type="radio" name="' + sideCodeClass + '" ' +
-                '      value="enabled" ' + enableChecked + ' />' +
-                '    </label>' +
-                '  </div>' +
-                '</div>');
+              createSideCodeMarker(sideCode) +
+              '<div class="edit-control-group choice-group">' +
+              '  <div class="radio">' +
+              '    <label>' + _assetTypeConfiguration.editControlLabels.disabled +
+              '      <input ' +
+              '      class= "' + sideCodeClass + '"' +
+              '      type="radio" name="' + sideCodeClass + '" ' +
+              '      value="disabled" ' + disableChecked + '/>' +
+              '    </label>' +
+              '  </div>' +
+              '  <div class="radio">' +
+              '    <label>' + _assetTypeConfiguration.editControlLabels.enabled +
+              '      <input ' +
+              '      class= "' + sideCodeClass + '"' +
+              '      type="radio" name="' + sideCodeClass + '" ' +
+              '      value="enabled" ' + enableChecked + ' />' +
+              '    </label>' +
+              '  </div>' +
+              '</div>');
 
             toggleElement.find('.radio input').on('change', function(event) {
                 var disabled = $(this).val() === 'disabled';
@@ -1058,12 +1085,12 @@
                 input.prop('disabled', disabled);
 
                 if(disabled){
-                  forms.removeFields(sideCode);
-                  removeValueFn();
-                  _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+                    forms.removeFields(sideCode);
+                    removeValueFn();
+                    _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
-                  setValueFn(asset.value || {properties: []} );
-                  formGroup.find('.input-unit-combination').replaceWith(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled, true));
+                    setValueFn(asset.value || {properties: []} );
+                    formGroup.find('.input-unit-combination').replaceWith(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled, true));
                 }
                 eventbus.trigger("radio-trigger-dirty");
             });
@@ -1077,7 +1104,7 @@
 
         function renderLinkToWorkList(layerName) {
             $('ul[class=information-content]').append('' +
-                '<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
+              '<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
         }
 
         function renderInaccurateWorkList(layerName) {
@@ -1112,15 +1139,15 @@
 
             if(message) {
                 return '' +
-                    '<div class="form-group user-information">' +
-                    '<p class="form-control-static user-log-info">' + message + '</p>' +
-                    '</div>';
+                  '<div class="form-group user-information">' +
+                  '<p class="form-control-static user-log-info">' + message + '</p>' +
+                  '</div>';
             } else
                 return '';
         };
 
         var informationLog = function (date, username) {
-           return date ? (date + ' / ' + username) : '-';
+            return date ? (date + ' / ' + username) : '-';
         };
 
         function createBodyElement(selectedAsset) {
@@ -1135,26 +1162,26 @@
 
             var verifiedFields = function() {
                 return (_assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
-                    '<div class="form-group">' +
-                    '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
-                    '</div>' : '';
+                  '<div class="form-group">' +
+                  '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
+                  '</div>' : '';
             };
 
             return $('<div class="wrapper read-only">' +
-                '   <div class="form form-horizontal form-dark asset-factory">' +
-                '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
-                '     </div>' +
-                '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
-                '     </div>' +
-                verifiedFields() +
-                '     <div class="form-group">' +
-                '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
-                '     </div>' +
-                userInformationLog() +
-                '   </div>' +
-                '</div>');
+              '   <div class="form form-horizontal form-dark asset-factory">' +
+              '     <div class="form-group">' +
+              '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
+              '     </div>' +
+              '     <div class="form-group">' +
+              '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
+              '     </div>' +
+              verifiedFields() +
+              '     <div class="form-group">' +
+              '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
+              '     </div>' +
+              userInformationLog() +
+              '   </div>' +
+              '</div>');
         }
 
         function toggleBodyElements(rootElement, isReadOnly) {
@@ -1179,31 +1206,48 @@
             if(_.isEmpty(forms.getFields('a')) || _.isEmpty(forms.getFields('b')))
                 return true;
 
-      return _.some(forms.getFields('a'), function(fieldA){
-        var propertyValueA = fieldA.getPropertyValue();
-        var fieldB = _.head(_.filter(forms.getFields('b'), function (fieldB) {return propertyValueA.publicId === fieldB.getPropertyValue().publicId;}));
+            return _.some(forms.getFields('a'), function(fieldA){
+                var propertyValueA = fieldA.getPropertyValue();
+                var fieldB = _.head(_.filter(forms.getFields('b'), function (fieldB) {return propertyValueA.publicId === fieldB.getPropertyValue().publicId;}));
 
-        return !fieldA.compare(propertyValueA, fieldB.getPropertyValue()) || !_.isEqual(fieldB.disabled(), fieldA.disabled());
-      });
-    };
-
-    me.isSaveable = function(field){
-        var otherSaveCondition = function () {
-            if(_assetTypeConfiguration.saveCondition)
-                return _assetTypeConfiguration.saveCondition(field);
-            return true;
+                return !fieldA.compare(propertyValueA, fieldB.getPropertyValue()) || !_.isEqual(fieldB.disabled(), fieldA.disabled());
+            });
         };
-        return _.every(forms.getAllFields(), function(field){
-          return field.isValid();
-        })&& otherSaveCondition();
-    };
+
+        me.isSaveable = function(field){
+            var otherSaveCondition = function () {
+                if(_assetTypeConfiguration.saveCondition)
+                    return _assetTypeConfiguration.saveCondition(field);
+                return true;
+            };
+            return _.every(forms.getAllFields(), function(field){
+                return field.isValid();
+            })&& otherSaveCondition();
+        };
 
         function events() {
             return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
         }
 
-        var SaveButton = function(assetTypeConfiguration) {
+        me.unSetElement = function(selectedAsset){
+            _.map(forms.getAllFields(), function(field) {
+                if (field.isUnSet(selectedAsset)) {
+	                var currentPropertyValue = field.hasDefaultValue() ? field.getPropertyDefaultValue() :  field.emptyPropertyValue();
+                    var propertiesA = _.filter(selectedAsset.getValue() ? selectedAsset.getValue().properties : selectedAsset.getValue(), function (property) {
+                        return property.publicId !== field.getPublicId();
+                    });
+                    selectedAsset.setAValue({properties: propertiesA.concat(currentPropertyValue)});
+                    field.element.hide();
 
+                    var propertiesB = _.filter(selectedAsset.getBValue() ? selectedAsset.getBValue().properties : selectedAsset.getBValue(), function (property) {
+                        return property.publicId !== field.getPublicId();
+                    });
+                    if(!_.isEmpty(propertiesB)) selectedAsset.setBValue({properties: propertiesB.concat(currentPropertyValue)});
+                }
+            });
+        };
+
+        var SaveButton = function(assetTypeConfiguration) {
             var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
                 assetTypeConfiguration.selectedLinearAsset.save();
             });
@@ -1268,9 +1312,9 @@
             };
         };
 
-      jQuery.fn.showElement = function(visible) {
-        var toggle = visible ? 'visible' : 'hidden';
-        return this.css('visibility', toggle);
-      };
+        jQuery.fn.showElement = function(visible) {
+            var toggle = visible ? 'visible' : 'hidden';
+            return this.css('visibility', toggle);
+        };
     };
 })(this);

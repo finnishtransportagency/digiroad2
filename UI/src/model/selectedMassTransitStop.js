@@ -170,7 +170,7 @@
     eventbus.on('asset:fetched', open, this);
 
     var getProperties = function() {
-      return currentAsset.payload.properties;
+      return !_.isUndefined(currentAsset.payload) ? currentAsset.payload.properties : undefined;
     };
 
     var getPropertyMetadata = function(publicId) {
@@ -542,6 +542,15 @@
       return !_.isUndefined(roadNumber) && !_.isEmpty(roadNumber.values);
     }
 
+    function isSuggested(properties) {
+      if (!_.isUndefined(properties)) {
+        return _.some((_.isUndefined(properties.propertyData) ? properties.payload.properties : properties.propertyData), function (property) {
+          return property.publicId === 'suggest_box' && !_.isEmpty(property.values) && !!parseInt(_.head(property.values).propertyValue);
+        });
+      } else
+        return false;
+    }
+
     return {
       close: close,
       save: save,
@@ -580,7 +589,8 @@
       isTerminalChild: isTerminalChild,
       getMunicipalityCode: getMunicipalityCode,
       hasRoadAddress: hasRoadAddress,
-      setAdditionalProperty: setAdditionalProperty
+      setAdditionalProperty: setAdditionalProperty,
+      isSuggested: isSuggested
     };
   };
 

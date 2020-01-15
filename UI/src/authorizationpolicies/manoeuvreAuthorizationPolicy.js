@@ -16,5 +16,8 @@
       return ((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(features.getProperties().municipalityCode)) || me.isOperator();
     };
 
+    this.handleSuggestedAsset = function(selectedAsset) {
+      return (_.isEmpty(selectedAsset.get().manoeuvres) && me.isOperator()) || (selectedAsset.isSuggested() && (me.isOperator() || me.isMunicipalityMaintainer()));
+    };
   };
 })(this);
