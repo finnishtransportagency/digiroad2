@@ -206,15 +206,15 @@ class MunicipalityApi(val vvhClient: VVHClient,
     links.foreach { link =>
       speedLimit match {
         case Some(value) =>
-          val speedLimitValue = value.toInt
+          val speedLimitValue = SpeedLimitValue(value.toInt)
           val speedLimitsOnRoadLink = speedLimitService.getExistingAssetByRoadLink(link, false)
 
           if (speedLimitsOnRoadLink.isEmpty) {
-            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, NumericValue(speedLimitValue), properties("sideCode").toInt, timeStamp, None)
-            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), speedLimitValue, AwsUser, timeStamp, (_, _) => Unit)
+            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, speedLimitValue, properties("sideCode").toInt, timeStamp, None)
+            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), AwsUser, timeStamp, (_, _) => Unit)
           } else
             speedLimitsOnRoadLink.foreach { sl =>
-              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, NumericValue(speedLimitValue), properties("sideCode").toInt,timeStamp, None)
+              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, speedLimitValue, properties("sideCode").toInt,timeStamp, None)
               speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser, false)
             }
         case None =>
