@@ -169,7 +169,7 @@ trait TrafficSignLinearGenerator {
     val groupedAssets = (newSegments ++ existingSegments).groupBy(_.roadLink)
     val assets = fillTopology(roadLinks, groupedAssets)
 
-    convertEndRoadSegments(assets, findStartEndRoadLinkOnChain(roadLinks)).toSet
+    convertRoadSegments(assets, findStartEndRoadLinkOnChain(roadLinks)).toSet
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[RoadLink, Seq[TrafficSignToLinear]]): Seq[TrafficSignToLinear] = {
@@ -484,7 +484,7 @@ trait TrafficSignLinearGenerator {
       result :+ baseSegment
   }
 
-  def convertEndRoadSegments(segments: Seq[TrafficSignToLinear], endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]): Seq[TrafficSignToLinear] = {
+  def convertRoadSegments(segments: Seq[TrafficSignToLinear], endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]): Seq[TrafficSignToLinear] = {
     val segmentsOndEndRoads = segments.filter { seg =>
       endRoadLinksInfo.exists { case (endRoadLink, firstPoint, lastPoint) =>
         val (first, last) = GeometryUtils.geometryEndpoints(endRoadLink.geometry)
@@ -1246,9 +1246,9 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     val length = GeometryUtils.geometryLength(actualRoadLink.geometry)
 
     // Get the oposite sign of roadwork in the current linkid if exists
-    val existingSigns = allSignsRelated.filterNot(_.id == mainSign.id)
-                                    .filter( _.linkId == actualRoadLink.linkId)
-                                    .filter( sign => compareValue(createValue(Seq(mainSign)).get, createValue(Seq(sign)).get) && sign.validityDirection != direction )
+    val existingSigns = allSignsRelated.filterNot( _.id == mainSign.id )
+                                    .filter( _.linkId == actualRoadLink.linkId )
+                                    .filter( sign =>  sign.validityDirection == direction || compareValue(createValue(Seq(mainSign)).get, createValue(Seq(sign)).get) )
 
     // Calculate the length of the effect the oposite sign in the current roadlink
     val existingSignLengthEffect =  if (existingSigns.nonEmpty) {
@@ -1262,7 +1262,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
                                         else
                                          Math.abs(length - auxSign.mValue)
                                       }
-                                    } else 0 // In case we don't have sign pointing in oposite
+                                    } else 0 // In case we don't have sign
 
 
     // calculate the correct distance of effect for the current linkid
@@ -1279,13 +1279,48 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     // if the sum of distances are higher than MAX_DISTANCE then cut to the MAX_DISTANCE allowed
     if(totalDistance > MAX_DISTANCE)
       Some(length - Math.abs(totalDistance - MAX_DISTANCE) )
-    else if (existingSigns.nonEmpty)  // if we find a sign pointing to oposite side
-        Some(distanceLeft)
-    else
+    else if (existingSigns.nonEmpty) { // if we find a sign
+        val auxSign = existingSigns.head
+        val sameDirection = auxSign.validityDirection == mainSign.validityDirection
+
+        if (sameDirection && auxSign.linkId == mainSign.linkId){
+          if ( mainSign.validityDirection == direction  ) {
+            if (SideCode.apply(direction) == TowardsDigitizing){
+              if (mainSign.mValue > auxSign.mValue)
+                None
+              else
+                Some(distanceLeft)
+            } else {
+              if (mainSign.mValue < auxSign.mValue)
+                None
+              else
+                Some(distanceLeft)
+            }
+          }
+          else{
+            if (SideCode.apply(direction) == TowardsDigitizing){
+              if (mainSign.mValue > auxSign.mValue)
+                Some(distanceLeft)
+              else
+                None
+            } else {
+              if (mainSign.mValue < auxSign.mValue)
+                Some(distanceLeft)
+              else
+                None
+            }
+          }
+        }
+        else
+          Some(distanceLeft)
+    } else
       None
 
   }
 
+  override def convertRoadSegments(segments: Seq[TrafficSignToLinear], endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]): Seq[TrafficSignToLinear] = {
+    segments
+  }
 
   def generateSegmentPiece(currentRoadLink: RoadLink, sign: PersistedTrafficSign, value: Value, endDistance: Option[Double], direction: Int): TrafficSignToLinear = {
     if (debbuger) println("generateSegmentPiece")

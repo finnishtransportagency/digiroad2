@@ -2464,7 +2464,7 @@ object DataFixture {
       case Some("create_parking_prohibition_using_traffic_signs") =>
         trafficSignParkingProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("create_roadWorks_using_traffic_signs") =>
-        trafficSignRoadWorkGenerator.createLinearAssetUsingTrafficSigns()
+        trafficSignRoadWorkGenerator.createRoadWorkAssetUsingTrafficSign()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
