@@ -49,17 +49,31 @@
       createZoomDependentOneWayRule(15, { stroke: {width: 8 }})
     ];
 
+    var getProperty = function(speedLimit, propertyName) {
+      return _.has(speedLimit, propertyName) ? speedLimit[propertyName] : null;
+    };
+
+    var value = function(speedLimit) {
+      var speedValue = getProperty(speedLimit,'value');
+      return !_.isNull(speedValue) && speedValue.value;
+    };
+
+    var isSuggested = function(speedLimit) {
+      var speedValue = getProperty(speedLimit,'value');
+      return !_.isNull(speedValue) && speedValue.isSuggested;
+    };
+
     var speedLimitStyleRules = [
-      new StyleRule().where('value').is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg'}}),
-      new StyleRule().where('value').is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg'}}),
-      new StyleRule().where('value').is(40).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/40.svg'}}),
-      new StyleRule().where('value').is(50).use({ stroke: { color: '#ff0000', fill: '#11bb00'}, icon: {src:  'images/speed-limits/50.svg'}}),
-      new StyleRule().where('value').is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
-      new StyleRule().where('value').is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
-      new StyleRule().where('value').is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
-      new StyleRule().where('value').is(90).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/90.svg'}}),
-      new StyleRule().where('value').is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}}),
-      new StyleRule().where('value').is(120).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/120.svg'}})
+      new StyleRule().where(value).is(20).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src: 'images/speed-limits/20.svg'}}),
+      new StyleRule().where(value).is(30).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/30.svg'}}),
+      new StyleRule().where(value).is(40).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/40.svg'}}),
+      new StyleRule().where(value).is(50).use({ stroke: { color: '#ff0000', fill: '#11bb00'}, icon: {src:  'images/speed-limits/50.svg'}}),
+      new StyleRule().where(value).is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
+      new StyleRule().where(value).is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
+      new StyleRule().where(value).is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
+      new StyleRule().where(value).is(90).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}, icon: {src:  'images/speed-limits/90.svg'}}),
+      new StyleRule().where(value).is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}}),
+      new StyleRule().where(value).is(120).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/120.svg'}})
     ];
 
     var speedLimitFeatureSizeRules = [
@@ -79,6 +93,10 @@
       new StyleRule().where('type').is('cutter').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
+    var questionMarkerStyleRules = [
+      new StyleRule().where(isSuggested).is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.7, anchor: [0.45, 1]}})
+    ];
+    
     var browseStyle = new StyleRuleProvider({});
     browseStyle.addRules(speedLimitStyleRules);
     browseStyle.addRules(speedLimitFeatureSizeRules);
@@ -86,6 +104,7 @@
     browseStyle.addRules(overlayStyleRules);
     browseStyle.addRules(validityDirectionStyleRules);
     browseStyle.addRules(oneWayOverlayStyleRules);
+    browseStyle.addRules(questionMarkerStyleRules);
 
     var selectionStyle = new StyleRuleProvider({ stroke: {opacity: 0.15}, graphic: {opacity: 0.3}});
     selectionStyle.addRules(speedLimitStyleRules);
@@ -95,6 +114,7 @@
     selectionStyle.addRules(validityDirectionStyleRules);
     selectionStyle.addRules(oneWayOverlayStyleRules);
     selectionStyle.addRules([unknownLimitStyleRule]);
+    selectionStyle.addRules(questionMarkerStyleRules);
 
     //History rules
     var typeSpecificStyleRulesHistory = [
@@ -144,7 +164,7 @@
     historyStyle.addRules(oneWayOverlayStyleRules);
 
     var isUnknown = function(speedLimit) {
-      return !_.isNumber(speedLimit.value);
+      return _.isUndefined(speedLimit.value) || !_.isNumber(speedLimit.value.value);
     };
 
     var lineFeatures = function(speedLimits) {
@@ -188,7 +208,7 @@
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, speedLimit);
       };
       var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
+      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return !_.isUndefined(speedLimit.value) ? speedLimit.value.value >= 70 : false; });
       var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
       var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 

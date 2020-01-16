@@ -1,4 +1,5 @@
 .page.csv-import{
+  max-width: 42%;
   .file-upload {
     position: relative;
     overflow: hidden;
@@ -59,5 +60,61 @@
     .control-label {
       margin-right: 0;
     }
+  }
+}
+
+.job-status {
+  padding-top: 10px;
+  border-top: 4px solid @gray-light-2;
+  font-size: 14px;
+
+  table ,tr td{
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    word-wrap: break-word;
+    .file{
+      width: 35%;
+    }
+    .date {
+      width: 22%;
+    }
+    .status {
+      width: 8%;
+      text-align: center;
+    }
+    .detail {
+      width: 14%;
+    }
+    .jobName {
+      width: 22%;
+    }
+  }
+
+  tbody {
+    display:block;
+    overflow-y:auto;
+    flex-direction: column;
+    overflow-x: hidden;
+    min-height: 0;
+    max-height: 198px;
+  }
+  thead, tbody tr {
+    display:table;
+    width:100%;
+    table-layout:fixed;
+  }
+
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 1%;
+  }
+
+  th:last-child {
+    border-right: none;
+  }
+
+  tr:nth-child(even) {
+    background-color: #dddddd;
   }
 }

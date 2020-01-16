@@ -7,7 +7,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
@@ -41,7 +41,7 @@ class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
 
   def persistedAssetChanges(busStop: PersistedMassTransitStop) = {
     withDynSession {
-      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode)
+      val municipalityName = municipalityService.getMunicipalityNameByCode(busStop.municipalityCode, newTransaction = false)
       val massTransitStop = MassTransitStopOperations.eventBusMassTransitStop(busStop, municipalityName)
       ValluSender.postToVallu(massTransitStop)
       massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
@@ -283,12 +283,8 @@ class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSig
 class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: TrafficSignInfoUpdate =>
-       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
-                                trafficSignManager.createAssets(x.newSign)
-      case _ => println("Nonexistent traffic Sign Type")
-    }
-      trafficSignManager.createAssets(x.newSign)
+            trafficSignManager.deleteAssets(Seq(x.oldSign))
+            trafficSignManager.createAssets(x.newSign)
     case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
@@ -425,7 +421,7 @@ object Digiroad2Context {
   }
 
   lazy val linearMassLimitationService: LinearMassLimitationService = {
-    new LinearMassLimitationService(roadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
+    new LinearMassLimitationService(roadLinkService, new DynamicLinearAssetDao)
   }
 
   lazy val speedLimitService: SpeedLimitService = {
@@ -479,7 +475,7 @@ object Digiroad2Context {
   }
 
   lazy val municipalityService: MunicipalityService = {
-    new MunicipalityService(eventbus, roadLinkService)
+    new MunicipalityService
   }
 
   lazy val dynamicLinearAssetService: DynamicLinearAssetService = {
@@ -546,7 +542,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager(roadLinkService, eventbus)
+    new DataImportManager(vvhClient, roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {

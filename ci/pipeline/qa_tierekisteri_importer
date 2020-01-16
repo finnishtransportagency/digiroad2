@@ -71,8 +71,8 @@ pipeline {
                             "ssh web@testing1 \'cd /home/web/digiroad2/current && echo YES |",
                              "/home/web/digiroad2/current/./sbt",
                              "-Ddigiroad2.env=testing",
-                             "\'project digiroad2-oracle\'",
-                             "\'test:run-main fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter ${ACTION} ${ASSET} ${TRAFFICSIGNGROUP}\'"
+                             "\"project digiroad2-oracle\"",
+                             "\"test:run-main fi.liikennevirasto.digiroad2.util.TierekisteriDataImporter ${ACTION} ${ASSET} ${TRAFFICSIGNGROUP}\"\'"
                         ].join(" ")
                     }
             }

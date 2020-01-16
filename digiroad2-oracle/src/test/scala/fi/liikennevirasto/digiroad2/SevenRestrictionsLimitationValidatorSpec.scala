@@ -3,58 +3,55 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import org.mockito.ArgumentMatchers.any
 
 class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockTrafficSignService = MockitoSugar.mock[TrafficSignService]
-  val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockDynamicAssetDao: DynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
 
   case class SevenRestrictionsValidation(typeId: Int, service: SevenRestrictionsLimitationValidator, trafficSign: TrafficSignType, value: String )
   class TestWidthLimitValidator extends WidthLimitValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestHeightLimitValidator extends HeightLimitValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestTotalWeightLimitValidator extends TotalWeightLimitValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestTrailerTruckWeightLimitValidator extends TrailerTruckWeightLimitValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestAxleWeightLimitValidator extends AxleWeightLimitValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   class TestBogieWeightLimitValidator extends BogieWeightLimitValidator {
@@ -64,9 +61,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   }
 
   class TestLengthLimitValidator extends LengthLimitValidator {
-    override lazy val dao: OracleLinearAssetDao = mockLinearAssetDao
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
+    override lazy val dynamicAssetDao: DynamicLinearAssetDao = mockDynamicAssetDao
   }
 
   val widthLimitValidator = new TestWidthLimitValidator
@@ -80,7 +77,8 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   val weightLimitAssets = Seq(
     SevenRestrictionsValidation(TotalWeightLimit.typeId, totalWeightLimitValidator, MaxLadenExceeding, "100"),
     SevenRestrictionsValidation(TrailerTruckWeightLimit.typeId, trailerTruckWeightLimitValidator,MaxMassCombineVehiclesExceeding, "100"),
-    SevenRestrictionsValidation(AxleWeightLimit.typeId, axleWeightLimitValidator, MaxTonsOneAxleExceeding, "100")
+    SevenRestrictionsValidation(AxleWeightLimit.typeId, axleWeightLimitValidator, MaxTonsOneAxleExceeding, "100"),
+    SevenRestrictionsValidation(BogieWeightLimit.typeId, bogieWeightLimitValidator, MaxTonsOnBogieExceeding, "200")
   )
 
   val otherLimitAssets = Seq(
@@ -103,13 +101,13 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(sevenRestrictionsAsset.service.dao.fetchLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l), LinearAssetTypes.numericValuePropertyId, false)).thenReturn(Seq())
+      when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l), false)).thenReturn(Seq())
 
       val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
       withClue("assetName " + AssetTypeInfo.apply(sevenRestrictionsAsset.typeId).toString) {
@@ -124,18 +122,18 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(sevenRestrictionsAsset.service.dao.fetchLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l), LinearAssetTypes.numericValuePropertyId, false))
+      when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l), false))
         .thenReturn(Seq(PersistedLinearAsset(1, 1003l, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 0.4, 9.6, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
       val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
       withClue("assetName " + AssetTypeInfo.apply(sevenRestrictionsAsset.typeId).toString) {
-        result should have size 0
+        result should have size 1
       }
 
       dynamicSession.rollback()
@@ -145,13 +143,13 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMismatchedAsset(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("300"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("300"))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("300"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("300"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
-      when(sevenRestrictionsAsset.service.dao.fetchLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l), LinearAssetTypes.numericValuePropertyId, false))
+      when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l), false))
         .thenReturn(Seq(PersistedLinearAsset(1, 1003l, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 0.4, 9.6, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
       val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
@@ -167,14 +165,14 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   def massLimitationWithMatchedAssetAfter50meter(sevenRestrictionsAsset: SevenRestrictionsValidation): Unit = {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 12, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
-      when(sevenRestrictionsAsset.service.dao.fetchLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l, 1004l), LinearAssetTypes.numericValuePropertyId, false))
+      when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l, 1004l),false))
         .thenReturn(Seq(PersistedLinearAsset(1, 1004l, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 13, 20, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
       val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
@@ -191,9 +189,9 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
 
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sevenRestrictionsAsset.trafficSign.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 120, 0, 120, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -203,7 +201,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
       val roadLink4 = RoadLink(1004l, Seq(Point(500.0, 0.0), Point(700.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
-      when(sevenRestrictionsAsset.service.dao.fetchLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l, 1004l), LinearAssetTypes.numericValuePropertyId, false))
+      when(sevenRestrictionsAsset.service.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(sevenRestrictionsAsset.typeId, Seq(1001l,1002l, 1003l, 1004l), false))
         .thenReturn(Seq(PersistedLinearAsset(1, 1004l, 1, Some(NumericValue(sevenRestrictionsAsset.value.toInt)), 121, 200, None, None, None, None, false, sevenRestrictionsAsset.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
 
       val result = sevenRestrictionsAsset.service.assetValidator(trafficSign)
@@ -246,101 +244,13 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("bogieWeightLimit traffic sign without match asset") {
-    OracleDatabase.withDynTransaction {
-
-      val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
-
-      val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
-
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
-      when(bogieWeightLimitValidator.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001l,1002l, 1003l), false)).thenReturn(Seq())
-
-      val result = bogieWeightLimitValidator.assetValidator(trafficSign)
-      result should have size 1
-      result.head.linkId should be (Some(roadLink2.linkId))
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("bogieWeightLimit traffic sign have a correct asset") {
-    OracleDatabase.withDynTransaction {
-      val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
-
-      val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
-
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
-      when(bogieWeightLimitValidator.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001l,1002l, 1003l), false))
-        .thenReturn(Seq(PersistedLinearAsset(1, 1003l, 1, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("bogie_weight_2_axel", "integer", false, Seq(DynamicPropertyValue(100))))))), 0.4, 9.6, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-
-      val result = bogieWeightLimitValidator.assetValidator(trafficSign)
-      result should have size 0
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("bogieWeightLimit traffic sign have a mismatched asset") {
-    OracleDatabase.withDynTransaction {
-      val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("300"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("300"))))
-
-      val trafficSign = PersistedTrafficSign(1, 1002l, 2, 2, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
-
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
-      when(bogieWeightLimitValidator.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001l,1002l, 1003l), false))
-        .thenReturn(Seq(PersistedLinearAsset(1, 1003l, 1,  Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("bogie_weight_2_axel", "integer", false, Seq(DynamicPropertyValue(100))))))), 0.4, 9.6, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-
-      val result = bogieWeightLimitValidator.assetValidator(trafficSign)
-      result should have size 1
-      result.head.assetId should be (Some(1l))
-
-      dynamicSession.rollback()
-    }
-  }
-
-  test("bogieWeightLimit traffic sign without a match asset before 500m") {
-    OracleDatabase.withDynTransaction {
-
-      val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
-
-      val trafficSign = PersistedTrafficSign(1, 1002l, 120, 0, 120, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
-
-      val roadLink1 = RoadLink(1001l, Seq(Point(0.0, 0.0), Point(100, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink2 = RoadLink(1002l, Seq(Point(100.0, 0.0), Point(200, 0.0)), 10.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink3 = RoadLink(1003l, Seq(Point(200.0, 0.0), Point(500.0, 0.0)), 30.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val roadLink4 = RoadLink(1004l, Seq(Point(500.0, 0.0), Point(700.0, 0.0)), 20.0, Municipality, 1, TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-
-      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
-      when(bogieWeightLimitValidator.dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(BogieWeightLimit.typeId, Seq(1001l,1002l, 1003l, 1004l), false))
-        .thenReturn(Seq(PersistedLinearAsset(1, 1004l, 1, Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("bogie_weight_2_axel", "integer", false, Seq(DynamicPropertyValue(100))))))), 121, 200, None, None, None, None, false, BogieWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface, None, None, None)))
-
-      val result = bogieWeightLimitValidator.assetValidator(trafficSign)
-      result should have size 1
-      result.head.linkId should be (Some(roadLink2.linkId))
-
-      dynamicSession.rollback()
-    }
-  }
 
   test("bogieWeightLimit traffic sign without additional have an asset with 2 and 3 axle") {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("100"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("100"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -359,10 +269,10 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
   test("bogieWeightLimit traffic sign with additional have an asset with 2 and 3 axle") {
     OracleDatabase.withDynTransaction {
       val propTrafficSign = Seq(
-        TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
-        TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("15000"))),
-        TrafficSignProperty(2, "trafficSigns_info", "", false, Seq(TextPropertyValue("200"))),
-      TrafficSignProperty(2, "additional_panel", "", false, Seq(AdditionalPanel(AdditionalPanelWithText.OTHvalue, "3 - akseliselle telille 16 t", "", 1))))
+        Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
+        Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("15000"))),
+        Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))),
+      Property(2, "additional_panel", "", false, Seq(AdditionalPanel(AdditionalPanelWithText.OTHvalue, "3 - akseliselle telille 16 t", "", 1))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 

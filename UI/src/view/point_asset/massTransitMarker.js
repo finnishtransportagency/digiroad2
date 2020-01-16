@@ -212,6 +212,23 @@
       });
     };
 
+    var createQuestionIconStyle = function(data, margin){
+      var totalStopTypes = !_.isUndefined(data.group) ?
+          _.map(data.group.assetGroup, function(group) {
+            return group.stopTypes.length;
+          }).reduce(function(a,b){return a + b;},0) : 1;
+      var numberOfGroup = !_.isUndefined(data.group) ?  data.group.assetGroup.length : 1;
+      var imgMargin = margin ? margin : 0;
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: 'images/icons/questionMarkerIcon.png',
+          anchor :  [0-imgMargin , (totalStopTypes * IMAGE_HEIGHT) + STICK_HEIGHT + (numberOfGroup * IMAGE_PADDING * 2) + 45],
+          anchorXUnits: 'pixels',
+          anchorYUnits: "pixels"
+        }))
+      });
+    };
+
     var createDirectionArrowStyle = function() {
       var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
       var directionArrowSrc, rotation;
@@ -305,6 +322,7 @@
       styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
       styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
       styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
+      styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;
     };
 
@@ -315,6 +333,7 @@
       styles = styles.concat(createStickStyle());
       styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
       styles = styles.concat(createStopTypeStyles(data.stopTypes));
+      styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;
     };
 

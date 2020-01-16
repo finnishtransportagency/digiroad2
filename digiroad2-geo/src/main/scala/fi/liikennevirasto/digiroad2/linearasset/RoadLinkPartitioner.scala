@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2.linearasset
 object RoadLinkPartitioner extends GraphPartitioner {
   def partition(links: Seq[RoadLink]): Seq[Seq[RoadLink]] = {
     val linkGroups = links.groupBy { link => (
-      link.functionalClass, link.trafficDirection,
-      link.linkType, link.administrativeClass, link.roadIdentifier)
+      link.functionalClass, link.trafficDirection, link.linkType, link.administrativeClass,
+      link.roadIdentifier, link.accessRightId, link.privateRoadAssociation , link.additionalInfo)
     }
 
     val clusters = for (linkGroup <- linkGroups.values.toSeq;

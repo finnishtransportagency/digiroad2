@@ -159,6 +159,13 @@
       var right = _.cloneDeep(link);
       right.points = split.secondSplitVertices;
 
+      /**
+       * The value isSuggested in the link is changed this way, due to the changes made in 1891 user story, so that
+       * in the split of the asset the isSuggested marker disappears.
+       */
+      left.value.isSuggested = false;
+      right.value.isSuggested = false;
+
       if (calculateMeasure(left) < calculateMeasure(right)) {
         splitSpeedLimits.created = left;
         splitSpeedLimits.existing = right;
@@ -179,7 +186,7 @@
     };
 
     this.saveSplit = function(callback) {
-      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value, splitSpeedLimits.existing.value, function() {
+      backend.splitSpeedLimit(splitSpeedLimits.existing.id, splitSpeedLimits.splitMeasure, splitSpeedLimits.created.value.value, splitSpeedLimits.existing.value.value, function() {
         eventbus.trigger('speedLimit:saved');
         splitSpeedLimits = {};
         dirty = false;
@@ -215,6 +222,13 @@
       var originalLimit = _.find(_.flatten(speedLimits), { id: id });
       var limitA = _.cloneDeep(originalLimit);
       var limitB = _.cloneDeep(originalLimit);
+
+      /**
+       * The value isSuggested in the link is changed this way, due to the changes made in 1891 user story, so that
+       * in the split of the asset the isSuggested marker disappears.
+       */
+      limitA.value.isSuggested = false;
+      limitB.value.isSuggested = false;
 
       limitA.sideCode = 2;
       limitA.marker = 'A';
