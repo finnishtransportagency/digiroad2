@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties, T
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
+import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
@@ -37,6 +37,7 @@ case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType
                           administrativeClass: AdministrativeClass, privateRoadAssociation: Option[String] = None, additionalInfo: Option[AdditionalInformation] = None,
                           accessRightID: Option[String] = None)
 case class PrivateRoadAssociation(name: String, roadName: String, municipality: String, linkId: Long)
+case class RoadLinkAttributeInfo(id: Long, linkId: Option[Long], name: Option[String], value: Option[String], createdDate: Option[DateTime], createdBy: Option[String], modifiedDate: Option[DateTime], modifiedBy: Option[String])
 
 sealed trait RoadLinkType {
   def value: Int
@@ -58,6 +59,7 @@ object RoadLinkType{
 
 sealed trait AdditionalInformation {
   def value: String
+  def label: String
 }
 
 object AdditionalInformation{
@@ -67,10 +69,12 @@ object AdditionalInformation{
     values.find(_.value == stringValue).getOrElse(NotDelivered)
   }
 
-  case object NotDelivered extends AdditionalInformation { def value = "99" }
-  case object DeliveredWithRestrictions extends AdditionalInformation { def value = "1" }
-  case object DeliveredWithoutRestrictions extends AdditionalInformation { def value = "2" }
+  case object NotDelivered extends AdditionalInformation { def value = "99"; def label = "Ei toimitettu"; }
+  case object DeliveredWithRestrictions extends AdditionalInformation { def value = "1"; def label = "Tieto toimitettu, rajoituksia"; }
+  case object DeliveredWithoutRestrictions extends AdditionalInformation { def value = "2"; def label = "Tieto toimitettu, ei rajoituksia"; }
 }
+
+case class PrivateRoadInfoStructure(privateRoadName: Option[String], associationId: Option[String], additionalInfo: Option[String], lastModifiedDate: Option[String])
 
 /**
   * This class performs operations related to road links. It uses VVHClient to get data from VVH Rest API.
@@ -80,7 +84,7 @@ object AdditionalInformation{
   * @param vvhSerializer
   */
 class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, val vvhSerializer: VVHSerializer) {
-  lazy val municipalityService = new MunicipalityService(eventbus, RoadLinkService.this)
+  lazy val municipalityService = new MunicipalityService
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -88,6 +92,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   val privateRoadAssociationPublicId = "PRIVATE_ROAD_ASSOCIATION"
   val additionalInfoPublicId = "ADDITIONAL_INFO"
   val accessRightIDPublicId = "ACCESS_RIGHT_ID"
+  val privateLastModifiedDatePublicId = "PRIVATE_ROAD_LAST_MOD_DATE"
+  val privateLastModifiedUserPublicId = "PRIVATE_ROAD_LAST_MOD_USER"
 
   //No road name found
   val roadWithoutName = "tuntematon tienimi"
@@ -99,6 +105,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   implicit val getDateTime = new GetResult[DateTime] {
     def apply(r: PositionedResult) = {
       new DateTime(r.nextTimestamp())
+    }
+  }
+  implicit val getRoadAttributeInfo = new GetResult[RoadLinkAttributeInfo] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong()
+      val linkId = r.nextLongOption()
+      val name = r.nextStringOption()
+      val value = r.nextStringOption()
+      val createdDate = r.nextTimestampOption().map(new DateTime(_))
+      val createdBy = r.nextStringOption()
+      val modifiedDate = r.nextTimestampOption().map(new DateTime(_))
+      val modifiedBy = r.nextStringOption()
+
+      RoadLinkAttributeInfo(id, linkId, name, value, createdDate, createdBy, modifiedDate, modifiedBy)
     }
   }
 
@@ -328,6 +348,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         PrivateRoadAssociation(roadNamesPerLinkId.head._1, roadName, municipalityName, maxLengthRoadLink.linkId)
       }
     }.toSeq
+  }
+
+  def getPrivateRoadsInfoByMunicipality(municipalityCode: Int): Seq[PrivateRoadInfoStructure] = {
+    val cachedRoadLinks = getTinyRoadLinkFromVVH(municipalityCode).map(_.linkId).toSet
+    val results = getPrivateRoadsInfoByLinkIds(cachedRoadLinks)
+    groupPrivateRoadInformation(results)
+  }
+
+  def getPrivateRoadsInfoByLinkIds(linkIds: Set[Long]): List[(Long, Option[(String, String)])] = {
+    withDynTransaction {
+      MassQuery.withIds(linkIds) { idTableName =>
+        fetchOverridedRoadLinkAttributes(idTableName)
+      }
+    }
   }
 
   def getValuesByRoadAssociationName(roadAssociationName: String, roadAssociationPublicId: String, newTransaction: Boolean = true): List[(String, Long)] = {
@@ -791,50 +825,65 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-    private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
+  private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
     val fetchResult =
       sql"""select i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
             from #$idTableName i
-            left join road_link_attributes rla on i.id = rla.link_id and (rla.valid_to IS NULL OR rla.valid_to > sysdate)
-      """.as[(Long, Option[Long], Option[String], Option[String], Option[DateTime], Option[String], Option[DateTime], Option[String])].list
+            join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
+            .as[RoadLinkAttributeInfo].list
 
     fetchResult.map(row => {
-      val rla = (row._3, row._4) match {
+      val rla = (row.name, row.value) match {
         case (Some(name), Some(value)) => Option((name, value))
         case _ => None
       }
-      row._1 -> rla
+
+      row.id -> rla
     }
     ) ++ getPrivateRoadLastModification(fetchResult)
   }
 
-  private def getPrivateRoadLastModification(fetchResult: Seq[(Long, Option[Long], Option[String], Option[String],
-    Option[DateTime], Option[String], Option[DateTime], Option[String])]): Map[Long, Option[(String, String)]] = {
-
-    fetchResult.filter(row => row._2.nonEmpty && Seq(privateRoadAssociationPublicId, additionalInfoPublicId).contains(row._3.get)).flatMap {
-      case (_, linkId, _, _, createdDate, createdBy, modifiedDate, modifyBy) =>
-        (createdDate, modifiedDate) match {
-          case (Some(createdDt), None) => Some(linkId.get, createdDt, createdBy.get)
-          case (_, Some(modifiedDt)) => Some(linkId.get, modifiedDt, modifyBy.get)
+  private def getPrivateRoadLastModification(fetchResult: Seq[RoadLinkAttributeInfo]): Seq[(Long, Option[(String, String)])] = {
+    val groupedResults = fetchResult.filter(row => row.linkId.nonEmpty && Seq(privateRoadAssociationPublicId, additionalInfoPublicId).contains(row.name.get)).flatMap {roadInfo =>
+        (roadInfo.createdDate, roadInfo.modifiedDate) match {
+          case (Some(createdDt), None) => Some(roadInfo.linkId.get, createdDt, roadInfo.createdBy.get)
+          case (_, Some(modifiedDt)) => Some(roadInfo.linkId.get, modifiedDt, roadInfo.modifiedBy.get)
           case _ => None
         }
     }.groupBy(_._1).mapValues(_.sortBy(_._2)(dateTimeOrdering).head)
-      .map{ p => p._1 -> Some("PRIVATE_ROAD_LAST_MODIFICATION" , DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss").print(p._2._2) + " / " + p._2._3)}
+
+    groupedResults.map(value => Seq((value._2._1, Some(privateLastModifiedDatePublicId , DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss").print(value._2._2))),
+      (value._2._1, Some(privateLastModifiedUserPublicId, value._2._3)))
+    ).flatten.toSeq
+  }
+
+  def groupPrivateRoadInformation(results: List[(Long, Option[(String, String)])]): Seq[PrivateRoadInfoStructure] = {
+    val inputFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
+    val outputFormat = new SimpleDateFormat("dd.MM.yyyy")
+
+    results.groupBy(_._1).map { attr =>
+      val prop = attr._2.flatMap(_._2)
+      PrivateRoadInfoStructure(
+        prop.find(_._1 == privateRoadAssociationPublicId).map(_._2),
+        prop.find(_._1 == accessRightIDPublicId).map(_._2),
+        prop.find(_._1 == additionalInfoPublicId).map(_._2),
+        prop.find(_._1 == privateLastModifiedDatePublicId).map(date => outputFormat.format(inputFormat.parse(date._2)))
+      )
+    }.toSeq.distinct
   }
 
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
-    val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)
-      .zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+    val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
     val linkprocessor = new VVHRoadLinkHistoryProcessor()
     // picks links that are newest in each link chains history with that are with in set tolerance . Keeps ones with no current link
-    val filtteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
+    val filteredHistoryLinks = linkprocessor.process(historyRoadLinks, roadlinks)
 
     withDynTransaction {
-      enrichRoadLinksFromVVH(filtteredHistoryLinks)
+      enrichRoadLinksFromVVH(filteredHistoryLinks)
     }
   }
 
-  def reloadRoadNodesFromVVH(municipality: Int): Seq[VVHRoadNodes]= {
+  def reloadRoadNodesFromVVH(municipality: Int): Seq[VVHRoadNodes] = {
     vvhClient.roadNodesData.fetchByMunicipality(municipality)
   }
 
@@ -859,10 +908,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
 
   /**
-    * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints.
+    * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints and add_obstacles_shapefile batch.
     */
-  def getClosestRoadlinkFromVVH(user: User, point: Point): Option[VVHRoadlink] = {
-    val diagonal = Vector3d(500, 500, 0)
+  def getClosestRoadlinkFromVVH(user: User, point: Point, vectorRadius: Int = 500): Option[VVHRoadlink] = {
+    val diagonal = Vector3d(vectorRadius, vectorRadius, 0)
 
     val roadLinks =
       if (user.isOperator())
@@ -1074,11 +1123,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val vvhRoadLink = vvhRoadLinks.find(_.linkId == roadLink.linkId)
       vvhRoadLink.get.featureClass match {
         case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.DrivePath => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.DrivePath | FeatureClass.CarRoad_IIIb => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithoutGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.CarRoad_IIIa => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.CarRoad_IIIa => vvhRoadLink.get.administrativeClass match {
+          case State => roadLink.copy(functionalClass = 4, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+          case Municipality | Private => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+          case _ => roadLink
+        }
         case _ => roadLink //similar logic used in roadaddressbuilder
       }
     }

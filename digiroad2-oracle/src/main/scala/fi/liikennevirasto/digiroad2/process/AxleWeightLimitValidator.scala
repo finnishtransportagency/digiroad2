@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, Prope
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 import fi.liikennevirasto.digiroad2.{MaxTonsOneAxleExceeding, TrafficSignType}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, TextPropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, AxleWeightLimit, PropertyValue}
 
 
 class AxleWeightLimitValidator extends SevenRestrictionsLimitationValidator{
@@ -15,7 +15,7 @@ class AxleWeightLimitValidator extends SevenRestrictionsLimitationValidator{
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case MaxTonsOneAxleExceeding =>
-        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
+        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset, "weight")
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }

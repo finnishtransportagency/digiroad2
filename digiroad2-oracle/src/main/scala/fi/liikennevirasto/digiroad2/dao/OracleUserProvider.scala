@@ -44,6 +44,10 @@ class OracleUserProvider extends UserProvider {
       }
   }
 
+  def getUsers(): List[User] = {
+    sql"""select id, username, configuration, name from service_user""".as[User].list
+  }
+
   def getUser(username: String, newTransaction: Boolean = true): Option[User] = {
     if (username == null) return None
 

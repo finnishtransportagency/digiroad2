@@ -1,13 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
-import fi.liikennevirasto.digiroad2.dao.OracleUserProvider
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, RoadLink, SpeedLimit}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, SpeedLimit, SpeedLimitValue}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -17,9 +15,6 @@ import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.mockito.ArgumentMatchers.any
 
 class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -41,19 +36,19 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(dataSource)(test)
   val validator = new SpeedLimitValidator(testTrafficSignService)
-  val simpleProp50 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("5"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("50"))))
-  val simpleProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("1"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
-  val speedLimitEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("2"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
-  val urbanAreaEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("6"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
-  val speedLimitAreaEndsProp70 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("4"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("70"))))
-  val simpleProp80 = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue("1"))), TrafficSignProperty(1, "trafficSigns_value", "", false, Seq(TextPropertyValue("80"))))
+  val simpleProp50 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("5"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("50"))))
+  val simpleProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val speedLimitEndsProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("2"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val urbanAreaEndsProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("6"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val speedLimitAreaEndsProp70 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("4"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("70"))))
+  val simpleProp80 = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue("1"))), Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("80"))))
 
   test("get inaccurate SpeedLimit when speed limit traffic sign value is different of the speed limit value") {
     runWithRollback {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSign = Seq(PersistedTrafficSign(1, speedLimit.linkId, 100, 0, 50, false, 0, 235, simpleProp80, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface))
@@ -70,7 +65,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -93,7 +88,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -115,7 +110,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
       val geometry = Seq(Point(0.0, 0.0), Point(200, 0.0))
       val roadLink = RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
-      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+      val speedLimit = SpeedLimit(1, 1000, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
         0.0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
 
       val trafficSigns =
@@ -139,9 +134,9 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 90, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
-          SpeedLimit(2, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(80)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(2, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0)),
             90, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -166,7 +161,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -191,7 +186,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -215,7 +210,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -240,7 +235,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -265,7 +260,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(40)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(40)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -290,7 +285,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -314,7 +309,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 
@@ -338,7 +333,7 @@ class SpeedLimitValidatorSpec  extends FunSuite with Matchers {
 
       val speedLimitsSeq =
         Seq(
-          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(NumericValue(70)), Seq(Point(0.0, 0.0)),
+          SpeedLimit(1, linkIdForTests, SideCode.TowardsDigitizing, TrafficDirection.TowardsDigitizing, Some(SpeedLimitValue(70)), Seq(Point(0.0, 0.0)),
             0, 200, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
         )
 

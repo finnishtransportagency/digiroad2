@@ -24,7 +24,6 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName), geometry = vvhRoadlink.geometry)
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }

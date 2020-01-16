@@ -175,7 +175,7 @@ class BogieWeightLimitImporter  extends WeightConversionTierekisteriImporter {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-      dynamicLinearAssetService.dynamicLinearAssetDao.updateAssetProperties(assetId, properties)
+      dynamicLinearAssetService.dynamicLinearAssetDao.updateAssetProperties(assetId, properties, typeId)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }

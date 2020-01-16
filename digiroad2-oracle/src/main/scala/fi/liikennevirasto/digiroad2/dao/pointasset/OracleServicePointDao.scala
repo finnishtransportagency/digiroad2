@@ -1,19 +1,21 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 case class IncomingServicePoint(lon: Double,
                                 lat: Double,
-                                services: Set[IncomingService])
+                                services: Set[IncomingService],
+                                propertyData: Set[SimplePointAssetProperty])
 
 case class IncomingService(serviceType: Int,
                            name: Option[String],
@@ -39,9 +41,32 @@ case class ServicePoint(id: Long,
                         createdAt: Option[DateTime] = None,
                         modifiedBy: Option[String] = None,
                         modifiedAt: Option[DateTime] = None,
-                        municipalityCode: Int)
+                        municipalityCode: Int,
+                        propertyData: Seq[Property])
+
+case class ServicePointRow(id: Long,
+                          lon: Double,
+                          lat: Double,
+                          services: Set[Service],
+                          createdBy: Option[String] = None,
+                          createdAt: Option[DateTime] = None,
+                          modifiedBy: Option[String] = None,
+                          modifiedAt: Option[DateTime] = None,
+                          municipalityCode: Int,
+                          property: PropertyRow)
 
 object OracleServicePointDao {
+  private def createOrUpdateServicePoint(servicePoint: IncomingServicePoint, id: Long): Unit ={
+    servicePoint.propertyData.map(propertyWithTypeAndId(ServicePoints.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
+  }
+
   def create(servicePoint: IncomingServicePoint, municipalityCode: Int, username: String): Long = {
     val servicePointId = Sequences.nextPrimaryKeySeqValue
     sqlu"""
@@ -58,6 +83,9 @@ object OracleServicePointDao {
         ($serviceId, $servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData})
       """.execute
     }
+
+    createOrUpdateServicePoint(servicePoint, servicePointId)
+
     servicePointId
   }
 
@@ -75,6 +103,9 @@ object OracleServicePointDao {
         ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData})
       """.execute
     }
+
+    createOrUpdateServicePoint(updatedAsset, assetId)
+
     assetId
   }
 
@@ -106,14 +137,22 @@ object OracleServicePointDao {
     else
       ""
 
-    val servicePoints = StaticQuery.queryNA[ServicePoint](
-      s"""
-      select a.id, a.geometry, a.created_by, a.created_date, a.modified_by, a.modified_date, a.municipality_code
-      from asset a
-      where a.ASSET_TYPE_ID = 250
-      and (a.valid_to > sysdate or a.valid_to is null)
+    val servicePointQuery = s"""
+         select a.id, a.geometry, a.created_by, a.created_date, a.modified_by, a.modified_date, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+           case
+             when ev.name_fi is not null then ev.name_fi
+             else null
+           end as display_value
+         from asset a
+         join property p on p.asset_type_id = a.asset_type_id
+         left join multiple_choice_value mcv ON mcv.asset_id = a.id and mcv.property_id = p.id AND p.PROPERTY_TYPE = 'checkbox'
+         left join enumerated_value ev on (ev.property_id = p.id AND mcv.enumerated_value_id = ev.id)
+         where a.ASSET_TYPE_ID = 250
+         and (a.valid_to > sysdate or a.valid_to is null)
       $withFilter
-    """).iterator.toSet
+    """
+
+    val servicePoints = queryToServicePoint(servicePointQuery)
 
     val services: Map[Long, Set[Service]] =
       if (servicePoints.isEmpty)
@@ -126,15 +165,39 @@ object OracleServicePointDao {
           WHEN IS_AUTHORITY_DATA IS NULL THEN '1' ELSE IS_AUTHORITY_DATA END AS IS_AUTHORITY_DATA
           from SERVICE_POINT_VALUE
           where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({ x => s"($x, $x)" }).mkString(",")})
-        """).iterator.toSet.groupBy(_.assetId)
+        """)(getService).iterator.toSet.groupBy(_.assetId)
 
     servicePoints.map { servicePoint =>
       servicePoint.copy(services = services(servicePoint.id))
-    }
-
+    }.toSet
   }
 
-  implicit val getServicePoint = new GetResult[ServicePoint] {
+  def assetRowToProperty(assetRows: Iterable[ServicePointRow]): Seq[Property] = {
+    assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
+      val row = rows.head
+      Property(
+        id = key,
+        publicId = row.property.publicId,
+        propertyType = row.property.propertyType,
+        required = row.property.propertyRequired,
+        values = rows.flatMap { assetRow =>
+          Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+        }.toSeq)
+    }.toSeq
+  }
+
+  private def queryToServicePoint(query: String): Seq[ServicePoint] = {
+    val rows = StaticQuery.queryNA[ServicePointRow](query)(getServicePoint).iterator.toSeq
+
+    rows.groupBy(_.id).map { case (id, signRows) =>
+      val row = signRows.head
+      val properties: Seq[Property] = assetRowToProperty(signRows)
+
+      id -> ServicePoint(row.id, row.lon, row.lat, row.services, row.createdBy, row.createdAt, row.modifiedBy, row.modifiedAt, row.municipalityCode, properties)
+    }.values.toSeq
+  }
+
+  implicit val getServicePoint = new GetResult[ServicePointRow] {
     def apply(r: PositionedResult) = {
       val id = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
@@ -143,8 +206,21 @@ object OracleServicePointDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val municipalityCode = r.nextInt()
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = PropertyRow(
+        propertyId = propertyId,
+        publicId = propertyPublicId,
+        propertyType = propertyType,
+        propertyRequired = propertyRequired,
+        propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
+        propertyDisplayValue = propertyDisplayValue.orNull)
 
-      ServicePoint(id, point.x, point.y, Set.empty, createdBy, createdDateTime, modifiedBy, modifiedDateTime, municipalityCode)
+      ServicePointRow(id, point.x, point.y, Set.empty, createdBy, createdDateTime, modifiedBy, modifiedDateTime, municipalityCode, property)
     }
   }
 
@@ -166,6 +242,34 @@ object OracleServicePointDao {
   def fetchByFilter(filter: String): Set[ServicePoint] = {
     getWithFilter(filter)
   }
+
+  def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
+    val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+    (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
+  }
+
+  def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    StaticQuery.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
+    StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
+    propertyType match {
+      case CheckBox =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
+        if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
+          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
+        } else {
+          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
+        }
+      case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
 }
-
-

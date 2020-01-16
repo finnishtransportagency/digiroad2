@@ -89,7 +89,7 @@
     me.browsingStyleProvider.addRules(oneWayOverlayStyleRules);
 
     this.isUnknown = function(linearAsset) {
-      return !_.isNumber(linearAsset.value);
+      return !_.isNumber(linearAsset.value.value);
     };
 
     this.dottedLineFeatures = function(linearAssets) {

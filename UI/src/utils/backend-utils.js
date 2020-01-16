@@ -453,11 +453,19 @@
       return $.getJSON('api/linearassets/unverified?typeId=' + typeId);
     };
 
+    this.getPrivateRoadAssociationsByMunicipality = function(municipalityCode) {
+      return $.getJSON('api/privateRoads/' + municipalityCode);
+    };
+
     this.getLinearAssetMidPoint = latestResponseRequestor(function(typeId, id){
       return {
         url: 'api/linearassets/midpoint?typeId=' + typeId + '&id=' + id
       };
     });
+
+    this.getUnverifiedMunicipalities = function(municipalityCode) {
+      return $.getJSON('api/municipality?municipalityCode=' + municipalityCode);
+    };
 
     this.getMunicipalities = function() {
       return $.getJSON('api/municipalities/byUser');
@@ -473,6 +481,14 @@
 
     this.getAssetTypesByMunicipality = function(municipalityCode, refresh) {
       return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes/' + refresh);
+    };
+
+    this.getSuggestedAssetsById = function(municipalityCode, typeId) {
+      return $.getJSON('api/suggested/' + municipalityCode + '/' + typeId);
+    };
+
+    this.getStructuredInfo = function(municipalityName, municipalityCode) {
+      return $.getJSON('api/buildInfo/' + municipalityName + '/' + municipalityCode);
     };
 
     this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {

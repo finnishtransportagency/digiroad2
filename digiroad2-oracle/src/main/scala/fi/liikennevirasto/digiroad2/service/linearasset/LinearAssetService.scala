@@ -216,7 +216,8 @@ trait LinearAssetOperations {
             (road.municipalityCode, id, road.administrativeClass)
           }
     }
-      val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
+      val municipalityNames = if (unVerified.nonEmpty) municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
+                                else  List[MunicipalityInfo]().groupBy(_.id)
 
       unVerified.groupBy(_._1).map{
         case (municipalityCode, grouped) => (municipalityNames.get(municipalityCode).get.map(_.name).head, grouped)}

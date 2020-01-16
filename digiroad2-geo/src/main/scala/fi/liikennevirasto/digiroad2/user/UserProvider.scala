@@ -21,8 +21,8 @@ trait UserProvider {
 
   def createUser(username: String, config: Configuration, name: Option[String] = None, newTransaction: Boolean = true)
 
+  def getUsers(): Seq[User]
   def getUser(username: String, newTransaction: Boolean = true): Option[User]
-
   def saveUser(user: User): User
   def updateUserConfiguration(user: User, newTransaction: Boolean = true): User
 }

@@ -27,6 +27,16 @@
       });
     };
 
+    this.getSuggestionStyle = function (yPosition) {
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: 'images/icons/questionMarkerIcon.png',
+          anchor : [0.5, yPosition],
+          anchorYUnits: "pixels"
+        }))
+      });
+    };
+    
     this.getPropertiesConfiguration = function (counter) {};
 
     this.getSignType = function (sign) {};
@@ -37,7 +47,7 @@
       });
     };
 
-    me.getLabelProperty = function (sign, counter) {
+    me.getLabelProperty = function (sign) {
 
       var labelProperty = me.getLabel(sign);
 
@@ -132,14 +142,7 @@
       })];
     };
 
-    this.renderFeaturesByPointAssets = function(pointAssets, zoomLevel){
-      return me.renderGroupedFeatures(pointAssets, zoomLevel, function(asset){
-        return me.getCoordinate(asset);
-      });
-    };
-
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){ };
-
 
     this.createFeature = function(point){
       return new ol.Feature(new ol.geom.Point(point));
