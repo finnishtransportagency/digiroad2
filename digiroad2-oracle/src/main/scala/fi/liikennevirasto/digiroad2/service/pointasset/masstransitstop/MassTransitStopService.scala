@@ -403,8 +403,8 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedStops.map(_.municipalityCode).foreach(municipalityValidation)
       val municipalities = municipalityDao.getMunicipalitiesNameAndIdByCode(persistedStops.map(_.municipalityCode).toSet)
 
-      persistedStops.flatMap { persistedStop =>
-        withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink, (id) => municipalities.find(_.id == id).map(_.name)))(persistedStop)
+      persistedStops.map { persistedStop =>
+        withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink, id => municipalities.find(_.id == id).map(_.name)))(persistedStop)
       }
     }
 
