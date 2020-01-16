@@ -1153,12 +1153,19 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     roadWorkService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
   }
 
+  override def withdraw(value1: Value, value2: Value): Value = {
+    val newProperties = value1.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "tyon_tunnus") ++ value2.asInstanceOf[DynamicValue].value.properties
+    DynamicValue(DynamicAssetValue(newProperties.toSeq))
+  }
+
   override def updateLinearAsset(oldAssetId: Long, newValue: Value, username: String): Seq[Long] = {
     if (debbuger) println("updateLinearAsset")
     roadWorkService.updateWithoutTransaction(Seq(oldAssetId), newValue, username)
   }
 
   override def deleteOrUpdateAssetBasedOnSign(trafficSign: PersistedTrafficSign): Unit = {
+    if (debbuger) println("deleteOrUpdateAssetBasedOnSign")
+
     val username = "automatic_trafficSign_deleted"
     val trafficSignRelatedAssets = fetchTrafficSignRelatedAssets(trafficSign.id)
     val createdValue = createValue(Seq(trafficSign))
@@ -1180,7 +1187,9 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   override def assetToUpdate(assets: Seq[PersistedLinearAsset], trafficSign: PersistedTrafficSign, createdValue: Value, username: String) : Unit = {
     if (debbuger) println("assetToUpdate")
     val groupedAssetsToUpdate = assets.map { asset =>
-      (asset.id, asset.value.get.asInstanceOf[DynamicValue].value.properties.diff(createdValue.asInstanceOf[DynamicValue].value.properties))
+      val newProperties = asset.value.get.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "tyon_tunnus") ++ createdValue.asInstanceOf[DynamicValue].value.properties
+
+      (asset.id, newProperties)// asset.value.get.asInstanceOf[DynamicValue].value.properties.diff(createdValue.asInstanceOf[DynamicValue].value.properties))
     }.groupBy(_._2)
 
     groupedAssetsToUpdate.values.foreach { value =>
@@ -1219,7 +1228,7 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
 
   def getStopCondition(actualRoadLink: RoadLink, mainSign: PersistedTrafficSign, allSignsRelated: Seq[PersistedTrafficSign], direction: Int, result : Seq[TrafficSignToLinear]): Option[Double] = {
     // STOP CONDITIONS:
-    //  a) Find another signal point in oposite direction
+    //  a) Find another roadwork sign
     //  b) No signal found in a 1000m range
 
     val mainSignRoadLink = (result.map(_.roadLink) :+ actualRoadLink).find(_.linkId == mainSign.linkId).get
@@ -1316,6 +1325,27 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
     } else
       None
 
+  }
+
+  override def segmentsManager(roadLinks: Seq[RoadLink], trafficSigns: Seq[PersistedTrafficSign], existingSegments: Seq[TrafficSignToLinear]): Set[TrafficSignToLinear] = {
+    if (debbuger) println(s"segmentsManager : roadLinkSize = ${roadLinks.size}")
+
+    val relevantLink = relevantLinkOnChain(roadLinks, trafficSigns)
+    val newSegments = relevantLink.flatMap { case (roadLink, startPointOfInterest, lastPointOfInterest) =>
+      baseProcess(trafficSigns, roadLinks, roadLink, (startPointOfInterest, lastPointOfInterest, None), Seq())
+    }.distinct
+
+  val mergedSegments = newSegments.map { x =>
+                          val newProps = if (existingSegments.nonEmpty) withdraw( existingSegments.head.value, x.value )
+                                          else x.value
+
+                          TrafficSignToLinear(x.roadLink, newProps, x.sideCode, x.startMeasure, x.endMeasure, x.signId, x.oldAssetId )
+                      }
+
+    val groupedAssets = mergedSegments.groupBy(_.roadLink)
+    val assets = fillTopology(roadLinks, groupedAssets)
+
+    convertRoadSegments(assets, findStartEndRoadLinkOnChain(roadLinks)).toSet
   }
 
   override def convertRoadSegments(segments: Seq[TrafficSignToLinear], endRoadLinksInfo: Seq[(RoadLink, Option[Point], Option[Point])]): Seq[TrafficSignToLinear] = {
