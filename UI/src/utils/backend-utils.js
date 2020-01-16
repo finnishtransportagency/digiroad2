@@ -370,6 +370,10 @@
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
+    this.getLanesByLinkId = function(linkId, callback) {
+      $.get('api/laneModelling/' + linkId, callback);
+    };
+
     this.getMassTransitStopById = function(id, callback) {
       $.get('api/massTransitStop/' + id, callback);
     };

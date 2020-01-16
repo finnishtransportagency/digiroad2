@@ -2,6 +2,7 @@
   root.AssetTypeConfiguration = function () {
 
     var oneKmZoomLvl = 8;
+    var fiftyMetersZoomLvl = 12;
 
     var assetType = {
       massTransitStop: 10,
@@ -803,9 +804,56 @@
         allowComplementaryLinks: true,
         isVerifiable: false,
         // style: new LaneModellingToolStyle(), // new
-        // form: new LaneModellingToolForm (),  // new
+        form: new LaneModellingToolForm({
+          fields : [
+            {
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_number", weight: 1
+            },
+            {
+              label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
+              values: [
+                {id: 2, label: 'Ohituskaista'},
+                {id: 3, label: 'Kääntymiskaista oikealle'},
+                {id: 4, label: 'Kääntymiskaista vasemmalle'},
+                {id: 5, label: 'Lisäkaista suoraan ajaville'},
+                {id: 6, label: 'Liittymiskaista'},
+                {id: 7, label: 'Erkanemiskaista'},
+                {id: 8, label: 'Sekoittumiskaista'},
+                {id: 9, label: 'Joukkoliikenteen kaista / taksikaista'},
+                {id: 10, label: 'Raskaan liikenteen kaista'},
+                {id: 11, label: 'Vaihtuvasuuntainen kaista'},
+                {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
+                {id: 21, label: 'Jalankulun kaista'},
+                {id: 22, label: 'Pyöräilykaista'},
+              ],  defaultValue: "2", weight: 2
+            },
+            {
+              label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 3,
+              values: [
+                {id: 1, label: 'Jatkuva'},
+                {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
+                {id: 3, label: 'Kääntyvä'},
+                {id: 4, label: 'Päättyvä'},
+                {id: 5, label: 'Jatkuva, osoitettu myös oikealle kääntyville'},
+                {id: 6, label: 'Jatkuva, osoitettu myös vasemmalle kääntyville'},
+              ]
+            },
+            {
+              label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 4
+            },
+            {
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 5
+            },
+            {
+              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 6
+            }
+          ]
+        }),
+        collection: LaneModellingCollection,
+        layer: LaneModellingLayer,
         // label: new LinearAssetLabel(), //new
-         hasMunicipalityValidation: true
+        hasMunicipalityValidation: true,
+        minZoomForContent: fiftyMetersZoomLvl
       }
     ];
 
