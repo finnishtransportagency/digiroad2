@@ -293,6 +293,17 @@
       };
     });
 
+    this.updateLaneAssets = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/laneModelling",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({

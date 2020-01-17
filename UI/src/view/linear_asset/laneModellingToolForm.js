@@ -75,9 +75,9 @@
 
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
-      var value = properties.concat(currentPropertyValue);
-      setValue(currentLane, { properties: value});
+      var properties = _.filter(getValue(currentLane), function(property){ return property.publicId !== currentPropertyValue.publicId; });
+      properties.push(currentPropertyValue);
+      setValue(currentLane, {properties: properties});
     };
   };
 
@@ -820,7 +820,7 @@
   var mainLaneFormStructure = {
     fields : [
       {
-        label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: 11, weight: 1
+        label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", defaultValue: 11, weight: 1
       },
       {
         label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 2,
@@ -906,7 +906,7 @@
 
       eventbus.on(events('selected', 'cancelled'), function () {
         var isDisabled = false;
-        rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
+        // rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
         rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
         rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
         rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
@@ -914,7 +914,7 @@
       });
 
       eventbus.on(events('unselect'), function() {
-        rootElement.find('#feature-attributes-header').empty();
+        // rootElement.find('#feature-attributes-header').empty();
         rootElement.find('#feature-attributes-form').empty();
         rootElement.find('#feature-attributes-footer').empty();
       });
@@ -933,7 +933,7 @@
       eventbus.on('application:readOnly', function(){
         if(_assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && _assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
           var isDisabled = false;
-          rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
+          // rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
           rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
           rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
           rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
@@ -962,8 +962,8 @@
       var fieldGroupElement = $('<div class = "input-unit-combination lane-' + currentLane + '" >');
       _.each(_.sortBy(currentFormStructure.fields, function(field){ return field.weight; }), function (field) {
         var fieldValues = [];
-        if (asset.value) {
-          var existingProperty = _.find(asset.value.properties, function (property) { return property.publicId === field.publicId; });
+        if (asset.properties) {
+          var existingProperty = _.find(asset.properties, function (property) { return property.publicId === field.publicId; });
           if(!_.isUndefined(existingProperty))
             fieldValues = existingProperty.values;
         }
@@ -1000,7 +1000,7 @@
         var previewButton = $('<li class="preview lane ' + number + '" ' + 'style="display: inline-block; width: 8%;height:10%;background-color:dimgrey;">' + number + '</li>').click(function() {
           $(".preview .lane").css('border', '1px solid white');
           $(this).css('border', '1px solid yellow');
-          currentLane = number;
+          currentLane = parseInt(number);
           var isDisabled = false;
           var rootElement = $('#feature-attributes');
 
@@ -1033,7 +1033,7 @@
       });
 
       var preview = function () {
-        var previewList = $('<ul id="preview" class="preview" style="margin-top: 1%; display: inline; text-align: center; color: white; margin-left:auto;margin-right:auto"></ul>');
+        var previewList = $('<ul id="preview" class="preview" style="margin-top: 1%; display: inline; color: white; margin:auto;"></ul>');
 
         var oddListElements = _.map(odd, function (number) {
               return createNumber(number);
@@ -1043,7 +1043,7 @@
           return createNumber(number);
         });
 
-        var previewDiv = previewList.append(evenListElements).append(oddListElements).append('<hr style="width: 90%;">');
+        var previewDiv = $('<div style="text-align:center;"></div>').append(previewList.append(evenListElements).append(oddListElements).append('<hr style="width: 90%;">'));
 
         return previewDiv;
       };
@@ -1051,11 +1051,71 @@
       return preview();
     };
 
-    var createLaneButtons = function(){
-      return $('<ul style="list-style-type: none;">').append('' +
-        '   <li><button class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button></li>' +
-        '   <li><button class="btn btn-secondary">Lisää kaista oikealle puolelle</button></li>'+
-        '   <li><button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button></li>');
+    var createLaneButtons = function(selectedAsset){
+      var laneNumbers = _.map(selectedAsset.get(), function (lane){
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code";
+        }).values[0].value;
+      });
+
+      var odd =_.filter(laneNumbers, function (number) {
+        return number % 2 !== 0;
+      });
+
+      var even = _.filter(laneNumbers, function (number) {
+        return number % 2 === 0;
+      });
+
+      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary add-lane-left">Lisää kaista oikealle puolelle</button>').click(function() {
+        $(".preview .lane").css('border', '1px solid white');
+
+        var nextLaneNumber;
+        if(_.isEmpty(even)){
+          nextLaneNumber = parseInt(odd.toString()[0] + '2');
+        }else{
+          nextLaneNumber = parseInt(_.max(even)) + 2;
+        }
+
+        currentLane = nextLaneNumber;
+        selectedAsset.setNewLane(nextLaneNumber);
+
+        var isDisabled = false;
+        var rootElement = $('#feature-attributes');
+
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+        currentFormStructure = defaultFormStructure;
+
+        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
+        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
+        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+      }));
+
+      var addRightLane = $('<li>').append($('<button class="btn btn-secondary add-lane-right">Lisää kaista vasemmalle puolelle</button>').click(function() {
+        $(".preview .lane").css('border', '1px solid white');
+
+        var nextLaneNumber = parseInt(_.max(odd)) + 2;
+
+        currentLane = nextLaneNumber;
+        selectedAsset.setNewLane(nextLaneNumber);
+
+        var isDisabled = false;
+        var rootElement = $('#feature-attributes');
+
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+        currentFormStructure = defaultFormStructure;
+
+        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
+        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
+        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+      }));
+
+      if(_.max(even) == 18 || _.max(even) == 28)
+        addLeftLane.find('.add-lane-left').prop("disabled", true);
+
+      if(_.max(odd) == 19 || _.max(odd) == 29)
+        addRightLane.find('.add-lane-right').prop("disabled", true);
+
+      return $('<ul style="list-style: none;">').append('' + '<button disabled class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button>').append(addLeftLane).append(addRightLane);
     };
 
       me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -1099,7 +1159,9 @@
 
     me.renderPreview = function(selectedAsset) {
       var previewHeader = createPreviewHeaderElement(_.map(selectedAsset.get(), function (lane){
-        return lane.laneCode;
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code";
+        }).values[0].value;
       }));
 
       return previewHeader;
@@ -1107,9 +1169,9 @@
 
     me.renderLaneButtons = function(selectedAsset) {
       var isReadOnly = _isReadOnly(selectedAsset);
-      var laneButtons = createLaneButtons();
+      var laneButtons = createLaneButtons(selectedAsset);
       //Hide or show elements depending on the readonly mode
-      laneButtons.filter('.form-controls').toggle(!isReadOnly);
+      laneButtons.toggle(!isReadOnly);
 
       return laneButtons;
     };
@@ -1127,33 +1189,106 @@
       forms = new AvailableForms();
       var isReadOnly = _isReadOnly(selectedAsset);
       var asset = _.find(selectedAsset.get(), function (lane){
-        return lane.laneCode == currentLane;
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value == currentLane;
+        });
       });
 
       var body = createBodyElement(selectedAsset);
 
       renderFormElements(asset, isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, selectedAsset.removeValue, isDisabled, body);
 
-      //Render separate button if is separable asset type
-      renderSeparateButtonElement(selectedAsset, body, isMassUpdate);
+      if(!isReadOnly)
+        renderExpireAndDeleteButtonsElement(selectedAsset, body);
 
       //Hide or show elements depending on the readonly mode
       toggleBodyElements(body, isReadOnly);
       return body;
     };
 
-    function renderSeparateButtonElement(selectedAsset, body, isMassUpdate){
-      if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset) && !isMassUpdate){
-        var separateElement = $(''+
-          '<div class="form-group editable">' +
-          '  <label class="control-label"></label>' +
-          '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
-          '</div>');
+    // function renderSeparateButtonElement(selectedAsset, body, isMassUpdate){
+    //   if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset) && !isMassUpdate){
+    //     var separateElement = $(''+
+    //       '<div class="form-group editable">' +
+    //       '  <label class="control-label"></label>' +
+    //       '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
+    //       '</div>');
+    //
+    //     separateElement.find('#separate-limit').on('click', function() { _assetTypeConfiguration.selectedLinearAsset.separate(); });
+    //
+    //     body.find('.form').append(separateElement);
+    //   }
+    // }
 
-        separateElement.find('#separate-limit').on('click', function() { _assetTypeConfiguration.selectedLinearAsset.separate(); });
+    function renderExpireAndDeleteButtonsElement(selectedAsset, body){
+      var deleteLane = $('<li>').append($('<button class="btn btn-secondary delete-lane">Poista kaista</button>').click(function() {
+        $(".preview .lane").css('border', '1px solid white');
+        selectedAsset.removeLane(currentLane);
 
-        body.find('.form').append(separateElement);
-      }
+        var asset = _.find(selectedAsset.get(), function (lane){
+          return _.find(lane.properties, function (property) {
+            return property.publicId == "lane_code" && property.values[0].value == currentLane;
+          });
+        });
+
+        if(_.isUndefined(asset)){
+          if(currentLane.toString()[1] == "2"){
+            currentLane = parseInt(currentLane.toString()[0] + '1');
+          }else{
+            currentLane = currentLane-2;
+          }
+        }
+
+        var isDisabled = false;
+        var rootElement = $('#feature-attributes');
+
+        if(currentLane.toString()[1] == "1"){
+          currentFormStructure = mainLaneFormStructure;
+        }else{
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+          currentFormStructure = defaultFormStructure;
+        }
+
+        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
+        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
+        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+      }));
+
+      var expireLane = $('<li>').append($('<button disabled class="btn btn-secondary delete-lane">Paata kaista</button>').click(function() {
+        $(".preview .lane").css('border', '1px solid white');
+        selectedAsset.removeLane(currentLane);
+
+        var asset = _.find(selectedAsset.get(), function (lane){
+          return _.find(lane.properties, function (property) {
+            return property.publicId == "lane_code" && property.values[0].value == currentLane;
+          });
+        });
+
+        if(_.isUndefined(asset)){
+          if(currentLane.toString()[1] == "2"){
+            currentLane = parseInt(currentLane.toString()[0] + '1');
+          }else{
+            currentLane = currentLane-2;
+          }
+        }
+
+        var isDisabled = false;
+        var rootElement = $('#feature-attributes');
+
+        if(currentLane.toString()[1] == "1"){
+          currentFormStructure = mainLaneFormStructure;
+        }else{
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+          currentFormStructure = defaultFormStructure;
+        }
+
+        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
+        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
+        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+      }));
+
+      if(currentLane.toString()[1] !== "1")
+        body.find('.form').append($('<div>')).append($('<ul style="list-style: none;">').append(deleteLane).append(expireLane));
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
@@ -1161,7 +1296,7 @@
 
       var formGroup = $('' + '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' + '</div>');
 
-      setValueFn(currentLane, asset.propertyData);
+      setValueFn(currentLane, {properties: asset.properties});
 
       body.find('.form').append(formGroup);
       body.find('.form-editable-' + sideCodeClass).append(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
@@ -1219,12 +1354,12 @@
 
     function createBodyElement(selectedAsset) {
       var info = {
-        modifiedBy :  selectedAsset.getModifiedBy() || '',
-        modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '',
-        createdBy : selectedAsset.getCreatedBy() || '',
-        createdDate : selectedAsset.getCreatedDateTime() ? ' ' + selectedAsset.getCreatedDateTime(): '',
-        verifiedBy : selectedAsset.getVerifiedBy(),
-        verifiedDateTime : selectedAsset.getVerifiedDateTime()
+        // modifiedBy :  selectedAsset.getModifiedBy() || '',
+        // modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '',
+        // createdBy : selectedAsset.getCreatedBy() || '',
+        // createdDate : selectedAsset.getCreatedDateTime() ? ' ' + selectedAsset.getCreatedDateTime(): '',
+        // verifiedBy : selectedAsset.getVerifiedBy(),
+        // verifiedDateTime : selectedAsset.getVerifiedDateTime()
       };
 
       var verifiedFields = function() {
@@ -1284,7 +1419,7 @@
     me.isSaveable = function(field){
       var otherSaveCondition = function () {
         if(_assetTypeConfiguration.saveCondition)
-          return _assetTypeConfiguration.saveCondition(field);
+          return _assetTypeConfiguration.saveCondition(_assetTypeConfiguration.selectedLinearAsset.get());
         return true;
       };
       return _.every(forms.getAllFields(), function(field){
@@ -1299,6 +1434,7 @@
     var SaveButton = function(assetTypeConfiguration) {
 
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
+        currentLane = parseInt(currentLane.toString()[0] + '1');
         assetTypeConfiguration.selectedLinearAsset.save();
       });
 
@@ -1323,11 +1459,16 @@
     var CancelButton = function(assetTypeConfiguration) {
 
       var element = $('<button />').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+        currentLane = parseInt(currentLane.toString()[0] + '1');
         assetTypeConfiguration.selectedLinearAsset.cancel();
       });
 
       eventbus.on(events('valueChanged'), function() {
-        $('.cancel').prop('disabled', false);
+        if(assetTypeConfiguration.selectedLinearAsset.isDirty()){
+          $('.cancel').prop('disabled', false);
+        }else{
+          $('.cancel').prop('disabled', true);
+        }
       });
 
       return {

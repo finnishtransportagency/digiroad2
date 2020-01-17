@@ -1,5 +1,6 @@
 (function(root) {
   root.SelectedLaneModelling = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
+    var lanesFetched = [];
     var selection = [];
     var self = this;
     var dirty = false;
@@ -9,8 +10,41 @@
     var multipleSelected;
 
     var getLane = function (laneNumber) {
-        _.find(selection, function (lane){
-          return lane.laneCode == laneNumber;
+        return _.find(selection, function (lane){
+          return _.find(lane.properties, function (property) {
+            return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+          });
+        });
+    };
+
+    var reorganizeLanes = function (laneNumber) {
+      var lanesToUpdate = _.map(selection, function (lane){
+        var foundValidProperty =  _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value > laneNumber && ((property.values[0].value % 2 !== 0 && laneNumber % 2 !== 0) || (property.values[0].value % 2 === 0 && laneNumber % 2 === 0));
+        });
+
+        if(_.isUndefined(foundValidProperty)){
+          return undefined;
+        }else{
+          return lane;
+        }
+      });
+
+      var listLanesIndexes = _.filter(_.map(lanesToUpdate,function (laneToUpdate) {
+        return _.findIndex(selection, function (lane) {
+          return lane == laneToUpdate;
+        });
+      }),function (index) {
+        return index != "-1";
+      });
+
+      if (!_.isEmpty(listLanesIndexes))
+        _.forEach(listLanesIndexes, function (number) {
+          var propertyIndex =  _.findIndex(selection[number].properties, function (property) {
+            return property.publicId == "lane_code";
+          });
+          selection[number].properties[propertyIndex].values[0].value = parseInt(selection[number].properties[propertyIndex].values[0].value) - 2;
+          // selection[number].values[0].value = parseInt(selection[number].values[0].value) - 2;
         });
     };
 
@@ -40,16 +74,14 @@
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
-    //need to fetch the link id
     this.open = function(linearAsset, singleLinkSelect) {
       multipleSelected = false;
       self.close();
-      // selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
-      // originalLinearAssetValue = self.getValue();
-      // collection.setSelection(self);
+      var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset); //need to put in data received
       backend.getLanesByLinkId(linearAsset.linkId, function(asset) {
-        originalLinearAssetValue = asset;
-        selection = asset;
+        originalLinearAssetValue = _.cloneDeep(asset);  //same as lanes fetched?
+        selection = _.cloneDeep(asset);
+        lanesFetched = _.cloneDeep(asset);
         collection.setSelection(self);
         eventbus.trigger(singleElementEvent('selected'), self);
       });
@@ -140,15 +172,15 @@
 
     var saveExisting = function() {
       eventbus.trigger(singleElementEvent('saving'));
-      var payloadContents = function() {
-        if (self.isUnknown()) {
-          return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
-        } else {
-          return { ids: _.map(selection, 'id') };
-        }
-      };
-      var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
-      var backendOperation = _.isUndefined(self.getValue()) ? backend.deleteLinearAssets : backend.createLinearAssets;
+      // var payloadContents = function() {
+      //   if (self.isUnknown()) {
+      //     return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
+      //   } else {
+      //     return { ids: _.map(selection, 'id') };
+      //   }
+      // };
+      var payload = {assets: selection, typeId: typeId};
+      var backendOperation = backend.updateLaneAssets;
 
       backendOperation(payload, function() {
         dirty = false;
@@ -165,13 +197,19 @@
 
     this.isUnknown = function(laneNumber) {
       return isUnknown(_.find(selection, function (lane){
-        return lane.laneCode == laneNumber;
+        // return lane.properties.lane_code == laneNumber;
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+        });
       }));
     };
 
     this.isSplit = function(laneNumber) {
       var lane = _.find(selection, function (lane){
-        return lane.laneCode == laneNumber;
+        // return lane.properties.lane_code == laneNumber;
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+        });
       });
 
       return !isSeparated && !_.isEmpty(lane) && lane.id === null;
@@ -186,13 +224,7 @@
     };
 
     this.save = function() {
-      if (self.isSplit()) {
-        saveSplit();
-      } else if (isSeparated) {
-        saveSeparation();
-      } else {
         saveExisting();
-      }
     };
 
     var cancelCreation = function() {
@@ -211,18 +243,20 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
-      selection = collection.replaceSegments(selection, newGroup);
+      // var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
+      // selection = collection.replaceSegments(selection, newGroup);
+      selection = lanesFetched;
       dirty = false;
-      eventbus.trigger(singleElementEvent('cancelled'), self);
+      // eventbus.trigger(singleElementEvent('cancelled'), self);
+      eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
     };
 
     this.cancel = function() {
-      if (self.isSplit() || self.isSeparated()) {
-        cancelCreation();
-      } else {
-        cancelExisting();
-      }
+      // if (self.isSplit() || self.isSeparated()) {
+      //   cancelCreation();
+      // } else {
+      cancelExisting();
+      // }
       self.close();
     };
 
@@ -243,22 +277,13 @@
       return _.has(lane, propertyName) ? lane[propertyName] : null;
     };
 
-    var getPropertyB = function(propertyName) {
-      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
-    };
-
     this.getId = function() {
       return getProperty('id');
     };
 
-    this.getValue = function() {
-      var value = getProperty('value');
-      return _.isNull(value) ? undefined : value;
-    };
-
-    this.getBValue = function() {
-      var value = getPropertyB('value');
-      return _.isNull(value) ? undefined : value;
+    this.getValue = function(laneNumber) {
+      var value = getProperty(getLane(laneNumber), 'properties');
+      return value;
     };
 
     this.getModifiedBy = function() {
@@ -270,25 +295,24 @@
     };
 
     this.getCreatedBy = function(laneNumber) {
-      var lane = getLane(laneNumber);
-      return getProperty(lane,'createdBy');
+      return getProperty(getLane(laneNumber), 'createdBy');
     };
 
-    this.getCreatedDateTime = function() {
-      return selection.length === 1 ? getProperty('createdAt') : null;
+    this.getCreatedDateTime = function(laneNumber) {
+      return getProperty(getLane(laneNumber), 'createdAt');
     };
 
-    this.getAdministrativeClass = function() {
-      var value = getProperty('administrativeClass');
+    this.getAdministrativeClass = function(laneNumber) {
+      var value = getProperty(getLane(laneNumber), 'administrativeClass');
       return _.isNull(value) ? undefined : value;
     };
 
-    this.getVerifiedBy = function() {
-      return selection.length === 1 ? getProperty('verifiedBy') : null;
+    this.getVerifiedBy = function(laneNumber) {
+      return getProperty(getLane(laneNumber), 'verifiedBy');
     };
 
-    this.getVerifiedDateTime = function() {
-      return selection.length === 1 ? getProperty('verifiedAt') : null;
+    this.getVerifiedDateTime = function(laneNumber) {
+      return getProperty(getLane(laneNumber), 'verifiedAt');
     };
 
     this.get = function() {
@@ -299,20 +323,58 @@
       return selection.length;
     };
 
+    this.setNewLane = function(laneNumber) {
+      var newLane;
+      if(laneNumber.toString()[1] == 2){
+        newLane = _.cloneDeep(getLane(laneNumber-1));
+      }else{
+        newLane = _.cloneDeep(getLane(laneNumber-2));
+      }
+
+      var outerLaneIsMainLane = laneNumber.toString()[1] == 2 || laneNumber.toString()[1] == 3;
+
+      var properties = _.filter(newLane.properties, function (property) {
+        if(outerLaneIsMainLane)
+          return property.publicId != "lane_code" && property.publicId != "lane_type";
+
+        return property.publicId != "lane_code";
+      });
+
+      var laneCodeProperty = {publicId: "lane_code", propertyType: "read_only_number", required: "required", values: [{value: laneNumber}]};
+      properties.push(laneCodeProperty);
+      newLane.properties = properties;
+
+      newLane.id = 0;
+      selection.push(newLane);
+    };
+
+    this.removeLane = function(laneNumber) {
+      var laneIndex = _.findIndex(selection, function (lane) {
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+        });
+      });
+
+      selection.splice(laneIndex,1);
+      reorganizeLanes(laneNumber);
+    };
+
     this.setValue = function(laneNumber, value) {
-      var lane = _.find(selection, function (lane){
-        return lane.laneCode == laneNumber;
+      var laneIndex = _.findIndex(selection, function (lane) {
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+        });
       });
-
-      var laneIndex = _.findIndex(selection, function (lane){
-        return lane.laneCode == laneNumber;
-      });
-
-      var newGroup = _.map(lane, function(s) { return _.assign({}, s, value); });
-      selection[laneIndex].propertyData = collection.replaceSegments(selection, lane, newGroup);
-      dirty = true;
-      eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
-
+        // var newGroup = _.map(selection[laneIndex], function(s) { return _.assign({}, s, value); });
+        var newGroup = _.assign([], selection[laneIndex].properties, value);
+        // selection[laneIndex] = collection.replaceSegments(selection, selection[laneIndex], newGroup);
+        selection[laneIndex].properties = newGroup.properties;
+        if(selection == lanesFetched){
+          dirty = false;
+        }else{
+          dirty = true;
+        }
+        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
     };
 
     this.setMultiValue = function(value) {
@@ -370,8 +432,8 @@
       }
     };
 
-    this.removeValue = function() {
-      self.setValue(undefined);
+    this.removeValue = function(laneNumber) {
+      self.setValue(laneNumber, undefined);
     };
 
     this.removeMultiValue = function() {

@@ -21,10 +21,9 @@
     var feedbackCollection = new FeedbackModel(backend, assetConfiguration);
     new FeedbackApplicationTool(authorizationPolicy, feedbackCollection);
 
-
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
-      var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
+      var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec);
+      var selectedLinearAsset = _.isUndefined(spec.selected) ? SelectedLinearAssetFactory.construct(backend, collection, spec) : new spec.selected(backend, collection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.isSeparable);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,

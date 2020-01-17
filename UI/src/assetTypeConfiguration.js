@@ -53,12 +53,20 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
+    var dateExtract = function (date) {
+      return new Date(date.values[0].value.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+    };
+
     var datePeriodValueExtract = function (date) {
       var datePeriodValue = date.getPropertyValue().values;
       var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
       var endDate = new Date(_.head(datePeriodValue).value.endDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
 
       return {startDate: startDate, endDate: endDate};
+    };
+
+    var isValidPeriodDate = function (startDate, endDate) {
+      return startDate <= endDate;
     };
 
     var isEndDateAfterStartdate = function (date) {
@@ -807,7 +815,7 @@
         form: new LaneModellingToolForm({
           fields : [
             {
-              label: 'Kaista', type: 'read_only_number', publicId: "lane_number", weight: 1
+              label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 1
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
@@ -849,6 +857,44 @@
             }
           ]
         }),
+        saveCondition:function (lanes) {
+          var isValidLane = function (fields) {
+            var dateFields = _.filter(fields, function (field) {
+              return field.propertyType === 'date';
+            });
+            var isValidDate = true;
+
+            if(dateFields.length != 2){
+              return isValidDate;
+            }
+
+            var startDate = _.find(dateFields, function (field) {
+              return field.publicId === 'start_date';
+            });
+
+            var endDate = _.find(dateFields, function (field) {
+              return field.publicId === 'end_date';
+            });
+
+            if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isEmpty(endDate.values[0]))
+              isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
+
+              return isValidDate;
+          };
+
+          var validLanes = _.filter(_.map(lanes, function (lane) {
+            return isValidLane(lane.properties);
+          }), function (boolean) {
+            return boolean === false;
+          });
+
+          if(_.isEmpty(validLanes)){
+            return true;
+          }else{
+            return false;
+          }
+        },
+        selected: SelectedLaneModelling,
         collection: LaneModellingCollection,
         layer: LaneModellingLayer,
         // label: new LinearAssetLabel(), //new

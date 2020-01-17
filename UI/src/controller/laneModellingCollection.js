@@ -153,11 +153,11 @@
     };
 
     this.replaceSegments = function(selection, lane, newSegments) {
-      if (selection.length === 1) {
+      // if (selection.length === 1) {
         self.linearAssets = replaceOneSegment(self.linearAssets, lane, newSegments);
-      } else {
-        self.linearAssets = replaceGroup(self.linearAssets, lane, newSegments);
-      }
+      // } else {
+      //   self.linearAssets = replaceGroup(self.linearAssets, lane, newSegments);
+      // }
       return newSegments;
     };
 
