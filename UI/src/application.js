@@ -147,12 +147,11 @@
         assetTypeId = startupParameters.assetType;
         defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
 
-        assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, assetTypeId);
-        if(assetTypeId === 0){
+        if(_.isUndefined(assetTypeId) || assetTypeId === 0){
           assetTypeLayerName = "linkProperty";
         }
         else{
-          assetTypeLayerName = assetTypeLayerName.layerName;
+          assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, assetTypeId).layerName;
         }
 
         localizedStrings = assetPropertyNames;
@@ -304,7 +303,7 @@
     new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration,getAssetTitle(), defaultLocation);
 
     function getAssetTitle() {
-      if(assetTypeId !== 0){
+      if(!_.isUndefined(assetTypeId) && assetTypeId !== 0){
         return assetConfiguration.assetTypeInfo.find(function (asset) {
           return asset.typeId === assetTypeId;
         }).title;

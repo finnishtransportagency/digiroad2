@@ -54,17 +54,17 @@ define(['AssetsTestData',
     Application.restart(backend || defaultBackend(), false, true);
   };
 
-  var defaultBackend = function() {
-    return fakeBackend(AssetsTestData.generate(), {});
+  var defaultBackend = function(assetTypeId) {
+    return fakeBackend(AssetsTestData.generate(), {}, undefined, assetTypeId || 10);
   };
 
-  var fakeBackend = function(assetsData, assetData, zoomLevel) {
+  var fakeBackend = function(assetsData, assetData, zoomLevel, assetTypeId) {
     var speedLimitsTestData = SpeedLimitsTestData.generate(2);
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
       .withAssetEnumeratedPropertyValues([], 300)
-      .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 })
+      .withStartupParameters({lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10, assetType: assetTypeId || 0})
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)

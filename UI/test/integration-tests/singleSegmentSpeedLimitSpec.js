@@ -24,7 +24,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         openLayersMap = map;
         testHelpers.selectLayer('speedLimit');
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimitsData));
     });
 
@@ -105,7 +105,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimits));
     });
 
@@ -149,7 +149,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimits));
     });
 
