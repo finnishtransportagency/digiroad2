@@ -1,5 +1,6 @@
 (function(application) {
   application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
+    var assetTypeLayerName = 'massTransitStop';
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -139,14 +140,24 @@
     new InaccurateWorkList().initialize();
     new PrivateRoadsWorkList().initialize(backend);
     new UserNotificationPopup(models.userNotificationCollection).initialize();
-
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
+        assetTypeId = startupParameters.assetType;
+        defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
+
+        if(_.isUndefined(assetTypeId) || assetTypeId === 0){
+          assetTypeLayerName = "linkProperty";
+        }
+        else{
+          assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, assetTypeId).layerName;
+        }
+
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
         startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
+        window.applicationModel.selectLayer(assetTypeLayerName);
       });
     });
   };
@@ -289,7 +300,18 @@
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-    new DefaultLocationButton(map, mapPluginsContainer, backend);
+    new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration,getAssetTitle(), defaultLocation);
+
+    function getAssetTitle() {
+      if(!_.isUndefined(assetTypeId) && assetTypeId !== 0){
+        return assetConfiguration.assetTypeInfo.find(function (asset) {
+          return asset.typeId === assetTypeId;
+        }).title;
+      }
+      else{
+        return 'Tielinkki';
+      }
+    }
 
 
     if (withTileMaps) { new TileMapCollection(map); }
@@ -440,6 +462,12 @@
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
     ol.proj.proj4.register(proj4);
   };
+
+  function getSelectedAssetByTypeId(assets, assetTypeId) {
+    return _.find(assets, function (asset) {
+      return asset.typeId === assetTypeId;
+    });
+  }
 
   function getSelectedPointAsset(pointAssets, layerName) {
     return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;

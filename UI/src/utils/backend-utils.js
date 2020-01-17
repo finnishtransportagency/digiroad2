@@ -835,6 +835,10 @@
       };
       };
 
+    this.getUserElyConfiguration = function () {
+      return $.getJSON('api/userConfiguration/elys');
+    };
+
     this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
       $.ajax({
         contentType: "application/json",

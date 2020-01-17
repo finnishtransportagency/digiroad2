@@ -4,10 +4,10 @@ import fi.liikennevirasto.digiroad2.Point
 
 
 class DummyUserProvider extends UserProvider {
-  def createUser(username: String, config: Configuration, name: Option[String]) = {
+  def createUser(username: String, config: Configuration, name: Option[String], newTransaction: Boolean = true) = {
     User(0, username, Configuration(), name)
   }
-  def getUser(username: String): Option[User] = {
+  def getUser(username: String, newTransaction: Boolean = true): Option[User] = {
     Some(User(0, username, Configuration(zoom = Some(8), east = Some(373560), north = Some(6677676), municipalityNumber = Some(235), authorizedMunicipalities = Set(235)), Some("John Tester")))
   }
 
@@ -25,7 +25,7 @@ class DummyUserProvider extends UserProvider {
   }
   def saveUser(user: User): User = user
 
-  def updateUserConfiguration(user: User): User = {
+  def updateUserConfiguration(user: User, newTransaction: Boolean = true): User = {
     User(0, "username", Configuration())
   }
 }

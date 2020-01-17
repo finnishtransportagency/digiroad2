@@ -92,4 +92,10 @@ class MunicipalityDao {
       sql"""select ELY_NRO from municipality  where id in (#${municipalities.mkString(",")} ) group by ELY_NRO""".as[Int].list
     }
   }
+
+  def getElysIdAndNamesByCode(elys: Set[Int]): Seq[(Int, String)] ={
+    OracleDatabase.withDynSession {
+      sql"""select id, name_fi from ely where id in (#${elys.mkString(",")} )""".as[(Int, String)].list
+    }
+  }
 }

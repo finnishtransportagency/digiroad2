@@ -177,7 +177,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, assetType: Int)
 
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
@@ -207,34 +207,39 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   def municipalityDao = new MunicipalityDao
 
-  private def getMapViewStartParameters(mapView: Option[MapViewZoom]): Option[(Double, Double, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom))
+  private def getMapViewStartParameters(mapView: Option[MapViewZoom], assetType: Int): Option[(Double, Double, Int, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom, assetType))
 
 
   get("/startupParameters") {
-    val defaultValues: (Double, Double, Int) = (390000, 6900000, 2)
+    val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, MassTransitStopAsset.typeId)
     val user = userProvider.getCurrentUser()
-    val userPreferences: Option[(Long, Long, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom) match {
-      case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom)
+
+    val assetTypeId = user.configuration.assetType match {
+      case Some(assetType) => assetType
+      case _  => MassTransitStopAsset.typeId
+    }
+
+    val userPreferences: Option[(Long, Long, Int, Int)] = (user.configuration.east, user.configuration.north, user.configuration.zoom) match {
+      case (Some(east), Some(north), Some(zoom)) => Some(east, north, zoom, assetTypeId)
       case _  => None
     }
 
-
     val location = userPreferences match {
-      case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3)
+      case Some(preference) => Some(preference._1.toDouble, preference._2.toDouble, preference._3, preference._4)
       case _ =>
         if(user.isMunicipalityMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty )
-          getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality)
+          getStartUpParameters(user.configuration.authorizedMunicipalities, municipalityDao.getCenterViewMunicipality, assetTypeId)
         else {
           if (user.isServiceRoadMaintainer() && user.configuration.authorizedAreas.nonEmpty)
-            getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea)
+            getStartUpParameters(user.configuration.authorizedAreas, municipalityDao.getCenterViewArea, assetTypeId)
           else if (user.isELYMaintainer() && user.configuration.authorizedMunicipalities.nonEmpty) //case ely maintainer
-            getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly)
+            getStartUpParameters(getUserElysByMunicipalities(user.configuration.authorizedMunicipalities), municipalityDao.getCenterViewEly, assetTypeId)
           else
             None
         }
     }
     val loc = location.getOrElse(defaultValues)
-    StartupParameters(loc._1, loc._2, loc._3)
+    StartupParameters(loc._1, loc._2, loc._3, loc._4)
   }
 
   private def getUserElysByMunicipalities(authorizedMunicipalities: Set[Int]): Set[Int] = {
@@ -254,8 +259,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getStartUpParameters(authorizedTo: Set[Int], getter: Int => Option[MapViewZoom]): Option[(Double, Double, Int)]  = {
-    authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id)) } match {
+  private def getStartUpParameters(authorizedTo: Set[Int], getter: Int => Option[MapViewZoom], assetType: Int): Option[(Double, Double, Int, Int)]  = {
+    authorizedTo.headOption.map { id => getMapViewStartParameters(getter(id), assetType) } match {
       case Some(param) => param
       case None => None
     }
@@ -1886,13 +1891,56 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     transformation(values)
   }
 
+  get("/userConfiguration/elys") {
+    val user = userProvider.getCurrentUser()
+    val elysId = municipalityDao.getElysByMunicipalities(user.configuration.authorizedMunicipalities)
+    val elysIdAndName = municipalityDao.getElysIdAndNamesByCode(elysId.toSet)
+
+    elysIdAndName.sortBy(_._2).map( ely =>
+      Map(
+        "id" -> ely._1,
+        "name" -> ely._2
+      )
+    )
+  }
+
   put("/userConfiguration/defaultLocation") {
+    def getCenterView(id: Int, getCenterViewFunctionType: Int => Option[MapViewZoom], user: User): User = {
+      getCenterViewFunctionType(id) match {
+        case Some(centerView) =>
+          val east = Option(centerView.geometry.x.toLong)
+          val north = Option(centerView.geometry.y.toLong)
+          val zoom = Option(centerView.zoom)
+
+          user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
+        case _ => user
+      }
+    }
+
     val user = userProvider.getCurrentUser()
     val east = (parsedBody \ "lon").extractOpt[Long]
     val north = (parsedBody \ "lat").extractOpt[Long]
     val zoom = (parsedBody \ "zoom").extractOpt[Int]
+    val assetType = (parsedBody \ "assetType").extractOpt[Int]
+    val municipalityId = (parsedBody \ "municipalityId").extractOpt[Int]
+    val elyId = (parsedBody \ "elyId").extractOpt[Int]
 
-    val updatedUser = user.copy(configuration = user.configuration.copy(east = east, north = north, zoom = zoom))
+    val updatedUserWithAssetType = assetType match {
+      case Some(_) => user.copy(configuration = user.configuration.copy(assetType = assetType))
+      case _ => user
+    }
+
+    val updatedUser = (municipalityId, elyId, east) match {
+      case (Some(idMunicipality), _, _) =>
+        getCenterView(idMunicipality, municipalityDao.getCenterViewMunicipality, updatedUserWithAssetType)
+      case (_, Some(idEly), _) =>
+        getCenterView(idEly, municipalityDao.getCenterViewEly, updatedUserWithAssetType)
+      case (_, _, Some(_)) =>
+        updatedUserWithAssetType.copy(configuration = updatedUserWithAssetType.configuration.copy(east = east, north = north, zoom = zoom))
+      case _ =>
+        updatedUserWithAssetType
+    }
+
     userProvider.updateUserConfiguration(updatedUser)
   }
 

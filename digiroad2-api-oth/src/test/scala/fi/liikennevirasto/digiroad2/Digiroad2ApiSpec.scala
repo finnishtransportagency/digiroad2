@@ -227,9 +227,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/startupParameters") {
       status should equal(200)
       val responseJson = parse(body)
-      (responseJson \ "zoom").values should equal(8)
-      (responseJson \ "lon").values should equal(373560)
-      (responseJson \ "lat").values should equal(6677676)
+      (responseJson \ "zoom").values should equal(3)
+      (responseJson \ "lon").values should equal(470092)
+      (responseJson \ "lat").values should equal(7504895)
     }
   }
 
@@ -244,8 +244,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 2, "bearing": 0}"""
-    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+    val requestPayload = """{"lon": 7478014, "lat": 483655, "linkId": 2, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes, username = "silari") {
       status should equal(400)
     }
   }

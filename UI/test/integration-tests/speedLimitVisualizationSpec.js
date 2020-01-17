@@ -19,7 +19,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         openLayersMap = map;
         testHelpers.selectLayer('speedLimit');
         done();
-      });
+      }, testHelpers.defaultBackend(20));
     });
     it('displays speed limits', function() {
       var speedLimitVectors = lineStrings(testHelpers.getSpeedLimitFeatures(openLayersMap));
