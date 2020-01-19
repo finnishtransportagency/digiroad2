@@ -894,7 +894,7 @@
           return _.find(lane.properties, function (property) {
             return property.publicId == "lane_code";
           }).values[0].value;
-        })))
+        })));
       }
 
       new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
