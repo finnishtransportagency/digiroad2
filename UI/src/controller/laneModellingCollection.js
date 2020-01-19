@@ -106,7 +106,7 @@
 
     this.getGroup = function(segment) {
       return _.find(self.linearAssets, function(linearAssetGroup) {
-        return _.some(linearAssetGroup, function(s) { return isEqual(s, segment); });
+        return _.some(linearAssetGroup, function(s) { return s.linkId == segment.linkId; });
       });
     };
 

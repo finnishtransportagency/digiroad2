@@ -2,6 +2,7 @@
   root.SelectedLaneModelling = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
     var lanesFetched = [];
     var selection = [];
+    var assetsToBeExpired = [];
     var self = this;
     var dirty = false;
     var originalLinearAssetValue = null;
@@ -77,12 +78,18 @@
     this.open = function(linearAsset, singleLinkSelect) {
       multipleSelected = false;
       self.close();
-      var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset); //need to put in data received
+      var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       backend.getLanesByLinkId(linearAsset.linkId, function(asset) {
+        _.forEach(asset, function (lane) {
+          lane.linkId = _.map(linearAssets, function (linearAsset) {
+            return linearAsset.linkId;
+          });
+        });
         originalLinearAssetValue = _.cloneDeep(asset);  //same as lanes fetched?
         selection = _.cloneDeep(asset);
         lanesFetched = _.cloneDeep(asset);
-        collection.setSelection(self);
+        collection.setSelection(self);  //is this needed?
+        assetsToBeExpired=[];
         eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
@@ -179,7 +186,7 @@
       //     return { ids: _.map(selection, 'id') };
       //   }
       // };
-      var payload = {assets: selection, typeId: typeId};
+      var payload = {assets: selection.concat(assetsToBeExpired), typeId: typeId};
       var backendOperation = backend.updateLaneAssets;
 
       backendOperation(payload, function() {
@@ -356,6 +363,20 @@
       });
 
       selection.splice(laneIndex,1);
+      reorganizeLanes(laneNumber);
+    };
+
+    this.expireLane = function(laneNumber) {
+      var laneIndex = _.findIndex(selection, function (lane) {
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+        });
+      });
+
+      var expireLane = selection.splice(laneIndex,1)[0];
+      expireLane.expire = true;
+      assetsToBeExpired.push(expireLane);
+
       reorganizeLanes(laneNumber);
     };
 
