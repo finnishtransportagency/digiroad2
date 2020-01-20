@@ -59,7 +59,7 @@
     me.viewModeRender = function (field, propertyValues) {
       var value = _.head(propertyValues, function(propertyValue) { return propertyValue.value ; });
       var unit = field.unit ? ' ' + field.unit : '';
-      var _value = value ? value.value + unit: '-';
+      var _value = value ? value.value + unit: field.defaultValue ? field.defaultValue : '-';
 
       return $('' +
         '<div class="form-group">' +
@@ -75,9 +75,13 @@
 
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      var properties = _.filter(getValue(currentLane), function(property){ return property.publicId !== currentPropertyValue.publicId; });
-      properties.push(currentPropertyValue);
-      setValue(currentLane, {properties: properties});
+      if(isAddByRoadAddressActive &&  (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
+        lanesAssets.setEndAddressesValues(currentPropertyValue);
+      }else{
+        var properties = _.filter(getValue(currentLane), function(property){ return property.publicId !== currentPropertyValue.publicId; });
+        properties.push(currentPropertyValue);
+        setValue(currentLane, {properties: properties});
+      }
     };
   };
 
@@ -155,7 +159,7 @@
       me.element = $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control' + unitClass + '" value="' + _value + '"  id="' + className + '" ' + me.disabled() + '>' +
+        '   <input type="text" name="' + field.publicId + '" fieldType = "' + field.type + '" ' + me.required() + ' class="form-control' + unitClass + '" value="' + _value + '"  id="' + className + field.publicId + '" ' + me.disabled() + '>' +
         unit +
         '</div>');
 
@@ -180,7 +184,7 @@
       return $('' +
         '<div class="form-group">' +
         '   <label class="control-label">' + field.label + '</label>' +
-        '   <p class="form-control-readOnly">' + currentLane + '</p>' +
+        '   <p class="form-control-readOnly">' + _value + '</p>' +
         '</div>'
       );
     };
@@ -815,12 +819,12 @@
     {name: 'hidden_read_only_number', fieldType: HiddenReadOnlyFields}
   ];
 
-  var currentLane = 11;
+  var currentLane;
 
   var mainLaneFormStructure = {
     fields : [
       {
-        label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", defaultValue: 11, weight: 1
+        label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 1
       },
       {
         label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 2,
@@ -845,13 +849,41 @@
     ]
   };
 
-  var currentFormStructure;
+  var roadAddressFormStructure = {
+    fields : [
+      {
+        label: 'Tie', required: 'required', type: 'read_only_number', publicId: "initial_road_number", weight: 1
+      },
+      {
+        label: 'Osa', required: 'required', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2
+      },
+      {
+        label: 'Etäisyys', required: 'required', type: 'read_only_number', publicId: "initial_distance", weight: 3
+      },
+      {
+        label: 'Osa', required: 'required', type: 'number', publicId: "end_road_part_number", weight: 4
+      },
+      {
+        label: 'Etäisyys', required: 'required', type: 'number', publicId: "end_distance", weight: 5
+      }
+    ]
+  };
 
+  var currentFormStructure;
   var defaultFormStructure;
+  var isAddByRoadAddressActive;
+  var lanesAssets;
 
   root.LaneModellingToolForm = function (formStructure) {
     var me = this;
     var _assetTypeConfiguration;
+
+    function reloadForm(rootElement){
+      rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, false));
+      rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
+      rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+    }
+
     var AvailableForms = function(){
       var formFields = {};
 
@@ -886,10 +918,12 @@
     me.initialize = function(assetTypeConfiguration, feedbackModel){
       var rootElement = $('#feature-attributes');
       _assetTypeConfiguration = assetTypeConfiguration;
+      lanesAssets = _assetTypeConfiguration.selectedLinearAsset;
 
       function setInitialForm() {
         defaultFormStructure = formStructure;
         currentFormStructure = mainLaneFormStructure;
+        isAddByRoadAddressActive = false;
         currentLane = parseInt(_.min(_.map(_assetTypeConfiguration.selectedLinearAsset.get(), function (lane) {
           return _.find(lane.properties, function (property) {
             return property.publicId == "lane_code";
@@ -964,6 +998,28 @@
       if(alreadyRendered)
         forms.removeFields(sideCode);
       var fieldGroupElement = $('<div class = "input-unit-combination lane-' + currentLane + '" >');
+
+      if(isAddByRoadAddressActive){
+        fieldGroupElement.append('<div class="form-group"><label class="control-label" style="text-align: left">' + 'Kaistan alkaa:' + '</label></div>');
+        _.each(_.sortBy(roadAddressFormStructure.fields, function(field){ return field.weight; }), function (field) {
+          var fieldValues = [];
+          if (asset.properties) {
+            var existingProperty = _.find(asset.properties, function (property) { return property.publicId === field.publicId; });
+            if(!_.isUndefined(existingProperty))
+              fieldValues = existingProperty.values;
+          }
+          var dynamicField = _.find(laneModellingFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
+          var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
+          forms.addField(fieldType, sideCode);
+          var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
+
+          fieldGroupElement.append(fieldElement);
+
+        });
+        fieldGroupElement.append('<hr style="width: 90%;">');
+      }
+
+      fieldGroupElement.append('<div class="form-group"><label class="control-label" style="text-align: left">' + 'Kaistan lisäys' + '</label></div>');
       _.each(_.sortBy(currentFormStructure.fields, function(field){ return field.weight; }), function (field) {
         var fieldValues = [];
         if (asset.properties) {
@@ -1005,19 +1061,14 @@
           $(".preview .lane").css('border', '1px solid white');
           $(this).css('border', '1px solid yellow');
           currentLane = parseInt(number);
-          var isDisabled = false;
-          var rootElement = $('#feature-attributes');
 
           if(currentLane.toString()[1] == "1"){
             currentFormStructure = mainLaneFormStructure;
           }else{
-            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
             currentFormStructure = defaultFormStructure;
           }
-
-          rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-          rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
-          rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+          reloadForm($('#feature-attributes'));
         });
 
         if(number == currentLane){
@@ -1083,16 +1134,11 @@
         currentLane = nextLaneNumber;
         selectedAsset.setNewLane(nextLaneNumber);
 
-        var isDisabled = false;
-        var rootElement = $('#feature-attributes');
-
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
         currentFormStructure = defaultFormStructure;
 
-        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
-      }));
+        reloadForm($('#feature-attributes'));
+      }).prop("disabled", _.max(even).toString()[1] == 8));
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary add-lane-right">Lisää kaista vasemmalle puolelle</button>').click(function() {
         $(".preview .lane").css('border', '1px solid white');
@@ -1102,24 +1148,21 @@
         currentLane = nextLaneNumber;
         selectedAsset.setNewLane(nextLaneNumber);
 
-        var isDisabled = false;
-        var rootElement = $('#feature-attributes');
-
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
         currentFormStructure = defaultFormStructure;
 
-        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
-      }));
+        reloadForm($('#feature-attributes'));
+      }).prop("disabled", _.max(odd).toString()[1] == 9));
 
-      if(_.max(even) == 18 || _.max(even) == 28)
-        addLeftLane.find('.add-lane-left').prop("disabled", true);
+      var selectedRoadLink = selectedAsset.getSelectedRoadlink();
+      var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary add-by-road-address">Lisää kaista tieosoitteen avulla</button>').click(function() {
+        isAddByRoadAddressActive = true;
+        selectedAsset.setInitialRoadFields();
 
-      if(_.max(odd) == 19 || _.max(odd) == 29)
-        addRightLane.find('.add-lane-right').prop("disabled", true);
+        reloadForm($('#feature-attributes'));
+      }).prop("disabled", _.isUndefined(selectedRoadLink.administrativeClass) || _.isUndefined(selectedRoadLink.roadNumber) || _.isUndefined(selectedRoadLink.roadPartNumber) || _.isUndefined(selectedRoadLink.startAddrMValue) || selectedRoadLink.administrativeClass != 1));
 
-      return $('<ul style="list-style: none;">').append('' + '<button disabled class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button>').append(addLeftLane).append(addRightLane);
+      return $('<ul style="list-style: none;">').append(addByRoadAddress).append(addLeftLane).append(addRightLane);
     };
 
       me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -1227,9 +1270,6 @@
     // }
 
     function renderExpireAndDeleteButtonsElement(selectedAsset, body){
-      var isDisabled = false;
-      var rootElement = $('#feature-attributes');
-
       var deleteLane = $('<button class="btn btn-secondary delete-lane" style="display: inline;">Poista kaista</button>').click(function() {
         $(".preview .lane").css('border', '1px solid white');
         selectedAsset.removeLane(currentLane);
@@ -1251,13 +1291,10 @@
         if(currentLane.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
         }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
           currentFormStructure = defaultFormStructure;
         }
-
-        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+        reloadForm($('#feature-attributes'));
       });
 
       var expireLane = $('<button class="btn btn-secondary delete-lane" style="display: inline;">Paata kaista</button>').click(function() {
@@ -1281,13 +1318,10 @@
         if(currentLane.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
         }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_number", defaultValue: currentLane, weight: 1};
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
           currentFormStructure = defaultFormStructure;
         }
-
-        rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-        rootElement.find('#feature-attributes-form').prepend(me.renderPreview(_assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-form').append(me.renderLaneButtons(_assetTypeConfiguration.selectedLinearAsset));
+        reloadForm($('#feature-attributes'));
       });
 
       expireLane.prop('disabled', _.find(selectedAsset.get(), function (lane){
@@ -1449,9 +1483,9 @@
       });
 
       var updateStatus = function(element) {
-        if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-          element.prop('disabled', !(me.isSaveable(forms.getFields('a')) && me.isSaveable(forms.getFields('b')) && me.isSplitOrSeparatedAllowed()));
-        } else
+        // if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+        //   element.prop('disabled', !(me.isSaveable(forms.getFields('a')) && me.isSaveable(forms.getFields('b')) && me.isSplitOrSeparatedAllowed()));
+        // } else
           element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && assetTypeConfiguration.selectedLinearAsset.isDirty()));
       };
 

@@ -2,6 +2,7 @@
   root.SelectedLaneModelling = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
     var lanesFetched = [];
     var selection = [];
+    var selectedRoadlink = null;
     var assetsToBeExpired = [];
     var self = this;
     var dirty = false;
@@ -79,6 +80,7 @@
       multipleSelected = false;
       self.close();
       var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
+      selectedRoadlink = linearAsset;
       backend.getLanesByLinkId(linearAsset.linkId, function(asset) {
         _.forEach(asset, function (lane) {
           lane.linkId = _.map(linearAssets, function (linearAsset) {
@@ -96,6 +98,20 @@
 
     this.getLinearAsset = function(id) {
       return collection.getById(id);
+    };
+
+    this.getSelectedRoadlink = function() {
+      return selectedRoadlink;
+    };
+
+    this.setInitialRoadFields = function(){
+      var roadNumberElement = {publicId: "initial_road_number", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadNumber}]};
+      var roadPartNumberElement = {publicId: "initial_road_part_number", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadPartNumber}]};
+      var startAddrMValueElement = {publicId: "initial_distance", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.startAddrMValue}]};
+
+      _.forEach(selection, function (lane) {
+        lane.properties.push(roadNumberElement, roadPartNumberElement, startAddrMValueElement);
+      });
     };
 
     this.addSelection = function(linearAssets){
@@ -286,6 +302,18 @@
 
     this.getId = function() {
       return getProperty('id');
+    };
+
+    this.setEndAddressesValues = function(currentPropertyValue) {
+      _.forEach(selection, function (lane) {
+        var currentLaneNumber = _.find(lane.properties,function (prop) {
+          return prop.publicId == "lane_code";
+        }).values[0].value;
+
+        var properties = _.filter(this.getValue(currentLaneNumber), function(property){ return property.publicId !== currentPropertyValue.publicId; });
+        properties.push(currentPropertyValue);
+        this.setValue(currentLaneNumber, {properties: properties});
+      });
     };
 
     this.getValue = function(laneNumber) {

@@ -864,10 +864,7 @@
             });
             var isValidDate = true;
 
-            if(dateFields.length != 2){
-              return isValidDate;
-            }
-
+            if (dateFields.length != 2) {
             var startDate = _.find(dateFields, function (field) {
               return field.publicId === 'start_date';
             });
@@ -878,8 +875,29 @@
 
             if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isEmpty(endDate.values[0]))
               isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
+          }
 
-              return isValidDate;
+            var isValidRoadAddresses = true;
+
+            var roadAddressesFields = _.filter(fields, function (field) {
+              return field.propertyType === 'number';
+            });
+
+              if (dateFields.length == 2) {
+                var endRoadPartNumber = _.find(roadAddressesFields, function (field) {
+                  return field.publicId === 'end_road_part_number';
+                });
+
+                var endDistance = _.find(roadAddressesFields, function (field) {
+                  return field.publicId === 'end_distance';
+                });
+
+                if (_.isEmpty(endRoadPartNumber.values) || _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isEmpty(endDistance.values[0])){
+                  isValidRoadAddresses = false;
+                }
+              }
+
+              return isValidDate && isValidRoadAddresses;
           };
 
           var validLanes = _.filter(_.map(lanes, function (lane) {
