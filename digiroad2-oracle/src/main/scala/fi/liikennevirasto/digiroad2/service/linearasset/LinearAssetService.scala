@@ -124,10 +124,20 @@ trait LinearAssetOperations {
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
   }
 
+  private def addFunctionalClassAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("functionalClass" -> roadLink.functionalClass))
+  }
+
+  private def addLinkTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("linkType" -> roadLink.linkType.value))
+  }
+
   private def enrichLinearAssetAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val linearAssetAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
       addMunicipalityCodeAttribute,
-      addConstructionTypeAttribute
+      addConstructionTypeAttribute,
+      addFunctionalClassAttribute,
+      addLinkTypeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
@@ -832,7 +842,8 @@ trait LinearAssetOperations {
     ids
   }
 
-  def validateAssetValue(value: Option[Value]): Unit = {}
+  //def validateAssetValue(value: Option[Value]): Unit = {}
+  def validateCondition(asset: NewLinearAsset): Unit = {}
 
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 

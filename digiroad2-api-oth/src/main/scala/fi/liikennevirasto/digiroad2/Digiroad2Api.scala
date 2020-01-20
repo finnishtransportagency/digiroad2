@@ -89,7 +89,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val dataFeedback: FeedbackDataService = Digiroad2Context.dataFeedback,
                    val damagedByThawService: DamagedByThawService = Digiroad2Context.damagedByThawService,
                    val roadWorkService: RoadWorkService = Digiroad2Context.roadWorkService,
-                   val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService)
+                   val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
+                   val cyclingAndWalkingService : CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService )
+
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -982,7 +984,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startAddrMValue" -> link.attributes.getOrElse("VIITE_START_ADDR", link.attributes.get("TEMP_START_ADDR")),
           "endAddrMValue" ->  link.attributes.getOrElse("VIITE_END_ADDR", link.attributes.get("TEMP_END_ADDR")),
           "administrativeClass" -> link.administrativeClass.value,
-          "constructionType" -> extractIntValue(link.attributes, "constructionType")
+          "constructionType" -> extractIntValue(link.attributes, "constructionType"),
+          "linkType" -> ( if (extractIntValue(link.attributes, "linkType") != None) LinkType(extractIntValue(link.attributes, "linkType").asInstanceOf[Int]) else LinkType(99) ),
+          "functionalClass" -> extractIntValue(link.attributes, "functionalClass")
         )
       }
     }
@@ -1069,6 +1073,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  def createFakeNewLinearAssetForValidations (existingAssets: PersistedLinearAsset, inputValues: Value ): NewLinearAsset ={
+    NewLinearAsset(existingAssets.linkId, existingAssets.startMeasure, existingAssets.endMeasure, inputValues,
+      existingAssets.sideCode, existingAssets.vvhTimeStamp, existingAssets.geomModifiedDate)
+  }
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1080,8 +1089,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
     val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
+    val asset = if (newLinearAssets.nonEmpty) newLinearAssets.head
+                else createFakeNewLinearAssetForValidations (existingAssets.head ,valueOption.get )
+
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
-    validateValues(valueOption, usedService)
+   //usedService.validateAssetValue(valueOption)
+  usedService.validateCondition(asset)
 
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {
@@ -1461,10 +1474,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
-  private def validateValues(value: Option[Value], service: LinearAssetOperations): Unit = {
-    service.validateAssetValue(value)
-  }
-
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1789,7 +1798,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId | CyclingAndWalking.typeId => dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId  => dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -1802,6 +1811,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case DamagedByThaw.typeId => damagedByThawService
       case RoadWorksAsset.typeId => roadWorkService
       case ParkingProhibition.typeId => parkingProhibitionService
+      case CyclingAndWalking.typeId => cyclingAndWalkingService
       case _ => linearAssetService
     }
   }

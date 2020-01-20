@@ -65,6 +65,18 @@
       return datePeriods.startDate <= datePeriods.endDate;
     };
 
+    var cyclingAndWalkingValidator = function( selectedLinearAsset, id) {
+      if ( _.isUndefined(selectedLinearAsset) || _.isUndefined(id) || ![3,4,5,18].includes(id))
+        return false;
+
+      var currentAsset = _.head(selectedLinearAsset);
+
+      return (  ( id === 3 && (currentAsset.functionalClass !== 8 || currentAsset.linkType !== 8) ) ||
+                ( id === 4 && ![1,3].includes(currentAsset.administrativeClass) ) ||
+                ( id === 5 && currentAsset.administrativeClass !== 2) ||
+                ( id === 18 && currentAsset.linkType !== 12 ) );
+    };
+
     var linearAssetSpecs = [
       {
         typeId: assetType.totalWeightLimit,
@@ -629,17 +641,17 @@
                         {
                             label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "20",
                             values: [
-                                {hidden: true, id: 1, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
-                                {hidden: true, id: 2, label: '(Is) Normaalisti aina paljaana'},
-                                {hidden: true, id: 3, label: '(I) Normaalisti paljaana'},
-                                {hidden: true, id: 4, label: '(Ib) Pääosin suolattava, ajoittain hieman liukas'},
-                                {hidden: true, id: 5, label: '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'},
-                                {hidden: true, id: 6, label: '(II) Pääosin lumipintainen'},
-                                {hidden: true, id: 7, label: '(III) Pääosin lumipintainen, pisin toimenpideaika'},
-                                {hidden: true, id: 8, label: '(L) Kevyen liikenteen laatukäytävät'},
-                                {hidden: true, id: 9, label: '(K1) Melko vilkkaat kevyen liikenteen väylät'},
-                                {hidden: true, id: 10, label: '(K2) Kevyen liikenteen väylien perus talvihoitotaso'},
-                                {hidden: true, id: 11, label: '(ei talvih.) Kevyen liikenteen väylät, joilla ei talvihoitoa'},
+                                {hidden: function() {return true;} , id: 1, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
+                                {hidden: function() {return true;}, id: 2, label: '(Is) Normaalisti aina paljaana'},
+                                {hidden: function() {return true;}, id: 3, label: '(I) Normaalisti paljaana'},
+                                {hidden: function() {return true;}, id: 4, label: '(Ib) Pääosin suolattava, ajoittain hieman liukas'},
+                                {hidden: function() {return true;}, id: 5, label: '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'},
+                                {hidden: function() {return true;}, id: 6, label: '(II) Pääosin lumipintainen'},
+                                {hidden: function() {return true;}, id: 7, label: '(III) Pääosin lumipintainen, pisin toimenpideaika'},
+                                {hidden: function() {return true;}, id: 8, label: '(L) Kevyen liikenteen laatukäytävät'},
+                                {hidden: function() {return true;}, id: 9, label: '(K1) Melko vilkkaat kevyen liikenteen väylät'},
+                                {hidden: function() {return true;}, id: 10, label: '(K2) Kevyen liikenteen väylien perus talvihoitotaso'},
+                                {hidden: function() {return true;}, id: 11, label: '(ei talvih.) Kevyen liikenteen väylät, joilla ei talvihoitoa'},
                                 {id: 20, label: 'Pääkadut ja vilkkaat väylät'},
                                 {id: 30, label: 'Kokoojakadut'},
                                 {id: 40, label: 'Tonttikadut'},
@@ -814,9 +826,9 @@
                 {id: 99, label: 'Ei tietoa', disabled: true },
                 {id: 1 , label:'Pyöräily ja kävely kielletty'},
                 {id: 2 , label:'Pyöräily kielletty'},
-                {id: 3 , label:'Jalankulun ja pyöräilyn väylä'},
-                {id: 5 , label:'Katu'},
-                {id: 4 , label:'Maantie tai yksityistie'},
+                {id: 3 , label:'Jalankulun ja pyöräilyn väylä', hidden: cyclingAndWalkingValidator },
+                {id: 4 , label:'Maantie tai yksityistie', hidden: cyclingAndWalkingValidator},
+                {id: 5 , label:'Katu', hidden: cyclingAndWalkingValidator},
                 {id: 6 , label:'Pyöräkatu'},
                 {id: 7 , label:'Kylätie'},
                 {id: 9 , label:'Pihakatu'},
@@ -829,7 +841,7 @@
                 {id: 16 , label:'Puistokäytävä'},
                 {id: 15 , label:'Jalkakäytävä'},
                 {id: 17 , label:'Pururata'},
-                {id: 18 , label:'Ajopolku'},
+                {id: 18 , label:'Ajopolku', hidden: cyclingAndWalkingValidator},
                 {id: 19 , label:'Polku'},
                 {id: 20 , label:'Lossi tai lautta'}
               ]

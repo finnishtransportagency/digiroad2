@@ -655,6 +655,10 @@ object Digiroad2Context {
     new ParkingProhibitionService(roadLinkService, eventbus)
   }
 
+  lazy val cyclingAndWalkingService: CyclingAndWalkingService = {
+    new CyclingAndWalkingService(roadLinkService, eventbus)
+  }
+
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 
   lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()

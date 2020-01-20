@@ -246,7 +246,8 @@
             var optionTags = _.map(field.values, function(value) {
                 var selected = value.id.toString() === selectedValue ? " selected" : "";
                 var disabled = value.disabled ?  'disabled' : '';
-                return value.hidden ? '' : '<option value="' + value.id + '" ' + selected + ' '+ disabled +'>' + value.label + '</option>';
+                var hidden = _.isUndefined(value.hidden) ? false : value.hidden(assetTypeConfiguration.selectedLinearAsset.get(), value.id);
+                return  hidden ? '' : '<option value="' + value.id + '" ' + selected + ' '+ disabled +'>' + value.label + '</option>';
             }).join('');
 
             me.element = $(template({className: className, optionTags: optionTags, disabled: me.disabled(), name: field.publicId, fieldType: field.type, required: me.required()}));
