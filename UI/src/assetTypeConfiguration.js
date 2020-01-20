@@ -990,7 +990,7 @@
           ];
 
           var opposite_side_sign =  selectedAsset.get().propertyData.find( function(prop) { if (prop.publicId === "opposite_side_sign") return prop; }) ;
-          if (_.isUndefined(opposite_side_sign) || _.isUndefined(opposite_side_sign.values[0]) || opposite_side_sign.values[0].propertyValue == "") {
+          if (_.isUndefined(opposite_side_sign) || _.isUndefined(opposite_side_sign.values[0]) || opposite_side_sign.values[0].propertyValue === "") {
             selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');
           }
 
