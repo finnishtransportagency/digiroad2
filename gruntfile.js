@@ -105,26 +105,18 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            // host: '172.17.204.46',
-            host: '172.17.206.180',
-            port: '8080',
+            host: 'oag.vayla.fi',
             https: false,
             changeOrigin: true,
-            xforward: false,
-            rewrite: {
-              '^/maasto': '/digiroad/maasto'
-            }
+            xforward: false
           },
           {
-            context: '/vkm-api',
-            host: 'julkinen.vayla.fi',
-          	port: '443',
-            https: true,
-            changeOrigin: true,
-            xforward: false,
-            headers: {
-              host: 'https://julkinen.vayla.fi/vkm-api/'
-            }
+            context: '/vkm',
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
           }
         ]
       }
