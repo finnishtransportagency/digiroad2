@@ -9,14 +9,13 @@
       hazardousMaterialTransportProhibition: createHazardousMaterialTransportProhibitionFormElements(),
       winterSpeedLimits: PiecewiseLinearAssetFormElements.WinterSpeedLimitsFormElements,
       europeanRoads: PiecewiseLinearAssetFormElements.EuropeanRoadsFormElements,
-      exitNumbers: PiecewiseLinearAssetFormElements.ExitNumbersFormElements,
-      maintenanceRoad: PiecewiseLinearAssetFormElements.MaintenanceRoadFormElements
+      exitNumbers: PiecewiseLinearAssetFormElements.ExitNumbersFormElements
     };
     return assetFormElementConstructors[className] || PiecewiseLinearAssetFormElements.DefaultFormElements;
   }
 
   function construct(asset) {
-    return assetFormElementConstructor(asset.layerName)(asset.unit, asset.editControlLabels, asset.className, asset.defaultValue, asset.possibleValues, asset.accessRightsValues);
+    return assetFormElementConstructor(asset.layerName)(asset.unit, asset.editControlLabels, asset.className, asset.authorizationPolicy, asset.selectedLinearAsset, asset.defaultValue, asset.possibleValues);
   }
 
   function createHazardousMaterialTransportProhibitionFormElements() {

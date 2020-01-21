@@ -75,5 +75,9 @@
       });
     };
 
+    this.handleSuggestedAsset = function(selectedAsset, suggestedBoxValue) {
+      return (selectedAsset.isNew() && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
+    };
+
   };
 })(this);

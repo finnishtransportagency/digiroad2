@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{TrHeightLimit, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, TrHeightLimit}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleHeightLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -19,7 +19,8 @@ case class HeightLimit(id: Long, linkId: Long,
                        modifiedBy: Option[String] = None,
                        modifiedAt: Option[DateTime] = None,
                        linkSource: LinkGeomSource,
-                       limit: Double) extends PersistedPointAsset
+                       limit: Double,
+                       propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
 class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingHeightLimit

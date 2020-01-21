@@ -185,12 +185,12 @@ object DataFixture {
     new OracleSpeedLimitDao(null, null)
   }
 
-  lazy val roadLinkTempDao : RoadLinkTempDAO = {
-    new RoadLinkTempDAO
-  }
-
   lazy val verificationService: VerificationService = {
     new VerificationService( new DummyEventBus, roadLinkService)
+  }
+
+  lazy val roadLinkTempDao : RoadLinkTempDAO = {
+    new RoadLinkTempDAO
   }
 
   lazy val trafficSignProhibitionGenerator: TrafficSignProhibitionGenerator = {
@@ -614,7 +614,7 @@ object DataFixture {
     case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
     def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
       persistedStop.propertyData.
-        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.propertyValue.isEmpty))
+        exists(property => property.publicId == "yllapitajan_koodi" && property.values.exists(value => !value.asInstanceOf[PropertyValue].propertyValue.isEmpty))
     }
 
     println("\nGet the list of tierekisteri bus stops that doesn't have livi id in OTH")
@@ -772,7 +772,7 @@ object DataFixture {
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
         val stopLiviId = stop.propertyData.
           find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+          flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
         if (stopLiviId.isDefined && !liviIdsListTR.contains(stopLiviId.get)) {
 
@@ -1154,14 +1154,14 @@ object DataFixture {
       persistedStop.foreach { stop =>
         val stopLiviId = stop.propertyData.
           find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+          flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
         if (stopLiviId.isDefined && liviIdsListTR.contains(stopLiviId.get)) {
           //Data From OTH
           val stopNameSE =
             stop.propertyData.find(property => property.publicId == MassTransitStopOperations.nameSePublicId).
-              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
             match {
               case Some(roofValue) => roofValue
               case _ => ""
@@ -1169,7 +1169,7 @@ object DataFixture {
 
           val stopRoofValue =
             stop.propertyData.find(property => property.publicId == MassTransitStopOperations.roofPublicId).
-              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
             match {
               case Some(roofValue) => Existence.fromPropertyValue(roofValue)
               case _ => ""
@@ -1177,7 +1177,7 @@ object DataFixture {
 
           val stopRaisedBusStopValue =
             stop.propertyData.find(property => property.publicId == MassTransitStopOperations.raisePublicId).
-              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+              flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
             match {
               case Some(raisedValue) => Existence.fromPropertyValue(raisedValue)
               case _ => ""
@@ -1201,9 +1201,9 @@ object DataFixture {
 
           if ((stopNameSE != nameSEinTR) || (stopRoofValue != roofValueinTR) || (stopRaisedBusStopValue != raisedValueinTR)) {
             val propertiesToUpdate = Seq(
-              SimpleProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
-              SimpleProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString))),
-              SimpleProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString)))
+              SimplePointAssetProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
+              SimplePointAssetProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString))),
+              SimplePointAssetProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString)))
             )
 
             massTransitStopService.updatePropertiesForAsset(stop.id, propertiesToUpdate)
@@ -1469,7 +1469,7 @@ object DataFixture {
             val roadLink = roadLinks.find(_.linkId == sign.linkId).get
             val signType = trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt
             val additionalPanels = panels.filter(panel => GeometryUtils.geometryLength(Seq(Point(sign.lon, sign.lat), Point(panel.lon, panel.lat))) <= 2).map { panel =>
-              AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
+              AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection, id = Some(panel.id))
             }.toSet
 
             val additionalPanelsInRadius = trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, roadLink.geometry, additionalPanels, roadLinks)
@@ -1477,7 +1477,7 @@ object DataFixture {
             try{
               if (uniquePanels.size <= 3 && additionalPanelsInRadius.nonEmpty) {
                 val additionalPanels = trafficSignService.additionalPanelProperties(uniquePanels)
-                val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimpleTrafficSignProperty(x.publicId, x.values)) ++ additionalPanels
+                val propertyData = sign.propertyData.filterNot(prop => prop.publicId == trafficSignService.additionalPublicId).map(x => SimplePointAssetProperty(x.publicId, x.values)) ++ additionalPanels
                 val updatedTrafficSign = IncomingTrafficSign(sign.lon, sign.lat, sign.linkId, propertyData.toSet, sign.validityDirection, sign.bearing)
 
                 trafficSignService.updateWithoutTransaction(sign.id, updatedTrafficSign, roadLink, "batch_process_panel_merge", Some(sign.mValue), Some(sign.vvhTimeStamp))
@@ -1852,7 +1852,8 @@ object DataFixture {
               println("Nearest roadLink -> " + nearestRoadLink.linkId)
 
               val floating = GeometryUtils.minimumDistance(pointObstacle, nearestRoadLink.geometry) >= minimumDistanceFromRoadLink
-              val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId, obstacle.obstacleType)
+              val newObstacle = IncomingObstacle(pointObstacle.x, pointObstacle.y, nearestRoadLink.linkId,
+                Set(SimplePointAssetProperty(obstacleService.typePublicId, Seq(PropertyValue(obstacle.obstacleType.toString)))))
 
               val id = obstacleService.createFromCoordinates(newObstacle, nearestRoadLink, username, floating)
               println("Obstacle created with id " + id)
@@ -1982,6 +1983,26 @@ object DataFixture {
     println("Completed at time: " + DateTime.now())
   }
 
+  def loadMunicipalitiesVerificationInfo(): Unit = {
+    println("\nRefreshing information on municipality verification")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Working on municipality : $municipality")
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+        verificationService.refreshVerificationInfo(municipality, roadLinks.map(_.linkId), Some(DateTime.now()))
+      }
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -2032,26 +2053,6 @@ object DataFixture {
       }
       println("Complete at time: " + DateTime.now())
     }
-  }
-
-  def loadMunicipalitiesVerificationInfo(): Unit = {
-    println("\nRefreshing information on municipality verification")
-    println(DateTime.now())
-
-    //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
-    OracleDatabase.withDynTransaction {
-      municipalities.foreach { municipality =>
-        println(s"Working on municipality : $municipality")
-        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
-        verificationService.refreshVerificationInfo(municipality, roadLinks.map(_.linkId), Some(DateTime.now()))
-      }
-    }
-
-    println("\n")
-    println("Complete at time: ")
-    println(DateTime.now())
-    println("\n")
   }
 
   def extractTrafficSigns(group: Option[String]): Unit = {
@@ -2483,10 +2484,10 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links |" +
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
-        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets |" +
-        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibition_using_traffic_signs | " +
-        " create_hazmat_transport_prohibition_using_traffic_signs  | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info |" +
-        " resolving_Frozen_Links| import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
+        " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
+        " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info | import_private_road_info | " +
+        " normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | import_cycling_walking_info")
     }
   }

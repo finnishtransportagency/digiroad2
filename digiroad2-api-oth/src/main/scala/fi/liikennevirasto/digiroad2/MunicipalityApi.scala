@@ -192,7 +192,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
   private def updatePoint(properties: Map[String, String], link: RoadLink, assetType: String, assetCoordinates: List[Double]): Unit = {
     assetType match {
       case "obstacle" =>
-        val obstacleType = properties("class").toInt
+        val obstacleType = Set(SimplePointAssetProperty(obstacleService.typePublicId, Seq(PropertyValue(properties("class")))))
         val newObstacle = IncomingObstacle(assetCoordinates.head, assetCoordinates(1), link.linkId, obstacleType)
         obstacleService.createFromCoordinates(newObstacle, link, AwsUser, false)
     }
@@ -206,15 +206,15 @@ class MunicipalityApi(val vvhClient: VVHClient,
     links.foreach { link =>
       speedLimit match {
         case Some(value) =>
-          val speedLimitValue = value.toInt
+          val speedLimitValue = SpeedLimitValue(value.toInt)
           val speedLimitsOnRoadLink = speedLimitService.getExistingAssetByRoadLink(link, false)
 
           if (speedLimitsOnRoadLink.isEmpty) {
-            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, NumericValue(speedLimitValue), properties("sideCode").toInt, timeStamp, None)
-            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), speedLimitValue, AwsUser, timeStamp, (_, _) => Unit)
+            val newSpeedLimitAsset = NewLinearAsset(link.linkId, 0, link.length, speedLimitValue, properties("sideCode").toInt, timeStamp, None)
+            speedLimitService.createMultiple(Seq(newSpeedLimitAsset), AwsUser, timeStamp, (_, _) => Unit)
           } else
             speedLimitsOnRoadLink.foreach { sl =>
-              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, NumericValue(speedLimitValue), properties("sideCode").toInt,timeStamp, None)
+              val newSpeedLimitAsset = NewLinearAsset(link.linkId, sl.startMeasure, sl.endMeasure, speedLimitValue, properties("sideCode").toInt,timeStamp, None)
               speedLimitService.update(sl.id, Seq(newSpeedLimitAsset), AwsUser, false)
             }
         case None =>

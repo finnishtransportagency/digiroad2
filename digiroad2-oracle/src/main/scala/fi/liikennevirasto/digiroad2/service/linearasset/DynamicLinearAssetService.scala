@@ -21,10 +21,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   override def assetDao: OracleAssetDao = new OracleAssetDao
   def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-
-  val roadName_FI = "osoite_suomeksi"
-  val roadName_SE = "osoite_ruotsiksi"
+  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) : Map[String, Map[String ,List[Long]]] = throw new UnsupportedOperationException("Not supported method")
 
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     if(newTransaction)
@@ -63,7 +60,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
           case Some(DynamicValue(multiTypeProps)) =>
             val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
             validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props)
+            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
           case _ => None
         }
       }
@@ -88,7 +85,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
               case Some(id) =>
                 val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
                 validateRequiredProperties(linearAsset.typeId, props)
-                dynamicLinearAssetDao.updateAssetProperties(id, props)
+                dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
               case _ => None
             }
           case _ => None
@@ -180,7 +177,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       case DynamicValue(multiTypeProps) =>
         val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, typeId)
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
         dynamicLinearAssetDao.updateAssetLastModified(id, username)
       case _ => None
     }
@@ -200,7 +197,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
       case _ => None
     }
     id

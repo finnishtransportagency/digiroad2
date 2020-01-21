@@ -827,7 +827,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   private def fetchOverridedRoadLinkAttributes(idTableName: String): List[(Long, Option[(String, String)])] = {
     val fetchResult =
-      sql"""select /*+ PARALLEL */ i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
+      sql"""select i.id, rla.link_id, rla.name, rla.value, rla.created_date, rla.created_by, rla.modified_date, rla.modified_by
             from #$idTableName i
             join road_link_attributes rla on i.id = rla.link_id and rla.valid_to IS NULL"""
             .as[RoadLinkAttributeInfo].list

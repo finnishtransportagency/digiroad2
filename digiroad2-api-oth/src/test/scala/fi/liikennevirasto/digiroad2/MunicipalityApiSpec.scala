@@ -247,7 +247,7 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
       datasetStatus2 should be(3)
       featuresStatus2 should be (List(("200000","1")))
       createdSpeedLimit.head.linkId should be (5000)
-      createdSpeedLimit.head.value should be(Some(NumericValue(100)))
+      createdSpeedLimit.head.value should be(Some(SpeedLimitValue(100)))
       createdSpeedLimit.head.startMeasure should be (0.0)
       createdSpeedLimit.head.endMeasure should be (100.0)
       createdSpeedLimit.head.createdBy should be (Some("AwsUpdater"))
@@ -291,7 +291,12 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
       datasetStatus2 should be(3)
       featuresStatus2 should be (List(("200000","1")))
       createdPavementClass.head.linkId should be (5000)
-      createdPavementClass.head.value.toString should be(Some(DynamicValue(DynamicAssetValue(List(DynamicProperty("paallysteluokka","single_choice",false,List(DynamicPropertyValue(1))))))).toString)
+      createdPavementClass.head.value.toString should be(
+        Some(DynamicValue(DynamicAssetValue(List(
+          DynamicProperty("suggest_box", "checkbox", false, List()),
+          DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(1)))
+        )))).toString
+      )
       createdPavementClass.head.startMeasure should be (0.0)
       createdPavementClass.head.endMeasure should be (100.0)
       createdPavementClass.head.createdBy should be (Some("AwsUpdater"))

@@ -28,8 +28,8 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
       if (toUpdate.nonEmpty) {
-        val prohibitions = toUpdate.filter(a => Set(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId).contains(a.typeId))
-        val persisted = dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet).groupBy(_.id)
+        val prohibitions = toUpdate.filter(a => Set(HazmatTransportProhibition.typeId).contains(a.typeId))
+        val persisted = dao.fetchProhibitionsByIds(HazmatTransportProhibition.typeId, prohibitions.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted)
         if (newLinearAssets.nonEmpty)
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
@@ -47,7 +47,7 @@ class HazmatTransportProhibitionService(roadLinkServiceImpl: RoadLinkService, ev
           }
         linearAsset.value match {
           case Some(prohibitions: Prohibitions) =>
-            dao.insertProhibitionValue(id, prohibitions)
+            dao.insertProhibitionValue(id, HazmatTransportProhibition.typeId, prohibitions)
           case _ => None
         }
       }
