@@ -70,7 +70,7 @@
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(7).use({ stroke: { color: '#a800a8', fill: '#a800a8'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(8).use({ stroke: { color: '#ffe82d', fill: '#ffe82d'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(9).use({ stroke: { color: '#ffe82d', fill: '#ffe82d'}}),
-            new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(10).use({ stroke: { color: '#f64343', fill: '#f64343'}}),
+            new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(10).use({ stroke: { color: '#fffac8', fill: '#fffac8'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(11).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(12).use({ stroke: { color: '#ff55dd', fill: '#ff55dd'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(13).use({ stroke: { color: '#4ec643', fill: '#4ec643'}}),
@@ -78,8 +78,8 @@
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(15).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(16).use({ stroke: { color: '#008000', fill: '#008000'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(17).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}}),
-            new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(18).use({ stroke: { color: '#444', fill: '#444'}}),
-            new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(19).use({ stroke: { color: '#444', fill: '#444'}}),
+            new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(18).use({ stroke: { color: '#008080', fill: '#008080'}}),
+            new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(19).use({ stroke: { color: '#008080', fill: '#008080'}}),
             new StyleRule().where(function(asset){if(valueExists(asset, "cyclingAndWalking_type")){return findValue(asset, "cyclingAndWalking_type"); }}).is(20).use({ stroke: { color: '#888', fill: '#888'}})
 
         ];
