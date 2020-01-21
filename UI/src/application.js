@@ -144,14 +144,14 @@
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
-        assetTypeId = startupParameters.assetType;
-        defaultLocation = [startupParameters.lon, startupParameters.lat, startupParameters.zoom];
+        startupAssetTypeId = startupParameters.startupAsseId;
+        defaultLocation = {lon: startupParameters.lon, lat: startupParameters.lat, zoom: startupParameters.zoom, startupAsseId: startupAssetTypeId};
 
-        if(_.isUndefined(assetTypeId) || assetTypeId === 0){
+        if(_.isUndefined(startupAssetTypeId) || startupAssetTypeId === 0){
           assetTypeLayerName = "linkProperty";
         }
         else{
-          assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, assetTypeId) || getSelectedAssetByTypeId(linearAssets, assetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, assetTypeId).layerName;
+          assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, startupAssetTypeId) || getSelectedAssetByTypeId(linearAssets, startupAssetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, startupAssetTypeId).layerName;
         }
 
         localizedStrings = assetPropertyNames;
@@ -300,15 +300,15 @@
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-    new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration,getAssetTitle(), defaultLocation);
+    new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration, getAssetTitle(), defaultLocation);
 
     function getAssetTitle() {
-      if(!_.isUndefined(assetTypeId) && assetTypeId !== 0){
-        return assetConfiguration.assetTypeInfo.find(function (asset) {
-          return asset.typeId === assetTypeId;
+      if (!_.isUndefined(startupAssetTypeId) && startupAssetTypeId !== 0) {
+        return _.find(assetConfiguration.assetTypeInfo, function (assetInfo) {
+          return assetInfo.typeId === startupAssetTypeId;
         }).title;
       }
-      else{
+      else {
         return 'Tielinkki';
       }
     }

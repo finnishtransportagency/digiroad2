@@ -64,7 +64,7 @@ define(['AssetsTestData',
       .withUserRolesData(UserRolesTestData.generate())
       .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
       .withAssetEnumeratedPropertyValues([], 300)
-      .withStartupParameters({lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10, assetType: assetTypeId || 0})
+      .withStartupParameters({lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10, startupAsseId: assetTypeId || 0})
       .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
       .withAssetsData(assetsData)
       .withAssetData(assetData)

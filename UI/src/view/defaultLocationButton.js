@@ -14,9 +14,9 @@
     var defaultLocation = defaultCoordinates;
     var municipality = 'Suomi';
     var ely = 'Suomi';
-    var lon = defaultLocation.shift();
-    var lat = defaultLocation.shift();
-    var zoom = defaultLocation.shift();
+    var lon = defaultLocation.lon;
+    var lat = defaultLocation.lat;
+    var zoom = defaultLocation.zoom;
     var roles;
     var places;
 
@@ -28,20 +28,23 @@
 
     eventbus.on('roles:fetched', function(userInfo) {
       if (!(_.some(userInfo.roles, function(role) {return (role === "viewer" || role === "serviceRoadMaintainer");}))) {
-          roles = userInfo.roles.find(function (role) {return role === "busStopMaintainer" || role === "operator";});
-          switch(roles){
-            case "busStopMaintainer":
-              places = backend.getUserElyConfiguration();
-              municipality = ely;
-              break;
-            case "operator":
-              places = [];
-              break;
-            default:
-              places = backend.getMunicipalities();
-          }
-          vkm();
-          $('.default-location-btn-container').append('<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muokkaa aloitussivua</button>');
+        roles = _.find(userInfo.roles, function (role) {
+          return role === "elyMaintainer" || role === "operator";
+        });
+
+        switch(roles){
+          case "elyMaintainer":
+            places = backend.getUserElyConfiguration();
+            municipality = ely;
+            break;
+          case "operator":
+            places = [];
+            break;
+          default:
+            places = backend.getMunicipalities();
+        }
+        vkm();
+        $('.default-location-btn-container').append('<button class="btn btn-sm btn-tertiary" id="default-location-btn">Muokkaa aloitussivua</button>');
       }
 
       $('#default-location-btn').on('click', function () {
