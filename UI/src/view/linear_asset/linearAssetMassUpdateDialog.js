@@ -84,6 +84,7 @@
         renderDialog();
       else
         _renderDialog();
+      $('.suggestion').remove();
       bindEvents();
     };
 

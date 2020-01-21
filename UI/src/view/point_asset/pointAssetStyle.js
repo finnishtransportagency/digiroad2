@@ -3,8 +3,8 @@
     var featureTypeRules;
     if (layerName === 'obstacles') {
         featureTypeRules = [
-            new StyleRule().where('obstacleType').is(1).use({ icon: {  src: 'images/point-assets/point_blue.svg'} } ),
-            new StyleRule().where('obstacleType').is(2).use({ icon: { src: 'images/point-assets/point_green.svg'} } ),
+            new StyleRule().where('propertyData').is(1).use({ icon: {  src: 'images/point-assets/point_blue.svg'} } ),
+            new StyleRule().where('propertyData').is(2).use({ icon: { src: 'images/point-assets/point_green.svg'} } ),
             new StyleRule().where('floating').is(true).use({ icon: {  src: 'images/point-assets/point_red.svg'} } )
 
         ];

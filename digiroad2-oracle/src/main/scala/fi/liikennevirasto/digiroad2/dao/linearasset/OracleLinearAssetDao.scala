@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.{linearasset, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -10,28 +10,27 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
+import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId, updateSingleChoiceProperty}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
-
+import scala.language.implicitConversions
 
 case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
                            endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime], modifiedBy: Option[String], modifiedDate: Option[DateTime],
                            expired: Boolean, vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], startMinute: Option[Int], endMinute: Option[Int],
-                           additionalInfo: String, linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int])
-
+                           additionalInfo: String, linkSource: Int, verifiedBy: Option[String], verifiedDate: Option[DateTime], informationSource: Option[Int], isSuggested: Boolean = false)
 
 case class AssetLastModification(id: Long, linkId: Long, modifiedBy: Option[String], modifiedDate: Option[DateTime])
-
 case class AssetLink(id: Long, linkId: Long)
 
 
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
+  implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger = LoggerFactory.getLogger(getClass)
 
   /**
@@ -94,11 +93,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
+      val isSuggested = r.nextBoolean()
 
       ProhibitionsRow(id, linkId, sideCode, prohibitionId, prohibitionType, validityPeridoType, validityPeridoStartHour, validityPeridoEndHour,
                       exceptionType, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, vvhTimeStamp,
                       geomModifiedDate, validityPeridoStartMinute, validityPeridoEndMinute, prohibitionAdditionalInfo, linkSource,
-                      verifiedBy, verifiedDate, informationSource)
+                      verifiedBy, verifiedDate, informationSource, isSuggested)
 
     }
   }
@@ -259,7 +259,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join #$idTableName i on i.id = pos.link_id
-          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink].list
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink](getAssetLink).list
     }
   }
 
@@ -337,7 +337,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
       }
-      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues)), asset.startMeasure, asset.endMeasure, asset.createdBy,
+      PersistedLinearAsset(assetId, asset.linkId, asset.sideCode, Some(Prohibitions(prohibitionValues, asset.isSuggested)), asset.startMeasure, asset.endMeasure, asset.createdBy,
         asset.createdDate, asset.modifiedBy, asset.modifiedDate, asset.expired, assetTypeId, asset.vvhTimeStamp, asset.geomModifiedDate, LinkGeomSource.apply(asset.linkSource),
         asset.verifiedBy, asset.verifiedDate, asset.informationSource.map(info => InformationSource.apply(info)))
     }.toSeq
@@ -360,14 +360,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired,
                pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
-               pvp.end_minute, pv.additional_info, pos.link_source, a.verified_by, a.verified_date, a.information_source
+               pvp.end_minute, pv.additional_info, pos.link_source, a.verified_by, a.verified_date, a.information_source, e.value as suggested
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
           join #$idTableName i on i.id = pos.link_id
+          join property p on a.asset_type_id = p.asset_type_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+          left join enumerated_value e on mc.enumerated_value_id = e.id
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to > sysdate or a.valid_to is null)
           #$floatingFilter""".as[ProhibitionsRow].list
@@ -393,14 +396,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                case when a.valid_to <= sysdate then 1 else 0 end as expired,
                pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
                pvp.end_minute, pv.additional_info, pos.link_source,
-               a.verified_by, a.verified_date, a.information_source
+               a.verified_by, a.verified_date, a.information_source, e.value as suggested
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
           join #$idTableName i on i.id = a.id
+          join property p on a.asset_type_id = p.asset_type_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+          left join enumerated_value e on mc.enumerated_value_id = e.id
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to > sysdate or a.valid_to is null)
           #$floatingFilter"""
@@ -468,13 +474,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
               case when a.valid_to <= sysdate then 1 else 0 end as expired,
               pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
               pvp.end_minute, pv.additional_info, pos.link_source,
-              a.verified_by, a.verified_date, a.information_source
+              a.verified_by, a.verified_date, a.information_source, e.value as suggested
        from asset a
        join asset_link al on a.id = al.asset_id
        join lrm_position pos on al.position_id = pos.id
        join prohibition_value pv on pv.asset_id = a.id
+       join property p on a.asset_type_id = p.asset_type_id
        left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
        left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+       left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+       left join enumerated_value e on mc.enumerated_value_id = e.id
        where a.asset_type_id = $assetTypeId and pv.TYPE not in (#${excludedTypesValues.mkString(",")} )
        and (
          (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
@@ -841,8 +850,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateProhibitionValue(id: Long, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
+  def updateProhibitionValue(id: Long, typeId: Int, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
     Queries.updateAssetModified(id, username).first
+
+    val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first
+    val currentIdsAndValue = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(id, propertyId).list
+
+    if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
+      Queries.deleteMultipleChoiceValue(currentIdsAndValue.head._1).execute
+      insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
+    }
 
     val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
     if (prohibitionValueIds.nonEmpty) {
@@ -851,7 +868,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       sqlu"""delete from PROHIBITION_VALUE where asset_id = $id""".execute
     }
 
-    insertProhibitionValue(id, value)
+    insertProhibitionValue(id, typeId, value)
     optMeasure match {
       case None => None
       case Some(measure) => updateMValues(id, (measure.startMeasure, measure.endMeasure))
@@ -869,8 +886,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Saves prohibition value to db. Used by OracleLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
     */
-  def insertProhibitionValue(assetId: Long, value: Prohibitions): Unit = {
-    value.prohibitions.foreach { (prohibition: ProhibitionValue) =>
+  def insertProhibitionValue(assetId: Long, typeId: Int, value: Prohibitions): Unit = {
+    val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first
+    Queries.insertMultipleChoiceValue(assetId, propertyId, if(value.isSuggested) 1 else 0).execute
+
+    value.prohibitions.foreach { prohibition: ProhibitionValue =>
       val prohibitionId = Sequences.nextPrimaryKeySeqValue
       val prohibitionType = prohibition.typeId
       val additionalInfo = prohibition.additionalInfo

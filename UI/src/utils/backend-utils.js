@@ -483,6 +483,14 @@
       return $.getJSON('api/municipalities/' + municipalityCode + '/assetTypes/' + refresh);
     };
 
+    this.getSuggestedAssetsById = function(municipalityCode, typeId) {
+      return $.getJSON('api/suggested/' + municipalityCode + '/' + typeId);
+    };
+
+    this.getStructuredInfo = function(municipalityName, municipalityCode) {
+      return $.getJSON('api/buildInfo/' + municipalityName + '/' + municipalityCode);
+    };
+
     this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {
       eventbus.trigger('municipality:verifying');
       $.ajax({
@@ -826,6 +834,10 @@
        then : then
       };
       };
+
+    this.getUserElyConfiguration = function () {
+      return $.getJSON('api/userConfiguration/elys');
+    };
 
     this.updateUserConfigurationDefaultLocation = function (data, success, failure) {
       $.ajax({

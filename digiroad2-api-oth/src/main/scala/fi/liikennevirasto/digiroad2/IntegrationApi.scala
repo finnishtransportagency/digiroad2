@@ -41,21 +41,29 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def extractModifier(massTransitStop: PersistedMassTransitStop): (String, String) = {
-    "muokannut_viimeksi" ->  massTransitStop.modified.modifier
+    "muokannut_viimeksi" -> massTransitStop.modified.modifier
       .getOrElse(massTransitStop.created.modifier
         .getOrElse(""))
   }
+
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
     def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any), mapName: Option[String] = None): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
         property.values.map { value =>
-          value.propertyValue
+          value.asInstanceOf[PropertyValue].propertyValue
         }
       }
       mapName.getOrElse(key) -> transformation(values)
     }
-    def propertyValuesToIntList(values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
-    def propertyValuesToString(values: Seq[String]): String = { values.mkString }
+
+    def propertyValuesToIntList(values: Seq[String]): Seq[Int] = {
+      values.map(_.toInt)
+    }
+
+    def propertyValuesToString(values: Seq[String]): String = {
+      values.mkString
+    }
+
     def firstPropertyValueToInt(values: Seq[String]): Int = {
       try {
         values.headOption.map(_.toInt).get
@@ -63,12 +71,31 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case e: Exception => 99
       }
     }
-    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
-    def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
-    def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
-    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
-    def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = { "m_value" -> Some(massTransitStop.mValue) }
-    def extractLinkSource(massTransitStop: PersistedMassTransitStop) : (String, Option[Int]) = { "linkSource" -> Some(massTransitStop.linkSource.value) }
+
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = {
+      "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing)
+    }
+
+    def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = {
+      "valtakunnallinen_id" -> massTransitStop.nationalId
+    }
+
+    def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = {
+      "kelluvuus" -> massTransitStop.floating
+    }
+
+    def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = {
+      "link_id" -> Some(massTransitStop.linkId)
+    }
+
+    def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = {
+      "m_value" -> Some(massTransitStop.mValue)
+    }
+
+    def extractLinkSource(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = {
+      "linkSource" -> Some(massTransitStop.linkSource.value)
+    }
+
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
@@ -164,7 +191,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
-    roadLinks.map{ roadLink =>
+    roadLinks.map { roadLink =>
       Map("linkId" -> roadLink.linkId,
         "mmlId" -> roadLink.attributes.get("MTKID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
@@ -222,7 +249,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   def valueToApi(value: Option[Value]) = {
     value match {
-      case Some(Prohibitions(x)) => x.map { prohibitionValue =>
+      case Some(Prohibitions(x, false)) => x.map { prohibitionValue =>
         val exceptions = prohibitionValue.exceptions.toList match {
           case Nil => Map()
           case items => Map("exceptions" -> items)
@@ -234,7 +261,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         Map("typeId" -> prohibitionValue.typeId) ++ validityPeriods ++ exceptions
       }
       case Some(TextualValue(x)) => x.split("\n").toSeq
-      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v => v.value} }.headOption
+      case Some(DynamicValue(x)) => x.properties.flatMap { dynamicTypeProperty => dynamicTypeProperty.values.map { v => v.value } }.headOption
       case _ => value.map(_.toJson)
     }
   }
@@ -247,7 +274,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Prohibition.typeId => prohibitionService
       case HazmatTransportProhibition.typeId => hazmatTransportProhibitionService
       case EuropeanRoads.typeId | ExitNumbers.typeId => textValueLinearAssetService
-      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId =>  dynamicLinearAssetService
+      case CareClass.typeId | CarryingCapacity.typeId | AnimalWarnings.typeId | LitRoad.typeId => dynamicLinearAssetService
       case HeightLimitInfo.typeId => linearHeightLimitService
       case LengthLimit.typeId => linearLengthLimitService
       case WidthLimitInfo.typeId => linearWidthLimitService
@@ -264,10 +291,30 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+  private def isUnknown(asset: PieceWiseLinearAsset): Boolean = asset.id == 0
 
-    val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+  private def isSuggested(asset: PieceWiseLinearAsset): Boolean = {
+    asset.value match {
+      case Some(Prohibitions(_, isSuggested)) => isSuggested
+      case Some(SpeedLimitValue(_, isSuggested)) => isSuggested
+      case Some(DynamicValue(x)) =>
+        x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
+          case Some(value) => value.toString.toBoolean
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+
+  private def isSuggested(asset: PersistedPointAsset): Boolean = {
+    asset.propertyData.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
+      case Some(value) => value.toString.toBoolean
+      case _ => false
+    }
+  }
+
+  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(asset => isUnknown(asset) || isSuggested(asset))
 
     linearAssets.map { asset =>
       Map("id" -> asset.id,
@@ -300,8 +347,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   protected def getMultiValueLinearAssetByMunicipality(typeId: Int, municipalityNumber: Int): Seq[PieceWiseLinearAsset] = {
-    def isUnknown(asset: PieceWiseLinearAsset) = asset.id == 0
-    getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+    getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(asset => isUnknown(asset) || isSuggested(asset))
   }
 
   def massTransitLanesToApi( municipalityNumber: Int): Seq[Map[String, Any]] = {
@@ -336,6 +382,26 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
      }
 
       defaultMultiValueLinearAssetsMap(parkingProhibition) ++ dynamicMultiValueLinearAssetMap
+    }
+  }
+
+  def sevenRestrictionToApi(typeId: Int , municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val sevenRestriction = getMultiValueLinearAssetByMunicipality(typeId, municipalityNumber)
+
+    sevenRestriction.map { asset =>
+      val dynamicWeightLinearAssetsMap = asset.value match {
+        case Some(DynamicValue(value)) =>
+          value.properties.flatMap { asset =>
+            Map("value" ->  (asset.publicId match {
+              case "height" | "length" | "weight" | "width" =>
+                asset.values.map(_.value)
+              case _ => None
+            }))
+          }
+        case _ => Map()
+      }
+
+      defaultMultiValueLinearAssetsMap(asset) ++ dynamicWeightLinearAssetsMap
     }
   }
 
@@ -439,28 +505,42 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
 
-  def linearAssetsToApiWithInformationSource(assets: Seq[PieceWiseLinearAsset]): Seq[Map[String, Any]] = {
-    def isUnknown(asset:PieceWiseLinearAsset) = asset.id == 0
+  def multiValueWithInformationSource(asset: PieceWiseLinearAsset): Map[String, Any] = {
+      val extraFields = Map("informationSource" -> getInformationSource(asset.informationSource))
 
-    assets.filterNot(isUnknown).map { asset =>
-      Map("id" -> asset.id,
-        "points" -> asset.geometry,
-        geometryWKTForLinearAssets(asset.geometry),
-        "value" -> valueToApi(asset.value),
-        "side_code" -> asset.sideCode.value,
-        "linkId" -> asset.linkId,
-        "startMeasure" -> asset.startMeasure,
-        "endMeasure" -> asset.endMeasure,
-        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
-        lastModifiedBy(asset.createdBy, asset.modifiedBy),
-        "linkSource" -> asset.linkSource.value,
-        "informationSource" -> getInformationSource(asset.informationSource)
-      )
+    defaultMultiValueLinearAssetsMap(asset) ++ extraFields
+  }
+
+  def pavedRoadToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val pavedRoads = getMultiValueLinearAssetByMunicipality(PavedRoad.typeId, municipalityNumber)
+
+    pavedRoads.map { pavedRoad =>
+      val dynamicMultiValueLinearAssetsMap =
+        pavedRoad.value match {
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "paallysteluokka").map(_.values.map(_.value.toString.toInt)))
+          case _ => Map()
+        }
+
+      multiValueWithInformationSource(pavedRoad) ++ dynamicMultiValueLinearAssetsMap
+    }
+  }
+
+  def roadWidthToApi(municipalityNumber: Int): Seq[Map[String, Any]] = {
+    val roadsWidth = getMultiValueLinearAssetByMunicipality(RoadWidth.typeId, municipalityNumber)
+
+    roadsWidth.map { roadWidth =>
+      val dynamicMultiValueLinearAssetsMap =
+        roadWidth.value match {
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "width").map(_.values.map(_.value.toString.toInt)))
+          case _ => Map()
+        }
+
+      multiValueWithInformationSource(roadWidth) ++ dynamicMultiValueLinearAssetsMap
     }
   }
 
   def pedestrianCrossingsToApi(crossings: Seq[PedestrianCrossing]): Seq[Map[String, Any]] = {
-    crossings.filterNot(_.floating).map { pedestrianCrossing =>
+    crossings.filterNot(x => x.floating | isSuggested(x)).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
         geometryWKTForPoints(pedestrianCrossing.lon, pedestrianCrossing.lat),
@@ -473,7 +553,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def trafficLightsToApi(trafficLights: Seq[TrafficLight]): Seq[Map[String, Any]] = {
-    trafficLights.filterNot(_.floating).map { trafficLight =>
+    trafficLights.filterNot(x => x.floating | isSuggested(x)).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "point" -> Point(trafficLight.lon, trafficLight.lat),
         geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
@@ -486,7 +566,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def directionalTrafficSignsToApi(directionalTrafficSign: Seq[DirectionalTrafficSign]): Seq[Map[String, Any]] = {
-    directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
+    directionalTrafficSign.filterNot(x => x.floating | isSuggested(x)).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
         geometryWKTForPoints(directionalTrafficSign.lon, directionalTrafficSign.lat),
@@ -494,7 +574,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "m_value" -> directionalTrafficSign.mValue,
         "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
-        "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
+        "text" -> directionalTrafficSign.propertyData.find(_.publicId == "opastustaulun_teksti").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.split("\n").toSeq,
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
         lastModifiedBy(directionalTrafficSign.createdBy, directionalTrafficSign.modifiedBy),
         "linkSource" -> directionalTrafficSign.linkSource.value)
@@ -508,7 +588,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
   }
-
 
   def getInformationSource(informationSource: Option[InformationSource]): String = {
     informationSource match{
@@ -565,15 +644,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
-    crossings.filterNot(_.floating).map { railwayCrossing =>
+    crossings.filterNot(x => x.floating | isSuggested(x)).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
         geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
-        "safetyEquipment" -> railwayCrossing.safetyEquipment,
-        "name" -> railwayCrossing.name,
-        "railwayCrossingId" -> railwayCrossing.code,
+        "safetyEquipment" -> railwayCrossing.propertyData.find(_.publicId == "turvavarustus").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
+        "name" -> railwayCrossing.propertyData.find(_.publicId == "rautatien_tasoristeyksen_nimi").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
+        "railwayCrossingId" -> railwayCrossing.propertyData.find(_.publicId == "tasoristeystunnus").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)
@@ -581,13 +660,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def obstaclesToApi(obstacles: Seq[Obstacle]): Seq[Map[String, Any]] = {
-    obstacles.filterNot(_.floating).map { obstacle =>
+    obstacles.filterNot(x => x.floating | isSuggested(x)).map { obstacle =>
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
         geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
-        "obstacle_type" -> obstacle.obstacleType,
+        "obstacle_type" -> obstacle.propertyData.find(_.publicId == "esterakennelma").get.values.map(_.asInstanceOf[PropertyValue]).headOption,
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
         "linkSource" -> obstacle.linkSource.value)
@@ -595,7 +674,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def manouvresToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
-    manoeuvres.map { manoeuvre =>
+    manoeuvres.filterNot(_.isSuggested).map { manoeuvre =>
       Map("id" -> manoeuvre.id,
         //DROTH-177: add intermediate links -> check the element structure
         "elements" -> manoeuvre.elements.map(_.sourceLinkId),
@@ -675,7 +754,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
   }
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
-    trafficSigns.filterNot(_.floating).map{ trafficSign =>
+    trafficSigns.filterNot(x => x.floating | isSuggested(x)).map{ trafficSign =>
      Map("id" -> trafficSign.id,
           "point" -> Point(trafficSign.lon, trafficSign.lat),
           geometryWKTForPoints(trafficSign.lon, trafficSign.lat),
@@ -785,13 +864,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       assetType match {
         case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
         case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
-        case "total_weight_limits" => linearAssetsToApi(TotalWeightLimit.typeId, municipalityNumber)
-        case "trailer_truck_weight_limits" => linearAssetsToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
-        case "axle_weight_limits" => linearAssetsToApi(AxleWeightLimit.typeId, municipalityNumber)
+        case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
+        case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
+        case "axle_weight_limits" => sevenRestrictionToApi(AxleWeightLimit.typeId, municipalityNumber)
         case "bogie_weight_limits" => bogieWeightLimitsToApi(municipalityNumber)
-        case "height_limits" => linearAssetsToApi(HeightLimitInfo.typeId, municipalityNumber)
-        case "length_limits" => linearAssetsToApi(LengthLimit.typeId, municipalityNumber)
-        case "width_limits" => linearAssetsToApi(WidthLimitInfo.typeId, municipalityNumber)
+        case "height_limits" => sevenRestrictionToApi(HeightLimitInfo.typeId, municipalityNumber)
+        case "length_limits" => sevenRestrictionToApi(LengthLimit.typeId, municipalityNumber)
+        case "width_limits" => sevenRestrictionToApi(WidthLimitInfo.typeId, municipalityNumber)
         case "obstacles" => obstaclesToApi(obstacleService.getByMunicipality(municipalityNumber))
         case "traffic_lights" => trafficLightsToApi(trafficLightService.getByMunicipality(municipalityNumber))
         case "pedestrian_crossings" => pedestrianCrossingsToApi(pedestrianCrossingService.getByMunicipality(municipalityNumber))
@@ -802,8 +881,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "number_of_lanes" => linearAssetsToApi(NumberOfLanes.typeId, municipalityNumber)
         case "mass_transit_lanes" => massTransitLanesToApi(municipalityNumber)
         case "roads_affected_by_thawing" => damagedByThawToApi(municipalityNumber)
-        case "widths" => linearAssetsToApiWithInformationSource(roadWidthService.getByMunicipality(RoadWidth.typeId, municipalityNumber))
-        case "paved_roads" => linearAssetsToApiWithInformationSource(pavedRoadService.getByMunicipality(PavedRoad.typeId, municipalityNumber))
+        case "widths" => roadWidthToApi(municipalityNumber)
+        case "paved_roads" => pavedRoadToApi(municipalityNumber)
         case "lit_roads" => linearAssetsToApi(LitRoad.typeId, municipalityNumber)
         case "speed_limits_during_winter" => linearAssetsToApi(WinterSpeedLimit.typeId, municipalityNumber)
         case "traffic_volumes" => linearAssetsToApi(TrafficVolume.typeId, municipalityNumber)
