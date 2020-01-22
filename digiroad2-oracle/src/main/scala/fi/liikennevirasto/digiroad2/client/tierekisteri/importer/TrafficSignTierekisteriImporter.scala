@@ -249,7 +249,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
       withDynTransaction {
 
         val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter).to.filter {sign =>
+        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter).filter {sign =>
           TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == trafficSignGroup
         }
 
