@@ -19,6 +19,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
+   private val RECORD_NUMBER = 4000
 
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
@@ -32,7 +33,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
   implicit val getSpeedLimit = new GetResult[SpeedLimitRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : SpeedLimitRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val sideCode = r.nextInt()
@@ -293,30 +294,41 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     (speedLimitLinks, roadLinks)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedSpeedLimit] = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int]): Seq[PersistedSpeedLimit] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = pageNumber match {
+      case Some(pgNum) =>
+        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+        s"WHERE line_number between $startNum and $endNum"
+      case _ => ""
+    }
 
     val speedLimitRows =  sql"""
-        select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date,
-        case when a.valid_to <= sysdate then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp,
-        pos.modified_date, pos.link_source, p.public_id
-         from asset a
-         join asset_link al on a.id = al.asset_id
-         join lrm_position pos on al.position_id = pos.id
-         join property p on a.asset_type_id = p.asset_type_id
-         left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-         left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
-         left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-         where a.asset_type_id = 20
-         and floating = 0
-         and (
-           (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
-           or
-           (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
-           or
-           (a.created_date > $sinceDate and a.created_date <= $untilDate)
-         )
-         #$withAutoAdjustFilter
+        select asset_id, link_id, side_code, value, start_measure, end_measure, modified_by, modified_date, created_by, created_date,
+               adjusted_timestamp, pos_modified_date, expired, link_source, public_id
+          from (
+            select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date,
+            case when a.valid_to <= sysdate then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp,
+            pos.modified_date, pos.link_source, p.public_id, DENSE_RANK() over (ORDER BY a.id) line_number
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join property p on a.asset_type_id = p.asset_type_id
+            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
+            where a.asset_type_id = 20
+            and floating = 0
+            and (
+              (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+              or
+              (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+              or
+              (a.created_date > $sinceDate and a.created_date <= $untilDate)
+            )
+            #$withAutoAdjustFilter
+        ) #$recordLimit
     """.as[SpeedLimitRow].list
 
     groupSpeedLimitsResult(speedLimitRows)

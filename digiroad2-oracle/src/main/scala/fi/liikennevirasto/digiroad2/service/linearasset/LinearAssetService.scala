@@ -220,7 +220,7 @@ trait LinearAssetOperations {
                                 else  List[MunicipalityInfo]().groupBy(_.id)
 
       unVerified.groupBy(_._1).map{
-        case (municipalityCode, grouped) => (municipalityNames.get(municipalityCode).get.map(_.name).head, grouped)}
+        case (municipalityCode, grouped) => (municipalityNames(municipalityCode).map(_.name).head, grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
           .mapValues(_.map(_._2)))
@@ -452,9 +452,9 @@ trait LinearAssetOperations {
     * @param withAutoAdjust
     * @return Changed linear assets
     */
-  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, pageNumber: Option[Int] = None): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
+      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, pageNumber)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinks)

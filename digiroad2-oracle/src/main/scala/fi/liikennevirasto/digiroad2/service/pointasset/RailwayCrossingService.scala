@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, PointAssetValue, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleRailwayCrossingDao, RailwayCrossing}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -22,6 +22,8 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   val namePublicId = "rautatien_tasoristeyksen_nimi"
   val safetyEquipmentPublicId = "turvavarustus"
   val codePublicId = "tasoristeystunnus"
+
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[RailwayCrossing] = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setAssetPosition(asset: IncomingRailwayCrossing, geometry: Seq[Point], mValue: Double): IncomingRailwayCrossing = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
@@ -139,7 +141,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   def getCodeMaxSize : Long  =   withDynTransaction { OracleRailwayCrossingDao.getCodeMaxSize }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

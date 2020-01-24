@@ -44,6 +44,8 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 
 
 class OraclePedestrianCrossingDao() {
+  private val RECORD_NUMBER: Int = 4000
+
   private def createOrUpdatePedestrianCrossing(crossing: IncomingPedestrianCrossing, id: Long): Unit ={
     crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
@@ -141,6 +143,21 @@ class OraclePedestrianCrossingDao() {
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val queryWithFilter = queryFilter(query())
     queryToPedestrian(queryWithFilter)
+  }
+
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PedestrianCrossing] = {
+    val recordLimit = pageNumber match {
+      case Some(pgNum) =>
+        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+          s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+    queryToPedestrian(recordLimit)
   }
 
   private def query() = {
