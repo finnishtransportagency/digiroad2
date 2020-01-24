@@ -28,10 +28,11 @@ case class Obstacle(id: Long, linkId: Long,
                     linkSource: LinkGeomSource) extends PersistedPoint
 
 object OracleObstacleDao {
+  private val RECORD_NUMBER: Int = 4000
 
   private def query() = {
     """
-      select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by,
       a.modified_date, case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
       from asset a
       join asset_link al on a.id = al.asset_id
@@ -44,17 +45,32 @@ object OracleObstacleDao {
 
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[Obstacle] = {
     val queryWithFilter = queryFilter(query())
-    StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[Obstacle](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[Obstacle](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[Obstacle](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
-  implicit val getPointAsset = new GetResult[Obstacle] {
-    def apply(r: PositionedResult) = {
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[Obstacle] = {
+    val recordLimit = pageNumber match {
+      case Some(pgNum) =>
+        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+
+    val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+     s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+    StaticQuery.queryNA[Obstacle](recordLimit)(getPointAsset).iterator.toSeq
+  }
+
+  implicit val getPointAsset: GetResult[Obstacle] = new GetResult[Obstacle] {
+    def apply(r: PositionedResult): Obstacle = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get

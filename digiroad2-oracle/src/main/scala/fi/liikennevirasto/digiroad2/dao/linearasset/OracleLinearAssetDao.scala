@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import fi.liikennevirasto.digiroad2.{linearasset, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -10,14 +10,12 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.bytesToPoint
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
-
 
 case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
@@ -32,8 +30,8 @@ case class AssetLink(id: Long, linkId: Long)
 
 
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
-  val logger = LoggerFactory.getLogger(getClass)
-
+  val logger: Logger = LoggerFactory.getLogger(getClass)
+  private val RECORD_NUMBER = 4000
   /**
     * No usages in OTH.
     */
@@ -66,8 +64,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  implicit val getProhibitionsRow = new GetResult[ProhibitionsRow] {
-    def apply(r: PositionedResult) = {
+  implicit val getProhibitionsRow: GetResult[ProhibitionsRow] = new GetResult[ProhibitionsRow] {
+    def apply(r: PositionedResult) : ProhibitionsRow = {
 
       val id = r.nextLong()
       val linkId = r.nextLong()
@@ -103,8 +101,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  implicit val getLinearAsset = new GetResult[PersistedLinearAsset] {
-    def apply(r: PositionedResult) = {
+  implicit val getLinearAsset: GetResult[PersistedLinearAsset] = new GetResult[PersistedLinearAsset] {
+    def apply(r: PositionedResult) : PersistedLinearAsset = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val sideCode = r.nextInt()
@@ -123,7 +121,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       val verifiedBy = r.nextStringOption()
       val verifiedDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val informationSource = r.nextIntOption()
-
 
       PersistedLinearAsset(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate,
         linkSource, verifiedBy, verifiedDate, informationSource.map(info => InformationSource.apply(info)))
@@ -160,13 +157,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       PieceWiseLinearAsset(id, linkId, SideCode(sideCode), value, geometry, expired, startMeasure, endMeasure,
                            geometry.toSet, modifiedBy, modifiedDate, createdBy, createdDate, typeId, SideCode.toTrafficDirection(SideCode(sideCode)), vvhTimeStamp,
                            geomModifiedDate, linkSource, administrativeClass, verifiedBy = verifiedBy, verifiedDate = verifiedDate, informationSource = informationSource.map(info => InformationSource.apply(info)))
-
-
     }
   }
 
-  implicit val getLightLinearAssets = new GetResult[LightLinearAsset] {
-    def apply(r: PositionedResult) = {
+  implicit val getLightLinearAssets: GetResult[LightLinearAsset] = new GetResult[LightLinearAsset] {
+    def apply(r: PositionedResult) : LightLinearAsset = {
       val expired = r.nextBoolean()
       val value = r.nextInt()
       val typeId = r.nextInt()
@@ -259,12 +254,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join #$idTableName i on i.id = pos.link_id
-          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink].list
+          where a.asset_type_id in (#${assetTypeId.mkString(",")}) and a.floating = 0 #$filterExpired""".as[AssetLink](getAssetLink).list
     }
   }
 
-  implicit val getAssetLink = new GetResult[AssetLink] {
-    def apply(r: PositionedResult) = {
+  implicit val getAssetLink: GetResult[AssetLink] = new GetResult[AssetLink] {
+    def apply(r: PositionedResult): AssetLink = {
       val id = r.nextLong()
       val linkId = r.nextLong()
 
@@ -332,7 +327,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         val prohibitionType = rows.head.prohibitionType
         val prohibitionAdditionalInfo = rows.head.additionalInfo
         val exceptions = rows.flatMap(_.exceptionType).toSet
-        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { case row =>
+        val validityPeriods = rows.filter(_.validityPeriodType.isDefined).map { row =>
           ValidityPeriod(row.startHour.get, row.endHour.get, ValidityPeriodDayOfWeek(row.validityPeriodType.get), row.startMinute.get, row.endMinute.get)
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
@@ -410,29 +405,42 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
-  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean) : List[PersistedLinearAsset] = {
+  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int] = None) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = pageNumber match {
+      case Some(pgNum) =>
+        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val assets = sql"""
-        select a.id, pos.link_id, pos.side_code, s.value as total_weight_limit, pos.start_measure, pos.end_measure,
-               a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
-               pos.modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source
-          from asset a
-          join asset_link al on a.id = al.asset_id
-          join lrm_position pos on al.position_id = pos.id
-          join property p on p.public_id = 'mittarajoitus'
-          left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
-          where a.asset_type_id = $assetTypeId
-          and (
-            (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
-            or
-            (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
-            or
-            (a.created_date > $sinceDate and a.created_date <= $untilDate)
-          )
-          and a.floating = 0
-          #$withAutoAdjustFilter"""
+        select asset_id, link_id, side_code, value, start_measure, end_measure, created_by, created_date, modified_by, modified_date,
+               expired, asset_type_id, adjusted_timestamp, pos_modified_date, link_source, verified_by, verified_date, information_source
+        from (
+          select a.id as asset_id, pos.link_id, pos.side_code, s.value, pos.start_measure, pos.end_measure,
+                 a.created_by, a.created_date, a.modified_by, a.modified_date,
+                 case when a.valid_to <= sysdate then 1 else 0 end as expired, a.asset_type_id, pos.adjusted_timestamp,
+                 pos.modified_date as pos_modified_date, pos.link_source, a.verified_by, a.verified_date, a.information_source,
+                 DENSE_RANK() over (ORDER BY a.id) line_number
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join property p on p.public_id = 'mittarajoitus'
+            left join number_property_value s on s.asset_id = a.id and s.property_id = p.id
+            where a.asset_type_id = $assetTypeId
+            and (
+              (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+              or
+              (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+             or
+             (a.created_date > $sinceDate and a.created_date <= $untilDate)
+           )
+           and a.floating = 0
+           #$withAutoAdjustFilter
+           )#$recordLimit"""
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int, Option[String], Option[DateTime], Option[Int])].list
 
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource, verifiedBy, verifiedDate, informationSource) =>
@@ -457,36 +465,50 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       .as[LightLinearAsset].list
   }
 
-
-  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean): Seq[PersistedLinearAsset] = {
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, pageNumber: Option[Int] = None): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
     val excludedTypesValues = excludedTypes.map(_.value)
 
-    val assets =  sql"""
-       select a.id, pos.link_id, pos.side_code, pv.id, pv.type, pvp.type, pvp.start_hour, pvp.end_hour,pe.type,
-              pos.start_measure, pos.end_measure, a.created_by, a.created_date, a.modified_by, a.modified_date,
-              case when a.valid_to <= sysdate then 1 else 0 end as expired,
-              pos.adjusted_timestamp, pos.modified_date, pvp.start_minute,
-              pvp.end_minute, pv.additional_info, pos.link_source,
-              a.verified_by, a.verified_date, a.information_source
-       from asset a
-       join asset_link al on a.id = al.asset_id
-       join lrm_position pos on al.position_id = pos.id
-       join prohibition_value pv on pv.asset_id = a.id
-       left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
-       left join prohibition_exception pe on pe.prohibition_value_id = pv.id
-       where a.asset_type_id = $assetTypeId and pv.TYPE not in (#${excludedTypesValues.mkString(",")} )
-       and (
-         (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
-         or
-         (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
-         or
-         (a.created_date > $sinceDate and a.created_date <= $untilDate)
-       )
-       #$withAutoAdjustFilter
-    """.as[ProhibitionsRow].list
+    val recordLimit = pageNumber match {
+      case Some(pgNum) =>
+        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+        s"WHERE line_number between $startNum and $endNum"
+      case _ => ""
+    }
+
+    val assets = sql"""
+        select asset_id, link_id, side_code, pv_id, pv_type, pvp_type, start_hour, end_hour,pe_type,
+               start_measure, end_measure, created_by, created_date, modified_by, modified_date,
+               expired, adjusted_timestamp, pos_modified_date, start_minute, end_minute, additional_info,
+               link_source, verified_by, verified_date, information_source
+        from (
+          select a.id as asset_id, pos.link_id, pos.side_code, pv.id as pv_id, pv.type as pv_type, pvp.type as pvp_type, pvp.start_hour, pvp.end_hour,
+                 pe.type as pe_type, pos.start_measure, pos.end_measure, a.created_by, a.created_date, a.modified_by, a.modified_date,
+                 case when a.valid_to <= sysdate then 1 else 0 end as expired,
+                 pos.adjusted_timestamp, pos.modified_date as pos_modified_date, pvp.start_minute,
+                 pvp.end_minute, pv.additional_info, pos.link_source,
+                 a.verified_by, a.verified_date, a.information_source,
+                 DENSE_RANK() over (ORDER BY a.id) line_number
+            from asset a
+            join asset_link al on a.id = al.asset_id
+            join lrm_position pos on al.position_id = pos.id
+            join prohibition_value pv on pv.asset_id = a.id
+            left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
+            left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+            where a.asset_type_id = $assetTypeId and pv.TYPE not in (#${excludedTypesValues.mkString(",")} )
+            and (
+              (a.valid_to > $sinceDate and a.valid_to <= $untilDate)
+            or
+              (a.modified_date > $sinceDate and a.modified_date <= $untilDate)
+            or
+              (a.created_date > $sinceDate and a.created_date <= $untilDate)
+            )
+            #$withAutoAdjustFilter
+        ) #$recordLimit""".as[ProhibitionsRow].list
 
     groupProhibitionsResult(assets, assetTypeId)
+
   }
 
   /**

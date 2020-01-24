@@ -451,9 +451,9 @@ trait LinearAssetOperations {
     * @param withAutoAdjust
     * @return Changed linear assets
     */
-  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, pageNumber: Option[Int] = None): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
+      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, pageNumber)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinks)

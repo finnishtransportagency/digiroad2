@@ -4,9 +4,8 @@ package fi.liikennevirasto.digiroad2.linearasset
 import fi.liikennevirasto.digiroad2.{Point}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.scalatest.{FunSuite, Matchers}
 
 

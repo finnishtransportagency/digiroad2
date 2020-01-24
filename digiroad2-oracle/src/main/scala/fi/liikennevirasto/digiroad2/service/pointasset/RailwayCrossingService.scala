@@ -18,7 +18,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   type PersistedAsset = RailwayCrossing
 
   override def typeId: Int = 230
-
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[RailwayCrossing] = throw new UnsupportedOperationException("Not Supported Method")
   override def setAssetPosition(asset: IncomingRailwayCrossing, geometry: Seq[Point], mValue: Double): IncomingRailwayCrossing = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
@@ -132,7 +132,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   def getCodeMaxSize : Long  =   withDynTransaction { OracleRailwayCrossingDao.getCodeMaxSize }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

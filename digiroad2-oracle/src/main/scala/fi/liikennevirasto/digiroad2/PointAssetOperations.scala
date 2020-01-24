@@ -116,6 +116,7 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
+  def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, roadLink: RoadLink, newTransaction: Boolean = true): Long
   def update(id:Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String): Long
@@ -130,7 +131,7 @@ trait PointAssetOperations {
 
   def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = { throw new UnsupportedOperationException("Not Supported Method") }
 
-  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
@@ -140,7 +141,7 @@ trait PointAssetOperations {
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
 
     val assets = withDynSession {
-      fetchPointAssetsWithExpired(withFilter(filter))
+      fetchPointAssetsWithExpiredLimited(withFilter(filter), pageNumber)
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)

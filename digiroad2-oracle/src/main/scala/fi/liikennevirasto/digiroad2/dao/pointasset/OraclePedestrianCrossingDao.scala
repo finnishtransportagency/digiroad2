@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, PersistedPointAsset, Point}
+import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, PedestrianCrossings}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PedestrianCrossings}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 
@@ -29,6 +29,8 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 
 
 class OraclePedestrianCrossingDao() {
+  private val RECORD_NUMBER: Int = 4000
+
   def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
     sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
@@ -102,24 +104,38 @@ class OraclePedestrianCrossingDao() {
 
   def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val queryWithFilter = queryFilter(query())
-    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
+  }
+
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PedestrianCrossing] = {
+    val recordLimit = pageNumber match {
+      case Some(pgNum) =>
+        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+          s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+    StaticQuery.queryNA[PedestrianCrossing](recordLimit)(getPointAsset).iterator.toSeq
   }
 
   private def query() = {
     """
-      select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
       case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
     """
   }
-
 
   def fetchPedestrianCrossingByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PedestrianCrossing] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
@@ -133,7 +149,7 @@ class OraclePedestrianCrossingDao() {
       """
     val queryWithFilter =
       query + s"where a.asset_type_id = ${PedestrianCrossings.typeId} and pos.link_id in (${linkIds.mkString(",")})" + filterExpired
-    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
   implicit val getPointAsset = new GetResult[PedestrianCrossing] {
