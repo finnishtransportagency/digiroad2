@@ -14,7 +14,7 @@
     var getLane = function (laneNumber) {
         return _.find(selection, function (lane){
           return _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+            return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
           });
         });
     };
@@ -22,7 +22,8 @@
     var reorganizeLanes = function (laneNumber) {
       var lanesToUpdate = _.map(selection, function (lane){
         var foundValidProperty =  _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && property.values[0].value > laneNumber && ((property.values[0].value % 2 !== 0 && laneNumber % 2 !== 0) || (property.values[0].value % 2 === 0 && laneNumber % 2 === 0));
+          var value = _.head(property.values).value;
+          return property.publicId == "lane_code" && value > laneNumber && ((value % 2 !== 0 && laneNumber % 2 !== 0) || (value % 2 === 0 && laneNumber % 2 === 0));
         });
 
         if(_.isUndefined(foundValidProperty)){
@@ -46,7 +47,6 @@
             return property.publicId == "lane_code";
           });
           selection[number].properties[propertyIndex].values[0].value = parseInt(selection[number].properties[propertyIndex].values[0].value) - 2;
-          // selection[number].values[0].value = parseInt(selection[number].values[0].value) - 2;
         });
     };
 
@@ -86,6 +86,7 @@
           lane.linkId = _.map(linearAssets, function (linearAsset) {
             return linearAsset.linkId;
           });
+          lane.selectedLinks = linearAssets;
         });
         originalLinearAssetValue = _.cloneDeep(asset);  //same as lanes fetched?
         selection = _.cloneDeep(asset);
@@ -220,18 +221,16 @@
 
     this.isUnknown = function(laneNumber) {
       return isUnknown(_.find(selection, function (lane){
-        // return lane.properties.lane_code == laneNumber;
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       }));
     };
 
     this.isSplit = function(laneNumber) {
       var lane = _.find(selection, function (lane){
-        // return lane.properties.lane_code == laneNumber;
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
 
@@ -306,13 +305,13 @@
 
     this.setEndAddressesValues = function(currentPropertyValue) {
       _.forEach(selection, function (lane) {
-        var currentLaneNumber = _.find(lane.properties,function (prop) {
+        var currentLaneNumber = _.head(_.find(lane.properties,function (prop) {
           return prop.publicId == "lane_code";
-        }).values[0].value;
+        }).values).value;
 
-        var properties = _.filter(this.getValue(currentLaneNumber), function(property){ return property.publicId !== currentPropertyValue.publicId; });
+        var properties = _.filter(self.getValue(currentLaneNumber), function(property){ return property.publicId !== currentPropertyValue.publicId; });
         properties.push(currentPropertyValue);
-        this.setValue(currentLaneNumber, {properties: properties});
+        self.setValue(currentLaneNumber, {properties: properties});
       });
     };
 
@@ -386,7 +385,7 @@
     this.removeLane = function(laneNumber) {
       var laneIndex = _.findIndex(selection, function (lane) {
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
 
@@ -397,7 +396,7 @@
     this.expireLane = function(laneNumber) {
       var laneIndex = _.findIndex(selection, function (lane) {
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
 
@@ -411,19 +410,22 @@
     this.setValue = function(laneNumber, value) {
       var laneIndex = _.findIndex(selection, function (lane) {
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && property.values[0].value == laneNumber;
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
-        // var newGroup = _.map(selection[laneIndex], function(s) { return _.assign({}, s, value); });
-        var newGroup = _.assign([], selection[laneIndex].properties, value);
-        // selection[laneIndex] = collection.replaceSegments(selection, selection[laneIndex], newGroup);
+      // var newGroup = _.map(selection[laneIndex], function(s) { return _.assign({}, s, value); });
+      var newGroup = _.assign([], selection[laneIndex].properties, value);
+      // selection[laneIndex] = collection.replaceSegments(selection, selection[laneIndex], newGroup);
+      // if (JSON.stringify(selection[laneIndex].properties) !== JSON.stringify(newGroup.properties)){
         selection[laneIndex].properties = newGroup.properties;
-        if(selection == lanesFetched){
+        if (/*JSON.stringify(selection) === JSON.stringify(lanesFetched) */selection == lanesFetched) {
           dirty = false;
-        }else{
+        } else {
           dirty = true;
         }
-        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
+        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected, laneNumber);
+      // }
+      // eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected, laneNumber);
     };
 
     this.setMultiValue = function(value) {

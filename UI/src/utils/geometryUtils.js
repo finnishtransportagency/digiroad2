@@ -78,6 +78,43 @@
     return asset;
   };
 
+  root.offsetByLaneNumber = function (zoom, asset, isRoadlink) {
+    function getOffsetPoint(asset, baseOffset) {
+      asset.points = _.map(asset.points, function (point, index, geometry) {
+        return root.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
+      });
+      return asset;
+    }
+
+    var baseOffset = -3.5;
+
+    if(isRoadlink) {
+      if (asset.sideCode === 1) {
+        return asset;
+      }
+
+      return getOffsetPoint(asset, baseOffset);
+    }else{
+        var laneCode = _.find(asset.properties, function (property) {
+          return property.publicId === "lane_code";
+        });
+
+      if (_.head(laneCode.values).value.toString()[1] == '1') {
+        if (asset.sideCode === 1) {
+          return asset;
+        }
+        return getOffsetPoint(asset, baseOffset);
+      }
+
+      if (asset.sideCode === 1) {
+        baseOffset = _.head(laneCode.values).value % 2 === 0 ? 1.5 : -1.5;
+      }else{
+        baseOffset = _.head(laneCode.values).value % 2 === 0 ? -2 : -5;
+      }
+      return getOffsetPoint(asset, baseOffset);
+    }
+  };
+
   root.splitByPoint = function (lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));

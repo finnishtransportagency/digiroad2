@@ -811,7 +811,7 @@
         isSeparable: false,
         allowComplementaryLinks: true,
         isVerifiable: false,
-        // style: new LaneModellingToolStyle(), // new
+        style: new LaneModellingStyle(),
         form: new LaneModellingToolForm({
           fields : [
             {
@@ -864,7 +864,7 @@
             });
             var isValidDate = true;
 
-            if (dateFields.length != 2) {
+            if (dateFields.length == 2) {
             var startDate = _.find(dateFields, function (field) {
               return field.publicId === 'start_date';
             });
@@ -873,7 +873,7 @@
               return field.publicId === 'end_date';
             });
 
-            if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isEmpty(endDate.values[0]))
+            if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
               isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
           }
 
@@ -883,7 +883,7 @@
               return field.propertyType === 'number';
             });
 
-              if (dateFields.length == 2) {
+              if (roadAddressesFields.length >= 1) {
                 var endRoadPartNumber = _.find(roadAddressesFields, function (field) {
                   return field.publicId === 'end_road_part_number';
                 });
@@ -892,7 +892,7 @@
                   return field.publicId === 'end_distance';
                 });
 
-                if (_.isEmpty(endRoadPartNumber.values) || _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isEmpty(endDistance.values[0])){
+                if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) || _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0])){
                   isValidRoadAddresses = false;
                 }
               }
@@ -900,17 +900,11 @@
               return isValidDate && isValidRoadAddresses;
           };
 
-          var validLanes = _.filter(_.map(lanes, function (lane) {
+          return !_.some(_.map(lanes, function (lane) {
             return isValidLane(lane.properties);
           }), function (boolean) {
             return boolean === false;
           });
-
-          if(_.isEmpty(validLanes)){
-            return true;
-          }else{
-            return false;
-          }
         },
         selected: SelectedLaneModelling,
         collection: LaneModellingCollection,

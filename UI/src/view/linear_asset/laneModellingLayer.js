@@ -309,14 +309,6 @@
           selectToolControl.deactivateDraw();
           selectToolControl.activate();
           break;
-        case 'Rectangle':
-          linearAssetCutter.deactivate();
-          selectToolControl.activeRectangle();
-          break;
-        case 'Polygon':
-          linearAssetCutter.deactivate();
-          selectToolControl.activePolygon();
-          break;
         default:
       }
     };
@@ -376,12 +368,12 @@
       applicationModel.setSelectedTool('Select');
     };
 
-    var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, polygonSelection) {
+    var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, polygonSelection, laneNumber) {
       //Disable interaction so the user can not click on another feature after made changes
       selectToolControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-      me.decorateSelection(polygonSelection);
+      me.decorateSelection(polygonSelection, laneNumber);
     };
 
     var refreshReadOnlyLayer = function () {
@@ -531,38 +523,54 @@
       });
     };
 
-    this.decorateSelection = function (polygonSelection) {
+    this.decorateSelection = function (polygonSelection, laneNumber) {
+      function removeOldAssetFeatures() {
+        var features = _.filter(vectorSource.getFeatures(), function (feature) {
+          return !_.isUndefined(feature.values_.properties);
+        });
+        _.forEach(features, function (feature) {
+          vectorSource.removeFeature(feature);
+        });
+      }
+
       if (selectedLinearAsset.exists()) {
-
         var linearAssets = selectedLinearAsset.get();
-        var selectedFeatures = style.renderFeatures(linearAssets);
+        var selectedFeatures = style.renderFeatures(linearAssets, laneNumber);
 
-        if(assetLabel){
-          if(polygonSelection){
-            var selectedLabels = _.filter(vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
-              return layerFeature.values_.geometry instanceof ol.geom.Point && (geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_)); }) ;
+        if (assetLabel) {
+          if (polygonSelection) {
+            var selectedLabels = _.filter(vectorSource.getFeatures(), function (layerFeature) {
+              return _.some(selectedFeatures, function (selectedFeature) {
+                return layerFeature.values_.geometry instanceof ol.geom.Point && (geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_));
+              });
             });
             _.each(selectedLabels, removeFeature);
 
             selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
           } else {
-            var currentFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){
-              return _.some(selectedFeatures, function(selectedFeature) {
+            var currentFeatures = _.filter(vectorSource.getFeatures(), function (layerFeature) {
+              return _.some(selectedFeatures, function (selectedFeature) {
                 return geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
               });
             });
 
             _.each(currentFeatures, removeFeature);
 
-            if(selectedLinearAsset.isSplitOrSeparated() || _.some(linearAssets, function(asset){return !_.isEqual(asset.sideCode, 1);})){
+            if (selectedLinearAsset.isSplitOrSeparated() || _.some(linearAssets, function (asset) {
+              return !_.isEqual(asset.sideCode, 1);
+            })) {
               selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
-            }else
+            } else
               selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
           }
         }
 
+        removeOldAssetFeatures();
         vectorSource.addFeatures(selectedFeatures);
         selectToolControl.addSelectionFeatures(selectedFeatures);
+
+        if (_.isUndefined(laneNumber))
+          removeOldAssetFeatures();
 
         if (selectedLinearAsset.isSplitOrSeparated()) {
           me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
