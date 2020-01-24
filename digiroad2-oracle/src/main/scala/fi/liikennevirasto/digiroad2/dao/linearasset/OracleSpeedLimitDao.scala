@@ -305,12 +305,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     }
 
     val speedLimitRows =  sql"""
-        select asset_id, link_id, side_code, value, start_measure, end_measure, modified_by, modified_date, created_by, created_date,
-               adjusted_timestamp, pos_modified_date, expired, link_source, public_id
+        select asset_id, link_id, side_code, value, start_measure, end_measure, modified_by, modified_date, expired, created_by, created_date,
+               adjusted_timestamp, pos_modified_date, link_source, public_id
           from (
             select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date,
             case when a.valid_to <= sysdate then 1 else 0 end as expired, a.created_by, a.created_date, pos.adjusted_timestamp,
-            pos.modified_date, pos.link_source, p.public_id, DENSE_RANK() over (ORDER BY a.id) line_number
+            pos.modified_date, pos.link_source, p.public_id,
+            DENSE_RANK() over (ORDER BY a.id) line_number
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
