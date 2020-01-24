@@ -228,7 +228,7 @@
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
           '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
-          '<td headers="suggestedAssets">' + suggestedAssetsButton(0, asset.typeId) + '</td>' +
+          '<td headers="suggestedAssets">' + suggestedAssetsButton(asset.countSuggested, asset.typeId) + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
