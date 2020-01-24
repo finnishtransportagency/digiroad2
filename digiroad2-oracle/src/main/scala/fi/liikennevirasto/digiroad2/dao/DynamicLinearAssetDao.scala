@@ -373,7 +373,7 @@ class DynamicLinearAssetDao {
           join property p on p.asset_type_id = $typeId and p.property_type = 'date_period'
           join #$idTableName i on i.id = dp.asset_id
           where dp.property_id = p.id
-        """.as[DatePeriodRow](getValidityPeriodRow).list
+        """.as[DatePeriodRow](getDatePeriodRow).list
     }
     assets.groupBy(_.assetId).mapValues{ assetGroup =>
       assetGroup.groupBy(_.publicId).map { case (_, values) =>
