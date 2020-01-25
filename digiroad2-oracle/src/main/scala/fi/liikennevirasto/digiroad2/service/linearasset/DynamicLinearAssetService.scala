@@ -310,7 +310,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     */
   override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, pageNumber: Option[Int]): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, pageNumber)
+      dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, getRecordLimit(pageNumber))
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)

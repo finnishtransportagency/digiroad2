@@ -32,7 +32,6 @@ case class AssetLink(id: Long, linkId: Long)
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
   val logger = LoggerFactory.getLogger(getClass)
-  private val RECORD_NUMBER = 4000
 
   /**
     * No usages in OTH.
@@ -417,16 +416,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
-  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int] = None) : List[PersistedLinearAsset] = {
+  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
-        s"WHERE line_number between $startNum and $endNum"
-
-      case _ => ""
-    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, created_by, created_date, modified_by, modified_date,
@@ -477,37 +468,32 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       .as[LightLinearAsset].list
   }
 
-  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, pageNumber: Option[Int] = None): Seq[PersistedLinearAsset] = {
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, recordLimit: String): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
     val excludedTypesValues = excludedTypes.map(_.value)
-
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
-        s"WHERE line_number between $startNum and $endNum"
-      case _ => ""
-    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, pv_id, pv_type, pvp_type, start_hour, end_hour,pe_type,
                start_measure, end_measure, created_by, created_date, modified_by, modified_date,
                expired, adjusted_timestamp, pos_modified_date, start_minute, end_minute, additional_info,
-               link_source, verified_by, verified_date, information_source
+               link_source, verified_by, verified_date, information_source, suggested
         from (
           select a.id as asset_id, pos.link_id, pos.side_code, pv.id as pv_id, pv.type as pv_type, pvp.type as pvp_type, pvp.start_hour, pvp.end_hour,
                  pe.type as pe_type, pos.start_measure, pos.end_measure, a.created_by, a.created_date, a.modified_by, a.modified_date,
                  case when a.valid_to <= sysdate then 1 else 0 end as expired,
                  pos.adjusted_timestamp, pos.modified_date as pos_modified_date, pvp.start_minute,
                  pvp.end_minute, pv.additional_info, pos.link_source,
-                 a.verified_by, a.verified_date, a.information_source,
-                DENSE_RANK() over (ORDER BY a.id) line_number
+                 a.verified_by, a.verified_date, a.information_source, e.value as suggested,
+                 DENSE_RANK() over (ORDER BY a.id) line_number
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
           join prohibition_value pv on pv.asset_id = a.id
+          join property p on a.asset_type_id = p.asset_type_id
           left join prohibition_validity_period pvp on pvp.prohibition_value_id = pv.id
           left join prohibition_exception pe on pe.prohibition_value_id = pv.id
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
+          left join enumerated_value e on mc.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId and pv.TYPE not in (#${excludedTypesValues.mkString(",")} )
           and (
             (a.valid_to > $sinceDate and a.valid_to <= $untilDate)

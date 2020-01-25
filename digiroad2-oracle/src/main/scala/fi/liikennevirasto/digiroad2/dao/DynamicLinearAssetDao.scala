@@ -22,7 +22,6 @@ case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: Dynamic
 
 class DynamicLinearAssetDao {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  private val RECORD_NUMBER = 4000
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterFloating = if (includeFloating) "" else " and a.floating = 0"
@@ -431,15 +430,8 @@ class DynamicLinearAssetDao {
     }
   }
 
-  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int] = None) : List[PersistedLinearAsset] = {
+  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
-        s"WHERE line_number between $startNum and $endNum"
-      case _ => ""
-    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, public_id, property_type, required,

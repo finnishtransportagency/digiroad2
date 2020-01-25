@@ -19,8 +19,6 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
-   private val RECORD_NUMBER = 4000
-
   def MassQueryThreshold = 500
   case class UnknownLimit(linkId: Long, municipality: String, administrativeClass: String)
 
@@ -294,15 +292,8 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     (speedLimitLinks, roadLinks)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int]): Seq[PersistedSpeedLimit] = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String): Seq[PersistedSpeedLimit] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
-        s"WHERE line_number between $startNum and $endNum"
-      case _ => ""
-    }
 
     val speedLimitRows =  sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, modified_by, modified_date, expired, created_by, created_date,

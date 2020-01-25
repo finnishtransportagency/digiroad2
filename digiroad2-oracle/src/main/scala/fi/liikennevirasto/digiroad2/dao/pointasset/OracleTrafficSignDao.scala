@@ -51,8 +51,8 @@ object OracleTrafficSignDao {
 
   private def query() =
     """
-        select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
-               p.id, p.public_id, p.property_type, p.required, ev.value,
+        select a.id as asset_id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
+               p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
                case
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi

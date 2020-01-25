@@ -30,6 +30,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   val polygonTools: PolygonTools = new PolygonTools
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  private val RECORD_NUMBER = 4000
   lazy val dr2properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -65,6 +66,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       }
     else
       dao.getLinksWithLengthFromVVH(id)
+  }
+
+  def getRecordLimit(pageNumber: Option[Int]): String = {
+    pageNumber match {
+      case Some(pgNum) =>
+        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+        s"WHERE line_number between $startNum and $endNum"
+      case _ => ""
+    }
   }
 
   def getSpeedLimitAssetsByIds(ids: Set[Long], newTransaction: Boolean = true): Seq[SpeedLimit] = {
@@ -144,7 +155,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     */
   def getChanged(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean = false, pageNumber: Option[Int] = None): Seq[ChangedSpeedLimit] = {
     val persistedSpeedLimits = withDynTransaction {
-      dao.getSpeedLimitsChangedSince(sinceDate, untilDate, withAdjust, pageNumber)
+      dao.getSpeedLimitsChangedSince(sinceDate, untilDate, withAdjust, getRecordLimit(pageNumber))
     }
     val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)

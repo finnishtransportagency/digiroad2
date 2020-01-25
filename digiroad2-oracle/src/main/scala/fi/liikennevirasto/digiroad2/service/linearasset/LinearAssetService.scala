@@ -66,6 +66,7 @@ trait LinearAssetOperations {
 
   val logger = LoggerFactory.getLogger(getClass)
   val verifiableAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
+  private val RECORD_NUMBER = 4000
 
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
     withDynTransaction {
@@ -92,6 +93,16 @@ trait LinearAssetOperations {
     val minDistanceAllow = 0.01
     val (maxMeasure, minMeasure) = (math.max(measure1, measure2), math.min(measure1, measure2))
     (maxMeasure - minMeasure) > minDistanceAllow
+  }
+
+  def getRecordLimit(pageNumber: Option[Int]): String = {
+    pageNumber match {
+      case Some(pgNum) =>
+        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
+        val endNum = pgNum * RECORD_NUMBER
+        s"WHERE line_number between $startNum and $endNum"
+      case _ => ""
+    }
   }
 
   /**
@@ -454,7 +465,7 @@ trait LinearAssetOperations {
     */
   def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, pageNumber: Option[Int] = None): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, pageNumber)
+      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, getRecordLimit(pageNumber))
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinks)

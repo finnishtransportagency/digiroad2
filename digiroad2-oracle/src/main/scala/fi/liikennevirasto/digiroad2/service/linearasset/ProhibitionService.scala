@@ -256,7 +256,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, pageNumber: Option[Int] = None): Seq[ChangedLinearAsset] = {
     val excludedTypes = Seq(PassageThrough, HorseRiding, SnowMobile, RecreationalVehicle, OversizedTransport)
     val prohibitions = withDynTransaction {
-      dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust, pageNumber)
+      dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust, getRecordLimit(pageNumber))
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(prohibitions.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(prohibitions, roadLinks)
