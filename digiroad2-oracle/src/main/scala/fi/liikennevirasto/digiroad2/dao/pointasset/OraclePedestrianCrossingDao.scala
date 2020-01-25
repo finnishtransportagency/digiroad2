@@ -119,7 +119,7 @@ class OraclePedestrianCrossingDao() {
         val endNum = pgNum * RECORD_NUMBER
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
-        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, created_by, created_date," +
           s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
