@@ -142,8 +142,9 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssets(queryFilter)
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] =  { throw new UnsupportedOperationException("Not Supported Method") }
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PersistedMassTransitStop] = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = massTransitStopDao.fetchLightGeometry(queryFilter)
 

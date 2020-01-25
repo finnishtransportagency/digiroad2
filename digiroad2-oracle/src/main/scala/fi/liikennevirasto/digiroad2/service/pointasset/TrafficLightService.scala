@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficLightDao, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -18,7 +18,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   type PersistedAsset = TrafficLight
 
   override def typeId: Int = 280
-
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[TrafficLight] = throw new UnsupportedOperationException("Not Supported Method")
   override def setAssetPosition(asset: IncomingTrafficLight, geometry: Seq[Point], mValue: Double): IncomingTrafficLight = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
@@ -128,7 +128,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     }
   }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[TrafficLight] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }
