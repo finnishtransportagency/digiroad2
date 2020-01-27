@@ -270,7 +270,7 @@
       selection = lanesFetched;
       dirty = false;
       // eventbus.trigger(singleElementEvent('cancelled'), self);
-      eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
+      eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.cancel = function() {
@@ -423,7 +423,7 @@
         } else {
           dirty = true;
         }
-        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected, laneNumber);
+        eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
       // }
       // eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected, laneNumber);
     };
@@ -431,7 +431,7 @@
     this.setMultiValue = function(value) {
       var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
       selection = collection.replaceSegments(selection, newGroup);
-      eventbus.trigger(multiElementEvent('valueChanged'), self, multipleSelected);
+      eventbus.trigger(multiElementEvent('valueChanged'), self);
     };
 
     function isValueDifferent(selection){

@@ -2,7 +2,6 @@
   root.AssetTypeConfiguration = function () {
 
     var oneKmZoomLvl = 8;
-    var fiftyMetersZoomLvl = 12;
 
     var assetType = {
       massTransitStop: 10,
@@ -971,9 +970,8 @@
         selected: SelectedLaneModelling,
         collection: LaneModellingCollection,
         layer: LaneModellingLayer,
-        // label: new LinearAssetLabel(), //new
-        hasMunicipalityValidation: true,
-        minZoomForContent: fiftyMetersZoomLvl
+        label: new LaneModellingLabel(),
+        hasMunicipalityValidation: true
       }
     ];
 

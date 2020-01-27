@@ -1064,7 +1064,7 @@
           if(currentLane.toString()[1] == "1"){
             currentFormStructure = mainLaneFormStructure;
           }else{
-            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
+            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
             currentFormStructure = defaultFormStructure;
           }
           reloadForm($('#feature-attributes'));
@@ -1133,7 +1133,7 @@
         currentLane = nextLaneNumber;
         selectedAsset.setNewLane(nextLaneNumber);
 
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
         currentFormStructure = defaultFormStructure;
 
         reloadForm($('#feature-attributes'));
@@ -1147,7 +1147,7 @@
         currentLane = nextLaneNumber;
         selectedAsset.setNewLane(nextLaneNumber);
 
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
         currentFormStructure = defaultFormStructure;
 
         reloadForm($('#feature-attributes'));
@@ -1276,7 +1276,7 @@
         if(currentLane.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
         }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
           currentFormStructure = defaultFormStructure;
         }
         reloadForm($('#feature-attributes'));
@@ -1303,7 +1303,7 @@
         if(currentLane.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
         }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 1};
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
           currentFormStructure = defaultFormStructure;
         }
         reloadForm($('#feature-attributes'));

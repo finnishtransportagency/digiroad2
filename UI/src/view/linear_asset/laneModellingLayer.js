@@ -368,12 +368,12 @@
       applicationModel.setSelectedTool('Select');
     };
 
-    var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, polygonSelection, laneNumber) {
+    var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, laneNumber) {
       //Disable interaction so the user can not click on another feature after made changes
       selectToolControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-      me.decorateSelection(polygonSelection, laneNumber);
+      me.decorateSelection(laneNumber);
     };
 
     var refreshReadOnlyLayer = function () {
@@ -523,7 +523,7 @@
       });
     };
 
-    this.decorateSelection = function (polygonSelection, laneNumber) {
+    this.decorateSelection = function (laneNumber) {
       function removeOldAssetFeatures() {
         var features = _.filter(vectorSource.getFeatures(), function (feature) {
           return !_.isUndefined(feature.values_.properties);
@@ -538,16 +538,6 @@
         var selectedFeatures = style.renderFeatures(linearAssets, laneNumber);
 
         if (assetLabel) {
-          if (polygonSelection) {
-            var selectedLabels = _.filter(vectorSource.getFeatures(), function (layerFeature) {
-              return _.some(selectedFeatures, function (selectedFeature) {
-                return layerFeature.values_.geometry instanceof ol.geom.Point && (geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_));
-              });
-            });
-            _.each(selectedLabels, removeFeature);
-
-            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
-          } else {
             var currentFeatures = _.filter(vectorSource.getFeatures(), function (layerFeature) {
               return _.some(selectedFeatures, function (selectedFeature) {
                 return geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
@@ -556,13 +546,9 @@
 
             _.each(currentFeatures, removeFeature);
 
-            if (selectedLinearAsset.isSplitOrSeparated() || _.some(linearAssets, function (asset) {
-              return !_.isEqual(asset.sideCode, 1);
-            })) {
-              selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
-            } else
-              selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
-          }
+              selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedFeatures, function (feature) {
+                return feature.values_;
+              }), me.uiState.zoomLevel));
         }
 
         removeOldAssetFeatures();
