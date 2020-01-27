@@ -1002,6 +1002,31 @@
     };
 
     me.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled, alreadyRendered) {
+      function infoLabel(publicId) {
+        var info;
+        var infoElement;
+
+        switch(publicId) {
+          case "lane_code":
+            info = 'Kaistan lisäys:';
+            break;
+          case "end_road_part_number":
+            info = 'Kaistan loppuu:';
+            break;
+          case "initial_road_number":
+            info = 'Kaistan alkaa:';
+            break;
+        }
+
+        if(info)
+          infoElement = $('<div class="form-group"><label class="control-label" style="text-align: left">' + info + '</label></div>');
+
+        if(publicId == "lane_code" && isAddByRoadAddressActive)
+          return infoElement.prepend($('<hr style="width: 90%;">'));
+
+        return infoElement;
+      }
+
       if (alreadyRendered)
         forms.removeFields(sideCode);
       var fieldGroupElement = $('<div class = "input-unit-combination lane-' + currentLane + '" >');
@@ -1028,7 +1053,8 @@
         forms.addField(fieldType, sideCode);
         var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
 
-        fieldGroupElement.append(fieldElement);
+        var additionalElement = infoLabel(field.publicId);
+        fieldGroupElement.append(additionalElement).append(fieldElement);
 
       });
 
