@@ -1019,10 +1019,10 @@
         }
 
         if(info)
-          infoElement = $('<div class="form-group"><label class="control-label" style="text-align: left">' + info + '</label></div>');
+          infoElement = $('<div class="form-group"><label class="control-label info-label">' + info + '</label></div>');
 
         if(publicId == "lane_code" && isAddByRoadAddressActive)
-          return infoElement.prepend($('<hr style="width: 90%;">'));
+          return infoElement.prepend($('<hr class="form-break">'));
 
         return infoElement;
       }
@@ -1082,9 +1082,9 @@
 
     var createPreviewHeaderElement = function(laneNumbers) {
       var createNumber = function (number) {
-        var previewButton = $('<li class="preview lane ' + number + '" ' + 'style="margin:1px;display: inline-block; width: 8%;height:10%;background-color:dimgrey;">' + number + '</li>').click(function() {
-          $(".preview .lane").css('border', '1px solid white');
-          $(this).css('border', '1px solid yellow');
+        var previewButton = $('<li class="preview-lane"> ' + number + '</li>').click(function() {
+          $(".preview .lane").removeClass("not-highlight-lane highlight-lane").addClass("not-highlight-lane");
+          $(this).removeClass("not-highlight-lane").addClass("highlight-lane");
           currentLane = parseInt(number);
 
           if(currentLane.toString()[1] == "1"){
@@ -1097,9 +1097,9 @@
         });
 
         if(number == currentLane){
-          return previewButton.css("border", "1px solid yellow");
+          return previewButton.addClass("highlight-lane");
         }else{
-          return previewButton.css("border", "1px solid white");
+          return previewButton.addClass("not-highlight-lane");
         }
       };
 
@@ -1113,7 +1113,7 @@
       });
 
       var preview = function () {
-        var previewList = $('<ul id="preview" class="preview" style="display: inline; color: white; margin:auto;"></ul>');
+        var previewList = $('<ul class="preview">');
 
         var oddListElements = _.map(odd, function (number) {
               return createNumber(number);
@@ -1123,9 +1123,7 @@
           return createNumber(number);
         });
 
-        var previewDiv = $('<div style="text-align:center; margin-top: 2%;"></div>').append(previewList.append(evenListElements).append(oddListElements).append('<hr style="width: 90%;">'));
-
-        return previewDiv;
+        return $('<div class="preview-div">').append(previewList.append(evenListElements).append(oddListElements).append('<hr class="form-break">'));
       };
 
       return preview();
@@ -1146,7 +1144,7 @@
         return number % 2 === 0;
       });
 
-      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary add-lane-left">Lisää kaista oikealle puolelle</button>').click(function() {
+      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
         $(".preview .lane").css('border', '1px solid white');
 
         var nextLaneNumber;
@@ -1165,7 +1163,7 @@
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(even) && _.max(even).toString()[1] == 8));
 
-      var addRightLane = $('<li>').append($('<button class="btn btn-secondary add-lane-right">Lisää kaista vasemmalle puolelle</button>').click(function() {
+      var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
         $(".preview .lane").css('border', '1px solid white');
 
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
@@ -1180,14 +1178,14 @@
       }).prop("disabled", !_.isEmpty(odd) && _.max(odd).toString()[1] == 9));
 
       var selectedRoadLink = selectedAsset.getSelectedRoadlink();
-      var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary add-by-road-address">Lisää kaista tieosoitteen avulla</button>').click(function() {
+      var addByRoadAddress = isAddByRoadAddressActive ? $('<li>') : $('<li>').append($('<button class="btn btn-secondary">Lisää kaista tieosoitteen avulla</button>').click(function() {
         isAddByRoadAddressActive = true;
         selectedAsset.setInitialRoadFields();
 
         reloadForm($('#feature-attributes'));
       }).prop("disabled", _.isUndefined(selectedRoadLink.administrativeClass) || _.isUndefined(selectedRoadLink.roadNumber) || _.isUndefined(selectedRoadLink.roadPartNumber) || _.isUndefined(selectedRoadLink.startAddrMValue) || selectedRoadLink.administrativeClass != 1));
 
-      return $('<ul style="list-style: none;">').append(addByRoadAddress).append(addLeftLane).append(addRightLane);
+      return $('<ul class="list-lane-buttons">').append(addByRoadAddress).append(addLeftLane).append(addRightLane);
     };
 
       me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -1273,7 +1271,7 @@
       if(!isReadOnly)
         renderExpireAndDeleteButtonsElement(selectedAsset, body);
 
-      body.find('.form').append('<hr style="width: 90%;">');
+      body.find('.form').append('<hr class="form-break">');
 
       //Hide or show elements depending on the readonly mode
       toggleBodyElements(body, isReadOnly);
@@ -1281,8 +1279,7 @@
     };
 
     function renderExpireAndDeleteButtonsElement(selectedAsset, body){
-      var deleteLane = $('<button class="btn btn-secondary delete-lane" style="display: inline;">Poista kaista</button>').click(function() {
-        $(".preview .lane").css('border', '1px solid white');
+      var deleteLane = $('<button class="btn btn-secondary lane-button">Poista kaista</button>').click(function() {
         selectedAsset.removeLane(currentLane);
 
         var asset = _.find(selectedAsset.get(), function (lane){
@@ -1308,8 +1305,7 @@
         reloadForm($('#feature-attributes'));
       });
 
-      var expireLane = $('<button class="btn btn-secondary delete-lane" style="display: inline;">Paata kaista</button>').click(function() {
-        $(".preview .lane").css('border', '1px solid white');
+      var expireLane = $('<button class="btn btn-secondary lane-button">Paata kaista</button>').click(function() {
         selectedAsset.expireLane(currentLane);
 
         var asset = _.find(selectedAsset.get(), function (lane){
@@ -1342,7 +1338,7 @@
       }).id === 0);
 
       if(currentLane.toString()[1] !== "1")
-        body.find('.form').append($('<div style="margin-left: 43%; margin-bottom: 10%;">').append(expireLane).append(deleteLane));
+        body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
