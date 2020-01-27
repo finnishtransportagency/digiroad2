@@ -70,11 +70,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            from asset a
            join asset_link al on a.id = al.asset_id
            join lrm_position pos on al.position_id = pos.id
+            join  #$idTableName i on i.id = pos.link_id
            join property p on a.asset_type_id = p.asset_type_id
            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-           join  #$idTableName i on i.id = pos.link_id
 		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[SpeedLimitRow].list
     }
     groupSpeedLimitsResult(speedLimitRows)
@@ -129,11 +129,11 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
+        join #$idTableName i on i.id = a.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id
         left join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         left join MULTIPLE_CHOICE_VALUE mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
         left join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-        join #$idTableName i on i.id = a.id
         where a.asset_type_id = 20
         """.as[SpeedLimitRow].list
     }
@@ -155,11 +155,10 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id
+        join #$idTableName i on i.id = a.id
         left join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         left join MULTIPLE_CHOICE_VALUE mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
         left join ENUMERATED_VALUE e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-        join #$idTableName i on i.id = a.id
-
         where a.asset_type_id = 20
         """.as[SpeedLimitRow].list
     }
