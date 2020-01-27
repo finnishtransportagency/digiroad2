@@ -18,7 +18,8 @@
           validityDirection: 3,
           readOnly: true,
           municipalityCode: 235,
-          validityPeriod: 'current'
+          validityPeriod: 'current',
+          propertyData:[{'publicId': 'suggest_box', 'values':[]}]
         }
       );
     },

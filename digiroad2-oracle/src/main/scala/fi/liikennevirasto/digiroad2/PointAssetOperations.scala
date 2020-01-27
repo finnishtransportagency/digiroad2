@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2
 
-import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset._
@@ -13,13 +12,10 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
-import slick.jdbc.StaticQuery.interpolation
-import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 sealed trait FloatingReason {
   def value: Int
@@ -70,6 +66,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val floating: Boolean
   val vvhTimeStamp: Long
   val linkSource: LinkGeomSource
+  val propertyData: Seq[Property]
 }
 
 trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
@@ -87,6 +84,7 @@ trait PersistedPoint extends PersistedPointAsset with IncomingPointAsset {
   val modifiedAt: Option[DateTime]
   val expired: Boolean
   val linkSource: LinkGeomSource
+  val propertyData: Seq[Property]
 }
 
 
@@ -145,9 +143,15 @@ trait PointAssetOperations {
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val historicRoadLink = roadLinkService.getHistoryDataLinksFromVVH(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId) match {
+        case Some(roadLink) => roadLink
+        case _ => historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+          .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
+      })
+    }
   }
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
@@ -456,6 +460,10 @@ trait PointAssetOperations {
 
   def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = Map()
 
+
+  def getProperty(asset: PersistedPointAsset, property: String) : Option[PropertyValue] = {
+    asset.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  }
 }
 
 object PointAssetOperations {

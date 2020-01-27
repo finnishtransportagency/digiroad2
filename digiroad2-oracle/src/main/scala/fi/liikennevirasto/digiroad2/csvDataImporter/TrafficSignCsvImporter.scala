@@ -4,8 +4,8 @@ import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, GeometryUtils, IncompleteRow, MalformedRow, Point, Status, TrafficSignType}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, SimpleTrafficSignProperty, State, TextPropertyValue}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -27,7 +27,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
 
-  case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleTrafficSignProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
+  case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
@@ -90,17 +90,17 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
 
-  private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimpleTrafficSignProperty] = {
+  private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimplePointAssetProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
-      SimpleTrafficSignProperty(valuePublicId, Seq(TextPropertyValue(value.toString)))}
+      SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value.toString)))}
 
     val additionalInfo = getPropertyValue(trafficSignAttributes, "additionalInfo").toString
     val additionalProperty = if(additionalInfo.nonEmpty)
-      Some(SimpleTrafficSignProperty(infoPublicId, Seq(TextPropertyValue(additionalInfo))))
+      Some(SimplePointAssetProperty(infoPublicId, Seq(PropertyValue(additionalInfo))))
     else
       None
 
-    val typeProperty = SimpleTrafficSignProperty(typePublicId, Seq(TextPropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
+    val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
 
     Set(Some(typeProperty), valueProperty, additionalProperty).flatten
   }
@@ -156,7 +156,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
 
     val (additionalPanelInfo, trafficSignInfo) = signs.partition{ case(_, sign) =>
-      TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
+      TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
 
     val additionalPanels = additionalPanelInfo.map {case (csvRow, panel) => (csvRow, AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat))))}.toSet
 
@@ -167,7 +167,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       else
         sign.bearing
 
-      val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[TextPropertyValue].propertyValue.toString.toInt
+      val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[PropertyValue].propertyValue.toString.toInt
       val filteredAdditionalPanel = trafficSignService.distinctPanels(trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels.map(_._2)))
 
       if (filteredAdditionalPanel.size <= 3) {

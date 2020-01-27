@@ -25,7 +25,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
 
   get("/user/:username") {
     params.get("username").flatMap {
-      userProvider.getUser
+      userProvider.getUser(_)
     } match {
       case Some(u) => u
       case None => NotFound("User not found: " + params.get("username").getOrElse(""))
@@ -45,7 +45,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   put("/user/:username/municipalities") {
     val municipalities = parsedBody.extract[List[Int]].toSet
     params.get("username").flatMap {
-      userProvider.getUser
+      userProvider.getUser(_)
     }.map { u =>
       val updatedUser = u.copy(configuration = u.configuration.copy(authorizedMunicipalities = municipalities))
       userProvider.saveUser(updatedUser)
@@ -59,7 +59,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   put("/user/:username/name") {
     val name = parsedBody.extract[String]
     params.get("username").flatMap {
-      userProvider.getUser
+      userProvider.getUser(_)
     }.map { u =>
       val updatedUser = u.copy(name = Some(name))
       userProvider.saveUser(updatedUser)
@@ -147,7 +147,7 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
   put("/user/:username/roles") {
     val newRoles = parsedBody.extract[List[String]].toSet
     params.get("username").flatMap {
-      userProvider.getUser
+      userProvider.getUser(_)
     }.map { u =>
       val updatedUser = u.copy(configuration = u.configuration.copy(roles = newRoles))
       userProvider.saveUser(updatedUser)

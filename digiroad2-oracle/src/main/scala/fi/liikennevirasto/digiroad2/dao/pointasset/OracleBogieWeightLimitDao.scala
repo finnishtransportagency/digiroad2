@@ -25,7 +25,7 @@ object OracleBogieWeightLimitDao {
         left join number_property_value npv on npv.asset_id = a.id
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[WeightLimit](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[WeightLimit](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
   def create(asset: IncomingBogieWeightLimit, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {

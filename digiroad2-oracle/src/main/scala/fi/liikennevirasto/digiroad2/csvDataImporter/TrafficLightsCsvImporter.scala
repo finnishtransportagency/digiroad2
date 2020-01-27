@@ -31,7 +31,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 
-      trafficLightsService.createFromCoordinates(IncomingTrafficLight(position.x, position.y, nearestRoadLink.linkId), nearestRoadLink, user.username, floating)
+      trafficLightsService.createFromCoordinates(IncomingTrafficLight(position.x, position.y, nearestRoadLink.linkId, Set()), nearestRoadLink, user.username, floating)
     }
     result
   }

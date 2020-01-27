@@ -24,8 +24,10 @@ class DynamicLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
   val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
-  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+    val filterFloating = if (includeFloating) "" else " and a.floating = 0"
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
+    val filter = filterFloating + filterExpired
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
         select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, p.public_id, p.property_type, p.required,
@@ -51,8 +53,7 @@ class DynamicLinearAssetDao {
           left join date_property_value dtp on dtp.asset_id = a.id and dtp.property_id = p.id and p.property_type = 'date'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
           where a.asset_type_id = $assetTypeId
-          and a.floating = 0
-          #$filterExpired""".as[DynamicAssetRow](getDynamicAssetRow).list
+          #$filter""".as[DynamicAssetRow](getDynamicAssetRow).list
     }
     assets.groupBy(_.id).map { case (id, assetRows) =>
       val row = assetRows.head
@@ -171,18 +172,18 @@ class DynamicLinearAssetDao {
     }
   }
 
-  private def propertyWithTypeAndId(property: DynamicProperty): Tuple3[String, Option[Long], DynamicProperty] = {
+  private def propertyWithTypeAndId(typeId: Int, property: DynamicProperty): Tuple3[String, Option[Long], DynamicProperty] = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
     else {
-      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
       (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[DynamicProperty]) {
-    properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
+  def updateAssetProperties(assetId: Long, properties: Seq[DynamicProperty], typeId: Int) {
+    properties.map(prop =>propertyWithTypeAndId(typeId, prop)).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
         updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
       } else {
@@ -295,7 +296,7 @@ class DynamicLinearAssetDao {
       case SingleChoice =>
         val newVal = propertyValues.head.value.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
-          (p.publicId == propertyPublicId) && p.values.map(_.propertyValue).contains(newVal)
+          (p.publicId == propertyPublicId) && p.values.map(_.asInstanceOf[PropertyValue].propertyValue).contains(newVal)
         } match {
           case Some(propValues) =>
             updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute
