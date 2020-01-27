@@ -497,10 +497,10 @@
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
-    var laneModellingToolBox = new LaneModellingToolBox(_.find(linearAssets, {typeId: assetType.laneModellingTool}));
+    var laneModellingBox = new LaneModellingBox(_.find(linearAssets, {typeId: assetType.laneModellingTool}));
     return [
       [roadLinkBox]
-          .concat(laneModellingToolBox)
+          .concat(laneModellingBox)
           .concat([speedLimitBox])
           .concat([manoeuvreBox])
           .concat(getLinearAsset(assetType.prohibition))

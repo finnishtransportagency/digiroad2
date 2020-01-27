@@ -1,5 +1,5 @@
 (function(root) {
-  root.LaneModellingToolBox = function (assetConfig) {
+  root.LaneModellingBox = function (assetConfig) {
     LinearAssetBox.call(this, assetConfig);
     var me = this;
 

@@ -873,7 +873,7 @@
         allowComplementaryLinks: true,
         isVerifiable: false,
         style: new LaneModellingStyle(),
-        form: new LaneModellingToolForm({
+        form: new LaneModellingForm({
           fields : [
             {
               label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 6

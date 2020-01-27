@@ -874,7 +874,7 @@
   var isAddByRoadAddressActive;
   var lanesAssets;
 
-  root.LaneModellingToolForm = function (formStructure) {
+  root.LaneModellingForm = function (formStructure) {
     var me = this;
     var _assetTypeConfiguration;
 
