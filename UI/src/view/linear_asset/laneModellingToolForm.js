@@ -824,16 +824,16 @@
   var mainLaneFormStructure = {
     fields : [
       {
-        label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 1
+        label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 6
       },
       {
-        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 2,
+        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 7,
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
       },
       {
-        label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 3,
+        label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 8,
         values: [
           {id: 1, label: 'Jatkuva'},
           {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
@@ -844,7 +844,7 @@
         ]
       },
       {
-        label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 4
+        label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9
       }
     ]
   };
@@ -1006,34 +1006,11 @@
         forms.removeFields(sideCode);
       var fieldGroupElement = $('<div class = "input-unit-combination lane-' + currentLane + '" >');
 
-      if (isAddByRoadAddressActive) {
-        fieldGroupElement.append('<div class="form-group"><label class="control-label" style="text-align: left">' + 'Kaistan alkaa:' + '</label></div>');
-        _.each(_.sortBy(roadAddressFormStructure.fields, function (field) {
-          return field.weight;
-        }), function (field) {
-          var fieldValues = [];
-          if (asset.properties) {
-            var existingProperty = _.find(asset.properties, function (property) {
-              return property.publicId === field.publicId;
-            });
-            if (!_.isUndefined(existingProperty))
-              fieldValues = existingProperty.values;
-          }
-          var dynamicField = _.find(laneModellingFormFields, function (availableFieldType) {
-            return availableFieldType.name === field.type;
-          });
-          var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
-          forms.addField(fieldType, sideCode);
-          var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
+      var formFields = currentFormStructure.fields;
+      if (isAddByRoadAddressActive)
+        formFields = formFields.concat(roadAddressFormStructure.fields);
 
-          fieldGroupElement.append(fieldElement);
-
-        });
-        fieldGroupElement.append('<hr style="width: 90%;">');
-      }
-
-      fieldGroupElement.append('<div class="form-group"><label class="control-label" style="text-align: left">' + 'Kaistan lisäys:' + '</label></div>');
-      _.each(_.sortBy(currentFormStructure.fields, function (field) {
+      _.each(_.sortBy(formFields, function (field) {
         return field.weight;
       }), function (field) {
         var fieldValues = [];
@@ -1055,12 +1032,6 @@
 
       });
 
-      // if (currentLane.toString()[1] != "1"){
-      //   var $startDate = fieldGroupElement.find('#start_date');
-      //   var $endDate = fieldGroupElement.find('#end_date');
-      //   dateutil.removeDatePickersFromDom();
-      //   dateutil.addTwoDependentDatePickers($startDate, $endDate);
-      // }
       return fieldGroupElement;
     };
 

@@ -815,7 +815,7 @@
         form: new LaneModellingToolForm({
           fields : [
             {
-              label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 1
+              label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 6
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
@@ -833,10 +833,10 @@
                 {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
                 {id: 21, label: 'Jalankulun kaista'},
                 {id: 22, label: 'Pyöräilykaista'},
-              ],  defaultValue: "2", weight: 2
+              ],  defaultValue: "2", weight: 7
             },
             {
-              label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 3,
+              label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 8,
               values: [
                 {id: 1, label: 'Jatkuva'},
                 {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
@@ -847,13 +847,13 @@
               ]
             },
             {
-              label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 4
+              label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9
             },
             {
-              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 5
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 10
             },
             {
-              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 6
+              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 11
             }
           ]
         }),
