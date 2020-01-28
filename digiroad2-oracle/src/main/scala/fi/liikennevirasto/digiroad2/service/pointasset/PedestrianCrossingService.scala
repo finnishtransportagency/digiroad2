@@ -25,7 +25,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService, eventBus: 
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = dao.fetchByFilter(queryFilter)
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PedestrianCrossing] = dao.fetchByFilterWithExpired(queryFilter)
-  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PedestrianCrossing] = dao.fetchByFilterWithExpiredLimited(queryFilter, pageNumber)
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[String]): Seq[PedestrianCrossing] = dao.fetchByFilterWithExpiredLimited(queryFilter, pageNumber)
 
   override def setFloating(persistedAsset: PedestrianCrossing, floating: Boolean) : PedestrianCrossing = {
     persistedAsset.copy(floating = floating)

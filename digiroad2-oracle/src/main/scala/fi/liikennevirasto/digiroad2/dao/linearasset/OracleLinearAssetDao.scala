@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -16,6 +19,7 @@ import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+import sun.misc.BASE64Decoder
 
 case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
                            startHour: Option[Int], endHour: Option[Int], exceptionType: Option[Int], startMeasure: Double,
@@ -31,7 +35,7 @@ case class AssetLink(id: Long, linkId: Long)
 
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
-  private val RECORD_NUMBER = 4000
+
   /**
     * No usages in OTH.
     */
@@ -405,12 +409,14 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
-  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int] = None) : List[PersistedLinearAsset] = {
+  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
         s"WHERE line_number between $startNum and $endNum"
 
       case _ => ""
@@ -465,15 +471,18 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       .as[LightLinearAsset].list
   }
 
-  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, pageNumber: Option[Int] = None): Seq[PersistedLinearAsset] = {
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, token: Option[String] = None): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
     val excludedTypesValues = excludedTypes.map(_.value)
 
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
         s"WHERE line_number between $startNum and $endNum"
+
       case _ => ""
     }
 

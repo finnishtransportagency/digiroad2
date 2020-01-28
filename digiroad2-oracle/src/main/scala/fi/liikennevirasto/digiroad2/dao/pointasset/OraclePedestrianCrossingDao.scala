@@ -1,11 +1,14 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, PedestrianCrossings}
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, PedestrianCrossings}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 
@@ -29,7 +32,6 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 
 
 class OraclePedestrianCrossingDao() {
-  private val RECORD_NUMBER: Int = 4000
 
   def update(id: Long, persisted: IncomingPedestrianCrossing, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
     sqlu""" update asset set municipality_code = ${municipality} where id = $id """.execute
@@ -112,11 +114,13 @@ class OraclePedestrianCrossingDao() {
     StaticQuery.queryNA[PedestrianCrossing](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
-  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PedestrianCrossing] = {
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PedestrianCrossing] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
         s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, created_by, created_date," +

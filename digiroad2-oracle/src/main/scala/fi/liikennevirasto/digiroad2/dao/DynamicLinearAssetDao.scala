@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -22,7 +25,6 @@ case class DynamicAssetRow(id: Long, linkId: Long, sideCode: Int, value: Dynamic
 
 class DynamicLinearAssetDao {
   val logger = LoggerFactory.getLogger(getClass)
-  private val RECORD_NUMBER = 4000
 
   def fetchDynamicLinearAssetsByLinkIds(assetTypeId: Int, linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLinearAsset] = {
     val filterExpired = if (includeExpired) "" else " and (a.valid_to > sysdate or a.valid_to is null)"
@@ -430,13 +432,16 @@ class DynamicLinearAssetDao {
     }
   }
 
-  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, pageNumber: Option[Int] = None) : List[PersistedLinearAsset] = {
+  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
         s"WHERE line_number between $startNum and $endNum"
+
       case _ => ""
     }
 

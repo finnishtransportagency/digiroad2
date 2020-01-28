@@ -1,11 +1,14 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Decode, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import slick.jdbc.StaticQuery.interpolation
@@ -28,7 +31,6 @@ case class Obstacle(id: Long, linkId: Long,
                     linkSource: LinkGeomSource) extends PersistedPoint
 
 object OracleObstacleDao {
-  private val RECORD_NUMBER: Int = 4000
 
   private def query() = {
     """
@@ -54,11 +56,13 @@ object OracleObstacleDao {
     StaticQuery.queryNA[Obstacle](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
-  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[Obstacle] = {
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[Obstacle] = {
+    val recordLimit = token match {
+    case Some(tk) =>
+    val values = Decode.getPageAndRecordNumber(tk)
+
+    val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+    val endNum = values("pageNumber") * values("recordNumber")
 
     val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
      s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +

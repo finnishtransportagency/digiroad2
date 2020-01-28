@@ -20,7 +20,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpired(queryFilter)
-  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpiredLimited(queryFilter, pageNumber)
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[String]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpiredLimited(queryFilter, pageNumber)
 
   override def setFloating(persistedAsset: Obstacle, floating: Boolean) : Obstacle = {
     persistedAsset.copy(floating = floating)
