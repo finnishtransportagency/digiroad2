@@ -876,7 +876,7 @@
         form: new LaneModellingForm({
           fields : [
             {
-              label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 6
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",

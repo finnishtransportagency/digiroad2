@@ -824,7 +824,7 @@
   var mainLaneFormStructure = {
     fields : [
       {
-        label: 'Kaista', type: 'read_only_number', required: 'required', publicId: "lane_code", weight: 6
+        label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6
       },
       {
         label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 7,
@@ -852,13 +852,13 @@
   var roadAddressFormStructure = {
     fields : [
       {
-        label: 'Tie', required: 'required', type: 'read_only_number', publicId: "initial_road_number", weight: 1
+        label: 'Tie', type: 'read_only_number', publicId: "initial_road_number", weight: 1
       },
       {
-        label: 'Osa', required: 'required', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2
+        label: 'Osa', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2
       },
       {
-        label: 'Etäisyys', required: 'required', type: 'read_only_number', publicId: "initial_distance", weight: 3
+        label: 'Etäisyys', type: 'read_only_number', publicId: "initial_distance", weight: 3
       },
       {
         label: 'Osa', required: 'required', type: 'number', publicId: "end_road_part_number", weight: 4
@@ -1019,7 +1019,7 @@
         }
 
         if(info)
-          infoElement = $('<div class="form-group"><label class="control-label info-label">' + info + '</label></div>');
+          infoElement = $('<div class="form-group"><label class="control-label" style="text-align: left;">' + info + '</label></div>');
 
         if(publicId == "lane_code" && isAddByRoadAddressActive)
           return infoElement.prepend($('<hr class="form-break">'));
@@ -1466,7 +1466,7 @@
       });
     };
 
-    me.isSaveable = function(field){
+    me.isSaveable = function(){
       var otherSaveCondition = function() {
         if(_assetTypeConfiguration.saveCondition)
           return _assetTypeConfiguration.saveCondition(_assetTypeConfiguration.selectedLinearAsset.get());
@@ -1494,7 +1494,7 @@
         // if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
         //   element.prop('disabled', !(me.isSaveable(forms.getFields('a')) && me.isSaveable(forms.getFields('b')) && me.isSplitOrSeparatedAllowed()));
         // } else
-          element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && assetTypeConfiguration.selectedLinearAsset.isDirty()));
+          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty()));
       };
 
       updateStatus(element);

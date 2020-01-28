@@ -369,10 +369,14 @@
     };
 
     var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, laneNumber) {
-      //Disable interaction so the user can not click on another feature after made changes
       selectToolControl.deactivate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-      eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
+      eventListener.stopListening(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+      if (selectedLinearAsset.isDirty()) {
+        eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
+      }else{
+        eventListener.listenTo(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+      }
       me.decorateSelection(laneNumber);
     };
 

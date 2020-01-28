@@ -391,6 +391,7 @@
 
       selection.splice(laneIndex,1);
       reorganizeLanes(laneNumber);
+      dirty = true;
     };
 
     this.expireLane = function(laneNumber) {
@@ -405,6 +406,7 @@
       assetsToBeExpired.push(expireLane);
 
       reorganizeLanes(laneNumber);
+      dirty = true;
     };
 
     this.setValue = function(laneNumber, value) {
@@ -413,19 +415,14 @@
           return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
-      // var newGroup = _.map(selection[laneIndex], function(s) { return _.assign({}, s, value); });
       var newGroup = _.assign([], selection[laneIndex].properties, value);
-      // selection[laneIndex] = collection.replaceSegments(selection, selection[laneIndex], newGroup);
-      // if (JSON.stringify(selection[laneIndex].properties) !== JSON.stringify(newGroup.properties)){
+      if(!dirty && _.isEqual(selection[laneIndex].properties, newGroup.properties)){
+        dirty = false;
+      }else{
         selection[laneIndex].properties = newGroup.properties;
-        if (/*JSON.stringify(selection) === JSON.stringify(lanesFetched) */selection == lanesFetched) {
-          dirty = false;
-        } else {
-          dirty = true;
-        }
-        eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
-      // }
-      // eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected, laneNumber);
+        dirty = true;
+      }
+      eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
     };
 
     this.setMultiValue = function(value) {
