@@ -480,7 +480,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     val propertyIdBox = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", SpeedLimitAsset.typeId).first
     val propertiesUpdated = Queries.updateMultipleChoiceValue(id, propertyIdBox, if(values.isSuggested) 1 else 0).first + singlePropertiesUpdated
 
-    if (assetsUpdated == 1 && propertiesUpdated == 2) {
+    if (assetsUpdated == 1 ) {
       Some(id)
     } else {
       dynamicSession.rollback()
