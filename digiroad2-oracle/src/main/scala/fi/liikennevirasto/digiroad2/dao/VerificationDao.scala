@@ -112,10 +112,9 @@ class VerificationDao {
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on lrm.id = al.position_id
-        join #$idTableName i on i.id = lrm.link_id
         join property p on p.asset_type_id = a.asset_type_id and p.property_type = 'checkbox' and p.public_id = 'suggest_box'
         join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id
-        join enumerated_value ev on ev.property_id = p.id and ev.value = 1 and ev.id = mcv.enumerated_value_id
+        join enumerated_value ev on ev.property_id = p.id and ev.value = 1 and ev.id = mcv.enumerated_value_id and  lrm.link_id in (select id from #$idTableName)
         """.as[(Long, Int)].list
     }
   }
