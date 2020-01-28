@@ -130,7 +130,7 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
   }
 
   def getSuggestedLinearAssets(linkIds: Seq[Long]): Seq[(Long, Int)] = {
-    withDynSession {
+    withDynTransaction {
       dao.getSuggestedLinearAssets(linkIds.toSet)
     }
   }
