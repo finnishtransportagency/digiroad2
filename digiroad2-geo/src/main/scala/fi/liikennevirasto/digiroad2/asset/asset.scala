@@ -629,6 +629,7 @@ object DateParser {
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
   val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
   val DateTimePropertyFormatMsTimeZone = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZZ")
+  val DateTimePropertyFormatMsTimeZoneWithT = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
 
   def dateToString(date: DateTime, dateFormatter: DateTimeFormatter): String = {
     date.toString(dateFormatter)

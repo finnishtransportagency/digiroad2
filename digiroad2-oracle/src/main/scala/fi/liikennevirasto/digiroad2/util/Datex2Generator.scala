@@ -19,7 +19,7 @@ case class LorryParkingInDATEX2(servicePointId: Option[Long] = None,
 class Datex2Generator() {
   val countryInicial = "fi"
   val nationalIdentifier = "Finnish parking sites for lorries"
-  val timeOfCreation = DateParser.dateToString(DateTime.now(), DateParser.DateTimePropertyFormatMsTimeZone)
+  val timeOfCreation = DateParser.dateToString(DateTime.now(), DateParser.DateTimePropertyFormatMsTimeZoneWithT)
   val genericPublicationName = "ParkingTablePublication"
   val version = "1"
   val parkingTableId = "FIN_FTA_TruckParkingTable_1"
@@ -40,6 +40,18 @@ class Datex2Generator() {
   val bottomXML =
     s"""</parkingTable></parkingTablePublication></genericPublicationExtension></payloadPublication></d2LogicalModel>"""
 
+  var serviceType = Map(
+    6 -> "Rest area or gas station",
+    12 -> "Parking lot, min. 40-50 places",
+    13 -> "Car shipping terminal",
+    14 -> "Coach and lorry parking",
+    15 -> "Parking house"
+  )
+
+  var restAreaType = Map(
+    1 -> "rest area, comprehensive facilities",
+    2 -> "rest area, basic facilities"
+  )
 
   def generateDatex2Body(lorryParkings: Set[LorryParkingInDATEX2]): String = {
     lorryParkings.map { lp =>
@@ -53,6 +65,14 @@ class Datex2Generator() {
       val municipalityCode = lp.municipalityCode
       val lon = lp.lon
       val lat = lp.lon
+
+      //parkingNumberOfSpaces needs to have integer
+      //equipmentType needs to have a value
+      //publishingAgreement needs to be boolean
+      //parkingTypeOfGroup needs to have a value [adjacentSpaces, nonAdjacentSpaces, completeFloor, mixedUsage, statisticsOnly, singleParameters, other]
+      //interUrbanParkingSiteLocation needs to have a value [motorway, nearbyMotorway, layBy, onStreet, other]
+      //accessCategory needs to have a value [vehicleEntranceAndExit, vehicleEntrance, vehicleExit, pedestrianEntranceAndExit, pedestrianEntrance, pedestrianExit, emergencyExit, unspecified, unknown, other]
+      //all latitude and longitude needs to have floats
 
       s"""<parkingRecord xsi:type="InterUrbanParkingSite" id="FI-${servicePointId}" version="${version}">
           <parkingName>
