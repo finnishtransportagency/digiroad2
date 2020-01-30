@@ -294,11 +294,6 @@ trait LinearAssetOperations {
 
     val fullChanges = extensionChanges ++ replacementChanges
 
-    val AutoGenereatedAsset = changes.filter(_.changeType == ChangeType.New.value).flatMap(createAssetsInNewLink(_, assetsToUpdate))
-
-  println(AutoGenereatedAsset)
-
-
     val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
       case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
         val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, cs)
@@ -416,24 +411,6 @@ trait LinearAssetOperations {
         }
       case _ =>
         None
-    }
-  }
-
-  private def createAssetsInNewLink(change: ChangeInfo, assets: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
-    val adj = roadLinkService.getAdjacent(change.newId.get, false)
-
-    val actualRoaLink: RoadLink = adj.find(road => road.linkId == change.newId.get).get
-    val adjacentRoadLinks = adj.filter(road => road.administrativeClass == actualRoaLink.administrativeClass)
-
-    val assetsOnAdjacentRoadLinks = assets.filter(asset => adjacentRoadLinks.map(_.linkId).contains(asset.linkId))
-    val groupedAssets = assetsOnAdjacentRoadLinks.groupBy(_.sideCode)
-
-    assetsOnAdjacentRoadLinks.map(_.sideCode).flatMap { sideCode =>
-      val adjAsset = groupedAssets(sideCode)
-      if(adjAsset.size == 1 || adjAsset.tail.count(_.value.equals(adjAsset.head.value)) > 1)
-        Seq(adjAsset.head.copy(startMeasure = 0, endMeasure = GeometryUtils.geometryLength(actualRoaLink.geometry), vvhTimeStamp = actualRoaLink.vvhTimeStamp))
-      else
-        Seq()
     }
   }
 
