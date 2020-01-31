@@ -153,11 +153,7 @@
     };
 
     this.replaceSegments = function(selection, lane, newSegments) {
-      // if (selection.length === 1) {
-        self.linearAssets = replaceOneSegment(self.linearAssets, lane, newSegments);
-      // } else {
-      //   self.linearAssets = replaceGroup(self.linearAssets, lane, newSegments);
-      // }
+      self.linearAssets = replaceOneSegment(self.linearAssets, lane, newSegments);
       return newSegments;
     };
 
@@ -176,14 +172,14 @@
       return new ol.geom.LineString(points).getLength();
     };
 
-    this.splitLinearAsset = function(id, split, callback) {
-      var link = _.find(_.flatten(self.linearAssets), { id: id });
-
-      var left = _.cloneDeep(link);
+    this.splitLinearAsset = function(lane, split, callback) {
+      var left = _.cloneDeep(lane);
       left.points = split.firstSplitVertices;
+      left.endMeasure = split.splitMeasure;
 
-      var right = _.cloneDeep(link);
+      var right = _.cloneDeep(lane);
       right.points = split.secondSplitVertices;
+      right.startMeasure = split.splitMeasure;
 
       if (calculateMeasure(left) < calculateMeasure(right)) {
         splitLinearAssets.created = left;
@@ -193,15 +189,14 @@
         splitLinearAssets.existing = left;
       }
 
-      splitLinearAssets.created.id = null;
-      splitLinearAssets.splitMeasure = split.splitMeasure;
+      splitLinearAssets.created.id = 0;
+      splitLinearAssets.existing.id = 0;
 
       splitLinearAssets.created.marker = 'A';
       splitLinearAssets.existing.marker = 'B';
 
       dirty = true;
       callback(splitLinearAssets);
-      eventbus.trigger(multiElementEvent('fetched'), self.getAll());
     };
 
     this.saveSplit = function(callback) {

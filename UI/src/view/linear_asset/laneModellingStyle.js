@@ -11,6 +11,10 @@
       var laneCode = _.find(asset.properties, function(property){
         return property.publicId === "lane_code";
       });
+
+      if (_.isUndefined(laneCode))
+        return true;
+
       return _.head(laneCode.values).value.toString()[1] == "1";
     };
 
@@ -31,14 +35,14 @@
         var hasAsset = me.hasValue(linearAsset);
         var type = {type: 'line'};
 
-        if (isRoadlink) {
+        if (isRoadlink || (!_.isUndefined(linearAsset.points) && !isRoadlink && linearAsset.selectedLinks.length == 1)) {
           return _.merge({}, linearAsset, {hasAsset: hasAsset}, type);
         }else{
-          return _.map(linearAsset.selectedLinks, function(roadLink) {
-            var roadLinkWithAsset = linearAsset;
-            roadLinkWithAsset.points = roadLink.points;
-            return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset}, type);
-          });
+            return _.map(linearAsset.selectedLinks, function(roadLink) {
+              var roadLinkWithAsset = linearAsset;
+              roadLinkWithAsset.points = roadLink.points;
+              return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset}, type);
+            });
         }
       }));
 

@@ -3,6 +3,26 @@
     LinearAssetBox.call(this, assetConfig);
     var me = this;
 
+    this.Tool = function (toolName, icon) {
+      var className = toolName.toLowerCase();
+      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function () {
+        applicationModel.setSelectedTool(toolName);
+      });
+      var deactivate = function () {
+        element.removeClass('active');
+      };
+      var activate = function () {
+        element.addClass('active');
+      };
+
+      return {
+        element: element,
+        deactivate: deactivate,
+        activate: activate,
+        name: toolName
+      };
+    };
+
     this.legendName = function () {
       return 'linear-asset-legend ' + assetConfig.className;
     };

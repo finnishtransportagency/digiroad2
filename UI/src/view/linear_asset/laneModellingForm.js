@@ -75,7 +75,7 @@
 
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      if(isAddByRoadAddressActive &&  (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
+      if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
         lanesAssets.setEndAddressesValues(currentPropertyValue);
       }else{
         var properties = _.filter(getValue(currentLane), function(property){ return property.publicId !== currentPropertyValue.publicId; });
@@ -921,6 +921,10 @@
       _assetTypeConfiguration = assetTypeConfiguration;
       lanesAssets = _assetTypeConfiguration.selectedLinearAsset;
 
+      eventbus.on('laneModellingForm: reload', function() {
+        reloadForm($('#feature-attributes'));
+      });
+
       function setInitialForm() {
         defaultFormStructure = formStructure;
         currentFormStructure = mainLaneFormStructure;
@@ -1183,7 +1187,8 @@
         selectedAsset.setInitialRoadFields();
 
         reloadForm($('#feature-attributes'));
-      }).prop("disabled", _.isUndefined(selectedRoadLink.administrativeClass) || _.isUndefined(selectedRoadLink.roadNumber) || _.isUndefined(selectedRoadLink.roadPartNumber) || _.isUndefined(selectedRoadLink.startAddrMValue) || selectedRoadLink.administrativeClass != 1));
+      }).prop("disabled", _.isUndefined(selectedRoadLink.roadNumber) || _.isUndefined(selectedRoadLink.roadPartNumber) ||
+        _.isUndefined(selectedRoadLink.startAddrMValue) || selectedRoadLink.administrativeClass != 1 || selectedAsset.configurationIsCut()));
 
       return $('<ul class="list-lane-buttons">').append(addByRoadAddress).append(addLeftLane).append(addRightLane);
     };
@@ -1228,11 +1233,13 @@
     };
 
     me.renderPreview = function(selectedAsset) {
-      var previewHeader = createPreviewHeaderElement(_.map(selectedAsset.get(), function (lane){
+      var laneNumbers = _.map(selectedAsset.get(), function (lane){
         return _.head(_.find(lane.properties, function (property) {
           return property.publicId == "lane_code";
         }).values).value;
-      }));
+      });
+
+      var previewHeader = createPreviewHeaderElement(_.uniq(laneNumbers));
 
       return previewHeader;
     };
@@ -1258,7 +1265,7 @@
     me.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
       forms = new AvailableForms();
       var isReadOnly = _isReadOnly(selectedAsset);
-      var asset = _.find(selectedAsset.get(), function (lane){
+      var asset = _.filter(selectedAsset.get(), function (lane){
         return _.find(lane.properties, function (property) {
           return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
         });
@@ -1266,21 +1273,38 @@
 
       var body = createBodyElement(selectedAsset);
 
-      renderFormElements(asset, isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, selectedAsset.removeValue, isDisabled, body);
+      if(selectedAsset.isSplit(currentLane)) {
+        //Render form A
+        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getAValue, selectedAsset.removeAValue, false, body);
 
-      if(!isReadOnly)
-        renderExpireAndDeleteButtonsElement(selectedAsset, body);
+        if(!isReadOnly)
+          renderExpireAndDeleteButtonsElement(selectedAsset, body, 'A');
 
-      body.find('.form').append('<hr class="form-break">');
+        body.find('.form').append('<hr class="form-break">');
+        //Render form B
+        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, false, body);
+
+        if(!isReadOnly)
+          renderExpireAndDeleteButtonsElement(selectedAsset, body, 'B');
+
+        body.find('.form').append('<hr class="form-break">');
+      }else{
+        renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, selectedAsset.removeValue, isDisabled, body);
+
+        if(!isReadOnly)
+          renderExpireAndDeleteButtonsElement(selectedAsset, body);
+
+        body.find('.form').append('<hr class="form-break">');
+      }
 
       //Hide or show elements depending on the readonly mode
       toggleBodyElements(body, isReadOnly);
       return body;
     };
 
-    function renderExpireAndDeleteButtonsElement(selectedAsset, body){
+    function renderExpireAndDeleteButtonsElement(selectedAsset, body, sidecode){
       var deleteLane = $('<button class="btn btn-secondary lane-button">Poista kaista</button>').click(function() {
-        selectedAsset.removeLane(currentLane);
+        selectedAsset.removeLane(currentLane, sidecode);
 
         var asset = _.find(selectedAsset.get(), function (lane){
           return _.find(lane.properties, function (property) {
@@ -1306,7 +1330,7 @@
       });
 
       var expireLane = $('<button class="btn btn-secondary lane-button">Paata kaista</button>').click(function() {
-        selectedAsset.expireLane(currentLane);
+        selectedAsset.expireLane(currentLane, sidecode);
 
         var asset = _.find(selectedAsset.get(), function (lane){
           return _.find(lane.properties, function (property) {
@@ -1331,11 +1355,12 @@
         reloadForm($('#feature-attributes'));
       });
 
-      expireLane.prop('disabled', _.find(selectedAsset.get(), function (lane){
-        return _.find(lane.properties, function (property) {
+      var lane = _.find(selectedAsset.get(), function (lane) {
+        return (_.isUndefined(sidecode) || lane.marker == sidecode) && _.find(lane.properties, function (property) {
           return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
         });
-      }).id === 0);
+      });
+      expireLane.prop('disabled', lane.id === 0 || !_.isUndefined(sidecode));
 
       if(currentLane.toString()[1] !== "1")
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
@@ -1345,9 +1370,9 @@
       var sideCodeClass = generateClassName(sideCode);
 
       var formGroup = $('' + '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' + '</div>');
-
       setValueFn(currentLane, {properties: asset.properties});
 
+      formGroup.append($('' + createSideCodeMarker(sideCode)));
       body.find('.form').append(formGroup);
       body.find('.form-editable-' + sideCodeClass).append(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
@@ -1491,10 +1516,7 @@
       });
 
       var updateStatus = function(element) {
-        // if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-        //   element.prop('disabled', !(me.isSaveable(forms.getFields('a')) && me.isSaveable(forms.getFields('b')) && me.isSplitOrSeparatedAllowed()));
-        // } else
-          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty()));
+          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty() && !assetTypeConfiguration.selectedLinearAsset.lanesCutAreEqual()));
       };
 
       updateStatus(element);

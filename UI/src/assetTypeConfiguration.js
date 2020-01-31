@@ -920,29 +920,33 @@
         }),
         saveCondition:function (lanes) {
           var isValidLane = function (fields) {
+            var isValidDatePeriod = function (fields) {
             var dateFields = _.filter(fields, function (field) {
               return field.propertyType === 'date';
             });
             var isValidDate = true;
 
             if (dateFields.length == 2) {
-            var startDate = _.find(dateFields, function (field) {
-              return field.publicId === 'start_date';
-            });
+              var startDate = _.find(dateFields, function (field) {
+                return field.publicId === 'start_date';
+              });
 
-            var endDate = _.find(dateFields, function (field) {
-              return field.publicId === 'end_date';
-            });
+              var endDate = _.find(dateFields, function (field) {
+                return field.publicId === 'end_date';
+              });
 
-            if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
-              isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
-          }
+              if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+                isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
+            }
+            return isValidDate;
+          };
 
-            var isValidRoadAddresses = true;
+            var isValidRoadAddress = function (fields) {
+              var isValidRoadAddress = true;
 
-            var roadAddressesFields = _.filter(fields, function (field) {
-              return field.propertyType === 'number';
-            });
+              var roadAddressesFields = _.filter(fields, function (field) {
+                return field.propertyType === 'number';
+              });
 
               if (roadAddressesFields.length >= 1) {
                 var endRoadPartNumber = _.find(roadAddressesFields, function (field) {
@@ -953,12 +957,15 @@
                   return field.publicId === 'end_distance';
                 });
 
-                if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) || _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0])){
-                  isValidRoadAddresses = false;
+                if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
+                  _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0])) {
+                  isValidRoadAddress = false;
                 }
               }
+              return isValidRoadAddress;
+            };
 
-              return isValidDate && isValidRoadAddresses;
+              return isValidDatePeriod(fields) && isValidRoadAddress(fields);
           };
 
           return !_.some(_.map(lanes, function (lane) {

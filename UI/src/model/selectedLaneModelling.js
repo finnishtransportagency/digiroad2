@@ -4,11 +4,10 @@
     var selection = [];
     var selectedRoadlink = null;
     var assetsToBeExpired = [];
+    var assetsToBeRemoved = [];
     var self = this;
     var dirty = false;
     var originalLinearAssetValue = null;
-    var isSeparated = false;
-    var isValid = true;
     var multipleSelected;
 
     var getLane = function (laneNumber) {
@@ -58,22 +57,13 @@
       return multiElementEventCategory + ':' + eventName;
     };
 
-    this.splitLinearAsset = function(id, split) {
-      collection.splitLinearAsset(id, split, function(splitLinearAssets) {
-        selection = [splitLinearAssets.created, splitLinearAssets.existing];
-        originalLinearAssetValue = splitLinearAssets.existing.value;
+    this.splitLinearAsset = function(laneNumber, split) {
+      collection.splitLinearAsset(getLane(laneNumber), split, function(splitLinearAssets) {
+        self.removeLane(laneNumber, undefined, true);
+        selection.push(splitLinearAssets.created, splitLinearAssets.existing);
         dirty = true;
-        collection.setSelection(self);
-        eventbus.trigger(singleElementEvent('selected'), self);
+        eventbus.trigger('laneModellingForm: reload');
       });
-    };
-
-    this.separate = function() {
-      selection = collection.separateLinearAsset(_.head(selection));
-      isSeparated = true;
-      dirty = true;
-      eventbus.trigger(singleElementEvent('separated'), self);
-      eventbus.trigger(singleElementEvent('selected'), self);
     };
 
     this.open = function(linearAsset, singleLinkSelect) {
@@ -81,18 +71,19 @@
       self.close();
       var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       selectedRoadlink = linearAsset;
-      backend.getLanesByLinkId(linearAsset.linkId, function(asset) {
+      backend.getLanesByLinkIdAndSidecode(linearAsset.linkId, linearAsset.sideCode, function(asset) {
         _.forEach(asset, function (lane) {
           lane.linkId = _.map(linearAssets, function (linearAsset) {
             return linearAsset.linkId;
           });
           lane.selectedLinks = linearAssets;
         });
-        originalLinearAssetValue = _.cloneDeep(asset);  //same as lanes fetched?
+        originalLinearAssetValue = _.cloneDeep(asset);
         selection = _.cloneDeep(asset);
         lanesFetched = _.cloneDeep(asset);
-        collection.setSelection(self);  //is this needed?
+        collection.setSelection(self);
         assetsToBeExpired=[];
+        assetsToBeRemoved=[];
         eventbus.trigger(singleElementEvent('selected'), self);
       });
     };
@@ -177,33 +168,9 @@
       });
     };
 
-    var saveSplit = function() {
-      eventbus.trigger(singleElementEvent('saving'));
-      collection.saveSplit(function() {
-        dirty = false;
-        self.close();
-      });
-    };
-
-    var saveSeparation = function() {
-      eventbus.trigger(singleElementEvent('saving'));
-      collection.saveSeparation(function() {
-        dirty = false;
-        isSeparated = false;
-        self.close();
-      });
-    };
-
     var saveExisting = function() {
       eventbus.trigger(singleElementEvent('saving'));
-      // var payloadContents = function() {
-      //   if (self.isUnknown()) {
-      //     return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
-      //   } else {
-      //     return { ids: _.map(selection, 'id') };
-      //   }
-      // };
-      var payload = {assets: selection.concat(assetsToBeExpired), typeId: typeId};
+      var payload = {assets: selection.concat(assetsToBeExpired).concat(assetsToBeRemoved), typeId: typeId};
       var backendOperation = backend.updateLaneAssets;
 
       backendOperation(payload, function() {
@@ -228,57 +195,84 @@
     };
 
     this.isSplit = function(laneNumber) {
-      var lane = _.find(selection, function (lane){
+      if(_.isUndefined(laneNumber))
+        return false;
+
+      var lane = _.filter(selection, function (lane){
         return _.find(lane.properties, function (property) {
           return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
 
-      return !isSeparated && !_.isEmpty(lane) && lane.id === null;
+      return lane.length > 1;
     };
 
-    this.isSeparated = function() {
-      return isSeparated;
+    this.configurationIsCut = function() {
+      var lane = _.find(selection, function (lane){
+        return !_.isUndefined(lane.marker);
+      });
+
+      return !_.isUndefined(lane);
+    };
+
+    this.isAddByRoadAddress = function() {
+      var lane = _.find(selection, function (lane){
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "initial_road_number";
+        });
+      });
+
+      return !_.isUndefined(lane);
+    };
+
+    this.lanesCutAreEqual = function() {
+      var laneNumbers = _.map(selection, function (lane){
+        return _.head(_.find(lane.properties, function (property) {
+          return property.publicId == "lane_code";
+        }).values).value;
+      });
+
+      var cuttedLaneNumbers = _.transform(_.countBy(laneNumbers), function(result, count, value) {
+        if (count > 1) result.push(value);
+      }, []);
+
+      return _.some(cuttedLaneNumbers, function (laneNumber){
+        var lanes = _.filter(selection, function (lane){
+          return _.find(lane.properties, function (property) {
+            return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+          });
+        });
+
+        return _.isEqual(lanes[0].properties, lanes[1].properties);
+      });
+    };
+
+    this.isOuterLane= function(laneNumber) {
+      var lane = _.find(selection, function (lane){
+        return _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && _.head(property.values).value == parseInt(laneNumber) + 2;
+        });
+      });
+
+      return _.isUndefined(lane);
     };
 
     this.isSplitOrSeparated = function() {
-      return this.isSplit() || this.isSeparated();
+      return this.isSplit();
     };
 
     this.save = function() {
         saveExisting();
     };
 
-    var cancelCreation = function() {
-      if (isSeparated) {
-        var originalLinearAsset = _.cloneDeep(selection[0]);
-        originalLinearAsset.value = originalLinearAssetValue;
-        originalLinearAsset.sideCode = 1;
-        collection.replaceSegments([selection[0]], [originalLinearAsset]);
-      }
-      collection.setSelection(null);
-      selection = [];
-      dirty = false;
-      isSeparated = false;
-      collection.cancelCreation();
-      eventbus.trigger(singleElementEvent('unselect'), self);
-    };
-
     var cancelExisting = function() {
-      // var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
-      // selection = collection.replaceSegments(selection, newGroup);
       selection = lanesFetched;
       dirty = false;
-      // eventbus.trigger(singleElementEvent('cancelled'), self);
       eventbus.trigger(singleElementEvent('valueChanged'), self);
     };
 
     this.cancel = function() {
-      // if (self.isSplit() || self.isSeparated()) {
-      //   cancelCreation();
-      // } else {
       cancelExisting();
-      // }
       self.close();
     };
 
@@ -317,6 +311,28 @@
 
     this.getValue = function(laneNumber) {
       var value = getProperty(getLane(laneNumber), 'properties');
+      return value;
+    };
+
+    this.getAValue = function(laneNumber) {
+      var lane = _.find(selection, function (lane){
+        return lane.marker == 'A' && _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+        });
+      });
+
+      var value = getProperty(lane, 'properties');
+      return value;
+    };
+
+    this.getBValue = function(laneNumber) {
+      var lane = _.find(selection, function (lane){
+        return lane.marker == 'B' && _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+        });
+      });
+
+      var value = getProperty(lane, 'properties');
       return value;
     };
 
@@ -382,21 +398,26 @@
       selection.push(newLane);
     };
 
-    this.removeLane = function(laneNumber) {
-      var laneIndex = _.findIndex(selection, function (lane) {
-        return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+    this.removeLane = function(laneNumber, sidecode, splited) {
+        var laneIndex = _.findIndex(selection, function (lane) {
+          return (_.isUndefined(sidecode) || lane.marker == sidecode) && _.find(lane.properties, function (property) {
+            return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+          });
         });
-      });
 
-      selection.splice(laneIndex,1);
+      var removeLane = selection.splice(laneIndex,1)[0];
+      removeLane.delete = true;
+
+      if((removeLane.id !== 0 || !splited) && _.isUndefined(removeLane.marker))
+        assetsToBeRemoved.push(removeLane);
+
       reorganizeLanes(laneNumber);
       dirty = true;
     };
 
-    this.expireLane = function(laneNumber) {
+    this.expireLane = function(laneNumber, sidecode) {
       var laneIndex = _.findIndex(selection, function (lane) {
-        return _.find(lane.properties, function (property) {
+        return (_.isUndefined(sidecode) || lane.marker == sidecode) && _.find(lane.properties, function (property) {
           return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
@@ -431,53 +452,30 @@
       eventbus.trigger(multiElementEvent('valueChanged'), self);
     };
 
-    function isValueDifferent(selection){
-      if(selection.length == 1) return true;
-
-      var nonEmptyValues = _.map(selection, function (select) {
-        return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
+    this.setAValue = function (laneNumber, value) {
+      var laneIndex = _.findIndex(selection, function (lane) {
+        return lane.marker == 'A'  && _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+        });
       });
-      var zipped = _.zip(nonEmptyValues[0], nonEmptyValues[1]);
-      var mapped = _.map(zipped, function (zipper) {
-        if(!zipper[1] || !zipper[0])
-          return true;
-        else
-          return zipper[0].value !== zipper[1].value;
-      });
-      return _.includes(mapped, true);
-    }
+      var newGroup = _.assign([], selection[laneIndex].properties, value);
+        selection[laneIndex].properties = newGroup.properties;
+        dirty = true;
 
-    function getRequiredFields(properties){
-      return _.filter(properties, function (property) {
-        return (property.publicId === "huoltotie_kayttooikeus") || (property.publicId === "huoltotie_huoltovastuu");
-      });
-    }
-
-    function checkFormMandatoryFields(formSelection) {
-      if (_.isUndefined(formSelection.value)) return true;
-      var requiredFields = getRequiredFields(formSelection.value);
-      return !_.some(requiredFields, function(fields){ return fields.value === ''; });
-    }
-
-    function checkFormsMandatoryFields(formSelections) {
-      var mandatorySelected = !_.some(formSelections, function(formSelection){ return !checkFormMandatoryFields(formSelection); });
-      return mandatorySelected;
-    }
-
-    this.setAValue = function (value) {
-      if (value != selection[0].value) {
-        var newGroup = _.assign({}, selection[0], { value: value });
-        selection[0] = collection.replaceCreatedSplit(selection[0], newGroup);
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
-      }
+      eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
     };
 
-    this.setBValue = function (value) {
-      if (value != selection[1].value) {
-        var newGroup = _.assign({}, selection[1], { value: value });
-        selection[1] = collection.replaceExistingSplit(selection[1], newGroup);
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
-      }
+    this.setBValue = function (laneNumber, value) {
+      var laneIndex = _.findIndex(selection, function (lane) {
+        return lane.marker == 'B'  && _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+        });
+      });
+      var newGroup = _.assign([], selection[laneIndex].properties, value);
+      selection[laneIndex].properties = newGroup.properties;
+      dirty = true;
+
+      eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
     };
 
     this.removeValue = function(laneNumber) {
@@ -488,12 +486,12 @@
       self.setMultiValue();
     };
 
-    this.removeAValue = function() {
-      self.setAValue(undefined);
+    this.removeAValue = function(laneNumber) {
+      self.setAValue(laneNumber, undefined);
     };
 
-    this.removeBValue = function() {
-      self.setBValue(undefined);
+    this.removeBValue = function(laneNumber) {
+      self.setBValue(laneNumber, undefined);
     };
 
     this.isDirty = function() {
@@ -533,52 +531,6 @@
     var isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
-    };
-
-    this.requiredPropertiesMissing = function (formStructure) {
-
-      var requiredFields = _.filter(formStructure.fields, function(form) { return form.required; });
-
-      var assets = this.isSplitOrSeparated() ? _.filter(selection, function(asset){ return asset.value; }) : selection;
-
-      return !_.every(assets, function(asset){
-
-        return _.every(requiredFields, function(field){
-          if(!asset.value || _.isEmpty(asset.value))
-            return false;
-
-          var property  = _.find(asset.value.properties, function(p){ return p.publicId === field.publicId;});
-
-          if(!property)
-            return false;
-
-          if(_.isEmpty(property.values))
-            return false;
-
-          return _.some(property.values, function(value){ return value && !_.isEmpty(value.value); });
-        });
-      });
-    };
-
-    this.isSplitOrSeparatedEqual = function(){
-      if (_.filter(selection, function(p){return p.value;}).length <= 1)
-        return false;
-
-      return _.every(selection[0].value.properties, function(property){
-        var iProperty =  _.find(selection[1].value.properties, function(p){ return p.publicId === property.publicId; });
-        if(!iProperty)
-          return false;
-
-        return _.isEqual(property.values, iProperty.values);
-      });
-    };
-
-    this.hasValidValues = function () {
-      return isValid;
-    };
-
-    this.setValidValues = function (valid) {
-      isValid = valid;
     };
   };
 })(this);
