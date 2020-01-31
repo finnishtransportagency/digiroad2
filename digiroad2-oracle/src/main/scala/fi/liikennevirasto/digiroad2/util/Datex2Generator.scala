@@ -40,19 +40,6 @@ class Datex2Generator() {
   val bottomXML =
     s"""</parkingTable></parkingTablePublication></genericPublicationExtension></payloadPublication></d2LogicalModel>"""
 
-  var serviceType = Map(
-    6 -> "Rest area or gas station",
-    12 -> "Parking lot, min. 40-50 places",
-    13 -> "Car shipping terminal",
-    14 -> "Coach and lorry parking",
-    15 -> "Parking house"
-  )
-
-  var restAreaType = Map(
-    1 -> "rest area, comprehensive facilities",
-    2 -> "rest area, basic facilities"
-  )
-
   def generateDatex2Body(lorryParkings: Set[LorryParkingInDATEX2]): String = {
     lorryParkings.map { lp =>
       val servicePointId = lp.servicePointId.getOrElse("")
@@ -64,31 +51,17 @@ class Datex2Generator() {
       val modifiedDate = lp.modifiedDate.getOrElse("")
       val municipalityCode = lp.municipalityCode
       val lon = lp.lon
-      val lat = lp.lon
+      val lat = lp.lat
 
-      //parkingNumberOfSpaces needs to have integer
-      //equipmentType needs to have a value
-      //publishingAgreement needs to be boolean
-      //parkingTypeOfGroup needs to have a value [adjacentSpaces, nonAdjacentSpaces, completeFloor, mixedUsage, statisticsOnly, singleParameters, other]
-      //interUrbanParkingSiteLocation needs to have a value [motorway, nearbyMotorway, layBy, onStreet, other]
-      //accessCategory needs to have a value [vehicleEntranceAndExit, vehicleEntrance, vehicleExit, pedestrianEntranceAndExit, pedestrianEntrance, pedestrianExit, emergencyExit, unspecified, unknown, other]
-      //all latitude and longitude needs to have floats
-
-      s"""<parkingRecord xsi:type="InterUrbanParkingSite" id="FI-${servicePointId}" version="${version}">
+      s"""<parkingRecord xsi:type="InterUrbanParkingSite" id="FI_${servicePointId}" version="${version}">
           <parkingName>
           <values>
           <value lang="${countryInicial}">${name}</value>
           </values>
           </parkingName>
           <parkingRecordVersionTime>${timeOfCreation}</parkingRecordVersionTime>
-          <operator xsi:type="ContactDetails" id="FI-${servicePointId}" version="${version}">
-          <contactOrganisationName>
-          <values><value lang="${countryInicial}"></value></values>
-          </contactOrganisationName>
-          <contactDetailsTelephoneNumber></contactDetailsTelephoneNumber>
-          <contactDetailsEMail></contactDetailsEMail>
-          <urlLinkAddress></urlLinkAddress>
-          <publishingAgreement> </publishingAgreement>
+          <operator xsi:type="ContactDetails" id="FI_OPERATOR_${servicePointId}" version="${version}">
+          <publishingAgreement>true</publishingAgreement>
           </operator>
           <parkingLocation xsi:type="Point">
           <pointByCoordinates>
@@ -98,20 +71,20 @@ class Datex2Generator() {
           </pointByCoordinates>
           </parkingLocation>
           <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="1">
-          <parkingEquipmentOrServiceFacility xsi:type="Equipment"><equipmentType></equipmentType></parkingEquipmentOrServiceFacility>
+          <parkingEquipmentOrServiceFacility xsi:type="Equipment"><equipmentType>unknown</equipmentType></parkingEquipmentOrServiceFacility>
           </parkingEquipmentOrServiceFacility>
           <groupOfParkingSpaces groupIndex="1">
           <parkingSpaceBasics xsi:type="GroupOfParkingSpaces">
           <onlyAssignedParking>
           <vehicleCharacteristics><vehicleType>lorry</vehicleType></vehicleCharacteristics>
           </onlyAssignedParking>
-          <parkingNumberOfSpaces></parkingNumberOfSpaces>
-          <parkingTypeOfGroup></parkingTypeOfGroup>
+          <parkingNumberOfSpaces>1</parkingNumberOfSpaces>
+          <parkingTypeOfGroup>adjacentSpaces</parkingTypeOfGroup>
           </parkingSpaceBasics>
           </groupOfParkingSpaces>
           <parkingSiteAddress><contactUnknown>true</contactUnknown></parkingSiteAddress>
-          <parkingAccess id="FI-${servicePointId}-Access-1">
-          <accessCategory></accessCategory>
+          <parkingAccess id="FI_ACCESS_${servicePointId}">
+          <accessCategory>unknown</accessCategory>
           <primaryRoad>
           <roadIdentifier>
           <values><value lang="${countryInicial}"></value></values>
@@ -122,11 +95,11 @@ class Datex2Generator() {
           </primaryRoad>
           <location xsi:type="Point">
           <locationForDisplay>
-          <latitude></latitude><longitude></longitude>
+          <latitude>${lat}</latitude><longitude>${lon}</longitude>
           </locationForDisplay>
           <pointByCoordinates>
           <pointCoordinates>
-          <latitude></latitude><longitude></longitude>
+          <latitude>${lat}</latitude><longitude>${lon}</longitude>
           </pointCoordinates>
           </pointByCoordinates>
           </location>
@@ -134,7 +107,7 @@ class Datex2Generator() {
           <parkingStandardsAndSecurity>
           <parkingSecurity>unknown</parkingSecurity>
           </parkingStandardsAndSecurity>
-          <interUrbanParkingSiteLocation></interUrbanParkingSiteLocation>
+          <interUrbanParkingSiteLocation>motorway</interUrbanParkingSiteLocation>
           </parkingRecord>"""
 
     }.mkString(" ")

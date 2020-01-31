@@ -352,6 +352,8 @@ object Queries {
 
   //Table lorry_parking_to_datex2 created using an shape file importer, does't exist on Flyway
   def getLorryParkingToTransform(): Set[LorryParkingInDATEX2] = {
+    //When getting the geometry column it need to be in the SRID 4258
+    //workaround if geometry is not in SRID 4258. SDO_CS.TRANSFORM(GEOMETRY, 4258)
     Q.queryNA[LorryParkingInDATEX2](
       s"""
       select PALVPISTID, PALVELUID, TYYPPI, TYYPPI_TAR, NIMI, LISATIEDOT, MUOKKAUSPV, KUNTAKOODI, GEOMETRY from lorry_parking_to_datex2
