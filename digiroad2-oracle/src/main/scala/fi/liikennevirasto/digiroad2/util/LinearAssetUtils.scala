@@ -35,28 +35,6 @@ object LinearAssetUtils {
     newChangeInfoDetected(persistedLinearAssetToLinearAsset(a), changes)
   }
 
-  /**
-    * Returns true if there are new change informations for roadlink assets.
-    * Comparing if the assets vvh time stamp is older than the change time stamp
-    * @param roadLink Roadlink under consideration
-    * @param changeInfo Change information
-    * @param assets Linear assets
-    * @return true if there are new change informations for roadlink assets
-    */
-  @Deprecated
-  def isNewProjection(roadLink: RoadLink, changeInfo: Seq[ChangeInfo], assets: Seq[LinearAsset]) = {
-    changeInfo.exists(_.newId == roadLink.linkId) &&
-      assets.exists(asset => (asset.linkId == roadLink.linkId) &&
-        (asset.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp))
-  }
-
-  def isNewProjection(roadLink: RoadLink, changes: Map[Long, Seq[ChangeInfo]], assets: Seq[LinearAsset]) = {
-    val changeInfo = changes.getOrElse(roadLink.linkId, Seq.empty)
-    changeInfo.exists(_.newId == roadLink.linkId) &&
-      assets.exists(asset => (asset.linkId == roadLink.linkId) &&
-        (asset.vvhTimeStamp < changeInfo.filter(_.newId == roadLink.linkId).maxBy(_.vvhTimeStamp).vvhTimeStamp))
-  }
-
   /* Filter to only those Ids that are no longer present on map and not referred to in change information
      Used by LinearAssetService and SpeedLimitService
    */
@@ -71,6 +49,8 @@ object LinearAssetUtils {
       !c._2.exists(ci => ci.newId.contains(c._1)) &&
         !currentLinkIds.contains(c._1)
     ).keys.toSeq
+
+    changes.filterNot(c => currentLinkIds.contains(c._1)).keySet.toSeq
   }
 
   def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {

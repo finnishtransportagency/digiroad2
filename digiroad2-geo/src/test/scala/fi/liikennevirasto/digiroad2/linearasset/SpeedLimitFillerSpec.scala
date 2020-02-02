@@ -538,12 +538,12 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     oldLink1.value.get should be (NumericValue(50))
   }
 
-  def parse(string: String) = {
+  def parse(string: String): DateTime = {
     val dateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm")
     DateTime.parse(string, dateTimePropertyFormat)
   }
 
-  def printSL(speedLimit: SpeedLimit) = {
+  def printSL(speedLimit: SpeedLimit): Unit = {
     val ids = "%d (%d)".format(speedLimit.id, speedLimit.linkId)
     val dir = speedLimit.sideCode match {
       case SideCode.BothDirections => "⇅"
