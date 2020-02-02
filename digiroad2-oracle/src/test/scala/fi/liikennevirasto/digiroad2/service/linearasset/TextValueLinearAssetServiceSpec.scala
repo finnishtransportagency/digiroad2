@@ -41,6 +41,7 @@ class TextValueLinearAssetServiceSpec extends FunSuite with Matchers {
 
   object ServiceWithDao extends TextValueLinearAssetService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
+    override def withDynSession[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: OracleLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
