@@ -212,6 +212,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val newRoadLinks = Seq(RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
@@ -257,6 +258,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T  = f
     }
 
     val oldLinkId = 5000
@@ -335,6 +337,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId = 5000
@@ -410,6 +413,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 5001
@@ -498,6 +502,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 5001
@@ -735,6 +740,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 3056622
@@ -892,6 +898,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId = 5000

@@ -123,6 +123,7 @@ class PavedRoadServiceSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
     val service = new PavedRoadService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val newLinkId = 5001
