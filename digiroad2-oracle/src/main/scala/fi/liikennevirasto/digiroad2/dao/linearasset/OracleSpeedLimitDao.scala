@@ -565,7 +565,9 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   private def createGeometryForSegment(topology: Seq[RoadLink])(segment: SpeedLimit) = {
     val roadLink = topology.find(_.linkId == segment.linkId).get
     val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMeasure, segment.endMeasure)
-    SpeedLimit(segment.id, segment.linkId, segment.sideCode, roadLink.trafficDirection, segment.value, geometry, segment.startMeasure, segment.endMeasure, segment.modifiedBy, segment.modifiedDateTime, segment.createdBy, segment.createdDateTime, segment.vvhTimeStamp, segment.geomModifiedDate, linkSource = roadLink.linkSource)
+    SpeedLimit(segment.id, segment.linkId, segment.sideCode, roadLink.trafficDirection, segment.value, geometry, segment.startMeasure,
+      segment.endMeasure, segment.modifiedBy, segment.modifiedDateTime, segment.createdBy, segment.createdDateTime, segment.vvhTimeStamp,
+      segment.geomModifiedDate, linkSource = roadLink.linkSource)
   }
 
   /**

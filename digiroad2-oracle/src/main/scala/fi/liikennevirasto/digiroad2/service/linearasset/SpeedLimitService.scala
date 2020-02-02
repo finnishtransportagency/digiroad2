@@ -4,8 +4,8 @@ import java.util.{NoSuchElementException, Properties}
 
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.ConstructionType.{Planned, UnderConstruction}
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.{InaccurateAssetDAO, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleSpeedLimitDao
@@ -15,7 +15,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.SpeedLimitValidator
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
-import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -220,17 +219,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
 
     val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || roadFilterFunction(rl))
 
-
     val initChangeSet = ChangeSet(droppedAssetIds = Set.empty[Long],
                                   expiredAssetIds = oldSpeedLimits.map(_.id).toSet,
                                   adjustedMValues = Seq.empty[MValueAdjustment],
                                   adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                   adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
+                                  valueAdjustments = Seq.empty[ValueAdjustment])
 
 
     val (newSpeedLimits, projectedChangeSet) = fillNewRoadLinksWithPreviousSpeedLimitData(projectableTargetRoadLinks, oldSpeedLimits ++ speedLimitsOnChangedLinks,
-                                                                    speedLimitsOnChangedLinks, change, initChangeSet)
+                                                                    speedLimitsOnChangedLinks, change, initChangeSet, speedLimitLinks)
 
     val speedLimits = (speedLimitLinks ++ newSpeedLimits).groupBy(_.linkId)
     val roadLinksByLinkId = topology.groupBy(_.linkId).mapValues(_.head)
@@ -251,17 +249,68 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Uses VVH ChangeInfo API to map OTH speed limit information from old road links to new road links after geometry changes.
     */
-  private def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit],
-                                                         currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo], changeSet: ChangeSet) : (Seq[SpeedLimit], ChangeSet) ={
+  private def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo],
+                                                         changeSet: ChangeSet, existingSpeedLimit: Seq[SpeedLimit]) : (Seq[SpeedLimit], ChangeSet) = {
 
-
-    mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes).foldLeft((Seq.empty[SpeedLimit], changeSet)) {
-      case ((persistedSpeed, cs), (asset, (Some(roadLink), Some(projection)))) =>
+    val (speedLimit, changeSetF) = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes)
+      .foldLeft((Seq.empty[SpeedLimit], changeSet)) {
+      case ((persistedSpeed, cs) , (asset, (Some(roadLink), Some(projection)))) =>
         val (speedLimit, changes) = SpeedLimitFiller.projectSpeedLimit(asset, roadLink, projection, cs)
         ((persistedSpeed ++ Seq(speedLimit)).filter(sl => Math.abs(sl.startMeasure - sl.endMeasure) > 0) , changes)
-
-      case _=> (Seq.empty[SpeedLimit], changeSet)
     }
+
+    val newLinearAsset = if((speedLimit ++ existingSpeedLimit).nonEmpty) {
+      newChangeAsset(roadLinks, speedLimit ++ existingSpeedLimit, changes)
+    } else Seq()
+
+    (speedLimit ++ newLinearAsset, changeSetF)
+  }
+
+  def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[SpeedLimit], changes: Seq[ChangeInfo]): Seq[SpeedLimit] = {
+    def getAdjacentAssetByPoint(assets: Seq[(Point, SpeedLimit)], point: Point) : Seq[SpeedLimit] = {
+      assets.filter{case (assetPt, _) => GeometryUtils.areAdjacent(assetPt, point)}.map(_._2)
+    }
+
+    def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
+      existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.vvhTimeStamp)}
+        .flatMap { asset =>
+          val roadLink = roadLinks.find(_.linkId == asset.linkId)
+          if (roadLink.nonEmpty || roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
+            GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
+              (if (asset.startMeasure == 0)
+                GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.startMeasure).map(point => (point, asset))
+              else
+                Seq())
+          } else
+            Seq()
+        }
+    }
+
+    val changesNew = changes.filter(_.changeType == New.value)
+    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get)).flatMap { change =>
+      roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
+        val assetAndPoints : Seq[(Point, SpeedLimit)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
+        val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
+
+        if (assetAndPoints.nonEmpty) {
+          val assetAdjFirst = getAdjacentAssetByPoint(assetAndPoints, first)
+          val assetAdjLast = getAdjacentAssetByPoint(assetAndPoints, last)
+
+          val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
+          val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
+
+          if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
+            groupBySideCodeFirst.keys.flatMap { sideCode =>
+              groupBySideCodeFirst(sideCode).find(asset => groupBySideCodeLast(sideCode).exists(_.value.equals(asset.value))).map { asset =>
+                asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+              }
+            }
+          } else
+            Seq()
+        } else
+          Seq()
+      }
+    }.flatten
   }
 
   private def mapReplacementProjections(oldSpeedLimits: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], roadLinks: Seq[RoadLink],
@@ -292,7 +341,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     (roadLink,projection)
   }
 
-  private def mapChangeToProjection(change: ChangeInfo, speedLimits: Seq[SpeedLimit]) = {
+  private def mapChangeToProjection(change: ChangeInfo, speedLimits: Seq[SpeedLimit]): Option[Projection] = {
     val typed = ChangeType.apply(change.changeType)
     typed match {
         // cases 5, 6, 1, 2
