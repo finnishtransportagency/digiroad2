@@ -339,7 +339,7 @@ trait LinearAssetOperations {
     }
 
     val changesNew = changes.filter(_.changeType == New.value)
-    val linksWithExpiredAssets = OracleDatabase.withDynSession {
+    val linksWithExpiredAssets = withDynSession {
       Queries.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
     }
 
