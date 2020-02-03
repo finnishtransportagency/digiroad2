@@ -45,10 +45,10 @@ object LinearAssetUtils {
   }
 
   def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
-    currentLinkIds.flatMap { linkId =>
+   currentLinkIds.flatMap { linkId =>
       val someChange = changes.get(linkId)
       if (someChange.nonEmpty) {
-        someChange.get.flatMap { x => !x.oldId.contains(linkId) -> x.oldId.get
+        someChange.get.flatMap { x =>
           if (x.oldId.contains(linkId)) None else Some(x.oldId)
         }.flatten
       } else
