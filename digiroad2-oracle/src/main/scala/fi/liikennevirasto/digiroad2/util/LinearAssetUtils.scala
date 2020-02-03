@@ -45,12 +45,15 @@ object LinearAssetUtils {
   }
 
   def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
-    changes.filter(c =>
-      !c._2.exists(ci => ci.newId.contains(c._1)) &&
-        !currentLinkIds.contains(c._1)
-    ).keys.toSeq
-
-    changes.filterNot(c => currentLinkIds.contains(c._1)).keySet.toSeq
+    currentLinkIds.flatMap { linkId =>
+      val someChange = changes.get(linkId)
+      if (someChange.nonEmpty) {
+        someChange.get.flatMap { x => !x.oldId.contains(linkId) -> x.oldId.get
+          if (x.oldId.contains(linkId)) None else Some(x.oldId)
+        }.flatten
+      } else
+        None
+    }.toSeq
   }
 
   def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {

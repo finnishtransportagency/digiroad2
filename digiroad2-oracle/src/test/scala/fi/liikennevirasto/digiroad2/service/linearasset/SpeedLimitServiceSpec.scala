@@ -1035,7 +1035,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val speedLimitAssetTypeId = 20
     val oldLinkId = 3055878L
     val newLinkId = 3055879L
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
