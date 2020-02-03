@@ -515,6 +515,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
     val service = new ProhibitionService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId = 5000
