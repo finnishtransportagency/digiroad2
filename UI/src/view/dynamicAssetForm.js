@@ -877,13 +877,6 @@
             _assetTypeConfiguration = assetTypeConfiguration;
             new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
-          var updateStatusForMassButton = function(element) {
-            if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-              element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
-            } else
-              element.prop('disabled', !(me.isSaveable()));
-          };
-
             eventbus.on(events('selected', 'cancelled'), function () {
                 var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
               rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
@@ -917,18 +910,8 @@
                 }
             });
 
-             eventbus.on("massDialog:rendered", function(buttonElement){
-               eventbus.on(multiEvents('valueChanged'), function() {
-                 updateStatusForMassButton(buttonElement);
-               });
-             });
-
             function events() {
                 return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-            }
-
-            function multiEvents() {
-                return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
             }
         };
 
@@ -1004,7 +987,30 @@
           return footer;
         };
 
+        function setMassUpdateEvents() {
+            function multiEvents() {
+                return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
+            }
+
+            var updateStatusForMassButton = function(element) {
+                if(_assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+                    element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && me.isSplitOrSeparatedAllowed()));
+                } else
+                    element.prop('disabled', !(me.isSaveable(forms.getAllFields())));
+            };
+
+            eventbus.on("massDialog:rendered", function (massUpdateBox, buttonElement) {
+                eventbus.on(multiEvents('valueChanged') + ' radio-trigger-dirty', function () {
+                    updateStatusForMassButton(buttonElement);
+                    massUpdateBox.find('.suggestion').remove();
+                });
+            });
+        }
+
         me.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
+            if(isMassUpdate)
+                setMassUpdateEvents();
+
             forms = new AvailableForms();
             var isReadOnly = _isReadOnly(selectedAsset);
             var asset = selectedAsset.get();
@@ -1014,7 +1020,7 @@
             if(selectedAsset.isSplitOrSeparated()) {
                 //Render form A
                 renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getValue, selectedAsset.removeAValue, false, body);
-                //Remder form B
+                //Render form B
                 renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, false, body);
             }
             else
