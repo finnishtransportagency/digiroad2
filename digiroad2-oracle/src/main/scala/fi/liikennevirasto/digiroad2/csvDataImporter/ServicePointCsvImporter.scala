@@ -83,7 +83,7 @@ class ServicePointCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     val groupedServicePoints = validServicePoints.groupBy(_.position)
 
     val incomingServicePoints = groupedServicePoints.map { servicePoint =>
-      (IncomingServicePoint(servicePoint._1.x, servicePoint._1.y, servicePoint._2.map(_.incomingService).toSet), servicePoint._2.map(_.roadLink).head.municipalityCode)
+      (IncomingServicePoint(servicePoint._1.x, servicePoint._1.y, servicePoint._2.map(_.incomingService).toSet, Set()), servicePoint._2.map(_.roadLink).head.municipalityCode)
     }
 
     incomingServicePoints.foreach { incomingAsset =>

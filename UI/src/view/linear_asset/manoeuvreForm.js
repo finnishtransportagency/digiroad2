@@ -91,6 +91,14 @@
           '</div>' +
         '<% } %>' +
         '<% if(!_.isEmpty(additionalInfo)) { %> <label>Tarkenne: <%- additionalInfo %></label> <% } %>' +
+        '<% if(isSuggestionElement) { %>' +
+          '<div class="form-group suggestion-element">' +
+            '<label class="control-label">Vihjetieto: </label>' +
+            '<div class="form-group manoeuvre">' +
+              '<p class="form-control-static"> kyllä </p>' +
+            '</div>' +
+          '</div>' +
+        '<% } %>' +
       '</div>';
 
     var manoeuvresEditModeTemplate = '' +
@@ -147,6 +155,14 @@
                                  'placeholder="Muu tarkenne" <% print(manoeuvreExists ? "" : "disabled") %> ' +
                                  '<% if(additionalInfo) { %> value="<%- additionalInfo %>" <% } %>/>' +
             '</div>' +
+            '<% if(isSuggestionElement) { %>' +
+              '<div class="form-group suggestion-element">' +
+                '<label class="control-label">Vihjetieto</label>' +
+                '<div class="form-group suggestion-box">' +
+                  '<input type="checkbox" class="suggestionCheckBox" <%= suggestionValue %>>' +
+                '</div>' +
+              '</div>' +
+            '<% } %>' +
             '<div class="form-remove">' +
               '<div class="checkbox" >' +
                 '<input type="checkbox" class="checkbox-remove"/>' +
@@ -183,6 +199,7 @@
         rootElement.find('.adjacent-link').toggle(!readOnly);
         rootElement.find('.manoeuvre').toggle(readOnly);
         rootElement.find('.form-controls').toggle(!readOnly);
+        rootElement.find('.suggestion-box').toggle(!readOnly);
         if(readOnly){
           rootElement.find('.wrapper').addClass('read-only');
         } else {
@@ -217,11 +234,13 @@
               .sortBy(dayOrder, 'startHour', 'startMinute', 'endHour', 'endMinute')
               .map(validityPeriodDisplayElement)
               .join('');
+          var isSuggestionElement = authorizationPolicy.handleSuggestedAsset(selectedManoeuvreSource) && selectedManoeuvreSource.isSuggested();
 
           rootElement.find('.form').append(_.template(manouvresViewModeTemplate)(_.merge({}, manoeuvre, {
             isLinkChain: isLinkChain,
             localizedExceptions: localizedExceptions,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            isSuggestionElement: isSuggestionElement
           })));
         });
 
@@ -246,6 +265,8 @@
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
+          var suggestionValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
+          var isSuggestionElement = selectedManoeuvreSource.isSuggested() || !_.isNumber(selectedManoeuvreSource.getId());
           rootElement.find('.form').append(_.template(manoeuvresEditModeTemplate)(_.merge({}, adjacentLink, {
             manoeuvreExists: manoeuvreExists,
             manoeuvreId: manoeuvreId,
@@ -256,7 +277,9 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isLinkChain: isLinkChain,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            isSuggestionElement: isSuggestionElement,
+            suggestionValue: suggestionValue
           })));
         });
         _.each(roadLink.nonAdjacentTargets, function(target) {
@@ -277,6 +300,8 @@
               .map(validityPeriodDisplayElement)
               .join('') :
               '';
+          var suggestionValue = selectedManoeuvreSource.isSuggested() ? 'checked' : '';
+          var isSuggestionElement = selectedManoeuvreSource.isSuggested() || selectedManoeuvreSource.getId();
           rootElement.find('.form').append(_.template(manoeuvresEditModeTemplate)(_.merge({}, target, {
             linkId: manoeuvre.destLinkId,
             manoeuvreExists: manoeuvreExists,
@@ -288,7 +313,9 @@
             deleteButtonTemplate: deleteButtonTemplate,
             existingValidityPeriodElements: existingValidityPeriodElements,
             isLinkChain: isLinkChain,
-            validityPeriodElements: validityPeriodElements
+            validityPeriodElements: validityPeriodElements,
+            isSuggestionElement: isSuggestionElement,
+            suggestionValue: suggestionValue
           })));
         });
 
@@ -299,6 +326,7 @@
           var destLinkId = firstTargetLinkId;
           var manoeuvreId = !_.isEmpty(formGroupElement.attr('manoeuvreId')) ? parseInt(formGroupElement.attr('manoeuvreId'), 10) : null;
           var additionalInfo = !_.isEmpty(formGroupElement.find('.additional-info').val()) ? formGroupElement.find('.additional-info').val() : null;
+          var isSuggested = !_.isEmpty(rootElement.find('.suggestionCheckBox')) ? rootElement.find('.suggestionCheckBox').prop('checked') : false;
           var nextTargetLinkId = parseInt(formGroupElement.find('input:radio[name="target"]:checked').val(), 10);
           var linkIds = [firstTargetLinkId];
           return {
@@ -309,7 +337,8 @@
             linkIds: linkIds,
             exceptions: manoeuvreExceptions(formGroupElement),
             validityPeriods: manoeuvreValidityPeriods(formGroupElement),
-            additionalInfo: additionalInfo
+            additionalInfo: additionalInfo,
+            isSuggested: isSuggested
           };
         };
 
@@ -348,9 +377,14 @@
 
         rootElement.find('.adjacent-link').on('input', 'input[type="text"]', throttledAdditionalInfoHandler);
 
+        rootElement.find('.suggestion-box').on('change', 'input[type="checkbox"]', function(event) {
+          var manoeuvreId = selectedManoeuvreSource.getId();
+          selectedManoeuvreSource.setSuggestionInfo(manoeuvreId, $(event.currentTarget).prop('checked'));
+        });
+
         // Verify value of checkBox for remove the manoeuvres
         // If the checkBox was checked remove the manoeuvre
-        rootElement.find('.adjacent-link').on('change', 'input[type="checkbox"]', function(event) {
+        rootElement.find('.adjacent-link').on('change', '.checkbox-remove', function(event) {
           var eventTarget = $(event.currentTarget);
           var manoeuvreToEliminate = manoeuvreData($(event.delegateTarget));
           if (eventTarget.prop('checked')) {

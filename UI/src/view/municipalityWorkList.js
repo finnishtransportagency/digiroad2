@@ -98,13 +98,70 @@
       var privateRoadInfoListButton = $('<a>').addClass('btn btn-primary btn-private-road-list')
         .text('Yksityistiet').attr("href", "#work-list/privateRoads/" + municipalityId);
 
+      var downloadPDF = function() {
+      pdf.removeClass('pdfHide').addClass('pdfBackgroundColor pdfSize');
+        var html = $('#formTable').html();
+
+        var takeOutElements = function(beginElement, endElement, sizeElement){
+          while (html.indexOf(beginElement) != -1) {
+            var l = html.length;
+            var i = html.indexOf(beginElement);
+            var e = html.indexOf(endElement, i);
+            var s = html.slice(i, e + sizeElement);
+            html = html.replace(s, '');
+          }
+        };
+        takeOutElements('<button', '</button>', 9);
+        takeOutElements('<a', '</a>', 4);
+        takeOutElements('<th>', '</th>', 5);
+        takeOutElements('<td><input', '</td>', 5);
+        takeOutElements('<th id="suggestedAssets">', '</th>', 5);
+        takeOutElements('<td headers="suggestedAssets">', '</td>', 5);
+        takeOutElements('<div id="test">', '</div>', 6);
+
+        pdf.html('<div class="work-list"><div id="formTable">' + html + '</div></div>');
+
+        var HTML_Width = $("#pdf").width();
+        var HTML_Height = $("#pdf").height();
+        var top_left_margin = -5;
+        var PDF_Width = HTML_Width+(top_left_margin*2);
+        var PDF_Height = 985;
+        var canvas_image_width = HTML_Width;
+        var canvas_image_height = HTML_Height;
+        var totalPDFPages = Math.ceil(HTML_Height/PDF_Height)-1;
+
+        html2canvas(document.querySelector('#pdf')).then( function (canvas){
+              var imgData = canvas.toDataURL('image/jpeg');
+          var doc = new jsPDF('p', 'pt', [PDF_Width, PDF_Height]);
+          doc.addImage(imgData, 'JPEG', top_left_margin, top_left_margin,canvas_image_width,canvas_image_height);
+
+          for (var i = 1; i <= totalPDFPages; i++) {
+            doc.addPage(PDF_Width, PDF_Height);
+            doc.addImage(imgData, 'JPEG', top_left_margin, -(PDF_Height*i)+(top_left_margin*4),canvas_image_width,canvas_image_height);
+          }
+
+          var date = new Date();
+            doc.save('DR' + '_' + municipalityName.toLowerCase() + '_' + String(date.getDate()).padStart(2, '0') + String(date.getMonth() + 1).padStart(2, '0') + String(date.getFullYear()) + '.pdf');
+            });
+        pdf.html('').removeClass('pdfSize').addClass('pdfHide');
+      };
+
+      var printReportButton = function () {
+        if (authorizationPolicy.isOperator())
+          return $('<a>').addClass('btn btn-primary btn-print').text('Tulosta raportti').click(function(){
+            downloadPDF();
+          });
+      };
+
+      var pdf = $('<div id="pdf"/>');
+
       var municipalityHeader = function (municipalityName) {
-        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(privateRoadInfoListButton);
+        return $('<div class="municipality-header"/>').append($('<h2/>').html(municipalityName)).append(refreshButton).append(printReportButton).append(privateRoadInfoListButton);
       };
 
       var tableHeaderRow = function () {
         return '<thead><th></th> <th id="name">Tietolaji</th> <th id="count">Kohteiden määrä / Kohteita</th> <th id="date">Tarkistettu</th> <th id="verifier">Tarkistaja</th>' +
-               '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th></tr></thead>';
+          '<th id="modifiedBy">Käyttäjä</th> <th id="modifiedDate">Viimeisin päivitys</th> <th id="suggestedAssets">Vihjetieto</th> </tr></thead>';
       };
       var tableBodyRows = function (values) {
         return $('<tbody>').append(tableContentRows(values));
@@ -122,6 +179,10 @@
         _.forEach(values, function (asset) {
           asset.assetName = _.find(assetConfig.assetTypeInfo, function(config){ return config.typeId ===  asset.typeId; }).title ;
         });
+      };
+
+      var suggestedAssetsButton = function(counter, typeId) {
+        return counter > 0 ? '<a class="btn btn-suggested-list" href="#work-list/suggestedAssets/' + municipalityId + '/'+ typeId + '">' + counter + '</a>' : "";
       };
 
       var sortAssets = function (values) {
@@ -167,6 +228,7 @@
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
           '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
+          '<td headers="suggestedAssets">' + suggestedAssetsButton(asset.countSuggested, asset.typeId) + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
@@ -206,7 +268,7 @@
           .append(tableBodyRows(values));
       };
 
-      return $('<div id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems.properties)).append(deleteBtn).append(saveBtn);
+      return $('<div id="formTable"/>').append(municipalityHeader(municipalityName)).append(tableForGroupingValues(workListItems.properties)).append(deleteBtn).append(saveBtn).append(pdf);
     };
 
     this.generateWorkList = function (listP) {
@@ -228,7 +290,8 @@
 
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
-        if (limits.length == 1){
+        if (limits.length === 1){
+          showFormBtnVisible = false;
           me.createVerificationForm(_.head(limits));
         }
         else {

@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{TrHeightLimit, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Property, TrHeightLimit}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleHeightLimitDao
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -19,7 +19,8 @@ case class HeightLimit(id: Long, linkId: Long,
                        modifiedBy: Option[String] = None,
                        modifiedAt: Option[DateTime] = None,
                        linkSource: LinkGeomSource,
-                       limit: Double) extends PersistedPointAsset
+                       limit: Double,
+                       propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
 class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingHeightLimit
@@ -28,7 +29,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
   override def typeId: Int = TrHeightLimit.typeId
 
   override def setAssetPosition(asset: IncomingHeightLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
-
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[HeightLimit] = throw new UnsupportedOperationException("Not Supported Method")
   override def update(id: Long, updatedAsset: IncomingHeightLimit, roadLink: RoadLink, username: String) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: HeightLimit, floating: Boolean) = {
@@ -45,7 +46,7 @@ class HeightLimitService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[HeightLimit] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

@@ -94,10 +94,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(1l)).thenReturn(Some(roadLink))
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1l))).thenReturn(Seq(roadLink))
 
-      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), 30, "test", (_, _) => Unit)
+      val id = provider.create(Seq(NewLimit(1, 0.0, 150.0)), SpeedLimitValue(30), "test", (_, _) => Unit)
 
       val createdLimit = provider.getSpeedLimitById(id.head).get
-      createdLimit.value should equal(Some(NumericValue(30)))
+      createdLimit.value should equal(Some(SpeedLimitValue(30,false)))
       createdLimit.createdBy should equal(Some("test"))
     }
   }
@@ -164,8 +164,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val created = speedLimits(1)
       existing.value should not be(200097)
       created.value should not be(200097)
-      existing.value should be(Some(NumericValue(50)))
-      created.value should be(Some(NumericValue(60)))
+      existing.value should be(Some(SpeedLimitValue(50,false)))
+      created.value should be(Some(SpeedLimitValue(60,false)))
     }
   }
 
@@ -204,16 +204,16 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     runWithRollback {
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
 
-      val Seq(updatedLimit, createdLimit) = provider.separate(200097, 50, 40, "test", passingMunicipalityValidation)
+      val Seq(updatedLimit, createdLimit) = provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
 
       updatedLimit.linkId should be (388562360)
       updatedLimit.sideCode should be (SideCode.TowardsDigitizing)
-      updatedLimit.value should be (Some(NumericValue(50)))
+      updatedLimit.value should be (Some(SpeedLimitValue(50,false)))
       updatedLimit.createdBy should be (Some("test"))
 
       createdLimit.linkId should be (388562360)
       createdLimit.sideCode should be (SideCode.AgainstDigitizing)
-      createdLimit.value should be (Some(NumericValue(40)))
+      createdLimit.value should be (Some(SpeedLimitValue(40,false)))
       createdLimit.createdBy should be (Some("test"))
     }
   }
@@ -228,7 +228,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       intercept[IllegalArgumentException] {
-        provider.separate(200097, 50, 40, "test", failingMunicipalityValidation)
+        provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", failingMunicipalityValidation)
       }
     }
   }
@@ -236,7 +236,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if no speed limit is found") {
     runWithRollback {
       intercept[NoSuchElementException] {
-        provider.separate(0, 50, 40, "test", passingMunicipalityValidation)
+        provider.separate(0, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
       }
     }
   }
@@ -248,7 +248,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       intercept[IllegalArgumentException] {
-        provider.separate(300388, 50, 40, "test", passingMunicipalityValidation)
+        provider.separate(300388, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
       }
     }
   }
@@ -260,7 +260,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       intercept[IllegalArgumentException] {
-        provider.separate(200299, 50, 40, "test", passingMunicipalityValidation)
+        provider.separate(200299, SpeedLimitValue(50), SpeedLimitValue(40), "test", passingMunicipalityValidation)
       }
     }
   }
@@ -311,14 +311,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
-      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(3)
-      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       dynamicSession.rollback()
@@ -380,8 +380,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val (limit1, limit2) = (list1.head, list2.head)
       limit1.id should be (asset1)
       limit2.id should be (asset2)
-      limit1.value should be (Some(NumericValue(80)))
-      limit2.value should be (Some(NumericValue(60)))
+      limit1.value should be (Some(SpeedLimitValue(80,false)))
+      limit2.value should be (Some(SpeedLimitValue(60,false)))
       limit1.startMeasure should be (0.0)
       limit2.startMeasure should be (0.0)
       limit1.endMeasure should be (25.0)
@@ -461,8 +461,8 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val (limit1, limit2) = (list1.head, list2.head)
       limit1.id should be (asset1)
       limit2.id should be (asset2)
-      limit1.value should be (Some(NumericValue(80)))
-      limit2.value should be (Some(NumericValue(60)))
+      limit1.value should be (Some(SpeedLimitValue(80,false)))
+      limit2.value should be (Some(SpeedLimitValue(60,false)))
       limit1.startMeasure should be (0.0)
       limit2.startMeasure should be (limit1.endMeasure)
       limit2.endMeasure should be (25.0)
@@ -483,10 +483,10 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       link2Limits.length should be (2)
       link3Limits.length should be (1)
 
-      link1Limits.head.value should be (Some(NumericValue(80)))
-      link3Limits.head.value should be (Some(NumericValue(60)))
-      link2Limits.filter(_.startMeasure == 0.0).head.value should be (Some(NumericValue(80)))
-      link2Limits.filter(_.startMeasure > 0.0).head.value should be (Some(NumericValue(60)))
+      link1Limits.head.value should be (Some(SpeedLimitValue(80,false)))
+      link3Limits.head.value should be (Some(SpeedLimitValue(60,false)))
+      link2Limits.filter(_.startMeasure == 0.0).head.value should be (Some(SpeedLimitValue(80,false)))
+      link2Limits.filter(_.startMeasure > 0.0).head.value should be (Some(SpeedLimitValue(60,false)))
       dynamicSession.rollback()
     }
   }
@@ -545,7 +545,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(3)
-      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
@@ -553,7 +553,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
-      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       dynamicSession.rollback()
@@ -598,14 +598,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
-      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
-      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       dynamicSession.rollback()
@@ -651,14 +651,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
-      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
-      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       dynamicSession.rollback()
@@ -704,14 +704,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
-      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
-      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       dynamicSession.rollback()
@@ -878,7 +878,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       //println(before)
 
       before.length should be(1)
-      before.head.foreach(_.value should be(Some(NumericValue(80))))
+      before.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
@@ -886,7 +886,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       //println(after)
 
       after.length should be(1)
-      after.head.foreach(_.value should be(Some(NumericValue(80))))
+      after.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       after.head.foreach(_.sideCode should be(SideCode.BothDirections))
       after.head.foreach(_.endMeasure should be(50))
 
@@ -1412,7 +1412,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
+    val details = "%d %.1f %.1f".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure)
     if (speedLimit.expired) {
       println("N/A")
     } else {
@@ -1500,7 +1500,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
-      apeedLimits.head.foreach(_.value should be(Some(NumericValue(80))))
+      apeedLimits.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       dynamicSession.rollback()
     }
   }
@@ -1558,7 +1558,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
-      apeedLimits.head.foreach(_.value should be(Some(NumericValue(80))))
+      apeedLimits.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       dynamicSession.rollback()
 
     }

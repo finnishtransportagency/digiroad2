@@ -8,7 +8,7 @@ define(['chai', 'eventbus', 'testHelpers', 'AssetsTestData'], function(chai, eve
     this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
-      var backend = testHelpers.fakeBackend(assetsData, assetData);
+      var backend = testHelpers.fakeBackend(assetsData, assetData, 12, 10);
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         done();

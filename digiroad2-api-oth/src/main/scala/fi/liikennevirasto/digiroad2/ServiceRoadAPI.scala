@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.linearasset.{MaintenanceRoad, PersistedLinearAsset, Properties, RoadLink}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, DynamicProperty}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.MaintenanceService
 import org.joda.time.DateTime
@@ -108,12 +108,12 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
         Map(
           "type" -> "Feature",
           "geometry" -> getLineStringGeometry(geometry),
-          "properties" -> getProperties(asset, asset.value.getOrElse(MaintenanceRoad(Seq())).asInstanceOf[MaintenanceRoad].properties, roadlink)
+          "properties" -> getProperties(asset, asset.value.getOrElse(DynamicValue(DynamicAssetValue(Seq()))).asInstanceOf[DynamicValue].value.properties, roadlink)
         )
     }
   }
 
-  private def getProperties(asset: PersistedLinearAsset, properties: Seq[Properties], roadLink: RoadLink) ={
+  private def getProperties(asset: PersistedLinearAsset, properties: Seq[DynamicProperty], roadLink: RoadLink) ={
     val maintainerId = getFieldValueInt(properties, "huoltotie_huoltovastuu")
     val accessId = getFieldValueInt(properties, "huoltotie_kayttooikeus")
     Map (
@@ -140,12 +140,12 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     )
   }
 
-  private def getFieldValue(properties: Seq[Properties], publicId: String): Option[String] = {
-    properties.find(p => p.publicId == publicId).map(_.value)
+  private def getFieldValue(properties: Seq[DynamicProperty], publicId: String): Option[String] = {
+    properties.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.value.toString))
   }
 
-  private def getFieldValueInt(properties: Seq[Properties], publicId: String): Option[Int] = {
-    properties.find(p => p.publicId == publicId).map(_.value.toInt)
+  private def getFieldValueInt(properties: Seq[DynamicProperty], publicId: String): Option[Int] = {
+    properties.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.value.toString.toInt))
   }
 
   private def getLineStringGeometry(geometry: Seq[Point]) = {

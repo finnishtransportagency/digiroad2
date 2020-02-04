@@ -19,6 +19,7 @@ import org.joda.time.{DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
 
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
@@ -121,6 +122,7 @@ object Queries {
     sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
   }
 
+  def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first
   def getPropertyMaxSize = "select max_value_length from property where public_id = ?"
@@ -139,6 +141,13 @@ object Queries {
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE)
     """
 
+  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
+    sqlu"""
+     update multiple_choice_value set enumerated_value_id =
+       (select id from enumerated_value where value = $propertyValue and property_id = $propertyId)
+       where asset_id = $assetId and property_id = $propertyId
+   """
+
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
@@ -154,6 +163,9 @@ object Queries {
 
   def existsTextProperty =
     "select id from text_property_value where asset_id = ? and property_id = ?"
+
+  def existsMultipleChoiceProperty =
+    "select asset_id from multiple_choice_value where asset_id = ? and property_id = ?"
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
     sqlu"""

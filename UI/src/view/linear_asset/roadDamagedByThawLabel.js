@@ -1,17 +1,17 @@
 (function(root) {
   root.RoadDamagedByThawLabel = function () {
     AssetLabel.call(this);
+    var me = this;
 
     var IMAGE_SIGN_HEIGHT = 33;
     var IMAGE_SIGN_ADJUSTMENT = 15;
     var IMAGE_LABEL_HEIGHT = 58;
     var IMAGE_LABEL_ADJUSTMENT = 43;
-
-    this.getStyle = function (values) {
-      var weightLimitValue = _.find(values.properties, function(value){ return value.publicId === "kelirikko"; });
-
+    
+    this.defaultStyle = function(value) {
+      var weightLimitValue = _.find(value.properties, function (value) {return value.publicId === "kelirikko";});
       var validWeightLimitValue = (!_.isUndefined(weightLimitValue) && !_.isEmpty(weightLimitValue.values)) ? weightLimitValue.values[0].value : '';
-
+      
       return createMultiStyles(validWeightLimitValue);
     };
 
@@ -85,6 +85,37 @@
         2: 'images/mass-limitations/totalWeightLimit.png'
       };
       return images[position];
+    };
+    //TODO There are labels with this two function below that are duplicated
+    this.getSuggestionStyle = function (yPosition) {
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: 'images/icons/questionMarkerIcon.png',
+          anchor : [0.5, yPosition]
+        }))
+      });
+    };
+
+    this.renderFeatures = function (assets, zoomLevel, getPoint) {
+      if (!me.isVisibleZoom(zoomLevel))
+        return [];
+
+      return [].concat.apply([], _.chain(assets).map(function (asset) {
+        var values = me.getValue(asset);
+        return _.map(values, function () {
+          var style = me.defaultStyle(values);
+
+          if(me.isSuggested(asset)) {
+            style = style.concat(me.getSuggestionStyle( 2.5));
+          }
+          var feature = me.createFeature(getPoint(asset));
+          feature.setProperties(_.omit(asset, 'geometry'));
+          feature.setStyle(style);
+          return feature;
+        });
+      }).filter(function (feature) {
+        return !_.isUndefined(feature);
+      }).value());
     };
   };
 })(this);
