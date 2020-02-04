@@ -2270,6 +2270,21 @@ object DataFixture {
     println("\n")
   }
 
+  def mergeMunicipalities(): Unit = {
+    val municipalityToDelete = 911
+    val municipalityToMerge = 541
+
+    println(s"\nStart process of merging municipality $municipalityToDelete into $municipalityToMerge")
+    println(DateTime.now())
+    println("")
+
+    OracleDatabase.withDynTransaction{
+      Queries.mergeMunicipalities(municipalityToDelete, municipalityToMerge)
+    }
+
+    println("")
+    println("Complete at time: " + DateTime.now())
+  }
 
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
@@ -2422,6 +2437,8 @@ object DataFixture {
         getStateRoadWithFunctionalClassUndefined()
       case Some("add_obstacles_shapefile") =>
         addObstaclesShapefile()
+      case Some("merge_municipalities") =>
+        mergeMunicipalities()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2435,7 +2452,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile")
+        " add_obstacles_shapefile | merge_municipalities")
     }
   }
 }
