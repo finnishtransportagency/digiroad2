@@ -1000,10 +1000,7 @@
             };
 
             eventbus.on("massDialog:rendered", function (buttonElement) {
-                eventbus.on(multiEvents('valueChanged'), function () {
-                    updateStatusForMassButton(buttonElement);
-                });
-                eventbus.on('radio-trigger-dirty', function() {
+                eventbus.on(multiEvents('valueChanged') + ' radio-trigger-dirty', function () {
                     updateStatusForMassButton(buttonElement);
                 });
             });
