@@ -62,7 +62,7 @@
       selectedMulti.setValue =  setValue;
       selectedMulti.removeValue = removeValue;
       container.find('.form-elements-container').html(formElements.renderForm(selectedMulti, true, true).find('.editable'));
-      eventbus.trigger('massDialog:rendered' , $('button.save'));
+      eventbus.trigger('massDialog:rendered' , $('.mass-update-modal'), $('button.save'));
     };
 
 

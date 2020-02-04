@@ -999,9 +999,10 @@
                     element.prop('disabled', !(me.isSaveable(forms.getAllFields())));
             };
 
-            eventbus.on("massDialog:rendered", function (buttonElement) {
+            eventbus.on("massDialog:rendered", function (massUpdateBox, buttonElement) {
                 eventbus.on(multiEvents('valueChanged') + ' radio-trigger-dirty', function () {
                     updateStatusForMassButton(buttonElement);
+                    massUpdateBox.find('.suggestion').remove();
                 });
             });
         }
