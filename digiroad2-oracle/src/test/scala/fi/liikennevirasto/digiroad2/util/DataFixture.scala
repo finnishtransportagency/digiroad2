@@ -236,6 +236,7 @@ object DataFixture {
   def setUpTest() {
     migrateAll()
     importMunicipalityCodes()
+    updateMunicipalities()
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",

@@ -177,7 +177,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader(Digiroad2Context.Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, assetType: Int)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, startupAsseId: Int)
 
   val StateRoadRestrictedAssets = Set(DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId, LitRoad.typeId,
     PavedRoad.typeId, TrafficSigns.typeId, CareClass.typeId)
@@ -450,10 +450,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/massTransitStops/metadata") {
-    def constructPosition(position: String): Point = {
-      val PositionList = position.split(",").map(_.toDouble)
-      Point(PositionList(0), PositionList(1))
-    }
     massTransitStopService.getMetadata(params.get("position").map(constructPosition))
   }
 
@@ -1831,6 +1827,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def constructPosition(position: String): Point = {
+    val PositionList = position.split(",").map(_.toDouble)
+    Point(PositionList(0), PositionList(1))
+  }
+
   post("/servicePoints") {
     val user = userProvider.getCurrentUser()
     val asset = (parsedBody \ "asset").extract[IncomingServicePoint]
@@ -2017,4 +2018,34 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         }
     )
   }
+
+  get("/userStartLocation") {
+    val user = userProvider.getCurrentUser()
+    params.get("position") match {
+      case Some(position) =>
+        val coordinates = constructPosition(position)
+
+        if (user.isELYMaintainer()) {
+          municipalityService.getElyByCoordinates(coordinates).map {
+            case (elyId, elyName) =>
+              Map("elyID" -> elyId,
+                "elyName" -> elyName)
+          }
+        } else {
+          val municipalityInfo = municipalityService.getMunicipalityByCoordinates(coordinates)
+          if (municipalityInfo.isEmpty) {
+            Map()
+          } else {
+            municipalityInfo.map {
+              municipalityInfo =>
+                Map("municipalityId" -> municipalityInfo.id,
+                  "municipalityName" -> municipalityInfo.name,
+                  "municipalityElyNumber" -> municipalityInfo.ely)
+            }
+          }
+        }
+      case _ => Map()
+    }
+  }
+
 }
