@@ -151,7 +151,7 @@
           assetTypeLayerName = "linkProperty";
         }
         else{
-          assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, startupAssetTypeId) || getSelectedAssetByTypeId(linearAssets, startupAssetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, startupAssetTypeId).layerName;
+          assetTypeLayerName = (getSelectedAssetByTypeId(pointAssets, startupAssetTypeId) || getSelectedAssetByTypeId(linearAssets, startupAssetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, startupAssetTypeId)).layerName;
         }
 
         localizedStrings = assetPropertyNames;
