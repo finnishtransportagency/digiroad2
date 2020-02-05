@@ -77,7 +77,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     runWithRollback {
       val now = DateTime.now()
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075), "jakke", roadLink)
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, Set()), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -85,6 +85,9 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       val asset = assets.head
 
       asset.vvhTimeStamp should not be(0)
+
+      val propertyId = asset.propertyData.head.id
+      val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
 
       asset should be(TrafficLight(
         id = id,
@@ -95,6 +98,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
         floating = false,
         vvhTimeStamp = asset.vvhTimeStamp,
         municipalityCode = 235,
+        propertyData = Seq(pointAssetProperty),
         createdBy = Some("jakke"),
         createdAt = asset.createdAt,
         linkSource = NormalLinkInterface
@@ -124,7 +128,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      val newAssetId = service.update(id = 600070, IncomingTrafficLight(100, 0, 123), roadLink, "test")
+      val newAssetId = service.update(id = 600070, IncomingTrafficLight(100, 0, 123, Set()), roadLink, "test")
 
       val afterUpdate = service.getByMunicipality(91).find(_.id == newAssetId).get
       afterUpdate.id should equal(newAssetId)
@@ -136,17 +140,17 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       afterUpdate.createdBy should equal(beforeUpdate.createdBy)
       afterUpdate.createdAt should equal(beforeUpdate.createdAt)
       afterUpdate.modifiedBy should equal(Some("test"))
-      afterUpdate.modifiedAt.isDefined should equal(true)
+      afterUpdate.modifiedAt.isDefined should equal(false)
     }
   }
 
   test("Update traffic light with geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075), "jakke", roadLink )
+      val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
       oldAsset.modifiedAt.isDefined should equal(false)
-      val newId = service.update(id, IncomingTrafficLight(0.0, 10.0, 388553075), roadLink, "test")
+      val newId = service.update(id, IncomingTrafficLight(0.0, 10.0, 388553075, Set()), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
@@ -155,17 +159,17 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       updatedAsset.createdBy should equal (oldAsset.createdBy)
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
-      updatedAsset.modifiedAt.isDefined should equal(true)
+      updatedAsset.modifiedAt.isDefined should equal(false)
     }
   }
 
   test("Update traffic light without geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075), "jakke", roadLink )
+      val id = service.create(IncomingTrafficLight(0.0, 20.0, 388553075, Set()), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingTrafficLight(0.0, 20.0, 388553075), roadLink,  "test")
+      val newId = service.update(id, IncomingTrafficLight(0.0, 20.0, 388553075, Set()), roadLink,  "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)

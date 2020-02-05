@@ -17,18 +17,18 @@ class ImportLogDAO {
       val status = r.nextInt()
       val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextStringOption()
-      val logType = r.nextString()
+      val jobName = r.nextString()
       val content = r.nextStringOption()
 
-      ImportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, logType, content)
+      ImportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, jobName, content)
     }
   }
 
-  def create(username: String, fileName: String): Long = {
+  def create(username: String, fileName: String, importType: String): Long = {
     val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
     sqlu"""
-        insert into import_log(id, file_name, created_by)
-        values ($id, $fileName, $username)
+        insert into import_log(id, file_name, import_type, created_by)
+        values ($id, $fileName, $importType, $username)
       """.execute
     id
   }
@@ -38,15 +38,6 @@ class ImportLogDAO {
         update import_log
         set content = $content
            ,status = ${status.value}
-        where id = $id
-      """.execute
-    id
-  }
-
-  def update(id: Long, importType: String): Long = {
-    sqlu"""
-        update import_log
-        set import_type = $importType
         where id = $id
       """.execute
     id

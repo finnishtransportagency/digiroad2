@@ -31,16 +31,23 @@
     var featureTypeRules = [
       new StyleRule().where('type').is('cutter').use({ icon: {  src: 'images/cursor-crosshair.svg'}})
     ];
+   
+    var questionMarkerStyleRules = [
+      new StyleRule().where('suggested').is(true).use({icon: {src: 'images/icons/questionMarker.png', scale: 0.7, anchor: [0.45, 1]}})
+    ];
+    
 
     me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
     me.browsingStyleProvider.addRules(expirationRules);
     me.browsingStyleProvider.addRules(zoomLevelRules);
     me.browsingStyleProvider.addRules(oneWayRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
+    me.browsingStyleProvider.addRules(questionMarkerStyleRules);
 
     me.browsingStyleProviderReadOnly =  new StyleRuleProvider({ stroke : { opacity: 0.7 , color: '#439232'}});
     me.browsingStyleProviderReadOnly.addRules(zoomLevelRules);
     me.browsingStyleProviderReadOnly.addRules(oneWayRules);
+    me.browsingStyleProvider.addRules(questionMarkerStyleRules);
   };
 })(this);
 

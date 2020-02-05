@@ -28,24 +28,45 @@ class OracleUserProvider extends UserProvider {
     }
   }
 
-  def createUser(username: String, config: Configuration, name: Option[String] = None) = {
-    OracleDatabase.withDynSession {
-      sqlu"""
+  def createUser(username: String, config: Configuration, name: Option[String] = None, newTransaction: Boolean = true) = {
+    if (newTransaction) {
+      OracleDatabase.withDynSession {
+        sqlu"""
         insert into service_user (id, username, configuration, name, created_at)
         values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, sysdate)
       """.execute
-    }
+      }
+    }else {
+        sqlu"""
+        insert into service_user (id, username, configuration, name, created_at)
+        values (primary_key_seq.nextval, ${username.toLowerCase}, ${write(config)}, $name, sysdate)
+      """.execute
+      }
   }
 
-  def getUser(username: String): Option[User] = {
+  def getUsers(): List[User] = {
+    sql"""select id, username, configuration, name from service_user""".as[User].list
+  }
+
+  def getUser(username: String, newTransaction: Boolean = true): Option[User] = {
     if (username == null) return None
-    OracleDatabase.withDynSession {
+
+    if (newTransaction) {
+      OracleDatabase.withDynSession {
+        sql"""select id, username, configuration, name from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
+      }
+    } else {
       sql"""select id, username, configuration, name from service_user where lower(username) = ${username.toLowerCase}""".as[User].firstOption
     }
   }
 
-  def updateUserConfiguration(user: User): User = {
-    OracleDatabase.withDynSession {
+  def updateUserConfiguration(user: User, newTransaction: Boolean = true): User = {
+    if (newTransaction) {
+      OracleDatabase.withDynSession {
+        sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name} where lower(username) = ${user.username.toLowerCase}""".execute
+        user
+      }
+    } else{
       sqlu"""update service_user set configuration = ${write(user.configuration)}, name = ${user.name} where lower(username) = ${user.username.toLowerCase}""".execute
       user
     }

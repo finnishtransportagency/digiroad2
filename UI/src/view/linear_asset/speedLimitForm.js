@@ -33,12 +33,28 @@
             '<label class="control-label">Rajoitus</label>' +
             '<p class="form-control-static">' + ((selectedSpeedLimit.getValue() + ' ' + unit) || 'Tuntematon') + '</p>' +
             '<select class="form-control <%- speedLimitClass %>" style="display: none">' + speedLimitOptionTags.join('') + '</select>' +
-          '</div>');
+            '</div>' +
+            suggestionElement()
+        );
         return template({sideCode: sideCode, speedLimitClass: speedLimitClass});
       };
       var separateValueElement = singleValueElement("a") + singleValueElement("b");
-      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : singleValueElement();
+      return selectedSpeedLimit.isSplitOrSeparated() ? separateValueElement : (singleValueElement());
     };
+
+      function suggestionElement() {
+          if(authorizationPolicy.handleSuggestedAsset(selectedSpeedLimit)) {
+              var isSuggested = selectedSpeedLimit.isSuggested();
+              var checkedValue = isSuggested ? 'checked' : '';
+                return '' +
+                    '<div class="form-group editable suggestion"> ' +
+                        '<label class="control-label">Vihjetieto</label>' +
+                        '<p class="form-control-static"> kyllä </p>' +
+                        '<input type="checkbox" class="form-control suggestionCheckBox" '  + checkedValue + '>' +
+                    '</div>';
+          } else
+              return '';
+      }
 
     var userInformationLog = function() {
       var hasMunicipality = function (linearAsset) {
@@ -129,12 +145,8 @@
       }
   };
 
-  var bindEvents = function(selectedSpeedLimit, feedbackCollection, backend) {
+  var bindEvents = function(selectedSpeedLimit, feedbackCollection) {
     new FeedbackDataTool(feedbackCollection, 'speedLimit', authorizationPolicy);
-
-    if (authorizationPolicy.userRoles.length === 0){
-      backend.getUserRoles();
-    }
 
     var rootElement = $('#feature-attributes');
     var toggleMode = function(readOnly) {
@@ -143,7 +155,37 @@
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.editable .form-control').prop('disabled', readOnly);
+      rootElement.find('.edit-control-group').toggle(!readOnly);
+      handleSuggestionBox();
     };
+
+    function handleSuggestionBox() {
+      if((applicationModel.isReadOnly() && (_.isNull(selectedSpeedLimit.getId()) || !selectedSpeedLimit.isSuggested()))) {
+        rootElement.find('.suggestion').hide();
+      } else if(!_.isEmpty(selectedSpeedLimit.get()) && selectedSpeedLimit.isSplitOrSeparated()) {
+        rootElement.find('.suggestion').hide();
+      } else
+        rootElement.find('.suggestion').show();
+    }
+
+    eventbus.on('speedLimit:selected', function(){
+      handleSuggestionBox();
+    });
+
+    $(rootElement).find('.speed-limit-a, .speed-limit-b').on('click', function () {
+      $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+      selectedSpeedLimit.setValue( {isSuggested: false, value: selectedSpeedLimit.getBValue().value});
+      selectedSpeedLimit.setValue( {isSuggested: false, value: selectedSpeedLimit.getValue().value});
+    });
+
+    $(rootElement).find('.speed-limit').on('change', function () {
+      if(!_.isNull(selectedSpeedLimit.getId())) {
+        $(rootElement).find('.suggestionCheckBox').attr('disabled', true);
+        $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+        selectedSpeedLimit.setValue({isSuggested: false, value: parseInt(rootElement.find('select.speed-limit').val(),10)});
+      }
+    });
+
 
     eventbus.on('speedLimit:selected speedLimit:cancelled', function() {
       rootElement.find('#feature-attributes-header').html(header(selectedSpeedLimit));
@@ -154,14 +196,23 @@
         return parseInt($(event.currentTarget).find(':selected').attr('value'), 10);
       };
 
-      rootElement.find('select.speed-limit').change(function(event) {
-        selectedSpeedLimit.setValue(extractValue(event));
+      rootElement.find('select.speed-limit, .suggestionCheckBox').change(function(event) {
+        var checkBoxValue = rootElement.find('.suggestionCheckBox').prop('checked');
+        var speedLimitValue = parseInt(rootElement.find('select.speed-limit').val(),10);
+        selectedSpeedLimit.setValue({isSuggested: checkBoxValue ? checkBoxValue : false, value: speedLimitValue});
+
+        if(!_.isNull(selectedSpeedLimit.getId())) {
+          $(rootElement).find('.suggestionCheckBox').attr('disabled', true);
+          $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+          selectedSpeedLimit.setValue({isSuggested: false, value: speedLimitValue});
+        }
       });
+
       rootElement.find('select.speed-limit-a').change(function(event) {
-        selectedSpeedLimit.setAValue(extractValue(event));
+        selectedSpeedLimit.setAValue({value: extractValue(event), isSuggested: false});
       });
       rootElement.find('select.speed-limit-b').change(function(event) {
-        selectedSpeedLimit.setBValue(extractValue(event));
+        selectedSpeedLimit.setBValue({value: extractValue(event), isSuggested: false});
       });
       rootElement.find('#separate-limit').on('click', function() { selectedSpeedLimit.separate(); });
       rootElement.find('.form-controls.speed-limit button.save').on('click', function() { selectedSpeedLimit.save(); });
@@ -183,7 +234,12 @@
     eventbus.on('layer:selected', function(layer) {
       if(layer === 'speedLimit') {
         $('ul[class=information-content]').empty();
-        renderLinktoWorkList();
+        if(!authorizationPolicy.fetched)
+            eventbus.on('roles:fetched', function() {
+                renderLinktoWorkList(authorizationPolicy);
+            });
+         else
+            renderLinktoWorkList(authorizationPolicy);
       }
     });
   };
@@ -196,8 +252,8 @@
   }
 
   root.SpeedLimitForm = {
-    initialize: function(selectedSpeedLimit, feedbackCollection, backend) {
-      bindEvents(selectedSpeedLimit, feedbackCollection, backend);
+    initialize: function(selectedSpeedLimit, feedbackCollection) {
+      bindEvents(selectedSpeedLimit, feedbackCollection);
     }
   };
 })(this);

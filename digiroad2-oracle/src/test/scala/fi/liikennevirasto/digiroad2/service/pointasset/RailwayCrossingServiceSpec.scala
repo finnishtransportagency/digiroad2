@@ -85,31 +85,55 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
   test("Update railway crossing with geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 1, None, "testCode"), "jakke", roadLink )
+      val codeValue = PropertyValue("")
+      val safetyEquipmentValue = PropertyValue("1")
+      val nameValue = PropertyValue("testCode")
+      val simpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(codeValue))
+      val simpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(safetyEquipmentValue))
+      val simpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(nameValue))
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, Set(simpleCodeProperty, simpleSafetyEquipmentProperty, simpleNameProperty)), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
       oldAsset.modifiedAt.isDefined should equal(false)
-      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0, 388553075, 2, None, "testCode"), roadLink, "test")
+
+      val updatedCodeValue = PropertyValue("")
+      val updatedSafetyEquipmentValue = PropertyValue("2")
+      val updatedNameValue = PropertyValue("testCode")
+      val updatedSimpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(updatedCodeValue))
+      val updatedSimpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(updatedSafetyEquipmentValue))
+      val updatedSimpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(updatedNameValue))
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 10.0, 388553075, Set(updatedSimpleCodeProperty, updatedSimpleNameProperty, updatedSimpleSafetyEquipmentProperty)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
       updatedAsset.lon should equal (0.0)
       updatedAsset.lat should equal (10.0)
-      updatedAsset.safetyEquipment should equal(2)
+      updatedAsset.propertyData.find(_.publicId == "turvavarustus").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should equal(2)
       updatedAsset.createdBy should equal (oldAsset.createdBy)
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.modifiedAt.isDefined should equal(true)
-      updatedAsset.code should equal ("testCode")
     }
   }
 
   test("Update railway crossing without geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, 2, None, "testCode"), "jakke", roadLink )
+      val codeValue = PropertyValue("")
+      val safetyEquipmentValue = PropertyValue("1")
+      val nameValue = PropertyValue("testCode")
+      val simpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(codeValue))
+      val simpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(safetyEquipmentValue))
+      val simpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(nameValue))
+      val id = service.create(IncomingRailwayCrossing(0.0, 20.0, 388553075, Set(simpleCodeProperty, simpleSafetyEquipmentProperty, simpleNameProperty)), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0, 388553075,1, Some("nameTest"), "testCode"), roadLink, "test")
+      val updatedCodeValue = PropertyValue("")
+      val updatedSafetyEquipmentValue = PropertyValue("2")
+      val updatedNameValue = PropertyValue("testCode")
+      val updatedSimpleCodeProperty = SimplePointAssetProperty("tasoristeystunnus", Seq(updatedCodeValue))
+      val updatedSimpleSafetyEquipmentProperty = SimplePointAssetProperty("turvavarustus", Seq(updatedSafetyEquipmentValue))
+      val updatedSimpleNameProperty = SimplePointAssetProperty("rautatien_tasoristeyksen_nimi", Seq(updatedNameValue))
+      val newId = service.update(id, IncomingRailwayCrossing(0.0, 20.0, 388553075, Set(updatedSimpleCodeProperty, updatedSimpleNameProperty, updatedSimpleSafetyEquipmentProperty)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
@@ -117,9 +141,6 @@ class RailwayCrossingServiceSpec extends FunSuite with Matchers {
       updatedAsset.lat should be (asset.lat)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
-      updatedAsset.safetyEquipment should equal(1)
-      updatedAsset.name should equal (Some("nameTest"))
-      updatedAsset.code should equal ("testCode")
     }
   }
 }

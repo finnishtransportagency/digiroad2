@@ -114,8 +114,11 @@ $(function() {
     backend.getJobs().then(function(jobs){
       if(!_.isEmpty(jobs))
         $('.job-status').empty().html(buildJobTable(jobs));
-      rootElement.find('.job-status-link').on('click', function (event) {
+
+      _.forEach(jobs, function(job) {
+        rootElement.find('.job-status-link#'+job.id).on('click', function (event) {
         getJob(event);
+        });
       });
       scrollbarResize();
       refresh = setInterval(refreshJobs, 3000);
@@ -196,7 +199,7 @@ $(function() {
     };
 
     var tableHeaderRow = function () {
-      return '<thead><th id="date" class="date">Päivämäärä</th> <th id="file" class="file"">Tiedosto</th> <th id="status" class="status">Tila</th> <th id="detail" class="detail">Raportti</th></tr></thead>';
+      return '<thead><th id="date" class="date">Päivämäärä</th><th class="jobName">Tietolajityyppi</th><th id="file" class="file"">Tiedosto</th> <th id="status" class="status">Tila</th> <th id="detail" class="detail">Raportti</th></tr></thead>';
     };
     
     var tableBodyRows = function (jobs) {
@@ -210,10 +213,23 @@ $(function() {
     return table(jobs);
   };
   
+  var jobNameConvert =
+    { 'import_roadLinks': 'Täydentävät tielinkit',
+      'import_trafficSigns': 'Liikennemerkit',
+      'import_maintenanceRoads': 'Rautateiden huoltotie',
+      'import_massTransitStop': 'Joukkoliikennepysäkit',
+      'import_obstacles': 'Esterakennelma',
+      'import_trafficLights': 'Liikennevalot',
+      'import_railwayCrossings': 'Tasoristeys',
+      'import_pedestrianCrossings': 'Suojatie',
+      'import_servicePoints': 'Palvelupiste'
+    };
+  
   var jobRow = function (job) {
     return '' +
       '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
         '<td headers="date" class="date">' + job.createdDate + '</td>' +
+        '<td headers="jobName" class="jobName">' + (_.isUndefined(jobNameConvert[job.jobName]) ? "" : jobNameConvert[job.jobName]) + '</td>' +
         '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
         '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
         '<td headers="detail" class="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
