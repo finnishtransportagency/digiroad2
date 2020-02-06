@@ -191,7 +191,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
-    roadLinks.map { roadLink =>
+    //TODO revert this code after viite unfreeze
+    val viiteEnrichedRoadLinks = roadAddressService.roadLinkWithRoadAddress(roadLinks)
+    val enrichedRoadLinks = roadAddressService.roadLinkWithRoadAddressTemp(viiteEnrichedRoadLinks.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty))
+
+    enrichedRoadLinks.map{ roadLink =>
       Map("linkId" -> roadLink.linkId,
         "mmlId" -> roadLink.attributes.get("MTKID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
