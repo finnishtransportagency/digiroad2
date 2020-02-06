@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -430,8 +433,18 @@ class DynamicLinearAssetDao {
     }
   }
 
-  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String) : List[PersistedLinearAsset] = {
+  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, public_id, property_type, required,
