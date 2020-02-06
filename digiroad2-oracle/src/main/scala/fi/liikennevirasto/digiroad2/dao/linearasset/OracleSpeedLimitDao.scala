@@ -74,7 +74,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            join enumerated_value e on s.enumerated_value_id = e.id
            join  #$idTableName i on i.id = pos.link_id
-		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[PersistedSpeedLimit].list
+		   where a.asset_type_id = 20 #$queryFilter""".as[PersistedSpeedLimit].list
     }
   }
 

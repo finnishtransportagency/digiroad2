@@ -293,17 +293,20 @@ trait LinearAssetOperations {
 
     val fullChanges = extensionChanges ++ replacementChanges
 
-    val (linearAssets, changeSetF) = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
-      case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, cs)
-        (persistedAsset ++ Seq(linearAsset), changes)
+
+    val linearAssetsAndChanges = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).flatMap {
+      case (asset, (Some(roadLink), Some(projection))) =>
+        val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, changeSet)
+        Some((linearAsset, changes.copy()))
+      case _ => None
     }
 
+    val linearAssets = linearAssetsAndChanges.map(_._1)
     val newLinearAsset = if((linearAssets ++ existingAssets).nonEmpty) {
       newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes)
     } else Seq()
 
-    (linearAssets ++ newLinearAsset, changeSetF)
+    (linearAssets ++ newLinearAsset, linearAssetsAndChanges.map(_._2).last)
   }
 
   def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]): Seq[PersistedLinearAsset] = {
@@ -312,8 +315,7 @@ trait LinearAssetOperations {
     }
 
     def getAssetsAndPoints(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PersistedLinearAsset)] = {
-      existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.vvhTimeStamp)}
-        .flatMap { asset =>
+      existingAssets.flatMap { asset =>
           val roadLink = roadLinks.find(_.linkId == asset.linkId)
           if (roadLink.nonEmpty || roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
             GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++

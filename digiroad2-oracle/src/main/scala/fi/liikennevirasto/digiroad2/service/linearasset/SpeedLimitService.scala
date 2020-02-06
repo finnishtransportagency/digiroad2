@@ -252,18 +252,23 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   private def fillNewRoadLinksWithPreviousSpeedLimitData(roadLinks: Seq[RoadLink], speedLimitsToUpdate: Seq[SpeedLimit], currentSpeedLimits: Seq[SpeedLimit], changes: Seq[ChangeInfo],
                                                          changeSet: ChangeSet, existingSpeedLimit: Seq[SpeedLimit]) : (Seq[SpeedLimit], ChangeSet) = {
 
-    val (speedLimit, changeSetF) = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes)
-      .foldLeft((Seq.empty[SpeedLimit], changeSet)) {
-      case ((persistedSpeed, cs) , (asset, (Some(roadLink), Some(projection)))) =>
-        val (speedLimit, changes) = SpeedLimitFiller.projectSpeedLimit(asset, roadLink, projection, cs)
-        ((persistedSpeed ++ Seq(speedLimit)).filter(sl => Math.abs(sl.startMeasure - sl.endMeasure) > 0) , changes)
+    val speedLimitsAndChanges = mapReplacementProjections(speedLimitsToUpdate, currentSpeedLimits, roadLinks, changes).flatMap {
+      case (asset, (Some(roadLink), Some(projection))) =>
+        val (speedLimit, changes) = SpeedLimitFiller.projectSpeedLimit(asset, roadLink, projection, changeSet)
+        if (Math.abs(speedLimit.startMeasure - speedLimit.endMeasure) > 0)
+          Some((speedLimit, changes))
+        else
+          None
+      case _ =>
+        None
     }
 
+    val speedLimit = speedLimitsAndChanges.map(_._1)
     val newLinearAsset = if((speedLimit ++ existingSpeedLimit).nonEmpty) {
       newChangeAsset(roadLinks, speedLimit ++ existingSpeedLimit, changes)
     } else Seq()
 
-    (speedLimit ++ newLinearAsset, changeSetF)
+    (speedLimit ++ newLinearAsset, speedLimitsAndChanges.map(_._2).last)
   }
 
   def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[SpeedLimit], changes: Seq[ChangeInfo]): Seq[SpeedLimit] = {
@@ -272,8 +277,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
 
     def getAssetsAndPoints(existingAssets: Seq[SpeedLimit], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, SpeedLimit)] = {
-      existingAssets.filter { asset => asset.createdDateTime.get.isBefore(changeInfo._1.vvhTimeStamp)}
-        .flatMap { asset =>
+      existingAssets.flatMap { asset =>
           val roadLink = roadLinks.find(_.linkId == asset.linkId)
           if (roadLink.nonEmpty || roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
             GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
