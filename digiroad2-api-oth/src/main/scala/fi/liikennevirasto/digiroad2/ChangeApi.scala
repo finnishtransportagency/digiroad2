@@ -171,7 +171,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case Some(SpeedLimitValue(_, isSuggested)) => isSuggested
       case Some(DynamicValue(x)) =>
         x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
-          case Some(value) => value.toString.toBoolean
+          case Some(value) => value.asInstanceOf[DynamicPropertyValue].value.toString.equals("1")
           case _ => false
         }
       case _ => false
@@ -180,7 +180,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   private def isSuggested(asset: ChangedPointAsset): Boolean = {
     asset.pointAsset.propertyData.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
-      case Some(value) => value.toString.toBoolean
+      case Some(value) => value.asInstanceOf[PropertyValue].propertyValue.equals("1")
       case _ => false
     }
   }
