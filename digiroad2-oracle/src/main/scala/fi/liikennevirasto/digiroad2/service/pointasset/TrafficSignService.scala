@@ -52,7 +52,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpired(queryFilter)
 
-  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpiredLimited(queryFilter, pageNumber)
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpiredLimited(queryFilter, token)
 
   override def setFloating(persistedAsset: PersistedTrafficSign, floating: Boolean): PersistedTrafficSign = {
     persistedAsset.copy(floating = floating)
@@ -92,9 +92,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method, Try to used") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, tokne: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method, Try to used") }
 
-  def getChangedByType(trafficSignTypes: Set[Int], sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = {
+  def getChangedByType(trafficSignTypes: Set[Int], sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
@@ -105,7 +105,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
 
     val assets = withDynSession {
-      fetchPointAssetsWithExpiredLimited(withFilter(filter), pageNumber)
+      fetchPointAssetsWithExpiredLimited(withFilter(filter), token)
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)

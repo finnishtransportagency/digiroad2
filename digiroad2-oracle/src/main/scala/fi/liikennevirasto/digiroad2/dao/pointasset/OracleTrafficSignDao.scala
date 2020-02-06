@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -47,7 +50,6 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           expired: Boolean = false)
 
 object OracleTrafficSignDao {
-  private val RECORD_NUMBER: Int = 4000
 
   private def query() =
     """
@@ -80,11 +82,13 @@ object OracleTrafficSignDao {
     queryToPersistedTrafficSign(queryWithFilter)
   }
 
-  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PersistedTrafficSign] = {
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
         s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import java.util.NoSuchElementException
+import java.nio.charset.StandardCharsets
+import java.util.{Base64, NoSuchElementException}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -291,8 +292,18 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     (speedLimitLinks, roadLinks)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String): Seq[PersistedSpeedLimit] = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String]): Seq[PersistedSpeedLimit] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val values = Decode.getPageAndRecordNumber(tk)
+
+        val startNum =values("recordNumber") * ( values("pageNumber") - 1) + 1
+        val endNum = values("pageNumber") * values("recordNumber")
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val speedLimitRows =  sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, modified_by, modified_date, expired, created_by, created_date,
