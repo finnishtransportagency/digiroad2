@@ -23,8 +23,6 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   val safetyEquipmentPublicId = "turvavarustus"
   val codePublicId = "tasoristeystunnus"
 
-  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[RailwayCrossing] = throw new UnsupportedOperationException("Not Supported Method")
-
   override def setAssetPosition(asset: IncomingRailwayCrossing, geometry: Seq[Point], mValue: Double): IncomingRailwayCrossing = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
