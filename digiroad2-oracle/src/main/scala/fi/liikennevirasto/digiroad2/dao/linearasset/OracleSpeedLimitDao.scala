@@ -75,7 +75,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[SpeedLimitRow].list
+		   where a.asset_type_id = 20 #$queryFilter""".as[SpeedLimitRow].list
     }
     groupSpeedLimitsResult(speedLimitRows)
   }
