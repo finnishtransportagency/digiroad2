@@ -60,7 +60,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
-    val pageNumber = params.get("pageNumber").map(_.toInt)
+    val token = params.get("pageNumber").map(_.toString)
 
     val withAdjust = params.get("withAdjust") match{
       case Some(value)=> true
