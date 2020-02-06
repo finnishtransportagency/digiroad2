@@ -309,16 +309,19 @@ trait LinearAssetOperations {
     val linearAssetsAndChanges = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).flatMap {
       case (asset, (Some(roadLink), Some(projection))) =>
         val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, changeSet)
-        Some((linearAsset, changes.copy()))
+        Some((linearAsset, changes))
       case _ => None
     }
 
     val linearAssets = linearAssetsAndChanges.map(_._1)
+
+    val generatedChangeSet = linearAssetsAndChanges.map(_._2)
+    val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
     val newLinearAsset = if((linearAssets ++ existingAssets).nonEmpty) {
       newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes)
     } else Seq()
 
-    (linearAssets ++ newLinearAsset, linearAssetsAndChanges.map(_._2).last)
+    (linearAssets ++ newLinearAsset, changeSetF)
   }
 
   def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]): Seq[PersistedLinearAsset] = {
@@ -329,7 +332,7 @@ trait LinearAssetOperations {
     def getAssetsAndPoints(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PersistedLinearAsset)] = {
       existingAssets.flatMap { asset =>
           val roadLink = roadLinks.find(_.linkId == asset.linkId)
-          if (roadLink.nonEmpty || roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
+          if (roadLink.nonEmpty && roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
             GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
               (if (asset.startMeasure == 0)
                 GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.startMeasure).map(point => (point, asset))
@@ -341,11 +344,8 @@ trait LinearAssetOperations {
     }
 
     val changesNew = changes.filter(_.changeType == New.value)
-    val linksWithExpiredAssets = withDynSession {
-      Queries.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
-    }
 
-    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get) || linksWithExpiredAssets.contains(chg.newId.get)).flatMap { change =>
+    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get)).flatMap { change =>
       roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
         val assetAndPoints : Seq[(Point, PersistedLinearAsset)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
         val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
