@@ -68,16 +68,6 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       dao.getLinksWithLengthFromVVH(id)
   }
 
-  def getRecordLimit(pageNumber: Option[Int]): String = {
-    pageNumber match {
-      case Some(pgNum) =>
-        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
-        s"WHERE line_number between $startNum and $endNum"
-      case _ => ""
-    }
-  }
-
   def getSpeedLimitAssetsByIds(ids: Set[Long], newTransaction: Boolean = true): Seq[SpeedLimit] = {
     if (newTransaction)
       withDynTransaction {
