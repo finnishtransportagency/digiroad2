@@ -262,7 +262,7 @@
       };
     });
 
-    this.getLanesByBoundigBox = latestResponseRequestor(function(boundingBox, zoom) {
+    this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom) {
       return {
         url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom
       };
@@ -274,7 +274,7 @@
       };
     });
 
-    this.getLanesWithComplementaryByBoundigBox = latestResponseRequestor(function(boundingBox, zoom) {
+    this.getLanesWithComplementaryByBoundingBox = latestResponseRequestor(function(boundingBox, zoom) {
       return {
         url: 'api/lanes/complementary?bbox=' + boundingBox + '&zoom=' + zoom
       };

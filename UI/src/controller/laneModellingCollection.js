@@ -50,11 +50,11 @@
     };
 
     this.fetch = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getLanesByBoundigBox(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
+      return fetch(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom), center);
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getLanesWithComplementaryByBoundigBox(boundingBox, zoom), center);
+      return fetch(boundingBox, backend.getLanesWithComplementaryByBoundingBox(boundingBox, zoom), center);
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
