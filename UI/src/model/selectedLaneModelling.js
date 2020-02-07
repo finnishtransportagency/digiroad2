@@ -10,6 +10,12 @@
     var originalLinearAssetValue = null;
     var multipleSelected;
 
+    var initial_road_number;
+    var initial_road_part_number;
+    var initial_distance;
+    var end_road_part_number;
+    var end_distance;
+
     var getLane = function (laneNumber) {
         return _.find(selection, function (lane){
           return _.find(lane.properties, function (property) {
@@ -101,6 +107,10 @@
       var roadPartNumberElement = {publicId: "initial_road_part_number", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadPartNumber}]};
       var startAddrMValueElement = {publicId: "initial_distance", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.startAddrMValue}]};
 
+      initial_road_number = selectedRoadlink.roadNumber;
+      initial_road_part_number = selectedRoadlink.roadPartNumber;
+      initial_distance = selectedRoadlink.startAddrMValue;
+
       _.forEach(selection, function (lane) {
         lane.properties.push(roadNumberElement, roadPartNumberElement, startAddrMValueElement);
       });
@@ -153,7 +163,7 @@
       var knownLinearAssets = partition[false];
 
       var payload = {
-        newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, expired: false }); }),
+        newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, isExpired: false }); }),
         ids: _.map(knownLinearAssets, 'id'),
         value: value,
         typeId: typeId
@@ -168,10 +178,44 @@
       });
     };
 
-    var saveExisting = function() {
+    function omitUnrelevantProperties(lanes){
+      return _.map(lanes, function (lane) {
+        return _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker', 'initial_road_number',
+          'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance']);
+      });
+    }
+
+    var saveExisting = function(isAddByRoadAddressActive) {
       eventbus.trigger(singleElementEvent('saving'));
-      var payload = {assets: selection.concat(assetsToBeExpired).concat(assetsToBeRemoved), typeId: typeId};
-      var backendOperation = backend.updateLaneAssets;
+
+      var linkIds = selection[0].linkId;
+      var sideCode = selection[0].sideCode;
+
+      var lanes = omitUnrelevantProperties(selection);
+
+      var payload;
+      if(isAddByRoadAddressActive) {
+
+        payload = {
+          isAddByRoadAddress: true,
+          sideCode: sideCode,
+          initial_road_number: initial_road_number,
+          initial_road_part_number: initial_road_part_number,
+          initial_distance: initial_distance,
+          end_road_part_number: end_road_part_number,
+          end_distance: end_distance,
+          lanes: lanes
+        };
+      }else{
+
+        payload = {
+          linkIds: linkIds,
+          sideCode: sideCode,
+          lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired)).concat(omitUnrelevantProperties(assetsToBeRemoved))
+        };
+      }
+
+      var backendOperation = isAddByRoadAddressActive ? backend.updateLaneAssetsByRoadAddress : backend.updateLaneAssets;
 
       backendOperation(payload, function() {
         dirty = false;
@@ -261,8 +305,8 @@
       return this.isSplit();
     };
 
-    this.save = function() {
-        saveExisting();
+    this.save = function(isAddByRoadAddressActive) {
+        saveExisting(isAddByRoadAddressActive);
     };
 
     var cancelExisting = function() {
@@ -298,6 +342,16 @@
     };
 
     this.setEndAddressesValues = function(currentPropertyValue) {
+      var endValue = _.head(currentPropertyValue.values).value;
+      switch(currentPropertyValue.publicId) {
+        case "end_road_part_number":
+          end_road_part_number = endValue;
+          break;
+        case "end_distance":
+          end_distance = endValue;
+          break;
+      }
+
       _.forEach(selection, function (lane) {
         var currentLaneNumber = _.head(_.find(lane.properties,function (prop) {
           return prop.publicId == "lane_code";
@@ -406,7 +460,7 @@
         });
 
       var removeLane = selection.splice(laneIndex,1)[0];
-      removeLane.delete = true;
+      removeLane.isDeleted = true;
 
       if((removeLane.id !== 0 || !splited) && _.isUndefined(removeLane.marker))
         assetsToBeRemoved.push(removeLane);
@@ -423,7 +477,7 @@
       });
 
       var expireLane = selection.splice(laneIndex,1)[0];
-      expireLane.expire = true;
+      expireLane.isExpired = true;
       assetsToBeExpired.push(expireLane);
 
       reorganizeLanes(laneNumber);

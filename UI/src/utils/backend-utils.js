@@ -262,6 +262,12 @@
       };
     });
 
+    this.getLanesByBoundigBox = latestResponseRequestor(function(boundingBox, zoom) {
+      return {
+        url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom
+      };
+    });
+
     this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
       return {
         url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
@@ -296,8 +302,20 @@
     this.updateLaneAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
-        url: "api/laneModelling",
+        type: "POST",
+        url: "api/lanes",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.updateLaneAssetsByRoadAddress = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/lanesByRoadAddress",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -382,7 +400,7 @@
     };
 
     this.getLanesByLinkIdAndSidecode = function(linkId, sidecode, callback) {
-      $.get('api/laneModelling/' + linkId + "/" + sidecode, callback);
+      $.get('api/lanes/' + linkId + "/" + sidecode, callback);
     };
 
     this.getMassTransitStopById = function(id, callback) {

@@ -353,7 +353,7 @@
       var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
 
       var addDatePickers = function (field, html) {
-        var $dateElement = html.find('#' + field.publicId);
+        var $dateElement = html.find('#' + field.publicId + sideCode);
         dateutil.addDependentDatePicker($dateElement);
       };
 
@@ -363,7 +363,7 @@
         '</div>');
 
       var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
-        .attr('id', field.publicId)
+        .attr('id', field.publicId + sideCode)
         .attr('required', me.required())
         .attr('placeholder',"pp.kk.vvvv")
         .attr('fieldType', fieldValue.type)
@@ -871,7 +871,7 @@
 
   var currentFormStructure;
   var defaultFormStructure;
-  var isAddByRoadAddressActive;
+  var isAddByRoadAddressActive = false;
   var lanesAssets;
 
   root.LaneModellingForm = function (formStructure) {
@@ -1376,6 +1376,10 @@
       body.find('.form').append(formGroup);
       body.find('.form-editable-' + sideCodeClass).append(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
+      // var $startElement = body.find('#start_date' + sideCode);
+      // var $endElement = body.find('#end_date' + sideCode);
+      // dateutil.addTwoDependentDatePickers($startElement, $endElement);
+
       return body;
     }
 
@@ -1512,7 +1516,7 @@
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
         currentLane = parseInt(currentLane.toString()[0] + '1');
         currentFormStructure = mainLaneFormStructure;
-        assetTypeConfiguration.selectedLinearAsset.save();
+        assetTypeConfiguration.selectedLinearAsset.save(isAddByRoadAddressActive);
       });
 
       var updateStatus = function(element) {
