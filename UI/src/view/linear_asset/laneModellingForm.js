@@ -1086,7 +1086,7 @@
 
     var createPreviewHeaderElement = function(laneNumbers) {
       var createNumber = function (number) {
-        var previewButton = $('<li class="preview-lane"> ' + number + '</li>').click(function() {
+        var previewButton = $('<td class="preview-lane">' + number + '</td>').click(function() {
           $(".preview .lane").removeClass("not-highlight-lane highlight-lane").addClass("not-highlight-lane");
           $(this).removeClass("not-highlight-lane").addClass("highlight-lane");
           currentLane = parseInt(number);
@@ -1117,17 +1117,21 @@
       });
 
       var preview = function () {
-        var previewList = $('<ul class="preview">');
+        var previewList = $('<table class="preview">');
+
+        var numberHeaders =$('<tr style="font-size: 10px;">').append(_.map(_.reverse(even).concat(odd), function (number) {
+          return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
+        }));
 
         var oddListElements = _.map(odd, function (number) {
               return createNumber(number);
             });
 
-        var evenListElements = _.map(_.reverse(even), function (number) {
+        var evenListElements = _.map(even, function (number) {
           return createNumber(number);
         });
 
-        return $('<div class="preview-div">').append(previewList.append(evenListElements).append(oddListElements).append('<hr class="form-break">'));
+        return $('<div class="preview-div">').append(previewList.append(numberHeaders).append($('<tr>').append(evenListElements).append(oddListElements))).append('<hr class="form-break">');
       };
 
       return preview();
