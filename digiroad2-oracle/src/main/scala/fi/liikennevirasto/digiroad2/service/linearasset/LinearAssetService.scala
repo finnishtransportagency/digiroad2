@@ -344,8 +344,11 @@ trait LinearAssetOperations {
     }
 
     val changesNew = changes.filter(_.changeType == New.value)
+    val linksWithExpiredAssets = withDynSession {
+      Queries.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
+    }
 
-    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get)).flatMap { change =>
+    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get) || linksWithExpiredAssets.contains(chg.newId.get)).flatMap { change =>
       roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
         val assetAndPoints : Seq[(Point, PersistedLinearAsset)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
         val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)

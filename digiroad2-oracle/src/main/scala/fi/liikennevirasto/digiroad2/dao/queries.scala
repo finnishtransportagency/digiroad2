@@ -390,7 +390,7 @@ object Queries {
       join lrm_position pos on al.position_id = pos.id
       where a.asset_type_id = $assetType
       and a.valid_to is not null
-      and pos.link_id in ($ids)
+      and pos.link_id in (#${ids})
     """.as[Long].list
   }
 }
