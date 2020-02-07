@@ -15,6 +15,7 @@
     var initial_distance;
     var end_road_part_number;
     var end_distance;
+    var track;
 
     var getLane = function (laneNumber) {
         return _.find(selection, function (lane){
@@ -110,6 +111,7 @@
       initial_road_number = selectedRoadlink.roadNumber;
       initial_road_part_number = selectedRoadlink.roadPartNumber;
       initial_distance = selectedRoadlink.startAddrMValue;
+      track = selectedRoadlink.track;
 
       _.forEach(selection, function (lane) {
         lane.properties.push(roadNumberElement, roadPartNumberElement, startAddrMValueElement);
@@ -197,13 +199,13 @@
       if(isAddByRoadAddressActive) {
 
         payload = {
-          isAddByRoadAddress: true,
           sideCode: sideCode,
           initial_road_number: initial_road_number,
           initial_road_part_number: initial_road_part_number,
           initial_distance: initial_distance,
           end_road_part_number: end_road_part_number,
           end_distance: end_distance,
+          track: track,
           lanes: lanes
         };
       }else{
