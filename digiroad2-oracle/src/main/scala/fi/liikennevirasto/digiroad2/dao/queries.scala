@@ -370,15 +370,15 @@ object Queries {
   }
 
   def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int) : Seq[Long] = {
-    val ids = if(linkIds.nonEmpty) linkIds.mkString(",") else ""
+    val withLinkIds = if(linkIds.nonEmpty) s"and pos.link_id in (${linkIds.mkString(",")})" else ""
+
     sql"""
       select LINK_ID
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
       where a.asset_type_id = $assetType
-      and a.valid_to is not null
-      and pos.link_id in (#${ids})
+      and a.valid_to is not null #${withLinkIds}
     """.as[Long].list
   }
 }
