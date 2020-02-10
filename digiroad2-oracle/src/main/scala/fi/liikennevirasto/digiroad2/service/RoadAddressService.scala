@@ -4,6 +4,7 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.client.viite.{SearchViiteClient, ViiteClientException}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress, RoadAddressTEMP, RoadLinkDAO, RoadLinkTempDAO}
+import fi.liikennevirasto.digiroad2.lane.PieceWiseLane
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, RoadLink, RoadLinkLike, SpeedLimit}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
@@ -41,8 +42,8 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     * @param roadParts All the road number parts
     * @return
     */
-  def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long]): Seq[RoadAddress] = {
-    viiteClient.fetchAllBySection(roadNumber, roadParts, Seq())
+  def getAllByRoadNumberAndParts(roadNumber: Long, roadParts: Seq[Long], tracks: Seq[Track] = Seq()): Seq[RoadAddress] = {
+    viiteClient.fetchAllBySection(roadNumber, roadParts, tracks)
   }
 
   /**
@@ -158,6 +159,32 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
     }
   }
 
+
+  /**
+    * Returns the given lane with road address attributes
+    * @param pieceWiseLanes The linear assets sequence
+    * @return
+    */
+  def laneWithRoadAddress(pieceWiseLanes: Seq[Seq[PieceWiseLane]]): Seq[Seq[PieceWiseLane]] ={
+    try{
+      val addressData = groupRoadAddress(getAllByLinkIds(pieceWiseLanes.flatMap(pwl => pwl.map(_.linkId)))).map(a => (a.linkId, a)).toMap
+      pieceWiseLanes.map(
+        _.map(pwl =>
+          if (addressData.contains(pwl.linkId))
+            pwl.copy(attributes = pwl.attributes ++ roadAddressAttributes(addressData(pwl.linkId)))
+          else
+            pwl
+        ))
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        pieceWiseLanes
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
+        pieceWiseLanes
+    }
+  }
+
   /**
     * Returns the given speed limits with road address attributes
     * @param speedLimits
@@ -221,6 +248,28 @@ class RoadAddressService(viiteClient: SearchViiteClient ) {
       case vce: ViiteClientException =>
         logger.error(s"Viite error with message ${vce.getMessage}")
         pieceWiseLinearAssets
+    }
+  }
+
+
+  def experimentalLaneWithRoadAddress(pieceWiseLanes: Seq[Seq[PieceWiseLane]]): Seq[Seq[PieceWiseLane]] ={
+    try {
+      val addressData = withDynTransaction(roadLinkTempDao.getByLinkIds(pieceWiseLanes.head.map(_.linkId).toSet)).map(a => (a.linkId, a)).toMap
+
+      pieceWiseLanes.map(
+        _.map(pwa =>
+          if (addressData.contains(pwa.linkId))
+            pwa.copy(attributes = pwa.attributes ++ roadAddressAttributesTemp(addressData(pwa.linkId)))
+          else
+            pwa
+        ))
+    } catch {
+      case hhce: HttpHostConnectException =>
+        logger.error(s"Viite connection failing with message ${hhce.getMessage}")
+        pieceWiseLanes
+      case vce: ViiteClientException =>
+        logger.error(s"Viite error with message ${vce.getMessage}")
+        pieceWiseLanes
     }
   }
 

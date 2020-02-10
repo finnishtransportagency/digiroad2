@@ -20,6 +20,7 @@ import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearTotalWeightLimitService, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
+import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
@@ -653,6 +654,10 @@ object Digiroad2Context {
 
   lazy val parkingProhibitionService: ParkingProhibitionService = {
     new ParkingProhibitionService(roadLinkService, eventbus)
+  }
+
+  lazy val laneService: LaneService = {
+    new LaneService(roadLinkService, eventbus)
   }
 
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()

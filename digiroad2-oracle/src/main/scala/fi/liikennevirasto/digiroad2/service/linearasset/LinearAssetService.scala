@@ -237,7 +237,7 @@ trait LinearAssetOperations {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
-         dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
+        dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
       }.filterNot(_.expired)
     existingAssets
   }
