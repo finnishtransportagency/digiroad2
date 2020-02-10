@@ -180,54 +180,6 @@
       });
     };
 
-    function omitUnrelevantProperties(lanes){
-      return _.map(lanes, function (lane) {
-        return _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker', 'initial_road_number',
-          'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance']);
-      });
-    }
-
-    var saveExisting = function(isAddByRoadAddressActive) {
-      eventbus.trigger(singleElementEvent('saving'));
-
-      var linkIds = selection[0].linkId;
-      var sideCode = selection[0].sideCode;
-
-      var lanes = omitUnrelevantProperties(selection);
-
-      var payload;
-      if(isAddByRoadAddressActive) {
-
-        payload = {
-          sideCode: sideCode,
-          initial_road_number: initial_road_number,
-          initial_road_part_number: initial_road_part_number,
-          initial_distance: initial_distance,
-          end_road_part_number: end_road_part_number,
-          end_distance: end_distance,
-          track: track,
-          lanes: lanes
-        };
-      }else{
-
-        payload = {
-          linkIds: linkIds,
-          sideCode: sideCode,
-          lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired)).concat(omitUnrelevantProperties(assetsToBeRemoved))
-        };
-      }
-
-      var backendOperation = isAddByRoadAddressActive ? backend.updateLaneAssetsByRoadAddress : backend.updateLaneAssets;
-
-      backendOperation(payload, function() {
-        dirty = false;
-        self.close();
-        eventbus.trigger(singleElementEvent('saved'));
-      }, function() {
-        eventbus.trigger('asset:updateFailed');
-      });
-    };
-
     var isUnknown = function(linearAsset) {
       return !_.has(linearAsset, 'id');
     };
@@ -307,8 +259,59 @@
       return this.isSplit();
     };
 
-    this.save = function(isAddByRoadAddressActive) {
-        saveExisting(isAddByRoadAddressActive);
+    function omitUnrelevantProperties(lanes){
+      return _.map(lanes, function (lane) {
+        return _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker', 'initial_road_number',
+          'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance']);
+      });
+    }
+
+    this.save = function(isAddByRoadAddressActive, currentLane) {
+      eventbus.trigger(singleElementEvent('saving'));
+
+      var linkIds = selection[0].linkId;
+      var sideCode = selection[0].sideCode;
+
+      var lanes = omitUnrelevantProperties(selection);
+
+      var payload;
+      if(isAddByRoadAddressActive) {
+
+        var selectedLane = _.find(lanes, function (lane){
+          return _.find(lane.properties, function (property) {
+            return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
+          });
+        });
+
+        payload = {
+          sideCode: sideCode,
+          initial_road_number: initial_road_number,
+          initial_road_part_number: initial_road_part_number,
+          initial_distance: initial_distance,
+          end_road_part_number: end_road_part_number,
+          end_distance: end_distance,
+          track: track,
+          lane: selectedLane
+        };
+      }else{
+
+        payload = {
+          linkIds: linkIds,
+          sideCode: sideCode,
+          lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired)).concat(omitUnrelevantProperties(assetsToBeRemoved))
+        };
+      }
+
+      var backendOperation = isAddByRoadAddressActive ? backend.updateLaneAssetsByRoadAddress : backend.updateLaneAssets;
+
+      backendOperation(payload, function() {
+        dirty = false;
+        self.close();
+        eventbus.trigger(singleElementEvent('saved'));
+      }, function(error) {
+        jQuery('.spinner-overlay').remove();
+        alert(error.responseText);
+      });
     };
 
     var cancelExisting = function() {

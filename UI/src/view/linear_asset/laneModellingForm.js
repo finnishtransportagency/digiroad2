@@ -1518,9 +1518,9 @@
     var SaveButton = function(assetTypeConfiguration) {
 
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
+        assetTypeConfiguration.selectedLinearAsset.save(isAddByRoadAddressActive, currentLane);
         currentLane = parseInt(currentLane.toString()[0] + '1');
         currentFormStructure = mainLaneFormStructure;
-        assetTypeConfiguration.selectedLinearAsset.save(isAddByRoadAddressActive);
       });
 
       var updateStatus = function(element) {
