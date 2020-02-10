@@ -283,12 +283,15 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
         None
     }
 
-    val speedLimit = speedLimitsAndChanges.map(_._1)
-    val newLinearAsset = if((speedLimit ++ existingSpeedLimit).nonEmpty) {
-      newChangeAsset(roadLinks, speedLimit ++ existingSpeedLimit, changes)
+    val speedLimits = speedLimitsAndChanges.map(_._1)
+    val generatedChangeSet = speedLimitsAndChanges.map(_._2)
+    val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
+
+    val newLinearAsset = if((speedLimits ++ existingSpeedLimit).nonEmpty) {
+      newChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes)
     } else Seq()
 
-    (speedLimit ++ newLinearAsset, speedLimitsAndChanges.map(_._2).last)
+    (speedLimits ++ newLinearAsset, changeSetF)
   }
 
   def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[SpeedLimit], changes: Seq[ChangeInfo]): Seq[SpeedLimit] = {
