@@ -97,7 +97,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     * Iterates a set of link ids  and returns lanes. Used by LaneService.getByRoadLinks.
     */
   def fetchMainLanesByLinkIds( linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLane] = {
-    val filterExpired = if (includeExpired) "" else " and (l.valid_to > sysdate or l.valid_to is null)"
+    val filterExpired = if (includeExpired) "" else " and (l.valid_to > sysdate or l.valid_to is null) "
 
 
     val lanes = MassQuery.withIds(linkIds.toSet) { idTableName =>
@@ -113,6 +113,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
           JOIN #$idTableName i ON i.id = pos.link_id
           WHERE l.lane_code IN (11, 21, 31)
           #$filterExpired
+          ORDER BY l.lane_code ASC
        """.as[LaneRow].list
     }
 
@@ -120,6 +121,30 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
   }
 
+
+  def fetchLanesByLinkIds( linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLane] = {
+    val filterExpired = if (includeExpired) "" else " and (l.valid_to > sysdate or l.valid_to is null) "
+
+    val lanes = MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""SELECT l.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure,
+               l.created_by, l.created_date, l.modified_by, l.modified_date,
+               CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
+               pos.adjusted_timestamp, pos.modified_date,
+               la.name, la.value, l.municipality_code, l.lane_code
+          FROM lane l
+          JOIN lane_link ll ON l.id = ll.lane_id
+          JOIN lane_position pos ON ll.lane_position_id = pos.id
+          JOIN lane_attribute la ON la.lane_id = l.id
+          JOIN #$idTableName i ON i.id = pos.link_id
+          WHERE 1 = 1
+          #$filterExpired
+          ORDER BY l.lane_code ASC
+       """.as[LaneRow].list
+    }
+
+    convertLaneRowToPersistedLane (lanes)
+
+  }
 
   def fetchLanesByLinkIdAndSideCode( linkId: Long, sideCode: Int): Seq[PersistedLane] = {
 

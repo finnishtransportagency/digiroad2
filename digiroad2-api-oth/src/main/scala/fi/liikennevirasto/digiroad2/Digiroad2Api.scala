@@ -647,7 +647,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
+    val laneInfo = laneService.fetchExistingLanesByRoadLinks( Seq(roadLink)).map(_.laneCode).sorted( _ ).mkString(",").toString
+
     Map(
+      "lanes" ->  ( if (laneInfo.toString.isEmpty ) "" else laneInfo ),
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
       "points" -> roadLink.geometry,
@@ -2188,7 +2191,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val sideCode = params("sideCode").toInt
 
     val usedService =  laneService
-    val existingLanes = usedService.fetchExistingLanesByLinksId(linkId, sideCode)
+    val existingLanes = usedService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode)
 
     existingLanes.map { lane =>
       val auxProperties = lane.laneAttributes.properties.map ( props =>

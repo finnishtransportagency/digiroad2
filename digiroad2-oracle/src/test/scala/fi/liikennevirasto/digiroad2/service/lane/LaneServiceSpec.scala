@@ -170,10 +170,10 @@ class LaneServiceSpec extends LaneTestSupporter {
       val newLane22 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues22)), Set(100L), 2, usernameTest)
       newLane22.length should be(1)
 
-      val existingLanes = ServiceWithDao.fetchExistingLanesByLinksId(100L, 1)
+      val existingLanes = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(100L, 1)
       existingLanes.length should be(1)
 
-      val existingLanesOtherSide = ServiceWithDao.fetchExistingLanesByLinksId(100L, 2)
+      val existingLanesOtherSide = ServiceWithDao.fetchExistingLanesByLinksIdAndSideCode(100L, 2)
       existingLanesOtherSide.length should be(2)
 
     }

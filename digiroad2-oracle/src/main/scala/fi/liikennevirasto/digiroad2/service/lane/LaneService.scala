@@ -93,7 +93,18 @@ trait LaneOperations {
     existingAssets
   }
 
-  def fetchExistingLanesByLinksId( linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
+
+  def fetchExistingLanesByRoadLinks( roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
+    val linkIds = roadLinks.map(_.linkId)
+    val existingAssets =
+      withDynTransaction {
+        dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds)
+      }.filterNot(_.expired)
+    existingAssets
+  }
+
+
+  def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
 
     val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(linkId).head
 
