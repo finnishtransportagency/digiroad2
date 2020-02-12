@@ -898,7 +898,6 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
-      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId = 5000
