@@ -332,8 +332,8 @@ trait LinearAssetOperations {
     }
 
     val changesNew = changes.filter(_.changeType == New.value)
-    val linksWithExpiredAssets = withDynSession {
-      Queries.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
+    val linksWithExpiredAssets = withDynTransaction {
+      dao.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
     }
 
     changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get) || linksWithExpiredAssets.contains(chg.newId.get)).flatMap { change =>

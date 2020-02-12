@@ -974,4 +974,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
          and ca.created_date > ADD_MONTHS(TO_DATE(TO_CHAR(${lastCreationDate.get}, 'YYYY-MM-DD'), 'YYYY-MM-DD hh24:mi:ss'), -1)
          #$municipalityFilter""".as[(Long, Int)].list
   }
+
+  def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int): Seq[Long] = {
+    val withLinkIds = if (linkIds.nonEmpty) s"and pos.link_id in (${linkIds.mkString(",")})" else ""
+
+    sql"""
+      select LINK_ID
+      from asset a
+      join asset_link al on a.id = al.asset_id
+      join lrm_position pos on al.position_id = pos.id
+      where a.asset_type_id = $assetType
+      and a.valid_to is not null #${withLinkIds}
+    """.as[Long].list
+  }
 }
