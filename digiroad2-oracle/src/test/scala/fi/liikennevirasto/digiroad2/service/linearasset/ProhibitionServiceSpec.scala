@@ -548,7 +548,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       service.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
+        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set(asset1), Nil))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("prohibition:saveProjectedProhibition"), captor.capture())
