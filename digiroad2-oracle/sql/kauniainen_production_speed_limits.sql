@@ -64,7 +64,6 @@ INSERT ALL
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000069, 1610954, 362957715, 0.000, 78.569, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000070, 1611041, 388551808, 0.000, 249.778, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000071, 1611359, 388552954, 0.000, 68.882, 1)
-  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000072, 1611664, 362964902, 0.000, 75.097, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000074, 1611664, 362964902, 75.097, 75.407, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000075, 1610973, 362954853, 46.297, 204.137, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000076, 1610973, 362954853, 0.000, 24.948, 1)
@@ -114,7 +113,6 @@ INSERT ALL
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000165, 1611623, 388551898, 0.000, 24.679, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000166, 1611740, 362956683, 4.170, 101.772, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000167, 1611738, 362955435, 0.000, 153.352, 1)
-  INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000168, 1611740, 362956683, 0.000, 1.740, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000175, 1611740, 362956683, 1.740, 4.170, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000176, 1611390, 388553518, 0.000, 55.642, 1)
   INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (20000177, 1611191, 388553584, 0.000, 114.971, 1)
@@ -887,8 +885,6 @@ INSERT ALL
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200148,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200149,20,1)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200150,20,0)
-  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200151,20,1)
-  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200152,20,1)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200153,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200154,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200155,20,1)
@@ -933,7 +929,6 @@ INSERT ALL
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200194,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200195,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200196,20,1)
-  INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200197,20,1)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200198,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200199,20,0)
   INTO ASSET (ID,ASSET_TYPE_ID,FLOATING) values (200200,20,1)
@@ -1500,9 +1495,6 @@ INSERT ALL
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200149,20000066)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200149,20000067)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200150,20000069)
-  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200151,20000070)
-  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200151,20000071)
-  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200152,20000072)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200153,20000074)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200154,20000075)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200155,20000076)
@@ -1552,7 +1544,6 @@ INSERT ALL
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200195,20000165)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200196,20000166)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200196,20000167)
-  INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200197,20000168)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200198,20000175)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200199,20000176)
   INTO ASSET_LINK (ASSET_ID,POSITION_ID) values (200200,20000177)
@@ -2178,8 +2169,6 @@ Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) value
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200148,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200149,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200150,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
-Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200151,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
-Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200152,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200153,(select id from enumerated_value where value = 50 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200154,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200155,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
@@ -2224,7 +2213,6 @@ Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) value
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200194,(select id from enumerated_value where value = 50 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200195,(select id from enumerated_value where value = 40 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200196,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
-Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200197,(select id from enumerated_value where value = 40 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200198,(select id from enumerated_value where value = 50 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200199,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
 Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID) values (200200,(select id from enumerated_value where value = 30 and property_id = (select id from property where public_id = 'rajoitus')),(select id from property where public_id = 'rajoitus'));
