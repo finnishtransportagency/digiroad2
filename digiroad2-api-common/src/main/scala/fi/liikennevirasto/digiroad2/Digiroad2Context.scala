@@ -7,21 +7,20 @@ import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.OraclePointMassLimitationDao
-import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.lane.{LaneFiller, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
+import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
 import fi.liikennevirasto.digiroad2.service._
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearTotalWeightLimitService, _}
 import fi.liikennevirasto.digiroad2.service.feedback.{FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{LinearTotalWeightLimitService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop._
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -69,6 +68,24 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
         massTransitStopService.saveIdPrintedOnValluLog(busStop.id)
       }
     }
+  }
+}
+
+class LanesUpdater(laneService: LaneService) extends Actor {
+  def receive = {
+    case x: LaneFiller.ChangeSet => persistLaneChanges(x )
+    case _            => println("LinearAssetUpdater: Received unknown message")
+  }
+
+  def persistLaneChanges(changeSet: LaneFiller.ChangeSet) {
+    laneService.updateChangeSet(changeSet)
+  }
+}
+
+class LanesSaveProjected[T](laneService: LaneService) extends Actor {
+  def receive = {
+    case x: Seq[T] => laneService.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLane]])
+    case _             => println("laneSaveProjected: Received unknown message")
   }
 }
 
@@ -412,6 +429,13 @@ object Digiroad2Context {
 
   val pedestrianCrossingVerifier = system.actorOf(Props(classOf[PedestrianCrossingValidation], pedestrianCrossingValidator), name = "pedestrianCrossingValidator")
   eventbus.subscribe(pedestrianCrossingVerifier, "pedestrianCrossing:Validator")
+
+  val lanesUpdater = system.actorOf(Props(classOf[LanesUpdater], laneService), name = "lanesUpdater")
+  eventbus.subscribe(lanesUpdater, "lanes:updater")
+
+  val lanesSaveProjected = system.actorOf(Props(classOf[LanesSaveProjected[PersistedLane]], laneService), name = "lanesSaveProjected")
+  eventbus.subscribe(lanesSaveProjected, "lanes:saveProjectedLanes")
+
 
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean

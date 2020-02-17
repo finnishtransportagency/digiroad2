@@ -179,11 +179,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
                CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
                pos.adjusted_timestamp, pos.modified_date,
                la.name, la.value, l.municipality_code, l.lane_code
-          from lane l
-          JOIN lane_link ll on l.id = ll.lane_id
-          JOIN lane_position pos on ll.lane_position_id = pos.id
+          FROM lane l
+          JOIN lane_link ll ON l.id = ll.lane_id
+          JOIN lane_position pos ON ll.lane_position_id = pos.id
           JOIN lane_attribute la ON la.lane_id = l.id
-          JOIN #$idTableName i on i.id = l.id
+          JOIN #$idTableName i ON i.id = l.id
       """.as[LaneRow].list
     }
 
@@ -368,10 +368,59 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
   def updateLaneAttributes(laneId: Long, props: LaneProperty, username: String ): Unit = {
+
+    val finalValue = if (props.values.isEmpty) "Null"
+                     else props.values.head.value.toString
+
     sqlu"""UPDATE LANE_ATTRIBUTE
-           SET VALUE = ${props.values.head.value.toString}, MODIFIED_BY = $username, MODIFIED_DATE = sysdate
-          WHERE LANE_ID =  $laneId AND NAME = ${props.publicId}
+           SET VALUE = $finalValue, MODIFIED_BY = $username, MODIFIED_DATE = sysdate
+          WHERE LANE_ID =  $laneId
+          AND NAME = ${props.publicId}
     """.execute
+  }
+
+
+  def updateLaneModifiedFields (laneId: Long, username: String) = {
+    sqlu"""
+      update LANE
+      set modified_by = $username,
+          modified_date = SYSDATE
+      where id = $laneId
+    """.execute
+  }
+
+  def updateMValues(id: Long, linkMeasures: (Double, Double), username: String): Unit = {
+    val (startMeasure, endMeasure) = linkMeasures
+
+    sqlu"""UPDATE LANE_POSITION
+           SET  START_MEASURE = $startMeasure, END_MEASURE = $endMeasure,  modified_date = SYSDATE
+          WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
+     """.execute
+
+    updateLaneModifiedFields(id, username)
+  }
+
+  def updateMValuesChangeInfo(laneId: Long, linkMeasures: (Double, Double), vvhTimestamp: Long, username: String): Unit = {
+    println("lane_id -> " + laneId)
+
+    val (startMeasure, endMeasure) = linkMeasures
+
+    sqlu"""
+      UPDATE LANE_POSITION
+      SET start_measure = $startMeasure, end_measure = $endMeasure, modified_date = SYSDATE, adjusted_timestamp = $vvhTimestamp
+      where id = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $laneId )
+    """.execute
+
+    updateLaneModifiedFields(laneId, username)
+  }
+
+  def updateExpiration(id: Long, expired: Boolean, username: String) = {
+
+    val validTo = if (expired) "sysdate" else "null"
+
+      sqlu"""UPDATE LANE
+            SET valid_to = $validTo, modified_by = $username, modified_date = SYSDATE
+            WHERE id = $id""".execute
   }
 
 }

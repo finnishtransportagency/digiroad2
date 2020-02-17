@@ -10,20 +10,18 @@ import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, HeightLimit => Heigh
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriClientException
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao, Queries}
-import fi.liikennevirasto.digiroad2.service.linearasset.ProhibitionService
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
-import fi.liikennevirasto.digiroad2.lane.{LanePropertiesValues, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, LaneValue, LightLane, NewIncomeLane, NewLane, PersistedLane, PieceWiseLane}
+import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
-import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service._
+import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
-import fi.liikennevirasto.digiroad2.service.linearasset._
+import fi.liikennevirasto.digiroad2.service.linearasset.{ProhibitionService, _}
 import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopException, MassTransitStopService, NewMassTransitStop}
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util._
-import org.apache.http.HttpStatus
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
@@ -647,7 +645,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    val laneInfo = laneService.fetchExistingLanesByRoadLinks( Seq(roadLink)).map(_.laneCode).sorted( _ ).mkString(",").toString
+    val laneInfo = laneService.fetchExistingLanesByRoadLinks( Seq(roadLink)).map(_.laneCode).sorted.mkString(",").toString
 
     Map(
       "lanes" ->  ( if (laneInfo.toString.isEmpty ) "" else laneInfo ),

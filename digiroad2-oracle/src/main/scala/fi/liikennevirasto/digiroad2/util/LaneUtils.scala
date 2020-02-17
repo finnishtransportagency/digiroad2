@@ -2,17 +2,15 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, GeometryUtils}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
-import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
 import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO}
+import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import org.joda.time.DateTime
 
 object LaneUtils {
@@ -193,6 +191,25 @@ object LaneUtils {
                               case _ => None
                               })
 
+  }
+
+
+  def getMappedChanges(changes: Seq[ChangeInfo]): Map[Long, Seq[ChangeInfo]] = {
+    (changes.filter(_.oldId.nonEmpty).map(c => c.oldId.get -> c) ++ changes.filter(_.newId.nonEmpty)
+      .map(c => c.newId.get -> c)).groupBy(_._1).mapValues(_.map(_._2))
+  }
+
+  def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
+    changes.filter(c =>
+      !c._2.exists(ci => ci.newId.contains(c._1)) &&
+        !currentLinkIds.contains(c._1)
+    ).keys.toSeq
+  }
+
+  def newChangeInfoDetected(lane : PersistedLane, changes: Map[Long, Seq[ChangeInfo]]): Boolean = {
+    changes.getOrElse(lane.linkId, Seq()).exists(c =>
+      c.vvhTimeStamp > lane.vvhTimeStamp && (c.oldId.getOrElse(0) == lane.linkId || c.newId.getOrElse(0) == lane.linkId)
+    )
   }
 
 }
