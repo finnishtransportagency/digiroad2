@@ -304,6 +304,26 @@ object RoadLinkDAO{
       sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
     }
 
+    def getExistingValuesForChanges(linkId: Long, changeTimeStamp: Long) = {
+      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) and adjusted_timestamp < $changeTimeStamp""".as[(String, String)].list.toMap
+    }
+
+    def expireAttributesChange(linkId: Long, username: String, changeTimeStamp: Long): Unit = {
+      sqlu"""
+            update road_link_attributes set
+              valid_to = sysdate,
+              modified_by = $username,
+              adjusted_timestamp = $changeTimeStamp
+            where link_id = $linkId
+          """.execute
+    }
+
+    def insertAttributeValueChange(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)
+             select primary_key_seq.nextval, $linkId, $attributeName, $value, $username, $changeTimeStamp
+              from dual""".execute
+    }
+
     def getAllExistingDistinctValues(attributeName: String) : List[String] = {
       sql"""select distinct value from #$table where name = $attributeName and (valid_to is null or valid_to > sysdate)""".as[String].list
     }
