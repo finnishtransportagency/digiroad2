@@ -95,6 +95,15 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     importMassTransitStop(fileParams("csv-file"), administrativeClassLimitations)
   }
 
+  //should be better if we use the /:pointAssetTypeImport since all the code is pratically the same
+  //just need to change the name to a more useful name
+  post("/lanes") {
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    }
+    importLanes(fileParams("csv-file"))
+  }
+
   get("/log/:id") {
     params.getAs[Long]("id").flatMap(id =>  csvDataImporter.getById(id)).getOrElse("Logia ei löytynyt.")
   }
@@ -173,6 +182,19 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     val newLogId = createNewLog(user.username, fileName, s"import_${MassTransitStopAsset.layerName}")
     eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, newLogId, administrativeClassLimitations.map(AdministrativeValues)))
     getLogById(newLogId)
+  }
+
+  def importLanes(csvFileItem: FileItem): Option[ImportStatusInfo] = {
+    val csvFileInputStream = csvFileItem.getInputStream
+    val fileName = csvFileItem.getName
+    if (csvFileInputStream.available() == 0)
+      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
+    else {
+      val user = userProvider.getCurrentUser()
+      val newLogId = createNewLog(user.username, fileName , s"import_${Lanes.layerName}")
+      eventBus.publish("importCSVData", CsvDataImporterInfo(Lanes.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId))
+      getLogById(newLogId)
+    }
   }
 
   def createNewLog(username: String, fileName: String, jobName: String) : Long =  OracleDatabase.withDynTransaction {importLogDao.create(username, fileName, jobName)}
