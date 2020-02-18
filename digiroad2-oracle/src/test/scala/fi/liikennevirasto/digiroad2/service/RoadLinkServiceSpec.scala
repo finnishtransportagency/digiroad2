@@ -1333,7 +1333,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       insertTestData()
       val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
-      service.fillRoadLinkAttributes(changeInfoTest)
+      service.fillRoadLinkAttributes(Seq(), changeInfoTest)
 
       val attributesRoadLink4 = LinkAttributesDao.getExistingValues(4)
       attributesRoadLink4.size should be (2)
