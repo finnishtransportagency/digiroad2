@@ -1,19 +1,11 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporter, CsvDataImporterOperations, DigiroadEventBus, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Status}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, ServicePointsClass, State}
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
-import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingService, IncomingServicePoint}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporter, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.ServicePointException
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   case class NotImportedData(reason: String, csvRow: String)
@@ -33,18 +25,48 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     "s_katyyppi" -> "name lane type"
   )
 
-  private val mandatoryFieldsMapping: Map[String, String] = Map(
+  private val intValueFieldsMapping: Map[String, String] = Map(
     "tie" -> "road number",
     "ajorata" -> "track",
-    "kaista" -> "lane",
-    "osa" -> "parking place count",
+    "osa" -> "road part",
     "aet" -> "initial distance",
-    "let" -> "end distance",
-    "katyyppi" -> "lane type"
+    "let" -> "end distance"
   )
+
+  private val laneNumberFieldMapping: Map[String, String] = Map("kaista" -> "lane")
+  private val laneTypeFieldMapping: Map[String, String] = Map("katyyppi" -> "lane type")
+
+  private val mandatoryFieldsMapping: Map[String, String] = laneNumberFieldMapping ++ intValueFieldsMapping ++ laneTypeFieldMapping
 
   private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
     mandatoryFieldsMapping.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+  }
+
+  def verifyIntType(parameterName: String, parameterValue: String): ParsedRow = {
+    if (parameterValue.forall(_.isDigit)) {
+      (Nil, List(AssetProperty(columnName = intValueFieldsMapping(parameterName), value = parameterValue)))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
+  def verifyLaneNumber(parameterName: String, parameterValue: String): ParsedRow = {
+    if (parameterValue.forall(_.isDigit) && parameterValue.length == 2 && Seq(1, 2, 3).contains(parameterValue.charAt(0).getNumericValue)) {
+      (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = parameterValue)))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
+  //put this in the right file
+  val laneTypes = (1 to 11) ++ (20 to 22)
+
+  def verifyLaneType(parameterName: String, parameterValue: String): ParsedRow = {
+    if (parameterValue.forall(_.isDigit) && laneTypes.contains(parameterValue.toInt)) {
+      (Nil, List(AssetProperty(columnName = laneTypeFieldMapping(parameterName), value = parameterValue)))
+    } else {
+      (List(parameterName), Nil)
+    }
   }
 
   def assetRowToAttributes(csvRowWithHeaders: Map[String, String]): ParsedRow = {
@@ -60,7 +82,16 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           else
             result
         } else {
-          if(mandatoryFieldsMapping.contains(key))
+          if (intValueFieldsMapping.contains(key)) {
+            val (malformedParameters, properties) = verifyIntType(key, value.toString)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          } else if (laneNumberFieldMapping.contains(key)) {
+            val (malformedParameters, properties) = verifyLaneNumber(key, value.toString)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          } else if (laneTypeFieldMapping.contains(key)) {
+            val (malformedParameters, properties) = verifyLaneType(key, value.toString)
+            result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+          }else if(mandatoryFieldsMapping.contains(key))
             result.copy(_2 = AssetProperty(columnName = mandatoryFieldsMapping(key), value = value) :: result._2)
           else if (nonMandatoryFieldsMapping.contains(key))
             result.copy(_2 = AssetProperty(columnName = nonMandatoryFieldsMapping(key), value = value) :: result._2)
@@ -87,10 +118,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 //  }
 
   def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-    val lanes = laneAssetProperties.map {lane =>
-      lane
-    }
-    var resultActual = result
+    val lanesByRoadNumber = laneAssetProperties.groupBy(lane => lane.find(_.columnName == "road number").get.value)
+
     result
 //    val incomingServicePoint = pointAssetAttributes.map { servicePointAttribute =>
 //      val csvProperties = servicePointAttribute.properties
@@ -169,7 +198,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         (result, row) =>
           val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
           val missingParameters = findMissingParameters(csvRow)
-          val (malformedParameters, properties) = assetRowToAttributes(csvRow)   //need to put more different mappings for validation
+          val (malformedParameters, properties) = assetRowToAttributes(csvRow)
 
           if (missingParameters.nonEmpty || malformedParameters.nonEmpty/* || notImportedParameters.nonEmpty*/) {
             result.copy(
@@ -192,10 +221,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
             result.copy(createdData = properties :: result.createdData)
           }
       }
-//      val (notImportedParameters, parsedRow) = verifyData(properties, user) //need to verifyDataBetween rows
-
+//      val (notImportedParameters, parsedRow) = verifyData(properties, user) //need to verifyDataBetween rows or just the row?
       createAsset(result.createdData, user, result)
     }
-    ImportResultLaneAsset()
   }
 }

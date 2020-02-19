@@ -69,10 +69,13 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
   }
 
-  post("/:pointAssetTypeImport") {
-    validateOperation()
-    val assetType = params("pointAssetTypeImport")
-    importPointAssets(fileParams("csv-file"), assetType)
+  post("/:assetTypeImport") {
+    val assetType = params("assetTypeImport")
+    if(assetType == Lanes.layerName && !userProvider.getCurrentUser().isOperator())
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    else
+      validateOperation()
+    importAssets(fileParams("csv-file"), assetType)
   }
 
   post("/roadLinks") {
@@ -93,15 +96,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     ).flatten
 
     importMassTransitStop(fileParams("csv-file"), administrativeClassLimitations)
-  }
-
-  //should be better if we use the /:pointAssetTypeImport since all the code is pratically the same
-  //just need to change the name to a more useful name
-  post("/lanes") {
-    if (!userProvider.getCurrentUser().isOperator()) {
-      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-    }
-    importLanes(fileParams("csv-file"))
   }
 
   get("/log/:id") {
@@ -136,7 +130,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     }
   }
 
-  def importPointAssets(csvFileItem: FileItem, layerName: String): Option[ImportStatusInfo] = {
+  def importAssets(csvFileItem: FileItem, layerName: String): Option[ImportStatusInfo] = {
     val fileName = csvFileItem.getName
     val csvFileInputStream = csvFileItem.getInputStream
     if(csvFileInputStream.available() == 0)
@@ -182,19 +176,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     val newLogId = createNewLog(user.username, fileName, s"import_${MassTransitStopAsset.layerName}")
     eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, newLogId, administrativeClassLimitations.map(AdministrativeValues)))
     getLogById(newLogId)
-  }
-
-  def importLanes(csvFileItem: FileItem): Option[ImportStatusInfo] = {
-    val csvFileInputStream = csvFileItem.getInputStream
-    val fileName = csvFileItem.getName
-    if (csvFileInputStream.available() == 0)
-      halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
-    else {
-      val user = userProvider.getCurrentUser()
-      val newLogId = createNewLog(user.username, fileName , s"import_${Lanes.layerName}")
-      eventBus.publish("importCSVData", CsvDataImporterInfo(Lanes.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId))
-      getLogById(newLogId)
-    }
   }
 
   def createNewLog(username: String, fileName: String, jobName: String) : Long =  OracleDatabase.withDynTransaction {importLogDao.create(username, fileName, jobName)}
