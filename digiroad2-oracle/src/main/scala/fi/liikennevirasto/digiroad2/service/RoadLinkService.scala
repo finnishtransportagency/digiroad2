@@ -1124,22 +1124,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           val commonAttributes = returnEqualAttributes(Seq(attributesFirstRoadLink, attributesLastRoadLink))
 
           commonAttributes.foreach { case (attribute, value) =>
-            LinkAttributesDao.insertAttributeValueChange(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+            LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
           }
         }
       }
     }
 
-    def returnEqualAttributes(oldIdsAttributes: Seq[Map[String, String]]): Map[String, String] = {
-      oldIdsAttributes.flatMap { mapToFilter =>
+    def returnEqualAttributes(oldAttributes: Seq[Map[String, String]]): Map[String, String] = {
+      oldAttributes.flatMap { mapToFilter =>
         mapToFilter.filter { case (attr, value) =>
-          oldIdsAttributes.forall { thisMap =>
-            val option = thisMap.get(attr)
-            if (option.isEmpty) {
-              false
-            } else {
-              option.get == value
-            }
+          oldAttributes.forall { oldAttribute =>
+            val attribute = oldAttribute.get(attr)
+            attribute.nonEmpty && attribute.get == value
           }
         }
       }.toMap
@@ -1153,30 +1149,26 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           val newIdFromVariousOld = changesToBeProcessed.filter(_.newId == change.newId && change.newId.isDefined)
           if (newIdFromVariousOld.size > 1) {
             val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-              val attributes = LinkAttributesDao.getExistingValuesForChanges(thisChange.oldId.get, change.vvhTimeStamp)
+              val attributes = LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
               if (attributes.nonEmpty)
-                LinkAttributesDao.expireAttributesChange(thisChange.oldId.get, changeUsername, thisChange.vvhTimeStamp)
+                LinkAttributesDao.expireValues(thisChange.oldId.get, Some(changeUsername), Some(thisChange.vvhTimeStamp))
               attributes
             }
 
-            val attributes = returnEqualAttributes(oldIdsAttributes)
-            attributes.foreach { case (attribute, value) =>
-              LinkAttributesDao.insertAttributeValueChange(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+            returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
+              LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
             }
           } else {
-            val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValuesForChanges(change.oldId.get, change.vvhTimeStamp)
+            val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
 
             if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
               val newIdsOfThisOldId = changesToBeProcessed.filter(thisChange => thisChange.oldId == change.oldId && thisChange.newId.isDefined)
 
-              newIdsOfThisOldId.isEmpty match {
-                case false => LinkAttributesDao.expireAttributesChange(change.oldId.get, changeUsername, change.vvhTimeStamp)
-                  newIdsOfThisOldId.foreach { changeNewId =>
-                    roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
-                      LinkAttributesDao.insertAttributeValueChange(changeNewId.newId.get, changeUsername, attribute, value, changeNewId.vvhTimeStamp)
-                    }
-                  }
-                case true => LinkAttributesDao.expireAttributesChange(change.oldId.get, changeUsername, change.vvhTimeStamp)
+              LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
+              newIdsOfThisOldId.foreach { changeNewId =>
+                roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
+                  LinkAttributesDao.insertAttributeValueByChanges(changeNewId.newId.get, changeUsername, attribute, value, changeNewId.vvhTimeStamp)
+                }
               }
             }
           }
