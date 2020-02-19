@@ -1315,23 +1315,17 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         ChangeInfo(Some(55555555), Some(4), 1, 1, None, None, None, None, 1)
       )
 
-      def insertTestData () = {
-        val testUser = "test_user"
+      val testUser = "test_user"
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (11111111, 'PRIVATE_ROAD_ASSOCIATION', 11111111, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333331, 'PRIVATE_ROAD_ASSOCIATION', 33333333, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333332, 'ADDITIONAL_INFO', 33333333, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444441, 'PRIVATE_ROAD_ASSOCIATION', 44444444, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444442, 'ADDITIONAL_INFO', 44444444, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555551, 'PRIVATE_ROAD_ASSOCIATION', 55555555, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555552, 'ADDITIONAL_INFO', 55555555, '2', $testUser)""".execute
 
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (11111111, 'PRIVATE_ROAD_ASSOCIATION', 11111111, $dummyRoadAssociationNameNumber, $testUser)""".execute
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
 
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333331, 'PRIVATE_ROAD_ASSOCIATION', 33333333, $dummyRoadAssociationNameNumber, $testUser)""".execute
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333332, 'ADDITIONAL_INFO', 33333333, '2', $testUser)""".execute
-
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444441, 'PRIVATE_ROAD_ASSOCIATION', 44444444, $dummyRoadAssociationNameNumber, $testUser)""".execute
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444442, 'ADDITIONAL_INFO', 44444444, '2', $testUser)""".execute
-
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555551, 'PRIVATE_ROAD_ASSOCIATION', 55555555, $dummyRoadAssociationNameNumber, $testUser)""".execute
-        sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555552, 'ADDITIONAL_INFO', 55555555, '2', $testUser)""".execute
-      }
-
-      insertTestData()
       val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
       service.fillRoadLinkAttributes(Seq(), changeInfoTest)
 
