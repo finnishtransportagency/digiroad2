@@ -2,9 +2,12 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.lane.{LanePropertiesValues, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporter, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
 
 class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -15,7 +18,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
                                    notImportedData: List[NotImportedData] = Nil,
                                    createdData: List[ParsedProperties] = Nil)  extends ImportResult
   type ImportResultData = ImportResultLaneAsset
-  type ParsedCsv = (MalformedParameters, Seq[ParsedProperties])
+  type ParsedCsv = (MalformedParameters, List[ParsedProperties])
 
   private val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "id" -> "id",
@@ -36,10 +39,18 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   private val laneNumberFieldMapping: Map[String, String] = Map("kaista" -> "lane")
   private val laneTypeFieldMapping: Map[String, String] = Map("katyyppi" -> "lane type")
 
-  private val mandatoryFieldsMapping: Map[String, String] = laneNumberFieldMapping ++ intValueFieldsMapping ++ laneTypeFieldMapping
+  val mandatoryFieldsMapping: Map[String, String] = laneNumberFieldMapping ++ intValueFieldsMapping ++ laneTypeFieldMapping
 
   private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
     mandatoryFieldsMapping.keySet.diff(csvRowWithHeaders.keys.toSet).toList
+  }
+
+  def getPropertyValue(pointAssetAttributes: ParsedProperties, propertyName: String): String = {
+    pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get.asInstanceOf[String]
+  }
+
+  def getPropertyValueOption(pointAssetAttributes: ParsedProperties, propertyName: String): Option[String] = {
+    pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).asInstanceOf[Option[String]]
   }
 
   def verifyIntType(parameterName: String, parameterValue: String): ParsedRow = {
@@ -91,84 +102,63 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           } else if (laneTypeFieldMapping.contains(key)) {
             val (malformedParameters, properties) = verifyLaneType(key, value.toString)
             result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-          }else if(mandatoryFieldsMapping.contains(key))
+          }else if(mandatoryFieldsMapping.contains(key)) {
             result.copy(_2 = AssetProperty(columnName = mandatoryFieldsMapping(key), value = value) :: result._2)
-          else if (nonMandatoryFieldsMapping.contains(key))
+          } else if (nonMandatoryFieldsMapping.contains(key)) {
             result.copy(_2 = AssetProperty(columnName = nonMandatoryFieldsMapping(key), value = value) :: result._2)
-          else
+          } else {
             result
+          }
         }
     }
   }
 
-//  def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
-//    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
-//    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
-//
-//    (optLon, optLat) match {
-//      case (Some(lon), Some(lat)) =>
-//        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
-//        roadLinks.isEmpty match {
-//          case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-//          case false => (List(), Seq(parsedRow))
-//        }
-//      case _ =>
-//        (Nil, Nil)
-//    }
-//  }
+  def verifyData(parsedRow: ParsedProperties): ParsedCsv = {
+    val optTrack = getPropertyValueOption(parsedRow, "track")
+    val optLane = getPropertyValueOption(parsedRow, "lane")
+
+    (optTrack, optLane) match {
+      case (Some(track), Some(lane)) =>
+        (Track.apply(track.toInt), lane.charAt(0).getNumericValue) match {
+          case (Track.RightSide, 2) | (Track.LeftSide, 1)  => (List(s"Wrong lane number for the track given"), List())
+          case (_, _) => (List(), List(parsedRow))
+        }
+      case _ =>
+        (Nil, Nil)
+    }
+  }
 
   def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-    val lanesByRoadNumber = laneAssetProperties.groupBy(lane => lane.find(_.columnName == "road number").get.value)
+//    val partitionedLanes = laneAssetProperties.groupBy(lane => lane.find(_.columnName == "road number").get.value).toSeq.sortBy(_._1.asInstanceOf[String].toInt).map{lane =>
+//      val sortedLanes = lane._2.sortBy(lane => (lane.find(_.columnName == "road part").get.value.asInstanceOf[String].toInt, lane.find(_.columnName == "initial distance").get.value.asInstanceOf[String].toInt))
+//      val (ajorata0, otherAjorata) = sortedLanes.partition(_.find(_.columnName == "track").get.value.asInstanceOf[String].toInt == 0)
+//      val (ajorata1, ajorata2) = otherAjorata.partition(_.find(_.columnName == "track").get.value.asInstanceOf[String].toInt == 1)
+//      (lane._1, ajorata0, ajorata1, ajorata2)
+//    }
 
-    result
-//    val incomingServicePoint = pointAssetAttributes.map { servicePointAttribute =>
-//      val csvProperties = servicePointAttribute.properties
-//      val nearbyLinks = servicePointAttribute.roadLink
+//    laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).foreach { lane =>
+//      lane._2.foreach { props =>
+//        val roadPartNumber = getPropertyValue(props, "road part").toLong
+//        val initialDistance = getPropertyValue(props, "initial distance").toLong
+//        val endDistance = getPropertyValue(props, "end distance").toLong
+//        val track = getPropertyValue(props, "track").toInt
+//        val laneCode = getPropertyValue(props, "lane")
+//        val laneType = getPropertyValue(props, "lane type").toInt
 //
-//      val position = getCoordinatesFromProperties(csvProperties)
+//        val sideCode = track match {
+//          case 1 | 2 => SideCode.BothDirections
+//          case _ => if(laneCode.charAt(0).getNumericValue == 1) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+//        }
 //
-//      val roadLink = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-//      val nearestRoadLink = roadLink.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(position, r.geometry))
+//        val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))), LaneProperty("lane_type", Seq(LanePropertyValue(laneType))), LaneProperty("lane_continuity", Seq(LanePropertyValue(1)))))
+//        val incomingLane = NewIncomeLane(0, 0, 100, 749, false, false, properties)
+//        val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
 //
-//      val serviceType = getPropertyValue(csvProperties, "type").asInstanceOf[String]
-//      val typeExtension = getPropertyValueOption(csvProperties, "type extension").map(_.toString)
-//      val name = getPropertyValueOption(csvProperties, "name").map(_.toString)
-//      val additionalInfo = getPropertyValueOption(csvProperties, "additional info").map(_.toString)
-//      val isAuthorityData = getPropertyValue(csvProperties, "is authority data").asInstanceOf[String]
-//      val parkingPlaceCount = getPropertyValueOption(csvProperties, "parking place count").map(_.toString.toInt)
-//
-//      val validatedServiceType = serviceTypeConverter(serviceType)
-//      val validatedTypeExtension = ServicePointsClass.getTypeExtensionValue(typeExtension.get, validatedServiceType)
-//      val validatedAuthorityData = authorityDataConverter(isAuthorityData)
-//
-//      val incomingService = IncomingService(validatedServiceType, name, additionalInfo, validatedTypeExtension, parkingPlaceCount, validatedAuthorityData)
-//
-//      val servicePointInfo =
-//        if(validatedServiceType == ServicePointsClass.Unknown.value)
-//          Seq(NotImportedData(reason = s"Service Point type $serviceType does not exist.", csvRow = rowToString(csvProperties.flatMap{x => Map(x.columnName -> x.value)}.toMap)))
-//        else
-//          Seq()
-//
-//      CsvServicePoint(position, incomingService, nearestRoadLink, servicePointInfo)
-//    }
-//
-//    val (validServicePoints, nonValidServicePoints) = incomingServicePoint.partition(servicePoint => servicePoint.importInformation.isEmpty)
-//    val notImportedInfo = nonValidServicePoints.flatMap(_.importInformation)
-//    val groupedServicePoints = validServicePoints.groupBy(_.position)
-//
-//    val incomingServicePoints = groupedServicePoints.map { servicePoint =>
-//      (IncomingServicePoint(servicePoint._1.x, servicePoint._1.y, servicePoint._2.map(_.incomingService).toSet, Set()), servicePoint._2.map(_.roadLink).head.municipalityCode)
-//    }
-//
-//    incomingServicePoints.foreach { incomingAsset =>
-//      try {
-//        servicePointService.create(incomingAsset._1, incomingAsset._2, user.username, false)
-//      } catch {
-//        case e: ServicePointException => result.copy(notImportedData = List(NotImportedData(reason = e.getMessage, csvRow = "")) ++ result.notImportedData)
+//        LaneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username)
 //      }
 //    }
-//
-//    result.copy(notImportedData = notImportedInfo.toList ++ result.notImportedData)
+
+    result
   }
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
@@ -193,14 +183,15 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-    withDynTransaction {
+//    withDynTransaction {
       val result = csvReader.allWithHeaders().foldLeft(ImportResultLaneAsset()) {
         (result, row) =>
           val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
           val missingParameters = findMissingParameters(csvRow)
           val (malformedParameters, properties) = assetRowToAttributes(csvRow)
+          val (notImportedParameters, parsedRow) = verifyData(properties)
 
-          if (missingParameters.nonEmpty || malformedParameters.nonEmpty/* || notImportedParameters.nonEmpty*/) {
+          if (missingParameters.nonEmpty || malformedParameters.nonEmpty || notImportedParameters.nonEmpty) {
             result.copy(
               incompleteRows = missingParameters match {
                 case Nil => result.incompleteRows
@@ -211,18 +202,17 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
                 case Nil => result.malformedRows
                 case parameters =>
                   MalformedRow(malformedParameters = parameters, csvRow = rowToString(csvRow)) :: result.malformedRows
-              }/*,
+              },
               notImportedData = notImportedParameters match {
                 case Nil => result.notImportedData
                 case parameters =>
                   NotImportedData(reason = parameters.head, csvRow = rowToString(csvRow)) :: result.notImportedData
-              }*/)
+              })
           } else {
-            result.copy(createdData = properties :: result.createdData)
+            result.copy(createdData = parsedRow ++ result.createdData)
           }
       }
-//      val (notImportedParameters, parsedRow) = verifyData(properties, user) //need to verifyDataBetween rows or just the row?
       createAsset(result.createdData, user, result)
-    }
+//    }
   }
 }
