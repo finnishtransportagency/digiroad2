@@ -646,6 +646,10 @@
       return returnedMunicipality(lon, lat, onSuccess, onFailure);
     };
 
+    this.getStartLocationNameByCoordinates = function (startCoordinates) {
+      return $.getJSON('api/userStartLocation?position=' + startCoordinates.lon + ',' + startCoordinates.lat);
+    };
+
     this.getMassTransitStopByNationalIdForSearch = function(nationalId) {
       return $.get('api/massTransitStopsSafe/' + nationalId);
     };
