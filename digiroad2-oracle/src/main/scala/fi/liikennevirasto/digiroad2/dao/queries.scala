@@ -370,19 +370,12 @@ object Queries {
   }
 
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
-    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete;""".execute
-    sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete;""".execute
-    sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete;""".execute
-    sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete;""".execute
-
-    // should be automatic, so maybe this query is not needed
-    // confirm this
-    sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete; """.execute
-
-    // Update on municipalityToMerge should be in daily batch so no need to update that here only delete the municipalityToDelete rows
-    // confirm this
-    sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete;""".execute
-
-    sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete;""".execute
+    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
+    sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
   }
 }
