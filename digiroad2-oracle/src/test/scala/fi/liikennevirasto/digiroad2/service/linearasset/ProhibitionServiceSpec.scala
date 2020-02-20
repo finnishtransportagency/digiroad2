@@ -80,6 +80,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 5001
@@ -248,6 +249,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 5001
@@ -414,6 +416,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new ProhibitionService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 6000
@@ -514,6 +517,7 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
 
     val service = new ProhibitionService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId = 5000
@@ -544,11 +548,11 @@ class ProhibitionServiceSpec extends FunSuite with Matchers {
       service.getByMunicipality(assetTypeId, municipalityCode)
 
       verify(mockEventBus, times(1))
-        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set.empty[Long], Nil))
+        .publish("prohibition:update", ChangeSet(Set.empty[Long], Nil, Nil, Nil, Set(asset1), Nil))
 
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("prohibition:saveProjectedProhibition"), captor.capture())
-      val projectedAssets = captor.getValue
+      val projectedAssets = captor.getValue.asInstanceOf[Seq[PersistedLinearAsset]]
       projectedAssets.length should be(1)
       projectedAssets.foreach { proj =>
         proj.id should be (0)

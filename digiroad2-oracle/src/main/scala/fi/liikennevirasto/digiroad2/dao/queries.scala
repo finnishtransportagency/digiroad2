@@ -408,6 +408,7 @@ object Queries {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
 
+
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
     sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
