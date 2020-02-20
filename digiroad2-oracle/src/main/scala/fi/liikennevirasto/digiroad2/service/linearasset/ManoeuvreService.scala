@@ -2,8 +2,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
@@ -11,7 +9,8 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -334,8 +333,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
     val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("Connection Point not valid")))
 
-    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
-    val manoeuvreInit = trafficSignInfo.roadLink +: intermediates
+    try {
+      val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
+      val manoeuvreInit = trafficSignInfo.roadLink +: intermediates
 
       val tsType = TrafficSignType.applyOTHValue(trafficSignInfo.signType)
 
@@ -358,6 +358,11 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     else
       Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id)), roadLinks))
 
+    } catch {
+      case mce @ ( _: ManoeuvreCreationException |  _: InvalidParameterException ) =>
+        inaccurateDAO.createInaccurateAsset(trafficSignInfo.id, Manoeuvres.typeId, trafficSignInfo.roadLink.municipalityCode, trafficSignInfo.roadLink.administrativeClass )
+        Seq()
+    }
   }
 
   def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
