@@ -184,19 +184,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("speed limit mass query gives correct amount of results") {
-    val ids = Seq.range(1610929L, 1611759L).toSet // in test fixture this contains > 400 speed limits
-    val dao = new OracleSpeedLimitDao(null, null)
-    ids.size >= dao.MassQueryThreshold should be (true) // This should be high number enough
-    runWithRollback {
-      val count = dao.getCurrentSpeedLimitsByLinkIds(Option(ids)).size
-      val grouped = ids.grouped(dao.MassQueryThreshold - 1).toSet
-      grouped.size > 1 should be (true)
-      val checked = grouped.map(i => dao.getCurrentSpeedLimitsByLinkIds(Option(i)).count(s => true)).sum
-      count should be (checked) // number using mass query should be equal to those queried without using mass query
-    }
-  }
-
   test("speed limit no mass query") {
     val ids = Seq.range(1L, 2L).toSet
     val dao = new OracleSpeedLimitDao(null, null)
