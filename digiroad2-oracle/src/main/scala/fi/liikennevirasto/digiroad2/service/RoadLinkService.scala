@@ -1143,7 +1143,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
       changesToBeProcessed.foreach { change =>
-        if (change.changeType == New.value) {
+        if (change.oldId.isEmpty) {
           resolveNewChange(change)
         } else {
           val newIdFromVariousOld = changesToBeProcessed.filter(_.newId == change.newId && change.newId.isDefined)
