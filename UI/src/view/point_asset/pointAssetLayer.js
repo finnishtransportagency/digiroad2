@@ -16,6 +16,7 @@
       assetGrouping = params.assetGrouping,
       authorizationPolicy = params.authorizationPolicy,
       trafficSignReadOnlyLayer = params.readOnlyLayer;
+    var pointAssetLayerStyles = PointAssetLayerStyles(params.roadLayer);
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -156,8 +157,10 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), zoomlevels.getViewZoom(map));
-         selectControl.activate();
+        var roadLinks = roadCollection.getAll();
+        roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
+        me.drawOneWaySigns(roadLayer.layer, roadLinks);
+        selectControl.activate();
       });
       if(collection.complementaryIsActive()) {
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
@@ -240,6 +243,7 @@
 
     this.layerStarted = function(eventListener) {
       bindEvents(eventListener);
+      showRoadLinkInformation();
     };
 
     function toggleMode(readOnly) {
@@ -415,6 +419,14 @@
       if(applicationModel.getSelectedLayer() == layerName)
         me.refreshView();
     };
+
+    function showRoadLinkInformation() {
+      if(params.showRoadLinkInfo) {
+        roadLayer.setLayerSpecificStyleProvider(params.layerName, function() {
+          return pointAssetLayerStyles;
+        });
+      }
+    }
 
     return {
       show: show,

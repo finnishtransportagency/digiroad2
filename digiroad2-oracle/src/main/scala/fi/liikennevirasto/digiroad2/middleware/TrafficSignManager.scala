@@ -83,7 +83,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     val username = Some("automatic_trafficSign_deleted")
 
     trafficSign.foreach { trSign =>
-      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[PropertyValue]).head.propertyValue.toInt
       trafficSignType match {
         case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
           manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username, newTransaction)
@@ -95,7 +95,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
           insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
 
         case signType if TrafficSignManager.belongsToParking(signType) =>
-          insertTrafficSignToProcess(trSign.id, ParkingProhibition)
+          insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign))
+
+        case _ => None
       }
     }
   }

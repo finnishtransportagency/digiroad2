@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.LinearAssetTypes
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
@@ -12,7 +13,7 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, TrafficSignType}
 trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperations {
 
   override type AssetType = PersistedLinearAsset
-  lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val dynamicAssetDao = new DynamicLinearAssetDao
   override def assetTypeInfo: AssetTypeInfo
   override val radiusDistance: Int
 
@@ -38,15 +39,18 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
       Seq()
   }
 
-  def getAssetValue(asset: PersistedLinearAsset): String = {
+  def getAssetValue(asset: PersistedLinearAsset, publicId: String): String = {
     asset.value match {
-      case Some(NumericValue(intValue)) => intValue.toString
+      case Some(DynamicValue(value)) => value.properties.find(_.publicId == publicId).map(_.values) match {
+        case Some(values) => values.map(_.value).head.toString
+        case _ => ""
+      }
       case _ => ""
     }
   }
 
   override def getAsset(roadLink: Seq[RoadLink]): Seq[AssetType] = {
-    dao.fetchLinearAssetsByLinkIds(assetTypeInfo.typeId, roadLink.map(_.linkId), LinearAssetTypes.numericValuePropertyId, false).filterNot(_.expired)
+    dynamicAssetDao.fetchDynamicLinearAssetsByLinkIds(assetTypeInfo.typeId, roadLink.map(_.linkId))
   }
 
   override def verifyAsset(assets: Seq[PersistedLinearAsset], roadLink: RoadLink, trafficSign: PersistedTrafficSign): Set[Inaccurate] = {
@@ -63,7 +67,7 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
     if (assetInfo.ids.toSeq.nonEmpty) {
       withDynTransaction {
 
-        val assets = dao.fetchAssetsWithTextualValuesByIds(assetInfo.ids, LinearAssetTypes.getValuePropertyId(assetTypeInfo.typeId)).filterNot(_.expired)
+        val assets = dynamicAssetDao.fetchDynamicLinearAssetsByIds(assetInfo.ids).filterNot(_.expired).filterNot(_.expired)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet, newTransaction = false).filterNot(_.administrativeClass == Private)
 
         assets.foreach { asset =>
@@ -84,7 +88,6 @@ trait SevenRestrictionsLimitationValidator extends AssetServiceValidatorOperatio
                 inaccurateAssetDAO.deleteInaccurateAssetByLinkIds(allLinkIds, assetTypeInfo.typeId)
 
               trafficSigns.foreach(validateAndInsert)
-
             case _ =>
           }
         }

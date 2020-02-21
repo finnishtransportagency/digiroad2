@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.asset
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
-import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
@@ -19,6 +18,15 @@ sealed trait RoadLinkDAO{
 
   def getExistingValue(linkId: Long): Option[Int]= {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
+  }
+
+  def getLinkIdByValue(value: Int, since: Option[String]): Seq[Long] = {
+    val sinceDateQuery = since match {
+      case Some(date) => " AND modified_date >= to_date('" + date + "', 'YYYYMMDD')"
+      case _ =>""
+    }
+
+    sql"""select link_id from #$table where #$column = $value #$sinceDateQuery""".as[Long].list
   }
 
 
@@ -75,11 +83,19 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def expireValues(linkId: Long, username: Option[String]) = {
+  def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
+    val withTimeStamp = changeTimeStamp match {
+      case Some(ts) => ", adjusted_timestamp = " + ts + ""
+      case _ => ""
+    }
+
     sqlu"""update #$table
                  set valid_to = SYSDATE - 1,
                      modified_by = $username
-                 where link_id = $linkId""".execute
+                     #$withTimeStamp
+                 where link_id = $linkId
+                    and (valid_to is null or valid_to > sysdate)
+        """.execute
   }
 
   def deleteValues(linkId: Long) = {
@@ -121,6 +137,11 @@ object RoadLinkDAO{
   def getVVHValue(propertyName: String, vvhRoadLink: VVHRoadlink): Option[Int] = {
     val dao = getDao(propertyName)
     dao.getVVHValue(vvhRoadLink)
+  }
+
+  def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[Long] = {
+    val dao = getDao(propertyName)
+    dao.getLinkIdByValue(value, since)
   }
 
 
@@ -276,6 +297,13 @@ object RoadLinkDAO{
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
+    override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
+      sqlu"""update #$table
+                 set valid_to = SYSDATE - 1,
+                     modified_by = $username
+                 where link_id = $linkId""".execute
+    }
+
     override def updateValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
@@ -301,8 +329,19 @@ object RoadLinkDAO{
     def table: String = LinkAttributes
     def column: String = LinkAttributes
 
-    def getExistingValues(linkId: Long) = {
-      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
+    def getExistingValues(linkId: Long, changeTimeStamp: Option[Long] = None ) = {
+      val withTimeStamp = changeTimeStamp match {
+        case Some(ts) => "and adjusted_timestamp < " + ts + ""
+        case _ => ""
+      }
+
+      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate #$withTimeStamp) """.as[(String, String)].list.toMap
+    }
+
+    def insertAttributeValueByChanges(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)
+             select primary_key_seq.nextval, $linkId, $attributeName, $value, $username, $changeTimeStamp
+              from dual""".execute
     }
 
     def getAllExistingDistinctValues(attributeName: String) : List[String] = {
@@ -350,15 +389,6 @@ object RoadLinkDAO{
 
     def getVVHValue(vvhRoadLink: VVHRoadlink) = {
       throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
-    }
-
-    override def expireValues(linkId: Long, username: Option[String]) = {
-      sqlu"""update #$table
-                 set valid_to = SYSDATE - 1,
-                     modified_by = $username
-                 where link_id = $linkId
-                    and (valid_to is null or valid_to > sysdate)
-        """.execute
     }
   }
 }

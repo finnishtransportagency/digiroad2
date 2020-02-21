@@ -32,7 +32,11 @@
       }
 
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
-      rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
+      rootElement.find('.form-controls.linear-asset button.save').on('click', function() {
+        if(selectedLinearAsset.getCreatedBy() === "automatic_trafficSign_created")
+            new GenericConfirmPopup("Liikennemerkkiin on liitetty myös viivamainen tietolaji. Muokkaa tai poista myös viivamainen tietolaji", {type: 'alert'});
+        selectedLinearAsset.save();
+      });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
       rootElement.find('.form-controls.linear-asset button.verify').on('click', function() { selectedLinearAsset.verify(); });
       toggleMode(applicationModel.isReadOnly() || !validateAccess(selectedLinearAsset, authorizationPolicy));
@@ -68,11 +72,25 @@
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.read-only-title').toggle(readOnly);
       rootElement.find('.edit-mode-title').toggle(!readOnly);
+      handleSuggestionBox();
+    }
+
+    function handleSuggestionBox() {
+      if((applicationModel.isReadOnly() && (_.isNull(selectedLinearAsset.getId()) || !selectedLinearAsset.isSuggested()))) {
+        rootElement.find('.suggestion').hide();
+      } else if(selectedLinearAsset.isSplitOrSeparated()) {
+        rootElement.find('.suggestion').hide();
+      } else
+        rootElement.find('.suggestion').show();
     }
 
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
     }
+
+    eventbus.on(eventCategory + ':selected', function(){
+      handleSuggestionBox();
+    });
 
     eventbus.on('layer:selected', function(layer) {
       if(layerName === layer){

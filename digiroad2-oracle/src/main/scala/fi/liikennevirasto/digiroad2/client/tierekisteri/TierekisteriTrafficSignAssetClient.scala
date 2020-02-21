@@ -41,11 +41,8 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
       case _ =>
         convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
     }
-    if(Seq(NoVehiclesWithDangerGoods, HazmatProhibitionA, HazmatProhibitionB, ValidSat, ValidMultiplePeriod, ValidMonFri).contains(TrafficSignType.applyTRValue(assetNumber)) || !signSidePlacement.contains(alongTheRoad)) {
-      println(s"Prohibition sign $roadNumber ; $roadPartNumber ; $track ; $startMValue ; $roadSide ; ${TrafficSignType.applyTRValue(assetNumber)}; $assetValue")
-      Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue, signSidePlacement))
-    }else
-      None
+
+    Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue, signSidePlacement))
   }
 }
 class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriTrafficSignAssetClient(trEndPoint, trEnable, httpClient) {
@@ -62,6 +59,7 @@ class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable:
       val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
       val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
       val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse(getFieldValue(data, trNOPRA506).getOrElse("")).trim
+      val signSidePlacement = getFieldValue(data, trLIIKVAST)
 
       signSidePlacement match {
         case Some(sideInfo) if sideInfo == againstTraffic && Seq(SpeedLimitSign, SpeedLimitZone, UrbanArea).contains(TrafficSignType.applyTRValue(assetNumber)) =>
@@ -90,6 +88,7 @@ class TierekisteriTrafficSignGroupClient(trEndPoint: String, trEnable: Boolean, 
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
       val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+      val signSidePlacement = getFieldValue(data, trLIIKVAST)
 
       val roadSide: RoadSide = signSidePlacement match {
         case Some(sideInfo) if sideInfo == againstTraffic =>
