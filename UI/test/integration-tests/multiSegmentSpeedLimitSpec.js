@@ -8,7 +8,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
     });
     expect(features.length).not.to.equal(0);
     _.each(features, function(feature) {
-      expect(feature.getProperties().value).to.equal(limitValue);
+      expect(feature.getProperties().value.value).to.equal(limitValue);
     });
     expect($('#feature-attributes .speed-limit :selected')).to.contain(limitValue.toString());
   };
@@ -22,7 +22,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         openLayersMap = map;
         testHelpers.selectLayer('speedLimit');
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData([speedLimitsData]));
     });
 
@@ -76,7 +76,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
     var openLayersMap;
     var backend;
     before(function (done) {
-      backend = testHelpers.defaultBackend(_.take(speedLimitsData, 1)).withSpeedLimitsData(speedLimitsData);
+      backend = testHelpers.defaultBackend(20, _.take(speedLimitsData, 1)).withSpeedLimitsData(speedLimitsData);
       testHelpers.restartApplication(function (map) {
         openLayersMap = map;
         testHelpers.selectLayer('speedLimit');
@@ -119,7 +119,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimitGroup));
     });
 
@@ -135,7 +135,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
 
         expect(features).not.to.equal(0);
         _.each(features, function(feature) {
-          expect(feature.getProperties().value).to.equal(100);
+          expect(feature.getProperties().value.value).to.equal(100);
         });
       });
 

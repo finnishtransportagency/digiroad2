@@ -15,7 +15,7 @@
       return { expanded: $([
         me.panel(),
         me.labeling(),
-        '  </div>',
+        me.roadTypeLabeling(),
         me.checkboxPanel(),
         me.bindExternalEventHandlers(),
         '</div>'].join(''))  };
@@ -32,14 +32,54 @@
     };
 
     this.labeling = function () {
-      return _(assetConfig.legendValues).map(function (val) {
+      var labelingTypePanel = _(assetConfig.legendValues).map(function (val) {
         return '<div class="legend-entry">' +
-          '  <div class="' + (val.cssClass ? val.cssClass : 'label') + '">' +
+          '    <div class="label ' + (val.cssClass ? val.cssClass : '') + '">' +
           '    <span>' + val.label + '</span> ' +
           '    <img class="symbol" src="' + val.symbolUrl + '"/>' +
           '  </div>' +
           '</div>';
       }).join('');
+
+      return labelingTypePanel + '</div>';
+    };
+
+    this.roadTypeLabeling = function() {
+      var roadTypePanel = [
+        '  <div class="panel-section panel-legend road-link-legend">',
+        '   <div class="legend-entry">',
+        '      <div class="label">Valtion omistama</div>',
+        '      <div class="symbol linear road"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Kunnan omistama</div>',
+        '     <div class="symbol linear street"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Yksityisen omistama</div>',
+        '     <div class="symbol linear private-road"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Ei tiedossa tai kevyen liikenteen väylä</div>',
+        '     <div class="symbol linear unknown"/>',
+        '   </div>',
+        '  </div>'
+      ].join('');
+
+      var constructionTypePanel = [
+        '   <div class="panel-section panel-legend linear-asset-legend construction-type-legend">',
+        '    <div class="legend-entry">',
+        '      <div class="label">Rakenteilla</div>',
+        '      <div class="symbol linear construction-type-1"/>',
+        '   </div>',
+        '   <div class="legend-entry">',
+        '     <div class="label">Suunnitteilla</div>',
+        '     <div class="symbol linear construction-type-3"/>',
+        '   </div>',
+        ' </div>'
+      ].join('');
+
+      return roadTypePanel.concat(constructionTypePanel);
     };
 
     this.checkboxPanel = function () {
