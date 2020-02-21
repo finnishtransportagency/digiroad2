@@ -83,22 +83,15 @@
     };
 
     var getVerticalLevelType = function(verticalLevel) {
-      var verticalLevelType;
-
-      if(typeof verticalLevel === 'string'){
+      if (typeof verticalLevel === 'string') {
         var multipleLevels = verticalLevel.includes(",");
         if (multipleLevels) {
           return "[useita eri arvoja]";
         }
-        else{
-          verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel, 10); });
-          return verticalLevelType && verticalLevelType[1];
-        }
       }
-      else{
-        verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
-        return verticalLevelType && verticalLevelType[1];
-      }
+
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel); });
+      return verticalLevelType && verticalLevelType[1];
     };
 
     var getConstructionType = function(constructionTypeId){
@@ -251,18 +244,16 @@
       }
     };
 
-    var addressNumberString = function(minAddressNumber, maxAddressNumber) {
-      if(!minAddressNumber && !maxAddressNumber) {
+    var addressNumberString = function (minAddressNumber, maxAddressNumber) {
+      if (!minAddressNumber && !maxAddressNumber) {
         return '';
-      } else {
-        if(selectedLinkProperty.count() > 1) {
-          return "[useita eri arvoja]";
-        }
-        else {
-          var min = minAddressNumber || '';
-          var max = maxAddressNumber || '';
-          return min + '-' + max;
-        }
+      } else if (selectedLinkProperty.count() > 1) {
+        return "[useita eri arvoja]";
+      }
+      else {
+        var min = minAddressNumber || '';
+        var max = maxAddressNumber || '';
+        return min + '-' + max;
       }
     };
 
