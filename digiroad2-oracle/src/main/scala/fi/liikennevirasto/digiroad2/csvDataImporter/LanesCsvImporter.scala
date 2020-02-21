@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
+
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.lane.{LanePropertiesValues, LaneProperty, LanePropertyValue, LaneRoadAddressInfo, NewIncomeLane}
-import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporter, DigiroadEventBus, ExcludedRow, ImportResult, IncompleteRow, MalformedRow, Status}
+import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
@@ -129,34 +130,44 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
-//    val partitionedLanes = laneAssetProperties.groupBy(lane => lane.find(_.columnName == "road number").get.value).toSeq.sortBy(_._1.asInstanceOf[String].toInt).map{lane =>
-//      val sortedLanes = lane._2.sortBy(lane => (lane.find(_.columnName == "road part").get.value.asInstanceOf[String].toInt, lane.find(_.columnName == "initial distance").get.value.asInstanceOf[String].toInt))
-//      val (ajorata0, otherAjorata) = sortedLanes.partition(_.find(_.columnName == "track").get.value.asInstanceOf[String].toInt == 0)
-//      val (ajorata1, ajorata2) = otherAjorata.partition(_.find(_.columnName == "track").get.value.asInstanceOf[String].toInt == 1)
-//      (lane._1, ajorata0, ajorata1, ajorata2)
-//    }
+    //    val partitionedLanes = laneAssetProperties.groupBy(lane => lane.find(_.columnName == "road number").get.value).toSeq.sortBy(_._1.asInstanceOf[String].toInt).map{lane =>
+    //      val sortedLanes = lane._2.sortBy(lane => (lane.find(_.columnName == "road part").get.value.asInstanceOf[String].toInt, lane.find(_.columnName == "initial distance").get.value.asInstanceOf[String].toInt))
+    //      val (ajorata0, otherAjorata) = sortedLanes.partition(_.find(_.columnName == "track").get.value.asInstanceOf[String].toInt == 0)
+    //      val (ajorata1, ajorata2) = otherAjorata.partition(_.find(_.columnName == "track").get.value.asInstanceOf[String].toInt == 1)
+    //      (lane._1, ajorata0, ajorata1, ajorata2)
+    //    }
 
-//    laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).foreach { lane =>
-//      lane._2.foreach { props =>
-//        val roadPartNumber = getPropertyValue(props, "road part").toLong
-//        val initialDistance = getPropertyValue(props, "initial distance").toLong
-//        val endDistance = getPropertyValue(props, "end distance").toLong
-//        val track = getPropertyValue(props, "track").toInt
-//        val laneCode = getPropertyValue(props, "lane")
-//        val laneType = getPropertyValue(props, "lane type").toInt
-//
-//        val sideCode = track match {
-//          case 1 | 2 => SideCode.BothDirections
-//          case _ => if(laneCode.charAt(0).getNumericValue == 1) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
-//        }
-//
-//        val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))), LaneProperty("lane_type", Seq(LanePropertyValue(laneType))), LaneProperty("lane_continuity", Seq(LanePropertyValue(1)))))
-//        val incomingLane = NewIncomeLane(0, 0, 100, 749, false, false, properties)
-//        val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
-//
-//        LaneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username)
-//      }
-//    }
+    //    6 202 1 - 6 216 3428
+    //    13 238 3042 - 13 221 0
+    //    3821 2 1 - 3821 2 4400
+    //    387 1 1896 - 387 4 282
+    //    408 1 1988 - 408 4 4136
+    //    4081 1 2573 - 4081 2 6556
+    //    13 239 128 - 13 241 6231
+    //    26 11 4163 - 26 8 8533
+    //    6 310 0 - 6 318 5929
+    //    409 1 1046 - 409 2 3246
+
+    laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).foreach { lane =>
+      lane._2.foreach { props =>
+        val roadPartNumber = getPropertyValue(props, "road part").toLong
+        val initialDistance = getPropertyValue(props, "initial distance").toLong
+        val endDistance = getPropertyValue(props, "end distance").toLong
+        val track = getPropertyValue(props, "track").toInt
+        val laneCode = getPropertyValue(props, "lane")
+        val laneType = getPropertyValue(props, "lane type").toInt
+
+        val sideCode = track match {
+          case 1 | 2 => SideCode.BothDirections
+          case _ => if (laneCode.charAt(0).getNumericValue == 1) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+        }
+
+        val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))), LaneProperty("lane_type", Seq(LanePropertyValue(laneType))), LaneProperty("lane_continuity", Seq(LanePropertyValue(1)))))
+        val incomingLane = NewIncomeLane(0, 0, 100, 749, false, false, properties)
+        val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
+        LaneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username)
+      }
+    }
 
     result
   }
@@ -183,7 +194,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
-//    withDynTransaction {
+    withDynTransaction {
       val result = csvReader.allWithHeaders().foldLeft(ImportResultLaneAsset()) {
         (result, row) =>
           val csvRow = row.map(r => (r._1.toLowerCase(), r._2))
@@ -213,6 +224,6 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           }
       }
       createAsset(result.createdData, user, result)
-//    }
+    }
   }
 }

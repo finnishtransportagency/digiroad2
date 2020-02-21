@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
 import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -73,10 +72,10 @@ object LaneUtils {
 
 
     // used TierekisteriAssetImporterOperations.importAssets as example
-    val roadParts = Seq(laneRoadAddressInfo.initialRoadPartNumber, laneRoadAddressInfo.endRoadPartNumber)
+    val roadParts = laneRoadAddressInfo.initialRoadPartNumber to laneRoadAddressInfo.endRoadPartNumber
 
     val roadAddresses = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
-    val vkmRoadAddress = OracleDatabase.withDynSession(roadLinkTempDAO.getByRoadNumberRoadPartTrack(laneRoadAddressInfo.roadNumber.toInt, laneRoadAddressInfo.track, roadParts.toSet))
+    val vkmRoadAddress = roadLinkTempDAO.getByRoadNumberRoadPartTrack(laneRoadAddressInfo.roadNumber.toInt, laneRoadAddressInfo.track, roadParts.toSet)
 
     val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks((roadAddresses.map(ra => ra.linkId) ++ vkmRoadAddress.map(_.linkId)).toSet)
 
@@ -182,14 +181,13 @@ object LaneUtils {
           }
         }
       }
-    }
+    }.flatten
 
     //Create lanes
-    allLanesToCreate.filterNot(_.head == None)
-                    .flatMap( x => x match {
-                              case lane: PersistedLane => laneService.createWithoutTransaction( lane, username).toString
-                              case _ => None
-                              })
+    allLanesToCreate.flatMap {
+      case lane: PersistedLane => laneService.createWithoutTransaction(lane, username).toString
+      case _ => None
+    }
 
   }
 

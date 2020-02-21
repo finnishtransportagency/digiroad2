@@ -384,7 +384,6 @@ trait LaneOperations {
     val lanePositionId = dao.createLanePosition(newLane, username)
 
     dao.createLanePositionRelation(laneId, lanePositionId)
-    dao.createLanePosition(newLane, username)
 
     newLane.attributes match {
       case props: LanePropertiesValues =>
