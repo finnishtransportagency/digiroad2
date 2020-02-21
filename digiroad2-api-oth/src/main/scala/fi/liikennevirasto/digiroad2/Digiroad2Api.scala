@@ -1650,7 +1650,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
   }
 
-  get("/municipality") {
+  get("/unverifiedMunicipality") {
     val municipalityCode = params("municipalityCode")
     municipalityService.getMunicipalitiesNameAndIdByCode(Set(municipalityCode.toInt)).sortBy(_.name).map { municipality =>
       Map("id" -> municipality.id,

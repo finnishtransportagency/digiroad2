@@ -33,7 +33,7 @@
         if (_.isNull(municipalityCode)) {
           me.generateWorkList(municipalityListAllowed);
         } else {
-          me.generateWorkList(backend.getUnverifiedMunicipalities(municipalityCode));
+          me.generateWorkList(backend.getUnverifiedMunicipality(municipalityCode));
         }
       });
 
