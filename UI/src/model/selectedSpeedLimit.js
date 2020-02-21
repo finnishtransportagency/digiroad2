@@ -3,13 +3,13 @@
     var selection = [];
     var self = this;
     var dirty = false;
-    var originalSpeedLimitValue = null;
+    var originalSpeedLimitValues = null;
     var isSeparated = false;
 
     this.splitSpeedLimit = function(id, split) {
       collection.splitSpeedLimit(id, split, function(splitSpeedLimits) {
         selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
-        originalSpeedLimitValue = splitSpeedLimits.existing.value;
+        originalSpeedLimitValues = { isSuggested: splitSpeedLimits.existing.value.isSuggested, value: splitSpeedLimits.existing.value.value };
         dirty = true;
         collection.setSelection(self);
         eventbus.trigger('speedLimit:selected', self);
@@ -28,7 +28,7 @@
     this.open = function(speedLimit, singleLinkSelect) {
       self.close();
       selection = singleLinkSelect ? [speedLimit] : collection.getGroup(speedLimit);
-      originalSpeedLimitValue = self.getValue();
+      originalSpeedLimitValues = { isSuggested: self.getSuggestionValue(), value: self.getValue() };
       collection.setSelection(self);
       eventbus.trigger('speedLimit:selected', self);
     };
@@ -62,7 +62,7 @@
       var payload = {
         newLimits: _.map(unknownSpeedLimits, function(x) { return _.pick(x, 'linkId', 'startMeasure', 'endMeasure'); }),
         ids: _.map(knownSpeedLimits, 'id'),
-        value: value
+        value: { isSuggested: false, value: value }
       };
       backend.updateSpeedLimits(payload, function() {
         dirty = false;
@@ -98,7 +98,7 @@
           return { ids: _.map(selection, 'id') };
         }
       };
-      var payload = _.merge({value: self.getValue()}, payloadContents());
+      var payload = _.merge({value: {isSuggested: self.getSuggestionValue() ,value:self.getValue()}}, payloadContents());
 
       backend.updateSpeedLimits(payload, function() {
         dirty = false;
@@ -145,7 +145,7 @@
     var cancelCreation = function() {
       eventbus.trigger('speedLimit:unselect', self);
       if (isSeparated) {
-        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValue, sideCode: 1});
+        var originalSpeedLimit = _.merge({}, selection[0], {value: originalSpeedLimitValues, sideCode: 1});
         collection.replaceSegments([selection[0]], [originalSpeedLimit]);
       }
       collection.setSelection(null);
@@ -156,7 +156,7 @@
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: originalSpeedLimitValue }); });
+      var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value:  originalSpeedLimitValues }); });
       selection = collection.replaceSegments(selection, newGroup);
       dirty = false;
       eventbus.trigger('speedLimit:cancelled', self);
@@ -189,6 +189,11 @@
       return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
     };
 
+    var getBProperty = function(propertyName) {
+      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
+    };
+
+
     this.getSpeedLimit = function(id){
       return collection.getByLinkId(id);
     };
@@ -198,7 +203,18 @@
     };
 
     this.getValue = function() {
-      return getProperty('value');
+      var speedValue = getProperty('value');
+      return !_.isNull(speedValue) && speedValue.value;
+    };
+
+    this.getBValue = function() {
+      var speedValue = getBProperty('value');
+      return !_.isNull(speedValue) && speedValue.value;
+    };
+
+    this.getSuggestionValue = function() {
+      var speedValue = getProperty('value');
+      return !_.isNull(speedValue) && speedValue.isSuggested;
     };
 
     this.getModifiedBy = function() {
@@ -229,8 +245,10 @@
       if (value != selection[0].value) {
         var newGroup = _.map(selection, function(s) { return _.merge({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
-        dirty = true;
-        eventbus.trigger('speedLimit:valueChanged', self);
+        if(!_.isNaN(selection[0].value.value)) {
+          dirty = true;
+          eventbus.trigger('speedLimit:valueChanged', self);
+        }
       }
     };
 
@@ -280,7 +298,7 @@
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
         if (this.isSplitOrSeparated() && valuesDiffer()) return true;
-        else if (!this.isSplitOrSeparated()) return true;
+        else if (!this.isSplitOrSeparated()) return !_.isUndefined(selection[0].value.value);
       }
       return false;
     };
@@ -288,6 +306,11 @@
     var isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
+    };
+
+    this.isSuggested = function() {
+      var  suggestedProp = getProperty('value');
+      return !_.isNull(suggestedProp) && suggestedProp.isSuggested;
     };
   };
 })(this);

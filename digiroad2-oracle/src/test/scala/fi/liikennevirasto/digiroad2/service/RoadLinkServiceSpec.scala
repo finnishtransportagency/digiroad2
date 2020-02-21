@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, B
 import fi.liikennevirasto.digiroad2.asset.{CycleOrPedestrianPath, _}
 import fi.liikennevirasto.digiroad2.client.vvh.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.client.vvh._
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
@@ -273,7 +274,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val result = service.getRoadLinksFromVVH(boundingBox)
       val exactModifiedAtValue = result.head.modifiedAt
       val roadLink: List[RoadLink] = List(RoadLink(123, List(), 0.0, Municipality, 6, TrafficDirection.TowardsDigitizing, SingleCarriageway, exactModifiedAtValue, Some("automatic_generation"), constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface))
-      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)))
+      val changeSet: RoadLinkChangeSet = RoadLinkChangeSet(roadLink, List(IncompleteLink(789,91,Municipality)), List(), service.getRoadLinkDataByLinkIds(vvhRoadLinks))
 
       verify(mockEventBus).publish(
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
@@ -665,7 +666,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.equals(Seq(roadLink1, roadLink2, roadLink3, roadLink4))
 
       // Pass only incomplete road links with construction type 'in use' to be saved with actor
-      val changeSet = RoadLinkChangeSet(Seq(), List(IncompleteLink(1,91,Municipality), IncompleteLink(4,91,Municipality)))
+      val changeSet = RoadLinkChangeSet(Seq(), List(IncompleteLink(1,91,Municipality), IncompleteLink(4,91,Municipality)), List(), roadLinks.sortBy(_.linkId))
       verify(mockEventBus).publish(
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
         org.mockito.ArgumentMatchers.eq(changeSet))
@@ -710,7 +711,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.equals(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5, roadLink6))
 
       // Pass only incomplete road links with link source normal
-      val changeSet = RoadLinkChangeSet(List(), List(IncompleteLink(5,91,Municipality)))
+      val changeSet = RoadLinkChangeSet(List(),List(IncompleteLink(5,91,Municipality)),List(),roadLinks.sortBy(_.linkId))
       verify(mockEventBus).publish(
         org.mockito.ArgumentMatchers.eq("linkProperties:changed"),
         org.mockito.ArgumentMatchers.eq(changeSet))
@@ -1295,6 +1296,50 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       result.map(_.roadName).contains(attributesRoad1("ROADNAME_FI")) should be(true)
       result.map(_.roadName).contains(attributesRoad3("ROADNAME_FI")) should be(false)
       result.map(_.roadName).contains(noRoadName) should be(true)
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Update roadLink attributes based on geometry changes") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val dummyRoadAssociationNameNumber = "Test Road Association"
+
+      val changeInfoTest = Seq(
+        ChangeInfo(Some(11111111), None, 1, 1, None, None, None, None, 1),
+        ChangeInfo(Some(22222222), Some(3), 1, 1, None, None, None, None, 1),
+
+        ChangeInfo(Some(33333333), Some(4), 1, 1, None, None, None, None, 1),
+        ChangeInfo(Some(44444444), Some(4), 1, 1, None, None, None, None, 1),
+        ChangeInfo(Some(55555555), Some(4), 1, 1, None, None, None, None, 1)
+      )
+
+      val testUser = "test_user"
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (11111111, 'PRIVATE_ROAD_ASSOCIATION', 11111111, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333331, 'PRIVATE_ROAD_ASSOCIATION', 33333333, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333332, 'ADDITIONAL_INFO', 33333333, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444441, 'PRIVATE_ROAD_ASSOCIATION', 44444444, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444442, 'ADDITIONAL_INFO', 44444444, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555551, 'PRIVATE_ROAD_ASSOCIATION', 55555555, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (55555552, 'ADDITIONAL_INFO', 55555555, '2', $testUser)""".execute
+
+
+      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+      service.fillRoadLinkAttributes(Seq(), changeInfoTest)
+
+      val attributesRoadLink4 = LinkAttributesDao.getExistingValues(4)
+      attributesRoadLink4.size should be (2)
+      attributesRoadLink4.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
+      attributesRoadLink4.get("ADDITIONAL_INFO") should be(Some("2"))
+
+      val attributesRoadLink11111111 = LinkAttributesDao.getExistingValues(11111111)
+      attributesRoadLink11111111.isEmpty should be(true)
+
+      val attributesRoadLink3 = LinkAttributesDao.getExistingValues(3)
+      attributesRoadLink3.size should be (1)
+      attributesRoadLink3.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
 
       dynamicSession.rollback()
     }

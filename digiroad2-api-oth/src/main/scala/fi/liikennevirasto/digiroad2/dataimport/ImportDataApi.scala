@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.middleware.{AdministrativeValues, CsvDataImporterInfo, NumericValues}
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.MassTransitStopExcelDataImporter
 import org.joda.time.DateTime
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
 import org.scalatra._
@@ -109,15 +108,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     csvDataImporter.getByIds(ids)
   }
 
-  //TODO check if this exist
-  post("/csv") {
-    if (!userProvider.getCurrentUser().isOperator()) {
-      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-    }
-    val csvStream = new InputStreamReader(fileParams("csv-file").getInputStream)
-    new MassTransitStopExcelDataImporter().updateAssetDataFromCsvFile(csvStream)
-  }
-
   def validateOperation(): Unit = {
     if(!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
       halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
@@ -131,7 +121,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else {
       val user = userProvider.getCurrentUser()
-      val newLogId = createNewLog(user.username, fileName)
+      val newLogId = createNewLog(user.username, fileName, s"import_${TrafficSigns.layerName}")
       eventBus.publish("importCSVData", CsvDataImporterInfo(TrafficSigns.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId, municipalitiesToExpire.map(NumericValues)))
       getLogById(newLogId)
     }
@@ -144,7 +134,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else {
       val user = userProvider.getCurrentUser()
-      val newLogId = createNewLog(user.username, fileName)
+      val newLogId = createNewLog(user.username, fileName, s"import_$layerName")
       eventBus.publish("importCSVData", CsvDataImporterInfo(layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId))
       getLogById(newLogId)
     }
@@ -157,7 +147,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else {
       val user = userProvider.getCurrentUser()
-      val newLogId = createNewLog(user.username, fileName)
+      val newLogId = createNewLog(user.username, fileName , "import_roadLinks")
       eventBus.publish("importCSVData", CsvDataImporterInfo("roadLinks", fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId))
       getLogById(newLogId)
     }
@@ -170,7 +160,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
       halt(BadRequest("Ei valittua CSV-tiedostoa. Valitse tiedosto ja yritä uudestaan."))
     else {
       val user = userProvider.getCurrentUser()
-      val newLogId = createNewLog(user.username, fileName)
+      val newLogId = createNewLog(user.username, fileName, s"import_${MaintenanceRoadAsset.layerName}")
       eventBus.publish("importCSVData", CsvDataImporterInfo(MaintenanceRoadAsset.layerName, fileName, userProvider.getCurrentUser(), csvFileInputStream, newLogId))
       getLogById(newLogId)
     }
@@ -180,12 +170,12 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     val csvFileInputStream = csvFileItem.getInputStream
     val fileName = csvFileItem.getName
     val user = userProvider.getCurrentUser()
-    val newLogId = createNewLog(user.username, fileName)
+    val newLogId = createNewLog(user.username, fileName, s"import_${MassTransitStopAsset.layerName}")
     eventBus.publish("importCSVData", CsvDataImporterInfo(MassTransitStopAsset.layerName, fileName, user, csvFileInputStream, newLogId, administrativeClassLimitations.map(AdministrativeValues)))
     getLogById(newLogId)
   }
 
-  def createNewLog(username: String, fileName: String) : Long =  OracleDatabase.withDynTransaction {importLogDao.create(username, fileName)}
+  def createNewLog(username: String, fileName: String, jobName: String) : Long =  OracleDatabase.withDynTransaction {importLogDao.create(username, fileName, jobName)}
 
   def getLogById(id: Long) : Option[ImportStatusInfo] =  OracleDatabase.withDynTransaction {importLogDao.get(id)}
 }

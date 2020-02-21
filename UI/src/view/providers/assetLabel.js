@@ -41,7 +41,7 @@
           map(function(asset){
             var assetValue = me.getValue(asset);
             if(assetValue !== undefined){
-              var style = me.getStyle(assetValue);
+              var style = me.getStyle(asset);
               var feature = me.createFeature(getPoint(asset));
               feature.setProperties(_.omit(asset, 'geometry'));
               feature.setStyle(style);
@@ -96,9 +96,42 @@
 
         this.getPoints = function(asset){ return asset.points; };
 
-        this.getValue = function(asset){};
+        this.getValue = function(asset){
+          return asset.value ? asset.value : undefined;
+        };
+        
+        this.isSuggested = function(asset){
+          var suggestionBox =  _.some(asset.value, function(value) {
+            var suggestionBox = _.find(value, function(prop) {
+              return prop.publicId === 'suggest_box';});
+            return (!_.isUndefined(suggestionBox) && suggestionBox.values.length !==0 && !!parseInt(_.head(suggestionBox.values).value));});
+          
+          return _.has(asset, 'value') && suggestionBox;
+        };
 
-        this.getStyle = function(value){};
 
+        this.getSuggestionStyle = function (position) {
+          position = _.isUndefined(position) ? {x:0, y:0} : position;
+            return new ol.style.Style({
+                image: new ol.style.Icon(({
+                    src: 'images/icons/questionMarker.png',
+                    anchor : [position.x, 1 + position.y]
+                }))
+            });
+        };
+        
+        this.defaultStyle = function(value){};
+      
+        this.getStyle = function(asset){
+          if(this.isSuggested(asset))
+            return this.getSuggestionStyle();
+          else
+            return this.defaultStyle(this.getValue(asset));
+        };
+
+        this.suggestionStyle = function(suggestionInfo, styles, position) {
+            return !_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue) ?
+                styles.concat(me.getSuggestionStyle(position)) : styles;
+        };
     };
 })(this);

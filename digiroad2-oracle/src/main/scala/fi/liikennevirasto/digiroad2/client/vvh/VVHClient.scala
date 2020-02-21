@@ -31,6 +31,7 @@ object FeatureClass {
   case object SpecialTransportWithoutGate extends FeatureClass
   case object SpecialTransportWithGate extends FeatureClass
   case object CarRoad_IIIa extends FeatureClass
+  case object CarRoad_IIIb extends FeatureClass
   case object AllOthers extends FeatureClass
 }
 
@@ -799,7 +800,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     12312 -> FeatureClass.WinterRoads,
     12153 -> FeatureClass.SpecialTransportWithoutGate,
     12154 -> FeatureClass.SpecialTransportWithGate,
-    12131 -> FeatureClass.CarRoad_IIIa
+    12131 -> FeatureClass.CarRoad_IIIa,
+    12132 -> FeatureClass.CarRoad_IIIb
   )
 
   protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(

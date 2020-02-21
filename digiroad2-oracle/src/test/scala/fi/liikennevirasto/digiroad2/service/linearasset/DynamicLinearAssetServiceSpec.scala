@@ -51,9 +51,11 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
 
   val multiTypePropSeq = DynamicAssetValue(
     Seq(
+      DynamicProperty("weight", "integer", required = true, Seq(DynamicPropertyValue("1000"))),
+      DynamicProperty("mittarajoitus", "number", required = false, Seq(DynamicPropertyValue("1000"))),
       DynamicProperty("nimi_suomeksiTest", "text", required = false, Seq(DynamicPropertyValue("Dummy Text"))),
-      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!"))),
-      DynamicProperty("mittarajoitus", "number", required = false, Seq(DynamicPropertyValue("1000")))
+      DynamicProperty("suggest_box", "checkbox", required = false, List()),
+      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
     ))
   val multiTypePropSeq1 =DynamicAssetValue(
     Seq(
@@ -74,12 +76,19 @@ class DynamicLinearTestSupporter extends FunSuite with Matchers {
     Seq(
       DynamicProperty("mittarajoitus", "number", required = false, Seq(DynamicPropertyValue("1000")))
     ))
+  val multiTypePropSeq5 =DynamicAssetValue(
+    Seq(
+      DynamicProperty("weight", "integer", required = true, Seq(DynamicPropertyValue("1000"))),
+      DynamicProperty("nimi_suomeksiTest", "text", required = false, Seq(DynamicPropertyValue("Dummy Text Five"))),
+      DynamicProperty("esteettomyys_liikuntarajoitteiselleTest", "long_text", required = false, Seq(DynamicPropertyValue("Long Dummy Text!!!!!!!!!!!!!!!!!!")))
+    ))
 
   val propertyData = DynamicValue(multiTypePropSeq)
   val propertyData1 = DynamicValue(multiTypePropSeq1)
   val propertyData2 = DynamicValue(multiTypePropSeq2)
   val propertyData3 = DynamicValue(multiTypePropSeq3)
   val propertyData4 = DynamicValue(multiTypePropSeq4)
+  val propertyData5 = DynamicValue(multiTypePropSeq5)
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -351,8 +360,8 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
         sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 40, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData1, 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, propertyData3, 1, 0, None)), 40, "testuser")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(1, 30, 60, propertyData5, 1, 0, None)), 40, "testuser")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set())
       unVerifiedAssets.keys.head should be ("Kauniainen")
@@ -384,9 +393,9 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 40, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData1, 1, 0, None)), 40, "dr1_conversion")
-      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, propertyData2, 1, 0, None)), 40, "dr1_conversion")
-      val newAssets3 = ServiceWithDao.create(Seq(NewLinearAsset(3, 0, 30, propertyData3, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets2 = ServiceWithDao.create(Seq(NewLinearAsset(2, 0, 60, propertyData5, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets3 = ServiceWithDao.create(Seq(NewLinearAsset(3, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91,92))
       unVerifiedAssets.keys.size should be (2)
@@ -415,7 +424,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
       sqlu"""INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
            VALUES ($propId2, 40, 'long_text', 0, 'testuser', 'esteettomyys_liikuntarajoitteiselleTest', null)""".execute
 
-      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData1, 1, 0, None)), 40, "dr1_conversion")
+      val newAssets1 = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 30, propertyData5, 1, 0, None)), 40, "dr1_conversion")
 
       val unVerifiedAssets = ServiceWithDao.getUnverifiedLinearAssets(40, Set(91))
       unVerifiedAssets should be(empty)
@@ -512,12 +521,14 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
     val damagedByThawValue = DynamicValue(DynamicAssetValue(Seq(
       DynamicProperty("kelirikko", "number", false, Seq(DynamicPropertyValue(10))),
       DynamicProperty("spring_thaw_period", "number", false, Seq()),
-      DynamicProperty("annual_repetition", "number", false, Seq())
+      DynamicProperty("annual_repetition", "number", false, Seq()),
+      DynamicProperty("suggest_box", "checkbox", false, List())
     )))
 
     val roadWorksValue = DynamicValue(DynamicAssetValue(Seq(
       DynamicProperty("tyon_tunnus", "number", false, Seq(DynamicPropertyValue(99))),
-      DynamicProperty("arvioitu_kesto", "date", false, Seq(DynamicPropertyValue(Map(("startDate", "11.9.2018"), ("endDate", "21.9.2018")))))
+      DynamicProperty("arvioitu_kesto", "date", false, Seq(DynamicPropertyValue(Map(("startDate", "11.9.2018"), ("endDate", "21.9.2018"))))),
+      DynamicProperty("suggest_box", "checkbox", false, List())
     )))
 
     val assetsInfo = Seq(
@@ -554,7 +565,7 @@ class DynamicLinearAssetServiceSpec extends DynamicLinearTestSupporter {
 
       withClue("assetName " + AssetTypeInfo.apply(assetInfo.typeId).layerName) {
         verify(mockEventBus, times(1))
-          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Seq(SideCodeAdjustment(assetId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,SideCode.BothDirections,assetInfo.typeId)), Set.empty[Long], valueAdjustments = Seq.empty[ValueAdjustment]))
+          .publish("dynamicAsset:update", ChangeSet(Set.empty[Long], Nil, Nil, Seq(SideCodeAdjustment(assetId,SideCode.BothDirections,assetInfo.typeId), SideCodeAdjustment(0,SideCode.BothDirections,assetInfo.typeId)), Set(assetId), valueAdjustments = Seq.empty[ValueAdjustment]))
 
         val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
         verify(mockEventBus, times(count)).publish(org.mockito.ArgumentMatchers.eq("dynamicAsset:saveProjectedAssets"), captor.capture())

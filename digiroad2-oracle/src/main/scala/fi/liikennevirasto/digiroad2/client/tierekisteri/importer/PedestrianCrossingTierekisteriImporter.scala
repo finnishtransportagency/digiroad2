@@ -29,7 +29,7 @@ class PedestrianCrossingTierekisteriImporter extends PointAssetTierekisteriImpor
 
     GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
       point =>
-        val pedestrianCrossing = IncomingPedestrianCrossing(point.x, point.y, vvhRoadlink.linkId)
+        val pedestrianCrossing = IncomingPedestrianCrossing(point.x, point.y, vvhRoadlink.linkId, Set())
 
         dao.create(pedestrianCrossing, mValue, s"batch_process_$assetName", vvhRoadlink.municipalityCode,
           VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
