@@ -976,15 +976,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int): Seq[Long] = {
-    val withLinkIds = if (linkIds.nonEmpty) s"and pos.link_id in (${linkIds.mkString(",")})" else ""
-
-    sql"""
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
       select LINK_ID
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
+      join #$idTableName i on i.id = pos.link_id
       where a.asset_type_id = $assetType
-      and a.valid_to is not null #${withLinkIds}
+      and a.valid_to is not null
     """.as[Long].list
+    }
   }
 }
