@@ -78,6 +78,71 @@
     return asset;
   };
 
+  root.offsetByLaneNumber = function (zoom, asset, isRoadlink) {
+    function getOffsetPoint(asset, baseOffset) {
+      asset.points = _.map(asset.points, function (point, index, geometry) {
+        return root.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
+      });
+      return asset;
+    }
+
+    var baseOffset = -3.5;
+
+    if(isRoadlink) {
+      if (asset.sideCode === 1) {
+        return asset;
+      }
+
+      return getOffsetPoint(asset, baseOffset);
+    }else{
+        var laneCode = _.find(asset.properties, function (property) {
+          return property.publicId === "lane_code";
+        });
+
+      if (_.head(laneCode.values).value.toString()[1] == '1') {
+        if (asset.sideCode === 1) {
+          return asset;
+        }
+        return getOffsetPoint(asset, baseOffset);
+      }
+
+      if (asset.sideCode === 1) {
+        baseOffset = _.head(laneCode.values).value % 2 === 0 ? 1.5 : -1.5;
+      }else{
+        baseOffset = _.head(laneCode.values).value % 2 === 0 ? -2 : -5;
+      }
+      return getOffsetPoint(asset, baseOffset);
+    }
+  };
+
+  root.revertOffsetByLaneNumber = function (asset) {
+    function getOffsetPoint(asset, baseOffset) {
+      asset.points = _.map(asset.points, function (point, index, geometry) {
+        return root.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
+      });
+      return asset;
+    }
+
+    var baseOffset = 3.5;
+    var laneCode = _.find(asset.properties, function (property) {
+      return property.publicId === "lane_code";
+    });
+
+    if (_.head(laneCode.values).value.toString()[1] == '1') {
+      if (asset.sideCode === 1) {
+        return asset;
+      }
+      return getOffsetPoint(asset, baseOffset);
+    }
+
+    if (asset.sideCode === 1) {
+      baseOffset = _.head(laneCode.values).value % 2 === 0 ? -1.5 : 1.5;
+    }else{
+      baseOffset = _.head(laneCode.values).value % 2 === 0 ? 2 : 5;
+    }
+    return getOffsetPoint(asset, baseOffset);
+  };
+
   root.splitByPoint = function (lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
@@ -166,7 +231,7 @@
     throw new Error("Geometry not supported");
   };
 
-  root.calculateMidpointOfLineString = function (lineString) {
+  root.calculateMidpointOfLineString = function (lineString, lineFraction) {
     var length = lineString.getLength();
     var vertices = lineString.getCoordinates();
     var firstVertex = _.head(vertices);
@@ -174,15 +239,15 @@
       if (acc.midpoint) return acc;
       var distance = distanceOfPoints(vertex, acc.previousVertex);
       var accumulatedDistance = acc.distanceTraversed + distance;
-      if (accumulatedDistance < length / 2) {
+      if (accumulatedDistance < length / (lineFraction || 2)) {
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
       } else {
         vertex = {x: vertex[0], y: vertex[1]};
         acc.previousVertex = {x: acc.previousVertex[0], y:acc.previousVertex[1] };
         return {
           midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / 2 - acc.distanceTraversed)),
+            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / (lineFraction || 2) - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / (lineFraction || 2) - acc.distanceTraversed)),
             angleFromNorth: calculateAngleFromNorth(subtractVector(vertex, acc.previousVertex))
           }
         };
