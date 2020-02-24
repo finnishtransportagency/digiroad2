@@ -262,7 +262,7 @@
     function omitUnrelevantProperties(lanes){
       return _.map(lanes, function (lane) {
         return _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker', 'initial_road_number',
-          'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance']);
+          'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance', 'municipalityCode']);
       });
     }
 
@@ -271,6 +271,7 @@
 
       var linkIds = selection[0].linkId;
       var sideCode = selection[0].sideCode;
+      var municipalityCode = selection[0].municipalityCode;
 
       var lanes = omitUnrelevantProperties(selection);
 
@@ -285,6 +286,7 @@
 
         payload = {
           sideCode: sideCode,
+          municipalityCode: municipalityCode,
           initial_road_number: initial_road_number,
           initial_road_part_number: initial_road_part_number,
           initial_distance: initial_distance,
@@ -298,6 +300,7 @@
         payload = {
           linkIds: linkIds,
           sideCode: sideCode,
+          municipalityCode: municipalityCode,
           lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired)).concat(omitUnrelevantProperties(assetsToBeRemoved))
         };
       }

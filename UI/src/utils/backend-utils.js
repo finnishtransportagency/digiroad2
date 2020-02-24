@@ -406,7 +406,7 @@
     };
 
     this.getLanesByLinkIdAndSidecode = function(linkId, sidecode, callback) {
-      $.get('api/lanes/' + linkId + "/" + sidecode, callback);
+      $.get('api/lane/' + linkId + "/" + sidecode, callback);
     };
 
     this.getMassTransitStopById = function(id, callback) {
