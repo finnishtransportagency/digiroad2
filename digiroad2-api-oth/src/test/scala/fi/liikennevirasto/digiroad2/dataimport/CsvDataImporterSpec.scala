@@ -413,15 +413,13 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for lanes import fails if parameters combinations are invalid", Tag("db")) {
-    val laneRow1 = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 5, "osa" -> 67, "ajorata" -> 1, "aet" -> 0, "let" -> 2113)
-    val laneRow2 = Map("kaista" -> 12, "katyyppi" -> 1, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
-    val laneRow3 = Map("kaista" -> 21, "katyyppi" -> 1, "tie" -> 8, "osa" -> 67, "ajorata" -> 0, "aet" -> 0, "let" -> 1000)
+    val laneRow = Map("kaista" -> 12, "katyyppi" -> 1, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
 
-    val invalidCsv = csvToInputStream(createCsvLanes(laneRow1, laneRow2, laneRow3))
+    val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
     val assets = lanesCsvImporter.processing(invalidCsv, testUser)
 
     assets.notImportedData.size should be (1)
-    assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow2))
+    assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
   }
 
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
