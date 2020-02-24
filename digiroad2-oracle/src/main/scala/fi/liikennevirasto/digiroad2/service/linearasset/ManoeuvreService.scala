@@ -15,10 +15,10 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: Option[DateTime],
-                     modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String, isSuggested: Boolean)
+                     modifiedBy: Option[String], additionalInfo: String, createdDateTime: DateTime, createdBy: String)
 case class ManoeuvreElement(manoeuvreId: Long, sourceLinkId: Long, destLinkId: Long, elementType: Int)
-case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long], isSuggested: Boolean)
-case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String],  isSuggested: Option[Boolean])
+case class NewManoeuvre(validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], additionalInfo: Option[String], linkIds: Seq[Long], trafficSignId: Option[Long])
+case class ManoeuvreUpdates(validityPeriods: Option[Set[ValidityPeriod]], exceptions: Option[Seq[Int]], additionalInfo: Option[String])
 
 sealed trait ManoeuvreTurnRestrictionType {
   def value: Int
@@ -154,7 +154,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
     val cleanedManoeuvreElements = cleanChain(firstElement, lastElement, intermediateElements)
 
-    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null, false)
+    val manoeuvre = Manoeuvre(0, cleanedManoeuvreElements, newManoeuvre.validityPeriods, newManoeuvre.exceptions, None, null, newManoeuvre.additionalInfo.orNull, null, null)
 
     isValidManoeuvre(roadLinks)(manoeuvre)
   }
@@ -364,7 +364,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       if(!validateManoeuvre(trafficSignInfo.roadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
         throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
       else
-        Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id), false), roadLinks))
+        Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id)), roadLinks))
 
     } catch {
       case mce: ManoeuvreCreationException =>
