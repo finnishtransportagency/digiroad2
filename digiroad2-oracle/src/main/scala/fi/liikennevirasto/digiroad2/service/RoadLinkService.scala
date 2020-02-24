@@ -1146,7 +1146,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         if (change.oldId.isEmpty) {
           resolveNewChange(change)
         } else {
-          val newIdFromVariousOld = changesToBeProcessed.filter(_.newId == change.newId && change.newId.isDefined)
+          val newIdFromVariousOld = if(change.newId.isEmpty) {Seq.empty} else {changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)}
           if (newIdFromVariousOld.size > 1) {
             val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
               val attributes = LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
