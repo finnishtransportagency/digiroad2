@@ -42,7 +42,7 @@ class VerificationDao {
         where m.id = $municipalityId and atype.id = $typeId and valid_to is null
       """.as[(String, Int, String, String)].list
     suggestedAssets.map { row =>
-      SuggestedAssetsStructure(row._1, row._2, row._3, typeId, row._4.split(",").map(_.toInt).toSeq)
+      SuggestedAssetsStructure(row._1, row._2, row._3, typeId, row._4.split(",").map(_.toInt).toSet)
     }.head
   }
 
@@ -110,6 +110,7 @@ class VerificationDao {
       sql"""
       select a.id, a.asset_type_id
         from asset a
+        join asset_type atype on atype.geometry_type = 'linear' and atype.id = a.asset_type_id
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on lrm.id = al.position_id
         join property p on p.asset_type_id = a.asset_type_id and p.property_type = 'checkbox' and p.public_id = 'suggest_box'
@@ -124,6 +125,7 @@ class VerificationDao {
     sql"""
     select a.id, a.asset_type_id
       from asset a
+      join asset_type atype on atype.geometry_type = 'point' and atype.id = a.asset_type_id
       join property p on p.asset_type_id = a.asset_type_id and p.property_type = 'checkbox' and p.public_id = 'suggest_box'
       join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id
       join enumerated_value ev on ev.property_id = p.id and ev.value = 1 and ev.id = mcv.enumerated_value_id

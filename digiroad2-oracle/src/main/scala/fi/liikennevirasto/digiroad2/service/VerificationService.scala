@@ -15,7 +15,7 @@ import scala.concurrent.{Await, Future}
 case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime],  geometryType: String, counter: Int, verified: Boolean = false,
                             modifiedBy: Option[String] = None, modifiedDate: Option[DateTime] = None, refreshDate: Option[DateTime] = None, suggestedAssetsCount: Option[Int] = None)
 case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
-case class SuggestedAssetsStructure(municipalityName: String, municipalityCode: Int, assetTypeName: String, assetTypeId: Int, suggestedIds: Seq[Int])
+case class SuggestedAssetsStructure(municipalityName: String, municipalityCode: Int, assetTypeName: String, assetTypeId: Int, suggestedIds: Set[Int])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
   val logger = LoggerFactory.getLogger(getClass)
