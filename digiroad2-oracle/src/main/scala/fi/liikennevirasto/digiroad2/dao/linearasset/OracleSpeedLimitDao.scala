@@ -208,11 +208,12 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       select s.link_id, m.name_fi, s.administrative_class
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0
       """
 
     val filterAdministrativeClass = administrativeClass match {
-      case Some(ac) if ac == Municipality => s" where s.administrative_class not in ( ${State.value}, ${Private.value})"
-      case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
+      case Some(ac) if ac == Municipality => s" and s.administrative_class not in ( ${State.value}, ${Private.value})"
+      case Some(ac) if ac == State => s" and s.administrative_class = ${ac.value}"
       case _ => ""
     }
 
@@ -571,11 +572,17 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     sqlu"""delete from unknown_speed_limit where link_id in (#${linkIds.mkString(",")})""".execute
   }
 
+  def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {
+    sqlu"""update unknown_speed_limit set unnecessary = 1 where link_id in (#${linkIds.mkString(",")})""".execute
+    linkIds
+  }
+
   private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
     val unknownSpeedLimitCounts = sql"""
       select name_fi, s.administrative_class, count(*), m.id
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0
       group by name_fi, administrative_class, m.id
     """.as[(String, Int, Int, Int)].list
 

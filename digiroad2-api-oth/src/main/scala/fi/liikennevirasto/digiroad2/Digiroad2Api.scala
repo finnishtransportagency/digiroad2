@@ -2046,4 +2046,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  delete("/unknownSpeedLimit/delete") {
+    val unknownSpeedLimitIds = parsedBody.extractOpt[Set[Long]]
+
+    unknownSpeedLimitIds match {
+      case Some(value) => speedLimitService.hideUnknownSpeedLimits(value)
+      case None => false
+    }
+  }
 }

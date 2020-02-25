@@ -192,6 +192,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {
+    withDynTransaction {
+      dao.hideUnknownSpeedLimits(linkIds)
+    }
+  }
+
   def getMunicipalitiesWithUnknown(administrativeClass: Option[AdministrativeClass]): Seq[(Long, String)] = {
     withDynSession {
       dao.getMunicipalitiesWithUnknown(administrativeClass)
