@@ -79,11 +79,11 @@
           .append(tableForGroupingValues('Ei tiedossa', workListItems.Unknown, 0));
     };
 
-    var addSpinner = function () {
+    this.addSpinner = function () {
       $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
     };
 
-    var removeSpinner = function () {
+    this.removeSpinner = function () {
       $('.spinner-overlay').remove();
     };
 
@@ -128,11 +128,11 @@
         '</div>'
       );
 
-      addSpinner();
+      me.addSpinner();
       listP.then(function(limits) {
         var unknownLimits = _.map(limits, _.partial(me.workListItemTable, layerName));
         $('#work-list .work-list').html(unknownLimits);
-        removeSpinner();
+        me.removeSpinner();
       });
     };
   };

@@ -15,14 +15,6 @@
       });
     };
 
-    var addSpinner = function () {
-      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-    };
-
-    var removeSpinner = function () {
-      $('.spinner-overlay').remove();
-    };
-
     var generateWorkList = function(layerName, listP) {
       var title = 'Vanhentuneiden kohteiden lista';
       $('#work-list').html('' +
@@ -37,11 +29,11 @@
         '</div>' +
         '</div>'
       );
-      addSpinner();
+      me.addSpinner();
       listP.then(function(assets) {
         var unverifiedAssets = _.map(assets, _.partial(me.workListItemTable, layerName));
         $('#work-list .work-list').html(unverifiedAssets);
-        removeSpinner();
+        me.removeSpinner();
       });
     };
   };
