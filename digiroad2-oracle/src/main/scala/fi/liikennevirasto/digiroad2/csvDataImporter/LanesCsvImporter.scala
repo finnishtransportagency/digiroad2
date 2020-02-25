@@ -70,11 +70,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  //put this in the right file
-  val laneTypes = (1 to 11) ++ (20 to 22)
-
   def verifyLaneType(parameterName: String, parameterValue: String): ParsedRow = {
-    if (parameterValue.forall(_.isDigit) && laneTypes.contains(parameterValue.toInt)) {
+    if (parameterValue.forall(_.isDigit) && LaneType.apply(parameterValue.toInt) != LaneType.Unknown) {
       (Nil, List(AssetProperty(columnName = laneTypeFieldMapping(parameterName), value = parameterValue)))
     } else {
       (List(parameterName), Nil)
@@ -146,13 +143,15 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case _ => if (isMainLaneTowardsDigitizing) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         }
 
-        val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))), LaneProperty("lane_type", Seq(LanePropertyValue(laneType))), LaneProperty("lane_continuity", Seq(LanePropertyValue(1)))))
-        val incomingLane = NewIncomeLane(0, 0, 100, 749, false, false, properties)
+        val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
+                                                  LaneProperty("lane_type", Seq(LanePropertyValue(laneType))),
+                                                  LaneProperty("lane_continuity", Seq(LanePropertyValue(LaneContinuity.Continuous.value)))))
+        //id, start measure, end measure and municipalityCode doesnt matter
+        val incomingLane = NewIncomeLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
         val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
         LaneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username)
       }
     }
-
     result
   }
 
