@@ -1,8 +1,11 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.{SpeedLimitTrafficSignClient, TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{HazmatTransportProhibitionService, ManoeuvreService, ProhibitionService}
@@ -10,11 +13,6 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, Inc
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.tierekisteri.{SpeedLimitTrafficSignClient, TierekisteriTrafficSignAssetClient, TierekisteriTrafficSignGroupClient}
-
-import scala.util.Try
 
 class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperations {
 
@@ -136,7 +134,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
           roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
             val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId,  trafficSign.validityDirection, signType, roadLink), false)
+            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId,  trafficSign.validityDirection, signType, roadLink), newTransaction = false, fromTrafficSignGenerator = true)
           }
           newId
       }
@@ -167,9 +165,9 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    expireAssets()
+   // expireAssets()
 
-    val roadNumbers = getAllViiteRoadNumbers
+    val roadNumbers = Seq(170)//getAllViiteRoadNumbers
 
     roadNumbers.foreach {
       roadNumber =>
@@ -223,7 +221,13 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
               } else
                 allowedAdditionalPanels
 
-              createPointAsset(ra, roadlink.get, mValue, trAssetData, allowedProperties.toSet)
+              //Remove additonal Panels with 'trafficSigns_type' with empty value
+              val additionalPanelsFiltered = allowedAdditionalPanels.filterNot{ panel =>
+                                            val prop = trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get
+                                            prop.propertyValue.toString.trim.isEmpty }
+
+              if ( trafficSignType.toString.trim.nonEmpty )
+                createPointAsset(ra, roadlink.get, mValue, trAssetData, additionalPanelsFiltered)
           }
         }
     }
@@ -249,7 +253,7 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
       withDynTransaction {
 
         val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter).to.filter {sign =>
+        val trafficSigns = trafficSignService.getTrafficSign(roadLinksWithStateFilter).filter {sign =>
           TrafficSignType.applyOTHValue(trafficSignService.getProperty(sign, trafficSignService.typePublicId).get.propertyValue.toInt).group == trafficSignGroup
         }
 

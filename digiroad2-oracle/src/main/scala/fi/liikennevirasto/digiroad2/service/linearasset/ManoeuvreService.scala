@@ -2,8 +2,6 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 
 import java.security.InvalidParameterException
 
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Manoeuvres, SideCode}
 import fi.liikennevirasto.digiroad2.dao.InaccurateAssetDAO
 import fi.liikennevirasto.digiroad2.dao.linearasset.manoeuvre.ManoeuvreDao
@@ -11,7 +9,8 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point, _}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -322,7 +321,15 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     }
   }
 
-  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {
+  private def insertInaccurateAsset(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean, exception: Exception ): Seq[Long] = {
+    if (fromTrafficSignGenerator )
+      throw exception
+
+    inaccurateDAO.createInaccurateAsset(trafficSignInfo.id, Manoeuvres.typeId, trafficSignInfo.roadLink.municipalityCode, trafficSignInfo.roadLink.administrativeClass )
+    Seq()
+  }
+
+  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean = false ): Seq[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = trafficSignInfo.linkId
     val tsDirection = trafficSignInfo.validityDirection
@@ -335,40 +342,47 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
     val connectionPoint = roadLinkService.getRoadLinkEndDirectionPoints(trafficSignInfo.roadLink, Some(tsDirection)).headOption.getOrElse(throw new ManoeuvreCreationException(Set("Connection Point not valid")))
 
-    val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
-    val manoeuvreInit = trafficSignInfo.roadLink +: intermediates
+    try {
+        val (intermediates, adjacents, adjacentConnectPoint) = recursiveGetAdjacent(tsLinkId, connectionPoint)
+        val manoeuvreInit = trafficSignInfo.roadLink +: intermediates
 
-      val tsType = TrafficSignType.applyOTHValue(trafficSignInfo.signType)
+        val tsType = TrafficSignType.applyOTHValue(trafficSignInfo.signType)
 
-      val roadLinks = tsType match {
-        case NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+        val roadLinks = tsType match {
+          case NoLeftTurn => manoeuvreInit :+ roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
 
-        case NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
+          case NoRightTurn => manoeuvreInit :+ roadLinkService.pickRightMost(manoeuvreInit.last, adjacents)
 
-        case NoUTurn =>
-          val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
-          val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint))
-          (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
+          case NoUTurn =>
+            val firstLeftMost = roadLinkService.pickLeftMost(manoeuvreInit.last, adjacents)
+            val (int, newAdjacents, _)= recursiveGetAdjacent(firstLeftMost.linkId, getOpositePoint(firstLeftMost.geometry, adjacentConnectPoint))
+            (manoeuvreInit :+ firstLeftMost) ++ (int :+ roadLinkService.pickLeftMost(firstLeftMost, newAdjacents))
 
-        case _ => Seq.empty[RoadLink]
-      }
+          case _ => Seq.empty[RoadLink]
+        }
 
+      if(!validateManoeuvre(trafficSignInfo.roadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
+        throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
+      else
+        Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id), isSuggested = false), roadLinks))
 
-    if(!validateManoeuvre(trafficSignInfo.roadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
-      throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
-    else
-      Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id), false), roadLinks))
+    } catch {
+      case mce: ManoeuvreCreationException =>
+          insertInaccurateAsset(trafficSignInfo, fromTrafficSignGenerator, mce)
 
+      case eipe: InvalidParameterException =>
+            insertInaccurateAsset(trafficSignInfo, fromTrafficSignGenerator, eipe)
+    }
   }
 
-  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Seq[Long] = {
+  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTrafficSignGenerator: Boolean = false): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createManoeuvreFromTrafficSign(trafficSignInfo)
+        createManoeuvreFromTrafficSign(trafficSignInfo, fromTrafficSignGenerator)
       }
     }
     else
-      createManoeuvreFromTrafficSign(trafficSignInfo)
+      createManoeuvreFromTrafficSign(trafficSignInfo, fromTrafficSignGenerator)
   }
 
   private def getOpositePoint(geometry: Seq[Point], point: Point) = {
