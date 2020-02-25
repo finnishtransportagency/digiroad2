@@ -8,7 +8,7 @@
     });
 
     eventbus.on('loadingBar:hide', function() {
-      $('.loadingBar').remove();
+      setTimeout(function(){ $('.loadingBar').remove(); }, 1000);
     });
 
   };
