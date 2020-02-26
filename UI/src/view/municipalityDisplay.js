@@ -13,7 +13,7 @@
       }, function () {
         container.find('.municipality-wrapper').text('');
       }
-    )}, 250);
+    );}, 250);
 
     eventbus.on('map:moved', function (event) {
       //Municipality name could be shown at 5 km zoom level (level 5 = 5 Km)

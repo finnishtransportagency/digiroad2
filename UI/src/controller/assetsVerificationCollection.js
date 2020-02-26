@@ -8,7 +8,7 @@
                 setMunicipalityInfo(boundingBox, typeId);
         }, function () {
             setMunicipalityInfo(boundingBox, typeId);
-        })}, 250);
+        });}, 250);
 
         this.fetch = function (boundingBox, center, typeId, hasMunicipalityValidation) {
             if(!hasMunicipalityValidation)

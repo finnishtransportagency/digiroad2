@@ -624,19 +624,18 @@
     this.getGeocode = function(address) {
       var addressNormalized = address.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       var parsedAddress = addressNormalized.split(/^(\s*\w.*)(\s)(\s*\d+\s*),(\s*\w.*)/)
-          .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
-          .map(function(elem) { return elem.trim(); });
+        .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
+        .map(function(elem) { return elem.trim(); });
 
       return this.getMunicipalityIdByName(parsedAddress[2]).then(
-          function(kuntakoodi) {
-            var params = {
-              katunimi :   parsedAddress[0],
-              katunumero : parsedAddress[1],
-              kuntakoodi : _.head(kuntakoodi).id
-            };
-            return $.get("vkm-api/geocode", params ).then(function(x) { return x; });
-          });
-
+        function(municipalityInfo) {
+          var params = {
+            katunimi :   parsedAddress[0],
+            katunumero : parsedAddress[1],
+            kuntakoodi : _.head(municipalityInfo).id
+          };
+          return $.get("vkm-api/geocode", params ).then(function(x) { return x; });
+        });
     };
 
     this.getRoadLinkToPromise= function(linkid)

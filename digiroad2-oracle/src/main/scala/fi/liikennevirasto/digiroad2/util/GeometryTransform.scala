@@ -76,7 +76,7 @@ object RoadSide {
   case object Unknown extends RoadSide { def value = 0 }
 }
 
-case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, addrM: Int, deviation: Option[Double])
+case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, addrM: Int)
 class RoadAddressException(response: String) extends RuntimeException(response)
 class RoadPartReservedException(response: String) extends RoadAddressException(response)
 
@@ -97,14 +97,14 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
       val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
       val newMValue = (addr.endAddrMValue - ((mValue-addr.startMValue) * addressLength / lrmLength)).toInt
-      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
+      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
     }
 
     def towardsDigitizing (addr: RoadAddressDTO) = {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
       val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
       val newMValue = (((mValue-addr.startMValue) * addressLength) / lrmLength + addr.startAddrMValue).toInt
-      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
+      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue)
     }
 
     val roadAddress = roadAddressService.getByLrmPosition(linkId, mValue)
@@ -297,11 +297,10 @@ class VKMGeometryTransform {
     val roadPart = validateAndConvertToInt(VkmRoadPart, data)
     val track = validateAndConvertToInt(VkmTrackCode, data)
     val mValue = validateAndConvertToInt(VkmDistance, data)
-    val deviation = Option(0.0)
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
-    RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
+    RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue)
   }
 
   private def mapCoordinates(data: List[Map[String, Any]]) = {
