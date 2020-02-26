@@ -39,6 +39,39 @@
       background-color: @gray-darker-2;      
     }
 
+    .contentNoBackColor {
+      display: inline-block;
+      padding: @line-height-modifier * 2;
+      border-top-left-radius: @border-radius-base;
+      border-top-right-radius: @border-radius-base;
+      color: #000000;
+      width: 95%;
+
+      .municipalityElyText{
+        margin-left: 25%;
+        white-space:nowrap;
+      }
+
+      .assetTypeText{
+        margin-left: 34%;
+        white-space:nowrap;
+      }
+
+      .municipalityEly{
+        color: #ffffff;
+        background-color: #a4a4a2;
+        width: 50%;
+        margin-left: 45%;
+      }
+
+      .assetType{
+        color: #ffffff;
+        background-color: #a4a4a2;
+        width: 51%;
+        margin-left: 45%;
+      }
+    }
+
     .form-group {
       margin-bottom: 0;
       padding: @line-height-modifier * 2;
@@ -217,6 +250,20 @@
     text-transform: none;
     font-size: 17px;
     margin: 18px 58px 12px 18px;
+  }
+
+  .badge {
+    position: absolute;
+    bottom: 20px;
+    padding: 5px 10px;
+    border-radius: 50%;
+    background: #0615af;
+    color: #ffffff;
+  }
+
+  .actions
+    .cancel {
+      margin-left: 17px;
   }
 }
 

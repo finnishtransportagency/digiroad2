@@ -502,7 +502,7 @@ object SpeedLimitFiller {
       case SideCode.AgainstDigitizing => "↓"
       case _ => "?"
     }
-    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(NumericValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp.toString)
+    val details = "%d %.4f %.4f %s".format(speedLimit.value.getOrElse(SpeedLimitValue(0)).value, speedLimit.startMeasure, speedLimit.endMeasure, speedLimit.vvhTimeStamp.toString)
     if (speedLimit.expired) {
       println("N/A")
     } else {
@@ -563,5 +563,5 @@ object SpeedLimitFiller {
       geomModifiedDate = None, linkSource = asset.linkSource), changeSet)
   }
 
-  case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[NumericValue])
+  case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[SpeedLimitValue])
 }

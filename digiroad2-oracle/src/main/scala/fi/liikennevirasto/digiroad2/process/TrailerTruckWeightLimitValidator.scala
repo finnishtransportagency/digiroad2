@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.process
 
 import fi.liikennevirasto.digiroad2.{MaxMassCombineVehiclesExceeding, TrafficSignType}
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, TextPropertyValue, TrailerTruckWeightLimit}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, PropertyValue, TrailerTruckWeightLimit}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.PersistedLinearAsset
 
@@ -13,7 +13,7 @@ class TrailerTruckWeightLimitValidator extends SevenRestrictionsLimitationValida
   override def comparingAssetAndTrafficValue(asset: PersistedLinearAsset, trafficSign: PersistedTrafficSign): Boolean = {
     TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt) match {
       case MaxMassCombineVehiclesExceeding =>
-        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(TextPropertyValue("")).propertyValue == getAssetValue(asset)
+        trafficSignService.getProperty(trafficSign, "trafficSigns_value").getOrElse(PropertyValue("")).propertyValue == getAssetValue(asset, "weight")
       case _ => throw new NumberFormatException(s"Not supported trafficSign on ${assetTypeInfo.label} asset")
     }
   }

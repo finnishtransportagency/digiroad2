@@ -1,14 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
+import fi.liikennevirasto.digiroad2.asset.SimplePointAssetProperty
 import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, OracleDirectionalTrafficSignDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 
-case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, bearing: Option[Int], propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
 
 
 class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -17,6 +16,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
 
   override def typeId: Int = 240
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[DirectionalTrafficSign] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[DirectionalTrafficSign] =  throw new UnsupportedOperationException("Not Supported Method")
 
   override def setAssetPosition(asset: IncomingDirectionalTrafficSign, geometry: Seq[Point], mValue: Double): IncomingDirectionalTrafficSign = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
@@ -51,9 +51,8 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     val signsInRadius = OracleDirectionalTrafficSignDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
       .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters
         && Math.abs(sign.bearing.getOrElse(0) - incomingDirectionalTrafficSign.bearing.getOrElse(0)) <= BearingLimit)
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else  None
   }
 
   def getLatestModifiedAsset(signs: Seq[DirectionalTrafficSign]): DirectionalTrafficSign = {
@@ -97,7 +96,7 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
         OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username)
     }
   }
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 }
 
 

@@ -35,20 +35,20 @@ trait TrafficSignLinearGenerator {
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val assetType: Int
-  case object TrafficSignSerializer extends CustomSerializer[TrafficSignProperty](format =>
+  case object TrafficSignSerializer extends CustomSerializer[Property](format =>
     ({
       case jsonObj: JObject =>
         val id = (jsonObj \ "id").extract[Long]
         val publicId = (jsonObj \ "publicId").extract[String]
         val propertyType = (jsonObj \ "propertyType").extract[String]
-        val values: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[TextPropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+        val values: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[PropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
         val required = (jsonObj \ "required").extract[Boolean]
         val numCharacterMax = (jsonObj \ "numCharacterMax").extractOpt[Int]
 
-        TrafficSignProperty(id, publicId, propertyType, required, values, numCharacterMax)
+        Property(id, publicId, propertyType, required, values, numCharacterMax)
     },
       {
-        case tv : TrafficSignProperty =>
+        case tv : Property =>
           Extraction.decompose(tv)
       }))
 
@@ -367,7 +367,8 @@ trait TrafficSignLinearGenerator {
       oracleLinearAssetDao.expireConnectedByLinearAsset(asset.id)
     }
 
-    assetToUpdate(toUpdate, trafficSign, createdValue.get, username)
+    if(createdValue.nonEmpty)
+      assetToUpdate(toUpdate, trafficSign, createdValue.get, username)
   }
 
   def getAdjacents(previousInfo: (Option[Point], Option[Point], Option[Int]), roadLinks: Seq[RoadLink]): Seq[(RoadLink, (Option[Point], Option[Point], Option[Int]))] = {
@@ -801,6 +802,11 @@ class TrafficSignHazmatTransportProhibitionGenerator(roadLinkServiceImpl: RoadLi
     hazmatTransportProhibitionService.createWithoutTransaction(assetType, newSegment.roadLink.linkId, newSegment.value,
       newSegment.sideCode.value, Measures(newSegment.startMeasure, newSegment.endMeasure), username,
       vvhClient.roadLinkData.createVVHTimeStamp(), Some(newSegment.roadLink))
+  }
+
+  override def getExistingSegments(roadLinks : Seq[RoadLink]): Seq[PersistedLinearAsset] = {
+    if (debbuger) println("getExistingSegments")
+    hazmatTransportProhibitionService.getPersistedAssetsByLinkIds(assetType, roadLinks.map(_.linkId), false)
   }
 }
 

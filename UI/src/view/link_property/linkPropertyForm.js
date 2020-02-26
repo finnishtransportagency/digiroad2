@@ -82,8 +82,15 @@
       return localizedLinkType && localizedLinkType[1];
     };
 
-    var getVerticalLevelType = function(verticalLevel){
-      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+    var getVerticalLevelType = function(verticalLevel) {
+      if (typeof verticalLevel === 'string') {
+        var multipleLevels = verticalLevel.includes(",");
+        if (multipleLevels) {
+          return "[useita eri arvoja]";
+        }
+      }
+
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel); });
       return verticalLevelType && verticalLevelType[1];
     };
 
@@ -105,6 +112,9 @@
     var checkIfMultiSelection = function(mmlId){
       if(selectedLinkProperty.count() === 1){
         return mmlId;
+      }
+      else{
+        return "[useita eri arvoja]";
       }
     };
 
@@ -234,10 +244,13 @@
       }
     };
 
-    var addressNumberString = function(minAddressNumber, maxAddressNumber) {
-      if(!minAddressNumber && !maxAddressNumber) {
+    var addressNumberString = function (minAddressNumber, maxAddressNumber) {
+      if (!minAddressNumber && !maxAddressNumber) {
         return '';
-      } else {
+      } else if (selectedLinkProperty.count() > 1) {
+        return "[useita eri arvoja]";
+      }
+      else {
         var min = minAddressNumber || '';
         var max = maxAddressNumber || '';
         return min + '-' + max;

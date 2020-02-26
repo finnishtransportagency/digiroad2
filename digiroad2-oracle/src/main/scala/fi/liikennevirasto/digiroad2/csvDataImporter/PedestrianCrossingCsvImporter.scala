@@ -32,7 +32,7 @@ class PedestrianCrossingCsvImporter(roadLinkServiceImpl: RoadLinkService, eventB
 
       val floating = checkMinimumDistanceFromRoadLink(position, nearestRoadLink.geometry)
 
-      pedestrianCrossingService.createFromCoordinates(IncomingPedestrianCrossing(position.x, position.y, nearestRoadLink.linkId), nearestRoadLink, user.username, floating)
+      pedestrianCrossingService.createFromCoordinates(IncomingPedestrianCrossing(position.x, position.y, nearestRoadLink.linkId, Set()), nearestRoadLink, user.username, floating)
     }
 
     result

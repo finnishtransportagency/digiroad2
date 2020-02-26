@@ -3,11 +3,11 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, SimpleProperty, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -27,6 +27,8 @@ class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl:
     Seq(propertyUpdater, creator, positionUpdater)
   }
 
+  lazy val importLogDao: ImportLogDAO = new ImportLogDAO
+
   def getStrategy(csvRowWithHeaders: Map[String, String]): CsvOperations = {
     val strategies = getStrategies()
     strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(throw new UnsupportedOperationException(s"Please check the combination between Koordinaatti and  Valtakunnallinen ID"))
@@ -42,9 +44,17 @@ class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl:
       r => r.toList.map ( p => (p._1.toLowerCase, p._2)).toMap
     }
 
-    val strategy = getStrategy(csvRow.head)
-    strategy.importAssets(csvRow: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
-    }
+    try {
+      val strategy = getStrategy(csvRow.head)
+      strategy.importAssets(csvRow: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
+
+    } catch {
+      case e: Exception =>
+        OracleDatabase.withDynTransaction  {
+        importLogDao.update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
+        }
+      }
+  }
 }
 
 
@@ -136,13 +146,13 @@ trait MassTransitStopCsvImporter extends PointAssetCsvImporter {
     }
   }
 
-  def convertProperties(properties: Seq[AssetProperty]) : Seq[SimpleProperty] = {
+  def convertProperties(properties: Seq[AssetProperty]) : Seq[SimplePointAssetProperty] = {
     properties.map { prop =>
       prop.value match {
         case values if values.isInstanceOf[List[_]] =>
-          SimpleProperty(prop.columnName, values.asInstanceOf[List[PropertyValue]])
+          SimplePointAssetProperty(prop.columnName, values.asInstanceOf[List[PropertyValue]])
         case _ =>
-          SimpleProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))
+          SimplePointAssetProperty(prop.columnName, Seq(PropertyValue(prop.value.toString)))
       }
     }
   }

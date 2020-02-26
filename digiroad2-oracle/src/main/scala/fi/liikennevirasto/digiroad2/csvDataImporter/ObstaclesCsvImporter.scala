@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import fi.liikennevirasto.digiroad2.asset.State
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
@@ -42,7 +42,9 @@ class ObstaclesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: D
           Seq()
 
       if(validData.isEmpty)
-        obstaclesService.createFromCoordinates(IncomingObstacle(position.x, position.y, nearestRoadLink.linkId, obstacleType), nearestRoadLink, user.username, floating)
+        obstaclesService.createFromCoordinates(
+          IncomingObstacle(position.x, position.y, nearestRoadLink.linkId, Set(SimplePointAssetProperty(obstaclesService.typePublicId, Seq(PropertyValue(obstacleType.toString))))),
+          nearestRoadLink, user.username, floating)
 
       validData
     }

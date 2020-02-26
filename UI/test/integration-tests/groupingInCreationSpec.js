@@ -9,7 +9,7 @@ define(['chai', 'eventbus', 'testHelpers', 'AssetsTestData'], function(chai, eve
     before(function(done) {
       var assetsData = [testAsset1];
       var backend = testHelpers
-        .fakeBackend(assetsData, {}, 12)
+        .fakeBackend(assetsData, {}, 12, 10)
         .withAssetCreationTransformation(function(assetData) {
           return _.merge({}, assetData, {stopTypes: [2], id: 2});
         });
