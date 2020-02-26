@@ -165,9 +165,9 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-   // expireAssets()
+    expireAssets()
 
-    val roadNumbers = Seq(170)//getAllViiteRoadNumbers
+    val roadNumbers = getAllViiteRoadNumbers
 
     roadNumbers.foreach {
       roadNumber =>
