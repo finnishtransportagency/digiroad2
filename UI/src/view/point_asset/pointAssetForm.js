@@ -143,7 +143,7 @@ root.PointAssetForm = function() {
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
   };
 
-  var userInformationLog = function(authorizationPolicy, asset) {
+  this.userInformationLog = function(authorizationPolicy, asset) {
     var limitedRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen. Voit muokata kohteita vain oman kuntasi alueelta.';
     var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
     var message = '';
@@ -162,7 +162,7 @@ root.PointAssetForm = function() {
       return '';
   };
 
-  var informationLog = function (date, username) {
+  this.informationLog = function (date, username) {
     return date ? (date + ' / ' + username) : '-';
   };
 
@@ -202,14 +202,14 @@ root.PointAssetForm = function() {
       return '' +
         '<div class="wrapper">' +
         '  <div class="form form-horizontal form-dark form-pointasset">' +
-        renderFloatingNotification(asset.floating, localizedTexts) +
+        me.renderFloatingNotification(asset.floating, localizedTexts) +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(asset.createdAt, asset.createdBy) + '</p>' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + me.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
         '    </div>' +
         '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + me.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
         '    </div>' +
-        userInformationLog(authorizationPolicy, selectedAsset) +
+        me.userInformationLog(authorizationPolicy, selectedAsset) +
         me.renderValueElement(asset, collection, authorizationPolicy) +
         suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
         '    <div class="form-group form-group delete">' +
@@ -254,7 +254,7 @@ root.PointAssetForm = function() {
     rootElement.find('.edit-only').toggle(!readOnly);
   };
 
-  var renderFloatingNotification = function(floating, localizedTexts) {
+  this.renderFloatingNotification = function(floating, localizedTexts) {
     if (floating) {
       return '' +
         '<div class="form-group form-notification">' +

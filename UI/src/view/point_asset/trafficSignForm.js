@@ -39,6 +39,9 @@
         if (propertyType === "read_only_number")
           return readOnlyHandler(feature);
 
+        if (propertyType === 'date')
+          return dateHandler(feature);
+
       }), function(prev, curr) { return prev + curr; }, '');
 
       var additionalPanels = getProperties(asset.propertyData, "additional_panel");
@@ -50,18 +53,18 @@
       }
 
       var panelCheckbox =
-          '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
-          '      <div class="checkbox" >' +
-          '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
-          '      </div>' +
-          '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
-          '    </div>';
+        '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
+        '      <div class="checkbox" >' +
+        '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
+        '      </div>' +
+        '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
+        '    </div>';
 
       var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
-          '    <div class="form-group form-directional-traffic-sign">' +
-          '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
-          '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
-          '    </div>' : '';
+        '    <div class="form-group form-directional-traffic-sign">' +
+        '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
+        '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
+        '    </div>' : '';
 
       if(asset.validityDirection)
         return components +
@@ -70,16 +73,98 @@
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
           '    </div>' + wrongSideInfo + panelCheckbox + renderedPanels;
 
-
       return components + wrongSideInfo + panelCheckbox + renderedPanels;
     };
 
+    this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
+
+      var asset = selectedAsset.get();
+      var wrapper = $('<div class="wrapper">');
+      var formRootElement = $('<div class="form form-horizontal form-dark form-pointasset">');
+
+
+      if (selectedAsset.isNew()) {
+        formRootElement = formRootElement.append(me.renderValueElement(asset, collection));
+
+        return  wrapper.append(formRootElement );
+
+      } else {
+        var deleteCheckbox = $(''+
+            '    <div class="form-group form-group delete">' +
+            '      <div class="checkbox" >' +
+            '        <input type="checkbox">' +
+            '      </div>' +
+            '      <p class="form-control-static">Poista</p>' +
+            '    </div>' +
+            '  </div>' );
+        var logInfoGroup = $( '' +
+        '    <div class="form-group">' +
+        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + this.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
+        '    </div>' +
+        '    <div class="form-group">' +
+        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + this.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
+        '    </div>');
+
+        formRootElement = formRootElement.append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
+                                          .append(logInfoGroup)
+                                          .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
+                                          .append(me.renderValueElement(asset, collection))
+                                          .append(deleteCheckbox);
+
+        return wrapper.append(formRootElement );
+      }
+    };
+
+    this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+      var id = selectedAsset.getId();
+
+      var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
+      var header = '<span>' + title + '</span>';
+      var form = me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
+      var footer = me.renderButtons();
+
+      rootElement.find("#feature-attributes-header").html(header);
+      rootElement.find("#feature-attributes-form").html(form);
+      rootElement.find("#feature-attributes-footer").html(footer);
+
+      rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
+        var eventTarget = $(event.currentTarget);
+        selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
+      });
+
+      rootElement.find('input[type="text"]').not('#trafficSign_start_date, #trafficSign_end_date').on('input change', function (event) {
+        var eventTarget = $(event.currentTarget);
+        var obj = {};
+        obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
+        selectedAsset.set(obj);
+      });
+
+      rootElement.find('button#change-validity-direction').on('click', function() {
+        var previousValidityDirection = selectedAsset.get().validityDirection;
+        selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+      });
+
+      rootElement.find('.pointasset button.save').on('click', function() {
+        selectedAsset.save();
+      });
+
+      rootElement.find('.pointasset button.cancel').on('click', function() {
+        selectedAsset.cancel();
+      });
+
+
+      this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+    };
+
+
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+      dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
+
       rootElement.find('.form-traffic-sign').on('change', function() {
         selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
       });
 
-      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input', function (event) {
+      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input, datechange', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
         var propertyValue = $(event.currentTarget).val();
@@ -173,13 +258,30 @@
         'trafficSigns_type',
         'trafficSigns_value',
         'trafficSigns_info',
-        'counter'];
+        'counter',
+        'trafficSign_start_date',
+        'trafficSign_end_date' ];
 
       return _.sortBy(properties, function(property) {
         return _.indexOf(propertyOrdering, property.publicId);
       }).filter(function(property){
         return _.indexOf(propertyOrdering, property.publicId) >= 0;
       });
+    };
+
+    var dateHandler = function(property) {
+
+      var propertyValue = '';
+
+      if ( !_.isEmpty(property.values) && !_.isEmpty(property.values[0].propertyDisplayValue) )
+          propertyValue = property.values[0].propertyDisplayValue;
+
+      return '' +
+          '<div><div class="form-group editable form-traffic-sign">' +
+          '        <label class="control-label">' + property.localizedName + '</label>' +
+          '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+          '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+          '    </div></div>';
     };
 
     var textHandler = function (property) {

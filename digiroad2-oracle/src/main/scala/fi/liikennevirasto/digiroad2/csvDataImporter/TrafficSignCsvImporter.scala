@@ -26,6 +26,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val typePublicId = "trafficSigns_type"
   private val valuePublicId = "trafficSigns_value"
   private val infoPublicId = "trafficSigns_info"
+  private val startDatePublicId = "trafficSign_start_date"
+  private val endDatePublicId = "trafficSign_end_date"
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
@@ -33,13 +35,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   private val longValueFieldMappings = coordinateMappings
 
+  //mandatory for the sign 142 (RoadWorks)
+  override val dateFieldsMapping = Map(
+    "alkupäivämäärä" -> "startDate",
+    "loppupäivämäärä" -> "endDate"
+  )
+
   private val nonMandatoryMappings = Map(
     "arvo" -> "value",
     "kaksipuolinen merkki" -> "twoSided",
     "liikennevirran suunta" -> "trafficDirection",
     "suuntima" -> "bearing",
     "lisatieto" -> "additionalInfo"
-  )
+  ) ++ dateFieldsMapping
 
   private val codeValueFieldMappings = Map(
     "liikennemerkin tyyppi" -> "trafficSignType"
@@ -62,6 +70,14 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     Try(propertyValue.toInt).toOption
   }
 
+  override def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
+    val code = csvRoadWithHeaders.get("liikennemerkin tyyppi")
+    code match {
+      case Some(value) if value.nonEmpty && value.forall(_.isDigit) && TrafficSignType.applyTRValue(value.toInt) == RoadWorks =>
+        mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList ++ dateFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
+      case _ => mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
+    }
+  }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
@@ -81,6 +97,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         } else if (codeValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueCode(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        }else if (dateFieldsMapping.contains(key)){
+          val (malformedParameters, properties) = verifyDateType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
         } else
@@ -89,20 +108,67 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
+  override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
+    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+
+    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[Int]]
+    val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
+    val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
+
+    val isValidDate = optTrafficSignType match {
+      case Some(value) =>
+        val isRoadworks = TrafficSignType.applyTRValue(value) == RoadWorks
+          (optStartDate, optEndDate) match {
+            case (Some(startDate), Some(endDate)) =>
+                  try {
+                    val startDateFormat = dateFormatter.parseDateTime(startDate)
+                    val endDateFormat = dateFormatter.parseDateTime(endDate)
+
+                    endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+                  } catch {
+                    case _: Throwable => !isRoadworks
+                  }
+            case _ => !isRoadworks
+          }
+      case _ => true
+    }
+
+    if(isValidDate) {
+      (optLon, optLat) match {
+        case (Some(lon), Some(lat)) =>
+          val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
+          roadLinks.isEmpty match {
+            case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+            case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+          }
+        case _ =>
+          (Nil, Nil)
+      }
+    } else {
+      (List("Invalid Dates"), Seq())
+    }
+  }
+
 
   private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimplePointAssetProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
       SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value.toString)))}
 
-    val additionalInfo = getPropertyValue(trafficSignAttributes, "additionalInfo").toString
-    val additionalProperty = if(additionalInfo.nonEmpty)
-      Some(SimplePointAssetProperty(infoPublicId, Seq(PropertyValue(additionalInfo))))
-    else
-      None
-
     val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
 
-    Set(Some(typeProperty), valueProperty, additionalProperty).flatten
+    val listPublicIds = Set(infoPublicId, startDatePublicId, endDatePublicId)
+    val listFieldsNames = Set("additionalInfo", "startDate", "endDate")
+
+    val propertiesValues = (listPublicIds, listFieldsNames).zipped.map{(publicId, fieldName) =>
+      val propertyInfo = getPropertyValueOption(trafficSignAttributes, fieldName)
+      if(propertyInfo.nonEmpty)
+        Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString))))
+      else
+        None
+    }
+
+    (Set(Some(typeProperty), valueProperty) ++ propertiesValues).flatten
   }
 
   def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {

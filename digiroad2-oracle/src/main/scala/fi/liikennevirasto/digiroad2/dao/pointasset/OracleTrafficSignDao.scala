@@ -13,6 +13,7 @@ import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import org.joda.time.format.DateTimeFormat
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -48,6 +49,7 @@ case class TrafficSignRow(id: Long, linkId: Long,
 
 object OracleTrafficSignDao {
   private val RECORD_NUMBER: Int = 4000
+  val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   private def query() =
     """
@@ -56,6 +58,7 @@ object OracleTrafficSignDao {
                case
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
+                when dpv.date_time is not null then to_char(dpv.date_time, 'DD.MM.YYYY')
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
@@ -66,6 +69,7 @@ object OracleTrafficSignDao {
         left join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id and p.property_type = 'checkbox'
         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
         left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id and p.property_type = 'text'
+        left join date_property_value dpv on dpv.asset_id = a.id and dpv.property_id = p.id and p.property_type = 'date'
         left join enumerated_value ev on scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
       """
@@ -395,6 +399,10 @@ object OracleTrafficSignDao {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
+  private def datePropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    StaticQuery.query[(Long, Long), Long](existsDateProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
       case Text =>
@@ -425,6 +433,16 @@ object OracleTrafficSignDao {
           insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
           updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
+        }
+      case Date =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
+        val isBlank =  propertyValues.isEmpty || propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString.isEmpty
+        if (!datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
+          deleteDateProperty(assetId, propertyId).execute
+        } else if (datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
+          insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
+        } else if (!datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank){
+          updateDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toString)).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
