@@ -222,12 +222,12 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
                 allowedAdditionalPanels
 
               //Remove additonal Panels with 'trafficSigns_type' with empty value
-              val additionalPanelsFiltered = allowedAdditionalPanels.filterNot{ panel =>
+              val additionalPanelsFiltered = allowedProperties.filterNot{ panel =>
                                             val prop = trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get
                                             prop.propertyValue.toString.trim.isEmpty }
 
               if ( trafficSignType.toString.trim.nonEmpty )
-                createPointAsset(ra, roadlink.get, mValue, trAssetData, additionalPanelsFiltered)
+                createPointAsset(ra, roadlink.get, mValue, trAssetData, additionalPanelsFiltered.toSet)
           }
         }
     }
