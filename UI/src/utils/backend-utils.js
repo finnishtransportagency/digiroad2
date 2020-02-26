@@ -685,26 +685,28 @@
     }
 
     function latestResponseRequestor(getParameters) {
+      var deferred;
+      var request;
 
-        var deferred;
-        var request;
+      function doRequest() {
+        eventbus.trigger('loadingBar:show');
+        if (request)
+          request.abort();
 
-        function doRequest(){
+        request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
+          deferred.resolve(result);
+          eventbus.trigger('loadingBar:hide');
+        }).fail(function () {
+          eventbus.trigger('loadingBar:hide');
+        });
+        return deferred;
+      }
 
-            if(request)
-                request.abort();
-
-            request = $.ajax(getParameters.apply(undefined, arguments)).done(function(result){
-                deferred.resolve(result);
-            });
-            return deferred;
-        }
-
-        return function(){
-            deferred = $.Deferred();
-            _.debounce(doRequest, 200).apply(undefined, arguments);
-            return deferred;
-        };
+      return function() {
+        deferred = $.Deferred();
+        _.debounce(doRequest, 200).apply(undefined, arguments);
+        return deferred;
+      };
     }
 
     this.withVerificationInfo = function(){

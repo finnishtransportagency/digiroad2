@@ -11,14 +11,6 @@
     var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
 
-    var addSpinner = function () {
-      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-    };
-
-    var removeSpinner = function(){
-      $('.spinner-overlay').remove();
-    };
-
     this.initialize = function(mapBackend){
       backend = mapBackend;
       me.bindEvents();
@@ -75,10 +67,10 @@
     this.reloadForm = function(municipalityId, refresh){
       refresh = _.isUndefined(refresh) ? false : refresh;
       $('#formTable').remove();
-      addSpinner();
+      me.addSpinner();
       backend.getAssetTypesByMunicipality(municipalityId, refresh).then(function(assets){
         $('#work-list .work-list').html(unknownLimitsTable(assets , municipalityName, municipalityId));
-        removeSpinner();
+        me.removeSpinner();
       });
     };
 
@@ -288,6 +280,7 @@
         '</div>'
       );
 
+      me.addSpinner();
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
         if (limits.length === 1){
@@ -309,6 +302,7 @@
             $('#tableData tbody').html(unknownLimits);
           });
         }
+        me.removeSpinner();
       });
     };
   };
