@@ -696,6 +696,8 @@
         request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
           deferred.resolve(result);
           eventbus.trigger('loadingBar:hide');
+        }).fail(function () {
+          eventbus.trigger('loadingBar:hide');
         });
         return deferred;
       }
