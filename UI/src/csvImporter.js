@@ -114,8 +114,11 @@ $(function() {
     backend.getJobs().then(function(jobs){
       if(!_.isEmpty(jobs))
         $('.job-status').empty().html(buildJobTable(jobs));
-      rootElement.find('.job-status-link').on('click', function (event) {
+
+      _.forEach(jobs, function(job) {
+        rootElement.find('.job-status-link#'+job.id).on('click', function (event) {
         getJob(event);
+        });
       });
       scrollbarResize();
       refresh = setInterval(refreshJobs, 3000);

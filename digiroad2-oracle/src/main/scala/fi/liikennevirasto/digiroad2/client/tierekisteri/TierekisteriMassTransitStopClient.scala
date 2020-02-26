@@ -360,10 +360,10 @@ object TierekisteriBusStopMarshaller {
 
 
   def getPropertyOption(propertyData: Seq[Property], publicId: String): Option[String] = {
-    propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.propertyValue))
+    propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue))
   }
   def getPropertyDateOption(propertyData: Seq[Property], publicId: String): Option[Date] = {
-    convertStringToDate(propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.propertyValue)))
+    convertStringToDate(propertyData.find(p => p.publicId == publicId).flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)))
   }
 
   def toTRRoadSide(roadSide: RoadSide) = {
@@ -403,7 +403,7 @@ object TierekisteriBusStopMarshaller {
   }
 
   private def mapEquipments(properties: Seq[Property]): Map[Equipment, Existence] = {
-    properties.map(p => mapPropertyToEquipment(p) -> mapPropertyValueToExistence(p.values)).
+    properties.map(p => mapPropertyToEquipment(p) -> mapPropertyValueToExistence(p.values.map(_.asInstanceOf[PropertyValue]))).
       filterNot(p => p._1.equals(Equipment.Unknown)).toMap
   }
 
@@ -421,6 +421,6 @@ object TierekisteriBusStopMarshaller {
 
   private def findLiViId(properties: Seq[Property]) = {
     properties.find(p =>
-      p.publicId.equals(liviIdPublicId) && p.values.nonEmpty).map(_.values.head.propertyValue)
+      p.publicId.equals(liviIdPublicId) && p.values.nonEmpty).map(_.values.head.asInstanceOf[PropertyValue].propertyValue)
   }
 }

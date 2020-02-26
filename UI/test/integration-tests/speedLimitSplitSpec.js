@@ -25,7 +25,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
       splitBackendCalls = [];
 
       var backend = testHelpers.defaultBackend()
-        .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11 })
+        .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11, startupAsseId: 20})
         .withSpeedLimitsData(speedLimitTestData)
         .withSpeedLimitSplitting(speedLimitSplitting);
 
@@ -64,7 +64,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.clickVisibleEditModeButton();
         done();
       }, testHelpers.defaultBackend()
-          .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11 })
+          .withStartupParameters({ lon: 0.0, lat: 0.0, zoom: 11, startupAsseId: 20 })
           .withSpeedLimitsData(speedLimitTestData)
           .withSpeedLimitSplitting(speedLimitSplitting));
     });

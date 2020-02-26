@@ -3,7 +3,10 @@
     var data = [
       [{
         "id": 1123812,
-        "value": 40,
+        "value": {
+          "value": 40,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "trafficDirection": "BothDirections",
         "points": [{
@@ -20,7 +23,10 @@
       }],
       [{
         "id": 1123107,
-        "value": 60,
+        "value": {
+          "value": 60,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "trafficDirection": "TowardsDigitizing",
         "points": [{
@@ -43,7 +49,10 @@
       }],
       [{
         "id": 0,
-        "value": 20,
+        "value": {
+          "value": 20,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374573.844,
@@ -90,7 +99,10 @@
       }],
       [{
         "id": 1,
-        "value": 30,
+        "value": {
+          "value": 30,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374695.469,
@@ -119,7 +131,10 @@
       }],
       [{
         "id": 2,
-        "value": 40,
+        "value": {
+          "value": 40,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374862.933,
@@ -145,7 +160,10 @@
       }],
       [{
         "id": 3,
-        "value": 50,
+        "value": {
+          "value": 50,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374809.404,
@@ -171,7 +189,10 @@
       }],
       [{
         "id": 4,
-        "value": 60,
+        "value": {
+          "value": 60,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374809.404,
@@ -200,7 +221,10 @@
       }],
       [{
         "id": 5,
-        "value": 70,
+        "value": {
+          "value": 70,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374783.504,
@@ -223,7 +247,10 @@
       }],
       [{
         "id": 6,
-        "value": 80,
+        "value": {
+          "value": 80,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374783.504,
@@ -252,7 +279,10 @@
       }],
       [{
         "id": 7,
-        "value": 100,
+        "value": {
+          "value": 100,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374512.858,
@@ -302,7 +332,10 @@
       }],
       [{
         "id": 8,
-        "value": 120,
+        "value": {
+          "value": 120,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374728.64,
@@ -328,7 +361,10 @@
       }],
       [{
         "id": 9,
-        "value": 20,
+        "value": {
+          "value": 20,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374662.801,
@@ -360,7 +396,10 @@
       }],
       [{
         "id": 10,
-        "value": 30,
+        "value": {
+          "value": 30,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374662.801,
@@ -386,7 +425,10 @@
       }],
       [{
         "id": 11,
-        "value": 40,
+        "value": {
+          "value": 40,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374640.964,
@@ -418,7 +460,10 @@
       }],
       [{
         "id": 120,
-        "value": 50,
+        "value": {
+          "value": 50,
+          "isSuggested": false
+        },
         "sideCode": 2,
         "points": [{
           "x": 374704.813,
@@ -462,7 +507,10 @@
       }],
       [{
         "id": 121,
-        "value": 50,
+        "value": {
+          "value": 50,
+          "isSuggested": false
+        },
         "sideCode": 3,
         "points": [{
           "x": 374704.813,
@@ -506,7 +554,10 @@
       }],
       [{
         "id": 13,
-        "value": 60,
+        "value": {
+          "value": 60,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374699.369,
@@ -540,7 +591,10 @@
         "linkSource": 1
       }, {
         "id": 14,
-        "value": 60,
+        "value": {
+          "value": 60,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374748.721,
@@ -584,7 +638,10 @@
       }],
       [{
         "id": 15,
-        "value": 80,
+        "value": {
+          "value": 80,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374945.976,
@@ -604,7 +661,10 @@
       }],
       [{
         "id": 16,
-        "value": 100,
+        "value": {
+          "value": 100,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374817.814,
@@ -630,7 +690,10 @@
       }],
       [{
         "id": 17,
-        "value": 120,
+        "value": {
+          "value": 120,
+          "isSuggested": false
+        },
         "sideCode": 1,
         "points": [{
           "x": 374867.016,

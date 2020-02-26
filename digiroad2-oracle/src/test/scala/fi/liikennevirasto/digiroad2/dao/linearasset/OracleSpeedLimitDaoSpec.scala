@@ -56,18 +56,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     result
   }
 
-  test("filter out floating speed limits") {
-    runWithRollback {
-      val roadLinks = Seq(
-        RoadLink(1610980, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink(1610951, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-      val dao = new OracleSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
-      dao.setFloating(Set(300100, 300101))
-      val (speedLimits, _) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      speedLimits.map(_.id) should equal(Seq(200352))
-    }
-  }
-
   test("filter out disallowed link types") {
     runWithRollback {
       val roadLinks = Seq(
@@ -81,7 +69,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits._1.map(_.id) should equal(Seq(300103))
+      speedLimits._1.map(_.id) should equal(Seq(300103, 200285))
     }
   }
 
@@ -96,7 +84,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits._1.map(_.id) should equal(Seq(300103))
+      speedLimits._1.map(_.id) should equal(Seq(300103, 200285))
     }
   }
 
@@ -106,11 +94,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       }
       id2 shouldBe None
     }
@@ -122,15 +110,15 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, (_, _) => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, (_, _) => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, SpeedLimitValue(40), 0, (_, _) => ())
       }
       id2 shouldBe defined
       val id3 = simulateQuery {
-        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, (_, _) => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       }
       id3 shouldBe None
     }
@@ -156,11 +144,11 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
       val dao = daoWithRoadLinks(List(roadLink))
 
       when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
-      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, (_, _) => ())
+      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
-      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, (_, _) => ())
+      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, SpeedLimitValue(40), 0, (_, _) => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
@@ -193,19 +181,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     val dao = new OracleSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
-    }
-  }
-
-  test("speed limit mass query gives correct amount of results") {
-    val ids = Seq.range(1610929L, 1611759L).toSet // in test fixture this contains > 400 speed limits
-    val dao = new OracleSpeedLimitDao(null, null)
-    ids.size >= dao.MassQueryThreshold should be (true) // This should be high number enough
-    runWithRollback {
-      val count = dao.getCurrentSpeedLimitsByLinkIds(Option(ids)).size
-      val grouped = ids.grouped(dao.MassQueryThreshold - 1).toSet
-      grouped.size > 1 should be (true)
-      val checked = grouped.map(i => dao.getCurrentSpeedLimitsByLinkIds(Option(i)).count(s => true)).sum
-      count should be (checked) // number using mass query should be equal to those queried without using mass query
     }
   }
 

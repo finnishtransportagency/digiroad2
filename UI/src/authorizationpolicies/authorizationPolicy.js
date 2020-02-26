@@ -28,7 +28,7 @@
     };
 
     this.isElyMaintainer = function(){
-      return me.isUser('busStopMaintainer');
+      return me.isUser('elyMaintainer');
     };
 
     this.isOperator = function(){
@@ -73,6 +73,10 @@
       return _.every(selectedAssets, function(selectedAsset){
         return me.formEditModeAccess(selectedAsset);
       });
+    };
+
+    this.handleSuggestedAsset = function(selectedAsset, suggestedBoxValue) {
+      return (selectedAsset.isNew() && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
 
   };

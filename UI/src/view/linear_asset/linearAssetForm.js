@@ -72,12 +72,26 @@
       rootElement.find('#separate-limit').toggle(!readOnly);
       rootElement.find('.read-only-title').toggle(readOnly);
       rootElement.find('.edit-mode-title').toggle(!readOnly);
+      handleSuggestionBox();
+    }
+
+    function handleSuggestionBox() {
+      if((applicationModel.isReadOnly() && (_.isNull(selectedLinearAsset.getId()) || !selectedLinearAsset.isSuggested()))) {
+        rootElement.find('.suggestion').hide();
+      } else if(selectedLinearAsset.isSplitOrSeparated()) {
+        rootElement.find('.suggestion').hide();
+      } else
+        rootElement.find('.suggestion').show();
     }
 
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
     }
-    
+
+    eventbus.on(eventCategory + ':selected', function(){
+      handleSuggestionBox();
+    });
+
     eventbus.on('layer:selected', function(layer) {
       if(layerName === layer){
         $('ul[class=information-content]').empty();

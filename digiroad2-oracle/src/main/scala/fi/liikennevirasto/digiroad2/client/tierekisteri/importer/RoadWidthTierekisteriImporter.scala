@@ -1,12 +1,17 @@
 package fi.liikennevirasto.digiroad2.client.tierekisteri.importer
 
-import fi.liikennevirasto.digiroad2.asset.{InformationSource, RoadRegistry, RoadWidth, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{InformationSource, RoadRegistry, RoadWidth, SideCode, SpeedLimitAsset}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriRoadWidthAssetClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.Queries.{insertNumberProperty, insertSingleChoiceProperty}
+import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
 import org.apache.http.impl.client.HttpClientBuilder
+import slick.jdbc.StaticQuery
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+
 
 class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
@@ -25,7 +30,9 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), verifiedBy = Some("batch_process_" + assetName), informationSource = Some(RoadRegistry.value), geometry = vvhRoadlink.geometry)
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.assetValue)
+      val propertyId = StaticQuery.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("width", typeId).first
+      insertNumberProperty(assetId, propertyId, trAssetData.assetValue.toLong).execute
+
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }

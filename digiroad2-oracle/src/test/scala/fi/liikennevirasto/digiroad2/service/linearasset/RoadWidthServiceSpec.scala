@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{AssetLastModification, OracleLinearAssetDao}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -27,6 +27,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockPolygonTools = MockitoSugar.mock[PolygonTools]
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockDynamicLinearAssetDao = MockitoSugar.mock[DynamicLinearAssetDao]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
@@ -46,6 +47,8 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
                                            adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
                                            adjustedSideCodes = Seq.empty[SideCodeAdjustment],
                                            valueAdjustments = Seq.empty[ValueAdjustment])
+
+  val dynamicLinearAssetDAO = new DynamicLinearAssetDao
 
   object ServiceWithDao extends RoadWidthService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -73,6 +76,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   private def createService() = {
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
     }
     service
@@ -360,20 +364,34 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   test("update roadWidth and check if informationSource is Municipality Maintainer "){
+    val propSuggestBox = DynamicProperty("suggest_box", "checkbox", false, List(DynamicPropertyValue(0)))
+
+    val propInsWidth1 = DynamicProperty("width", "integer", true, Seq(DynamicPropertyValue("4000")))
+    val propIns1: Seq[DynamicProperty] = List(propInsWidth1, propSuggestBox)
+    val propInsWidth2 = DynamicProperty("width", "integer", true, Seq(DynamicPropertyValue("3000")))
+    val propIns2: Seq[DynamicProperty] = List(propInsWidth2, propSuggestBox)
+
+    val propUpdWidth = DynamicProperty("width", "integer", true, Seq(DynamicPropertyValue("1500")))
+    val propUpd: Seq[DynamicProperty] = List(propSuggestBox, propUpdWidth)
+
+    val roadWidthIns1 = DynamicValue(DynamicAssetValue(propIns1))
+    val roadWidthIns2 = DynamicValue(DynamicAssetValue(propIns2))
+    val roadWidthUpd = DynamicValue(DynamicAssetValue(propUpd))
+
     when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(5000, 235, Seq(Point(0, 0), Point(100, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
     val service = createService()
-    val toInsert = Seq(NewLinearAsset(5000, 0, 50, NumericValue(4000), BothDirections.value, 0, None), NewLinearAsset(5001, 0, 50, NumericValue(3000), BothDirections.value, 0, None))
+    val toInsert = Seq(NewLinearAsset(5000, 0, 50, roadWidthIns1, BothDirections.value, 0, None), NewLinearAsset(5001, 0, 50, roadWidthIns2, BothDirections.value, 0, None))
     runWithRollback {
       val assetsIds = service.create(toInsert, RoadWidth.typeId, "test")
-      val updated = service.update(assetsIds, NumericValue(1500), "userTest")
+      val updated = service.update(assetsIds, roadWidthUpd, "userTest")
 
       val assetsUpdated = service.getPersistedAssetsByIds(RoadWidth.typeId, updated.toSet)
 
       assetsUpdated.length should be (2)
       assetsUpdated.foreach{asset =>
         asset.informationSource should be (Some(MunicipalityMaintenainer))
-        asset.value should be (Some(NumericValue(1500)))
+        asset.value.head.asInstanceOf[DynamicValue].value.properties.find(_.publicId == "width") should be (roadWidthUpd.value.properties.find(_.publicId == "width"))
       }
     }
   }
@@ -384,6 +402,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
+      override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
       def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
@@ -400,7 +419,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val changesInfo = Seq(ChangeInfo(Some(5000), Some(5000), 0L, 3, Some(0), Some(GeometryUtils.geometryLength(geometry) - 10), Some(0), Some(GeometryUtils.geometryLength(geometry)), 11L))
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changesInfo))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String], any[Boolean])).thenReturn(assets)
+      when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(assets)
 
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
@@ -422,6 +441,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       override def withDynTransaction[T](f: => T): T = f
       override def dao: OracleLinearAssetDao = mockLinearAssetDao
       override def eventBus: DigiroadEventBus = mockEventBus
+      override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
 
       def getByRoadLinksTest(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) :Seq[PieceWiseLinearAsset] =
         super.getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo])
@@ -438,7 +458,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       val changesInfo = Seq(ChangeInfo(Some(5000), Some(5000), 0L, 3, Some(0), Some(GeometryUtils.geometryLength(geometry) - 10), Some(0), Some(GeometryUtils.geometryLength(geometry)), 11L))
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changesInfo))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String], any[Boolean])).thenReturn(assets)
+      when(mockDynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[Boolean], any[Boolean])).thenReturn(assets)
 
       val newAsset = service.getByRoadLinksTest(RoadWidth.typeId, roadLinks, changesInfo)
 
@@ -453,7 +473,12 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   }
 
   test("Should create a new asset with a new sideCode (dupicate the oldAsset)") {
-    val newLinearAsset = NewLinearAsset(1l, 0, 10, NumericValue(2), SideCode.AgainstDigitizing.value, 0, None)
+    val propWidth = DynamicProperty("width", "integer", true, Seq(DynamicPropertyValue("2")))
+    val propSuggestBox = DynamicProperty("suggest_box", "checkbox", false, List(DynamicPropertyValue(0)))
+    val propertiesSeq: Seq[DynamicProperty] = List(propWidth, propSuggestBox)
+    val roadWidthValues = DynamicValue(DynamicAssetValue(propertiesSeq))
+
+    val newLinearAsset = NewLinearAsset(1l, 0, 10, roadWidthValues, SideCode.AgainstDigitizing.value, 0, None)
 
     OracleDatabase.withDynTransaction {
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
@@ -470,7 +495,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
       ServiceWithDao.updateChangeSet(changeSet)
       val expiredAsset = ServiceWithDao.getPersistedAssetsByIds(RoadWidth.typeId, Set(id)).head
-      val newAsset = ServiceWithDao.dao.fetchLinearAssetsByLinkIds(RoadWidth.typeId, Seq(original.linkId), LinearAssetTypes.numericValuePropertyId)
+      val newAsset = dynamicLinearAssetDAO.fetchDynamicLinearAssetsByLinkIds(RoadWidth.typeId, Seq(original.linkId))
 
         newAsset.size should be(1)
         val asset = newAsset.head

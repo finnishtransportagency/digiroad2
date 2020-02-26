@@ -73,11 +73,11 @@
           setElys();
           if($(elysCheckbox).is(':checked')){
             $(".elys").show();
-            roleName.push('busStopMaintainer');
+            roleName.push('elyMaintainer');
           }
           else {
             $(".elys").hide().find("#elys_search, select[name*='elyNumber']").find('option').remove();
-            delete roleName['busStopMaintainer'];
+            delete roleName['elyMaintainer'];
           }
 
         }
@@ -304,7 +304,7 @@
                 </div>
 
                 <div class="checkbox">
-                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="busStopMaintainer" onchange="onChangeEvent(), isEly()">
+                    <input type="checkbox" id="elysCheckbox" name="roleName" class="form-control" value="elyMaintainer" onchange="onChangeEvent(), isEly()">
                     <label class="control-label"  id="labelCheckboxEly" >Ely-ylläpitäjä</label>
 
                     <div class="form-group elys">
