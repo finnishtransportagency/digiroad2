@@ -16,12 +16,12 @@
      */
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
-        var resultLength = _.get(result, 'results.length');
+        var resultLength = _.get(result, 'length');
         var vkmResultToCoordinates = function(r) {
-          return { title: r.address, lon: r.x, lat: r.y ,resultType:"street" };
+          return { title: r.tienimiFi +" "+ r.katunumero + ", "+ r.kuntaNimi, lon: r.x, lat: r.y ,resultType:"street" };
         };
         if (resultLength > 0) {
-          return _.map(result.results, vkmResultToCoordinates);
+          return _.map(result, vkmResultToCoordinates);
         } else {
           return $.Deferred().reject('Tuntematon katuosoite');
         }
@@ -125,14 +125,14 @@
      * @returns {*}
      */
     function roadLocationAPIResultParser(roadData){
-      var constructTitle = function(result) {
-        var address = _.get(result, 'alkupiste.tieosoitteet[0]');
-        var titleParts = [_.get(address, 'tie'), _.get(address, 'osa'), _.get(address, 'etaisyys'), _.get(address, 'ajorata')];
+      var constructTitle = function(road) {
+        var titleParts = [_.get(road, 'tie'), _.get(road, 'osa'), _.get(road, 'etaisyys'), _.get(road, 'ajorata')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
-      var lon = _.get(roadData, 'alkupiste.tieosoitteet[0].point.x');
-      var lat = _.get(roadData, 'alkupiste.tieosoitteet[0].point.y');
-      var title = constructTitle(roadData);
+      var auxRoadData = _.head(roadData);
+      var lon = _.get(auxRoadData, 'x');
+      var lat = _.get(auxRoadData, 'y');
+      var title = constructTitle(auxRoadData);
       if (lon && lat) {
         return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
       } else {
