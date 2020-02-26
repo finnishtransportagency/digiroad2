@@ -69,7 +69,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits._1.map(_.id) should equal(Seq(300103, 200285))
+      speedLimits._1.map(_.id) should equal(Seq(300103))
     }
   }
 
@@ -84,7 +84,7 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks.filter(_.isCarTrafficRoad))
 
-      speedLimits._1.map(_.id) should equal(Seq(300103, 200285))
+      speedLimits._1.map(_.id) should equal(Seq(300103))
     }
   }
 
