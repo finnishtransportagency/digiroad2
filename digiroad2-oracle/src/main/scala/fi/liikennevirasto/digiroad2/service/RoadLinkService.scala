@@ -18,7 +18,6 @@ import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util._
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -1143,40 +1142,42 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     def resolveChanges(changesToBeProcessed: Seq[ChangeInfo]): Unit = {
       changesToBeProcessed.foreach { change =>
-        if (change.oldId.isEmpty) {
-          resolveNewChange(change)
-        } else {
-          val newIdFromVariousOld = if(change.newId.isEmpty) {Seq.empty} else {changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)}
-          if (newIdFromVariousOld.size > 1) {
-            val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-              val attributes = LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
-              if (attributes.nonEmpty)
-                LinkAttributesDao.expireValues(thisChange.oldId.get, Some(changeUsername), Some(thisChange.vvhTimeStamp))
-              attributes
-            }
-
-            returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
-              LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
-            }
-          } else {
-            val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
-
-            if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
-              val newIdsOfThisOldId = changesToBeProcessed.filter(thisChange => thisChange.oldId == change.oldId && thisChange.newId.isDefined)
-
+        ChangeType.apply(change.changeType) match {
+          case ChangeType.New =>
+            resolveNewChange(change)
+          case ChangeType.Removed =>
+            if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty)
               LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
-              newIdsOfThisOldId.foreach { changeNewId =>
+          case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
+            val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId)
+            if (newIdFromVariousOld.size > 1) {
+              val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
+                val attributes = LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
+                attributes
+              }
+
+              returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
+                LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+              }
+            } else {
+              val roadLinkAttributesRelatedWithThisChange = LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp))
+
+              if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
                 roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
-                  LinkAttributesDao.insertAttributeValueByChanges(changeNewId.newId.get, changeUsername, attribute, value, changeNewId.vvhTimeStamp)
+                  LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
+
                 }
               }
             }
-          }
+          case _ =>
         }
       }
     }
 
-    val changesToBeProcessed = changes.filter(change => change.oldId != change.newId).sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
+    val changesToBeProcessed = changes.filterNot(change => change.oldId == change.newId)
+      .filterNot(change => change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value)
+      .filterNot(change => change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value)
+      .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
     resolveChanges(changesToBeProcessed)
   }
 
