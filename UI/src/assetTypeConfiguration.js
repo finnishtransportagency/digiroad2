@@ -1069,12 +1069,23 @@
         newAsset: { validityDirection: 2, propertyData: [
           {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
+          {'name': 'Päämerkin teksti', 'propertyType': 'text', 'publicId': 'main_sign_text', values: []},
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
-          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : ""}},
-          {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]},
+          {'name': "Sijaintitarkenne", 'propertyType': 'single_choice', 'publicId': "location_specifier", values: [{ propertyValue: 999 }]},
+          {'name': "Rakenne", 'propertyType': 'single_choice', 'publicId': "structure", values: [{ propertyValue: 999 }]},
+          {'name': "Kunto", 'propertyType': 'single_choice', 'publicId': "condition", values: [{ propertyValue: 999 }]},
+          {'name': "Koko", 'propertyType': 'single_choice', 'publicId': "size", values: [{ propertyValue: 999 }]},
+          {'name': "Korkeus", 'propertyType': 'integer', 'publicId': "height", values: []},
+          {'name': "Kalvon tyyppi", 'propertyType': 'single_choice', 'publicId': "coating_type", values: [{ propertyValue: 999 }]},
+          {'name': "Kaista", 'propertyType': 'integer', 'publicId': "lane", values: []},
+          {'name': "Elinkaari", 'propertyType': 'single_choice', 'publicId': "life_cycle", values: [ {propertyValue: 3} ]},
+          {'name': "Merkin materiaali", 'propertyType': 'single_choice', 'publicId': "sign_material", values: [{ propertyValue: 999 }]},
           {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
-          {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] }
+          {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] },
+          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue:
+                {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 999, coating_type: 999, additional_panel_color: 999 }},
+          {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
         collection: TrafficSignsCollection,

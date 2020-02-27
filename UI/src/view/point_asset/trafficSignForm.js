@@ -30,17 +30,13 @@
         feature.localizedName = window.localizedStrings[feature.publicId];
         var propertyType = feature.propertyType;
 
-        if (propertyType === "text")
-          return textHandler(feature);
-
-        if (propertyType === "single_choice")
-          return singleChoiceHandler(feature, collection);
-
-        if (propertyType === "read_only_number")
-          return readOnlyHandler(feature);
-
-        if (propertyType === 'date')
-          return dateHandler(feature);
+        switch (propertyType) {
+          case "text":
+          case "integer": return textHandler(feature);
+          case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection) : singleChoiceHandler(feature);
+          case "read_only_number": return readOnlyHandler(feature);
+          case "date": return dateHandler(feature);
+        }
 
       }), function(prev, curr) { return prev + curr; }, '');
 
@@ -132,13 +128,6 @@
         selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
       });
 
-      rootElement.find('input[type="text"]').not('#trafficSign_start_date, #trafficSign_end_date').on('input change', function (event) {
-        var eventTarget = $(event.currentTarget);
-        var obj = {};
-        obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
-        selectedAsset.set(obj);
-      });
-
       rootElement.find('button#change-validity-direction').on('click', function() {
         var previousValidityDirection = selectedAsset.get().validityDirection;
         selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
@@ -175,6 +164,34 @@
         var eventTarget = $(event.currentTarget);
         $('.form-traffic-sign select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
         selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-traffic-sign select#trafficSigns_type').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-location_specifier').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('location_specifier', $('.form-traffic-sign select#main-location_specifier').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-structure').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('structure', $('.form-traffic-sign select#main-structure').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-condition').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('condition', $('.form-traffic-sign select#main-condition').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-size').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('size', $('.form-traffic-sign select#main-size').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-life_cycle').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('life_cycle', $('.form-traffic-sign select#main-life_cycle').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-coating_type').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('coating_type', $('.form-traffic-sign select#main-coating_type').val());
+      });
+
+      rootElement.find('.form-traffic-sign select#main-sign_material').on('change', function (event) {
+        selectedAsset.setPropertyByPublicId('sign_material', $('.form-traffic-sign select#main-sign_material').val());
       });
 
       rootElement.find('#additional-panel-checkbox').on('change', function (event) {
@@ -228,7 +245,11 @@
               formPosition: (index + 1),
               panelType: parseInt($(self).find('#panelType').val()),
               panelValue: $(self).find('#panelValue').val(),
-              panelInfo:  $(self).find('#panelInfo').val()
+              panelInfo:  $(self).find('#panelInfo').val(),
+              text:  $(self).find('#text').val(),
+              size:  parseInt($(self).find('#size').val()),
+              coating_type:  parseInt($(self).find('#coating_type').val()),
+              additional_panel_color:  parseInt($(self).find('#additional_panel_color').val())
             };
           });
           selectedAsset.setAdditionalPanels(allPanels.toArray());
@@ -257,10 +278,21 @@
       var propertyOrdering = [
         'trafficSigns_type',
         'trafficSigns_value',
+        'main_sign_text',
         'trafficSigns_info',
         'counter',
         'trafficSign_start_date',
-        'trafficSign_end_date' ];
+        'trafficSign_end_date',
+        'location_specifier',
+        'structure',
+        'condition',
+        'size',
+        'height',
+        'coating_type',
+        'lane',
+        'life_cycle',
+        'sign_material'
+      ];
 
       return _.sortBy(properties, function(property) {
         return _.indexOf(propertyOrdering, property.publicId);
@@ -320,9 +352,9 @@
         '      </select></div>';
     };
 
-    var singleChoiceHandler = function (property, collection) {
+    var singleChoiceTrafficSignTypeHandler = function (property, collection) {
       var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; });
       var groups =  collection.getGroup(signTypes);
       var groupKeys = Object.keys(groups);
       var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
@@ -344,6 +376,26 @@
         singleChoiceSubType( collection, mainTypeDefaultValue, property );
     };
 
+    var singleChoiceHandler = function (property) {
+      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+      var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
+      var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
+      var selectableValues = _.map(propertyValues, function (label) {
+        return $('<option>',
+            { selected: propertyValue == label.propertyValue,
+              value: parseInt(label.propertyValue),
+              text: label.propertyDisplayValue}
+        )[0].outerHTML; }).join('');
+      return '' +
+          '    <div class="form-group editable form-traffic-sign">' +
+          '      <label class="control-label">' + property.localizedName + '</label>' +
+          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue] || '-') + '</p>' +
+          '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+          selectableValues +
+          '      </select>' +
+          '    </div>';
+    };
+
     var readOnlyHandler = function (property) {
       var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
       var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
@@ -360,7 +412,12 @@
         'formPosition',
         'panelType',
         'panelValue',
-        'panelInfo'];
+        'panelInfo',
+        'text',
+        'size',
+        'coating_type',
+        'additional_panel_color',
+      ];
 
       var sorted = {};
 
@@ -385,17 +442,18 @@
         var body =
           $('<div class="single-panel-container" id='+ (index + 1)+'>' +
           Object.entries(panel).map(function (feature) {
-            if(_.head(feature) === "formPosition")
-              return panelLabel(index+1);
 
-            if (_.head(feature) === "panelValue")
-              return panelTextHandler(feature);
+            switch (_.head(feature)) {
+              case "formPosition": return panelLabel(index+1);
+              case "panelValue":
+              case "panelInfo":
+              case "text": return panelTextHandler(feature);
+              case "panelType": return singleChoiceForPanelTypes(feature, collection);
+              case "size":
+              case "coating_type":
+              case "additional_panel_color": return singleChoiceForPanels(feature);
+            }
 
-            if (_.head(feature) === "panelType")
-              return singleChoiceForPanels(feature, collection);
-
-            if (_.head(feature) === "panelInfo")
-              return panelTextHandler(feature);
           }).join(''));
 
         var buttonDiv = $('<div class="form-group editable form-traffic-sign-panel traffic-panel-buttons">' + (sortedByFormPosition.length === 1 ? '' : removeButton(index+1)) + addButton(index+1) + '</div>');
@@ -415,7 +473,7 @@
       return '<button class="btn edit-only editable btn-secondary add-panel" id="'+id+'" >Uusi lisäkilpi</button>';
     };
 
-    var singleChoiceForPanels = function (property, collection) {
+    var singleChoiceForPanelTypes = function (property, collection) {
       var propertyValue = _.isUndefined(_.last(property))  ? '' : _.last(property);
       var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
       var panels = _.find(collection.getAdditionalPanels(signTypes));
@@ -439,13 +497,47 @@
         '      </select></div>';
     };
 
+    var singleChoiceForPanels = function (property) {
+      var publicId = _.head(property);
+      var propertyValue = (!_.isEmpty(_.last(property))) ? '' : _.last(property);
+      var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': publicId }), function(val) {return val.values; }));
+      var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
+      var selectableValues = _.map(propertyValues, function (label) {
+        return $('<option>',
+            { selected: propertyValue == label.propertyValue,
+              value: parseInt(label.propertyValue),
+              text: label.propertyDisplayValue}
+        )[0].outerHTML; }).join('');
+
+      switch (publicId) {
+        case "size": property.label = "KOKO"; break;
+        case "coating_type": property.label = "KALVON TYYPPI"; break;
+        case "additional_panel_color": property.label = "LISÄKILVEN VÄRI"; break;
+      }
+
+      return '' +
+          '    <div class="form-group editable form-traffic-sign">' +
+          '      <label class="control-label">' + property.label + '</label>' +
+          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue] || '-') + '</p>' +
+          '      <select class="form-control" style="display:none" id="' + publicId +'">' +
+          selectableValues +
+          '      </select>' +
+          '    </div>';
+    };
+
     var panelTextHandler = function (property) {
       var publicId = _.first(property);
       var propertyValue = _.isUndefined(_.last(property)) ? '' : _.last(property);
-      var label = publicId == 'panelInfo' ? 'LISÄTIETO' : 'ARVO';
+
+      switch (publicId) {
+        case "panelValue": property.label = "ARVO"; break;
+        case "panelInfo": property.label = "LISÄTIETO"; break;
+        case "text": property.label = "TEKSTI"; break;
+      }
+
       return '' +
         '    <div class="form-group editable form-traffic-sign-panel">' +
-        '        <label class="control-label">' + label + '</label>' +
+        '        <label class="control-label">' + property.label + '</label>' +
         '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
         '        <input type="text" class="form-control" id="' + publicId + '" value="' + propertyValue + '">' +
         '    </div>';
