@@ -321,8 +321,17 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     }
   }
 
-  private def insertInaccurateAsset(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean, exception: Exception ): Seq[Long] = {
-    if (fromTrafficSignGenerator )
+  /**
+    * The idea is to insert the signs that are wrong into the inaccurateAsset Table.
+    * However if the function it is not invoked by the TierekisteriImporter script we will thow the exception as is.
+    *
+    * @param trafficSignInfo TrafficSign to be inserted in the inaccurateAsset Table
+    * @param fromTrafficSignGenerator Boolean to know if it is the Import script or not
+    * @param exception Exception that will be throw if this function it is not called by Import Script
+    * @return
+    */
+  private def insertInaccurateAssetFromTrafficSignGenerator(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean, exception: Exception ): Seq[Long] = {
+    if ( !fromTrafficSignGenerator )
       throw exception
 
     inaccurateDAO.createInaccurateAsset(trafficSignInfo.id, Manoeuvres.typeId, trafficSignInfo.roadLink.municipalityCode, trafficSignInfo.roadLink.administrativeClass )
@@ -368,10 +377,10 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
     } catch {
       case mce: ManoeuvreCreationException =>
-          insertInaccurateAsset(trafficSignInfo, fromTrafficSignGenerator, mce)
+          insertInaccurateAssetFromTrafficSignGenerator(trafficSignInfo, fromTrafficSignGenerator, mce)
 
       case eipe: InvalidParameterException =>
-            insertInaccurateAsset(trafficSignInfo, fromTrafficSignGenerator, eipe)
+            insertInaccurateAssetFromTrafficSignGenerator(trafficSignInfo, fromTrafficSignGenerator, eipe)
     }
   }
 
