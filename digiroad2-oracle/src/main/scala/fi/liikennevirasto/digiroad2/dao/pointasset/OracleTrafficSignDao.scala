@@ -85,10 +85,7 @@ object OracleTrafficSignDao {
   def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
     val recordLimit = token match {
       case Some(tk) =>
-        val values = Decode.getPageAndRecordNumber(tk)
-
-        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
-        val endNum = values("pageNumber") * values("recordNumber")
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
         s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +

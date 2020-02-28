@@ -424,10 +424,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
     val recordLimit = token match {
       case Some(tk) =>
-        val values = Decode.getPageAndRecordNumber(tk)
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
-        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
-        val endNum = values("pageNumber") * values("recordNumber")
         s"WHERE line_number between $startNum and $endNum"
 
       case _ => ""
@@ -488,10 +486,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     val recordLimit = token match {
       case Some(tk) =>
-        val values = Decode.getPageAndRecordNumber(tk)
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
-        val startNum =values("recordNumber") * ( values("pageNumber")- 1) + 1
-        val endNum = values("pageNumber") * values("recordNumber")
         s"WHERE line_number between $startNum and $endNum"
 
       case _ => ""
