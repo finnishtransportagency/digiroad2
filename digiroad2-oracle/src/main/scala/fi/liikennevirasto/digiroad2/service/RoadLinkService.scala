@@ -1152,8 +1152,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId)
             if (newIdFromVariousOld.size > 1) {
               val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
-                val attributes = LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
-                attributes
+                LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
               }
 
               returnEqualAttributes(oldIdsAttributes).foreach { case (attribute, value) =>
@@ -1165,7 +1164,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
               if (roadLinkAttributesRelatedWithThisChange.nonEmpty) {
                 roadLinkAttributesRelatedWithThisChange.foreach { case (attribute, value) =>
                   LinkAttributesDao.insertAttributeValueByChanges(change.newId.get, changeUsername, attribute, value, change.vvhTimeStamp)
-
                 }
               }
             }
@@ -1174,9 +1172,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     }
 
-    val changesToBeProcessed = changes.filterNot(change => change.oldId == change.newId)
-      .filterNot(change => change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value)
-      .filterNot(change => change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value)
+    val changesToBeProcessed = changes.filterNot{change =>
+      val isOldEqNew = change.oldId == change.newId
+      val isNotToExpire = change.oldId.isDefined && change.newId.isEmpty && change.changeType != ChangeType.Removed.value
+      val isNotToCreate = change.oldId.isEmpty && change.newId.isDefined && change.changeType != ChangeType.New.value
+
+      isOldEqNew || isNotToExpire || isNotToCreate
+    }
       .sortWith(_.vvhTimeStamp < _.vvhTimeStamp)
     resolveChanges(changesToBeProcessed)
   }

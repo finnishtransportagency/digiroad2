@@ -1316,7 +1316,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val testUser = "test_user"
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (2, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333331, 'PRIVATE_ROAD_ASSOCIATION', 33333333, $dummyRoadAssociationNameNumber, $testUser)""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333332, 'ADDITIONAL_INFO', 33333333, '2', $testUser)""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444441, 'PRIVATE_ROAD_ASSOCIATION', 44444444, $dummyRoadAssociationNameNumber, $testUser)""".execute
@@ -1369,9 +1369,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val testUser = "test_user"
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (11111111, 'PRIVATE_ROAD_ASSOCIATION', 1, $dummyRoadAssociationNameNumber, $testUser)""".execute
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'ADDITIONAL_INFO', 1, '2', $testUser)""".execute
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333333, 'PRIVATE_ROAD_ASSOCIATION', 2, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (1, 'PRIVATE_ROAD_ASSOCIATION', 1, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (2, 'ADDITIONAL_INFO', 1, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (3, 'PRIVATE_ROAD_ASSOCIATION', 2, $dummyRoadAssociationNameNumber, $testUser)""".execute
 
 
       val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -1399,8 +1399,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val testUser = "test_user"
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (11111111, 'PRIVATE_ROAD_ASSOCIATION', 1, $dummyRoadAssociationNameNumber, $testUser)""".execute
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'ADDITIONAL_INFO', 2, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (1, 'PRIVATE_ROAD_ASSOCIATION', 1, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (2, 'ADDITIONAL_INFO', 2, '2', $testUser)""".execute
 
 
       val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
