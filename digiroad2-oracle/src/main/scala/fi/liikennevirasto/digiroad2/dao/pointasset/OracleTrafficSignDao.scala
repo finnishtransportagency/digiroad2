@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -50,8 +53,8 @@ object OracleTrafficSignDao {
 
   private def query() =
     """
-        select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
-               p.id, p.public_id, p.property_type, p.required, ev.value,
+        select a.id as asset_id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
+               p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
                case
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
@@ -77,6 +80,23 @@ object OracleTrafficSignDao {
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PersistedTrafficSign] = {
     val queryWithFilter = queryFilter(query())
     queryToPersistedTrafficSign(queryWithFilter)
+  }
+
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +
+        s"property_type, required, value, display_value, created_by, created_date, modified_by, modified_date, link_source, " +
+        s"bearing, side_code, additional_sign_type, additional_sign_value, additional_sign_info, form_position, expired" +
+        s" from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+
+    queryToPersistedTrafficSign(recordLimit)
   }
 
   def fetchByRadius(position : Point, meters: Int): Seq[PersistedTrafficSign] = {

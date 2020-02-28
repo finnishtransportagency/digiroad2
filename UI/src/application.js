@@ -150,7 +150,7 @@
           assetTypeLayerName = "linkProperty";
         }
         else{
-          assetTypeLayerName = getSelectedAssetByTypeId(pointAssets, startupAssetTypeId) || getSelectedAssetByTypeId(linearAssets, startupAssetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, startupAssetTypeId).layerName;
+          assetTypeLayerName = (getSelectedAssetByTypeId(pointAssets, startupAssetTypeId) || getSelectedAssetByTypeId(linearAssets, startupAssetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, startupAssetTypeId)).layerName;
         }
 
         localizedStrings = assetPropertyNames;
@@ -300,6 +300,7 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
     new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration, getAssetTitle(), defaultLocation);
+    new LoadingBarDisplay(map, mapPluginsContainer);
 
     function getAssetTitle() {
       if (!_.isUndefined(startupAssetTypeId) && startupAssetTypeId !== 0) {

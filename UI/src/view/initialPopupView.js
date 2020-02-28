@@ -6,6 +6,8 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
     successCallback: function () {
       var selectedLocation = $('#location').val();
       var selectedAssetType = parseInt($('#assetType').val(), 10);
+      var selectedLocationName = _.isNull(selectedLocation) ? undefined : $('#location option:selected').text();
+      var selectedAssetTypeName = _.isNaN(selectedAssetType) ? undefined : $('#assetType option:selected').text();
       var defaultParameters = {lon: null, lat: null, zoom: null, assetType: selectedAssetType, municipalityId: null, elyId: null};
 
       if (selectedLocation === "currentLocation") {
@@ -19,15 +21,20 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
         defaultParameters.zoom = 2;
       }
       else {
-        if (userRole !== "busStopMaintainer") {
+        if (userRole !== "elyMaintainer") {
           defaultParameters.municipalityId = parseInt(selectedLocation, 10);
         }
         else {
           defaultParameters.elyId = parseInt(selectedLocation,10);
         }
       }
-      backend.updateUserConfigurationDefaultLocation(defaultParameters);
-      setTimeout(function () {new GenericConfirmPopup("Laskeutumissivu päivitetty.", {type: "alert"});}, 1);
+
+      backend.updateUserConfigurationDefaultLocation(defaultParameters,
+        function () {
+          eventbus.trigger('userInfo:setDefaultLocation', selectedAssetTypeName, selectedLocationName);
+        });
+
+      setTimeout(function () {new GenericConfirmPopup("Aloitusnäkymä päivitetty.", {type: "alert"});}, 1);
     },
     closeCallback: function () {},
     container: '.container'
@@ -131,7 +138,7 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
             '<div class="modal-dialog">' +
                 '<div class="content">' +
                     '<b>' + "Aloitussivu" + '</b>' +
-                    '<a class="header-link cancel" href="#">' + "Sulje" + '</a>' +
+                    '<a class="header-link cancel" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
                 '</div>' +
 
                 '<div class="contentNoBackColor">' +

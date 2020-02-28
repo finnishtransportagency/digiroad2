@@ -5,6 +5,7 @@ import java.sql.Connection
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
 import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
@@ -377,7 +378,44 @@ object Queries {
     """.as[(Long, Long, Int, Option[String], Option[String])].list
   }
 
+  //Table lorry_parking_to_datex2 created using an shape file importer, does't exist on Flyway
+  def getLorryParkingToTransform(): Set[LorryParkingInDATEX2] = {
+    //When getting the geometry column it need to be in the SRID 4258
+    //workaround if geometry is not in SRID 4258. SDO_CS.TRANSFORM(GEOMETRY, 4258)
+    Q.queryNA[LorryParkingInDATEX2](
+      s"""
+      select PALVPISTID, PALVELUID, TYYPPI, TYYPPI_TAR, NIMI, LISATIEDOT, MUOKKAUSPV, KUNTAKOODI, GEOMETRY from lorry_parking_to_datex2
+    """).iterator.toSet
+  }
+
+  implicit val getLorryParkings = new GetResult[LorryParkingInDATEX2] {
+    def apply(r: PositionedResult) = {
+      val servicePointId = r.nextLongOption()
+      val serviceId = r.nextLongOption()
+      val parkingType = r.nextInt()
+      val parkingTypeMeaning = r.nextInt()
+      val name = r.nextStringOption()
+      val additionalInfo = r.nextStringOption()
+      val modifiedDate = r.nextStringOption()
+      val municipalityCode = r.nextInt()
+      val point = r.nextBytesOption().map(bytesToPoint).get
+
+      LorryParkingInDATEX2(servicePointId, serviceId, parkingType, parkingTypeMeaning, name, additionalInfo, point.x, point.y, modifiedDate, municipalityCode)
+    }
+  }
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
+  }
+
+
+  def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
+    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
+    sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
   }
 }

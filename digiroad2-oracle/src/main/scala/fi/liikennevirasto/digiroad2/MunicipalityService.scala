@@ -16,6 +16,15 @@ class MunicipalityService {
     }
   }
 
+  def getMunicipalityIdByName(municipalityName: String, newTransaction: Boolean = true): List[MunicipalityInfo] = {
+    if (newTransaction) {
+      withDynSession {
+        municipalityDao.getMunicipalityIdByName(municipalityName)
+      }
+    } else
+      municipalityDao.getMunicipalityIdByName(municipalityName)
+  }
+
   def getMunicipalityNameByCode(municipalityId: Int, newTransaction: Boolean = true): String = {
     if (newTransaction) {
       withDynSession {
@@ -43,5 +52,23 @@ class MunicipalityService {
     } else {
       municipalityDao.getMunicipalitiesNameAndIdByEly(ely)
     }
+  }
+
+  def getMunicipalityByCoordinates(coordinates: Point, newTransaction: Boolean = true): Seq[MunicipalityInfo] = {
+    if (newTransaction) {
+      withDynSession {
+        municipalityDao.getMunicipalityByCoordinates(coordinates)
+      }
+    } else
+      municipalityDao.getMunicipalityByCoordinates(coordinates)
+  }
+
+  def getElyByCoordinates(coordinates: Point, newTransaction: Boolean = true): Seq[(Int, String)] = {
+    if (newTransaction) {
+      withDynSession {
+        municipalityDao.getElysIdAndNamesByCoordinates(coordinates.x.toInt, coordinates.y.toInt)
+      }
+    } else
+      municipalityDao.getElysIdAndNamesByCoordinates(coordinates.x.toInt, coordinates.y.toInt)
   }
 }
