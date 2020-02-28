@@ -1,10 +1,15 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Decode, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -44,7 +49,6 @@ case class Obstacle(id: Long, linkId: Long,
 case class ObstacleShapefile(lon: Double, lat: Double, obstacleType: Int = 1)
 
 object OracleObstacleDao {
-  private val RECORD_NUMBER: Int = 4000
 
   private def query() = {
     """
@@ -119,11 +123,10 @@ object OracleObstacleDao {
     }
   }
 
-  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[Obstacle] = {
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = RECORD_NUMBER * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[Obstacle] = {
+    val recordLimit = token match {
+    case Some(tk) =>
+    val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
     val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
      s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
