@@ -1106,6 +1106,9 @@
             { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
+          var lifecycleValidations = [
+            { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
+          ];
 
           var opposite_side_sign =  _.find( selectedAsset.get().propertyData, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
           if (_.isUndefined(opposite_side_sign) || _.isUndefined(opposite_side_sign.values[0]) || opposite_side_sign.values[0].propertyValue === "") {
@@ -1133,11 +1136,11 @@
             return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;
           /* End: Special validate for roadwork sign */
 
-          var isValidDate = true;
-          if( !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) && endDateExtracted < startDateExtracted )
-            isValidDate = false;
+          var lifecycleField = _.head(_.filter(fields, function(field) { return field.publicId === 'life_cycle'; }));
+          var lifecycleValidator = _.find(lifecycleValidations, function (validator) { return _.includes(validator.values, parseInt(_.head(lifecycleField.values).propertyValue)); });
+          var validLifecycleDates = _.isUndefined(lifecycleValidator) ? true : lifecycleValidator.validate(startDateExtracted, endDateExtracted);
 
-          return isValidFunc && isValidDate && suggestedAssetCondition;
+          return isValidFunc && suggestedAssetCondition && validLifecycleDates;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer,
         showRoadLinkInfo: true

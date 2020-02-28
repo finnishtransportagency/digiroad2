@@ -281,6 +281,7 @@
         'main_sign_text',
         'trafficSigns_info',
         'counter',
+        'life_cycle',
         'trafficSign_start_date',
         'trafficSign_end_date',
         'location_specifier',
@@ -290,7 +291,6 @@
         'height',
         'coating_type',
         'lane',
-        'life_cycle',
         'sign_material'
       ];
 
