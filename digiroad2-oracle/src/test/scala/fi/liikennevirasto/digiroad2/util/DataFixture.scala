@@ -474,7 +474,7 @@ object DataFixture {
         case (_, x) =>
           x match {
             case u: List[Any] =>
-              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet)
+              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet, Seq())
             case _ =>
           }
         case _ =>

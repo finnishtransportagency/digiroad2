@@ -19,7 +19,7 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     eventBus.subscribe(updater, "testSpeedLimits:purgeUnknownSpeedLimits")
     eventBus.publish("testSpeedLimits:purgeUnknownSpeedLimits", Set(1l))
 
-    verify(mockProvider, times(1)).purgeUnknown(Set(1l))
+    verify(mockProvider, times(1)).purgeUnknown(Set(1l), Seq())
   }
 
   test("should persist unknown speed limits") {
