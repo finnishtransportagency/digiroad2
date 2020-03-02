@@ -807,7 +807,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(mockEventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), List(), Set(), List()))
       verify(mockEventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", List())
-      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq()))
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
 
     }
@@ -1554,7 +1554,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset), Seq()))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
       verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
-      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq(oldLinkId)))
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
       apeedLimits.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
