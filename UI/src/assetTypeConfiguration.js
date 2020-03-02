@@ -923,11 +923,7 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
-        saveCondition: function(selectedAsset, authorizationPolicy) {
-          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
-          var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-          return !(suggestedAssetCondition && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-        },
+        saveCondition: saveConditionWithSuggested,
         hasMunicipalityValidation: true,
         roadCollection: ObstaclesRoadCollection,
         showRoadLinkInfo: true,

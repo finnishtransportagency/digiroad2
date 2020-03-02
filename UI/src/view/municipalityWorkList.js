@@ -11,14 +11,6 @@
     var authorizationPolicy = new AuthorizationPolicy();
     var assetConfig = new AssetTypeConfiguration();
 
-    var addSpinner = function () {
-      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-    };
-
-    var removeSpinner = function(){
-      $('.spinner-overlay').remove();
-    };
-
     this.initialize = function(mapBackend){
       backend = mapBackend;
       me.bindEvents();
@@ -33,7 +25,7 @@
         if (_.isNull(municipalityCode)) {
           me.generateWorkList(municipalityListAllowed);
         } else {
-          me.generateWorkList(backend.getUnverifiedMunicipalities(municipalityCode));
+          me.generateWorkList(backend.getUnverifiedMunicipality(municipalityCode));
         }
       });
 
@@ -75,10 +67,10 @@
     this.reloadForm = function(municipalityId, refresh){
       refresh = _.isUndefined(refresh) ? false : refresh;
       $('#formTable').remove();
-      addSpinner();
+      me.addSpinner();
       backend.getAssetTypesByMunicipality(municipalityId, refresh).then(function(assets){
         $('#work-list .work-list').html(unknownLimitsTable(assets , municipalityName, municipalityId));
-        removeSpinner();
+        me.removeSpinner();
       });
     };
 
@@ -228,7 +220,7 @@
           '<td headers="verifier">' + asset.verified_by + '</td>' +
           '<td headers="modifiedBy">' + asset.modified_by + '</td>' +
           '<td headers="modifiedDate">' + asset.modified_date + '</td>' +
-          '<td headers="suggestedAssets">' + suggestedAssetsButton(0, asset.typeId) + '</td>' +
+          '<td headers="suggestedAssets">' + suggestedAssetsButton(asset.countSuggested, asset.typeId) + '</td>' +
           '</tr>';
       };
       var oldAsset = function (asset) {
@@ -288,6 +280,7 @@
         '</div>'
       );
 
+      me.addSpinner();
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
         if (limits.length === 1){
@@ -309,6 +302,7 @@
             $('#tableData tbody').html(unknownLimits);
           });
         }
+        me.removeSpinner();
       });
     };
   };

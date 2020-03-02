@@ -56,18 +56,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     result
   }
 
-  test("filter out floating speed limits") {
-    runWithRollback {
-      val roadLinks = Seq(
-        RoadLink(1610980, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink(1610951, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-      val dao = new OracleSpeedLimitDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
-      dao.setFloating(Set(300100, 300101))
-      val (speedLimits, _) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
-      speedLimits.map(_.id) should equal(Seq(200352))
-    }
-  }
-
   test("filter out disallowed link types") {
     runWithRollback {
       val roadLinks = Seq(
@@ -193,19 +181,6 @@ class OracleSpeedLimitDaoSpec extends FunSuite with Matchers {
     val dao = new OracleSpeedLimitDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
-    }
-  }
-
-  test("speed limit mass query gives correct amount of results") {
-    val ids = Seq.range(1610929L, 1611759L).toSet // in test fixture this contains > 400 speed limits
-    val dao = new OracleSpeedLimitDao(null, null)
-    ids.size >= dao.MassQueryThreshold should be (true) // This should be high number enough
-    runWithRollback {
-      val count = dao.getCurrentSpeedLimitsByLinkIds(Option(ids)).size
-      val grouped = ids.grouped(dao.MassQueryThreshold - 1).toSet
-      grouped.size > 1 should be (true)
-      val checked = grouped.map(i => dao.getCurrentSpeedLimitsByLinkIds(Option(i)).count(s => true)).sum
-      count should be (checked) // number using mass query should be equal to those queried without using mass query
     }
   }
 

@@ -63,7 +63,10 @@
           if($(municipalityCheckbox).is(':checked')){
             $(".municipalities").show();
           }
-          else{  $(".municipalities").hide();}
+          else{
+              $(".municipalities").hide().find("#municipalities_search, select[name*='municipalityNumbers']").find('option').remove();
+              getMunicipalities();
+          }
         }
 
         function isEly(){
@@ -73,7 +76,7 @@
             roleName.push('elyMaintainer');
           }
           else {
-            $(".elys").hide();
+            $(".elys").hide().find("#elys_search, select[name*='elyNumber']").find('option').remove();
             delete roleName['elyMaintainer'];
           }
 
@@ -86,7 +89,7 @@
             roleName.push('serviceRoadMaintainer');
           }
           else {
-            $(".maintenanceAreas").hide();
+            $(".maintenanceAreas").hide().find("#multiselect, select[name*='authorizationArea']").find('option').remove();
             delete roleName['serviceRoadMaintainer'];
           }
         }
@@ -181,9 +184,12 @@
                     func(username, successResponseValue);
                 },
                 error: function (errorValue) {
-                    if (errorValue.status === 400) {
+                    if (errorValue.status >= 400) {
                         alert('Tarkista syöttämäsi tiedot.');
+                    } else if (errorValue.status === 200) {
+                        func(username, successResponseValue);
                     }
+
                 }
             });
         }
