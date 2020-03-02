@@ -121,6 +121,7 @@
 
       rootElement.find("#feature-attributes-header").html(header);
       rootElement.find("#feature-attributes-form").html(form);
+      rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
       rootElement.find("#feature-attributes-footer").html(footer);
 
       rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
@@ -131,6 +132,7 @@
       rootElement.find('button#change-validity-direction').on('click', function() {
         var previousValidityDirection = selectedAsset.get().validityDirection;
         selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
       });
 
       rootElement.find('.pointasset button.save').on('click', function() {
@@ -550,5 +552,46 @@
         '    </div>';
     };
 
+    me.renderPreview = function(roadCollection, selectedAsset) {
+      var asset = selectedAsset.get();
+      var lanes =  roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
+      lanes = validitydirections.filterLanesByDirection(lanes, asset.validityDirection);
+      return createPreviewHeaderElement(_.uniq(lanes));
+    };
+
+    var createPreviewHeaderElement = function(laneNumbers) {
+      var createNumber = function (number) {
+        return $('<td class="preview-lane-traffic-signs">' + number + '</td>');
+      };
+
+      var numbers = _.sortBy(laneNumbers);
+
+      var odd = _.filter(numbers, function (number) {
+        return number % 2 !== 0;
+      });
+      var even = _.filter(numbers, function (number) {
+        return number % 2 === 0;
+      });
+
+      var preview = function () {
+        var previewList = $('<table class="preview">');
+
+        var numberHeaders = $('<tr style="font-size: 11px;">').append(_.map(_.reverse(even).concat(odd), function (number) {
+          return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
+        }));
+
+        var oddListElements = _.map(odd, function (number) {
+          return createNumber(number);
+        });
+
+        var evenListElements = _.map(even, function (number) {
+          return createNumber(number);
+        });
+
+        return $('<div class="preview-div">').append(previewList.append(numberHeaders).append($('<tr>').append(evenListElements).append(oddListElements))).append('<hr class="form-break">');
+      };
+
+      return preview();
+    };
   };
 })(this);
