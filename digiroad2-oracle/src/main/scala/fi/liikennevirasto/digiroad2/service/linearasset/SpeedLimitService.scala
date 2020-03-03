@@ -323,11 +323,11 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
           val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
 
           if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
-            println("New roadLink -> " + changeRoadLink.linkId)
-            println("Adjacent Links First -> " + groupBySideCodeFirst)
-            println("Adjacent Links Last -> " + groupBySideCodeLast)
             groupBySideCodeFirst.keys.flatMap { sideCode =>
-              groupBySideCodeFirst(sideCode).find(asset => groupBySideCodeLast(sideCode).exists(_.value.equals(asset.value))).map { asset =>
+              groupBySideCodeFirst(sideCode).find{asset =>
+                val lastAdjsWithFirstSideCode = groupBySideCodeLast.get(sideCode)
+                lastAdjsWithFirstSideCode.isDefined && lastAdjsWithFirstSideCode.get.exists(_.value.equals(asset.value))
+              }.map { asset =>
                 asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
               }
             }
