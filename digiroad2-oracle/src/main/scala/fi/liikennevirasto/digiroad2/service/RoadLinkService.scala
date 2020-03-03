@@ -1149,7 +1149,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             if (LinkAttributesDao.getExistingValues(change.oldId.get, Some(change.vvhTimeStamp)).nonEmpty)
               LinkAttributesDao.expireValues(change.oldId.get, Some(changeUsername), Some(change.vvhTimeStamp))
           case _ if LinkAttributesDao.getExistingValues(change.newId.get).isEmpty =>
-            val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId)
+            val newIdFromVariousOld = changesToBeProcessed.filter(cp => cp.newId == change.newId && cp.oldId.isDefined)
             if (newIdFromVariousOld.size > 1) {
               val oldIdsAttributes = newIdFromVariousOld.map { thisChange =>
                 LinkAttributesDao.getExistingValues(thisChange.oldId.get, Some(change.vvhTimeStamp))
