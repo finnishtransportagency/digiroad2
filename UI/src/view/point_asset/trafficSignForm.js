@@ -36,6 +36,7 @@
           case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection) : singleChoiceHandler(feature);
           case "read_only_number": return readOnlyHandler(feature);
           case "date": return dateHandler(feature);
+          case "checkbox": return checkboxHandler(feature);
         }
 
       }), function(prev, curr) { return prev + curr; }, '');
@@ -62,13 +63,6 @@
         '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
         '    </div>' : '';
 
-      if(asset.validityDirection)
-        return components +
-          '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
-          '      <label class="control-label">Vaikutussuunta</label>' +
-          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-          '    </div>' + wrongSideInfo + panelCheckbox + renderedPanels;
-
       return components + wrongSideInfo + panelCheckbox + renderedPanels;
     };
 
@@ -88,7 +82,7 @@
         var deleteCheckbox = $(''+
             '    <div class="form-group form-group delete">' +
             '      <div class="checkbox" >' +
-            '        <input type="checkbox">' +
+            '        <input id="delete-checkbox" type="checkbox">' +
             '      </div>' +
             '      <p class="form-control-static">Poista</p>' +
             '    </div>' +
@@ -124,15 +118,17 @@
       rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
       rootElement.find("#feature-attributes-footer").html(footer);
 
-      rootElement.find('input[type="checkbox"]').not('#additional-panel-checkbox').on('change', function (event) {
+      rootElement.find('#delete-checkbox').on('change', function (event) {
         var eventTarget = $(event.currentTarget);
         selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
       });
 
-      rootElement.find('button#change-validity-direction').on('click', function() {
-        var previousValidityDirection = selectedAsset.get().validityDirection;
-        selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
-        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
+      rootElement.find('input[type=checkbox]').on('change', function (event) {
+        var eventTarget = $(event.currentTarget);
+        var propertyPublicId = eventTarget.attr('id');
+        //implicit cast from boolean to int to associate with the enumerated value from db
+        var propertyValue = +(eventTarget.prop('checked'));
+        selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
       });
 
       rootElement.find('.pointasset button.save').on('click', function() {
@@ -151,6 +147,8 @@
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
 
+      rootElement.find("#old_traffic_code-checkbox-div").before(me.renderValidityDirection(selectedAsset));
+
       rootElement.find('.form-traffic-sign').on('change', function() {
         selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
       });
@@ -158,7 +156,7 @@
       rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input, datechange', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
-        var propertyValue = $(event.currentTarget).val();
+        var propertyValue = eventTarget.val();
         selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
       });
 
@@ -217,6 +215,12 @@
         cont.find('.remove-panel').toggle(panels !== 1);
         cont.find('.add-panel').prop("disabled", panels === 3);
       }
+
+      rootElement.find('button#change-validity-direction').on('click', function() {
+        var previousValidityDirection = selectedAsset.get().validityDirection;
+        selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
+      });
 
       function bindPanelEvents(){
         rootElement.find('.remove-panel').on('click', function (event) {
@@ -280,9 +284,8 @@
       var propertyOrdering = [
         'trafficSigns_type',
         'trafficSigns_value',
-        'main_sign_text',
         'trafficSigns_info',
-        'counter',
+        'main_sign_text',
         'life_cycle',
         'trafficSign_start_date',
         'trafficSign_end_date',
@@ -293,7 +296,9 @@
         'height',
         'coating_type',
         'lane',
-        'sign_material'
+        'sign_material',
+        'old_traffic_code',
+        'counter'
       ];
 
       return _.sortBy(properties, function(property) {
@@ -326,6 +331,16 @@
         '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
         '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
         '    </div>';
+    };
+
+    var checkboxHandler = function(property) {
+      return '' +
+      '    <div id= "' + property.publicId + '-checkbox-div" class="form-group editable edit-only form-traffic-sign">' +
+      '      <div class="checkbox" >' +
+      '        <input id="' + property.publicId + '" type="checkbox">' +
+      '      </div>' +
+      '        <label class="' + property.publicId + '-checkbox-label">' + property.name + '</label>' +
+      '    </div>';
     };
 
     var singleChoiceSubType = function (collection, mainType, property) {
@@ -557,6 +572,17 @@
       var lanes =  roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
       lanes = validitydirections.filterLanesByDirection(lanes, asset.validityDirection);
       return createPreviewHeaderElement(_.uniq(lanes));
+    };
+
+    me.renderValidityDirection = function (selectedAsset) {
+      if(selectedAsset.get().validityDirection){
+        return $(
+            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+            '      <label class="control-label">Vaikutussuunta</label>' +
+            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+            '    </div>');
+      }
+      else return '';
     };
 
     var createPreviewHeaderElement = function(laneNumbers) {
