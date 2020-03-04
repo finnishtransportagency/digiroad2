@@ -10,12 +10,12 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, Point, Traff
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -359,6 +359,8 @@ object OracleTrafficSignDao {
   }
 
   def assetRowToProperty(assetRows: Seq[TrafficSignRow]): Seq[Property] = {
+    val specialCases = Seq("opposite_side_sign", "suggest_box")
+
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
       Property(
@@ -373,6 +375,12 @@ object OracleTrafficSignDao {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
                 case _ => Seq()
               }
+            case _ if( specialCases.contains(assetRow.property.publicId.toString )) =>
+                     val finalValue = if (assetRow.property.propertyValue.trim.isEmpty) "0"
+                                      else assetRow.property.propertyValue
+
+              Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
+
             case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
           }
         })
