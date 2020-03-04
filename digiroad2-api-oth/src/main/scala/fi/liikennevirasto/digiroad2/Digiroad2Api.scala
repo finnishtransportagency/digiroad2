@@ -2173,6 +2173,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = laneService
+      val withRoadAddress = params.getOrElse("withRoadAddress", false).asInstanceOf[Boolean]
 
       zoom >= minVisibleZoom && zoom <= maxZoom match {
         case true => mapLightLane(usedService.getByZoomLevel(boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
@@ -2180,7 +2181,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox( boundingRectangle)
 
-          if(params("withRoadAddress").toBoolean) {
+          if(withRoadAddress) {
             val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
             val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress(updatedInfo.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty)))
             mapLanes(updatedInfo ++ frozenInfo)

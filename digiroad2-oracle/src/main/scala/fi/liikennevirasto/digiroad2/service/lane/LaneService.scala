@@ -75,21 +75,9 @@ trait LaneOperations {
 
     val timing = System.currentTimeMillis
     val mainLanes = Seq("11","21", "31")
-    /*existingAssets.map { lane =>
-      val roadLink = roadLinks.find( _.linkId == lane.linkId).getOrElse(throw new Exception (s"No roadLink found [${lane.linkId}]") )
-      val geometry = GeometryUtils.truncateGeometry3D(  roadLink.geometry, lane.startMeasure, lane.endMeasure)
-      val endPoints = GeometryUtils.geometryEndpoints(geometry)
-
-        PieceWiseLane(lane.id, lane.linkId, lane.sideCode, lane.expired, geometry,
-          lane.startMeasure, lane.endMeasure,
-          Set(endPoints._1, endPoints._2), lane.modifiedBy, lane.modifiedDateTime,
-          lane.createdBy, lane.createdDateTime,
-          roadLink.vvhTimeStamp, lane.geomModifiedDate, roadLink.administrativeClass, lane.attributes )
-    }*/
-
     val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
 
-    val initChangeSet = ChangeSet(//droppedLaneIds = Set.empty[Long],
+    val initChangeSet = ChangeSet(
       expiredLaneIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
       adjustedMValues = Seq.empty[MValueAdjustment],
       adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
