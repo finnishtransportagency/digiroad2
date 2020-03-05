@@ -245,12 +245,11 @@
     };
 
     var addressNumberString = function (minAddressNumber, maxAddressNumber) {
-      if (!minAddressNumber && !maxAddressNumber) {
-        return '';
-      } else if (selectedLinkProperty.count() > 1) {
+      if (selectedLinkProperty.count() > 1) {
         return "[useita eri arvoja]";
-      }
-      else {
+      } else if (!minAddressNumber && !maxAddressNumber) {
+        return '';
+      } else {
         var min = minAddressNumber || '';
         var max = maxAddressNumber || '';
         return min + '-' + max;
