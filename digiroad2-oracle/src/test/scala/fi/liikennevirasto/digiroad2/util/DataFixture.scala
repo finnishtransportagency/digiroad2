@@ -474,7 +474,7 @@ object DataFixture {
         case (_, x) =>
           x match {
             case u: List[Any] =>
-              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet)
+              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet, Seq())
             case _ =>
           }
         case _ =>
@@ -1663,11 +1663,11 @@ object DataFixture {
         val unknownSpeedLimitByMunicipality = speedLimitDao.getMunicipalitiesWithUnknown(municipality)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unknownSpeedLimitByMunicipality.toSet, false)
 
-        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad)
+        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad).map(_.linkId) ++ unknownSpeedLimitByMunicipality.diff(roadLinks.map(_.linkId))
 
         if(filterRoadLinks.nonEmpty) {
-          println(s"Deleting linkIds - ${filterRoadLinks.map(_.linkId)}")
-          speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
+          println(s"Deleting linkIds - $filterRoadLinks")
+          speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks)
         }
       }
     }
