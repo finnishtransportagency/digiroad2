@@ -637,7 +637,7 @@ trait MassTransitStopService extends PointAssetOperations {
       fetchPointAssets(withFilter(filter))
     }
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(assets.map(_.linkId).toSet)
 
     assets.map { asset =>
       ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
