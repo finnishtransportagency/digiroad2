@@ -34,7 +34,7 @@
       };
 
       var extractMinAddressValue = function(selectedData, property) {
-        var roadPartNumber = Math.min.apply(null, pickUniqueValues(selectedData, 'roadPartNumber'));
+        var roadPartNumber = Math.min.apply(null, _.compact(pickUniqueValues(selectedData, 'roadPartNumber')));
         return Math.min.apply(null, _.chain(selectedData)
           .filter(function (data) {
             return data.roadPartNumber == roadPartNumber;
@@ -44,7 +44,7 @@
       };
 
       var extractMaxAddressValue = function(selectedData, property) {
-        var roadPartNumber = Math.max.apply(null, pickUniqueValues(selectedData, 'roadPartNumber'));
+        var roadPartNumber = Math.max.apply(null, _.compact(pickUniqueValues(selectedData, 'roadPartNumber')));
         return Math.max.apply(null, _.chain(selectedData)
           .filter(function (data) {
             return data.roadPartNumber == roadPartNumber;
