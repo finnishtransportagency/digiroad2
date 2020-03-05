@@ -578,7 +578,9 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */
   def deleteUnknownSpeedLimits(linkIds: Seq[Long]): Unit = {
-    sqlu"""delete from unknown_speed_limit where link_id in (#${linkIds.mkString(",")})""".execute
+      MassQuery.withIds(linkIds.toSet) { idTableName =>
+        sqlu"""delete from unknown_speed_limit where link_id in (select id from #$idTableName)""".execute
+      }
   }
 
   def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {
