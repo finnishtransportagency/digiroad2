@@ -374,13 +374,14 @@ object OracleTrafficSignDao {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
                 case _ => Seq()
               }
-            case _ if( specialCases.contains(assetRow.property.publicId.toString )) =>
-                     val finalValue = if (assetRow.property.propertyValue.trim.isEmpty) "0"
-                                      else assetRow.property.propertyValue
+            case _  =>
+              val isSpecialCase = specialCases.contains(assetRow.property.publicId.toString )
+              val isPropertyValueEmpty = assetRow.property.propertyValue.toString.trim.isEmpty
+
+              val finalValue = if ( isSpecialCase && isPropertyValueEmpty ) "0"
+              else assetRow.property.propertyValue
 
               Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
-
-            case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
           }
         })
     }.toSeq
