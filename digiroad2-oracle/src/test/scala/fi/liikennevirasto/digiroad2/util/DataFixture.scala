@@ -2307,7 +2307,7 @@ object DataFixture {
             speedLimitService.getExistingAssetByRoadLink(r, false)
           }
 
-        val newSpeedLimits = speedLimitService.newChangeAsset(roadLinks, speedLimits, changes).groupBy(_.linkId)
+        val newSpeedLimits = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimits, changes).groupBy(_.linkId)
 
         newSpeedLimits.foreach { case (speedLimitLinkId, speedLimitsToCreate) =>
           val speedLimitRoadLink = filteredRoadLinks.find(_.linkId == speedLimitLinkId).get
@@ -2317,7 +2317,7 @@ object DataFixture {
 //            speedLimitDao.createSpeedLimit(sl.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), sl.linkId, Measures(sl.startMeasure, sl.endMeasure),
 //              sl.sideCode, sl.value.get.value, Some(sl.vvhTimeStamp), sl.createdDateTime, sl.modifiedBy,
 //              sl.modifiedDateTime, sl.linkSource)
-            println("\nNew SpeedLimit created at Link Id: " + sl.linkId)
+            println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
 
             //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
 //            speedLimitDao.purgeFromUnknownSpeedLimits(speedLimitLinkId, GeometryUtils.geometryLength(speedLimitRoadLink.geometry))
