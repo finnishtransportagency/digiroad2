@@ -131,16 +131,15 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       lane._2.foreach { props =>
         val roadPartNumber = getPropertyValue(props, "road part").toLong
         val laneCode = getPropertyValue(props, "lane")
-        val isMainLaneTowardsDigitizing = laneCode.charAt(0).getNumericValue == 1
 
-        val initialDistance = if (isMainLaneTowardsDigitizing) getPropertyValue(props, "initial distance").toLong else  getPropertyValue(props, "end distance").toLong
-        val endDistance = if (isMainLaneTowardsDigitizing) getPropertyValue(props, "end distance").toLong else  getPropertyValue(props, "initial distance").toLong
+        val initialDistance = getPropertyValue(props, "initial distance").toLong
+        val endDistance = getPropertyValue(props, "end distance").toLong
         val track = getPropertyValue(props, "track").toInt
         val laneType = getPropertyValue(props, "lane type").toInt
 
         val sideCode = track match {
           case 1 | 2 => SideCode.BothDirections
-          case _ => if (isMainLaneTowardsDigitizing) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+          case _ => if (laneCode.charAt(0).getNumericValue == 1) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         }
 
         val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
