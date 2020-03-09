@@ -88,7 +88,6 @@
         }) || [];
         self.linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
-        verificationCollection.fetch(boundingBox, center, typeId, hasMunicipalityValidation);
       });
     };
 

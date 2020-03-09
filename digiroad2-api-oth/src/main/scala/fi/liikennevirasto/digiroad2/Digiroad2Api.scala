@@ -164,8 +164,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ai: AdditionalInformation => JString(ai.toString)
   }))
 
-
-
   case object NewIncomeLaneSerializer extends CustomSerializer[NewIncomeLane](format =>
     ( {
       case jsonObj: JObject =>
@@ -192,7 +190,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         LaneProperty(publicId, values)
     },
       {
-        case tv : LaneProperty => Extraction.decompose(tv)
+        case tv : LaneProperty => JObject(JField("publicId", JString(tv.publicId)), JField("values", Extraction.decompose(tv.values)))
       }))
 
   case object LanePropertyValueSerializer extends CustomSerializer[LanePropertyValue](format =>
@@ -203,9 +201,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         LanePropertyValue(value)
     },
       {
-        case tv : LanePropertyValue => Extraction.decompose(tv)
+        case tv : LanePropertyValue => JObject(JField("value", JString(tv.value.toString)))
       }))
-
 
   protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer +
                         TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer +
@@ -256,7 +253,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   def municipalityDao = new MunicipalityDao
 
   private def getMapViewStartParameters(mapView: Option[MapViewZoom], assetType: Int): Option[(Double, Double, Int, Int)] = mapView.map(m => (m.geometry.x, m.geometry.y, m.zoom, assetType))
-
 
   get("/startupParameters") {
     val defaultValues: (Double, Double, Int, Int) = (390000, 6900000, 2, MassTransitStopAsset.typeId)
@@ -394,7 +390,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       massTransitStop.getOrElse(NotFound("Mass transit stop " + nationalId + " not found"))
     }
   }
-
 
   get("/massTransitStop/:id") {
     val id = params("id").toLong
@@ -641,7 +636,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    val laneInfo = laneService.fetchExistingLanesByRoadLinks( Seq(roadLink)).map(_.laneCode).sorted.mkString(",").toString
+    val laneInfo = laneService.fetchExistingLanesByRoadLinks(Seq(roadLink)).map(_.laneCode).sorted.mkString(",").toString
 
     Map(
       "lanes" ->  ( if (laneInfo.toString.isEmpty ) "" else laneInfo ),
@@ -1048,7 +1043,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   def mapLanes(lanesRoot: Seq[Seq[PieceWiseLane]]): Seq[Seq[Map[String, Any]]] = {
     lanesRoot.map { lanes =>
       lanes.map { lane =>
@@ -1069,7 +1063,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
          // "verifiedBy" -> link.verifiedBy,
         //  "verifiedAt" -> link.verifiedDate,
         //  "area" -> extractIntValue(lane.attributes, "area"),
-          "municipalityCode" -> extractIntValue(lane.attributes, "municipality"),
+          "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
          // "informationSource" -> link.informationSource,
           "roadPartNumber" -> lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")),
           "roadNumber" -> lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")),
@@ -1125,7 +1119,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       }
     }
   }
-
 
   private def extractLinearAssetValue(value: JValue): Option[Value] = {
     val numericValue = value.extractOpt[Int]
@@ -1364,7 +1357,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     getUnknowns(adminClass, None)
   }
 
-
   get("/speedlimits/unknown/municipality") {
     val municipality = params.get("id").getOrElse(halt(BadRequest("Missing municipality id"))).toInt
     getUnknowns(Some(Municipality), Some(municipality)).map {
@@ -1549,7 +1541,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-
   private def validateUserRightsForLanes(linkIds: Set[Long], user: User ) : Unit = {
 
     val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary( linkIds  )
@@ -1673,7 +1664,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(BadRequest("Railway id property is too big"))
   }
 
-
   get("/directionalTrafficSigns")(getPointAssets(directionalTrafficSignService))
   get("/directionalTrafficSigns/:id")(getPointAssetById(directionalTrafficSignService))
   get("/directionalTrafficSigns/floating")(getFloatingPointAssets(directionalTrafficSignService))
@@ -1706,7 +1696,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/groupedPointAssets")(getGroupedPointAssets)
   get("/groupedPointAssets/:id")(getGroupedPointAssetsById)
-
 
   private def getServicePoints: Set[ServicePoint] = {
     val bbox = params.get("bbox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
@@ -2179,7 +2168,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         case true => mapLightLane(usedService.getByZoomLevel(boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
         case false =>
           validateBoundingBox(boundingRectangle)
-          val assets = usedService.getByBoundingBox( boundingRectangle)
+          val assets = usedService.getByBoundingBox(boundingRectangle)
 
           if(withRoadAddress) {
             val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
@@ -2207,7 +2196,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     LaneUtils.processNewIncomeLanes(incomingLanes, linkIds, sideCode, user.username)
   }
 
-
   post("/lanesByRoadAddress") {
     val user = userProvider.getCurrentUser()
     val usedService =  laneService
@@ -2227,9 +2215,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)
   }
 
-
   get("/lane/:linkId/:sideCode") {
-
     val linkId = params("linkId").toLong
     val sideCode = params("sideCode").toInt
 
@@ -2237,26 +2223,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val existingLanes = usedService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode)
 
     existingLanes.map { lane =>
-      val auxProperties = lane.laneAttributes.properties.map ( props =>
-        Map(
-          "publicId" -> props.publicId,
-          "values" ->  props.values.map( v =>
-            Map("value" -> v.value)
-          )
-        )
-      )
-
-
       Map(
         "id" -> lane.id,
         "linkId" -> lane.linkId,
         "sideCode" -> lane.sideCode,
         "startMeasure" -> lane.startMeasure,
         "endMeasure" -> lane.endMeasure,
-        "municipalityCode" -> extractIntValue(lane.attributes, "municipality"),
-        "properties" -> auxProperties
+        "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
+        "properties" -> lane.laneAttributes.properties
       )
     }
   }
-
 }

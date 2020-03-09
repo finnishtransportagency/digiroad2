@@ -63,18 +63,17 @@ trait LaneOperations {
     */
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLane]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getMainLanesByRoadLinks( roadLinks, change)
+    val linearAssets = getMainLanesByRoadLinks(roadLinks, change)
 
     LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-  protected def getMainLanesByRoadLinks( roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
+  protected def getMainLanesByRoadLinks(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    val existingAssets = fetchExistingLanesByRoadLinks(roadLinks, removedLinkIds )
+    val existingAssets = fetchExistingLanesByRoadLinks(roadLinks, removedLinkIds)
 
     val timing = System.currentTimeMillis
-    val mainLanes = Seq("11","21", "31")
     val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
 
     val initChangeSet = ChangeSet(
@@ -96,7 +95,7 @@ trait LaneOperations {
     val (filledTopology, changeSet) = laneFilter.fillTopology(roadLinks, groupedAssets, Some(changedSet))
 
     publish(eventBus, changeSet, projectedLanes)
-    filledTopology.filter( lane => mainLanes.contains( lane.laneAttributes.properties.find(_.publicId == "lane_code").head.values.head.value) )
+    filledTopology.filter(lane => lane.laneAttributes.properties.find(_.publicId == "lane_code").head.values.head.value.toString.charAt(1) == '1')
 
   }
 
@@ -254,16 +253,14 @@ trait LaneOperations {
     existingAssets
   }
 
-
-  def fetchExistingLanesByRoadLinks( roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
+  def fetchExistingLanesByRoadLinks(roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
-        dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds)
+        dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds)
       }.filterNot(_.expired)
     existingAssets
   }
-
 
   def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
 
@@ -281,8 +278,8 @@ trait LaneOperations {
     PieceWiseLane(lane.id, lane.linkId, lane.sideCode, lane.expired, geometry,
       lane.startMeasure, lane.endMeasure,
       Set(endPoints._1, endPoints._2), lane.modifiedBy, lane.modifiedDateTime,
-      lane.createdBy, lane.createdDateTime,
-      roadLink.vvhTimeStamp, lane.geomModifiedDate, roadLink.administrativeClass, lane.attributes )
+      lane.createdBy, lane.createdDateTime,  roadLink.vvhTimeStamp,
+      lane.geomModifiedDate, roadLink.administrativeClass, lane.attributes, attributes = Map("municipality" -> lane.municipalityCode))
     }
   }
 
@@ -440,7 +437,7 @@ trait LaneOperations {
       val ids = changeSet.expiredLaneIds.toSeq
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach( id => dao.updateExpiration( id, expired = true, VvhGenerated) )
+      ids.foreach(id => dao.updateExpiration(id, VvhGenerated))
 
       if (changeSet.adjustedSideCodes.nonEmpty)
         logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
@@ -465,7 +462,7 @@ trait LaneOperations {
       oldAsset.startMeasure, oldAsset.endMeasure, Some(VvhGenerated), Some( DateTime.now() ),
       None,None, expired = false, vvhClient.roadLinkData.createVVHTimeStamp(), oldAsset.geomModifiedDate, oldAsset.attributes)
 
-    dao.updateExpiration(oldAsset.id, expired = true, VvhGenerated)
+    dao.updateExpiration(oldAsset.id, VvhGenerated)
    createWithoutTransaction( newLane, VvhGenerated )
   }
 

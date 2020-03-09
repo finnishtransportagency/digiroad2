@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
 
-
 object  LaneFiller {
   case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
   case class VVHChangesAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long)
@@ -21,12 +20,9 @@ object  LaneFiller {
                        valueAdjustments: Seq[ValueAdjustment])
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: LanePropertiesValues)
-
 }
 
 class LaneFiller {
-
-
   val AllowedTolerance = 0.5
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
@@ -71,8 +67,7 @@ class LaneFiller {
       PieceWiseLane(dbLane.id,dbLane.linkId, dbLane.sideCode, dbLane.expired, points,
         dbLane.startMeasure, dbLane.endMeasure, Set(endPoints._1, endPoints._2), dbLane.modifiedBy, dbLane.modifiedDateTime,
         dbLane.createdBy, dbLane.createdDateTime, dbLane.vvhTimeStamp, dbLane.geomModifiedDate, roadLink.administrativeClass,
-        laneAttributes = dbLane.attributes  )
-
+        laneAttributes = dbLane.attributes, attributes = Map("municipality" -> dbLane.municipalityCode))
     }
   }
 
@@ -389,7 +384,7 @@ class LaneFiller {
     val resultingNumericalLimits = combinedSegment ++ newSegments
     val expiredIds = lanesZipped.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
 
-    val returnSegments = cleanNumericalLimitIds(resultingNumericalLimits, Seq())
+    val returnSegments = if (resultingNumericalLimits.size > 1) cleanNumericalLimitIds(resultingNumericalLimits, Seq()) else Seq()
     (returnSegments, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
   }

@@ -16,12 +16,12 @@ import slick.jdbc.{GetResult, PositionedResult}
 import scala.language.implicitConversions
 
 
-case class LaneRow ( id: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
+case class LaneRow(id: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
                    startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                    modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
                    vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
-case class LanePropertyRow ( publicId: String, propertyValue: Option[Any] )
+case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 
 
 
@@ -122,7 +122,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def fetchLanesByLinkIds( linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLane] = {
+  def fetchLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLane] = {
     val filterExpired = if (includeExpired) "" else " and (l.valid_to > sysdate or l.valid_to is null) "
 
     val lanes = MassQuery.withIds(linkIds.toSet) { idTableName =>
@@ -142,8 +142,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
        """.as[LaneRow].list
     }
 
-    convertLaneRowToPersistedLane (lanes)
-
+    convertLaneRowToPersistedLane(lanes)
   }
 
   def fetchLanesByLinkIdAndSideCode( linkId: Long, sideCode: Int): Seq[PersistedLane] = {
@@ -192,20 +191,18 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def convertLaneRowToPersistedLane( lanes: Seq[LaneRow]): Seq[PersistedLane] = {
-
+  def convertLaneRowToPersistedLane(lanes: Seq[LaneRow]): Seq[PersistedLane] = {
     lanes.groupBy(_.id).map { case (id, assetRows) =>
         val row = assetRows.head
         val attributeValues = LanePropertiesValues(laneRowToProperty(assetRows))
 
-        id -> PersistedLane ( id = row.id, linkId = row.linkId, sideCode = row.sideCode, laneCode = row.laneCode,
+        id -> PersistedLane (id = row.id, linkId = row.linkId, sideCode = row.sideCode, laneCode = row.laneCode,
           municipalityCode = row.municipalityCode, startMeasure = row.startMeasure, endMeasure = row.endMeasure,
           createdBy = row.createdBy, createdDateTime = row.createdDate,
           modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate,  expired = row.expired,
           vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
 
     }.values.toSeq
-
   }
 
 
@@ -414,12 +411,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     updateLaneModifiedFields(laneId, username)
   }
 
-  def updateExpiration(id: Long, expired: Boolean, username: String) = {
-
-    val validTo = if (expired) "sysdate" else "null"
-
+  def updateExpiration(id: Long, username: String) = {
       sqlu"""UPDATE LANE
-            SET valid_to = $validTo, modified_by = $username, modified_date = SYSDATE
+            SET valid_to = SYSDATE, modified_by = $username
             WHERE id = $id""".execute
   }
 
