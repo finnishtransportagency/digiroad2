@@ -86,8 +86,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     groupedSpeedLimit.keys.map { assetId =>
       val rows = groupedSpeedLimit(assetId)
       val asset = rows.head
+      val suggestBoxValue =
+        rows.find(_.publicId == "suggest_box") match {
+          case Some(suggested) => suggested.value
+          case _ => 0
+        }
 
-      val speedLimitValue = (rows.find(_.publicId == "suggest_box").head.value.map(_.asInstanceOf[Long]), rows.find(_.publicId == "rajoitus").head.value.map(_.asInstanceOf[Int])) match {
+      val speedLimitValue = (suggestBoxValue, rows.find(_.publicId == "rajoitus").head.value.map(_.asInstanceOf[Int])) match {
         case (Some(isSuggested), Some(value)) => Some(SpeedLimitValue(value, isSuggested == 1 ))
         case (None, Some(value)) => Some(SpeedLimitValue(value))
         case _ => None

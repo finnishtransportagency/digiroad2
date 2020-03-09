@@ -2325,7 +2325,7 @@ object DataFixture {
 
         val speedLimits =
           filteredRoadLinks.flatMap { r =>
-            speedLimitService.getExistingAssetByRoadLink(r)
+            speedLimitService.getExistingAssetByRoadLink(r, false)
           }
 
         val newSpeedLimits = speedLimitService.newChangeAsset(roadLinks, speedLimits, changes).groupBy(_.linkId)
