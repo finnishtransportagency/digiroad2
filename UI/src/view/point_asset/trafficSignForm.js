@@ -32,7 +32,7 @@
 
         switch (propertyType) {
           case "text":
-          case "integer": return textHandler(feature);
+          case "number": return textHandler(feature);
           case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection) : singleChoiceHandler(feature);
           case "read_only_number": return readOnlyHandler(feature);
           case "date": return dateHandler(feature);
@@ -58,7 +58,7 @@
         '    </div>';
 
       var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
-        '    <div class="form-group form-directional-traffic-sign">' +
+        '    <div id="wrongSideInfo" class="form-group form-directional-traffic-sign">' +
         '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
         '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
         '    </div>' : '';
@@ -126,8 +126,7 @@
       rootElement.find('input[type=checkbox]').on('change', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
-        //implicit cast from boolean to int to associate with the enumerated value from db
-        var propertyValue = +(eventTarget.prop('checked'));
+        var propertyValue = +eventTarget.prop('checked');
         selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
       });
 
@@ -146,8 +145,6 @@
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
-
-      rootElement.find("#old_traffic_code-checkbox-div").before(me.renderValidityDirection(selectedAsset));
 
       rootElement.find('.form-traffic-sign').on('change', function() {
         selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
@@ -229,7 +226,7 @@
           bindPanelEvents();
         });
 
-        rootElement.find('input[type=text]#panelValue, input[type=text]#panelInfo, .form-traffic-sign-panel select').on('change input', function (event) {
+        rootElement.find('input[type=text]#panelValue, input[type=text]#panelInfo, input[type=text]#text, .form-traffic-sign-panel select').on('change input', function (event) {
           setSinglePanel(event);
         });
 
@@ -270,7 +267,11 @@
           formPosition: parseInt(panelId),
           panelType: parseInt(container.find('#panelType').val()),
           panelValue: container.find('#panelValue').val(),
-          panelInfo:  container.find('#panelInfo').val()
+          panelInfo:  container.find('#panelInfo').val(),
+          text:  container.find('#text').val(),
+          size:  parseInt(container.find('#size').val()),
+          coating_type:  parseInt(container.find('#coating_type').val()),
+          additional_panel_color:  parseInt(container.find('#additional_panel_color').val())
         };
         selectedAsset.setAdditionalPanel(panel);
       };
@@ -334,12 +335,13 @@
     };
 
     var checkboxHandler = function(property) {
+      var checked = _.head(property.values).propertyValue == "0" ? '' : 'checked';
       return '' +
       '    <div id= "' + property.publicId + '-checkbox-div" class="form-group editable edit-only form-traffic-sign">' +
       '      <div class="checkbox" >' +
-      '        <input id="' + property.publicId + '" type="checkbox">' +
+      '        <input id="' + property.publicId + '" type="checkbox"' + checked + '>' +
       '      </div>' +
-      '        <label class="' + property.publicId + '-checkbox-label">' + property.name + '</label>' +
+      '        <label class="' + property.publicId + '-checkbox-label">' + property.localizedName + '</label>' +
       '    </div>';
     };
 
@@ -406,7 +408,7 @@
       return '' +
           '    <div class="form-group editable form-traffic-sign">' +
           '      <label class="control-label">' + property.localizedName + '</label>' +
-          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue] || '-') + '</p>' +
+          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
           '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
           selectableValues +
           '      </select>' +
@@ -514,10 +516,17 @@
         '      </select></div>';
     };
 
+    //can't be associated with traffic signs
+    var additionalPanelColorSettings = [
+      { propertyValue: "1", propertyDisplayValue: "Sininen", checked: false },
+      { propertyValue: "2", propertyDisplayValue: "Keltainen", checked: false },
+      { propertyValue: "999", propertyDisplayValue: "Ei tietoa", checked: false }
+    ];
+
     var singleChoiceForPanels = function (property) {
       var publicId = _.head(property);
       var propertyValue = (!_.isEmpty(_.last(property))) ? '' : _.last(property);
-      var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': publicId }), function(val) {return val.values; }));
+      var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': publicId }), function(val) {return val.values; }));
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
         return $('<option>',
@@ -533,9 +542,9 @@
       }
 
       return '' +
-          '    <div class="form-group editable form-traffic-sign">' +
+          '    <div class="form-group editable form-traffic-sign-panel">' +
           '      <label class="control-label">' + property.label + '</label>' +
-          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue] || '-') + '</p>' +
+          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
           '      <select class="form-control" style="display:none" id="' + publicId +'">' +
           selectableValues +
           '      </select>' +

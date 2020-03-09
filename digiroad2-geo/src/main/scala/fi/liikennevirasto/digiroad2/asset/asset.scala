@@ -656,8 +656,10 @@ sealed trait PointAssetValue {
 
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 
-case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int) extends PointAssetValue {
+case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
   override def toJson: Any = this
+  private val acceptableColorValues = Seq(1, 2, 999)
+  def verifyCorrectInputOnAdditionalPanelColor: Boolean = acceptableColorValues.contains(additional_panel_color)
 }
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {

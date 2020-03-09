@@ -1076,16 +1076,16 @@
           {'name': "Rakenne", 'propertyType': 'single_choice', 'publicId': "structure", values: [{ propertyValue: 999 }]},
           {'name': "Kunto", 'propertyType': 'single_choice', 'publicId': "condition", values: [{ propertyValue: 999 }]},
           {'name': "Koko", 'propertyType': 'single_choice', 'publicId': "size", values: [{ propertyValue: 999 }]},
-          {'name': "Korkeus", 'propertyType': 'integer', 'publicId': "height", values: []},
+          {'name': "Korkeus", 'propertyType': 'number', 'publicId': "height", values: []},
           {'name': "Kalvon tyyppi", 'propertyType': 'single_choice', 'publicId': "coating_type", values: [{ propertyValue: 999 }]},
-          {'name': "Kaista", 'propertyType': 'integer', 'publicId': "lane", values: []},
+          {'name': "Kaista", 'propertyType': 'number', 'publicId': "lane", values: []},
           {'name': "Elinkaari", 'propertyType': 'single_choice', 'publicId': "life_cycle", values: [ {propertyValue: 3} ]},
           {'name': "Merkin materiaali", 'propertyType': 'single_choice', 'publicId': "sign_material", values: [{ propertyValue: 999 }]},
           {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
           {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] },
           {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue:
                 {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 999, coating_type: 999, additional_panel_color: 999 }},
-          {'name': "Lisää vanhan lain mukainen koodi", 'propertyType': 'checkbox', 'publicId': "old_traffic_code", values: []},
+          {'name': "Lisää vanhan lain mukainen koodi", 'propertyType': 'checkbox', 'publicId': "old_traffic_code", values: [ {propertyValue: 0} ]},
           {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
@@ -1131,9 +1131,10 @@
           var startDateExtracted = dateValueExtract(dateValueStartField);
           var endDateExtracted = dateValueExtract(dateValueEndField);
 
-          var isValidaRoadWorkInfo = trafficSignTypeExtracted === "85" && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
+          var roadworksTrafficCode = "85";
+          var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
 
-          if (trafficSignTypeExtracted === "85")
+          if (trafficSignTypeExtracted === roadworksTrafficCode)
             return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;
           /* End: Special validate for roadwork sign */
 

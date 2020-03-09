@@ -36,7 +36,7 @@ object Queries {
     }
   }
   case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String, propertyMaxCharacters: Option[Int] = None)
-  case class AdditionalPanelRow(publicId: String, propertyType: String, panelType: Int, panelInfo: String, panelValue: String, formPosition: Int)
+  case class AdditionalPanelRow(publicId: String, propertyType: String, panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, panelText: String, panelSize: Int, panelCoatingType: Int, panelColor: Int)
   case class DynamicPropertyRow(publicId: String, propertyType: String, required: Boolean = false, propertyValue: Option[Any])
 
   def bytesToPoint(bytes: Array[Byte]): Point = {
@@ -182,6 +182,16 @@ object Queries {
     """
   }
 
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) = {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+    """
+  }
+
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
+
   def updateNumberProperty(assetId: Long, propertyId: Long, value: Double) =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
 
@@ -241,8 +251,8 @@ object Queries {
   def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanel) = {
     val id = Sequences.nextPrimaryKeySeqValue
     sqlu"""
-    INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position)
-    VALUES ($id, $assetId, (select id from property where public_id='additional_panel'), ${value.panelType}, ${value.panelValue}, ${value.panelInfo}, ${value.formPosition})
+    INSERT INTO additional_panel (id, asset_id ,property_id, additional_sign_type, additional_sign_value, additional_sign_info, form_position, additional_sign_text, additional_sign_size, additional_sign_coating_type, additional_sign_panel_color)
+    VALUES ($id, $assetId, (select id from property where public_id='additional_panel'), ${value.panelType}, ${value.panelValue}, ${value.panelInfo}, ${value.formPosition}, ${value.text}, ${value.size}, ${value.coating_type}, ${value.additional_panel_color})
     """
   }
 

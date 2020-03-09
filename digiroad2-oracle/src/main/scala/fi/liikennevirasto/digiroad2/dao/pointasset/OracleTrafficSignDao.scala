@@ -14,6 +14,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.format.DateTimeFormat
+import scala.util.Try
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -59,9 +60,11 @@ object OracleTrafficSignDao {
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
                 when dpv.date_time is not null then to_char(dpv.date_time, 'DD.MM.YYYY')
+                when npv.value is not null then to_char(npv.value)
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
-               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
+                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
+               ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color, case when a.valid_to <= sysdate then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -70,6 +73,7 @@ object OracleTrafficSignDao {
         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
         left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id and p.property_type = 'text'
         left join date_property_value dpv on dpv.asset_id = a.id and dpv.property_id = p.id and p.property_type = 'date'
+        left join number_property_value npv on npv.asset_id = a.id and npv.property_id = p.id and p.property_type = 'number'
         left join enumerated_value ev on scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
       """
@@ -136,7 +140,8 @@ object OracleTrafficSignDao {
                 when tpv.value_fi is not null then tpv.value_fi
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
-               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position, case when a.valid_to <= sysdate then 1 else 0 end as expired
+               lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
+               ap.additional_sign_text, ap.additional_sign_size, ap.additional_sign_coating_type, ap.additional_sign_panel_color, case when a.valid_to <= sysdate then 1 else 0 end as expired
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -214,8 +219,12 @@ object OracleTrafficSignDao {
       val panelValue = r.nextStringOption()
       val panelInfo = r.nextStringOption()
       val formPosition = r.nextInt()
+      val panelText = r.nextStringOption()
+      val panelSize = r.nextInt()
+      val panelCoatingType = r.nextInt()
+      val panelColor = r.nextInt()
       val additionalPanel = optPanelType match {
-        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId, propertyType, panelType, panelInfo.getOrElse(""), panelValue.getOrElse(""), formPosition))
+        case Some(panelType) => Some(AdditionalPanelRow(propertyPublicId, propertyType, panelType, panelInfo.getOrElse(""), panelValue.getOrElse(""), formPosition, panelText.getOrElse(""), panelSize, panelCoatingType, panelColor))
         case _ => None
       }
       val expired = r.nextBoolean()
@@ -373,7 +382,7 @@ object OracleTrafficSignDao {
           assetRow.property.propertyType match {
             case AdditionalPanelType =>
               assetRow.additionalPanel match {
-                case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
+                case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition, panel.panelText, panel.panelSize, panel.panelCoatingType, panel.panelColor))
                 case _ => Seq()
               }
             case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
@@ -393,6 +402,10 @@ object OracleTrafficSignDao {
 
   private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
     StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def numberPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    StaticQuery.query[(Long, Long), Long](existsNumberProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
@@ -425,7 +438,9 @@ object OracleTrafficSignDao {
         if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
-          insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
+          val additionalPanel = value.asInstanceOf[AdditionalPanel]
+          if (!additionalPanel.verifyCorrectInputOnAdditionalPanelColor) throw new IllegalArgumentException(s"Incorrect input for additional panel color: ${additionalPanel.additional_panel_color}")
+          insertAdditionalPanelProperty(assetId, additionalPanel).execute
         }
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
@@ -443,6 +458,15 @@ object OracleTrafficSignDao {
           insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toString)).execute
         } else if (!datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank){
           updateDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toString)).execute
+        }
+      case Number =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty) {
+          deleteNumberProperty(assetId, propertyId).execute
+        } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
+          insertNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption).execute
+        } else {
+          updateNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

@@ -1400,6 +1400,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  private def validateUserRightsForOldTrafficCodes(user: User, isOldCodeBeingUsed: Boolean, municipalityCode: Int) : Unit = {
+    if (isOldCodeBeingUsed) {
+      validateUserMunicipalityAccessByMunicipality(user)(municipalityCode)
+    }
+  }
+
   private def validateUserMunicipalityAccessByMunicipality(user: User)(municipality: Int) : Unit = {
     if (!user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))
@@ -1777,6 +1783,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) =>
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
+        service match {
+          case trafficSignService: TrafficSignService => {
+            validateUserRightsForOldTrafficCodes(user, trafficSignService.isOldCodeBeingUsed(updatedAsset.asInstanceOf[IncomingTrafficSign]), link.municipalityCode)
+            if (!trafficSignService.verifyDatesOnTemporarySigns(updatedAsset.asInstanceOf[IncomingTrafficSign])) halt(BadRequest("Incorrect parameters on date values"))
+          }
+          case _ =>
+        }
         service.update(id, updatedAsset, link, user.username)
     }
   }
@@ -1788,6 +1801,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId).map{
       link =>
        validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
+        service match {
+          case trafficSignService: TrafficSignService => {
+            validateUserRightsForOldTrafficCodes(user, trafficSignService.isOldCodeBeingUsed(asset.asInstanceOf[IncomingTrafficSign]), link.municipalityCode)
+            if (!trafficSignService.verifyDatesOnTemporarySigns(asset.asInstanceOf[IncomingTrafficSign])) halt(BadRequest("Incorrect parameters on date values"))
+          }
+          case _ =>
+        }
        service.create(asset, user.username, link)
     }
   }

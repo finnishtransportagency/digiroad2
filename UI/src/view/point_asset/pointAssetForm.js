@@ -252,6 +252,11 @@ root.PointAssetForm = function() {
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
+    var element = rootElement.find('#wrongSideInfo');
+    if (!_.isUndefined(element)){
+      if (readOnly) element.show();
+      else element.hide();
+    }
   };
 
   this.renderFloatingNotification = function(floating, localizedTexts) {
