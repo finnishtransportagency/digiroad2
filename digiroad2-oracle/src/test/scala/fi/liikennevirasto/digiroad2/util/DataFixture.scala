@@ -2313,9 +2313,9 @@ object DataFixture {
     println("\n")
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = Seq(49, 734, 286) /*OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
       Queries.getMunicipalities
-    }*/
+    }
 
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
@@ -2338,11 +2338,11 @@ object DataFixture {
 
               //Create new SpeedLimits on gaps
               speedLimitsToCreate.foreach { sl =>
-                //            speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
                 println("New SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
 
                 //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-                //            speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
+                speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
                 println("\nRemoved linkId " + sl.linkId + " from UnknownSpeedLimits working list")
               }
             }
