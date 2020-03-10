@@ -93,21 +93,24 @@ object LaneUtils {
     val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
 
       val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
-      val municipalityCode = mappedRoadLinks.find(_.linkId == road.linkId).get.municipalityCode
+      val vvhRoadLink = mappedRoadLinks.find(_.linkId == road.linkId).get
+      val municipalityCode = vvhRoadLink.municipalityCode
 
       lanesToInsert.map { lane =>
 
-        val laneCode = lane.attributes.properties.find(_.publicId == "lane_code").getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+        val laneCodeProperty = lane.attributes.properties.find(_.publicId == "lane_code").getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+        val laneCode = laneCodeProperty.values.head.value.toString.toInt
+        val isMainLane = laneCode.toString.charAt(1).getNumericValue == 1
 
         // Conversion from AddressMValue to MValue we used in LinkIds
         val startDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.initialDistance
-        val startPoint = Math.abs(road.startMValue - (startDifferenceAddr * road.endMValue / road.endAddrMValue))
+        val startPoint = if(isMainLane) 0 else Math.abs(road.startMValue - (startDifferenceAddr * road.endMValue / road.endAddrMValue))
         val endDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.endDistance
-        val endPoint = Math.abs(road.startMValue - (endDifferenceAddr * road.endMValue / road.endAddrMValue))
+        val endPoint = if(isMainLane) vvhRoadLink.length else Math.abs(road.startMValue - (endDifferenceAddr * road.endMValue / road.endAddrMValue))
 
         if (road.roadPartNumber > laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber < laneRoadAddressInfo.endRoadPartNumber) {
 
-          PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+          PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
             road.startMValue, road.endMValue,
             Some(username), Some(DateTime.now()),
             None, None, expired = false,
@@ -117,28 +120,28 @@ object LaneUtils {
         else if (road.roadPartNumber == laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber == laneRoadAddressInfo.endRoadPartNumber) {
           if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
 
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               startPoint, endPoint,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
               vvhTimeStamp, None, lane.attributes)
           }
           else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue < laneRoadAddressInfo.endDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               startPoint, road.endMValue,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
               vvhTimeStamp, None, lane.attributes)
           }
           else if (road.startAddrMValue > laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               road.startMValue, endPoint,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
               vvhTimeStamp, None, lane.attributes)
           }
           else {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               road.startMValue, road.endMValue,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
@@ -150,13 +153,13 @@ object LaneUtils {
           if (road.endAddrMValue < laneRoadAddressInfo.initialDistance) {
             None
           } else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               startPoint, road.endMValue,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
               vvhTimeStamp, None, lane.attributes)
           } else {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               road.startMValue, road.endMValue,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
@@ -168,13 +171,13 @@ object LaneUtils {
           if (road.endAddrMValue < laneRoadAddressInfo.endDistance) {
             None
           } else if (road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               road.startMValue, endPoint,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
               vvhTimeStamp, None, lane.attributes)
           } else {
-            PersistedLane(0, road.linkId, sideCode, laneCode.values.head.value.toString.toInt, municipalityCode,
+            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               road.startMValue, road.endMValue,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
