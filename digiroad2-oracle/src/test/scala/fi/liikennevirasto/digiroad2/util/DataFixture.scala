@@ -2322,15 +2322,15 @@ object DataFixture {
         println("\nWorking at Municipailty: " + municipality)
         val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
-        val changesToTreat = changes.filter(c => c.changeType == New.value && filteredRoadLinks.exists(_.linkId == c.newId.getOrElse(0)))
-        val speedLimitsAlreadyExistents = changesToTreat.flatMap { ctt =>
-          speedLimitService.getExistingAssetByRoadLink(filteredRoadLinks.find(_.linkId == ctt.newId.getOrElse(0)).get, false)
-        }
+        val changesToTreat = changes.filter(c => c.changeType == New.value && c.newId.nonEmpty && filteredRoadLinks.exists(_.linkId == c.newId.get))
+        val roadLinksToTreat = filteredRoadLinks.filter(r => changesToTreat.exists(_.newId.get == r.linkId)).map(_.linkId).toSet
+        val speedLimitsAlreadyExistents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(roadLinksToTreat))
+
         val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
-        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated)
+        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated.size)
 
         changesWithoutSpeedLimitCreated.foreach { cws =>
-          val adjacents = roadLinkService.getAdjacent(cws.newId.getOrElse(0L), false).map(_.linkId).toSet
+          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false).map(_.linkId).toSet
           if (adjacents.size >= 2) {
             val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
             if (speedLimitsOnAdjacents.size >= 2) {
@@ -2339,11 +2339,11 @@ object DataFixture {
               //Create new SpeedLimits on gaps
               speedLimitsToCreate.foreach { sl =>
                 speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
-                println("New SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
+                println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
 
                 //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
                 speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
-                println("\nRemoved linkId " + sl.linkId + " from UnknownSpeedLimits working list")
+                println("Removed linkId " + sl.linkId + " from UnknownSpeedLimits working list")
               }
             }
           }
