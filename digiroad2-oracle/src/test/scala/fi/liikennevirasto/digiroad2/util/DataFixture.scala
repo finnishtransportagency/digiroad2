@@ -2317,7 +2317,7 @@ object DataFixture {
 
               //Create new SpeedLimits on gaps
               speedLimitsToCreate.foreach { sl =>
-                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get.value, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
                 println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
 
                 //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
