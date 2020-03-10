@@ -2300,34 +2300,31 @@ object DataFixture {
       municipalities.foreach { municipality =>
         println("\nWorking at Municipailty: " + municipality)
         val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
-        println("\nTerminou de apanhar os roadlinks e as cahnges da municipailty")
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
-        println("\nFiltrou os roadlinks só ficando com os isCarRoadOrCyclePedestrianPath")
         val changesToTreat = changes.filter(c => c.changeType == New.value && filteredRoadLinks.exists(_.linkId == c.newId.getOrElse(0)))
-        println("\nFicou com " + changesToTreat.size + " changes para tratar")
         val speedLimitsAlreadyExistents = changesToTreat.flatMap { ctt =>
           speedLimitService.getExistingAssetByRoadLink(filteredRoadLinks.find(_.linkId == ctt.newId.getOrElse(0)).get, false)
         }
         val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
-        println("\nExclui as changes já tratadas")
+        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated)
 
-        changesWithoutSpeedLimitCreated.foreach{ cws =>
+        changesWithoutSpeedLimitCreated.foreach { cws =>
           val adjacents = roadLinkService.getAdjacent(cws.newId.getOrElse(0L), false).map(_.linkId).toSet
-          println("\nApanha os adjacentes dos rodalinks a criar")
-          val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
-          println("\nVe se tem speedLimitsOnAdjacents nos adjacentes ")
-          val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
-          println("\nRetornou os novos speedLimits a criar")
+          if (adjacents.size >= 2) {
+            val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
+            if (speedLimitsOnAdjacents.size >= 2) {
+              val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
 
-          //Create new SpeedLimits on gaps
-          speedLimitsToCreate.foreach { sl =>
-//            speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
-            println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
+              //Create new SpeedLimits on gaps
+              speedLimitsToCreate.foreach { sl =>
+                //            speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+                println("New SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
 
-            //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-//            speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
-            println("Removed linkId " + sl.linkId + "UnknownSpeedLimits from working list")
-            println("\n")
+                //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
+                //            speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
+                println("\nRemoved linkId " + sl.linkId + " from UnknownSpeedLimits working list")
+              }
+            }
           }
         }
       }
