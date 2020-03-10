@@ -22,7 +22,7 @@
       });
     };
 
-    this.renderValueElement = function(asset, collection) {
+    this.renderValueElement = function(asset, collection, authorizationPolicy) {
       var allTrafficSignProperties = asset.propertyData;
       var trafficSignSortedProperties = sortAndFilterTrafficSignProperties(allTrafficSignProperties);
 
@@ -36,7 +36,7 @@
           case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection) : singleChoiceHandler(feature);
           case "read_only_number": return readOnlyHandler(feature);
           case "date": return dateHandler(feature);
-          case "checkbox": return checkboxHandler(feature);
+          case "checkbox": return feature.publicId === 'suggest_box' ? suggestedBoxHandler (feature, authorizationPolicy) : checkboxHandler(feature);
         }
 
       }), function(prev, curr) { return prev + curr; }, '');
@@ -74,7 +74,7 @@
 
 
       if (selectedAsset.isNew()) {
-        formRootElement = formRootElement.append(me.renderValueElement(asset, collection));
+        formRootElement = formRootElement.append(me.renderValueElement(asset, collection, authorizationPolicy));
 
         return  wrapper.append(formRootElement );
 
@@ -98,11 +98,38 @@
         formRootElement = formRootElement.append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
                                           .append(logInfoGroup)
                                           .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
-                                          .append(me.renderValueElement(asset, collection))
+                                          .append(me.renderValueElement(asset, collection, authorizationPolicy))
                                           .append(deleteCheckbox);
 
         return wrapper.append(formRootElement );
       }
+    };
+
+    var suggestedBoxHandler = function(asset, authorizationPolicy) {
+      var suggestedBoxValue = getSuggestedBoxValue();
+      var suggestedBoxDisabledState = getSuggestedBoxDisabledState();
+
+      if(suggestedBoxDisabledState) {
+        var disabledValue = 'disabled';
+        return renderSuggestBoxElement(asset, disabledValue);
+      } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(me.selectedAsset, suggestedBoxValue)) {
+        var checkedValue = suggestedBoxValue ? 'checked' : '';
+        return renderSuggestBoxElement(asset, checkedValue);
+      } else {
+        return '';
+      }
+    };
+
+    var getSuggestedBoxDisabledState = function() {
+      return $('.suggested-checkbox').is(':disabled');
+    };
+
+    var getSuggestedBoxValue = function() {
+      return !!parseInt(me.selectedAsset.getByProperty("suggest_box"));
+    };
+
+    this.switchSuggestedValue = function(disabledValue) {
+      $('.suggested-checkbox').attr('disabled', disabledValue);
     };
 
     this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -123,11 +150,29 @@
         selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
       });
 
-      rootElement.find('input[type=checkbox]').on('change', function (event) {
+      rootElement.find('input[type=checkbox]').not('.suggested-checkbox').on('change', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
         var propertyValue = +eventTarget.prop('checked');
         selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+      });
+
+      rootElement.find('.suggested-checkbox').on('change', function (event) {
+        var eventTarget = $(event.currentTarget);
+        selectedAsset.setPropertyByPublicId(eventTarget.attr('id'), +eventTarget.prop('checked'));
+
+        if(id) {
+          me.switchSuggestedValue(true);
+          rootElement.find('.suggested-checkbox').prop('checked', false);
+        }
+      });
+
+      rootElement.find('.editable').not('.suggestion-box').on('change', function() {
+        if(id) {
+          me.switchSuggestedValue(true);
+          rootElement.find('.suggested-checkbox').prop('checked', false);
+          selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('id'), 0);
+        }
       });
 
       rootElement.find('.pointasset button.save').on('click', function() {
@@ -135,13 +180,12 @@
       });
 
       rootElement.find('.pointasset button.cancel').on('click', function() {
+        me.switchSuggestedValue(false);
         selectedAsset.cancel();
       });
 
-
       this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
     };
-
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
@@ -163,32 +207,9 @@
         selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-traffic-sign select#trafficSigns_type').val());
       });
 
-      rootElement.find('.form-traffic-sign select#main-location_specifier').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('location_specifier', $('.form-traffic-sign select#main-location_specifier').val());
-      });
-
-      rootElement.find('.form-traffic-sign select#main-structure').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('structure', $('.form-traffic-sign select#main-structure').val());
-      });
-
-      rootElement.find('.form-traffic-sign select#main-condition').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('condition', $('.form-traffic-sign select#main-condition').val());
-      });
-
-      rootElement.find('.form-traffic-sign select#main-size').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('size', $('.form-traffic-sign select#main-size').val());
-      });
-
-      rootElement.find('.form-traffic-sign select#main-life_cycle').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('life_cycle', $('.form-traffic-sign select#main-life_cycle').val());
-      });
-
-      rootElement.find('.form-traffic-sign select#main-coating_type').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('coating_type', $('.form-traffic-sign select#main-coating_type').val());
-      });
-
-      rootElement.find('.form-traffic-sign select#main-sign_material').on('change', function (event) {
-        selectedAsset.setPropertyByPublicId('sign_material', $('.form-traffic-sign select#main-sign_material').val());
+      var singleChoiceIds = ['location_specifier', 'structure', 'condition', 'size', 'life_cycle', 'coating_type', 'sign_material', 'lane_type', 'type_of_damage', 'urgency_of_repair'];
+      _.forEach(singleChoiceIds, function (publicId) {
+        bindSingleChoiceElement(publicId);
       });
 
       rootElement.find('#additional-panel-checkbox').on('change', function (event) {
@@ -204,6 +225,12 @@
       });
 
       bindPanelEvents();
+
+      function bindSingleChoiceElement (publicId) {
+        rootElement.find('.form-traffic-sign select#main-' + publicId).on('change', function (event) {
+          selectedAsset.setPropertyByPublicId(publicId, $('.form-traffic-sign select#main-' + publicId).val());
+        });
+      }
 
       function toggleButtonVisibility() {
         var cont = rootElement.find('.panel-group-container');
@@ -287,6 +314,7 @@
         'trafficSigns_value',
         'trafficSigns_info',
         'main_sign_text',
+        'municipality_id',
         'life_cycle',
         'trafficSign_start_date',
         'trafficSign_end_date',
@@ -297,7 +325,14 @@
         'height',
         'coating_type',
         'lane',
+        'lane_type',
         'sign_material',
+        'type_of_damage',
+        'urgency_of_repair',
+        'lifespan_left',
+        'terrain_coordinates_x',
+        'terrain_coordinates_y',
+        'suggest_box',
         'old_traffic_code',
         'counter'
       ];
@@ -343,6 +378,14 @@
       '      </div>' +
       '        <label class="' + property.publicId + '-checkbox-label">' + property.localizedName + '</label>' +
       '    </div>';
+    };
+
+    var renderSuggestBoxElement = function(asset, state) {
+      return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
+          '<label class="control-label">' + asset.localizedName + '</label>' +
+          '<p class="form-control-static">Kylla</p>' +
+          '<input type="checkbox" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + '"' + state + '>' +
+          '</div>';
     };
 
     var singleChoiceSubType = function (collection, mainType, property) {

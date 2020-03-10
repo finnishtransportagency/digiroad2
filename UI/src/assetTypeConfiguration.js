@@ -1083,6 +1083,13 @@
           {'name': "Merkin materiaali", 'propertyType': 'single_choice', 'publicId': "sign_material", values: [{ propertyValue: 999 }]},
           {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
           {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] },
+          {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "lane_type", values: [{ propertyValue: 999 }] },
+          {'name': "Vauriotyyppi", 'propertyType': 'single_choice', 'publicId': "type_of_damage", values: [{ propertyValue: 999 }] },
+          {'name': "Korjauksen kiireellisyys", 'propertyType': 'single_choice', 'publicId': "urgency_of_repair", values: [{ propertyValue: 999 }] },
+          {'name': "Arvioitu käyttöikä", 'propertyType': 'number', 'publicId': "lifespan_left", values: [] },
+          {'name': "Kunnan ID", 'propertyType': 'text', 'publicId': "municipality_id", values: [] },
+          {'name': "Maastokoordinaatti X", 'propertyType': 'text', 'publicId': "terrain_coordinates_x", values: [] },
+          {'name': "Maastokoordinaatti Y", 'propertyType': 'text', 'publicId': "terrain_coordinates_y", values: [] },
           {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue:
                 {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 999, coating_type: 999, additional_panel_color: 999 }},
           {'name': "Lisää vanhan lain mukainen koodi", 'propertyType': 'checkbox', 'publicId': "old_traffic_code", values: [ {propertyValue: 0} ]},
