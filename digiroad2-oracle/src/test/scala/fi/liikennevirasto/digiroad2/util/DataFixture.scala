@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
@@ -2306,6 +2307,56 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def fillNewRoadLinksWithPreviousInfo(): Unit = {
+    println("\nStart process to fill new road links with previous data, only for change type 12")
+    println(DateTime.now())
+    println("\n")
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println("\nWorking at Municipailty: " + municipality)
+        val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
+        val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
+        val changesToTreat = changes.filter(c => c.changeType == New.value && c.newId.nonEmpty && filteredRoadLinks.exists(_.linkId == c.newId.get))
+        val roadLinksToTreat = filteredRoadLinks.filter(r => changesToTreat.exists(_.newId.get == r.linkId)).map(_.linkId).toSet
+        val speedLimitsAlreadyExistents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(roadLinksToTreat))
+
+        val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
+        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated.size)
+
+        changesWithoutSpeedLimitCreated.foreach { cws =>
+          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false).map(_.linkId).toSet
+          if (adjacents.size >= 2) {
+            val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
+            if (speedLimitsOnAdjacents.size >= 2) {
+              val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
+
+              //Create new SpeedLimits on gaps
+              speedLimitsToCreate.foreach { sl =>
+                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+                println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
+
+                //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
+                speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
+                println("Removed linkId " + sl.linkId + " from UnknownSpeedLimits working list")
+              }
+            }
+          }
+        }
+      }
+
+      println("\n")
+      println("Complete at time: ")
+      println(DateTime.now())
+      println("\n")
+    }
+  }
+
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
     "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
@@ -2461,6 +2512,8 @@ object DataFixture {
         mergeMunicipalities()
       case Some("transform_lorry_parking_into_datex2") =>
         transformLorryParkingIntoDatex2()
+      case Some("fill_new_roadLinks_info") =>
+        fillNewRoadLinksWithPreviousInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2474,7 +2527,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2")
+        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info")
     }
   }
 }
