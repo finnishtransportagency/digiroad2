@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
@@ -2299,29 +2300,33 @@ object DataFixture {
       municipalities.foreach { municipality =>
         println("\nWorking at Municipailty: " + municipality)
         val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
-
+        println("\nTerminou de apanhar os roadlinks e as cahnges da municipailty")
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
+        println("\nFiltrou os roadlinks só ficando com os isCarRoadOrCyclePedestrianPath")
+        val changesToTreat = changes.filter(c => c.changeType == New.value && filteredRoadLinks.exists(_.linkId == c.newId.getOrElse(0)))
+        println("\nFicou com " + changesToTreat.size + " changes para tratar")
+        val speedLimitsAlreadyExistents = changesToTreat.flatMap { ctt =>
+          speedLimitService.getExistingAssetByRoadLink(filteredRoadLinks.find(_.linkId == ctt.newId.getOrElse(0)).get, false)
+        }
+        val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
+        println("\nExclui as changes já tratadas")
 
-        val speedLimits =
-          filteredRoadLinks.flatMap { r =>
-            speedLimitService.getExistingAssetByRoadLink(r, false)
-          }
-
-        val newSpeedLimits = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimits, changes).groupBy(_.linkId)
-
-        newSpeedLimits.foreach { case (speedLimitLinkId, speedLimitsToCreate) =>
-          val speedLimitRoadLink = filteredRoadLinks.find(_.linkId == speedLimitLinkId).get
+        changesWithoutSpeedLimitCreated.foreach{ cws =>
+          val adjacents = roadLinkService.getAdjacent(cws.newId.getOrElse(0L), false).map(_.linkId).toSet
+          println("\nApanha os adjacentes dos rodalinks a criar")
+          val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
+          println("\nVe se tem speedLimitsOnAdjacents nos adjacentes ")
+          val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
+          println("\nRetornou os novos speedLimits a criar")
 
           //Create new SpeedLimits on gaps
           speedLimitsToCreate.foreach { sl =>
-//            speedLimitDao.createSpeedLimit(sl.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), sl.linkId, Measures(sl.startMeasure, sl.endMeasure),
-//              sl.sideCode, sl.value.get.value, Some(sl.vvhTimeStamp), sl.createdDateTime, sl.modifiedBy,
-//              sl.modifiedDateTime, sl.linkSource)
+//            speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
             println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
 
             //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-//            speedLimitDao.purgeFromUnknownSpeedLimits(speedLimitLinkId, GeometryUtils.geometryLength(speedLimitRoadLink.geometry))
-            println("Removed linkId " + speedLimitLinkId + "UnknownSpeedLimits from working list")
+//            speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
+            println("Removed linkId " + sl.linkId + "UnknownSpeedLimits from working list")
             println("\n")
           }
         }
