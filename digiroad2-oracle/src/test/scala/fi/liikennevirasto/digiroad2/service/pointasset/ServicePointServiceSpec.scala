@@ -34,7 +34,7 @@ class ServicePointServiceSpec extends FunSuite with Matchers {
       val asset = assets.head
       val services = asset.services
       val firstService =  services.head
-      val secondService =  services.tail.head
+      val secondService =  services.last
 
       asset.id should be(id)
       asset.lon should be(374128)
