@@ -47,15 +47,15 @@ $(function() {
     var assetType = $('#asset-selection').find(":selected").val();
     function uploadFile() {
       backend.uploadFile(formData, assetType,
-        function() {
+        function(data) {
           spinnerOff();
-          getJobs();
+          addNewRow(data);
         },
         function(xhr) {
           spinnerOff();
           if(xhr.status === 403)
             alert("Vain operaattori voi suorittaa Excel-ajon");
-          getJobs();
+          addNewRow(xhr.responseText);
         });
     }
     if ($('#deleteCheckbox').is(':checked')) {
@@ -109,32 +109,64 @@ $(function() {
       }));
     });
   }
-
+  
   function getJobs() {
-     backend.getJobs().then(function(jobs){
-      if(!_.isEmpty(jobs)) {
+    backend.getJobs().then(function(jobs){
+      if(!_.isEmpty(jobs))
         $('.job-status').empty().html(buildJobTable(jobs));
-        rootElement.find('.job-status-link').on('click', function (event) {
-          getJob(event);
+
+      _.forEach(jobs, function(job) {
+        rootElement.find('.job-status-link#'+job.id).on('click', function (event) {
+        getJob(event);
         });
-        if(!refresh)
-          refresh = setInterval(refreshJobs, 30000);
-      }
+      });
+      scrollbarResize();
+      refresh = setInterval(refreshJobs, 3000);
     });
   }
-
+  
+  function addNewRow(job) {
+    if (!_.isEmpty(job)) {
+      var newRow = jobRow(job);
+      var table = $(".job-status-table tbody tr:first");
+      
+      if(_.isEmpty(table))
+        $('.job-status').empty().html(buildJobTable([job]));
+      else
+        table.before(newRow);
+      
+      if(!refresh)
+        refresh = setInterval(refreshJobs, 3000);
+      scrollbarResize();
+    }
+  }
+  
+  function replaceRow(job) {
+    if (!_.isEmpty(job)) {
+      var newRow = jobRow(job);
+      $("#"+job.id).replaceWith(newRow);
+      rootElement.find('.job-status-link').on('click', function (event) {
+        getJob(event);
+      });
+    }
+  }
+  
   var refreshJobs = function() {
     var jobsInProgress = $('.in-progress').map(function(){
       return $(this).attr('id');
     });
-    if(!_.isEmpty(jobsInProgress)){
+    
+    if(!_.isEmpty(jobsInProgress)) {
       backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
-        if(_.some(jobs, function(job){return job.status !== 1;}))
-          getJobs();
+        var endedJobs = _.filter(jobs, function(job){return job.status !== 1;});
+        _.map(endedJobs, replaceRow);
       });
+    } else {
+      clearInterval(refresh);
+      refresh = null;
     }
   };
-
+    
   function getJob(evt){
     var id = $(evt.currentTarget).prop('id');
     backend.getJob(id).then(function(job){
@@ -167,8 +199,9 @@ $(function() {
     };
 
     var tableHeaderRow = function () {
-      return '<thead><th id="date" class="date">Päivämäärä</th> <th id="file" class="file"">Tiedosto</th> <th id="status" class="status">Tila</th> <th id="detail" class="detail">Raportti</th></tr></thead>';
+      return '<thead><th id="date" class="date">Päivämäärä</th><th class="jobName">Tietolajityyppi</th><th id="file" class="file"">Tiedosto</th> <th id="status" class="status">Tila</th> <th id="detail" class="detail">Raportti</th></tr></thead>';
     };
+    
     var tableBodyRows = function (jobs) {
       return $('<tbody>').append(tableContentRows(jobs));
     };
@@ -177,29 +210,46 @@ $(function() {
         return jobRow(job).concat('');
       });
     };
-    var jobRow = function (job) {
-      return '' +
-        '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
+    return table(jobs);
+  };
+  
+  var jobNameConvert =
+    { 'import_roadLinks': 'Täydentävät tielinkit',
+      'import_trafficSigns': 'Liikennemerkit',
+      'import_maintenanceRoads': 'Rautateiden huoltotie',
+      'import_massTransitStop': 'Joukkoliikennepysäkit',
+      'import_obstacles': 'Esterakennelma',
+      'import_trafficLights': 'Liikennevalot',
+      'import_railwayCrossings': 'Tasoristeys',
+      'import_pedestrianCrossings': 'Suojatie',
+      'import_servicePoints': 'Palvelupiste'
+    };
+  
+  var jobRow = function (job) {
+    return '' +
+      '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
         '<td headers="date" class="date">' + job.createdDate + '</td>' +
+        '<td headers="jobName" class="jobName">' + (_.isUndefined(jobNameConvert[job.jobName]) ? "" : jobNameConvert[job.jobName]) + '</td>' +
         '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
         '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
         '<td headers="detail" class="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
-
-        '</tr>';
-    };
-    return table(jobs);
+      '</tr>';
   };
 
+  var scrollbarResize = function () {
+    if ( $('.job-status tbody tr').length >= 5)
+      $('.job-status thead').css("width", "calc(100% - 17px)");
+  };
 });
 
 var getStatusIcon = function(status, description) {
   var icon = {
-               1: "images/csv-status-icons/clock-outline.png",
-               2: "images/csv-status-icons/check-icon.png",
-               3: "images/csv-status-icons/not-ok-check-icon.png",
-               4: "images/csv-status-icons/error-icon-small.png",
-               99: "images/csv-status-icons/unknown-error.png"
-             };
+    1: "images/csv-status-icons/clock-outline.png",
+    2: "images/csv-status-icons/check-icon.png",
+    3: "images/csv-status-icons/not-ok-check-icon.png",
+    4: "images/csv-status-icons/error-icon-small.png",
+    99: "images/csv-status-icons/unknown-error.png"
+  };
   return '<img src="' + icon[status] + '" title="' + description + '"/>';
 };
 

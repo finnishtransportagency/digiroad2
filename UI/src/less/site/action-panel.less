@@ -397,6 +397,21 @@
   }
 }
 
+.parking-prohibition-legend {
+
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+    .parking-prohibition-1  { .linear-asset-color(@gray); }
+    .parking-prohibition-2  { .linear-asset-color(@linear-asset-4); }
+    .parking-prohibition-3  { .linear-asset-color(@parking-prohibition-3); }
+  }
+}
+
 .carrying-capacity-legend {
 
   .frost-heaving-factor-legend {
@@ -743,38 +758,58 @@
 
 .service-points {
   .panel-legend {
-    width: 185px;
+    padding-right: 1px;
+    padding-left: 7px;
     display: inline-block;
 
     .label {
       > span {
-        width: 140px;
+        width: 75%;
         display: inline-block;
       }
 
       > img {
-        position: absolute;
+        position: unset;
         right: 10px;
         left: unset;
         width: auto;
+        float: right;
+      }
+    }
+
+    .border-crossing {
+      &:extend(.label);
+      > span {
+        width: 40%;
       }
     }
 
     .loading-terminal {
       &:extend(.label);
       > span {
-        width: 111px;
+        width: 40%;
       }
 
       > img {
-        margin-top: 10px
+        margin-top: 10px;
       }
     }
 
     .parking-area {
       &:extend(.label);
+      > span {
+        width: 60%;
+      }
+
       > img {
-        margin-top: 10px
+        margin-top: 10px;
+      }
+    }
+
+    .charging-point {
+      &:extend(.label);
+      > span {
+        width: 65%;
       }
     }
   }

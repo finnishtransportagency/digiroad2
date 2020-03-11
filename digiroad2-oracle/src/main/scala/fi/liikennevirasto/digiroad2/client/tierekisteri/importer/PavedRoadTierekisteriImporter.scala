@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddress => ViiteRoadAddress}
 import fi.liikennevirasto.digiroad2.dao.Queries.insertSingleChoiceProperty
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.linearasset.{LinearAssetTypes, Measures}
+import fi.liikennevirasto.digiroad2.service.linearasset.Measures
 import org.apache.http.impl.client.HttpClientBuilder
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
@@ -33,7 +33,6 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value), informationSource = Some(RoadRegistry.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
       insertSingleChoiceProperty(assetId, Queries.getPropertyIdByPublicId(pavementClassPropertyId), trAssetData.pavementClass.value.toLong).execute
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }

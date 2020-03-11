@@ -33,6 +33,11 @@ object TrafficSignManager {
   def belongsToHazmat(intValue: Int) : Boolean = {
     hazmatRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
   }
+
+  val parkingRelatedSigns : Seq[TrafficSignType] = Seq(StandingAndParkingProhibited, ParkingProhibited)
+  def belongsToParking(intValue: Int) : Boolean = {
+    parkingRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
 }
 
 case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkService: RoadLinkService) {
@@ -57,32 +62,43 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
   }
 
   def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
+    trafficSignInfo match {
+      case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
+        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
 
-      if (TrafficSignManager.belongsToManoeuvre(trafficSignInfo.signType))
-        manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction)
+      case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, Prohibition)
 
-      else if (TrafficSignManager.belongsToProhibition(trafficSignInfo.signType))
-        insertTrafficSignToProcess(trafficSignInfo.id, Prohibition)
+      case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
 
-      else if (TrafficSignManager.belongsToHazmat(trafficSignInfo.signType))
-        insertTrafficSignToProcess(trafficSignInfo.id, HazmatTransportProhibition)
+      case trSign if TrafficSignManager.belongsToParking(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, ParkingProhibition)
+
+      case _ => None
+    }
   }
 
   def deleteAssets(trafficSign: Seq[PersistedTrafficSign], newTransaction: Boolean = true): Unit = {
     val username = Some("automatic_trafficSign_deleted")
 
     trafficSign.foreach { trSign =>
-      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[TextPropertyValue]).head.propertyValue.toInt
+      val trafficSignType = trSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.map(_.asInstanceOf[PropertyValue]).head.propertyValue.toInt
+      trafficSignType match {
+        case signType if TrafficSignManager.belongsToManoeuvre(signType) =>
+          manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username, newTransaction)
 
-      if (TrafficSignManager.belongsToManoeuvre(trafficSignType))
-        manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username, newTransaction)
+        case signType if TrafficSignManager.belongsToProhibition(signType) =>
+          insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
 
-       else if (TrafficSignManager.belongsToProhibition(trafficSignType))
-        insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
+        case signType if TrafficSignManager.belongsToHazmat(signType) =>
+          insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
 
-      else if(TrafficSignManager.belongsToHazmat(trafficSignType))
-        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
+        case signType if TrafficSignManager.belongsToParking(signType) =>
+          insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign))
 
+        case _ => None
+      }
     }
   }
 

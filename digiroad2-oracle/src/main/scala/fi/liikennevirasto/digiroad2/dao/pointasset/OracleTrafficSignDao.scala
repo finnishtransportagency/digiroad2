@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -19,7 +22,7 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 mValue: Double, floating: Boolean,
                                 vvhTimeStamp: Long,
                                 municipalityCode: Int,
-                                propertyData: Seq[TrafficSignProperty],
+                                propertyData: Seq[Property],
                                 createdBy: Option[String] = None,
                                 createdAt: Option[DateTime] = None,
                                 modifiedBy: Option[String] = None,
@@ -50,8 +53,8 @@ object OracleTrafficSignDao {
 
   private def query() =
     """
-        select a.id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
-               p.id, p.public_id, p.property_type, p.required, ev.value,
+        select a.id as asset_id, lp.link_id, a.geometry, lp.start_measure, a.floating, lp.adjusted_timestamp,a.municipality_code,
+               p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
                case
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
@@ -62,9 +65,10 @@ object OracleTrafficSignDao {
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
         join property p on a.asset_type_id = p.asset_type_id
+        left join multiple_choice_value mcv on mcv.asset_id = a.id and mcv.property_id = p.id and p.property_type = 'checkbox'
         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
         left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id and p.property_type = 'text'
-        left join enumerated_value ev on scv.enumerated_value_id = ev.id
+        left join enumerated_value ev on scv.enumerated_value_id = ev.id or mcv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
       """
 
@@ -76,6 +80,23 @@ object OracleTrafficSignDao {
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PersistedTrafficSign] = {
     val queryWithFilter = queryFilter(query())
     queryToPersistedTrafficSign(queryWithFilter)
+  }
+
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +
+        s"property_type, required, value, display_value, created_by, created_date, modified_by, modified_date, link_source, " +
+        s"bearing, side_code, additional_sign_type, additional_sign_value, additional_sign_info, form_position, expired" +
+        s" from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+
+    queryToPersistedTrafficSign(recordLimit)
   }
 
   def fetchByRadius(position : Point, meters: Int): Seq[PersistedTrafficSign] = {
@@ -132,7 +153,7 @@ object OracleTrafficSignDao {
   private def groupTrafficSign(rows: Seq[TrafficSignRow]): Seq[PersistedTrafficSign] = {
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
-      val properties: Seq[TrafficSignProperty] = assetRowToProperty(signRows)
+      val properties: Seq[Property] = assetRowToProperty(signRows)
 
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
@@ -144,6 +165,17 @@ object OracleTrafficSignDao {
   private def queryToPersistedTrafficSign(query: String): Seq[PersistedTrafficSign] = {
     val rows = StaticQuery.queryNA[TrafficSignRow](query)(getTrafficSignRow).iterator.toSeq
     groupTrafficSign(rows)
+  }
+
+  private def createOrUpdateTrafficSign(trafficSign: IncomingTrafficSign, id: Long): Unit ={
+    trafficSign.propertyData.map(propertyWithTypeAndId(TrafficSigns.typeId)).foreach { propertyWithTypeAndId =>
+      val propertyType = propertyWithTypeAndId._1
+      val propertyPublicId = propertyWithTypeAndId._3.publicId
+      val propertyId = propertyWithTypeAndId._2.get
+      val propertyValues = propertyWithTypeAndId._3.values
+
+      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
+    }
   }
 
   implicit val getTrafficSignRow = new GetResult[TrafficSignRow] {
@@ -161,7 +193,7 @@ object OracleTrafficSignDao {
       val propertyRequired = r.nextBoolean
       val propertyValue = r.nextLongOption()
       val propertyDisplayValue = r.nextStringOption()
-      val property = new PropertyRow(
+      val property = PropertyRow(
         propertyId = propertyId,
         publicId = propertyPublicId,
         propertyType = propertyType,
@@ -207,14 +239,8 @@ object OracleTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
+    createOrUpdateTrafficSign(trafficSign, id)
 
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
     id
   }
 
@@ -236,14 +262,8 @@ object OracleTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
+    createOrUpdateTrafficSign(trafficSign, id)
 
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
     id
   }
 
@@ -265,14 +285,8 @@ object OracleTrafficSignDao {
     """.execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
+    createOrUpdateTrafficSign(trafficSign, id)
 
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
     id
   }
 
@@ -282,14 +296,7 @@ object OracleTrafficSignDao {
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
-    trafficSign.propertyData.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
-      val propertyType = propertyWithTypeAndId._1
-      val propertyPublicId = propertyWithTypeAndId._3.publicId
-      val propertyId = propertyWithTypeAndId._2.get
-      val propertyValues = propertyWithTypeAndId._3.values
-
-      createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
-    }
+    createOrUpdateTrafficSign(trafficSign, id)
 
     adjustedTimeStampOption match {
       case Some(adjustedTimeStamp) =>
@@ -351,10 +358,10 @@ object OracleTrafficSignDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("trafficSigns_info").first
   }
 
-  def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[TrafficSignProperty] = {
+  def assetRowToProperty(assetRows: Seq[TrafficSignRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
-      TrafficSignProperty(
+      Property(
         id = key,
         publicId = row.property.publicId,
         propertyType = row.property.propertyType,
@@ -366,14 +373,14 @@ object OracleTrafficSignDao {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
                 case _ => Seq()
               }
-            case _ => Seq(TextPropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+            case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
           }
-        }.toSeq)
+        })
     }.toSeq
   }
 
-  private def propertyWithTypeAndId(property: SimpleTrafficSignProperty): Tuple3[String, Option[Long], SimpleTrafficSignProperty] = {
-    val propertyId = StaticQuery.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+  private def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
+    val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 
@@ -385,29 +392,40 @@ object OracleTrafficSignDao {
     StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
+  private def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
+    StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
-      case Text | LongText =>
+      case Text =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[TextPropertyValue].propertyValue.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case AdditionalPanelType =>
         if (propertyValues.size > 3) throw new IllegalArgumentException("A maximum of 3 " + propertyPublicId + " allowed per traffic sign.")
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
           insertAdditionalPanelProperty(assetId, value.asInstanceOf[AdditionalPanel]).execute
+        }
+      case CheckBox =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
+        if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
+          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
+        } else {
+          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

@@ -27,6 +27,16 @@
       });
     };
 
+    this.getSuggestionStyle = function (yPosition) {
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: 'images/icons/questionMarkerIcon.png',
+          anchor : [0.5, yPosition],
+          anchorYUnits: "pixels"
+        }))
+      });
+    };
+    
     this.getPropertiesConfiguration = function (counter) {};
 
     this.getSignType = function (sign) {};
@@ -37,7 +47,7 @@
       });
     };
 
-    me.getLabelProperty = function (sign, counter) {
+    me.getLabelProperty = function (sign) {
 
       var labelProperty = me.getLabel(sign);
 
@@ -78,6 +88,10 @@
         return labelProperty && labelProperty.height ? labelProperty.height : 35;
       }
 
+      function getTextColor(){
+        return labelProperty && labelProperty.textColor ? labelProperty.textColor :  '#000000';
+      }
+
       return {
         findImage: findImage,
         getTextOffsetX: getTextOffsetX,
@@ -87,7 +101,8 @@
         getUnit : getUnit,
         getAdditionalInfo: getAdditionalInfo,
         getMaxLength: getMaxLength,
-        getHeight: getHeight
+        getHeight: getHeight,
+        getTextColor: getTextColor
       };
     };
 
@@ -102,7 +117,7 @@
     };
 
     me.addMeters = function() {
-      return ''.concat('m');
+      return ''.concat(' m');
     };
 
     me.convertToTons = function(){
@@ -118,7 +133,7 @@
         text: new ol.style.Text({
           text: me.textStyle(trafficSign),
           fill: new ol.style.Fill({
-            color: trafficSign.textColor ?  trafficSign.textColor : '#000000'
+            color: trafficSign.textColor ?  trafficSign.textColor : me.getLabelProperty(trafficSign).getTextColor()
           }),
           font: '12px sans-serif',
           offsetX: me.getLabelProperty(trafficSign).getTextOffsetX(),
@@ -127,14 +142,7 @@
       })];
     };
 
-    this.renderFeaturesByPointAssets = function(pointAssets, zoomLevel){
-      return me.renderGroupedFeatures(pointAssets, zoomLevel, function(asset){
-        return me.getCoordinate(asset);
-      });
-    };
-
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){ };
-
 
     this.createFeature = function(point){
       return new ol.Feature(new ol.geom.Point(point));

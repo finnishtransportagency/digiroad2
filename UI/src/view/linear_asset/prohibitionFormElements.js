@@ -2,7 +2,7 @@
   root.ProhibitionFormElements = function(prohibitionValues, exceptionValues) {
     return elements;
 
-    function elements(unit, editControlLabels, className) {
+    function elements(unit, editControlLabels, className, authorizationPolicy, selectedAsset) {
       var dayLabels = {
         Weekday: "Ma–Pe",
         Saturday: "La",
@@ -20,13 +20,16 @@
       }
 
       function singleValueElement(asset, sideCode) {
+        var prohibitions = _.isObject(asset) ? asset.prohibitions : asset;
+        var isSuggested = _.isObject(asset) ? asset.isSuggested : asset;
         return '' +
           '<div class="form-group editable ' + generateClassName(sideCode) + '">' +
           '<label class="asset-label">' + editControlLabels.title + '</label>' +
           sideCodeMarker(sideCode) +
-          assetDisplayElement(asset) +
-          assetEditElement(asset) +
-          '</div>';
+          assetDisplayElement(prohibitions) +
+          assetEditElement(prohibitions) +
+          '</div>' +
+          suggestionElement(isSuggested);
       }
 
       function assetDisplayElement(prohibitions) {
@@ -45,6 +48,19 @@
           items +
           newProhibitionElement() +
           '</ul>';
+      }
+
+      function suggestionElement(isSuggested, sideCode) {
+        if(authorizationPolicy.handleSuggestedAsset(selectedAsset)) {
+          var checkedValue = isSuggested ? 'checked' : '';
+          return ''+
+              '<div class="form-group editable ' +  className + ' suggestion">' +
+                  '<label class="control-label">Vihjetieto</label>' +
+                  '<p class="form-control-static"> kyllä </p>' +
+                  '<input type="checkbox" class="edit-control-group suggestionCheckBox"'  + checkedValue + '>' +
+              '</div>';
+        } else
+          return '';
       }
 
       function sideCodeMarker(sideCode) {
@@ -149,7 +165,6 @@
             });
             return items.join('');
           }
-
           return '' +
             '<div class="exception-group">' +
             exceptionLabel(prohibition) +
@@ -332,6 +347,22 @@
         };
         var removeValue = valueRemovers[sideCode] || selectedLinearAsset.removeValue;
 
+        function hideSuggestionCheckBox() {
+          if (!_.isNull(selectedLinearAsset.getId())) {
+            $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+            $(rootElement).find('.suggestion').hide();
+          }
+        }
+
+        $(rootElement).one('click','.prohibition-a, .prohibition-b, .hazardousMaterialTransportProhibition-a, .hazardousMaterialTransportProhibition-b', function () {
+          $(rootElement).find('.suggestionCheckBox').prop('checked', false);
+          valueSetters.b( {isSuggested: false, prohibitions: selectedLinearAsset.getBValue().prohibitions});
+          valueSetters.a( {isSuggested: false, prohibitions: selectedLinearAsset.getValue().prohibitions});
+        });
+
+        $(rootElement).one('change input','.prohibition, .hazardousMaterialTransportProhibition', hideSuggestionCheckBox);
+        $(rootElement).one('click','.btn-delete', hideSuggestionCheckBox);
+
         $(rootElement).on('change', inputElements, function () {
           setValue(extractValue(rootElement, className));
         });
@@ -374,7 +405,12 @@
             validityPeriods: [],
             additionalInfo: {}
           }));
-          $(rootElement).find('.form-group' + className + ' .edit-control-group').append(newProhibitionElement());
+          $(rootElement).find('.form-group' + className + ' ul.edit-control-group').append(newProhibitionElement());
+          setValue(extractValue(rootElement, className));
+        });
+
+        $(rootElement).on('change', className + ' .suggestionCheckBox', function () {
+          $(rootElement).find('.form-group' + className + ' .edit-control-group');
           setValue(extractValue(rootElement, className));
         });
 
@@ -400,8 +436,12 @@
       }
 
       function extractValue(rootElement, className) {
+        var suggestionBox =  $(rootElement).find('.suggestionCheckBox');
+        var suggestionValue = !_.isUndefined(suggestionBox) ?  suggestionBox.prop('checked') : false;
         var prohibitionElements = $(rootElement).find(className).find('.edit-control-group .existing-prohibition');
-        return _.map(prohibitionElements, extractExistingProhibition);
+        var prohibitionValue = _.map(prohibitionElements, extractExistingProhibition);
+
+        return _.isEmpty(prohibitionValue) ? undefined : {isSuggested: suggestionValue, prohibitions: prohibitionValue};
       }
 
       function extractExistingProhibition(element) {

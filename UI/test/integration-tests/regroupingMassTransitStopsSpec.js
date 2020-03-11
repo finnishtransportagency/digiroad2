@@ -9,7 +9,7 @@ define(['chai', 'eventbus', 'testHelpers', 'AssetsTestData'], function(chai, eve
     var testAsset2 = AssetsTestData.generateAsset({id: 2, nationalId: 2, lon: 374710.131074107, lat: 6677460.91654743, roadLinkId: 2148015});
     before(function(done) {
       var assetsData = [testAsset1, testAsset2];
-      var backend = testHelpers.fakeBackend(assetsData, testAsset2, 12);
+      var backend = testHelpers.fakeBackend(assetsData, testAsset2, 12, 10);
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         testHelpers.selectLayer('massTransitStop');

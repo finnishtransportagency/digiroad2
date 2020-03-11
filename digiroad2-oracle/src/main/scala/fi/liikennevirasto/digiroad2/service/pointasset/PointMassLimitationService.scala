@@ -22,7 +22,8 @@ case class WeightGroupLimitation(id: Long,
                                 modifiedBy: Option[String] = None,
                                 modifiedAt: Option[DateTime] = None,
                                 linkSource: LinkGeomSource,
-                                limit: Double) extends PersistedPointAsset
+                                limit: Double,
+                                propertyData: Seq[Property] = Seq()) extends PersistedPointAsset
 
 
 class PointMassLimitationService(roadLinkService: RoadLinkService, dao: OraclePointMassLimitationDao) {

@@ -56,7 +56,7 @@ class MassTransitStopDao {
           left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
-          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
       """
@@ -97,7 +97,7 @@ class MassTransitStopDao {
   }
 
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
-    val rows = Q.queryNA[MassTransitStopRow](query).iterator.toSeq
+    val rows = Q.queryNA[MassTransitStopRow](query)(getMassTransitStopRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
@@ -125,7 +125,7 @@ class MassTransitStopDao {
   }
 
   private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : MassTransitStopRow = {
       val id = r.nextLong
       val externalId = r.nextLong
       val assetTypeId = r.nextLong
@@ -239,31 +239,35 @@ class MassTransitStopDao {
     updateAssetModified(assetId, modifier).execute
   }
 
-  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimpleProperty]): Boolean = {
+  private def validPropertyUpdates(propertyWithType: Tuple3[String, Option[Long], SimplePointAssetProperty]): Boolean = {
     propertyWithType match {
       case (SingleChoice, _, property) => property.values.nonEmpty
       case _ => true
     }
   }
 
-  private def propertyWithTypeAndId(property: SimpleProperty): Tuple3[String, Option[Long], SimpleProperty] = {
+  private def propertyWithTypeAndId(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     }
     else {
-      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, MassTransitStopAsset.typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
       (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
     properties.map(propertyWithTypeAndId).filter(validPropertyUpdates).foreach { propertyWithTypeAndId =>
       if (AssetPropertyConfiguration.commonAssetProperties.get(propertyWithTypeAndId._3.publicId).isDefined) {
-        updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+        updateCommonAssetProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
       } else {
-        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
+        updateAssetSpecificProperty(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values.map(_.asInstanceOf[PropertyValue]))
       }
     }
+  }
+
+  def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
+    Q.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def updateAssetSpecificProperty(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
@@ -286,7 +290,7 @@ class MassTransitStopDao {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         }
       }
-      case MultipleChoice => {
+      case MultipleChoice | CheckBox => {
         createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
       }
       case ReadOnly | ReadOnlyNumber | ReadOnlyText => {
@@ -337,11 +341,10 @@ class MassTransitStopDao {
       case SingleChoice => {
         val newVal = propertyValues.head.propertyValue.toString
         AssetPropertyConfiguration.commonAssetPropertyEnumeratedValues.find { p =>
-          (p.publicId == propertyPublicId) && (p.values.map(_.propertyValue).contains(newVal))
+          (p.publicId == propertyPublicId) && p.values.map(_.asInstanceOf[PropertyValue].propertyValue).contains(newVal)
         } match {
-          case Some(propValues) => {
+          case Some(propValues) =>
             updateCommonProperty(assetId, property.column, newVal, property.lrmPositionProperty).execute
-          }
           case None => throw new IllegalArgumentException("Invalid property/value: " + propertyPublicId + "/" + newVal)
         }
       }
@@ -382,16 +385,16 @@ class MassTransitStopDao {
     }
   }
 
-  def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
-    implicit val getDefaultValue = new GetResult[SimpleProperty] {
+  def propertyDefaultValues(assetTypeId: Long): List[SimplePointAssetProperty] = {
+    implicit val getDefaultValue = new GetResult[SimplePointAssetProperty] {
       def apply(r: PositionedResult) = {
-        SimpleProperty(publicId = r.nextString, values = List(PropertyValue(r.nextString)))
+        SimplePointAssetProperty(publicId = r.nextString, values = List(PropertyValue(r.nextString)))
       }
     }
     sql"""
       select p.public_id, p.default_value from asset_type a
       join property p on p.asset_type_id = a.id
-      where a.id = $assetTypeId and p.default_value is not null""".as[SimpleProperty].list
+      where a.id = $assetTypeId and p.default_value is not null""".as[SimplePointAssetProperty].list
   }
 
   def getAssetAdministrationClass(assetId: Long): Option[AdministrativeClass] = {
@@ -445,6 +448,7 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset_Link Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Terminal_Bus_Stop_Link where terminal_asset_id = $assetId or bus_stop_asset_id = $assetId""".execute
+    sqlu"""Delete From Vallu_Xml_Ids where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
@@ -646,9 +650,11 @@ class MassTransitStopDao {
     Q.queryNA[(Long, Long)](queryFilter(query)).list
   }
 
-  def getMunicipalityNameByCode(code: Int): String = {
-    sql"""
-      select name_fi from municipality where id = $code
-    """.as[String].first
+  def insertValluXmlIds(assetId: Long): Unit = {
+    sqlu"""
+           insert into vallu_xml_ids(id, asset_id)
+           values (primary_key_seq.nextval, $assetId)
+      """.execute
   }
+
 }

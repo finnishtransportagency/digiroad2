@@ -2,16 +2,16 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, OracleDirectionalTrafficSignDao, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.dao.pointasset.{DirectionalTrafficSign, Obstacle, ObstacleShapefile, OracleDirectionalTrafficSignDao, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
 
-case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
-case class IncomingObstacleAsset(linkId: Long, mValue: Long, obstacleType: Int)  extends IncomePointAsset
+case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+
+case class IncomingObstacleAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty])  extends IncomePointAsset
 
 
 class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
@@ -19,11 +19,13 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   type PersistedAsset = Obstacle
 
   override def typeId: Int = 220
+  val typePublicId = "esterakennelma"
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilter(queryFilter)
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpired(queryFilter)
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[Obstacle] = OracleObstacleDao.fetchByFilterWithExpiredLimited(queryFilter, token)
 
-  override def setFloating(persistedAsset: Obstacle, floating: Boolean) = {
+  override def setFloating(persistedAsset: Obstacle, floating: Boolean) : Obstacle = {
     persistedAsset.copy(floating = floating)
   }
 
@@ -60,16 +62,19 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     }
   }
 
-  def checkDuplicates(incomingObstacle: IncomingObstacle): Option[Obstacle] = {
+  def getProperty(incomingObstacle: IncomingObstacle, property: String) : Option[PropertyValue] = {
+    incomingObstacle.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  }
+
+  def checkDuplicates(incomingObstacle: IncomingObstacle, withDynSession: Boolean = false): Option[Obstacle] = {
     val position = Point(incomingObstacle.lon, incomingObstacle.lat)
-    val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
+    val obstacleType = getProperty(incomingObstacle, typePublicId).get.propertyValue.toString
+    val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters), withDynSession).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
-        asset.obstacleType == incomingObstacle.obstacleType
+          obstacleType == getProperty(asset, typePublicId).get.propertyValue.toString
     )
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }
 
   def getLatestModifiedAsset(signs: Seq[Obstacle]): Obstacle = {
@@ -108,7 +113,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
-    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
+    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
     updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated", Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
 
@@ -121,7 +126,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, linkSource = persistedStop.linkSource)
 
   }
@@ -136,8 +141,12 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingObstacle] = {
      GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-       point =>  IncomingObstacle(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingObstacleAsset].obstacleType)
+       point =>  IncomingObstacle(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingObstacle].propertyData)
      }
+  }
+
+  def getObstaclesFromShapefileTable(): Seq[ObstacleShapefile] = {
+    OracleObstacleDao.getObstaclesFromShapefileTable
   }
 }
 

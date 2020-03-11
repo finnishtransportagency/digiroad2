@@ -5,12 +5,14 @@
     me.municipalities = [];
     me.areas = [];
     me.username = {};
+    me.fetched = false;
 
     eventbus.on('roles:fetched', function(userInfo) {
       me.username = userInfo.username;
       me.userRoles = userInfo.roles;
       me.municipalities = userInfo.municipalities;
       me.areas = userInfo.areas;
+      me.fetched = true;
     });
 
     this.isUser = function(role) {
@@ -26,7 +28,7 @@
     };
 
     this.isElyMaintainer = function(){
-      return me.isUser('busStopMaintainer');
+      return me.isUser('elyMaintainer');
     };
 
     this.isOperator = function(){
@@ -71,6 +73,10 @@
       return _.every(selectedAssets, function(selectedAsset){
         return me.formEditModeAccess(selectedAsset);
       });
+    };
+
+    this.handleSuggestedAsset = function(selectedAsset, suggestedBoxValue) {
+      return (selectedAsset.isNew() && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
 
   };

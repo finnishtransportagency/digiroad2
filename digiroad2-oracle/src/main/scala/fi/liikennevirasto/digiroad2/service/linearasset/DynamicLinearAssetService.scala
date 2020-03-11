@@ -21,10 +21,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   override def assetDao: OracleAssetDao = new OracleAssetDao
   def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   def inaccurateDAO: InaccurateAssetDAO = new InaccurateAssetDAO
-  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-
-  val roadName_FI = "osoite_suomeksi"
-  val roadName_SE = "osoite_ruotsiksi"
+  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) : Map[String, Map[String ,List[Long]]] = throw new UnsupportedOperationException("Not supported method")
 
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     if(newTransaction)
@@ -63,7 +60,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
           case Some(DynamicValue(multiTypeProps)) =>
             val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
             validateRequiredProperties(linearAsset.typeId, props)
-            dynamicLinearAssetDao.updateAssetProperties(id, props)
+            dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
           case _ => None
         }
       }
@@ -88,7 +85,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
               case Some(id) =>
                 val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, linearAsset.typeId)
                 validateRequiredProperties(linearAsset.typeId, props)
-                dynamicLinearAssetDao.updateAssetProperties(id, props)
+                dynamicLinearAssetDao.updateAssetProperties(id, props, linearAsset.typeId)
               case _ => None
             }
           case _ => None
@@ -103,10 +100,13 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
   }
 
   override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
+    if(newTransaction)
+      withDynTransaction {
       enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
-    }
+    } else
+      enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(typeId, linkIds))
   }
+
   override protected def fetchExistingAssetsByLinksIds(typeId: Int, roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
@@ -135,7 +135,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     Some(newAssetIdCreated)
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
+  override def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, measures: Option[Measures] = None, informationSource: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -177,14 +177,14 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
       case DynamicValue(multiTypeProps) =>
         val props = setDefaultAndFilterProperties(multiTypeProps, roadLink, typeId)
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
         dynamicLinearAssetDao.updateAssetLastModified(id, username)
       case _ => None
     }
     id
   }
 
-  override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+  override def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                                   createdByFromUpdate: Option[String] = Some(""),
                                                   createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
 
@@ -197,7 +197,7 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
         val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
         val props = properties ++ defaultValues.toSet
         validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props)
+        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
       case _ => None
     }
     id
@@ -308,9 +308,9 @@ class DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusIm
     * @param withAutoAdjust
     * @return Changed linear assets
     */
-  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, token: Option[String]): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
+      dynamicLinearAssetDao.getDynamicLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)

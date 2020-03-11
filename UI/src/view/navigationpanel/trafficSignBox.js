@@ -3,17 +3,6 @@
     PointAssetBox.call(this, assetConfig);
     var me = this;
 
-    this.elements = function (){
-      return { expanded: $([
-        me.panel(),
-        me.labeling(),
-        me.checkboxPanel(),
-        me.bindExternalEventHandlers(),
-        ' </div>',
-        '</div>']
-        .join(''))  };
-    };
-
     this.labeling = function () {
       return _(assetConfig.legendValues).map(function (val) {
         return '<div class="legend-entry">' +

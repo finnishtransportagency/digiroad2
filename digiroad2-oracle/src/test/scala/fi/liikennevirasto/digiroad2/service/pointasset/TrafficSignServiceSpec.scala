@@ -59,33 +59,33 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   val properties80 = Set(
-    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("1"))),
-    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("80"))),
-    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
+    SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("80"))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
   val properties90 = Set(
-    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("2"))),
-    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("90"))),
-    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Updated Additional Info for test"))))
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("2"))),
+    SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("90"))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Updated Additional Info for test"))))
 
   val properties60 = Set(
-    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("2"))),
-    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("60"))),
-    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("2"))),
+    SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("60"))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
   val simpleProperties10 = Set(
-    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("10"))),
-    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("10"))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
   val simpleProperties82 = Set(
-    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("82"))),
-    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("82"))),
+    SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
   val simpleProperties46 = Set(
-    SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("46"))),
-    SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-    SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+    SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("46"))),
+    SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+    SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
@@ -144,9 +144,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.mValue should be(2)
       asset.floating should be(false)
       asset.municipalityCode should be(235)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Additional Info for test")
       asset.createdBy should be(Some(testUser.username))
       asset.createdAt shouldBe defined
     }
@@ -163,9 +163,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       service.update(trafficSign.id, updated, roadLink, "unit_test")
       val updatedTrafficSign = service.getById(600073).get
 
-      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("2")
-      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("90")
-      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Updated Additional Info for test")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("2")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("90")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Updated Additional Info for test")
       updatedTrafficSign.id should equal(updatedTrafficSign.id)
       updatedTrafficSign.modifiedBy should equal(Some("unit_test"))
       updatedTrafficSign.modifiedAt shouldBe defined
@@ -194,9 +194,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
       updatedAsset.modifiedAt.isDefined should equal(true)
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("2")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("60")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Additional Info for test")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Additional Info for test")
     }
   }
 
@@ -218,9 +218,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       updatedAsset.lat should be (asset.lat)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("2")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("60")
-      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Additional Info for test")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("2")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("60")
+      updatedAsset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Additional Info for test")
     }
   }
 
@@ -228,8 +228,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     /*mock road link is set to (2,2), (4,4), so this asset is set to go towards digitizing*/
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("1"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
@@ -240,8 +240,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("100")
       asset.validityDirection should be (TowardsDigitizing.value)
       asset.bearing.get should be (45)
     }
@@ -251,8 +251,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
      /*mock road link is set to (2,2), (4,4), so this asset is set to go against digitizing*/
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.OTHvalue.toString))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(SpeedLimitSign.OTHvalue.toString))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 4), toRoadLink(closestLink), None, false)
@@ -263,8 +263,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("100")
       asset.validityDirection should be (AgainstDigitizing.value)
     }
   }
@@ -274,8 +274,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
 
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.OTHvalue.toString))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(SpeedLimitSign.OTHvalue.toString))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 2), r.geometry))
       val validityDirection = service.getValidityDirection(Point(3, 2), toRoadLink(closestLink), None, false)
@@ -286,8 +286,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("100")
       asset.validityDirection should be (TowardsDigitizing.value)
       asset.bearing.get should be (45)
     }
@@ -296,8 +296,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with direction against digitizing using coordinates with asset bearing") {
     /*asset bearing in this case indicates towards which direction the traffic sign is facing, not the flow of traffic*/
     val properties = Set(
-      SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(SpeedLimitSign.OTHvalue.toString))),
-      SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+      SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(SpeedLimitSign.OTHvalue.toString))),
+      SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
     val bearing = Some(225)
     val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
@@ -310,8 +310,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("100")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("100")
       asset.validityDirection should be(AgainstDigitizing.value)
     }
   }
@@ -319,8 +319,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("two-sided traffic signs are effective in both directions ") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(PedestrianCrossingSign.OTHvalue.toString))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("100"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(PedestrianCrossingSign.OTHvalue.toString))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("100"))))
 
       val bearing = Some(45)
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
@@ -332,7 +332,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("7")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("7")
       asset.validityDirection should be(BothDirections.value)
 
     }
@@ -341,8 +341,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Create traffic sign with additional information") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(FreeWidth.OTHvalue.toString))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Info Test"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(FreeWidth.OTHvalue.toString))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Info Test"))))
 
       val bearing = Some(225)
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(3, 4), r.geometry))
@@ -355,8 +355,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
       val asset = assets.head
       asset.id should be(id)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("45")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Info Test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("45")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Info Test")
       asset.validityDirection should be(AgainstDigitizing.value)
     }
   }
@@ -381,9 +381,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       asset.mValue should be(20)
       asset.floating should be(false)
       asset.municipalityCode should be(235)
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Additional Info for test")
       asset.createdBy should be(Some(testUser.username))
       asset.createdAt shouldBe defined
     }
@@ -394,8 +394,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val propertiesSpeedLimit = properties80
 
       val propertiesMaximumRestrictions= Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("8"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue("10"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("8"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("10"))))
 
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 50.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       service.create(IncomingTrafficSign(0.0, 20.0, 388553075, propertiesSpeedLimit, 1, None), testUser.username, roadLink)
@@ -406,9 +406,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assets.size should be(1)
 
       val asset = assets.head
-      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be ("Additional Info for test")
     }
   }
 
@@ -447,7 +447,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, simpleProperties10))
+      verify(mockEventBus, times(1)).publish("trafficSign:create",TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, roadLink))
     }
   }
 
@@ -468,7 +468,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val id = trService.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
       val asset = trService.getPersistedAssetsByIds(Set(id)).head
 
-      verify(mockEventBus, times(1)).publish("trafficSign:create", TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, asset.mValue, roadLink, simpleProperties10))
+      verify(mockEventBus, times(1)).publish("trafficSign:create", TrafficSignInfo(asset.id, asset.linkId, asset.validityDirection, NoLeftTurn.OTHvalue, roadLink))
 
       trService.expire(id, "test_user")
       verify(mockEventBus, times(1)).publish("trafficSign:expire", id)
@@ -486,9 +486,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val adjacentRoadLink = RoadLink(linkId2, Seq(Point(0.0, 20.0), Point(0.0, 40.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("7"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Pedestrian crossing for test purpose"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("7"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Pedestrian crossing for test purpose"))))
 
       service.create(IncomingTrafficSign(0.0, 20.0, linkId1, properties, BothDirections.value, None), testUser.username, roadLink)
       service.create(IncomingTrafficSign(0.0, 20.0, linkId1, properties, BothDirections.value, None), batchProcessName, roadLink)
@@ -510,30 +510,30 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val signGroupOnLinkId1 = assetsOnLinkId1_vd1.sortBy(_.lat).lift(1).head
 
-      signGroupOnLinkId1.propertyData.filter(_.id == 0).head.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt should be (2)
-      assetsOnLinkId2_vd1.head.propertyData.filter(_.id == 0).head.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt should be (2)
-      assetsOnLinkId2_vd2.head.propertyData.filter(_.id == 0).head.values.head.asInstanceOf[TextPropertyValue].propertyValue.toInt should be (1)
+      signGroupOnLinkId1.propertyData.filter(_.id == 0).head.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should be (2)
+      assetsOnLinkId2_vd1.head.propertyData.filter(_.id == 0).head.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should be (2)
+      assetsOnLinkId2_vd2.head.propertyData.filter(_.id == 0).head.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should be (1)
     }
   }
 
   test("Get Traffic Signs changes by type group") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("83"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("83"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
       val properties1 = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("84"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign MovingBridge type, part of Warning Signs"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("84"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Traffic Sign MovingBridge type, part of Warning Signs"))))
       val properties2 = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("85"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign ConstructionWork type, part of Warning Signs"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("85"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Traffic Sign ConstructionWork type, part of Warning Signs"))))
       val properties3 = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("24"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign Pedestrians type, part of Prohibitions And Restrictions Signs"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("24"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Traffic Sign Pedestrians type, part of Prohibitions And Restrictions Signs"))))
 
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075l), false)).thenReturn(
@@ -547,12 +547,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
           service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties2, 2, None), testUser.username, roadLink),
           service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties3, 2, None), testUser.username, roadLink))
 
-      val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      val changes = service.getChangedByType(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
       changes.length should be(3)
 
       service.expire(id)
 
-      val changesAfterExpire = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      val changesAfterExpire = service.getChangedByType(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
       changesAfterExpire.length should be(3)
     }
   }
@@ -560,9 +560,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Get only one Traffic Sign change"){
     runWithRollback{
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("83"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("83"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Traffic Sign TwoWayTraffic type, part of Warning Signs"))))
 
       val lrmPositionsIds = Queries.fetchLrmPositionIds(11)
 
@@ -577,7 +577,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 2, None), testUser.username, roadLink)
 
-      val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-12-31T12:00Z"))
+      val changes = service.getChangedByType(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-12-31T12:00Z"))
       changes.length should be(1)
     }
   }
@@ -598,19 +598,18 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id, modified_date, modified_by) values(2, 300153, 300144, timestamp '2016-12-17 20:01:13.000000', null)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075l), false)).thenReturn(
-        Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-      )
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
+      when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
 
-      val changes = service.getChanged(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
+      val changes = service.getChangedByType(service.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
       changes.length should be(0)
     }
   }
   test("Prevent the creations of duplicated signs") {
     runWithRollback {
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.OTHvalue.toString))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Original Traffic Sign!"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(NoPedestrians.OTHvalue.toString))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Original Traffic Sign!"))))
 
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(5, 4), r.geometry))
       val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
@@ -623,12 +622,12 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetsInRadius.size should be(1)
       val assetO = assetsInRadius.head
       assetO.id should be(originalTrafficSignId)
-      assetO.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("24")
-      assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("Original Traffic Sign!")
+      assetO.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be("24")
+      assetO.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be("Original Traffic Sign!")
 
       val properties2 = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue(NoPedestrians.OTHvalue.toString))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Non Duplicated Traffic Sign!"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(NoPedestrians.OTHvalue.toString))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Non Duplicated Traffic Sign!"))))
 
       val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, validityDirection, bearing)
 
@@ -637,15 +636,15 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       assetsInRadius2.size should be(1)
       val assetD = assetsInRadius2.head
       assetD.id should be(duplicatedTrafficSignId)
-      assetD.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("24")
-      assetD.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[TextPropertyValue].propertyValue should be("Non Duplicated Traffic Sign!")
+      assetD.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be("24")
+      assetD.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.asInstanceOf[PropertyValue].propertyValue should be("Non Duplicated Traffic Sign!")
     }
 
   }
 
   test("get by distance with same roadLink, trafficType and Direction") {
-      val speedLimitProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(SpeedLimitSign.OTHvalue.toString))))
-      val speedLimitZoneProp = Seq(TrafficSignProperty(0, "trafficSigns_type", "", false, Seq(TextPropertyValue(SpeedLimitZone.OTHvalue.toString))))
+      val speedLimitProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(SpeedLimitSign.OTHvalue.toString))))
+      val speedLimitZoneProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(SpeedLimitZone.OTHvalue.toString))))
 
       val trafficSigns = Seq(
         PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, speedLimitProp, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface),
@@ -673,7 +672,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     val groupType = TrafficSignTypeGroup.InformationSigns
     val assetsIncluded = TrafficSignType.apply(groupType)
 
-    assetsIncluded.toSeq.sorted should be (Seq(113, 114, 115, 116, 117, 118, 119))
+    assetsIncluded.toSeq.sorted should be(Seq(113, 114, 115, 116, 117, 118, 119, 152, 153, 154, 155, 156, 157, 158,
+      159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181,
+      182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193))
   }
 
   test("Get by municipality and group"){
@@ -686,9 +687,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, roadLink)
 
     val properties1 = Set(
-      SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("83"))),
-      SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-      SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+      SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("83"))),
+      SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+      SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
     val id1 = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties1, 1, None), testUser.username, roadLink)
 
@@ -725,9 +726,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val properties = simpleProperties82
 
       val additionalPanelProperties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("45"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("45"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
       val roadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
@@ -745,7 +746,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
-        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(Point(panel.lon, panel.lat)) ,Some(panel.id))
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection, Some(Point(panel.lon, panel.lat)) ,Some(panel.id))
       }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
@@ -764,9 +765,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val properties = simpleProperties82
 
       val additionalPanelProperties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("45"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("45"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
       val roadLink = RoadLink(1000, Seq(Point(10.0, 0.0), Point(13.0, 0.0)), 3, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val roadLink2 = RoadLink(2000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
@@ -784,7 +785,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel2, additionalPanel3)).map { panel =>
-        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
       }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
@@ -818,7 +819,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel2, additionalPanel3)).map { panel =>
-        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
       }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
@@ -850,7 +851,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
-        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
       }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
@@ -863,14 +864,14 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
 
       val properties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("1"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
       val additionalPanelProperties = Set(
-        SimpleTrafficSignProperty("trafficSigns_type", List(TextPropertyValue("139"))),
-        SimpleTrafficSignProperty("trafficSigns_value", List(TextPropertyValue(""))),
-        SimpleTrafficSignProperty("trafficSigns_info", List(TextPropertyValue("Additional Info for test"))))
+        SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("139"))),
+        SimplePointAssetProperty("trafficSigns_value", List(PropertyValue(""))),
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
 
       val roadLink = RoadLink(1000, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       val trafficSign = service.create(IncomingTrafficSign(5.0, 0.0, 1000, properties, SideCode.TowardsDigitizing.value, None), testUser.username, roadLink)
@@ -882,7 +883,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel)).map { panel =>
-        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
       }.toSet
 
       val result = service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq())
@@ -910,7 +911,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
       val sign = service.getPersistedAssetsByIds(Set(trafficSign)).head
 
       val additionalPanels = service.getPersistedAssetsByIds(Set(additionalPanel, additionalPanel2, additionalPanel3, additionalPanel4)).map { panel =>
-        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimpleTrafficSignProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
+        AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData.map(x => SimplePointAssetProperty(x.publicId, x.values)).toSet, panel.validityDirection,  Some(Point(panel.lon, panel.lat)), Some(panel.id))
       }.toSet
 
       val result = service.distinctPanels(service.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, 82, roadLink.geometry, additionalPanels, Seq()))

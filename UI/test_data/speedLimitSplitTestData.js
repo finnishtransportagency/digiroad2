@@ -4,7 +4,10 @@
       [{
         "id": 111,
         "linkId": 555,
-        "value": 40,
+        "value": {
+            "value": 40,
+            "isSuggested": false
+        },
         "sideCode": 1,
         "startMeasure": 0,
         "linkSource": 1,
@@ -22,7 +25,10 @@
       {
         "id": 112,
         "linkId": 666,
-        "value": 40,
+        "value": {
+            "value": 40,
+            "isSuggested": false
+        },
         "sideCode": 1,
         "startMeasure": 10,
         "linkSource": 1,
@@ -40,7 +46,10 @@
       {
         "id": 113,
         "linkId": 777,
-        "value": 40,
+        "value": {
+            "value": 40,
+            "isSuggested": false
+        },
         "sideCode": 1,
         "startMeasure": 0,
         "linkSource": 1,

@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
 import fi.liikennevirasto.digiroad2.client.tierekisteri.{StopType, TRRoadSide, TierekisteriMassTransitStop, TierekisteriMassTransitStopClient}
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassLimitationDao, MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -34,7 +34,20 @@ case class DirectionalTrafficSignFromApi(id: Long, linkId: Long, lon: Double, la
 case class MassLinearAssetFromApi(geometry: Seq[Point], sideCode: Int, value: Option[Value], administrativeClass: Int)
 
 class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object PointAssetSerializer extends CustomSerializer[PointAssetValue](format =>
+    ({
+      case jsonObj: JObject =>
+        val propertyValue = (jsonObj \ "propertyValue").extract[String]
+        val propertyDisplayValue = (jsonObj \ "propertyDisplayValue").extractOpt[String]
+        val checked = (jsonObj \ "checked").extract[Boolean]
+
+        PropertyValue(propertyValue, propertyDisplayValue, checked)
+    },
+      {
+        case _ => null
+      }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + PointAssetSerializer
   val TestPropertyId = "katos"
   val TestPropertyId2 = "pysakin_tyyppi"
   val CreatedTestAssetId = 300004
@@ -45,7 +58,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
-  val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1, None)
+  val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1)
   when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
     TierekisteriMassTransitStop(2, "2", roadAddress, TRRoadSide.Unknown, StopType.Combined,
       false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
@@ -157,7 +170,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testLinearTotalWeightLimitService = new LinearTotalWeightLimitService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService
   val testMaintenanceRoadServiceService = new MaintenanceService(mockRoadLinkService, new DummyEventBus)
-  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new MassLimitationDao, new DynamicLinearAssetDao)
+  val testLinearMassLimitationService = new LinearMassLimitationService(mockRoadLinkService, new DynamicLinearAssetDao)
   val testPavedRoadService = new PavedRoadService(mockRoadLinkService, new DummyEventBus)
   val testRoadWidthService = new RoadWidthService(mockRoadLinkService, new DummyEventBus)
   val testNumericValueService = new NumericValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
@@ -206,7 +219,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(13)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(14)
     }
   }
 
@@ -214,14 +227,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/startupParameters") {
       status should equal(200)
       val responseJson = parse(body)
-      (responseJson \ "zoom").values should equal(8)
-      (responseJson \ "lon").values should equal(373560)
-      (responseJson \ "lat").values should equal(6677676)
+      (responseJson \ "zoom").values should equal(3)
+      (responseJson \ "lon").values should equal(470092)
+      (responseJson \ "lat").values should equal(7504895)
     }
   }
 
   test("update operation requires authentication") {
-    val body = propertiesToJson(SimpleProperty(TestPropertyId2, Seq(PropertyValue("3"))))
+    val body = propertiesToJson(SimplePointAssetProperty(TestPropertyId2, Seq(PropertyValue("3"))))
     putJsonWithUserAuth("/assets/" + CreatedTestAssetId, body.getBytes, username = "nonexistent") {
       status should equal(401)
     }
@@ -231,8 +244,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 2, "bearing": 0}"""
-    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+    val requestPayload = """{"lon": 7478014, "lat": 483655, "linkId": 2, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes, username = "silari") {
       status should equal(400)
     }
   }
@@ -270,7 +283,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(47)
+      ps.size should equal(49)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
@@ -302,13 +315,13 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("updating speed limits requires an operator role") {
-    putJsonWithUserAuth("/speedlimits", """{"value":60, "ids":[200114]}""".getBytes, username = "test") {
+    putJsonWithUserAuth("/speedlimits", """{"value":{"isSuggested":false,"value":60}, "ids":[200114]}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
 
   test("creating speed limit requires an operator role") {
-    postJsonWithUserAuth("/speedlimits", """{"linkId":1611071, "startMeasure":0.0, "endMeasure":50.0, "value":40}""".getBytes, username = "test") {
+    postJsonWithUserAuth("/speedlimits", """{"linkId":1611071, "startMeasure":0.0, "endMeasure":50.0, "value":{"isSuggested":false,"value":40}}""".getBytes, username = "test") {
       status should equal(401)
     }
   }
@@ -377,7 +390,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  private[this] def propertiesToJson(prop: SimpleProperty): String = {
+  private[this] def propertiesToJson(prop: SimplePointAssetProperty): String = {
     val json = write(Seq(prop))
     s"""{"properties":$json}"""
   }

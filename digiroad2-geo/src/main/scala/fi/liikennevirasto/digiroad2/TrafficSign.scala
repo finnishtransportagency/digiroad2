@@ -61,7 +61,12 @@ object TrafficSignType {
     RegulationBeginsFromSign, RegulationEndsToTheSign, HazmatProhibitionA, HazmatProhibitionB, ValidMonFri, ValidSat, ValidMultiplePeriod, TimeLimit, DistanceCompulsoryStop, DirectionOfPriorityRoad,
     CrossingLogTransportRoad, PassengerCar, Bus, Lorry, Van, VehicleForHandicapped, MotorCycle, Cycle, ParkingAgainstFee, ObligatoryUseOfParkingDisc, AdditionalPanelWithText,
     DrivingInServicePurposesAllowed, NoThroughRoad, NoThroughRoadRight, SymbolOfMotorway, Parking, ItineraryForIndicatedVehicleCategory, ItineraryForPedestrians, ItineraryForHandicapped,
-    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies, HusvagnCaravan, Moped)
+    LocationSignForTouristService, FirstAid, FillingStation, Restaurant, PublicLavatory, DistanceFromSignToPointWhichSignApplies, DistanceWhichSignApplies,
+    AdvanceDirectionSign, AdvanceDirectionSignSmall, AdvisorySignDetour, AdvisorySignDetourLarge, Detour, RouteToBeFollowed, InformationOnTrafficLanes, BiDirectionalInformationOnTrafficLanes,
+    EndOfLane, AdvanceDirectionSignAbove, ExitSignAbove, DirectionSign, ExitSign, DirectionSignOnPrivateRoad, LocationSign, DirectionSignForLightTraffic, DirectionSignForDetourWithText, DirectionSignForDetour,
+    DirectionSignForLocalPurposes, DirectionSignForMotorway, ParkAndRideFacilities, RecommendedMaxSpeed, SignShowingDistance, PlaceName, RoadNumberERoad, DirectionToTheNumberedRoad, RoadNumberPrimaryRoad,
+    RoadNumberRegionalOrSecondaryRoad, RoadNumberOrdinaryRoad, RoadForMotorVehicles, Airport, Ferry, GoodsHarbour, IndustrialArea, RailwayStation, BusStation, ItineraryForDangerousGoodsTransport, OverpassOrUnderpassWithSteps,
+    EmergencyExit, DirectionToEmergencyExit, AdvanceDirectionSignAboveSmall, OverpassOrUnderpassWithoutSteps, HusvagnCaravan, Moped)
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
     values.find(_.OTHvalue == intValue).getOrElse(Unknown)
@@ -578,6 +583,8 @@ case object NoMotorSledges extends ProhibitionsAndRestrictionsType {
 case object NoVehiclesWithDangerGoods extends ProhibitionsAndRestrictionsType {
   override val OTHvalue = 20
   override val TRvalue = 318
+
+  override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(HazmatProhibitionA, HazmatProhibitionB)
 }
 
 case object NoBuses extends ProhibitionsAndRestrictionsType {
@@ -796,7 +803,7 @@ case object SymbolOfMotorway extends InformationSignsType {
   override val TRvalue = 671
 }
 
-case object Parking  extends InformationSignsType {
+case object Parking extends InformationSignsType {
   override val OTHvalue = 116
   override val TRvalue = 677
 }
@@ -816,6 +823,215 @@ case object ItineraryForHandicapped extends InformationSignsType {
   override val TRvalue = 683
 }
 
+case object AdvanceDirectionSignSmall extends InformationSignsType {
+  override val OTHvalue = 178
+  override val TRvalue = 612
+}
+
+case object AdvisorySignDetourLarge extends InformationSignsType {
+  override val OTHvalue = 152
+  override val TRvalue = 614
+}
+
+case object Detour extends InformationSignsType {
+  override val OTHvalue = 153
+  override val TRvalue = 615
+}
+
+case object RouteToBeFollowed extends InformationSignsType {
+  override val OTHvalue = 154
+  override val TRvalue = 616
+}
+
+case object InformationOnTrafficLanes extends InformationSignsType {
+  override val OTHvalue = 155
+  override val TRvalue = 621
+}
+
+case object BiDirectionalInformationOnTrafficLanes extends InformationSignsType {
+  override val OTHvalue = 156
+  override val TRvalue = 622
+}
+
+case object EndOfLane extends InformationSignsType {
+  override val OTHvalue = 157
+  override val TRvalue = 623
+}
+
+case object AdvanceDirectionSignAbove extends InformationSignsType {
+  override val OTHvalue = 158
+  override val TRvalue = 631
+}
+
+case object ExitSignAbove extends InformationSignsType {
+  override val OTHvalue = 159
+  override val TRvalue = 633
+}
+
+case object DirectionSign extends InformationSignsType {
+  override val OTHvalue = 160
+  override val TRvalue = 641
+}
+
+case object ExitSign extends InformationSignsType {
+  override val OTHvalue = 161
+  override val TRvalue = 642
+}
+
+case object DirectionSignOnPrivateRoad extends InformationSignsType {
+  override val OTHvalue = 162
+  override val TRvalue = 643
+}
+
+case object LocationSign extends InformationSignsType {
+  override val OTHvalue = 163
+  override val TRvalue = 644
+}
+
+case object DirectionSignForLightTraffic extends InformationSignsType {
+  override val OTHvalue = 164
+  override val TRvalue = 645
+}
+
+case object DirectionSignForDetourWithText extends InformationSignsType {
+  override val OTHvalue = 165
+  override val TRvalue = 646
+}
+
+case object DirectionSignForDetour extends InformationSignsType {
+  override val OTHvalue = 166
+  override val TRvalue = 647
+}
+
+case object DirectionSignForLocalPurposes extends InformationSignsType {
+  override val OTHvalue = 167
+  override val TRvalue = 648
+}
+
+case object DirectionSignForMotorway extends InformationSignsType {
+  override val OTHvalue = 168
+  override val TRvalue = 649
+}
+
+case object ParkAndRideFacilities extends InformationSignsType {
+  override val OTHvalue = 169
+  override val TRvalue = 650
+}
+
+case object RecommendedMaxSpeed extends InformationSignsType {
+  override val OTHvalue = 170
+  override val TRvalue = 653
+}
+
+case object SignShowingDistance extends InformationSignsType {
+  override val OTHvalue = 171
+  override val TRvalue = 661
+}
+
+case object PlaceName extends InformationSignsType {
+  override val OTHvalue = 172
+  override val TRvalue = 662
+}
+
+case object RoadNumberERoad extends InformationSignsType {
+  override val OTHvalue = 173
+  override val TRvalue = 663
+}
+
+case object DirectionToTheNumberedRoad extends InformationSignsType {
+  override val OTHvalue = 174
+  override val TRvalue = 667
+}
+
+case object RoadNumberPrimaryRoad extends InformationSignsType {
+  override val OTHvalue = 175
+  override val TRvalue = 664
+}
+
+case object RoadNumberRegionalOrSecondaryRoad extends InformationSignsType {
+  override val OTHvalue = 176
+  override val TRvalue = 665
+}
+
+case object RoadNumberOrdinaryRoad extends InformationSignsType {
+  override val OTHvalue = 177
+  override val TRvalue = 666
+}
+
+case object RoadForMotorVehicles extends InformationSignsType {
+  override val OTHvalue = 179
+  override val TRvalue = 672
+}
+
+case object Airport extends InformationSignsType {
+  override val OTHvalue = 180
+  override val TRvalue = 673
+}
+
+case object Ferry extends InformationSignsType {
+  override val OTHvalue = 181
+  override val TRvalue = 674
+}
+
+case object GoodsHarbour extends InformationSignsType {
+  override val OTHvalue = 182
+  override val TRvalue = 675
+}
+
+case object IndustrialArea extends InformationSignsType {
+  override val OTHvalue = 183
+  override val TRvalue = 676
+}
+
+case object RailwayStation extends InformationSignsType {
+  override val OTHvalue = 184
+  override val TRvalue = 678
+}
+
+case object BusStation extends InformationSignsType {
+  override val OTHvalue = 185
+  override val TRvalue = 679
+}
+
+case object ItineraryForDangerousGoodsTransport extends InformationSignsType {
+  override val OTHvalue = 186
+  override val TRvalue = 684
+}
+
+case object OverpassOrUnderpassWithSteps extends InformationSignsType {
+  override val OTHvalue = 187
+  override val TRvalue = 685
+}
+
+case object OverpassOrUnderpassWithoutSteps extends InformationSignsType {
+  override val OTHvalue = 188
+  override val TRvalue = 686
+}
+
+case object EmergencyExit extends InformationSignsType {
+  override val OTHvalue = 189
+  override val TRvalue = 690
+}
+
+case object DirectionToEmergencyExit extends InformationSignsType {
+  override val OTHvalue = 190
+  override val TRvalue = 691
+}
+
+case object AdvanceDirectionSignAboveSmall extends InformationSignsType {
+  override val OTHvalue = 191
+  override val TRvalue = 632
+}
+
+case object AdvanceDirectionSign extends InformationSignsType {
+  override val OTHvalue = 192
+  override val TRvalue = 611
+}
+
+case object AdvisorySignDetour extends InformationSignsType {
+  override val OTHvalue = 193
+  override val TRvalue = 613
+}
 
 trait ServiceSignsType extends TrafficSignType  {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.ServiceSigns
@@ -994,12 +1210,12 @@ case object DrivingInServicePurposesAllowed  extends AdditionalPanelsType {
   override val TRvalue = 872
 }
 
-case object DistanceFromSignToPointWhichSignApplies extends AdditionalPanelsType {
+case object DistanceWhichSignApplies extends AdditionalPanelsType {
   override val OTHvalue = 148
   override val TRvalue = 814
 }
 
-case object DistanceWhichSignApplies extends AdditionalPanelsType {
+case object DistanceFromSignToPointWhichSignApplies extends AdditionalPanelsType {
   override val OTHvalue = 149
   override val TRvalue = 815
 }

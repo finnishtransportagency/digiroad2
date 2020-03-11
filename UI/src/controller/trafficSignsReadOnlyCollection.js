@@ -18,6 +18,7 @@
       hazardousMaterialTransportProhibition: false,
       manoeuvre: false ,
       pedestrianCrossings: false,
+      parking: false,
       trafficSigns: false
     };
 
@@ -32,6 +33,7 @@
       lengthLimit: {values : [8]},
       widthLimit: {values : [30]},
       prohibition: {values: [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26]},
+      parkingProhibition: {values: [100, 101]},
       hazardousMaterialTransportProhibition: {values : [20]},
       manoeuvre: {values: [10, 11, 12]},
       pedestrianCrossings: { values: [7] },

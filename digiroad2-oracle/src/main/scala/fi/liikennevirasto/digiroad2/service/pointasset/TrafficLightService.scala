@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficLightDao, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -10,15 +10,15 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
-case class IncomingTrafficLightAsset(linkId: Long, mValue: Long) extends IncomePointAsset
+case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+case class IncomingTrafficLightAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
   type PersistedAsset = TrafficLight
 
   override def typeId: Int = 280
-
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[TrafficLight] = throw new UnsupportedOperationException("Not Supported Method")
   override def setAssetPosition(asset: IncomingTrafficLight, geometry: Seq[Point], mValue: Double): IncomingTrafficLight = {
     GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
       case Some(point) =>
@@ -62,9 +62,8 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     val position = Point(incomingTrafficLight.lon, incomingTrafficLight.lat)
     val signsInRadius = OracleTrafficLightDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
       .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
-    if(signsInRadius.nonEmpty)
-      return Some(getLatestModifiedAsset(signsInRadius))
-    None
+
+    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }
 
   def getLatestModifiedAsset(signs: Seq[TrafficLight]): TrafficLight = {
@@ -105,7 +104,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
-    val updated = IncomingTrafficLight(adjustment.lon, adjustment.lat, adjustment.linkId)
+    val updated = IncomingTrafficLight(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet)
     updateWithoutTransaction(adjustment.assetId, updated, roadLink, "vvh_generated",
                              Some(adjustment.mValue), Some(adjustment.vvhTimeStamp))
   }
@@ -119,17 +118,17 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) : Option[IncomingTrafficLight] = {
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
-      point =>  IncomingTrafficLight(point.x, point.y, link.linkId)
+      point =>  IncomingTrafficLight(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingTrafficLight].propertyData)
     }
   }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[TrafficLight] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

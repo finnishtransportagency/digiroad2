@@ -82,8 +82,15 @@
       return localizedLinkType && localizedLinkType[1];
     };
 
-    var getVerticalLevelType = function(verticalLevel){
-      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+    var getVerticalLevelType = function(verticalLevel) {
+      if (typeof verticalLevel === 'string') {
+        var multipleLevels = verticalLevel.includes(",");
+        if (multipleLevels) {
+          return "[useita eri arvoja]";
+        }
+      }
+
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel); });
       return verticalLevelType && verticalLevelType[1];
     };
 
@@ -105,6 +112,9 @@
     var checkIfMultiSelection = function(mmlId){
       if(selectedLinkProperty.count() === 1){
         return mmlId;
+      }
+      else{
+        return "[useita eri arvoja]";
       }
     };
 
@@ -196,25 +206,33 @@
             staticField('Osoitenumerot vasemmalla', 'addressNumbersLeft') +
             staticField('MML ID', 'mmlId') +
             staticField('Linkin tila', 'constructionType') +
-            '<div class="form-group editable private-road" style="display: none">' +
-              '<div class="form-group editable">' +
-                '<label class="control-label">Käyttöoikeustunnus</label>' +
-                '<p class="form-control-static"><%- accessRightID %></p>' +
-                '<input type="text" class="form-control access-right-id"  style="display: none" value="<%- accessRightID %>">' +
-              '</div>' +
-              '<div class="form-group editable">' +
-                '<label class="control-label">Tiekunnan nimi </label>' +
-                '<p class="form-control-static"><%- privateRoadAssociation %></p>' +
-                '<input type="text" class="form-control private-road-association" style="display: none" value="<%- privateRoadAssociation %>">' +
-                '</div>' +
-              '<label class="control-label">Lisätieto</label>' +
-              '<p class="form-control-static"><%- localizedAdditionalInfoIds %></p>' +
-              '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
-            '</div>' +
+	          privateRoadAssociationInfo() +
           '</div>' +
         '</div>', options);
     };
 
+    var privateRoadAssociationInfo = function() {
+    	return '' +
+		    '<div class="form-group editable private-road" style="display: none">' +
+		        '<div class="form-group editable">' +
+		          '<label class="control-label">Käyttöoikeustunnus</label>' +
+		          '<p class="form-control-static"><%- accessRightID %></p>' +
+		          '<input type="text" class="form-control access-right-id"  style="display: none" value="<%- accessRightID %>">' +
+		      '</div>' +
+		      '<div class="form-group editable">' +
+		          '<label class="control-label">Tiekunnan nimi </label>' +
+		          '<p class="form-control-static"><%- privateRoadAssociation %></p>' +
+		          '<input type="text" class="form-control private-road-association" style="display: none" value="<%- privateRoadAssociation %>">' +
+		      '</div>' +
+		      '<div class="form-group editable">' +
+		          '<label class="control-label">Lisätieto</label>' +
+		          '<p class="form-control-static"><%- localizedAdditionalInfoIds %></p>' +
+		          '<select class="form-control additional-info" style="display: none"><%= additionalInfoOptionTags %></select>' +
+		      '</div>' +
+		      '<p class="private-road-last-modification"> <%- privateRoadLastModifiedInfo %> </p>' +
+		    '</div>';
+    };
+    
     var footer = function() { return buttons;};
 
     var renderLinkToIncompleteLinks = function renderLinkToIncompleteLinks() {
@@ -226,8 +244,10 @@
       }
     };
 
-    var addressNumberString = function(minAddressNumber, maxAddressNumber) {
-      if(!minAddressNumber && !maxAddressNumber) {
+    var addressNumberString = function (minAddressNumber, maxAddressNumber) {
+      if (selectedLinkProperty.count() > 1) {
+        return "[useita eri arvoja]";
+      } else if (!minAddressNumber && !maxAddressNumber) {
         return '';
       } else {
         var min = minAddressNumber || '';
@@ -280,7 +300,8 @@
         mmlId : checkIfMultiSelection(linkProperty.mmlId) || '',
         accessRightID: linkProperty.accessRightID || '',
         privateRoadAssociation: linkProperty.privateRoadAssociation || '',
-        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99 // Ei toimitettu
+        additionalInfo: !isNaN(parseInt(linkProperty.additionalInfo)) ? parseInt(linkProperty.additionalInfo) : 99, // Ei toimitettu
+	      privateRoadLastModifiedInfo: _.isUndefined(linkProperty.privateRoadLastModifiedDate) ? '' : 'Muokattu viimeksi:' + linkProperty.privateRoadLastModifiedDate + '/' + linkProperty.privateRoadLastModifiedUser
       });
     };
 
