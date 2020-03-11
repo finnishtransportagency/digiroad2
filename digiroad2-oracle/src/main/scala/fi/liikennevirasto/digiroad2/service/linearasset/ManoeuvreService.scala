@@ -322,7 +322,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
   }
 
   private def insertInaccurateAsset(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean, exception: Exception ): Seq[Long] = {
-    if (fromTrafficSignGenerator )
+    if (!fromTrafficSignGenerator )
       throw exception
 
     inaccurateDAO.createInaccurateAsset(trafficSignInfo.id, Manoeuvres.typeId, trafficSignInfo.roadLink.municipalityCode, trafficSignInfo.roadLink.administrativeClass )
