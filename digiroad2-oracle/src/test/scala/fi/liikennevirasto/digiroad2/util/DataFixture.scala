@@ -2294,7 +2294,7 @@ object DataFixture {
     def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit]): Unit = {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
-        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get.value, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
