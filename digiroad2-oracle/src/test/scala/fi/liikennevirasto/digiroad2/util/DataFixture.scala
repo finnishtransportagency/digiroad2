@@ -2308,6 +2308,22 @@ object DataFixture {
   }
 
   def fillNewRoadLinksWithPreviousInfo(): Unit = {
+    def getAdjacentsRoadLinks(allAdjacentsRoadLinks: Seq[RoadLink], point: Point): Seq[RoadLink] = {
+      allAdjacentsRoadLinks.filter(r => GeometryUtils.areAdjacent(r.geometry, point))
+    }
+
+    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit]): Unit = {
+      //Create new SpeedLimits on gaps
+      newSpeedLimits.foreach { speedLimit =>
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+        println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value)
+
+        //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
+        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(speedLimit.geometry))
+        println("Removed linkId " + speedLimit.linkId + " from UnknownSpeedLimits working list")
+      }
+    }
+
     println("\nStart process to fill new road links with previous data, only for change type 12")
     println(DateTime.now())
     println("\n")
@@ -2327,24 +2343,55 @@ object DataFixture {
         val speedLimitsAlreadyExistents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(roadLinksToTreat))
 
         val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
-        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated.size)
+        println("Number of Changes to Treat: " + changesWithoutSpeedLimitCreated.size + "(RoadLinks without asset values in the adjacents are not treated)")
 
         changesWithoutSpeedLimitCreated.foreach { cws =>
-          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false).map(_.linkId).toSet
-          if (adjacents.size >= 2) {
-            val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
-            if (speedLimitsOnAdjacents.size >= 2) {
-              val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
+          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false)
+          val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents.map(_.linkId).toSet))
 
-              //Create new SpeedLimits on gaps
-              speedLimitsToCreate.foreach { sl =>
-                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
-                println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
+          filteredRoadLinks.find(_.linkId == cws.newId.get).foreach { changeRoadLink =>
+            val assetAndPoints: Seq[(Point, SpeedLimit)] = speedLimitService.getAssetsAndPoints(speedLimitsOnAdjacents, roadLinks, (cws, changeRoadLink))
 
-                //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-                speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
-                println("Removed linkId " + sl.linkId + " from UnknownSpeedLimits working list")
-              }
+            if (assetAndPoints.nonEmpty) {
+              println("Treating changes for the LinkId: " + cws.newId.get)
+              val (firstRoadLinkPoint, lastRoadLinkPoint) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
+
+              val assetAdjFirst = speedLimitService.getAdjacentAssetByPoint(assetAndPoints, firstRoadLinkPoint)
+              val assetAdjLast = speedLimitService.getAdjacentAssetByPoint(assetAndPoints, lastRoadLinkPoint)
+
+              val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
+              val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
+
+              val adjacentsToFirstPoint = getAdjacentsRoadLinks(adjacents, firstRoadLinkPoint)
+              val adjacentsToLastPoint = getAdjacentsRoadLinks(adjacents, lastRoadLinkPoint)
+
+              val speedLimitsToCreate =
+                if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
+                  groupBySideCodeFirst.keys.flatMap { sideCode =>
+                    groupBySideCodeFirst(sideCode).find { asset =>
+                      val lastAdjsWithFirstSideCode = groupBySideCodeLast.get(sideCode)
+                      lastAdjsWithFirstSideCode.isDefined && lastAdjsWithFirstSideCode.get.exists(_.value.equals(asset.value))
+                    }.map { asset =>
+                      asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+                    }
+                  }.toSeq
+                } else if (assetAdjFirst.isEmpty && adjacentsToFirstPoint.isEmpty && assetAdjLast.nonEmpty) {
+                  groupBySideCodeLast.flatMap { case (_, speedLimits) =>
+                    speedLimits.map { speedLimit =>
+                      speedLimit.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+                    }
+                  }.toSeq
+                } else if (assetAdjFirst.nonEmpty && adjacentsToLastPoint.isEmpty && assetAdjLast.isEmpty) {
+                  groupBySideCodeFirst.flatMap { case (_, speedLimits) =>
+                    speedLimits.map { speedLimit =>
+                      speedLimit.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+                    }
+                  }.toSeq
+                } else {
+                  Seq()
+                }
+
+              createNewSpeedLimits(speedLimitsToCreate)
             }
           }
         }
