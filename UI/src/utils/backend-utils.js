@@ -622,7 +622,7 @@
     };
 
     this.getGeocode = function(address) {
-      var addressNormalized = address.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      var addressNormalized = address.normalize("NFC");
       var parsedAddress = addressNormalized.split(/^(\s*\w.*)(\s)(\s*\d+\s*),(\s*\w.*)/)
         .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
         .map(function(elem) { return elem.trim(); });
