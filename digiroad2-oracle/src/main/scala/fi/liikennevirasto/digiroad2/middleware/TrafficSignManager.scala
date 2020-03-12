@@ -58,10 +58,11 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
 
-  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTrafficSignGenerator: Boolean = false): Unit = {
+
+  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTierekisteriGenerator: Boolean = false ): Unit = {
     trafficSignInfo match {
       case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
-        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction, fromTrafficSignGenerator)
+        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction, fromTierekisteriGenerator)
 
       case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
         insertTrafficSignToProcess(trSign.id, Prohibition)

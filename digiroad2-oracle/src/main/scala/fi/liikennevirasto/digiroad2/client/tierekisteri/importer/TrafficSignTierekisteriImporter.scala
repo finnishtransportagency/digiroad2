@@ -132,10 +132,16 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
           val newId =  OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
 
-          roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach{ roadLink =>
-            val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-            trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId,  trafficSign.validityDirection, signType, roadLink), newTransaction = false, fromTrafficSignGenerator = true)
+          val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
+
+          if (TrafficSignManager.belongsToManoeuvre(signType)) {
+            roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink))
+                            .foreach{ roadLink =>
+                                val trafficSignInfo = TrafficSignInfo(newId, roadLink.linkId,  trafficSign.validityDirection, signType, roadLink)
+                                manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction = false, fromTierekisteriGenerator = true)
+            }
           }
+
           newId
       }
     println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
@@ -222,12 +228,12 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
                 allowedAdditionalPanels
 
               //Remove additonal Panels with 'trafficSigns_type' with empty value
-              val additionalPanelsFiltered = allowedAdditionalPanels.filterNot{ panel =>
-                                            val prop = trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get
-                                            prop.propertyValue.toString.trim.isEmpty }
+              val additionalPanelsFiltered = allowedProperties.filterNot{ panel =>
+                                                                              val prop = trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get
+                                                                              prop.propertyValue.toString.trim.isEmpty }
 
               if ( trafficSignType.toString.trim.nonEmpty )
-                createPointAsset(ra, roadlink.get, mValue, trAssetData, additionalPanelsFiltered)
+                createPointAsset(ra, roadlink.get, mValue, trAssetData, additionalPanelsFiltered.toSet)
           }
         }
     }
