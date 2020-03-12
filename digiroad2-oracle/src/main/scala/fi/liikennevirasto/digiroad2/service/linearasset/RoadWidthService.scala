@@ -46,7 +46,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         valueAdjustments = Seq.empty[ValueAdjustment])
 
       val (projectedAssets, changedSetProjected) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-        assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
+        assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
       val (newRoadWidthAssets, changedSet) = getRoadWidthAssetChanges(existingAssets, projectedAssets, roadLinks, changes, newAssetIds =>
         withDynTransaction {

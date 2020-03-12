@@ -53,8 +53,8 @@ object OracleWeightLimitDao {
     StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("suurin_sallittu_massa_mittarajoitus").first
   }
 
-  implicit val getPointAsset = new GetResult[WeightLimit] {
-    def apply(r: PositionedResult) = {
+  implicit val getPointAsset: GetResult[WeightLimit] = new GetResult[WeightLimit] {
+    def apply(r: PositionedResult) : WeightLimit  = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get

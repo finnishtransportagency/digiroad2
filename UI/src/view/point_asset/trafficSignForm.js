@@ -45,26 +45,39 @@
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
-      var panelCheckbox =
-      '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
-      '      <div class="checkbox" >' +
-      '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
-      '      </div>' +
-      '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
-      '    </div>';
+      function getSidePlacement() {
+        return _.head(getProperties(asset.propertyData, "opposite_side_sign").values);
+      }
 
+      var panelCheckbox =
+          '    <div class="form-group editable edit-only form-traffic-sign-panel additional-panel-checkbox">' +
+          '      <div class="checkbox" >' +
+          '        <input id="additional-panel-checkbox" type="checkbox" ' + checked + '>' +
+          '      </div>' +
+          '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
+          '    </div>';
+
+      var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
+          '    <div class="form-group form-directional-traffic-sign">' +
+          '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
+          '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
+          '    </div>' : '';
 
       if(asset.validityDirection)
         return components +
           '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
           '      <label class="control-label">Vaikutussuunta</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-          '    </div>' + panelCheckbox + renderedPanels;
+          '    </div>' + wrongSideInfo + panelCheckbox + renderedPanels;
 
-      return components + panelCheckbox + renderedPanels;
+
+      return components + wrongSideInfo + panelCheckbox + renderedPanels;
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+      rootElement.find('.form-traffic-sign').on('change', function() {
+        selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
+      });
 
       rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input', function (event) {
         var eventTarget = $(event.currentTarget);

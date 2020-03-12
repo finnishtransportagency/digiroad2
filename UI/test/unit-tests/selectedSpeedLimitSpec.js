@@ -12,7 +12,7 @@ define(['chai', 'lodash', 'jquery', 'testHelpers', 'SelectedSpeedLimit', 'SpeedL
         eventbus.stopListening();
         eventbus = {on: function() {}, trigger: function() {}};
         speedLimitTestData = SpeedLimitsTestData.generate();
-        var backend = testHelpers.defaultBackend()
+        var backend = testHelpers.defaultBackend(20)
           .withSpeedLimitsData(speedLimitTestData);
 
         var verificationCollection = new AssetsVerificationCollection(backend);

@@ -76,6 +76,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   private def createService() = {
     val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
       override def vvhClient: VVHClient = mockVVHClient
     }
     service

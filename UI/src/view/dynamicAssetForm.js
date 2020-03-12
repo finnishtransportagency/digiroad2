@@ -469,6 +469,7 @@
         DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
+        var dayLabels = {1: "Su", 2: "Ma–Pe", 7: "La"};
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
 
@@ -480,19 +481,17 @@
 
             function newValidityPeriodElement() {
                 return '' +
-                  '<li><div class="form-group new-validity-period">' +
-                  '  <select class="form-control select" ' + me.disabled() + '>' +
-                  '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
-                  '    <option value="0">Ma–Pe</option>' +
-                  '    <option value="1">La</option>' +
-                  '    <option value="2">Su</option>' +
-                  '  </select>' +
-                  '</div></li>';
+                    '<li><div class="form-group new-validity-period">' +
+                    '  <select class="form-control select" ' + me.disabled() + '>' +
+                    '    <option class="empty" disabled selected>Lisää voimassaoloaika</option>' +
+                    '    <option value="1">Su</option>' +
+                    '    <option value="2">Ma–Pe</option>' +
+                    '    <option value="7">La</option>' +
+                    '  </select>' +
+                    '</div></li>';
             }
 
             function validityPeriodElement(period) {
-                var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
-
                 return '' +
                   '<li><div class="form-group existing-validity-period" data-days="' + period.days + '">' +
                   '  <button class="delete btn-delete"' + me.disabled() + '>x</button>' +
@@ -613,7 +612,6 @@
             var validityPeriodLabel = _.isEmpty(currentValue) ? '' : '<label>Voimassaoloaika (lisäkilvessä):</label>';
 
             var validityPeriodTable = _.map(currentValue, function(value) {
-                var dayLabels = {0: "Ma–Pe", 1: "La", 2: "Su"};
                 var period = value.value;
                 return '' +
                     '<li>' + dayLabels[period.days] + " " + period.startHour + ":" + ("0" + period.startMinute).slice(-2)  + " - " + period.endHour + ":" + ("0" + period.endMinute).slice(-2) + '</li>';
@@ -879,13 +877,6 @@
             _assetTypeConfiguration = assetTypeConfiguration;
             new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
-          var updateStatusForMassButton = function(element) {
-            if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-              element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
-            } else
-              element.prop('disabled', !(me.isSaveable()));
-          };
-
             eventbus.on(events('selected', 'cancelled'), function () {
                 var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
               rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
@@ -919,18 +910,8 @@
                 }
             });
 
-             eventbus.on("massDialog:rendered", function(buttonElement){
-               eventbus.on(multiEvents('valueChanged'), function() {
-                 updateStatusForMassButton(buttonElement);
-               });
-             });
-
             function events() {
                 return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-            }
-
-            function multiEvents() {
-                return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
             }
         };
 
@@ -1006,7 +987,30 @@
           return footer;
         };
 
+        function setMassUpdateEvents() {
+            function multiEvents() {
+                return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
+            }
+
+            var updateStatusForMassButton = function(element) {
+                if(_assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+                    element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && me.isSplitOrSeparatedAllowed()));
+                } else
+                    element.prop('disabled', !(me.isSaveable(forms.getAllFields())));
+            };
+
+            eventbus.on("massDialog:rendered", function (massUpdateBox, buttonElement) {
+                eventbus.on(multiEvents('valueChanged') + ' radio-trigger-dirty', function () {
+                    updateStatusForMassButton(buttonElement);
+                    massUpdateBox.find('.suggestion').remove();
+                });
+            });
+        }
+
         me.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
+            if(isMassUpdate)
+                setMassUpdateEvents();
+
             forms = new AvailableForms();
             var isReadOnly = _isReadOnly(selectedAsset);
             var asset = selectedAsset.get();
@@ -1016,7 +1020,7 @@
             if(selectedAsset.isSplitOrSeparated()) {
                 //Render form A
                 renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getValue, selectedAsset.removeAValue, false, body);
-                //Remder form B
+                //Render form B
                 renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, false, body);
             }
             else
@@ -1226,7 +1230,7 @@
                 return field.isValid();
             })&& otherSaveCondition();
         };
-        
+
         function events() {
             return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
         }
@@ -1240,7 +1244,7 @@
                     });
                     selectedAsset.setAValue({properties: propertiesA.concat(currentPropertyValue)});
                     field.element.hide();
-    
+
                     var propertiesB = _.filter(selectedAsset.getBValue() ? selectedAsset.getBValue().properties : selectedAsset.getBValue(), function (property) {
                         return property.publicId !== field.getPublicId();
                     });

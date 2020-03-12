@@ -41,10 +41,12 @@
       var noRights = 'Käyttöoikeudet eivät riitä kohteen muokkaamiseen.';
       var message = '';
 
-      if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
-        message = limitedRights;
-      } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
-        message = noRights;
+      eventbus.on('roles:fetched', function() {
+        if (!authorizationPolicy.isOperator() && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isElyMaintainer()) && !hasMunicipality(selectedManoeuvreSource)) {
+          message = limitedRights;
+        } else if (!authorizationPolicy.formEditModeAccess(selectedManoeuvreSource))
+          message = noRights;
+      });
 
       if(message) {
         return '' +

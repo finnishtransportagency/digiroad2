@@ -1,5 +1,6 @@
 (function(application) {
   application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
+    var assetTypeLayerName = 'massTransitStop';
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ?  true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -128,7 +129,7 @@
 
     RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend, new FeedbackModel(backend, assetConfiguration, selectedMassTransitStopModel));
-    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit), backend);
+    SpeedLimitForm.initialize(selectedSpeedLimit, new FeedbackModel(backend, assetConfiguration, selectedSpeedLimit));
 
     new WorkListView().initialize(backend);
     new VerificationWorkList().initialize();
@@ -139,14 +140,24 @@
     new InaccurateWorkList().initialize();
     new PrivateRoadsWorkList().initialize(backend);
     new UserNotificationPopup(models.userNotificationCollection).initialize();
-
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
 
     backend.getStartupParametersWithCallback(function(startupParameters) {
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
+        startupAssetTypeId = startupParameters.startupAsseId;
+        defaultLocation = {lon: startupParameters.lon, lat: startupParameters.lat, zoom: startupParameters.zoom, startupAsseId: startupAssetTypeId};
+
+        if(_.isUndefined(startupAssetTypeId) || startupAssetTypeId === 0){
+          assetTypeLayerName = "linkProperty";
+        }
+        else{
+          assetTypeLayerName = (getSelectedAssetByTypeId(pointAssets, startupAssetTypeId) || getSelectedAssetByTypeId(linearAssets, startupAssetTypeId) || getSelectedAssetByTypeId(assetConfiguration.assetTypeInfo, startupAssetTypeId)).layerName;
+        }
+
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
         startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection, verificationCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
+        window.applicationModel.selectLayer(assetTypeLayerName);
       });
     });
   };
@@ -287,10 +298,21 @@
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
-    new TrafficSignToggle(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
-    new DefaultLocationButton(map, mapPluginsContainer, backend);
+    new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration, getAssetTitle(), defaultLocation);
+    new LoadingBarDisplay(map, mapPluginsContainer);
+
+    function getAssetTitle() {
+      if (!_.isUndefined(startupAssetTypeId) && startupAssetTypeId !== 0) {
+        return _.find(assetConfiguration.assetTypeInfo, function (assetInfo) {
+          return assetInfo.typeId === startupAssetTypeId;
+        }).title;
+      }
+      else {
+        return 'Tielinkki';
+      }
+    }
 
 
     if (withTileMaps) { new TileMapCollection(map); }
@@ -427,8 +449,6 @@
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
 
-    VioniceLayer({ map: map });
-
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
 
@@ -443,6 +463,12 @@
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
     ol.proj.proj4.register(proj4);
   };
+
+  function getSelectedAssetByTypeId(assets, assetTypeId) {
+    return _.find(assets, function (asset) {
+      return asset.typeId === assetTypeId;
+    });
+  }
 
   function getSelectedPointAsset(pointAssets, layerName) {
     return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;

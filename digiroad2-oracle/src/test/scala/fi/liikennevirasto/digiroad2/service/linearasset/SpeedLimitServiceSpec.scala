@@ -54,6 +54,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
   val roadLinkForSeparation = RoadLink(388562360, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l)).thenReturn(Some(roadLinkForSeparation))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l, true)).thenReturn(Some(roadLinkForSeparation))
   val vvhRoadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleSpeedLimitDao = {
@@ -218,6 +219,13 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   }
 
   test("separation should call municipalityValidation") {
+    val municipalityCode = 235
+    val linkId = 388562360
+    val geometry = List(Point(0.0, 0.0), Point(424.557, 0.0))
+    val vvhRoadLink = VVHRoadlink(linkId, municipalityCode, geometry, AdministrativeClass.apply(1), TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map())
+
+    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
+
     runWithRollback {
       intercept[IllegalArgumentException] {
         provider.separate(200097, SpeedLimitValue(50), SpeedLimitValue(40), "test", failingMunicipalityValidation)
@@ -236,6 +244,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if speed limit is one way") {
     val roadLink = RoadLink(1611445, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.BothDirections, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611445)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611445, true)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -247,6 +256,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
   test("speed limit separation fails if road link is one way") {
     val roadLink = RoadLink(1611388, List(Point(0.0, 0.0), Point(0.0, 200.0)), 200.0, Municipality, 1, TrafficDirection.TowardsDigitizing, UnknownLinkType, None, None)
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611388)).thenReturn(Some(roadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(1611388, true)).thenReturn(Some(roadLink))
 
     runWithRollback {
       intercept[IllegalArgumentException] {
@@ -797,7 +807,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(mockEventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), List(), Set(), List()))
       verify(mockEventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", List())
-      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq()))
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
 
     }
@@ -1025,7 +1035,6 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
-    val speedLimitAssetTypeId = 20
     val oldLinkId = 3055878L
     val newLinkId = 3055879L
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(424.557, 0.0)), 424.557, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
@@ -1545,12 +1554,38 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset), Seq()))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
       verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
-      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq(oldLinkId)))
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
       apeedLimits.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       dynamicSession.rollback()
 
+    }
+  }
+
+  test("Delete link id from unknown speed limit list when that link does not exist anymore"){
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
+
+    val oldLinkId = 5000
+    val municipalityCode = 235
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""INSERT INTO UNKNOWN_SPEED_LIMIT (MUNICIPALITY_CODE, ADMINISTRATIVE_CLASS, LINK_ID) VALUES ($municipalityCode, ${Municipality.value}, $oldLinkId)""".execute
+
+      service.purgeUnknown(Set(), Seq(oldLinkId))
+      val unknownSpeedLimits = service.dao.getMunicipalitiesWithUnknown(municipalityCode)
+
+      unknownSpeedLimits.isEmpty should be (true)
+      dynamicSession.rollback()
     }
   }
 }

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 
@@ -114,6 +115,7 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
+  def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
   def create(asset: IncomingAsset, username: String, roadLink: RoadLink, newTransaction: Boolean = true): Long
   def update(id:Long, updatedAsset: IncomingAsset, roadLink: RoadLink, username: String): Long
@@ -128,7 +130,7 @@ trait PointAssetOperations {
 
   def assetProperties(pointAsset: PersistedPointAsset, since: DateTime) : Map[String, Any] = { throw new UnsupportedOperationException("Not Supported Method") }
 
-  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
@@ -138,13 +140,19 @@ trait PointAssetOperations {
       s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
 
     val assets = withDynSession {
-      fetchPointAssetsWithExpired(withFilter(filter))
+      fetchPointAssetsWithExpiredLimited(withFilter(filter), token)
     }
 
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val historicRoadLink = roadLinkService.getHistoryDataLinksFromVVH(assets.map(_.linkId).toSet.diff(roadLinks.map(_.linkId).toSet))
 
     assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId) match {
+        case Some(roadLink) => roadLink
+        case _ => historicRoadLink.filter(_.linkId == asset.linkId).sortBy(_.vvhTimeStamp)(Ordering.Long.reverse).headOption
+          .getOrElse(throw new IllegalStateException(s"Road link no longer available ${asset.linkId}"))
+      })
+    }
   }
 
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
@@ -155,7 +163,7 @@ trait PointAssetOperations {
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
 
-      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.map { (persistedAsset: PersistedAsset) =>
+      val assetsBeforeUpdate: Seq[AssetBeforeUpdate] = persistedAssets.map { persistedAsset: PersistedAsset =>
         val (floating, assetFloatingReason) = isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
         adjustment(roadLinks, changeInfo, persistedAsset, floating, assetFloatingReason)  match {
           case Some(adjustment) =>
@@ -195,7 +203,7 @@ trait PointAssetOperations {
     Some(AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, reason))
   }
 
-  protected def floatingAdjustment(adjustmentOperation: ((PersistedAsset, AssetAdjustment, RoadLink) => Any), createOperation: ((PersistedAsset, AssetAdjustment) => PersistedAsset))
+  protected def floatingAdjustment(adjustmentOperation: (PersistedAsset, AssetAdjustment, RoadLink) => Any, createOperation: (PersistedAsset, AssetAdjustment) => PersistedAsset)
                                       (roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], persistedAsset: PersistedAsset, floating: Boolean, floatingReason: Option[FloatingReason]
   ): Option[AssetBeforeUpdate]= {
 
@@ -359,16 +367,16 @@ trait PointAssetOperations {
     }
   }
 
-  def expireWithoutTransaction(id: Long) = {
+  def expireWithoutTransaction(id: Long): Int = {
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
-  def expireWithoutTransaction(id: Long, username: String) = {
+  def expireWithoutTransaction(id: Long, username: String): Int = {
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
 
-  def expireWithoutTransaction(ids: Seq[Long], username: String) = {
+  def expireWithoutTransaction(ids: Seq[Long], username: String): Unit = {
     val expireAsset = dynamicSession.prepareStatement("update asset set valid_to = sysdate, modified_by = ? where id = ?")
 
     ids.foreach { id =>
@@ -427,7 +435,7 @@ trait PointAssetOperations {
     withFilter(s"Where a.asset_type_id = $typeId and $boundingBoxFilter")(query)
   }
 
-  protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]) = sqlu"""update asset set floating = $floating where id = $id""".execute
+  protected def updateFloating(id: Long, floating: Boolean, floatingReason: Option[FloatingReason]): Unit = sqlu"""update asset set floating = $floating where id = $id""".execute
 
   protected def floatingReason(persistedAsset: PersistedAsset, roadLinkOption: Option[RoadLinkLike]) : String = {
     roadLinkOption match {
@@ -489,7 +497,7 @@ object PointAssetOperations {
           }
         }
     }
-    return (false, None)
+    (false, None)
   }
 
   def calculateBearing(persistedPointAsset: PersistedPointAsset, geometry: Seq[Point]): Int = {

@@ -58,7 +58,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
 
-  val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1, None)
+  val roadAddress = RoadAddress(None, 1, 1, Track.Combined, 1)
   when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
     TierekisteriMassTransitStop(2, "2", roadAddress, TRRoadSide.Unknown, StopType.Combined,
       false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
@@ -219,7 +219,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(13)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(14)
     }
   }
 
@@ -227,9 +227,9 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/startupParameters") {
       status should equal(200)
       val responseJson = parse(body)
-      (responseJson \ "zoom").values should equal(8)
-      (responseJson \ "lon").values should equal(373560)
-      (responseJson \ "lat").values should equal(6677676)
+      (responseJson \ "zoom").values should equal(3)
+      (responseJson \ "lon").values should equal(470092)
+      (responseJson \ "lat").values should equal(7504895)
     }
   }
 
@@ -244,8 +244,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 2, "bearing": 0}"""
-    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
+    val requestPayload = """{"lon": 7478014, "lat": 483655, "linkId": 2, "bearing": 0}"""
+    postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes, username = "silari") {
       status should equal(400)
     }
   }
@@ -283,7 +283,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(48)
+      ps.size should equal(49)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")

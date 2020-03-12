@@ -542,9 +542,9 @@
       return !_.isUndefined(roadNumber) && !_.isEmpty(roadNumber.values);
     }
 
-    function isSuggested(properties) {
-      if (!_.isUndefined(properties)) {
-        return _.some((_.isUndefined(properties.propertyData) ? properties.payload.properties : properties.propertyData), function (property) {
+    function isSuggested(data) {
+      if (!_.isUndefined(data)) {
+        return _.some((_.isUndefined(data.payload) ? data.propertyData || data.properties : data.payload.properties), function (property) {
           return property.publicId === 'suggest_box' && !_.isEmpty(property.values) && !!parseInt(_.head(property.values).propertyValue);
         });
       } else

@@ -28,11 +28,11 @@ class OraclePointMassLimitationDao {
       """
     val queryWithFilter = queryFilter(query) +
       s" and (a.valid_to > sysdate or a.valid_to is null) and a.asset_type_id in (${assetTypes.mkString(",")})"
-    StaticQuery.queryNA[WeightGroupLimitation](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[WeightGroupLimitation](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
   implicit val getPointAsset = new GetResult[WeightGroupLimitation] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : WeightGroupLimitation = {
       val id = r.nextLong()
       val typeId = r.nextInt()
       val linkId = r.nextLong()

@@ -9,7 +9,7 @@
     };
 
     /**
-     * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/busStopMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
+     * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/elyMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
     * */
     this.reduceChoices = function(stopProperty) {
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();

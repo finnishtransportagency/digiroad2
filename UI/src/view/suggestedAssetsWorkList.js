@@ -34,7 +34,7 @@
       };
 
       var assetLink = function(item, assetTypeId) {
-        var layerName = _.find(assetConfig.pointAssetsConfig.concat(assetConfig.linearAssetsConfig), function(info){ return info.typeId === assetTypeId;}).layerName;
+        var layerName = _.find(assetConfig.pointAssetsConfig.concat(assetConfig.linearAssetsConfig).concat(assetConfig.assetTypeInfo), function(info){ return info.typeId === assetTypeId;}).layerName;
         var link = '#' + layerName  + '/' + item;
         return $('<a class="work-list-item"/>').attr('href', link).html(link);
       };

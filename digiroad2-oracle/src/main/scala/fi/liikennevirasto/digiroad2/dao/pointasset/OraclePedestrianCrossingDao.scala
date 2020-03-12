@@ -1,18 +1,24 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, PedestrianCrossings}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc._
+import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import slick.jdbc
 
 case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  lon: Double, lat: Double,
@@ -42,6 +48,7 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 
 
 class OraclePedestrianCrossingDao() {
+
   private def createOrUpdatePedestrianCrossing(crossing: IncomingPedestrianCrossing, id: Long): Unit ={
     crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
@@ -141,9 +148,23 @@ class OraclePedestrianCrossingDao() {
     queryToPedestrian(queryWithFilter)
   }
 
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PedestrianCrossing] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+          s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+    queryToPedestrian(recordLimit)
+  }
+
   private def query() = {
     """
-      select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code,p.id, p.public_id, p.property_type, p.required, ev.value,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code,p.id, p.public_id, p.property_type, p.required, ev.value,
       case
         when ev.name_fi is not null then ev.name_fi
           else null
@@ -167,7 +188,7 @@ class OraclePedestrianCrossingDao() {
             when ev.name_fi is not null then ev.name_fi
             else null
           end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date,
-          pos.link_source
+          case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -181,8 +202,8 @@ class OraclePedestrianCrossingDao() {
     queryToPedestrian(queryWithFilter)
   }
 
-  implicit val getPointAsset = new GetResult[PedestrianCrossingRow] {
-    def apply(r: PositionedResult) = {
+  implicit val getPointAssetRow = new GetResult[PedestrianCrossingRow] {
+    def apply(r: PositionedResult) : PedestrianCrossingRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
@@ -229,7 +250,7 @@ class OraclePedestrianCrossingDao() {
   }
 
   private def queryToPedestrian(query: String): Seq[PedestrianCrossing] = {
-    val rows = StaticQuery.queryNA[PedestrianCrossingRow](query).iterator.toSeq
+    val rows = StaticQuery.queryNA[PedestrianCrossingRow](query)(getPointAssetRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head

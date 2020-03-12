@@ -201,7 +201,7 @@ object OracleServicePointDao {
   }
 
   implicit val getServicePoint = new GetResult[ServicePointRow] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult) : ServicePointRow = {
       val id = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
       val createdBy = r.nextStringOption()
@@ -227,8 +227,8 @@ object OracleServicePointDao {
     }
   }
 
-  implicit val getService = new GetResult[Service] {
-    def apply(r: PositionedResult) = {
+  implicit val getService: GetResult[Service] = new GetResult[Service] {
+    def apply(r: PositionedResult) : Service = {
       val id = r.nextLong()
       val assetId = r.nextLong()
       val serviceType = r.nextInt()

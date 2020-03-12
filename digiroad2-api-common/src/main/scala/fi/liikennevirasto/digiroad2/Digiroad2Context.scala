@@ -165,7 +165,7 @@ class DynamicAssetSaveProjected[T](dynamicAssetProvider: DynamicLinearAssetServi
 
 class SpeedLimitUpdater[A, B, C](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
-    case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
+    case (affectedLinkIds: Set[A], expiredLinkIds: Seq[A]) => speedLimitProvider.purgeUnknown(affectedLinkIds.asInstanceOf[Set[Long]], expiredLinkIds.asInstanceOf[Seq[Long]])
     case x: Seq[B] => speedLimitProvider.persistUnknown(x.asInstanceOf[Seq[UnknownSpeedLimit]])
     case x: ChangeSet => speedLimitProvider.updateChangeSet(x)
     case _      => println("speedLimitFiller: Received unknown message")
@@ -283,12 +283,8 @@ class TrafficSignExpireAssets(trafficSignService: TrafficSignService, trafficSig
 class TrafficSignUpdateAssets(trafficSignService: TrafficSignService, trafficSignManager: TrafficSignManager) extends Actor {
   def receive = {
     case x: TrafficSignInfoUpdate =>
-       trafficSignService.getPersistedAssetsByIdsWithExpire(Set(x.expireId)).headOption match {
-      case Some(trafficType) => trafficSignManager.deleteAssets(Seq(trafficType))
-                                trafficSignManager.createAssets(x.newSign)
-      case _ => println("Nonexistent traffic Sign Type")
-    }
-      trafficSignManager.createAssets(x.newSign)
+            trafficSignManager.deleteAssets(Seq(x.oldSign))
+            trafficSignManager.createAssets(x.newSign)
     case _ => println("trafficSignUpdateAssets: Received unknown message")
   }
 }
@@ -479,7 +475,7 @@ object Digiroad2Context {
   }
 
   lazy val municipalityService: MunicipalityService = {
-    new MunicipalityService(eventbus, roadLinkService)
+    new MunicipalityService
   }
 
   lazy val dynamicLinearAssetService: DynamicLinearAssetService = {
@@ -546,7 +542,7 @@ object Digiroad2Context {
   }
 
   lazy val dataImportManager: DataImportManager = {
-    new DataImportManager(roadLinkService, eventbus)
+    new DataImportManager(vvhClient, roadLinkService, eventbus)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {
