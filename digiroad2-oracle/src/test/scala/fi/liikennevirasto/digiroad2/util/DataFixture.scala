@@ -2312,10 +2312,10 @@ object DataFixture {
       allAdjacentsRoadLinks.filter(r => GeometryUtils.areAdjacent(r.geometry, point))
     }
 
-    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit]): Unit = {
+    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadlink: RoadLink): Unit = {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
-        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(vvhClient.roadLinkData.createVVHTimeStamp()), linkSource = roadlink.linkSource)
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
@@ -2391,7 +2391,7 @@ object DataFixture {
                   Seq()
                 }
 
-              createNewSpeedLimits(speedLimitsToCreate)
+              createNewSpeedLimits(speedLimitsToCreate, changeRoadLink)
             }
           }
         }
