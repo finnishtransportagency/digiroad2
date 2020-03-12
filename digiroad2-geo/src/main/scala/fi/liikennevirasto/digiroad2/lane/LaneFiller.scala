@@ -384,7 +384,7 @@ class LaneFiller {
     val resultingNumericalLimits = combinedSegment ++ newSegments
     val expiredIds = lanesZipped.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
 
-    val returnSegments = if (resultingNumericalLimits.size > 1) cleanNumericalLimitIds(resultingNumericalLimits, Seq()) else Seq()
+    val returnSegments = if (resultingNumericalLimits.nonEmpty) cleanNumericalLimitIds(resultingNumericalLimits, Seq()) else Seq()
     (returnSegments, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
   }
