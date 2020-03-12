@@ -118,7 +118,11 @@ object LaneUtils {
 
         }
         else if (road.roadPartNumber == laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber == laneRoadAddressInfo.endRoadPartNumber) {
-          if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
+
+          if ( !(road.endAddrMValue > laneRoadAddressInfo.initialDistance && road.startAddrMValue < laneRoadAddressInfo.endDistance) )
+            None
+
+          else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
 
             PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               startPoint, endPoint,

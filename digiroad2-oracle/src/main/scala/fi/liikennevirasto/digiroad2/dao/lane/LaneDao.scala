@@ -369,10 +369,16 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     val finalValue = if (props.values.isEmpty) "Null"
                      else props.values.head.value.toString
 
-    sqlu"""UPDATE LANE_ATTRIBUTE
-           SET VALUE = $finalValue, MODIFIED_BY = $username, MODIFIED_DATE = sysdate
-          WHERE LANE_ID =  $laneId
-          AND NAME = ${props.publicId}
+    sqlu"""MERGE INTO LANE_ATTRIBUTE
+          USING dual
+          ON ( name = ${props.publicId} AND LANE_ID =  $laneId )
+          WHEN MATCHED THEN
+            UPDATE SET VALUE = $finalValue, MODIFIED_BY = $username, MODIFIED_DATE = sysdate
+            WHERE LANE_ID =  $laneId
+            AND NAME = ${props.publicId}
+          WHEN NOT MATCHED THEN
+            INSERT (id, lane_id, name, value, created_date, created_by)
+            VALUES( ${Sequences.nextPrimaryKeySeqValue}, $laneId, ${props.publicId}, $finalValue, sysdate, $username)
     """.execute
   }
 
