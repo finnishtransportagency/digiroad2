@@ -2316,7 +2316,7 @@ object DataFixture {
       //Create new SpeedLimits on gaps
       newSpeedLimits.foreach { speedLimit =>
         speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(vvhClient.roadLinkData.createVVHTimeStamp()), linkSource = roadlink.linkSource)
-        println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value)
+        println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
         speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(speedLimit.geometry))
@@ -2329,12 +2329,13 @@ object DataFixture {
     println("\n")
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = Seq(49, 734, 286)/*OracleDatabase.withDynSession {
       Queries.getMunicipalities
-    }
+    }*/
 
-    OracleDatabase.withDynTransaction {
-      municipalities.foreach { municipality =>
+
+    municipalities.foreach { municipality =>
+      OracleDatabase.withDynTransaction {
         println("\nWorking at Municipailty: " + municipality)
         val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
@@ -2396,12 +2397,12 @@ object DataFixture {
           }
         }
       }
-
-      println("\n")
-      println("Complete at time: ")
-      println(DateTime.now())
-      println("\n")
     }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
   }
 
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
