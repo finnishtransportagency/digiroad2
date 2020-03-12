@@ -2319,19 +2319,19 @@ object DataFixture {
         println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
 
         //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(speedLimit.geometry))
-        println("Removed linkId " + speedLimit.linkId + " from UnknownSpeedLimits working list")
+        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(roadlink.geometry))
+        println("\nRemoved linkId " + speedLimit.linkId + " from UnknownSpeedLimits working list")
+        println("")
       }
     }
 
     println("\nStart process to fill new road links with previous data, only for change type 12")
     println(DateTime.now())
-    println("\n")
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = Seq(49, 734, 286)/*OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
       Queries.getMunicipalities
-    }*/
+    }
 
 
     municipalities.foreach { municipality =>
@@ -2354,7 +2354,7 @@ object DataFixture {
             val assetAndPoints: Seq[(Point, SpeedLimit)] = speedLimitService.getAssetsAndPoints(speedLimitsOnAdjacents, roadLinks, (cws, changeRoadLink))
 
             if (assetAndPoints.nonEmpty) {
-              println("Treating changes for the LinkId: " + cws.newId.get)
+              println("\nTreating changes for the LinkId: " + cws.newId.get)
               val (firstRoadLinkPoint, lastRoadLinkPoint) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
 
               val assetAdjFirst = speedLimitService.getAdjacentAssetByPoint(assetAndPoints, firstRoadLinkPoint)
@@ -2376,18 +2376,17 @@ object DataFixture {
                       asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
                     }
                   }.toSeq
+
                 } else if (assetAdjFirst.isEmpty && adjacentsToFirstPoint.isEmpty && assetAdjLast.nonEmpty) {
-                  groupBySideCodeLast.flatMap { case (_, speedLimits) =>
-                    speedLimits.map { speedLimit =>
-                      speedLimit.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
-                    }
+                  groupBySideCodeLast.keys.map { sideCode =>
+                    groupBySideCodeLast(sideCode).head.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
                   }.toSeq
+
                 } else if (assetAdjFirst.nonEmpty && adjacentsToLastPoint.isEmpty && assetAdjLast.isEmpty) {
-                  groupBySideCodeFirst.flatMap { case (_, speedLimits) =>
-                    speedLimits.map { speedLimit =>
-                      speedLimit.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
-                    }
+                  groupBySideCodeFirst.keys.map { sideCode =>
+                    groupBySideCodeFirst(sideCode).head.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
                   }.toSeq
+
                 } else {
                   Seq()
                 }
