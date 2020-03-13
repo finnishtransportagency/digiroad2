@@ -3,20 +3,19 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
-import org.joda.time.DateTime
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.{BadRequest, ScalatraServlet}
-import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.swagger.{Swagger, SwaggerSupport}
-import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
 import fi.liikennevirasto.digiroad2.vallu.ValluStoreStopChangeMessage._
 import fi.liikennevirasto.digiroad2.vallu.ValluTransformer.{describeEquipments, describeReachability, transformToISODate}
+import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.json.JacksonJsonSupport
+import org.scalatra.swagger.{Swagger, SwaggerSupport}
+import org.scalatra.{BadRequest, ScalatraServlet}
 
 class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
   protected val applicationDescription = "Change API "
@@ -89,8 +88,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
+    val token = params.get("token").map(_.toString)
 
-    massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until))
+    massTransitStopsToGeoJson(since, massTransitStopService.getPublishedOnXml(since, until, token))
   }
 
   private def speedLimitsToGeoJson(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) =
@@ -171,7 +171,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case Some(SpeedLimitValue(_, isSuggested)) => isSuggested
       case Some(DynamicValue(x)) =>
         x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
-          case Some(value) => value.toString.toBoolean
+          case Some(value) => value.asInstanceOf[DynamicPropertyValue].value.toString.equals("1")
           case _ => false
         }
       case _ => false
@@ -180,7 +180,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
   private def isSuggested(asset: ChangedPointAsset): Boolean = {
     asset.pointAsset.propertyData.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
-      case Some(value) => value.toString.toBoolean
+      case Some(value) => value.asInstanceOf[PropertyValue].propertyValue.equals("1")
       case _ => false
     }
   }

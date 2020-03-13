@@ -1,39 +1,28 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
-import java.io.ByteArrayInputStream
-
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, Tag}
-import slick.driver.JdbcDriver.backend.Database
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.csvDataImporter.{Creator, MassTransitStopCsvImporter, MassTransitStopCsvOperation, PositionUpdater, Updater}
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, Track}
-import org.mockito.ArgumentMatchers
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
-
-import java.io.{InputStream, InputStreamReader}
+import java.io.{ByteArrayInputStream, InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, ExcludedRow, FloatingReason, GeometryUtils, IncompleteRow, MalformedRow, Point, Status}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, FloatingAsset, Position, PropertyValue, TrafficDirection, Unknown}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, PropertyValue, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink, _}
+import fi.liikennevirasto.digiroad2.csvDataImporter._
 import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, NewMassTransitStop, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, ExcludedRow, IncompleteRow, Point, _}
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{BeforeAndAfter, Tag}
 
 class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
@@ -349,7 +338,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val stop = PersistedMassTransitStop(1, 1, 1, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, 0, Modification(None, None), Modification(None, None), Nil, NormalLinkInterface)
       Some(transformation(stop)._1)
     }
-
   })
 
   test("update asset's properties in a generic manner", Tag("db")) {

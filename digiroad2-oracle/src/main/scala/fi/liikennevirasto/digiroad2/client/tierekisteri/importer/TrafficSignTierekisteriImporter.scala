@@ -56,7 +56,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
 
     trAssetData.signSidePlacement match {
-      case Some(signSidePlacement) if ( signSidePlacement != null ) =>
+      case Some(signSidePlacement) =>
         defaultProperties ++ Set(SimplePointAssetProperty(signPlacementPublicId, Seq(PropertyValue(signSidePlacement))))
       case _ => defaultProperties
     }
@@ -126,25 +126,26 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
   protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData, properties: Set[AdditionalPanelInfo]): Unit = {
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
+          val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData, properties),
+            getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
 
-          if (trAssetData.assetType != null || trAssetData.assetType.toString.nonEmpty) {
+          val newId =  OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+            VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
 
-            val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData, properties),
-              getSideCode(roadAddress, trAssetData.track, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
 
-            val newId = OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
-              VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
-
-            roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink)).foreach { roadLink =>
-              val signType = trafficSignService.getProperty(trafficSign, typePublicId).get.propertyValue.toInt
-              trafficSignManager.createAssets(TrafficSignInfo(newId, roadLink.linkId, trafficSign.validityDirection, signType, roadLink), newTransaction = false, fromTrafficSignGenerator = true)
+          if (TrafficSignManager.belongsToManoeuvre(signType)) {
+            roadLinkService.enrichRoadLinksFromVVH(Seq(vvhRoadlink))
+                            .foreach{ roadLink =>
+                                val trafficSignInfo = TrafficSignInfo(newId, roadLink.linkId,  trafficSign.validityDirection, signType, roadLink)
+                                manoeuvreService.createBasedOnTrafficSign(trafficSignInfo, newTransaction = false, fromTierekisteriGenerator = true)
             }
-
-            println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
-            newId
           }
+
+          newId
       }
-}
+    println(s"Created OTH $assetName asset on link ${vvhRoadlink.linkId} from TR data")
+  }
 
   private def getAdditionalPanels(trAdditionalData: Seq[(AddressSection, TierekisteriAssetData)], existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]],  vvhRoadLinks: Seq[VVHRoadlink]): Seq[AdditionalPanelInfo] = {
     trAdditionalData.flatMap { case (section, properties) =>
@@ -228,8 +229,8 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
               //Remove additonal Panels with 'trafficSigns_type' with empty value
               val additionalPanelsFiltered = allowedProperties.filterNot{ panel =>
-                                            val prop = trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get
-                                            prop.propertyValue.toString.trim.isEmpty }
+                                                                              val prop = trafficSignService.getProperty(panel.propertyData, trafficSignService.typePublicId).get
+                                                                              prop.propertyValue.toString.trim.isEmpty }
 
               if ( trafficSignType.toString.trim.nonEmpty )
                 createPointAsset(ra, roadlink.get, mValue, trAssetData, additionalPanelsFiltered.toSet)

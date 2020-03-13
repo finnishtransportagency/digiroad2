@@ -256,7 +256,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
 
   def createWithoutTransaction(userName: String, manoeuvre: NewManoeuvre, roadlinks: Seq[RoadLink]) : Long = {
     if(!isValid(manoeuvre, roadlinks))
-      throw new InvalidParameterException("Invalid 'manoeuvre")
+      throw new InvalidParameterException("Invalid 'manoeuvre'")
 
     dao.createManoeuvre(userName, manoeuvre)
   }
@@ -321,24 +321,8 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
     }
   }
 
-  /**
-    * The idea is to insert the signs that are wrong into the inaccurateAsset Table.
-    * However if the function it is not invoked by the TierekisteriImporter script we will thow the exception as is.
-    *
-    * @param trafficSignInfo TrafficSign to be inserted in the inaccurateAsset Table
-    * @param fromTrafficSignGenerator Boolean to know if it is the Import script or not
-    * @param exception Exception that will be throw if this function it is not called by Import Script
-    * @return
-    */
-  private def insertInaccurateAssetFromTrafficSignGenerator(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean, exception: Exception ): Seq[Long] = {
-    if ( !fromTrafficSignGenerator )
-      throw exception
 
-    inaccurateDAO.createInaccurateAsset(trafficSignInfo.id, Manoeuvres.typeId, trafficSignInfo.roadLink.municipalityCode, trafficSignInfo.roadLink.administrativeClass )
-    Seq()
-  }
-
-  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo, fromTrafficSignGenerator: Boolean = false ): Seq[Long] = {
+  private def createManoeuvreFromTrafficSign(trafficSignInfo: TrafficSignInfo, fromTierekisteriGenerator: Boolean = false ): Seq[Long] = {
     logger.info("creating manoeuvre from traffic sign")
     val tsLinkId = trafficSignInfo.linkId
     val tsDirection = trafficSignInfo.validityDirection
@@ -373,25 +357,33 @@ class ManoeuvreService(roadLinkService: RoadLinkService, eventBus: DigiroadEvent
       if(!validateManoeuvre(trafficSignInfo.roadLink.linkId, roadLinks.last.linkId, ElementTypes.FirstElement))
         throw new ManoeuvreCreationException(Set("Manoeuvre creation not valid"))
       else
-        Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id), isSuggested = false), roadLinks))
+        Seq(createWithoutTransaction("traffic_sign_generated", NewManoeuvre(Set(), Seq.empty[Int], None, roadLinks.map(_.linkId), Some(trafficSignInfo.id), false), roadLinks))
 
     } catch {
       case mce: ManoeuvreCreationException =>
-          insertInaccurateAssetFromTrafficSignGenerator(trafficSignInfo, fromTrafficSignGenerator, mce)
+            if (fromTierekisteriGenerator) {
+              println("ManoeuvreCreationException occurred but will be ignored since it comes from Tierekisteri")
+              Seq()
+            }
+            else throw mce
 
       case eipe: InvalidParameterException =>
-            insertInaccurateAssetFromTrafficSignGenerator(trafficSignInfo, fromTrafficSignGenerator, eipe)
+            if (fromTierekisteriGenerator) {
+              println("InvalidParameterException occurred but will be ignored since it comes from Tierekisteri")
+              Seq()
+            }
+            else throw eipe
     }
   }
 
-  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTrafficSignGenerator: Boolean = false): Seq[Long] = {
+  def createBasedOnTrafficSign(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTierekisteriGenerator: Boolean = false): Seq[Long] = {
     if(newTransaction) {
       withDynTransaction {
-        createManoeuvreFromTrafficSign(trafficSignInfo, fromTrafficSignGenerator)
+        createManoeuvreFromTrafficSign(trafficSignInfo, fromTierekisteriGenerator)
       }
     }
     else
-      createManoeuvreFromTrafficSign(trafficSignInfo, fromTrafficSignGenerator)
+      createManoeuvreFromTrafficSign(trafficSignInfo, fromTierekisteriGenerator)
   }
 
   private def getOpositePoint(geometry: Seq[Point], point: Point) = {
