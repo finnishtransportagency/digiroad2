@@ -142,6 +142,7 @@
 
       rootElement.find("#feature-attributes-header").html(header);
       rootElement.find("#feature-attributes-form").html(form);
+      dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
       rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
       rootElement.find("#feature-attributes-footer").html(footer);
 
@@ -188,8 +189,6 @@
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
-      dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
-
       rootElement.find('.form-traffic-sign').on('change', function() {
         selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
       });
@@ -313,25 +312,25 @@
         'trafficSigns_type',
         'trafficSigns_value',
         'trafficSigns_info',
-        'main_sign_text',
         'municipality_id',
-        'life_cycle',
-        'trafficSign_start_date',
-        'trafficSign_end_date',
-        'location_specifier',
+        'main_sign_text',
         'structure',
         'condition',
         'size',
         'height',
         'coating_type',
+        'sign_material',
+        'location_specifier',
+        'terrain_coordinates_x',
+        'terrain_coordinates_y',
         'lane',
         'lane_type',
-        'sign_material',
+        'life_cycle',
+        'trafficSign_start_date',
+        'trafficSign_end_date',
         'type_of_damage',
         'urgency_of_repair',
         'lifespan_left',
-        'terrain_coordinates_x',
-        'terrain_coordinates_y',
         'suggest_box',
         'old_traffic_code',
         'counter'

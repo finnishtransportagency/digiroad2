@@ -28,6 +28,26 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val infoPublicId = "trafficSigns_info"
   private val startDatePublicId = "trafficSign_start_date"
   private val endDatePublicId = "trafficSign_end_date"
+  private val municipalityPublicId = "municipality_id"
+  private val mainSignTextPublicId = "main_sign_text"
+  private val structurePublicId = "structure"
+  private val conditionPublicId = "condition"
+  private val sizePublicId = "size"
+  private val heightPublicId = "height"
+  private val coatingTypePublicId = "coating_type"
+  private val signMaterialPublicId = "sign_material"
+  private val locationSpecifierPublicId = "location_specifier"
+  private val terrainCoordinatesXPublicId = "terrain_coordinates_x"
+  private val terrainCoordinatesYPublicId = "terrain_coordinates_y"
+  private val laneTypePublicId = "lane_type"
+  private val lanePublicId = "lane"
+  private val lifeCyclePublicId = "life_cycle"
+  private val typeOfDamagePublicId = "type_of_damage"
+  private val urgencyOfRepairPublicId = "urgency_of_repair"
+  private val lifespanLeftPublicId = "lifespan_left"
+  private val oldTrafficCodePublicId = "old_traffic_code"
+  private val oppositeSideSignPublicId = "opposite_side_sign"
+  private val additionalPanelPublicId = "additional_panel"
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
@@ -37,16 +57,37 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   //mandatory for the sign 142 (RoadWorks)
   override val dateFieldsMapping = Map(
-    "alkupäivämäärä" -> "startDate",
-    "loppupäivämäärä" -> "endDate"
+    "alkupaivamaara" -> "startDate",
+    "loppupaivamaara" -> "endDate"
   )
 
   private val nonMandatoryMappings = Map(
     "arvo" -> "value",
+    "lisatieto" -> "additionalInfo",
+    "kunnan id" -> "municipalityId",
+    "paamerkin teksti" -> "mainSignText",
+    "rakenne" -> "structure",
+    "kunto" -> "condition",
+    "koko" -> "size",
+    "korkeus" -> "height",
+    "kalvon tyyppi" -> "coatingType",
+    "merkin materiaali" -> "signMaterial",
+    "sijaintitarkenne" -> "locationSpecifier",
+    "maastokoordinaatti x" -> "terrainCoordinatesX",
+    "maastokoordinaatti y" -> "terrainCoordinatesY",
+    "tien nimi" -> "roadname",
+    "kaistan tyyppi" -> "laneType",
+    "kaista" -> "lane",
+    "elinkaari" -> "lifeCycle",
+    "vauriotyyppi" -> "typeOfDamage",
+    "korjauksen kiireellisyys" -> "urgencyOfRepair",
+    "arvioitu kayttoika" -> "lifespanLeft",
+    "lisaa vanhan lain mukainen koodi" -> "oldTrafficCode",
+    "liikenteenvastainen" -> "oppositeSideSign",
     "kaksipuolinen merkki" -> "twoSided",
     "liikennevirran suunta" -> "trafficDirection",
     "suuntima" -> "bearing",
-    "lisatieto" -> "additionalInfo"
+    "lisakilpi" -> "additionalPanel"
   ) ++ dateFieldsMapping
 
   private val codeValueFieldMappings = Map(
@@ -59,8 +100,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   val mandatoryParameters: Set[String] = mappings.keySet ++ mandatoryFields
 
   private def verifyValueCode(parameterName: String, parameterValue: String): ParsedRow = {
-    if(parameterValue.forall(_.isDigit) && TrafficSignType.applyTRValue(parameterValue.toInt).source.contains("CSVimport")){
-      (Nil, List(AssetProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
+    if(TrafficSignType.applyNewLawCode(parameterValue).source.contains("CSVimport")){
+      (Nil, List(AssetProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue)))
     }else{
       (List(parameterName), Nil)
     }
@@ -73,7 +114,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   override def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
     val code = csvRoadWithHeaders.get("liikennemerkin tyyppi")
     code match {
-      case Some(value) if value.nonEmpty && value.forall(_.isDigit) && TrafficSignType.applyTRValue(value.toInt) == RoadWorks =>
+      case Some(value) if value.nonEmpty && TrafficSignType.applyNewLawCode(value) == RoadWorks =>
         mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList ++ dateFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
       case _ => mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
     }
@@ -109,45 +150,30 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
-    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
-    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
-
-    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[Int]]
+    val temporaryDevices = Seq(4,5)
+    val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
+    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[String]].get
     val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
 
     val isValidDate = optTrafficSignType match {
-      case Some(value) =>
-        val isRoadworks = TrafficSignType.applyTRValue(value) == RoadWorks
-          (optStartDate, optEndDate) match {
-            case (Some(startDate), Some(endDate)) =>
-                  try {
-                    val startDateFormat = dateFormatter.parseDateTime(startDate)
-                    val endDateFormat = dateFormatter.parseDateTime(endDate)
-
-                    endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
-                  } catch {
-                    case _: Throwable => !isRoadworks
-                  }
-            case _ => !isRoadworks
-          }
+      case Some(signType) if (optLifeCycle.nonEmpty && temporaryDevices.contains(optLifeCycle.toInt)) || TrafficSignType.applyNewLawCode(signType) == RoadWorks =>
+        (optStartDate, optEndDate) match {
+          case (Some(startDate), Some(endDate)) =>
+            try {
+              val startDateFormat = dateFormatter.parseDateTime(startDate)
+              val endDateFormat = dateFormatter.parseDateTime(endDate)
+              endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+            } catch {
+              case _: Throwable => false
+            }
+          case (_, _) => false
+        }
       case _ => true
     }
 
-    if(isValidDate) {
-      (optLon, optLat) match {
-        case (Some(lon), Some(lat)) =>
-          val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
-          roadLinks.isEmpty match {
-            case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-            case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
-          }
-        case _ =>
-          (Nil, Nil)
-      }
-    } else {
-      (List("Invalid Dates"), Seq())
-    }
+    if(isValidDate) super.verifyData(parsedRow, user)
+    else (List("Invalid Dates"), Seq())
   }
 
 
@@ -155,10 +181,17 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
       SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value.toString)))}
 
-    val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(TrafficSignType.applyTRValue(getPropertyValue(trafficSignAttributes, "trafficSignType").toString.toInt).OTHvalue.toString)))
+    val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(TrafficSignType.applyNewLawCode(getPropertyValue(trafficSignAttributes, "trafficSignType").toString).OTHvalue.toString)))
 
-    val listPublicIds = Set(infoPublicId, startDatePublicId, endDatePublicId)
-    val listFieldsNames = Set("additionalInfo", "startDate", "endDate")
+    val listPublicIds = Seq(infoPublicId, startDatePublicId, endDatePublicId, municipalityPublicId, mainSignTextPublicId, structurePublicId, conditionPublicId, sizePublicId,
+                            heightPublicId, coatingTypePublicId, signMaterialPublicId, locationSpecifierPublicId, terrainCoordinatesXPublicId, terrainCoordinatesYPublicId,
+                            laneTypePublicId, lanePublicId, lifeCyclePublicId, typeOfDamagePublicId, urgencyOfRepairPublicId, lifespanLeftPublicId, oldTrafficCodePublicId,
+                            oppositeSideSignPublicId
+    )
+    val listFieldsNames = Seq("additionalInfo", "startDate", "endDate", "municipalityId", "mainSignText", "structure", "condition", "size", "height", "coatingType", "signMaterial",
+                              "locationSpecifier", "terrainCoordinatesX", "terrainCoordinatesY", "laneType", "lane", "lifeCycle", "typeOfDamage", "urgencyOfRepair", "lifespanLeft",
+                              "oldTrafficCode", "oppositeSideSign"
+    )
 
     val propertiesValues = (listPublicIds, listFieldsNames).zipped.map{(publicId, fieldName) =>
       val propertyInfo = getPropertyValueOption(trafficSignAttributes, fieldName)
