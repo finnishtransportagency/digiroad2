@@ -5,7 +5,7 @@ import java.util.NoSuchElementException
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, FloatingReason, Point}
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Position, Property, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations._
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
@@ -51,4 +51,5 @@ class TerminatedBusStopStrategy(typeId: Int, massTransitStopDao: MassTransitStop
     (resultAsset, PublishInfo(Some(resultAsset)))
   }
 
+  override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (true, Some(FloatingReason.TerminatedRoad)) }
 }
