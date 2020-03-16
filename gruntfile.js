@@ -111,7 +111,7 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/vkm',
+            context: '/vkm-api',
             host: 'localhost',
             port: '8997',
             https: false,

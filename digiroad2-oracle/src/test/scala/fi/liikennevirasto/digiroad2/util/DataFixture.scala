@@ -24,6 +24,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset._
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.digiroad2.{GeometryUtils, TrafficSignTypeGroup, _}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
+import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager.prohibitionRelatedSigns
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
@@ -241,6 +242,7 @@ object DataFixture {
   def setUpTest() {
     migrateAll()
     importMunicipalityCodes()
+    updateMunicipalities()
     SqlScriptRunner.runScripts(List(
       "insert_test_fixture.sql",
       "insert_users.sql",
@@ -478,7 +480,7 @@ object DataFixture {
         case (_, x) =>
           x match {
             case u: List[Any] =>
-              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet)
+              speedLimitService.purgeUnknown(u.asInstanceOf[List[Long]].toSet, Seq())
             case _ =>
           }
         case _ =>
@@ -1667,11 +1669,11 @@ object DataFixture {
         val unknownSpeedLimitByMunicipality = speedLimitDao.getMunicipalitiesWithUnknown(municipality)
         val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unknownSpeedLimitByMunicipality.toSet, false)
 
-        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad)
+        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad).map(_.linkId) ++ unknownSpeedLimitByMunicipality.diff(roadLinks.map(_.linkId))
 
         if(filterRoadLinks.nonEmpty) {
-          println(s"Deleting linkIds - ${filterRoadLinks.map(_.linkId)}")
-          speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks.map(_.linkId))
+          println(s"Deleting linkIds - $filterRoadLinks")
+          speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks)
         }
       }
     }
@@ -2003,6 +2005,25 @@ object DataFixture {
     println("\n")
   }
 
+  def transformLorryParkingIntoDatex2(): Unit = {
+    //This Batch will use the table PARKS_TO_DATEX previus populated by a shape file gived to the transformation (Example: DROTH-1998)
+    //That table was generated when the conversion of shapefile to ours database
+    println("\nStart process transform lorry parkings into Datex2 format")
+    println(DateTime.now())
+    println()
+
+    val datex2Generator = new Datex2Generator()
+    OracleDatabase.withDynTransaction {
+      val lorryParkingInfo = Queries.getLorryParkingToTransform()
+      datex2Generator.convertToDatex2(lorryParkingInfo)
+    }
+
+
+    println()
+    println()
+    println("Complete at time: " + DateTime.now())
+  }
+
   def removeRoadWorksCreatedLastYear(): Unit = {
     println("\nStart process to remove all road works assets created during the last year")
     println(DateTime.now())
@@ -2249,7 +2270,7 @@ object DataFixture {
         try {
           val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
           if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-            println("problems in wonderland")
+            println("Problems in addresses")
             Seq()
           } else {
             val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
@@ -2320,6 +2341,71 @@ object DataFixture {
     println("\n")
   }
 
+  def mergeMunicipalities(): Unit = {
+    val municipalityToDelete = 911
+    val municipalityToMerge = 541
+
+    println(s"\nStart process of merging municipality $municipalityToDelete into $municipalityToMerge")
+    println(DateTime.now())
+    println("")
+
+    OracleDatabase.withDynTransaction{
+      Queries.mergeMunicipalities(municipalityToDelete, municipalityToMerge)
+    }
+
+    println("")
+    println("Complete at time: " + DateTime.now())
+  }
+
+  def fillNewRoadLinksWithPreviousInfo(): Unit = {
+    println("\nStart process to fill new road links with previous data, only for change type 12")
+    println(DateTime.now())
+    println("\n")
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println("\nWorking at Municipailty: " + municipality)
+        val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
+        val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
+        val changesToTreat = changes.filter(c => c.changeType == New.value && c.newId.nonEmpty && filteredRoadLinks.exists(_.linkId == c.newId.get))
+        val roadLinksToTreat = filteredRoadLinks.filter(r => changesToTreat.exists(_.newId.get == r.linkId)).map(_.linkId).toSet
+        val speedLimitsAlreadyExistents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(roadLinksToTreat))
+
+        val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
+        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated.size)
+
+        changesWithoutSpeedLimitCreated.foreach { cws =>
+          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false).map(_.linkId).toSet
+          if (adjacents.size >= 2) {
+            val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
+            if (speedLimitsOnAdjacents.size >= 2) {
+              val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
+
+              //Create new SpeedLimits on gaps
+              speedLimitsToCreate.foreach { sl =>
+                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
+                println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
+
+                //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
+                speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
+                println("Removed linkId " + sl.linkId + " from UnknownSpeedLimits working list")
+              }
+            }
+          }
+        }
+      }
+
+      println("\n")
+      println("Complete at time: ")
+      println(DateTime.now())
+      println("\n")
+    }
+  }
 
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
@@ -2472,6 +2558,12 @@ object DataFixture {
         getStateRoadWithFunctionalClassUndefined()
       case Some("add_obstacles_shapefile") =>
         addObstaclesShapefile()
+      case Some("merge_municipalities") =>
+        mergeMunicipalities()
+      case Some("transform_lorry_parking_into_datex2") =>
+        transformLorryParkingIntoDatex2()
+      case Some("fill_new_roadLinks_info") =>
+        fillNewRoadLinksWithPreviousInfo()
       case Some("import_cycling_walking_info") =>
         importCyclingAndWalkingInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -2486,9 +2578,9 @@ object DataFixture {
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
-        " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info | import_private_road_info | " +
+        " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | load_municipalities_verification_info | import_private_road_info |" +
         " normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile | import_cycling_walking_info")
+        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | import_cycling_walking_info")
     }
   }
 }

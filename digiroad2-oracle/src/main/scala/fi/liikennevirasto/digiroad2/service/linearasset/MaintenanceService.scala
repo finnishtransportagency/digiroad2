@@ -174,7 +174,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
                                   valueAdjustments = Seq.empty[ValueAdjustment])
 
     val (newAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
+      combinedAssets, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))

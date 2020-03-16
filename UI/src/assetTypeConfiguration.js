@@ -996,11 +996,7 @@
         },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         form: ObstacleForm,
-        saveCondition: function(selectedAsset, authorizationPolicy) {
-          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
-          var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-          return !(suggestedAssetCondition && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-        },
+        saveCondition: saveConditionWithSuggested,
         hasMunicipalityValidation: true,
         roadCollection: ObstaclesRoadCollection,
         showRoadLinkInfo: true,
@@ -1139,6 +1135,7 @@
         title: 'Liikennemerkit',
         allowComplementaryLinks: true,
         newAsset: { validityDirection: 2, propertyData: [
+          {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
@@ -1164,6 +1161,11 @@
             { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
+
+          var opposite_side_sign =  _.find( selectedAsset.get().propertyData, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
+          if (_.isUndefined(opposite_side_sign) || _.isUndefined(opposite_side_sign.values[0]) || opposite_side_sign.values[0].propertyValue === "") {
+            selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');
+          }
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);

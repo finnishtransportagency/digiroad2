@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao}
+import fi.liikennevirasto.digiroad2.dao.{ImportLogDAO, MassTransitStopDao, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -27,6 +27,8 @@ class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl:
     Seq(propertyUpdater, creator, positionUpdater)
   }
 
+  lazy val importLogDao: ImportLogDAO = new ImportLogDAO
+
   def getStrategy(csvRowWithHeaders: Map[String, String]): CsvOperations = {
     val strategies = getStrategies()
     strategies.find(strategy => strategy.is(csvRowWithHeaders)).getOrElse(throw new UnsupportedOperationException(s"Please check the combination between Koordinaatti and  Valtakunnallinen ID"))
@@ -42,9 +44,17 @@ class MassTransitStopCsvOperation(vvhClientImpl: VVHClient, roadLinkServiceImpl:
       r => r.toList.map ( p => (p._1.toLowerCase, p._2)).toMap
     }
 
-    val strategy = getStrategy(csvRow.head)
-    strategy.importAssets(csvRow: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
-    }
+    try {
+      val strategy = getStrategy(csvRow.head)
+      strategy.importAssets(csvRow: List[Map[String, String]], fileName, user, logId, roadTypeLimitations)
+
+    } catch {
+      case e: Exception =>
+        OracleDatabase.withDynTransaction  {
+        importLogDao.update(logId, Status.Abend, Some("Latauksessa tapahtui odottamaton virhe: " + e.toString))
+        }
+      }
+  }
 }
 
 

@@ -1,10 +1,15 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Decode, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Sequences
@@ -47,7 +52,7 @@ object OracleObstacleDao {
 
   private def query() = {
     """
-      select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
       case
         when ev.name_fi is not null then ev.name_fi
         else null
@@ -118,8 +123,22 @@ object OracleObstacleDao {
     }
   }
 
-  implicit val getPointAsset = new GetResult[ObstacleRow] {
-    def apply(r: PositionedResult) = {
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[Obstacle] = {
+    val recordLimit = token match {
+    case Some(tk) =>
+    val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+    val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+     s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+    queryToObstacle(recordLimit)
+  }
+
+  implicit val getPointAsset: GetResult[ObstacleRow] = new GetResult[ObstacleRow] {
+    def apply(r: PositionedResult): ObstacleRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get
@@ -197,7 +216,7 @@ object OracleObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
+  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource): Long = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
@@ -211,7 +230,7 @@ object OracleObstacleDao {
            set
            start_measure = $mValue,
            link_id = ${obstacle.linkId},
-           adjusted_timestamp = ${adjustedTimeStamp},
+           adjusted_timestamp = $adjustedTimeStamp,
            link_source = ${linkSource.value}
           where id = (select position_id from asset_link where asset_id = $id)
         """.execute
@@ -253,7 +272,7 @@ object OracleObstacleDao {
     queryToObstacle(queryWithFilter)
   }
 
-  def updateFloatingAsset(obstacleUpdated: Obstacle) = {
+  def updateFloatingAsset(obstacleUpdated: Obstacle): Unit = {
     val id = obstacleUpdated.id
 
     sqlu"""update asset set municipality_code = ${obstacleUpdated.municipalityCode}, floating =  ${obstacleUpdated.floating} where id = $id""".execute
@@ -308,7 +327,7 @@ object OracleObstacleDao {
   }
 
   implicit val getObstacleShapefile = new GetResult[ObstacleShapefile] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): ObstacleShapefile = {
       val lon = r.nextDouble()
       val lat = r.nextDouble()
 
@@ -316,7 +335,7 @@ object OracleObstacleDao {
     }
   }
 
-  def getObstaclesFromShapefileTable(): Seq[ObstacleShapefile] = {
+  def getObstaclesFromShapefileTable: Seq[ObstacleShapefile] = {
     sql"""
            SELECT X_KOORDI, Y_KOORDI FROM DRSTA_PUUTTUVAT_VVH_ESTEET
            """.as[ObstacleShapefile].list

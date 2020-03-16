@@ -53,6 +53,8 @@ class WidthLimitService(val roadLinkService: RoadLinkService) extends PointAsset
 
   override def setAssetPosition(asset: IncomingWidthLimit, geometry: Seq[Point], mValue: Double) = throw new UnsupportedOperationException("Not Supported Method")
 
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedAsset] = throw new UnsupportedOperationException("Not Supported Method")
+
   override def update(id: Long, updatedAsset: IncomingWidthLimit, roadLink: RoadLink, username: String) = throw new UnsupportedOperationException("Not Supported Method")
 
   override def setFloating(persistedAsset: WidthLimit, floating: Boolean) = {
@@ -69,7 +71,7 @@ class WidthLimitService(val roadLinkService: RoadLinkService) extends PointAsset
 
   override def toIncomingAsset(asset: IncomePointAsset, link: RoadLink) = throw new UnsupportedOperationException("Not Supported Method")
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[WidthLimit] =  { throw new UnsupportedOperationException("Not Supported Method") }
 }

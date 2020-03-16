@@ -23,6 +23,15 @@ class MunicipalityDao {
     }
   }
 
+  implicit val getMunicipalityInfo = new GetResult[MunicipalityInfo] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextInt()
+      val ely = r.nextInt()
+      val name = r.nextString()
+
+      MunicipalityInfo(id, ely, name)
+    }
+  }
 
   def getMunicipalities: Seq[Int] = {
     sql"""
@@ -41,8 +50,26 @@ class MunicipalityDao {
       select name_fi from municipality where id = $id""".as[String].first
   }
 
+  def getMunicipalityIdByName(municipalityName: String): List[MunicipalityInfo] = {
+    sql"""
+      select id, ely_nro, name_fi
+      from municipality
+      where LOWER(name_fi) = LOWER($municipalityName)"""
+      .as[MunicipalityInfo].list
+  }
+
   def getMunicipalityById(id: Int): Seq[Int] = {
     sql"""select id from municipality where id = $id """.as[Int].list
+  }
+
+  def getMunicipalityByCoordinates(coordinates: Point): Seq[MunicipalityInfo] = {
+    sql"""
+          select m.id, m.ely_nro,
+                 case when m.name_fi is not null then m.name_fi else m.name_sv end as name
+          from municipality m,
+               table(sdo_util.getvertices(m.geometry)) t
+            where trunc( t.x ) = ${coordinates.x} and trunc( t.y ) = ${coordinates.y}
+      """.as[MunicipalityInfo].list
   }
 
   def getMunicipalitiesNameAndIdByCode(codes: Set[Int]): List[MunicipalityInfo] = {
@@ -51,9 +78,7 @@ class MunicipalityDao {
     sql"""
       select id, ely_nro, name_fi from municipality
       #$filter
-    """.as[(Int, Int, String)].list
-      .map{ case(id, ely, name) =>
-        MunicipalityInfo(id, ely, name)}
+    """.as[MunicipalityInfo].list
   }
 
   def getMunicipalitiesNameAndIdByEly(ely: Set[Int]): List[MunicipalityInfo] = {
@@ -62,9 +87,7 @@ class MunicipalityDao {
     sql"""
       select id, ely_nro, name_fi from municipality
       #$filter
-    """.as[(Int, Int, String)].list
-      .map{ case(id, ely, name) =>
-        MunicipalityInfo(id, ely, name)}
+    """.as[MunicipalityInfo].list
   }
 
   def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] =  {
@@ -97,5 +120,18 @@ class MunicipalityDao {
     OracleDatabase.withDynSession {
       sql"""select id, name_fi from ely where id in (#${elys.mkString(",")} )""".as[(Int, String)].list
     }
+  }
+
+  def getElysIdAndNamesByCoordinates(lon: Int, lat: Int): Seq[(Int, String)] = {
+    sql"""
+         select e.id,
+         	case
+         		when e.name_fi is not null then e.name_fi
+         		else e.name_sv
+         	end as name
+         from ely e,
+              table(sdo_util.getvertices(e.geometry)) t
+         	where trunc( t.x ) = $lon and trunc( t.y ) = $lat
+       """.as[(Int, String)].list
   }
 }
