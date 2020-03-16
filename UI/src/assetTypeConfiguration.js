@@ -78,16 +78,21 @@
       return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
     };
 
-    var cyclingAndWalkingValidator = function( selectedLinearAsset, id) {
-      if ( _.isUndefined(selectedLinearAsset) || _.isUndefined(id) || ![3,4,5,18].includes(id))
+    var cyclingAndWalkingValidator = function(selectedLinearAsset, id) {
+      if (_.isUndefined(selectedLinearAsset) || _.isUndefined(id))
         return false;
 
       var currentAsset = _.head(selectedLinearAsset);
 
-      return (  ( id === 3 && (currentAsset.functionalClass !== 8 || currentAsset.linkType !== 8) ) ||
-        ( id === 4 && ![1,3].includes(currentAsset.administrativeClass) ) ||
-        ( id === 5 && currentAsset.administrativeClass !== 2) ||
-        ( id === 18 && currentAsset.linkType !== 12 ) );
+      return function() {
+        switch (id) {
+          case 3: return currentAsset.functionalClass !== 8 || currentAsset.linkType !== 8;
+          case 4: return ![1,3].includes(currentAsset.administrativeClass);
+          case 5: return currentAsset.administrativeClass !== 2;
+          case 18: return currentAsset.linkType !== 12;
+          default: return false
+        }
+      };
     };
 
     var linearAssetSpecs = [

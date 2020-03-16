@@ -902,7 +902,6 @@ trait LinearAssetOperations {
     ids
   }
 
-  //def validateAssetValue(value: Option[Value]): Unit = {}
   def validateCondition(asset: NewLinearAsset): Unit = {}
 
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}

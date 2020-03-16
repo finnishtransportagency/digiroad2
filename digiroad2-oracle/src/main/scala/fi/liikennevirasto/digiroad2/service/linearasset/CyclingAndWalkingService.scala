@@ -22,17 +22,20 @@ class CyclingAndWalkingService(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
     if (specialCases.contains(singleChoiceId)) {
 
-      val enrichedInfo = roadLinkServiceImpl.getRoadLinkAndComplementaryFromVVH(asset.linkId)
-      val functionalClass = enrichedInfo.head.functionalClass
-      val administrativeClass = enrichedInfo.head.administrativeClass.value
-      val linkType = enrichedInfo.head.linkType.value
+      roadLinkServiceImpl.getRoadLinkAndComplementaryFromVVH(asset.linkId) match {
+        case Some(roadLink) =>
+          val functionalClass = roadLink.functionalClass
+          val administrativeClass = roadLink.administrativeClass.value
+          val linkType = roadLink.linkType.value
 
-      // validate if singleChoiceId match is possible values
-      if ( singleChoiceId == "3" && (functionalClass != 8 || linkType != 8) ||
-         ( singleChoiceId == "4" && !Seq(1, 3).contains(administrativeClass)) || // AdministrativeClass For Road (1) Or Private Road (3)
-         ( singleChoiceId == "5" && administrativeClass != 2) ||
-         ( singleChoiceId == "18" && linkType != 12) )
-        throw new Exception("Invalid Values")
+          // validate if singleChoiceId match is possible values
+          if ( singleChoiceId == "3" && (functionalClass != 8 || linkType != 8) ||
+            ( singleChoiceId == "4" && !Seq(1, 3).contains(administrativeClass)) || // AdministrativeClass For Road (1) Or Private Road (3)
+            ( singleChoiceId == "5" && administrativeClass != 2) ||
+            ( singleChoiceId == "18" && linkType != 12) )
+            throw new Exception("Invalid Values")
+        case _ => throw new Exception("Invalid roadLink")
+      }
     }
   }
 

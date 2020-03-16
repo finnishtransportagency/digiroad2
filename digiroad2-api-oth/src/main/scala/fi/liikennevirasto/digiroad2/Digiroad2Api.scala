@@ -993,7 +993,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "endAddrMValue" ->  link.attributes.getOrElse("VIITE_END_ADDR", link.attributes.get("TEMP_END_ADDR")),
           "administrativeClass" -> link.administrativeClass.value,
           "constructionType" -> extractIntValue(link.attributes, "constructionType"),
-          "linkType" -> ( if (extractIntValue(link.attributes, "linkType") != None) LinkType(extractIntValue(link.attributes, "linkType").asInstanceOf[Int]) else LinkType(99) ),
+          "linkType" -> (if (extractIntValue(link.attributes, "linkType") != None) LinkType(extractIntValue(link.attributes, "linkType").asInstanceOf[Int]) else UnknownLinkType.value),
           "functionalClass" -> extractIntValue(link.attributes, "functionalClass")
         )
       }
@@ -1090,8 +1090,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                 else createFakeNewLinearAssetForValidations (existingAssets.head ,valueOption.get )
 
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
-   //usedService.validateAssetValue(valueOption)
-  usedService.validateCondition(asset)
+    usedService.validateCondition(asset)
 
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {

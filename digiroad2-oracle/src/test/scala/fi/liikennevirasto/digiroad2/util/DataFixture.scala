@@ -1890,9 +1890,8 @@ object DataFixture {
         println(s"Working on municipality : $municipality")
         val cyclingAndWalkingInfo = ImportShapeFileDAO.getCyclingAndWalkingInfo(municipality)
 
+        println(s"Number of records to update ${cyclingAndWalkingInfo.size}")
         if (cyclingAndWalkingInfo.nonEmpty) {
-          println(s"Number of records to update ${cyclingAndWalkingInfo.size}")
-
           val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
 
           cyclingAndWalkingInfo.foreach { asset =>
