@@ -61,29 +61,35 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     "loppupaivamaara" -> "endDate"
   )
 
+  private val singleChoiceMapping = Map(
+    "rakenne" -> "structure",
+    "kunto" -> "condition",
+    "koko" -> "size",
+    "kalvon tyyppi" -> "coatingType",
+    "merkin materiaali" -> "signMaterial",
+    "sijaintitarkenne" -> "locationSpecifier",
+    "kaistan tyyppi" -> "laneType",
+    "elinkaari" -> "lifeCycle",
+    "vauriotyyppi" -> "typeOfDamage",
+    "korjauksen kiireellisyys" -> "urgencyOfRepair"
+  )
+
+  private val multiChoiceMapping = Map(
+    "liikenteenvastainen" -> "oppositeSideSign",
+    "lisaa vanhan lain mukainen koodi" -> "oldTrafficCode"
+  )
+
   private val nonMandatoryMappings = Map(
     "arvo" -> "value",
     "lisatieto" -> "additionalInfo",
     "kunnan id" -> "municipalityId",
     "paamerkin teksti" -> "mainSignText",
-    "rakenne" -> "structure",
-    "kunto" -> "condition",
-    "koko" -> "size",
     "korkeus" -> "height",
-    "kalvon tyyppi" -> "coatingType",
-    "merkin materiaali" -> "signMaterial",
-    "sijaintitarkenne" -> "locationSpecifier",
     "maastokoordinaatti x" -> "terrainCoordinatesX",
     "maastokoordinaatti y" -> "terrainCoordinatesY",
     "tien nimi" -> "roadname",
-    "kaistan tyyppi" -> "laneType",
     "kaista" -> "lane",
-    "elinkaari" -> "lifeCycle",
-    "vauriotyyppi" -> "typeOfDamage",
-    "korjauksen kiireellisyys" -> "urgencyOfRepair",
     "arvioitu kayttoika" -> "lifespanLeft",
-    "lisaa vanhan lain mukainen koodi" -> "oldTrafficCode",
-    "liikenteenvastainen" -> "oppositeSideSign",
     "kaksipuolinen merkki" -> "twoSided",
     "liikennevirran suunta" -> "trafficDirection",
     "suuntima" -> "bearing",
@@ -93,7 +99,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val codeValueFieldMappings = Map(
     "liikennemerkin tyyppi" -> "trafficSignType"
   )
-  val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
+  val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings ++ singleChoiceMapping ++ multiChoiceMapping
 
   override def mandatoryFields = longValueFieldMappings.keySet ++ codeValueFieldMappings.keySet
 
@@ -121,15 +127,24 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
+    val defaultMultiChoiceValue = "0"
+    val defaultSingleChoiceValue = "999"
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
       val (key, value) = parameter
 
       if (isBlank(value.toString)) {
-        if (mandatoryFields.contains(key))
+        if (mandatoryFields.contains(key)) {
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
+        }
+        else if (multiChoiceMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = multiChoiceMapping(key), value = defaultMultiChoiceValue) :: result._2)
+        }
+        else if (singleChoiceMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = defaultSingleChoiceValue) :: result._2)
+        }
         else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
-        }else
+        } else
           result
       } else {
         if (longValueFieldMappings.contains(key)) {
@@ -141,6 +156,10 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         }else if (dateFieldsMapping.contains(key)){
           val (malformedParameters, properties) = verifyDateType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (singleChoiceMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = value) :: result._2)
+        } else if (multiChoiceMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = multiChoiceMapping(key), value = value) :: result._2)
         } else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
         } else

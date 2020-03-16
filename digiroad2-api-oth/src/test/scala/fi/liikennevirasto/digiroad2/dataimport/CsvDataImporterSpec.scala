@@ -109,17 +109,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     headers + rows
   }
 
-  test("validation for traffic sign import fails if type contains illegal characters", Tag("db")) {
-    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "a")
-    val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
-    val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
-
-    trafficSignCsvImporter.processing(invalidCsv, Set(), testUser) should equal(trafficSignCsvImporter.ImportResultPointAsset(
-      malformedRows = List(MalformedRow(
-        malformedParameters = List("liikennemerkin tyyppi"),
-        csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
-  }
-
   test("validation fails if field type \"Linkin ID\" is not filled", Tag("db")) {
     val roadLinkFields = Map("tien nimi (suomi)" -> "nimi", "liikennevirran suunta" -> "5")
     val invalidCsv = csvToInputStream(roadLinkCsvImporter.createCSV(roadLinkFields))
@@ -364,7 +353,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validation for traffic sign import fails if user try to create in an authorize municipality", Tag("db")) {
-    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "671")
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "F37")
     val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
     val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
     when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point])).thenReturn(Seq())
