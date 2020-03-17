@@ -90,7 +90,7 @@
           case 4: return ![1,3].includes(currentAsset.administrativeClass);
           case 5: return currentAsset.administrativeClass !== 2;
           case 18: return currentAsset.linkType !== 12;
-          default: return false
+          default: return false;
         }
       };
     };
