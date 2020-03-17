@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, PropertyValue, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{NewMassTransitStop, ServicePointStopService}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}

@@ -408,7 +408,6 @@ object Queries {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
 
-
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
     sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
@@ -417,9 +416,5 @@ object Queries {
     sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
     sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
-  }
-
-  def getPublicTransporType(assetId: Int): Unit = {
-
   }
 }

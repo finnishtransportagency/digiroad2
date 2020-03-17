@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, MassTransitStopAsset, Modification, PositionCoordinates, Property, PropertyValue, SimpleProperty}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, MassTransitStopAsset, Modification, PositionCoordinates, Property, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, Sequences, ServicePoint, ServicePointBusStopDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -27,7 +27,7 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
     query + s" and a.external_id = $id"
   }
 
-  def create(lon: Double, lat: Double, properties: Seq[SimpleProperty], username: String, municipalityCode: Int): Long = {
+  def create(lon: Double, lat: Double, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int): Long = {
     withDynTransaction {
       val assetId = Sequences.nextPrimaryKeySeqValue
       servicePointBusStopDao.insertAsset(assetId, lon, lat, username, municipalityCode)
@@ -94,11 +94,11 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
     }
   }
 
-  def update(assetId: Long, position: PositionCoordinates, properties: Set[SimpleProperty], username: String, municipalityCode: Int): ServicePoint = {
+  def update(assetId: Long, position: PositionCoordinates, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int): ServicePoint = {
     withDynSession {
       servicePointBusStopDao.updateAssetLastModified(assetId, username)
       updatePosition(assetId, position, municipalityCode)
-      servicePointBusStopDao.update(assetId, properties.toSeq, username)
+      servicePointBusStopDao.update(assetId, properties, username)
 
       val resultAsset = fetchAsset(assetId)
       //    eventbus.publish("service_point:saved", resultAsset)

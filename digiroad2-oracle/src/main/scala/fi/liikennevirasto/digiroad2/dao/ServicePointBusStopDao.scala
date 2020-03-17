@@ -160,7 +160,7 @@ class ServicePointBusStopDao {
     sqlu"update asset set valid_to = sysdate where id = $id".execute
   }
 
-  def update(assetId: Long, properties: Seq[SimpleProperty], user: String) = {
+  def update(assetId: Long, properties: Seq[SimplePointAssetProperty], user: String) = {
     sqlu"""
            UPDATE asset
             SET modified_by = $user, modified_date = sysdate
@@ -210,7 +210,7 @@ class ServicePointBusStopDao {
     updateAssetModified(assetId, modifier).execute
   }
 
-  private def propertyWithTypeAndId(property: SimpleProperty): (String, Option[Long], SimpleProperty) = {
+  private def propertyWithTypeAndId(property: SimplePointAssetProperty): (String, Option[Long], SimplePointAssetProperty) = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     } else {
@@ -219,7 +219,7 @@ class ServicePointBusStopDao {
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[SimpleProperty]) {
+  def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
     properties.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
       updateProperties(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
     }
@@ -233,27 +233,27 @@ class ServicePointBusStopDao {
     Q.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
-  private def updateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PropertyValue]) {
+  private def updateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
     propertyType match {
       case Text | LongText =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValues.head.propertyValue).execute
+          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
 
       case MultipleChoice =>
-        createOrUpdateMultipleChoiceProperty(propertyValues, assetId, propertyId)
+        createOrUpdateMultipleChoiceProperty(propertyValues.asInstanceOf[Seq[PropertyValue]], assetId, propertyId)
 
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         }
 
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
