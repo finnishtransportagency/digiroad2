@@ -46,7 +46,7 @@ object LinearAssetUtils {
 
   def deletedRoadLinkIds(changes: Map[Long, Seq[ChangeInfo]], currentLinkIds: Set[Long]): Seq[Long] = {
     changes.filter(c =>
-      c._2.exists(ci => ci.oldId.contains(c._1)) &&
+      !c._2.exists(ci => ci.newId.contains(c._1)) &&
         !currentLinkIds.contains(c._1)
     ).keys.toSeq
   }
