@@ -118,10 +118,10 @@
     };
 
     this.toolSelection = new me.ToolSelection([
-      new me.Tool('Select', me.selectToolIcon, selectedMassTransitStop ),
-      new me.Tool('Add', setTitleTool(me.addToolIcon, 'Lisää pysäkki'), selectedMassTransitStop ),
+      new me.Tool('Select', me.selectToolIcon, selectedMassTransitStop),
+      new me.Tool('Add', setTitleTool(me.addToolIcon, 'Lisää pysäkki'), selectedMassTransitStop),
       new me.Tool('AddTerminal', setTitleTool(me.terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStop),
-      new me.Tool('AddPointAsset', setTitleTool(me.pointAssetToolIcon, 'Add point asset'), selectedMassTransitStop )
+      new me.Tool('AddPointAsset', setTitleTool(me.pointAssetToolIcon, 'Lisää palvelupiste'), selectedMassTransitStop)
     ]);
 
     function setTitleTool(icon, title) {

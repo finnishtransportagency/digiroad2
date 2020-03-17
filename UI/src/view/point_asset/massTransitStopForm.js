@@ -95,12 +95,12 @@
     return selectedMassTransitStopModel.isSuggested(selectedMassTransitStopModel.get()) && _.isUndefined(selectedMassTransitStopModel.getId());
   }
 
-  var SaveButton = function(isTerminalActive) {
+  var SaveButton = function(busStopTypeSelected) {
     var deleteMessage = 'pysäkin';
 
-    if ( isTerminalActive  == 6 )
+    if (busStopTypeSelected == 6 )
       deleteMessage = 'valitsemasi terminaalipysäkin';
-    else if ( isTerminalActive == 7 )
+    else if (busStopTypeSelected == 7 )
       deleteMessage = 'palvelupiste';
 
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
@@ -199,7 +199,7 @@
       poistaSelected = false;
       var streetViewHandler;
       var isTRMassTransitStop = false;
-      var isTerminalBusStop = false;
+      var busStopTypeSelected = false;
       var roadAddressInfoLabel;
       authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
@@ -224,7 +224,7 @@
 
         readOnly = authorizationPolicy.formEditModeAccess();
         var wrapper;
-        if (readOnly) {
+        if(readOnly){
           wrapper = $('<div />').addClass('wrapper read-only');
         } else {
           wrapper = $('<div />').addClass('wrapper edit-mode');
@@ -232,7 +232,7 @@
         streetViewHandler = getStreetView();
 
         var components;
-        if (isTerminalBusStop == 7 && (applicationModel.getSelectedTool() == 'AddPointAsset') && selectedMassTransitStopModel.getCurrentAsset().id === undefined)  {
+        if (busStopTypeSelected == 7 && (applicationModel.getSelectedTool() == 'AddPointAsset') && selectedMassTransitStopModel.getCurrentAsset().id === undefined)  {
           components = createNewServiceDropDown();
         } else {
           components = getAssetForm();
@@ -241,10 +241,10 @@
         wrapper.append(streetViewHandler.render())
             .append($('<div />').addClass('form form-horizontal form-dark form-masstransitstop').attr('role', 'form').append(userInformationLog()).append(components));
 
-        var buttons = function (isTerminalBusStop) {
+        var buttons = function (busStopTypeSelected) {
           return $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
               .append(new ValidationErrorLabel().element)
-              .append(new SaveButton(isTerminalBusStop).element)
+              .append(new SaveButton(busStopTypeSelected).element)
               .append(new CancelButton().element);
         };
 
@@ -253,7 +253,7 @@
 
           if (_.isNumber(selectedMassTransitStopModel.getByProperty('nationalId'))) {
             header = $('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
-          } else if (isTerminalBusStop) {
+          } else if (busStopTypeSelected == 6) {
             header = $('' + '<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
           } else {
             header = $('' + '<span>Uusi pys&auml;kki</span>');
@@ -263,11 +263,11 @@
 
         rootElement.find("#feature-attributes-header").html(busStopHeader());
         rootElement.find("#feature-attributes-form").html(wrapper);
-        rootElement.find("#feature-attributes-footer").html($('<div />').addClass('mass-transit-stop form-controls').append(buttons(isTerminalBusStop)));
+        rootElement.find("#feature-attributes-footer").html($('<div />').addClass('mass-transit-stop form-controls').append(buttons(busStopTypeSelected)));
         addDatePickers();
 
         /*After added the form to the html, validate if tarkenne is to show or not */
-        if (isTerminalBusStop == 7 ) {
+        if (busStopTypeSelected == 7) {
             hideOrShowTarkenne();
         }
 
@@ -898,9 +898,9 @@
 
         /* don't change == to ===
         * sometimes the value is int other times is string*/
-        if (isTerminalBusStop == 6 ) {
+        if (busStopTypeSelected == 6 ) {
           properties = sortAndFilterTerminalProperties(allProperties);
-        } else if  (isTerminalBusStop == 7){
+        } else if  (busStopTypeSelected == 7){
           properties = sortAndFilterServicePointProperties(allProperties);
 
         }else{
@@ -923,7 +923,7 @@
             return directionChoiceHandler(feature);
           } else if (propertyType === "single_choice") {
             return singleChoiceHandler(feature, enumeratedPropertyValues);
-          } else if (feature.propertyType === "multiple_choice" && isTerminalBusStop == 6) {
+          } else if (feature.propertyType === "multiple_choice" && busStopTypeSelected == 6) {
             return terminalMultiChoiceHandler(feature);
           } else if (feature.propertyType === "multiple_choice") {
             return multiChoiceHandler(feature, enumeratedPropertyValues);
@@ -1024,7 +1024,7 @@
       eventbus.on('asset:modified', function(){
         readOnly = authorizationPolicy.formEditModeAccess();
 
-        if (isTerminalBusStop == 7 && !readOnly && readOnly !== undefined &&
+        if (busStopTypeSelected == 7 && !readOnly && readOnly !== undefined &&
               selectedMassTransitStopModel.getCurrentAsset() !== undefined && selectedMassTransitStopModel.getCurrentAsset().id === undefined) {
           selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{
             propertyValue: "7",
@@ -1108,7 +1108,7 @@
       });
 
       eventbus.on('terminalBusStop:selected', function(value) {
-        isTerminalBusStop = value;
+        busStopTypeSelected = value;
       });
 
 
@@ -1127,8 +1127,8 @@
         var result = $('<div />').addClass('form-group new-service');
 
         result = result.append( $('<select />').addClass('form-control select').change(newServiceSelectOnChange)
-                        .append($('<option />').text('Lisää uusi rajoitus').addClass('empty').attr('disabled', true).attr('selected', true))
-                        .append( enumVals.map(function (enumVal) {
+                        .append($('<option />').text('Lisää uusi palvelu').addClass('empty').attr('disabled', true).attr('selected', true))
+                        .append(enumVals.map(function (enumVal) {
                             return $('<option>').text(enumVal.propertyDisplayValue).attr('value', enumVal.propertyValue);
                           })));
 
@@ -1174,7 +1174,6 @@
             }
         }
       }
-
 
       backend.getEnumeratedPropertyValues();
     }

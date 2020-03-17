@@ -158,8 +158,8 @@
       var resultValues = {palvelu: undefined, tarkenne: undefined};
 
       if (data.propertyData !== undefined) {
-        resultValues.palvelu = data.propertyData.find(function (prop) { if (prop.publicId == "palvelu") return prop; });
-        resultValues.tarkenne = data.propertyData.find(function (prop) { if (prop.publicId == "tarkenne") return prop; });
+        resultValues.palvelu = _.find(data.propertyData, function(prop) {return prop.publicId == "palvelu";});
+        resultValues.tarkenne = _.find(data.propertyData, function(prop) {return prop.publicId == "tarkenne";});
       }
 
       if (resultValues.palvelu !== undefined) {

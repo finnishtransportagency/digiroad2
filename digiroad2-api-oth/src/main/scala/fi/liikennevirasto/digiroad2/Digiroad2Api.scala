@@ -382,9 +382,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/massTransitStop/:id") {
     val id = params("id").toLong
     val massTransitStopReturned = massTransitStopService.getMassTransitStopByIdWithTRWarnings(id)
+
     val massTransitStop = massTransitStopReturned._1.map { stop =>
-
-
       Map("id" -> stop.id,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
@@ -396,6 +395,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "floating" -> stop.floating,
         "propertyData" -> stop.propertyData,
         "municipalityCode" -> massTransitStopReturned._3)
+    }
+
+    if (massTransitStopReturned._2) {
+      TierekisteriNotFoundWarning(massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found")))
+    } else {
+      massTransitStop.getOrElse(NotFound("Mass transit stop " + id + " not found"))
     }
   }
 

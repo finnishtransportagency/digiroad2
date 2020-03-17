@@ -47,7 +47,6 @@
 
     var refreshAssetsServiceStops = function(mapMoveEvent) {
       var treatAssets = function (backendAssets) {
-        backendAssets = filterComplementaries(backendAssets);
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {

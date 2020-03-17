@@ -1,4 +1,3 @@
-
 package fi.liikennevirasto.digiroad2.util
 
 import java.security.InvalidParameterException

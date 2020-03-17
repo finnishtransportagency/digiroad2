@@ -179,7 +179,6 @@
       }
     });
 
-    eventbus.on('servicePointCheckbox:changed');
     eventbus.on('asset:saved asset:created', function() {
       changedProps = [];
       assetHasBeenModified = false;
