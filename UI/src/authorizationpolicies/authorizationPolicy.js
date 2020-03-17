@@ -79,5 +79,12 @@
       return (selectedAsset.isNew() && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
 
+    this.isMunicipalityExcluded = function (selectedAsset) {
+      var municipalitiesExcluded = [478,60,65,76,170,736,771,43,417,438,35,62,295,318,766,941];
+      var isOperatorAndHaveRights = me.isOperator() && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
+
+      return municipalitiesExcluded.indexOf(selectedAsset.municipalityCode) >= 0 && isOperatorAndHaveRights;
+    };
+
   };
 })(this);
