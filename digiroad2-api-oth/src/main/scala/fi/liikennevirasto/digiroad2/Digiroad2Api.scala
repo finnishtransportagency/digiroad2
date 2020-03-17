@@ -1959,7 +1959,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
         val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
         val totalSuggestedAssets = verificationService.getNumberSuggestedAssetNumber(municipalitiesNumbers)
-        val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
+        val modifiedAssetTypes = verificationService.getAssetsLatestModifications(municipalitiesNumbers)
 
         val updateUserLastLoginDate = user.copy(configuration = userConfiguration.copy(lastLoginDate = Some(LocalDate.now().toString)))
         userProvider.updateUserConfiguration(updateUserLastLoginDate)
