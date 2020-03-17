@@ -53,15 +53,8 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
     servicePointBusStopDao.fetchAsset(withId(id)).headOption.getOrElse(throw new NoSuchElementException)
   }
 
-//  def fetchAssetByNationalId(id: Long): Option[ServicePoint] = {
-//    servicePointBusStopDao.fetchAsset(massTransitStopDao.withNationalIdAndNotExpired(id)).headOption
-//  }
-
-  def expre(asset: ServicePoint, username: String) = {
+  def expire(asset: ServicePoint, username: String) = {
     servicePointBusStopDao.expire(asset.id, username)
-
-//TODO if vallu receive expirate
-//    eventbus.publish("service_point:saved", asset.id)
   }
 
   protected def updatePosition(id: Long, position: PositionCoordinates, municipalityCode: Int) = {
@@ -101,7 +94,6 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
       servicePointBusStopDao.update(assetId, properties, username)
 
       val resultAsset = fetchAsset(assetId)
-      //    eventbus.publish("service_point:saved", resultAsset)
       resultAsset
     }
   }
