@@ -79,11 +79,11 @@
       return (selectedAsset.isNew() && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
 
-    this.isMunicipalityExcluded = function (selectedAsset) {
-      var municipalitiesExcluded = [478,60,65,76,170,736,771,43,417,438,35,62,295,318,766,941];
+    this.isStateExclusions = function (selectedAsset) {
+      var statesExcluded = [35,43,60,62,65,76,170,295,318,417,438,478,736,766,771,941];
       var isOperatorAndHaveRights = me.isOperator() && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
 
-      return municipalitiesExcluded.indexOf(selectedAsset.municipalityCode) >= 0 && isOperatorAndHaveRights;
+      return _.includes(statesExcluded, selectedAsset.municipalityCode) && isOperatorAndHaveRights;
     };
 
   };

@@ -8,7 +8,7 @@
       var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
       var isMaintainerWithRightsOrOperator = isMaintainerAndHaveRights || me.isOperator();
 
-      return me.isMunicipalityExcluded(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator );
+      return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator );
     };
 
     this.handleSuggestedAsset = function(selectedAsset, value, layerMode) {
