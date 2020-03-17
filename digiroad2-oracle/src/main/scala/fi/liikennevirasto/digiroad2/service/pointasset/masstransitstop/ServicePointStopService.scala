@@ -3,13 +3,12 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, MassTransitStopAsset, Modification, PositionCoordinates, Property, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, MassTransitStopAsset, Modification, PositionCoordinates, Property, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, Sequences, ServicePoint, ServicePointBusStopDao}
+import fi.liikennevirasto.digiroad2.dao.{Sequences, ServicePoint, ServicePointBusStopDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 
-case class ServicePointPublishInfo(asset: Option[ServicePoint], detachAsset: Seq[Long], attachedAsset: Seq[Long])
 case class PersistedPublicTransportStop(id: Long, nationalId: Long, stopTypes: Seq[Int], municipalityCode: Int, lon: Double, lat: Double, validityPeriod: Option[String],
                                         vvhTimeStamp: Long, created: Modification, modified: Modification, propertyData: Seq[Property])
 
@@ -27,14 +26,22 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
     query + s" and a.external_id = $id"
   }
 
-  def create(lon: Double, lat: Double, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int): Long = {
-    withDynTransaction {
-      val assetId = Sequences.nextPrimaryKeySeqValue
+  def create(lon: Double, lat: Double, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int, withTransaction: Boolean = true): Long = {
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    def create = {
       servicePointBusStopDao.insertAsset(assetId, lon, lat, username, municipalityCode)
       servicePointBusStopDao.updateAssetProperties(assetId, properties)
-
-      assetId
     }
+
+    if(withTransaction){
+      withDynTransaction {
+        create
+      }
+    }else{
+      create
+    }
+
+    assetId
   }
 
   def getById(id: Long): Option[ServicePoint] = {
@@ -75,26 +82,34 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[ServicePoint] = {
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
-      val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId} and $boundingBoxFilter and ( a.valid_to is null or a.valid_to > sysdate)"
+      val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId} and $boundingBoxFilter"
       servicePointBusStopDao.fetchAsset(withFilter(filter))
     }
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[ServicePoint] = {
     withDynSession {
-      val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId}  and a.municipality_code = $municipalityCode and ( a.valid_to is null or a.valid_to > sysdate)"
+      val filter = s"and a.asset_type_id = ${MassTransitStopAsset.typeId}  and a.municipality_code = $municipalityCode"
       servicePointBusStopDao.fetchAsset(withFilter(filter))
     }
   }
 
-  def update(assetId: Long, position: PositionCoordinates, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int): ServicePoint = {
-    withDynSession {
+  def update(assetId: Long, position: PositionCoordinates, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int, withTransaction: Boolean = true): ServicePoint = {
+    def update = {
       servicePointBusStopDao.updateAssetLastModified(assetId, username)
       updatePosition(assetId, position, municipalityCode)
       servicePointBusStopDao.update(assetId, properties, username)
 
       val resultAsset = fetchAsset(assetId)
       resultAsset
+    }
+
+    if(withTransaction){
+      withDynTransaction {
+        update
+      }
+    }else{
+      update
     }
   }
 }
