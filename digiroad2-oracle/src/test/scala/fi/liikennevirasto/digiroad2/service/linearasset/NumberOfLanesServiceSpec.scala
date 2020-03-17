@@ -41,6 +41,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
@@ -81,6 +82,7 @@ class NumberOfLanesServiceSpec extends LinearAssetSpecSupport {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new NumberOfLanesService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val roadLinks = Seq(RoadLink(oldLinkId, geom, len, State, functionalClass, TrafficDirection.BothDirections, Freeway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),

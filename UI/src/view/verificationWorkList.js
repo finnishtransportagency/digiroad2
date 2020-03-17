@@ -29,9 +29,11 @@
         '</div>' +
         '</div>'
       );
+      me.addSpinner();
       listP.then(function(assets) {
         var unverifiedAssets = _.map(assets, _.partial(me.workListItemTable, layerName));
         $('#work-list .work-list').html(unverifiedAssets);
+        me.removeSpinner();
       });
     };
   };

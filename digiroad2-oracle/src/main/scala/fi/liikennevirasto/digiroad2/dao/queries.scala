@@ -1,20 +1,30 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
+
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
-import slick.jdbc.{StaticQuery => Q, PositionedResult, GetResult, SetParameter}
+import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
+import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
+
 import scala.math.BigDecimal.RoundingMode
-import java.text.{NumberFormat, DecimalFormat}
+import java.text.{DecimalFormat, NumberFormat}
+
 import Q._
-import org.joda.time.{LocalDate, DateTime}
+import org.joda.time.{DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
+
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.read
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -44,6 +54,14 @@ object Queries {
   implicit val getAssetType = new GetResult[AssetType] {
     def apply(r: PositionedResult) = {
       AssetType(r.nextLong, r.nextString, r.nextString)
+    }
+  }
+
+  implicit val formats = Serialization.formats(NoTypeHints)
+
+  implicit val getUser = new GetResult[User] {
+    def apply(r: PositionedResult) = {
+      User(r.nextLong(), r.nextString(), read[Configuration](r.nextString()), r.nextStringOption())
     }
   }
 
@@ -105,6 +123,7 @@ object Queries {
     sqlu"""update ASSET set VALID_TO = sysdate, MODIFIED_BY = $username, modified_date = sysdate where id = $id""".execute
   }
 
+  def propertyIdByPublicIdAndTypeId = "select id from property where public_id = ? and asset_type_id = ?"
   def propertyIdByPublicId = "select id from property where public_id = ?"
   def getPropertyIdByPublicId(id: String) = sql"select id from property where public_id = $id".as[Long].first
   def getPropertyMaxSize = "select max_value_length from property where public_id = ?"
@@ -123,6 +142,13 @@ object Queries {
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE)
     """
 
+  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
+    sqlu"""
+     update multiple_choice_value set enumerated_value_id =
+       (select id from enumerated_value where value = $propertyValue and property_id = $propertyId)
+       where asset_id = $assetId and property_id = $propertyId
+   """
+
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
@@ -138,6 +164,9 @@ object Queries {
 
   def existsTextProperty =
     "select id from text_property_value where asset_id = ? and property_id = ?"
+
+  def existsMultipleChoiceProperty =
+    "select asset_id from multiple_choice_value where asset_id = ? and property_id = ?"
 
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
     sqlu"""
@@ -349,12 +378,48 @@ object Queries {
     """.as[(Long, Long, Int, Option[String], Option[String])].list
   }
 
+  //Table lorry_parking_to_datex2 created using an shape file importer, does't exist on Flyway
+  def getLorryParkingToTransform(): Set[LorryParkingInDATEX2] = {
+    //When getting the geometry column it need to be in the SRID 4258
+    //workaround if geometry is not in SRID 4258. SDO_CS.TRANSFORM(GEOMETRY, 4258)
+    Q.queryNA[LorryParkingInDATEX2](
+      s"""
+      select PALVPISTID, PALVELUID, TYYPPI, TYYPPI_TAR, NIMI, LISATIEDOT, MUOKKAUSPV, KUNTAKOODI, GEOMETRY from lorry_parking_to_datex2
+    """).iterator.toSet
+  }
+
+  implicit val getLorryParkings = new GetResult[LorryParkingInDATEX2] {
+    def apply(r: PositionedResult) = {
+      val servicePointId = r.nextLongOption()
+      val serviceId = r.nextLongOption()
+      val parkingType = r.nextInt()
+      val parkingTypeMeaning = r.nextInt()
+      val name = r.nextStringOption()
+      val additionalInfo = r.nextStringOption()
+      val modifiedDate = r.nextStringOption()
+      val municipalityCode = r.nextInt()
+      val point = r.nextBytesOption().map(bytesToPoint).get
+
+      LorryParkingInDATEX2(servicePointId, serviceId, parkingType, parkingTypeMeaning, name, additionalInfo, point.x, point.y, modifiedDate, municipalityCode)
+    }
+  }
+
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
+  }
+
+
+  def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
+    sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE UNKNOWN_SPEED_LIMIT SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE INACCURATE_ASSET SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE INCOMPLETE_LINK SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
+    sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
+    sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
   }
 
   def getPublicTransporType(assetId: Int): Unit = {
 
   }
-
 }

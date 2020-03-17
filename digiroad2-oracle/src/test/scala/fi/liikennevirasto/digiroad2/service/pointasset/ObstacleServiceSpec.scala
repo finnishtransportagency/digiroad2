@@ -43,6 +43,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
 
+  when(mockRoadLinkService.getHistoryDataLinksFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
+
   val service = new ObstacleService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
 
@@ -95,7 +97,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Create new obstacle") {
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink)
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke", roadLink)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -110,7 +114,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       asset.mValue should be(2)
       asset.floating should be(false)
       asset.municipalityCode should be(235)
-      asset.obstacleType should be(2)
+      asset.propertyData.find(_.publicId == "esterakennelma").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should be(2)
       asset.createdBy should be(Some("jakke"))
       asset.createdAt shouldBe defined
     }
@@ -119,13 +123,15 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle") {
     runWithRollback {
       val obstacle = service.getById(600046).get
-      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, 2)
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, Set(simpleProperty))
 
       val roadLink =  RoadLink(obstacle.linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 200, Municipality, FunctionalClass.Unknown, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), linkSource = NormalLinkInterface)
       service.update(obstacle.id, updated, roadLink, "unit_test")
       val updatedObstacle = service.getById(600046).get
 
-      updatedObstacle.obstacleType should equal(2)
+      updatedObstacle.propertyData.find(_.publicId == "esterakennelma").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should equal(2)
       updatedObstacle.id should equal(obstacle.id)
       updatedObstacle.modifiedBy should equal(Some("unit_test"))
       updatedObstacle.modifiedAt shouldBe defined
@@ -135,7 +141,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Asset can be outside link within treshold") {
     runWithRollback {
       val roadLink = RoadLink(1191950690, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 14.178, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", roadLink)
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, Set(simpleProperty)), "unit_test", roadLink)
       val asset = service.getById(id).get
       asset.floating should be(false)
     }
@@ -175,7 +183,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       val roadLink = RoadLink(5797521, geometry, 101.85, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(853)))
-      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink)
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, Set(simpleProperty)), "unit_test", roadLink)
 
       val asset = service.getById(id).get
 
@@ -256,7 +266,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
           """.execute
 
 
-      val result = service.getFloatingObstacles(1, lastIdUpdate, lineRange)
+      val result = service.getFloatingObstacles(1, lastIdUpdate, lineRange).sortBy(_.id)
 
       result.foreach { fields =>
         fields.floating should be(true)
@@ -282,7 +292,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     OracleDatabase.withDynTransaction {
       val obstacle = service.getById(600046).get
       val newMvalue = obstacle.mValue+1
-      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true, mValue = newMvalue, linkId = 1611317, modifiedBy = Some("unit_test"))
+      val pointAssetProperty = Property(111111, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+      val newObstacle = obstacle.copy(municipalityCode = 500, floating = true, mValue = newMvalue, linkId = 1611317, modifiedBy = Some("unit_test"), propertyData = Seq(pointAssetProperty))
 
       service.updateFloatingAsset(newObstacle)
       val updatedObstacle = service.getById(600046).get
@@ -301,15 +312,17 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle with geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingObstacle(0.0, 20.0, 388553075, 2), "jakke", roadLink )
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val id = service.create(IncomingObstacle(0.0, 20.0, 388553075, Set(simpleProperty)), "jakke", roadLink )
       val oldAsset = service.getPersistedAssetsByIds(Set(id)).head
-      val newId = service.update(id, IncomingObstacle(0.0, 10.0, 388553075, 2), roadLink, "test")
+      val newId = service.update(id, IncomingObstacle(0.0, 10.0, 388553075, Set(simpleProperty)), roadLink, "test")
       oldAsset.modifiedAt.isDefined should equal(false)
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should not be id
       updatedAsset.lon should equal (0.0)
       updatedAsset.lat should equal (10.0)
-      updatedAsset.obstacleType should equal(2)
+      updatedAsset.propertyData.find(_.publicId == "esterakennelma").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should equal(2)
       updatedAsset.createdBy should equal (oldAsset.createdBy)
       updatedAsset.createdAt should equal (oldAsset.createdAt)
       updatedAsset.modifiedBy should equal (Some("test"))
@@ -320,10 +333,14 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle without geometry changes"){
     runWithRollback {
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(0.0, 20.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingObstacle(0.0, 20.0, 388553075, 2), "jakke", roadLink )
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val id = service.create(IncomingObstacle(0.0, 20.0, 388553075, Set(simpleProperty)), "jakke", roadLink )
       val asset = service.getPersistedAssetsByIds(Set(id)).head
 
-      val newId = service.update(id, IncomingObstacle(0.0, 20.0, 388553075,1), roadLink, "test")
+      val updatedValues = Seq(PropertyValue("1"))
+      val updatedSimpleProperty = SimplePointAssetProperty("esterakennelma", updatedValues)
+      val newId = service.update(id, IncomingObstacle(0.0, 20.0, 388553075, Set(updatedSimpleProperty)), roadLink, "test")
 
       val updatedAsset = service.getPersistedAssetsByIds(Set(newId)).head
       updatedAsset.id should be (id)
@@ -331,7 +348,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       updatedAsset.lat should be (asset.lat)
       updatedAsset.createdBy should equal (Some("jakke"))
       updatedAsset.modifiedBy should equal (Some("test"))
-      updatedAsset.obstacleType should equal(1)
+      updatedAsset.propertyData.find(_.publicId == "esterakennelma").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt should equal(1)
     }
   }
 
@@ -340,7 +357,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke_2", roadLink))
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val (id, id1, id2) = (service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke_1", roadLink), service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke_2", roadLink))
 
       val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(3)
@@ -369,7 +388,9 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
 
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", roadLink)
+      val values = Seq(PropertyValue("2"))
+      val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, Set(simpleProperty)), "jakke", roadLink)
 
       val changes = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-12-31T12:00Z"))
       changes.length should be(1)
@@ -393,7 +414,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) VALUES (400001, 2, 300080, 1)""".execute
       Queries.updateAssetGeometry(2, Point(5, 0))
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(388553075))).thenReturn(Seq(RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.AgainstDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq())
 
       val changes = service.getChanged(DateTime.now().minusDays(1), DateTime.now().plusDays(1))
       changes.length should be(0)

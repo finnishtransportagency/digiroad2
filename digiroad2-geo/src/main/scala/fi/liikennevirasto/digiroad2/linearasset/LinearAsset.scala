@@ -16,16 +16,19 @@ trait LinearAsset extends PolyLine {
 sealed trait Value {
   def toJson: Any
 }
+
+case class SpeedLimitValue(value: Int, isSuggested: Boolean = false) extends Value {
+  override def toJson: Any = value
+}
+
 case class NumericValue(value: Int) extends Value {
   override def toJson: Any = value
 }
 case class TextualValue(value: String) extends Value {
   override def toJson: Any = value
 }
-case class MaintenanceRoad(properties: Seq[Properties]) extends Value{
-  override def toJson: Any = properties
-}
-case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
+
+case class Prohibitions(prohibitions: Seq[ProhibitionValue], isSuggested: Boolean = false) extends Value {
   override def toJson: Any = prohibitions
 
   override def equals(obj: scala.Any): Boolean = {
@@ -61,11 +64,10 @@ case class DynamicValue(value: DynamicAssetValue) extends Value {
   }
 }
 
-case class AssetTypes(typeId: Int, value: String)
+case class AssetTypes(typeId: Int, value: String, isSuggested: Int)
 case class AssetProperties(name: String, value: String)
 case class ManoeuvreProperties(name: String, value: Any)
 
-case class Properties(publicId: String, propertyType: String, value: String)
 case class ProhibitionValue(typeId: Int, validityPeriods: Set[ValidityPeriod], exceptions: Set[Int], additionalInfo: String = "")
 case class ValidityPeriod(val startHour: Int, val endHour: Int, val days: ValidityPeriodDayOfWeek,
                           val startMinute: Int = 0, val endMinute: Int = 0) {

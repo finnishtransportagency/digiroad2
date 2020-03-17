@@ -269,6 +269,13 @@
                 imgPosition.y += me.getLabelProperty(value).getHeight();
                 styles = styles.concat(me.getStyle(value, imgPosition));
               });
+
+              var suggestionInfo = getProperty(asset,"suggest_box");
+              if(!_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue)){
+                imgPosition.y += 40;
+                styles = me.suggestionStyle(suggestionInfo, styles, imgPosition.y);
+              }
+
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);
               feature.setProperties(_.omit(asset, 'geometry'));

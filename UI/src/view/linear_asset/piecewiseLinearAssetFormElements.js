@@ -3,27 +3,21 @@
     WinterSpeedLimitsFormElements: WinterSpeedLimitsFormElements,
     EuropeanRoadsFormElements: TextualValueFormElements,
     ExitNumbersFormElements: TextualValueFormElements,
-    MaintenanceRoadFormElements: MaintenanceRoadFormElements,
     DefaultFormElements: DefaultFormElements
   };
 
-  function DefaultFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function DefaultFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
     var formElem = inputFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function WinterSpeedLimitsFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
     var formElem = dropDownFormElement(unit);
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
-  function TextualValueFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
+  function TextualValueFormElements(unit, editControlLabels, className, authorizationPolicy, defaultValue, possibleValues) {
     var formElem = textAreaFormElement();
-    return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
-  }
-
-  function MaintenanceRoadFormElements(unit, editControlLabels, className, defaultValue, possibleValues) {
-   var formElem = maintenanceRoadFormElement();
     return formElementFunctions(unit, editControlLabels, className, defaultValue, possibleValues, formElem);
   }
 
@@ -260,79 +254,5 @@
     function inputElementValue(input) {
       return parseInt(input.val(), 10);
     }
-  }
-
-  function maintenanceRoadFormElement() {
-    var template =  _.template(
-         '<label class="control-label"><%= label %> </label> ' +
-         '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
-
-    return {
-      inputElementValue: inputElementValue,
-      valueString: valueString,
-      measureInput: measureInput
-    };
-
-    function valueString(currentValue) {
-      return currentValue ? currentValue : '-';
-    }
-
-    function measureInput(currentValues, className, possibleValues) {
-
-        var disabled = _.isUndefined(currentValues) ? 'disabled' : '';
-        var template_aux = _.map(possibleValues, function(values) {
-
-          resProp = _.find(currentValues, function (value) {
-            return value.publicId == values.id;
-          });
-
-        currentValue = _.isUndefined(resProp) ? '' : resProp.value;
-
-          switch (values.propType){
-            case "single_choice":
-              var optionTagsLayer = _.map(values.value, function (value) {
-                var selected = value.typeId === parseInt(currentValue) ? " selected" : "";
-                return '<option value="' + value.typeId + '"' + selected + '>' + value.title + '</option>';
-              }).join('');
-
-              return template({className: className, optionTags: optionTagsLayer, disabled: disabled, label: values.name, id: values.id});
-
-            case "text" :
-              return ' ' +
-                  '<label class="control-label">' + values.name + '</label>' +
-                  '<input ' +
-                  '    type="text" ' +
-                  '    class="form-control ' + className + '" id="' + values.id + '"' +
-                  '    value="' + currentValue + '" ' + disabled + ' onclick="">';
-
-            case "checkbox" :
-              var checked = 1 === parseInt(currentValue) ? " checked" : "";
-              return ' ' +
-                  '<label class="control-label">' + values.name + '</label>' +
-                  '<input ' +
-                  '    type="checkbox" ' +
-                  '    class="form-control ' + className + '" id="' + values.id + '"' +
-                  checked + disabled + ' onclick="">';
-
-            case "header" :
-              return ' ' +
-                  '<h2>' + values.name + '</h2>';
-          }});
-        return '<form class="input-unit-combination form-group form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
-    }
-
-      function inputElementValue(input) {
-           return _.map(input, function (propElement) {
-             var type = propElement.type === "select-one" ? "single_choice" : propElement.type;
-             var checkboxValue = propElement.checked? 1: 0;
-             var value = type === 'checkbox' ? checkboxValue : propElement.value;
-
-             return{
-                  'publicId': propElement.id,
-                  'value': value,
-                  'propertyType': type
-              };
-          });
-      }
   }
 })(this);

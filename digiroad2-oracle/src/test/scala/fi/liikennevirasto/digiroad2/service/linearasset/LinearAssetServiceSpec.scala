@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -21,32 +20,31 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
 
 class LinearAssetSpecSupport extends FunSuite with Matchers {
 
-  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  val mockVVHClient = MockitoSugar.mock[VVHClient]
-  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
-  val mockPolygonTools = MockitoSugar.mock[PolygonTools]
+  val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+  val mockPolygonTools: PolygonTools = MockitoSugar.mock[PolygonTools]
 
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkId(388562360L)).thenReturn(Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val roadLinkWithLinkSource = RoadLink(
+  val roadLinkWithLinkSource: RoadLink = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLinkWithLinkSource))
 
-  val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
-  val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+  val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
+  val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
-  val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
-  val mockAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
+  val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
 
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
@@ -214,6 +212,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val linearAssetService = new LinearAssetService(mockRoadLinkService, mockEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val newRoadLinks = Seq(RoadLink(newLinkId, List(Point(0.0, 0.0), Point(25.0, 0.0)), 25.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
@@ -246,7 +245,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:update"), captor.capture())
-      captor.getValue.expiredAssetIds should be (Set(asset1,asset2,asset3))
+      captor.getValue.asInstanceOf[ChangeSet].expiredAssetIds should be (Set(asset1,asset2,asset3))
 
       dynamicSession.rollback()
     }
@@ -259,6 +258,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T  = f
     }
 
     val oldLinkId = 5000
@@ -337,6 +337,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId = 5000
@@ -412,6 +413,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 5001
@@ -500,6 +502,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 5001
@@ -737,6 +740,7 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
     }
 
     val oldLinkId1 = 3056622
@@ -767,21 +771,21 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
       val before = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
-      before should have size(2)
+      before should have size 2
 
       val newAsset = NewLinearAsset(oldLinkId1, 2.187, len, NumericValue(4779), 1, 234567, None)
 
       val id = service.create(Seq(newAsset), assetTypeId, "KX2")
 
-      id should have size (1)
-      id.head should not be (0)
+      id should have size 1
+      id.head should not be 0
 
       val assets = service.getPersistedAssetsByIds(assetTypeId, Set(asset, id.head))
-      assets should have size (2)
+      assets should have size 2
       assets.forall(_.vvhTimeStamp > 0L) should be (true)
 
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
-      after should have size(1)
+      after should have size 1
       after.flatten.forall(_.id != 0) should be (true)
       dynamicSession.rollback()
     }
@@ -928,8 +932,8 @@ class LinearAssetServiceSpec extends LinearAssetSpecSupport  {
       val captor = ArgumentCaptor.forClass(classOf[Seq[PersistedLinearAsset]])
       verify(mockEventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("linearAssets:saveProjectedLinearAssets"), captor.capture())
       val projectedAssets = captor.getValue
-      projectedAssets.length should be(1)
-      projectedAssets.foreach { proj =>
+      projectedAssets.asInstanceOf[Seq[PersistedLinearAsset]].length should be(1)
+      projectedAssets.asInstanceOf[Seq[PersistedLinearAsset]]foreach { proj =>
         proj.id should be (0)
         proj.linkId should be (6000)
       }

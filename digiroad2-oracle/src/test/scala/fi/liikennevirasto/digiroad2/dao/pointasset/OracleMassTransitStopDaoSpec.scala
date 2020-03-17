@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
 import fi.liikennevirasto.digiroad2.Point
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, Modification, PropertyValue}
 import fi.liikennevirasto.digiroad2.dao.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -42,15 +42,15 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
     val propertyRow = PropertyRow(1, "liikennointisuuntima", "", false, "", "")
     val properties = massTransitStopDao.assetRowToProperty(List(createAssetRow(propertyRow)))
     properties.head.publicId must equal("liikennointisuuntima")
-    properties.head.values.head.propertyDisplayValue must equal(Some("Etelä"))
+    properties.head.values.head.asInstanceOf[PropertyValue].propertyDisplayValue must equal(Some("Etelä"))
   }
 
   test("asset row values are mapped correctly to property row") {
     val propertyRow = PropertyRow(1, "sometestproperty", "", false, "123", "foo")
     val properties = massTransitStopDao.assetRowToProperty(List(createAssetRow(propertyRow)))
     properties.head.publicId must equal("sometestproperty")
-    properties.head.values.head.propertyDisplayValue must equal(Some("foo"))
-    properties.head.values.head.propertyValue must equal("123")
+    properties.head.values.head.asInstanceOf[PropertyValue].propertyDisplayValue must equal(Some("foo"))
+    properties.head.values.head.asInstanceOf[PropertyValue].propertyValue must equal("123")
   }
 
   test("get property descriptions correctly"){

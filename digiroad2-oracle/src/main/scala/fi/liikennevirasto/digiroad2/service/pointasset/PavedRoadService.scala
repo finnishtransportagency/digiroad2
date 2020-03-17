@@ -55,7 +55,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val combinedAssets = existingAssets.filterNot(a => expiredIds.contains(a.id) || newAndUpdatedPavedRoadAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
     ) ++ newAndUpdatedPavedRoadAssets
 
-    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks, combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
+    val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks, combinedAssets, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
     val newAssets = newAndUpdatedPavedRoadAssets.filterNot(a => projectedAssets.exists(f => f.linkId == a.linkId)) ++ projectedAssets
 
@@ -147,7 +147,7 @@ class PavedRoadService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
-  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int], informationSource: Option[Int] = None): Option[Long] = {
+  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None, informationSource: Option[Int] = None): Option[Long] = {
     //Get Old Asset
     val oldAsset =
     valueToUpdate match {

@@ -22,11 +22,11 @@ object TierekisteriBusStopStrategyOperations{
   def isStoredInTierekisteri(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean = {
     val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
     val stopType = properties.find(pro => pro.publicId == MassTransitStopOperations.MassTransitStopTypePublicId)
-    val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
-    val isVirtualStop = stopType.exists(_.values.exists(_.propertyValue == MassTransitStopOperations.VirtualBusStopPropertyValue))
-    val isHSLAdministrated =  administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
+    val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
+    val isVirtualStop = stopType.exists(_.values.exists(_.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.VirtualBusStopPropertyValue))
+    val isHSLAdministrated =  administrationProperty.exists(_.values.headOption.exists(_.asInstanceOf[PropertyValue].propertyValue == MassTransitStopOperations.HSLPropertyValue))
     val isAdminClassState = administrativeClass.contains(State)
-    val isOnTerminatedRoad = properties.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).exists(_.values.headOption.exists(_.propertyValue == FloatingReason.TerminatedRoad.value.toString))
+    val isOnTerminatedRoad = properties.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).exists(_.values.headOption.exists(_.asInstanceOf[PropertyValue].propertyValue == FloatingReason.TerminatedRoad.value.toString))
     !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState)) && !isOnTerminatedRoad
   }
 
@@ -45,9 +45,9 @@ object TierekisteriBusStopStrategyOperations{
 
       propertyValueOption match {
         case None => None
-        case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
-        case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
-          Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+        case Some(propertyValue) if propertyValue.asInstanceOf[PropertyValue].propertyValue.isEmpty => None
+        case Some(propertyValue) if propertyValue.asInstanceOf[PropertyValue].propertyValue.nonEmpty =>
+          Some(AdministrativeClass.apply(propertyValue.asInstanceOf[PropertyValue].propertyValue.toInt))
       }
     }
 
@@ -72,18 +72,18 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       properties.map(epv => epv.publicId -> epv.values).toMap
   }
 
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
+  override def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
           filterNot(property => newProperties.exists(_.publicId == property.publicId)).
-          map(property => SimpleProperty(property.publicId, property.values)) ++ newProperties).
+          map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ newProperties).
           filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
       case _ => newProperties.toSeq
     }
     val trSave = newProperties.
       find(property => property.publicId == AssetPropertyConfiguration.TrSaveId).
-      flatMap(property => property.values.headOption).map(p => p.propertyValue)
+      flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
     trSave.isEmpty && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
   }
@@ -92,12 +92,12 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     val administrationClass = MassTransitStopOperations.getAdministrationClass(existingAsset.propertyData)
     val stopLiviId = existingAsset.propertyData.
       find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
-      flatMap(property => property.values.headOption).map(p => p.propertyValue)
+      flatMap(property => property.values.headOption).map(p => p.asInstanceOf[PropertyValue].propertyValue)
 
     stopLiviId.isDefined && TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
-  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {
+  override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimplePointAssetProperty], username: String): Unit = {
     //Remove the Livi ID
     massTransitStopDao.updateTextPropertyValue(existingAsset.id, MassTransitStopOperations.LiViIdentifierPublicId, "")
     getLiviIdValue(existingAsset.propertyData).map {
@@ -113,7 +113,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     val enrichPersistedStop = { super.enrichBusStop(persistedStop, roadLinkOption)._1 }
     val properties = enrichPersistedStop.propertyData
     val liViProp = properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId)
-    val liViId = liViProp.flatMap(_.values.headOption).map(_.propertyValue)
+    val liViId = liViProp.flatMap(_.values.headOption).map(_.asInstanceOf[PropertyValue].propertyValue)
     val tierekisteriStop = liViId.flatMap(tierekisteriClient.fetchMassTransitStop)
     tierekisteriStop.isEmpty match {
       case true => (enrichPersistedStop, true)
@@ -128,7 +128,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) =
     create(asset, username, point, roadLink, createTierekisteriBusStop)
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
     if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(props.toSeq, roadLink)
     }
@@ -149,7 +149,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
     val mergedProperties = (asset.propertyData.
       filterNot(property => properties.exists(_.publicId == property.publicId)).
-      map(property => SimpleProperty(property.publicId, property.values)) ++ properties).
+      map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ properties).
       filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
     //If it was already stored in Tierekisteri
@@ -214,7 +214,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     (persistedAsset, PublishInfo(Some(persistedAsset)))
   }
 
-  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimpleProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  private def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Seq[SimplePointAssetProperty], roadLink: RoadLink, liviId: String, username: String, tierekisteriOperation: (PersistedMassTransitStop, RoadLink, String) => Unit): (PersistedMassTransitStop, AbstractPublishInfo) = {
     optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
     massTransitStopDao.updateAssetLastModified(asset.id, username)
     massTransitStopDao.updateAssetProperties(asset.id, properties)
@@ -229,7 +229,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {
-    properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId).flatMap(prop => prop.values.headOption).map(_.propertyValue)
+    properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId).flatMap(prop => prop.values.headOption).map(_.asInstanceOf[PropertyValue].propertyValue)
   }
 
   private def calculateMovedDistance(asset: PersistedMassTransitStop, optionalPosition: Option[Position]): Double = {
@@ -292,7 +292,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         case false =>
           val propertyValueString = existence.get.propertyValue.toString
           val propertyOverrideValue = massTransitStopEnumeratedPropertyValues.
-            get(property.publicId).get.find(_.propertyValue == propertyValueString).get
+            get(property.publicId).get.find(_.asInstanceOf[PropertyValue].propertyValue == propertyValueString).get
           property.copy(values = Seq(propertyOverrideValue))
       }
     }
@@ -331,7 +331,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     val floatingReason = persistedAsset.propertyData.find(_.publicId == MassTransitStopOperations.FloatingReasonPublicId).map(_.values).getOrElse(Seq()).headOption
 
-    if(persistedAsset.floating && floatingReason.nonEmpty && floatingReason.get.propertyValue == FloatingReason.TerminatedRoad.value.toString)
+    if(persistedAsset.floating && floatingReason.nonEmpty && floatingReason.get.asInstanceOf[PropertyValue].propertyValue == FloatingReason.TerminatedRoad.value.toString)
       (persistedAsset.floating, Some(FloatingReason.TerminatedRoad))
     else {
       (false, None)

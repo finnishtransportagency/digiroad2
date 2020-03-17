@@ -91,6 +91,10 @@
     return (authorizationPolicy.isElyMaintainer() || authorizationPolicy.isOperator()) && ((!hasRoadAddress && isAdministratorELY) || (hasRoadAddress && !isAdministratorELY)) && !floating;
   }
 
+  function saveNewBusStopStrategy() {
+    return selectedMassTransitStopModel.isSuggested(selectedMassTransitStopModel.get()) && _.isUndefined(selectedMassTransitStopModel.getId());
+  }
+
   var SaveButton = function(isTerminalActive) {
     var deleteMessage = 'pysäkin';
 
@@ -111,15 +115,24 @@
         saveStop();
       } else {
         if(optionalSave()){
-          new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
-            successCallback: function () {
-              selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
-              saveStop();
-            },
-            closeCallback: function () {
-              saveStop();
-            }
-          });
+          if(saveNewBusStopStrategy()) {
+            new GenericConfirmPopup('Koska tämä bussipysäkki on määritetty vihjeeksi, siihen liittyviä tietoja ei lähetetä Tierekisteriin. Haluatko silti tallentaa sen OTH:ssa?', {
+              successCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
+                saveStop();
+              }});
+          } else {
+            new GenericConfirmPopup('Oletko varma, ettet halua lähettää pysäkin tietoja Tierekisteriin? Jos vastaat kyllä, tiedot tallentuvat ainoastaan OTH-sovellukseen', {
+              successCallback: function () {
+                selectedMassTransitStopModel.setAdditionalProperty('trSave', [{ propertyValue: 'false' }]);
+                saveStop();
+              },
+              closeCallback: function () {
+                saveStop();
+              }
+            });
+          }
+
         } else {
           saveStop();
         }
@@ -263,6 +276,15 @@
           wrapper.addClass('read-only');
           wrapper.removeClass('edit-mode');
         }
+
+        $('.form-horizontal').on('change', function () {
+          if (selectedMassTransitStopModel.getId()) {
+            var values = [{propertyValue: 0, propertyDisplayValue: "", checked: false}];
+            selectedMassTransitStopModel.setProperty("suggest_box", values, "checkbox");
+
+            rootElement.find('.suggested-box').prop('checked', false).attr('disabled', true);
+          }
+        });
       };
 
       var getStreetView = function() {
@@ -514,6 +536,40 @@
         return element;
       };
 
+      var suggestedCheckboxHandler = function(property) {
+        return authorizationPolicy.handleMassTransitStopSuggestion(selectedMassTransitStopModel, property) ? createWrapper(property).append(createSuggestedCheckBoxElement(readOnly, property)) : '';
+      };
+
+      var createSuggestedCheckBoxElement = function (readOnly, property) {
+        if(readOnly) {
+            var item = $('<p />');
+            item.addClass('form-control-static');
+            item.text('Kylla');
+            return item;
+        } else {
+          var input = $('<input type="checkbox" class="suggested-box"/>');
+
+          if(!_.isEmpty(property.values))
+            input.prop('checked', !!parseInt(property.values[0].propertyValue));
+          else
+            input.prop('checked', false);
+
+          input.change(function() {
+            var values = [{
+              propertyValue: +input.prop('checked'),
+              propertyDisplayValue: '',
+              checked: input.prop('checked')
+            }];
+
+            selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
+          });
+
+          return input;
+
+        }
+        return '';
+      };
+
       var directionChoiceHandler = function(property){
         if (!readOnly) {
           return createWrapper(property).append(createDirectionChoiceElement(property));
@@ -745,6 +801,7 @@
           'viimeinen_voimassaolopaiva',//end date
           'inventointipaiva',//Inventory date
           'pysakin_tyyppi',
+          'pysakin_palvelutaso',
           'korotettu',
           'katos',
           'mainoskatos',
@@ -761,6 +818,7 @@
           'pysakin_omistaja',
           'palauteosoite',
           'lisatiedot',
+          'suggest_box',
           'trSave'];
 
         return _.sortBy(properties, function(property) {
@@ -776,6 +834,7 @@
           'muokattu_viimeksi',
           'nimi_suomeksi',
           'nimi_ruotsiksi',
+          'suggest_box',
           'liitetyt_pysakit'];
 
         return _.sortBy(properties, function(property) {
@@ -874,6 +933,8 @@
             return notificationHandler(feature);
           } else if (propertyType === 'read_only_number') {
             return readOnlyNumberHandler(feature);
+          } else if (propertyType === 'checkbox') {
+            return suggestedCheckboxHandler(feature);
           } else {
             feature.propertyValue = 'Ei toteutettu';
             return $(featureDataTemplateNA(feature));

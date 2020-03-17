@@ -63,6 +63,22 @@
       return current;
     };
 
+
+    /**
+     * Returns link id of current source. Used by ManoeuvreLayer to visualize road links on map.
+     */
+    var isSuggested = function() {
+      return !_.isEmpty(current.manoeuvres) && _.head(current.manoeuvres).isSuggested;
+    };
+
+    /**
+     * Returns link id of current source. Used by ManoeuvreLayer to visualize road links on map.
+     */
+    var getId = function() {
+      return !_.isEmpty(current.manoeuvres) && _.head(current.manoeuvres).id;
+    };
+
+
     /**
      * Returns link id of current source. Used by ManoeuvreLayer to visualize road links on map.
      */
@@ -169,6 +185,10 @@
        */
     var setAdditionalInfo = function(manoeuvreId, additionalInfo) {
       manoeuvresCollection.setAdditionalInfo(manoeuvreId, additionalInfo);
+    };
+
+    var setSuggestionInfo = function(manoeuvreId, linkId, suggestedInfo) {
+      manoeuvresCollection.setSuggestionInfo(manoeuvreId, linkId, suggestedInfo);
     };
 
     /**
@@ -304,9 +324,12 @@
       setExceptions: setExceptions,
       setValidityPeriods: setValidityPeriods,
       setAdditionalInfo: setAdditionalInfo,
+      setSuggestionInfo: setSuggestionInfo,
       save: save,
       cancel: cancel,
       isDirty: isDirty,
+      isSuggested: isSuggested,
+      getId: getId,
       setDirty: setDirty,
       refresh: refresh,
       setTargetRoadLink: setTargetRoadLink,

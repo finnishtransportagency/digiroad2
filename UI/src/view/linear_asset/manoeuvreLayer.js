@@ -1,5 +1,5 @@
 (function(root){
-  root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection, trafficSignReadOnlyLayer) {
+  root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection, trafficSignReadOnlyLayer, suggestionLabel) {
     var me = this;
     var layerName = 'manoeuvre';
     var indicatorVector = new ol.source.Vector({});
@@ -55,6 +55,7 @@
       eventListener.listenTo(eventbus, 'application:readOnly', reselectManoeuvre);
       eventListener.listenTo(eventbus, 'manoeuvre:showExtension', handleManoeuvreExtensionBuilding);
       eventListener.listenTo(eventbus, 'manoeuvre:extend', extendManoeuvre);
+      eventListener.listenTo(eventbus, 'manoeuvre:suggestion', handleSuggestion);
       eventListener.listenTo(eventbus, 'manoeuvre:linkAdded', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'manoeuvre:linkDropped', manoeuvreChangeHandler);
       eventListener.listenTo(eventbus, 'adjacents:updated', drawExtension);
@@ -210,6 +211,27 @@
       }));
     };
 
+    var createSourceSuggestionFeatures = function(roadLinks) {
+      return _.flatten(_.map(roadLinks, function(roadLink) {
+        var points = _.map(roadLink.points, function(point) {
+          return [point.x, point.y];
+        });
+        var lineString = new ol.geom.LineString(points);
+
+        var style = suggestionLabel.suggestionStyle(_.head(roadLink.manoeuvres).isSuggested, {x: 0, y: 0});
+
+        var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
+        var attributes = _.merge({}, roadLink, {
+          type: 'suggestion'
+        });
+        var feature = suggestionLabel.createFeature([middlePoint.x, middlePoint.y]);
+        feature.setProperties(attributes);
+        feature.setStyle(style);
+
+        return feature;
+      }));
+    };
+
     var drawDashedLineFeatures = function(roadLinks) {
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return !_.isEmpty(roadLink.destinationOfManoeuvres);
@@ -253,6 +275,13 @@
         return !_.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
       roadLayer.layer.getSource().addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
+    };
+
+    var drawSourceSuggestionFeatures = function(roadLinks) {
+      var sourceRoadLinks = _.filter(roadLinks, function(roadLink) {
+        return !_.isEmpty(roadLink.manoeuvres);
+      });
+      roadLayer.layer.getSource().addFeatures(createSourceSuggestionFeatures(sourceRoadLinks));
     };
 
     var reselectManoeuvre = function() {
@@ -305,6 +334,7 @@
       drawMultipleDestinationFeatures(linksWithManoeuvres);
       drawSourceDestinationFeatures(linksWithManoeuvres);
       me.drawOneWaySigns(roadLayer.layer, linksWithManoeuvres);
+      drawSourceSuggestionFeatures(linksWithManoeuvres);
       reselectManoeuvre();
     };
 
@@ -483,6 +513,10 @@
         indicatorLayer.getSource().clear();
       }
 
+    };
+
+    var handleSuggestion = function() {
+        draw();
     };
 
     var manoeuvreRemoveMarkers = function(data){

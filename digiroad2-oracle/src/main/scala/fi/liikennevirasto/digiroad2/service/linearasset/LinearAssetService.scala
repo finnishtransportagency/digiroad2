@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
@@ -216,10 +215,11 @@ trait LinearAssetOperations {
             (road.municipalityCode, id, road.administrativeClass)
           }
     }
-      val municipalityNames = municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
+      val municipalityNames = if (unVerified.nonEmpty) municipalityDao.getMunicipalitiesNameAndIdByCode(unVerified.map(_._1).toSet).groupBy(_.id)
+                                else  List[MunicipalityInfo]().groupBy(_.id)
 
       unVerified.groupBy(_._1).map{
-        case (municipalityCode, grouped) => (municipalityNames.get(municipalityCode).get.map(_.name).head, grouped)}
+        case (municipalityCode, grouped) => (municipalityNames(municipalityCode).map(_.name).head, grouped)}
         .mapValues(municipalityAssets => municipalityAssets
           .groupBy(_._3.toString)
           .mapValues(_.map(_._2)))
@@ -260,7 +260,7 @@ trait LinearAssetOperations {
                                valueAdjustments = Seq.empty[ValueAdjustment])
 
     val (projectedAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
+      assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
     val newAssets = projectedAssets ++ assetsWithoutChangedLinks
 
@@ -283,7 +283,7 @@ trait LinearAssetOperations {
     * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
   protected def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
-                                                     currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], changeSet: ChangeSet) : (Seq[PersistedLinearAsset], ChangeSet) ={
+                                                     currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo], changeSet: ChangeSet, existingAssets: Seq[PersistedLinearAsset]) : (Seq[PersistedLinearAsset], ChangeSet) ={
 
     val (replacementChanges, otherChanges) = changes.partition(isReplacementChange)
     val reverseLookupMap = replacementChanges.filterNot(c=>c.oldId.isEmpty || c.newId.isEmpty).map(c => c.newId.get -> c).groupBy(_._1).mapValues(_.map(_._2))
@@ -294,13 +294,73 @@ trait LinearAssetOperations {
 
     val fullChanges = extensionChanges ++ replacementChanges
 
-    val linearAssets = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLinearAsset], changeSet)) {
-      case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, cs)
-        (persistedAsset ++ Seq(linearAsset), changes)
-      case _ => (Seq.empty[PersistedLinearAsset], changeSet)
+
+    val linearAssetsAndChanges = mapReplacementProjections(assetsToUpdate, currentAssets, roadLinks, fullChanges).flatMap {
+      case (asset, (Some(roadLink), Some(projection))) =>
+        val (linearAsset, changes) = assetFiller.projectLinearAsset(asset, roadLink, projection, changeSet)
+        Some((linearAsset, changes))
+      case _ => None
     }
-    linearAssets
+
+    val linearAssets = linearAssetsAndChanges.map(_._1)
+
+    val generatedChangeSet = linearAssetsAndChanges.map(_._2)
+    val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
+    val newLinearAsset = if((linearAssets ++ existingAssets).nonEmpty) {
+      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes)
+    } else Seq()
+
+    (linearAssets ++ newLinearAsset, changeSetF)
+  }
+
+  def newChangeAsset(roadLinks: Seq[RoadLink], existingAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]): Seq[PersistedLinearAsset] = {
+    def getAdjacentAssetByPoint(assets: Seq[(Point, PersistedLinearAsset)], point: Point) : Seq[PersistedLinearAsset] = {
+      assets.filter{case (assetPt, _) => GeometryUtils.areAdjacent(assetPt, point)}.map(_._2)
+    }
+
+    def getAssetsAndPoints(existingAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changeInfo: (ChangeInfo, RoadLink)): Seq[(Point, PersistedLinearAsset)] = {
+      existingAssets.flatMap { asset =>
+          val roadLink = roadLinks.find(_.linkId == asset.linkId)
+          if (roadLink.nonEmpty && roadLink.get.administrativeClass == changeInfo._2.administrativeClass) {
+            GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.endMeasure).map(point => (point, asset)) ++
+              (if (asset.startMeasure == 0)
+                GeometryUtils.calculatePointFromLinearReference(roadLink.get.geometry, asset.startMeasure).map(point => (point, asset))
+              else
+                Seq())
+          } else
+            Seq()
+        }
+    }
+
+    val changesNew = changes.filter(_.changeType == New.value)
+    val linksWithExpiredAssets = withDynTransaction {
+      dao.getLinksWithExpiredAssets(changesNew.flatMap(_.newId.map(x => x)), existingAssets.head.typeId)
+    }
+
+    changesNew.filterNot(chg => existingAssets.exists(_.linkId == chg.newId.get) || linksWithExpiredAssets.contains(chg.newId.get)).flatMap { change =>
+      roadLinks.find(_.linkId == change.newId.get).map { changeRoadLink =>
+        val assetAndPoints : Seq[(Point, PersistedLinearAsset)] = getAssetsAndPoints(existingAssets, roadLinks, (change, changeRoadLink))
+        val (first, last) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
+
+        if (assetAndPoints.nonEmpty) {
+          val assetAdjFirst = getAdjacentAssetByPoint(assetAndPoints, first)
+          val assetAdjLast = getAdjacentAssetByPoint(assetAndPoints, last)
+
+          val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
+          val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
+
+          if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
+            groupBySideCodeFirst.keys.flatMap { sideCode =>
+              groupBySideCodeFirst(sideCode).find(asset => groupBySideCodeLast(sideCode).exists(_.value.equals(asset.value))).map { asset =>
+                asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+              }
+            }
+          } else
+            Seq()
+        } else
+          Seq()
+      }
+    }.flatten
   }
 
   private def mapReplacementProjections(oldLinearAssets: Seq[PersistedLinearAsset], currentLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]) : Seq[(PersistedLinearAsset, (Option[RoadLink], Option[Projection]))] = {
@@ -318,14 +378,14 @@ trait LinearAssetOperations {
       )}
   }
 
-  private def addSourceRoadLinkToChangeInfo(extensionChangeInfo: ChangeInfo, replacementChangeInfo: ChangeInfo) = {
-    def givenAndEqualDoubles(v1: Option[Double], v2: Option[Double]) = {
+  private def addSourceRoadLinkToChangeInfo(extensionChangeInfo: ChangeInfo, replacementChangeInfo: ChangeInfo) : Option[ChangeInfo] = {
+    def givenAndEqualDoubles(v1: Option[Double], v2: Option[Double]): Boolean = {
       (v1, v2) match {
         case (Some(d1), Some(d2)) => d1 == d2
         case _ => false
       }
     }
-    def givenAndEqualLongs(v1: Option[Long], v2: Option[Long]) = {
+    def givenAndEqualLongs(v1: Option[Long], v2: Option[Long]): Boolean = {
       (v1, v2) match {
         case (Some(l1), Some(l2)) => l1 == l2
         case _ => false
@@ -451,9 +511,9 @@ trait LinearAssetOperations {
     * @param withAutoAdjust
     * @return Changed linear assets
     */
-  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust)
+      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinks)

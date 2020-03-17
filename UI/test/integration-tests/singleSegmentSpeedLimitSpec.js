@@ -10,7 +10,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
     });
     expect(features.length).not.to.equal(0);
     _.each(features, function(feature) {
-      expect(feature.getProperties().value).to.equal(limitValue);
+      expect(feature.getProperties().value.value).to.equal(limitValue);
     });
     expect($('#feature-attributes .speed-limit :selected')).to.contain(limitValue.toString());
     expect($('#feature-attributes header span')).to.have.text("Kohteen ID: " + speedLimitId);
@@ -24,7 +24,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         openLayersMap = map;
         testHelpers.selectLayer('speedLimit');
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimitsData));
     });
 
@@ -105,7 +105,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimits));
     });
 
@@ -120,7 +120,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         });
         expect(features.length).not.to.equal(0);
         _.each(features, function(feature) {
-          expect(feature.getProperties().value).to.equal(100);
+          expect(feature.getProperties().value.value).to.equal(100);
         });
       });
 
@@ -149,7 +149,7 @@ define(['chai', 'testHelpers'], function(chai, testHelpers) {
         testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
         done();
-      }, testHelpers.defaultBackend()
+      }, testHelpers.defaultBackend(20)
         .withSpeedLimitsData(speedLimits));
     });
 

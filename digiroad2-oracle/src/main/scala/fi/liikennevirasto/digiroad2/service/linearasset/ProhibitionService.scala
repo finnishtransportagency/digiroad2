@@ -85,7 +85,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val combinedAssets = existingAssets.filterNot(a => assetsWithoutChangedLinks.exists(_.id == a.id))
 
     val (newAssets, changedSet) = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes, initChangeSet)
+      combinedAssets, assetsOnChangedLinks, changes, initChangeSet, existingAssets)
 
     if (newAssets.nonEmpty) {
       logger.info("Transferred %d assets in %d ms ".format(newAssets.length, System.currentTimeMillis - timing))
@@ -108,9 +108,9 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
       val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, newTransaction = false)
-      if (toUpdate.nonEmpty) {
-        val prohibitions = toUpdate.filter(a => Set(LinearAssetTypes.ProhibitionAssetTypeId).contains(a.typeId))
-        val persisted = dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet).groupBy(_.id)
+      if(toUpdate.nonEmpty) {
+        val prohibitions = toUpdate.filter(a => Set(Prohibition.typeId).contains(a.typeId))
+        val persisted = dao.fetchProhibitionsByIds(Prohibition.typeId, prohibitions.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted)
         if (newLinearAssets.nonEmpty)
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
@@ -128,7 +128,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           }
         linearAsset.value match {
           case Some(prohibitions: Prohibitions) =>
-            dao.insertProhibitionValue(id, prohibitions)
+            dao.insertProhibitionValue(id, Prohibition.typeId, prohibitions)
           case _ => None
         }
       }
@@ -148,7 +148,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       if (valueChanged(linearAsset, persistedLinearAsset)) {
         linearAsset.value match {
           case Some(prohibitions: Prohibitions) =>
-            dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
+            dao.updateProhibitionValue(id, linearAsset.typeId, prohibitions, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
@@ -177,7 +177,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
           }
           else {
             dao.updateVerifiedInfo(Set(id), username)
-            dao.updateProhibitionValue(id, prohibitions, username)
+            dao.updateProhibitionValue(id, typeId, prohibitions, username)
           }
         case _ =>
           Some(id)
@@ -190,7 +190,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     dao.fetchProhibitionsByIds(assetTypeId, Set(assetId)).headOption.map {
       oldAsset =>
         if (oldAsset.value.contains(prohibitions)) {
-          dao.updateProhibitionValue(assetId, prohibitions, username, measures).head
+          dao.updateProhibitionValue(assetId, assetTypeId, prohibitions, username, measures).head
         } else {
           //Expire the old asset
           dao.updateExpiration(assetId)
@@ -209,7 +209,7 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, verifiedBy)
     value match {
       case prohibitions: Prohibitions =>
-        dao.insertProhibitionValue(id, prohibitions)
+        dao.insertProhibitionValue(id, typeId, prohibitions)
       case _ => None
     }
     id
@@ -253,10 +253,10 @@ class ProhibitionService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false): Seq[ChangedLinearAsset] = {
+  override def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[ChangedLinearAsset] = {
     val excludedTypes = Seq(PassageThrough, HorseRiding, SnowMobile, RecreationalVehicle, OversizedTransport)
     val prohibitions = withDynTransaction {
-      dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust)
+      dao.getProhibitionsChangedSince(typeId, since, until, excludedTypes, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(prohibitions.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(prohibitions, roadLinks)

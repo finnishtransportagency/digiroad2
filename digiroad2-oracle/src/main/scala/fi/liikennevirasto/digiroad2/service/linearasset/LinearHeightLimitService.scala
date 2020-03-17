@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.process.AssetValidatorInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 
-class LinearHeightLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearSevenRestrictionsOperations {
+class LinearHeightLimitService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl, eventBusImpl) {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
