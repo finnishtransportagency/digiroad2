@@ -1070,9 +1070,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  def createFakeNewLinearAssetForValidations (existingAssets: PersistedLinearAsset, inputValues: Value ): NewLinearAsset ={
-    NewLinearAsset(existingAssets.linkId, existingAssets.startMeasure, existingAssets.endMeasure, inputValues,
-      existingAssets.sideCode, existingAssets.vvhTimeStamp, existingAssets.geomModifiedDate)
+  def createFakeNewLinearAssetsForValidations(existingAssets: Seq[PersistedLinearAsset], inputValues: Option[Value]): Seq[NewLinearAsset] = {
+    inputValues match {
+      case Some(values) => existingAssets.map(existingAsset => NewLinearAsset(existingAsset.linkId, existingAsset.startMeasure,
+        existingAsset.endMeasure, values, existingAsset.sideCode, existingAsset.vvhTimeStamp, existingAsset.geomModifiedDate))
+      case _ => Seq()
+    }
   }
 
   post("/linearassets") {
@@ -1086,11 +1089,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
     val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
-    val asset = if (newLinearAssets.nonEmpty) newLinearAssets.head
-                else createFakeNewLinearAssetForValidations (existingAssets.head ,valueOption.get )
+    val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
 
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
-    usedService.validateCondition(asset)
+    assets.foreach(usedService.validateCondition)
 
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {

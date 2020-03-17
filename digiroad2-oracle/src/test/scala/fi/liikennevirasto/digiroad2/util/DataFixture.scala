@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, ObstacleShapefile}
+import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -1836,7 +1836,7 @@ object DataFixture {
 
     println("\nGetting all obstacles information from the table created by the shapefile import")
     val obstaclesInformation: Seq[ObstacleShapefile] = OracleDatabase.withDynSession {
-      obstacleService.getObstaclesFromShapefileTable()
+      ImportShapeFileDAO.getObstaclesFromShapefileTable
     }
 
     OracleDatabase.withDynTransaction {
