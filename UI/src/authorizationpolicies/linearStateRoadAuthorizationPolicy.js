@@ -5,7 +5,10 @@
     var me = this;
 
     this.formEditModeAccess = function(selectedAsset) {
-      return !me.isState(selectedAsset) && (((me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode)) || me.isOperator());
+      var isMaintainerAndHaveRights = (me.isMunicipalityMaintainer() || me.isElyMaintainer()) && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
+      var isMaintainerWithRightsOrOperator = isMaintainerAndHaveRights || me.isOperator();
+
+      return me.isStateExclusions(selectedAsset) || (!me.isState(selectedAsset) && isMaintainerWithRightsOrOperator );
     };
 
     this.handleSuggestedAsset = function(selectedAsset, value, layerMode) {
