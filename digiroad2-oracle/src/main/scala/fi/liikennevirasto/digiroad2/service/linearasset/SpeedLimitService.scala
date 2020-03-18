@@ -288,7 +288,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
 
     val newLinearAsset = if((speedLimits ++ existingSpeedLimit).nonEmpty) {
-      newChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes)
+//      newChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes) //Temporarily disabled according to DROTH-2327
+      Seq()
     } else Seq()
 
     (speedLimits ++ newLinearAsset, changeSetF)
