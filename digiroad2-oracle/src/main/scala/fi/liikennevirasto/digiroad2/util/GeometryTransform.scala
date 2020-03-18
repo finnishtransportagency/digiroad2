@@ -3,14 +3,14 @@ package fi.liikennevirasto.digiroad2.util
 import java.net.URLEncoder
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.{ Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import org.apache.http.client.methods.{HttpGet}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
+import fi.liikennevirasto.digiroad2.service.RoadAddressService
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
-import fi.liikennevirasto.digiroad2.service.RoadAddressService
 
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
@@ -196,16 +196,17 @@ class VKMGeometryTransform {
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
+
     val params = Map(
             VkmRoad -> road,
             VkmRoadPart -> roadPart,
             VkmTrackCodes -> track.map(_.value),
             "x" -> Option(coord.x),
             "y" -> Option(coord.y),
-            VkmSearchRadius -> Some(searchDistance.getOrElse(DefaultToleranceMeters))
+            VkmSearchRadius -> searchDistance //Default in new VKM is 100
       )
 
-    request(vkmBaseUrl + "xyhaku?" + urlParamsReverse(params)) match {
+    request(vkmBaseUrl + "xyhaku?" + urlParams(params)) match {
       case Left(address) => mapFields(address.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
@@ -215,18 +216,9 @@ class VKMGeometryTransform {
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
                         distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                         includePedestrian: Option[Boolean] = Option(false)) = {
-    val indexedCoords = coords.zipWithIndex
-    val params = indexedCoords.map {
-      case (coord, index) => Map(VkmRoad -> road, VkmRoadPart -> roadPart,  VkmTrackCodes -> track.map(_.value),
-        "x" -> Option(coord.x), "y" -> Option(coord.y),
-        VkmQueryIdentifier -> Option(index),  VkmSearchRadius -> searchDistance
-      )
-    }
 
-    request(vkmBaseUrl + "xyhaku?" + urlParams(params.head)) match {
-      case Left(addresses) => extractRoadAddresses(addresses)
-      case Right(error) => throw new RoadAddressException(error.toString)
-    }
+    coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
+
   }
 
   // tieosoitehaku
