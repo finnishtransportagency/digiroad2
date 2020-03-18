@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, MassTransitStopAsset, Modification, PositionCoordinates, Property, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, MassTransitStopAsset, Modification, PositionCoordinates, Property, PropertyValue, ServicePointsClass, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.dao.{Sequences, ServicePoint, ServicePointBusStopDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -115,8 +115,21 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
 
   def transformToPersistedMassTransitStop(servicePoints :Seq[ServicePoint]): Seq[PersistedMassTransitStop] = {
     servicePoints.map { sp =>
+      val serviceTypeId = sp.propertyData.find(_.publicId == "palvelu").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt
+      val serviceType = ServicePointsClass.values.find(_.value == serviceTypeId).get
+
+      val servicePointName = if(serviceType == ServicePointsClass.RailwayStation) {
+        val serviceSubType = sp.propertyData.find(_.publicId == "tarkenne").get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt
+        val subTypes = serviceType.subTypeName.map(_.swap)
+
+        subTypes(serviceSubType)
+      } else
+        serviceType.labelName
+
+      val servicePointNameProperty = Property(0, "nimi_suomeksi", "name", values = Seq(PropertyValue(servicePointName)))
+
       PersistedMassTransitStop(sp.id, sp.nationalId, 0, sp.stopTypes, sp.municipalityCode, sp.lon, sp.lat, 0, None, None, None,
-                              floating = false, 0L, sp.created, sp.modified, sp.propertyData, LinkGeomSource.Unknown)
+        floating = false, 0L, sp.created, sp.modified, sp.propertyData :+ servicePointNameProperty, LinkGeomSource.Unknown)
     }
   }
 }
