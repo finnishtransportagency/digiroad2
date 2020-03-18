@@ -42,6 +42,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
   val additionalPublicId = "additional_panel"
+  val additionalPanelSize = "size"
+  val additionalPanelCoatingType = "coating_type"
+  val additionalPanelColor = "additional_panel_color"
   val suggestedPublicId = "suggest_box"
   val oldTrafficCode = "old_traffic_code"
   val lifeCycle = "life_cycle"
@@ -52,6 +55,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   private val batchProcessName = "batch_process_trafficSigns"
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
+  private val defaultMultiChoiceValue = "0"
+  private val defaultSingleChoiceValue = "999"
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
@@ -413,7 +418,17 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     oldCode.get.propertyValue == checkedValue
   }
 
+  def getDefaultMultiChoiceValue: String = defaultMultiChoiceValue
+  def getDefaultSingleChoiceValue: String = defaultSingleChoiceValue
+
   def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimplePointAssetProperty] = {
+
+    def getSingleChoiceValue(additionalPanelInfo: AdditionalPanelInfo, target: String): String = {
+      val targetValue = getProperty(additionalPanelInfo.propertyData, target).get.propertyValue
+      if (targetValue.nonEmpty) targetValue
+      else getDefaultSingleChoiceValue
+    }
+
     val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt).toSet
     val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
       AdditionalPanel(
@@ -421,13 +436,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
         getProperty(panel.propertyData, valuePublicId).getOrElse(PropertyValue("")).propertyValue,
         index,
-        //TODO: to be changed
         getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
-        getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt,
-        getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt,
-        getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt)
+        getSingleChoiceValue(panel, additionalPanelSize).toInt,
+        getSingleChoiceValue(panel, additionalPanelCoatingType).toInt,
+        getSingleChoiceValue(panel, additionalPanelColor).toInt
+      )
     }.toSeq
-
 
     if(additionalPanelsProperty.nonEmpty)
       Set(SimplePointAssetProperty(additionalPublicId, additionalPanelsProperty))

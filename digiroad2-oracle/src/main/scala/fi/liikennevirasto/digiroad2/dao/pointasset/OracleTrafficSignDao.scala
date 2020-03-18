@@ -439,7 +439,7 @@ object OracleTrafficSignDao {
         deleteAdditionalPanelProperty(assetId).execute
         propertyValues.foreach{value =>
           val additionalPanel = value.asInstanceOf[AdditionalPanel]
-          if (!additionalPanel.verifyCorrectInputOnAdditionalPanelColor) throw new IllegalArgumentException(s"Incorrect input for additional panel color: ${additionalPanel.additional_panel_color}")
+          additionalPanel.verifyCorrectInputOnAdditionalPanel
           insertAdditionalPanelProperty(assetId, additionalPanel).execute
         }
       case CheckBox =>

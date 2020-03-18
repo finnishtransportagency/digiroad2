@@ -659,7 +659,13 @@ case class Property(id: Long, publicId: String, propertyType: String, required: 
 case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
   override def toJson: Any = this
   private val acceptableColorValues = Seq(1, 2, 999)
-  def verifyCorrectInputOnAdditionalPanelColor: Boolean = acceptableColorValues.contains(additional_panel_color)
+  private val acceptableSizeValues = Seq(1, 2, 3, 999)
+  private val acceptableCoatingTypeValues = Seq(1, 2, 3, 999)
+  def verifyCorrectInputOnAdditionalPanel: Unit = {
+    if(!acceptableColorValues.contains(additional_panel_color)) throw new NoSuchElementException(s"Incorrect input for additional panel color: ${additional_panel_color}")
+    if(!acceptableSizeValues.contains(size)) throw new NoSuchElementException(s"Incorrect input for additional panel size: ${size}")
+    if(!acceptableCoatingTypeValues.contains(coating_type)) throw new NoSuchElementException(s"Incorrect input for additional panel coating type: ${coating_type}")
+  }
 }
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {

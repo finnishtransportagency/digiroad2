@@ -47,6 +47,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val lifespanLeftPublicId = "lifespan_left"
   private val oldTrafficCodePublicId = "old_traffic_code"
   private val oppositeSideSignPublicId = "opposite_side_sign"
+  private val suggestBoxPublicId = "suggest_box"
   private val additionalPanelPublicId = "additional_panel"
 
   case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
@@ -96,10 +97,34 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     "lisakilpi" -> "additionalPanel"
   ) ++ dateFieldsMapping
 
+  private val additionalPanelMapping = Map(
+    "lisakilpi 1" -> "additionalPanelType1",
+    "lisakilpi arvo 1" -> "additionalPanelValue1",
+    "lisakilpi lisatieto 1" -> "additionalPanelInfo1",
+    "lisakilpi teksti 1"-> "additionalPanelText1",
+    "lisakilpi koko 1" -> "additionalPanelSize1",
+    "lisakilpi kalvon tyyppi 1" -> "additionalPanelCoatingType1",
+    "lisakilpi lisakilven vari 1" -> "additionalPanelColor1",
+    "lisakilpi 2" -> "additionalPanelType2",
+    "lisakilpi arvo 2" -> "additionalPanelValue2",
+    "lisakilpi lisatieto 2" -> "additionalPanelInfo2",
+    "lisakilpi teksti 2"-> "additionalPanelText2",
+    "lisakilpi koko 2" -> "additionalPanelSize2",
+    "lisakilpi kalvon tyyppi 2" -> "additionalPanelCoatingType2",
+    "lisakilpi lisakilven vari 2" -> "additionalPanelColor2",
+    "lisakilpi 3" -> "additionalPanelType3",
+    "lisakilpi arvo 3" -> "additionalPanelValue3",
+    "lisakilpi lisatieto 3" -> "additionalPanelInfo3",
+    "lisakilpi teksti 3"-> "additionalPanelText3",
+    "lisakilpi koko 3" -> "additionalPanelSize3",
+    "lisakilpi kalvon tyyppi 3" -> "additionalPanelCoatingType3",
+    "lisakilpi lisakilven vari 3" -> "additionalPanelColor3"
+  )
+
   private val codeValueFieldMappings = Map(
     "liikennemerkin tyyppi" -> "trafficSignType"
   )
-  val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings ++ singleChoiceMapping ++ multiChoiceMapping
+  val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings ++ singleChoiceMapping ++ multiChoiceMapping ++ additionalPanelMapping
 
   override def mandatoryFields = longValueFieldMappings.keySet ++ codeValueFieldMappings.keySet
 
@@ -127,22 +152,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
-    val defaultMultiChoiceValue = "0"
-    val defaultSingleChoiceValue = "999"
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
       val (key, value) = parameter
 
       if (isBlank(value.toString)) {
         if (mandatoryFields.contains(key)) {
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
-        }
-        else if (multiChoiceMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = multiChoiceMapping(key), value = defaultMultiChoiceValue) :: result._2)
-        }
-        else if (singleChoiceMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = defaultSingleChoiceValue) :: result._2)
-        }
-        else if (nonMandatoryMappings.contains(key)) {
+        } else if (multiChoiceMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = multiChoiceMapping(key), value = trafficSignService.getDefaultMultiChoiceValue) :: result._2)
+        } else if (singleChoiceMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = trafficSignService.getDefaultSingleChoiceValue) :: result._2)
+        } else if (additionalPanelMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = additionalPanelMapping(key), value = value) :: result._2)
+        } else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
         } else
           result
@@ -153,13 +175,15 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         } else if (codeValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueCode(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        }else if (dateFieldsMapping.contains(key)){
+        } else if (dateFieldsMapping.contains(key)){
           val (malformedParameters, properties) = verifyDateType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (singleChoiceMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = value) :: result._2)
         } else if (multiChoiceMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = multiChoiceMapping(key), value = value) :: result._2)
+        } else if (additionalPanelMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = additionalPanelMapping(key), value = value) :: result._2)
         } else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
         } else
@@ -176,7 +200,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
 
     val isValidDate = optTrafficSignType match {
-      case Some(signType) if (optLifeCycle.nonEmpty && temporaryDevices.contains(optLifeCycle.toInt)) || TrafficSignType.applyNewLawCode(signType) == RoadWorks =>
+      case Some(signType) if (!isBlank(optLifeCycle) && temporaryDevices.contains(optLifeCycle.toInt)) || TrafficSignType.applyNewLawCode(signType) == RoadWorks =>
         (optStartDate, optEndDate) match {
           case (Some(startDate), Some(endDate)) =>
             try {
@@ -207,20 +231,51 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                             laneTypePublicId, lanePublicId, lifeCyclePublicId, typeOfDamagePublicId, urgencyOfRepairPublicId, lifespanLeftPublicId, oldTrafficCodePublicId,
                             oppositeSideSignPublicId
     )
-    val listFieldsNames = Seq("additionalInfo", "startDate", "endDate", "municipalityId", "mainSignText", "structure", "condition", "size", "height", "coatingType", "signMaterial",
+    val listFieldNames = Seq("additionalInfo", "startDate", "endDate", "municipalityId", "mainSignText", "structure", "condition", "size", "height", "coatingType", "signMaterial",
                               "locationSpecifier", "terrainCoordinatesX", "terrainCoordinatesY", "laneType", "lane", "lifeCycle", "typeOfDamage", "urgencyOfRepair", "lifespanLeft",
                               "oldTrafficCode", "oppositeSideSign"
     )
 
-    val propertiesValues = (listPublicIds, listFieldsNames).zipped.map{(publicId, fieldName) =>
+    val propertiesValues = (listPublicIds, listFieldNames).zipped.map{(publicId, fieldName) =>
       val propertyInfo = getPropertyValueOption(trafficSignAttributes, fieldName)
-      if(propertyInfo.nonEmpty)
+      if(propertyInfo.get != null && propertyInfo.nonEmpty)
         Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString))))
       else
         None
     }
+    //not possible to insert suggested signs through csv
+    val suggestBox = Set(Some(SimplePointAssetProperty(suggestBoxPublicId, Seq(PropertyValue("0")))))
 
-    (Set(Some(typeProperty), valueProperty) ++ propertiesValues).flatten
+    (Set(Some(typeProperty), valueProperty) ++ propertiesValues ++ suggestBox ++ generateBasePanelProperties(trafficSignAttributes)).flatten
+  }
+
+  private def generateBasePanelProperties(trafficSignAttributes: ParsedProperties): Set[Option[SimplePointAssetProperty]] = {
+
+    def getSingleChoiceValue(target: String): String = {
+      val targetValue = getPropertyValueOption(trafficSignAttributes, target).get.toString
+      if (!isBlank(targetValue)) targetValue
+      else trafficSignService.getDefaultSingleChoiceValue
+    }
+    var res: Seq[AdditionalPanel] = Seq()
+    val minAdditionalPanels = 1
+    val maxAdditionalPanels = 3
+    (minAdditionalPanels to maxAdditionalPanels).foreach(index => {
+      getPropertyValueOption(trafficSignAttributes, "additionalPanelType" + index).get match {
+        case pType : String if pType.nonEmpty => {
+          res = res ++ Seq(
+            AdditionalPanel(
+              TrafficSignType.applyNewLawCode(pType).OTHvalue,
+              getPropertyValueOption(trafficSignAttributes, "additionalPanelInfo" + index).get.toString,
+              getPropertyValueOption(trafficSignAttributes, "additionalPanelValue"+ index).get.toString,
+              index,
+              getPropertyValueOption(trafficSignAttributes, "additionalPanelText" + index).get.toString,
+              getSingleChoiceValue("additionalPanelSize" + index).toInt,
+              getSingleChoiceValue("additionalPanelCoatingType" + index).toInt,
+              getSingleChoiceValue("additionalPanelColor" + index).toInt
+            ))}
+        case _ =>
+      }})
+    Set(Some(SimplePointAssetProperty(additionalPanelPublicId, res)))
   }
 
   def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {
@@ -273,37 +328,20 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       (props, CsvTrafficSign(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
-    val (additionalPanelInfo, trafficSignInfo) = signs.partition{ case(_, sign) =>
-      TrafficSignType.applyOTHValue(sign.propertyData.find(p => p.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toString.toInt).group == AdditionalPanels}
-
-    val additionalPanels = additionalPanelInfo.map {case (csvRow, panel) => (csvRow, AdditionalPanelInfo(panel.mValue, panel.linkId, panel.propertyData, panel.validityDirection, Some(Point(panel.lon, panel.lat))))}.toSet
-
-    val usedAdditionalPanels = trafficSignInfo.flatMap { case (csvRow, sign) =>
+    var notImportedDataExceptions: List[NotImportedData] = List()
+    signs.foreach { case (csvRow, sign) =>
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(sign.lon, sign.lat), sign.roadLink.geometry)
       val bearing = if(sign.bearing.isEmpty && !sign.isFloating)
         Some(GeometryUtils.calculateBearing(sign.roadLink.geometry, Some(mValue)))
       else
         sign.bearing
-
-      val signType = sign.propertyData.find(p => p.publicId == typePublicId).get.values.headOption.get.asInstanceOf[PropertyValue].propertyValue.toString.toInt
-      val filteredAdditionalPanel = trafficSignService.distinctPanels(trafficSignService.getAdditionalPanels(sign.linkId, sign.mValue, sign.validityDirection, signType, sign.roadLink.geometry, additionalPanels.map(_._2)))
-
-      if (filteredAdditionalPanel.size <= 3) {
-        val propertyData = trafficSignService.additionalPanelProperties(filteredAdditionalPanel) ++ sign.propertyData
-        try {
-          trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, propertyData, sign.validityDirection, bearing), sign.roadLink, user.username, sign.isFloating)
-        } catch {
-          case ex: NoSuchElementException => NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(csvRow.flatMap{x => Map(x.columnName -> x.value)}.toMap))
-        }
-        filteredAdditionalPanel
-      } else Seq()
+      try {
+        trafficSignService.createFromCoordinates(IncomingTrafficSign(sign.lon, sign.lat, sign.roadLink.linkId, sign.propertyData, sign.validityDirection, bearing), sign.roadLink, user.username, sign.isFloating)
+      } catch {
+        case ex: NoSuchElementException => notImportedDataExceptions = notImportedDataExceptions :+ NotImportedData(reason = ex.getMessage, csvRow = rowToString(csvRow.flatMap{x => Map(x.columnName -> x.value)}.toMap))
+      }
     }
-
-    val unusedAdditionalPanels = additionalPanels.filterNot{ panel => usedAdditionalPanels.contains(panel._2)}.toSeq.map { notImportedAdditionalPanel =>
-      NotImportedData(reason = "Additional Panel Without main Sign Type", csvRow = rowToString(notImportedAdditionalPanel._1.flatMap{x => Map(x.columnName -> x.value)}.toMap))
-    }
-
-    result.copy(notImportedData = unusedAdditionalPanels.toList ++ result.notImportedData)
+    result.copy(notImportedData = notImportedDataExceptions ++ result.notImportedData)
   }
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long, municipalitiesToExpire: Set[Int]) : Unit = {

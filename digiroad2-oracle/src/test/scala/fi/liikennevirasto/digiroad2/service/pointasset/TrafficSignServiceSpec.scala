@@ -720,6 +720,25 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("Should return false on temporary sign verifications") {
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(388553075, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
+    val properties81 = Set(
+      SimplePointAssetProperty("trafficSigns_type", List(PropertyValue("1"))),
+      SimplePointAssetProperty("trafficSigns_value", List(PropertyValue("81"))),
+      SimplePointAssetProperty("life_cycle", List(PropertyValue("4"))),
+      SimplePointAssetProperty("trafficSign_start_date", List(PropertyValue("20.11.2020"))),
+      SimplePointAssetProperty("trafficSign_end_date", List(PropertyValue("20.10.2020"))),
+      SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
+
+    runWithRollback {
+      val properties = properties81
+      val verification = service.verifyDatesOnTemporarySigns(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None))
+
+      verification should be(false)
+    }
+  }
+
   test("Get additional panels in 2 meter buffer area for specific sign"){
     runWithRollback {
 
