@@ -322,7 +322,8 @@ trait LinearAssetOperations {
     val generatedChangeSet = linearAssetsAndChanges.map(_._2)
     val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
     val newLinearAsset = if((linearAssets ++ existingAssets).nonEmpty) {
-      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes)
+//      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes) //Temporarily disabled according to DROTH-2327
+      Seq()
     } else Seq()
 
     (linearAssets ++ newLinearAsset, changeSetF)

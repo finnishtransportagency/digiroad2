@@ -1091,8 +1091,8 @@
           {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka', cssClass: 'border-crossing'},
           {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'loading-terminal'},
           {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'parking-area'},
-          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste', cssClass: 'charging-point'}
-
+          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste', cssClass: 'charging-point'},
+          {symbolUrl: 'images/service_points/culvert.png', label: 'Tierumpu', cssClass: 'culvert-point'}
         ],
         formLabels: {
           singleFloatingAssetLabel: 'palvelupisteen',
@@ -1103,8 +1103,11 @@
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         saveCondition: function (selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return selected.services.length > 0 && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isOperator());
+          return  saveConditionWithSuggested(selectedAsset, authorizationPolicy) &&
+                 _.chain(selectedAsset.get().services)
+                  .filter(function(x) {return x.serviceType === 19;})
+                  .value()
+                  .every(function (x) {return _.isUndefined(x.weightLimit) || !_.isNaN(x.weightLimit) && !!parseInt(x.weightLimit);});
         },
         isSuggestedAsset: true,
         hasMunicipalityValidation: true,

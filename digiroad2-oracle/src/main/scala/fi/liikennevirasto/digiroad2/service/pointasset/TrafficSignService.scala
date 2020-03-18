@@ -1,17 +1,17 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.SideCode._
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
-import fi.liikennevirasto.digiroad2.linearasset.{ProhibitionValue, RoadLink, RoadLinkLike, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
@@ -92,7 +92,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime, tokne: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method, Try to used") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method, Try to used") }
 
   def getChangedByType(trafficSignTypes: Set[Int], sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
@@ -124,7 +124,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def updateWithoutTransaction(id: Long, updatedAsset: IncomingTrafficSign, roadLink: RoadLink, username: String, mValue: Option[Double], vvhTimeStamp: Option[Long]): Long = {
     val value = mValue.getOrElse(GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat), roadLink.geometry))
-    val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException("Asset not found"))
+    val oldAsset = getPersistedAssetsByIdsWithoutTransaction(Set(id)).headOption.getOrElse(throw new NoSuchElementException(s"Asset not found: $id"))
     val updatedId = oldAsset match {
       case old if old.bearing != updatedAsset.bearing || !GeometryUtils.areAdjacent(Point(old.lon, old.lat), Point(updatedAsset.lon, updatedAsset.lat)) || old.validityDirection != updatedAsset.validityDirection =>
         expireWithoutTransaction(id)
