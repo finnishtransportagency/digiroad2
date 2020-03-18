@@ -863,7 +863,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       val municipalityNumber = municipality.toInt
       val assetType = params("assetType")
       assetType match {
-        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
+        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
         case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
         case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
         case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
