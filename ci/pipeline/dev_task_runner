@@ -56,7 +56,8 @@ pipeline {
         								'add_obstacles_shapefile',
         								'remove_roadWorks_created_last_year',
         								'merge_municipalities',
-        								'fill_new_roadLinks_info'
+        								'fill_new_roadLinks_info',
+        								'import_cycling_walking_info'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
