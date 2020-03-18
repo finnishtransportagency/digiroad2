@@ -241,7 +241,7 @@ root.PointAssetForm = function() {
   this.renderSuggestBoxElement = function(inputProperty) {
     return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
             '<label class="control-label">Vihjetieto</label>' +
-            '<p class="form-control-static">' + 'Kylla' + '</p>' +
+            '<p class="form-control-static">' + 'Kyllä' + '</p>' +
             '<input type="checkbox" class="form-control suggested-checkbox" name="suggest_box"' + inputProperty + '>' +
            '</div>';
   };
