@@ -45,6 +45,13 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     response.setHeader("Digiroad2-Server-Originated-Response", "true")
   }
 
+  //needs to be on top, otherwise all requests will be pointed to this one
+  post("/:pointAssetTypeImport") {
+    validateOperation()
+    val assetType = params("pointAssetTypeImport")
+    importPointAssets(fileParams("csv-file"), assetType)
+  }
+
   post("/maintenanceRoads") {
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
@@ -67,12 +74,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     }
 
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
-  }
-
-  post("/:pointAssetTypeImport") {
-    validateOperation()
-    val assetType = params("pointAssetTypeImport")
-    importPointAssets(fileParams("csv-file"), assetType)
   }
 
   post("/roadLinks") {

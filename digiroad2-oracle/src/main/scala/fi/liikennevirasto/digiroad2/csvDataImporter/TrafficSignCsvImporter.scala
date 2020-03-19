@@ -198,6 +198,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[String]].get
     val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
+    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
 
     val isValidDate = optTrafficSignType match {
       case Some(signType) if (!isBlank(optLifeCycle) && temporaryDevices.contains(optLifeCycle.toInt)) || TrafficSignType.applyNewLawCode(signType) == RoadWorks =>
@@ -215,7 +217,24 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       case _ => true
     }
 
-    if(isValidDate) super.verifyData(parsedRow, user)
+    if(isValidDate){
+      (optLon, optLat) match {
+        case (Some(lon), Some(lat)) =>
+
+          val roadLinks = optTrafficSignType match{
+            case Some(signType) if TrafficSignType.applyAdditionalGroup(TrafficSignTypeGroup.CycleAndWalkwaySigns).contains(signType) => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+            case _ => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
+          }
+
+          if (roadLinks.isEmpty) {
+            (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+          } else {
+            (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+          }
+        case _ =>
+          (Nil, Nil)
+      }
+    }
     else (List("Invalid Dates"), Seq())
   }
 
@@ -306,18 +325,13 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _ => false
       }
       val point = getCoordinatesFromProperties(props)
-
       val (assetBearing, assetValidityDirection) = recalculateBearing(optBearing)
-
-      val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-
-      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, closestRoadLinks)
-
+      val possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
       val roadLinks = possibleRoadLinks.filter(_.administrativeClass != State)
       val roadLink = if (roadLinks.nonEmpty) {
         possibleRoadLinks.filter(_.administrativeClass != State).minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
       } else
-        closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
+        nearbyLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
 
       val validityDirection = if(assetBearing.isEmpty) {
         trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided)

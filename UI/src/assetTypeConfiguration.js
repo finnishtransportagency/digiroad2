@@ -800,12 +800,12 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new RoadWorkStyle(),
-	      label: new LinearAssetWithSuggestLayer(),
+        label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm ( {
           fields : [
             {label: 'Työn tunnus', publicId: 'tyon_tunnus', type: 'text', weight: 1},
             {label: 'Arvioitu kesto', publicId: 'arvioitu_kesto', type: 'date_period', required: true, multiElement: false, weight: 2},
-	          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -1059,7 +1059,8 @@
         saveCondition: saveConditionWithSuggested,
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         label: new SuggestionLabel(),
-        showRoadLinkInfo: true
+        showRoadLinkInfo: true,
+        layer : TrafficLayer
       },
       {
         typeId: assetType.trafficSigns,
@@ -1104,6 +1105,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
+        layer : TrafficLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,

@@ -4,13 +4,13 @@ import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
-import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.format.DateTimeFormat
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
-  case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[VVHRoadlink])
+  case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[RoadLink])
 
   case class NotImportedData(reason: String, csvRow: String)
   case class ImportResultPointAsset(incompleteRows: List[IncompleteRow] = Nil,

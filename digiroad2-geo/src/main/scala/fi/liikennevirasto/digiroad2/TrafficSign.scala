@@ -5,7 +5,7 @@ sealed trait TrafficSignTypeGroup{
 }
 object TrafficSignTypeGroup{
   val values = Set(Unknown, SpeedLimits, RegulatorySigns, MaximumRestrictions, GeneralWarningSigns, ProhibitionsAndRestrictions, AdditionalPanels, MandatorySigns,
-    PriorityAndGiveWaySigns, InformationSigns)
+    PriorityAndGiveWaySigns, InformationSigns, CycleAndWalkwaySigns)
 
   def apply(intValue: Int):TrafficSignTypeGroup= {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -21,6 +21,7 @@ object TrafficSignTypeGroup{
   case object PriorityAndGiveWaySigns extends TrafficSignTypeGroup{ def value = 8 }
   case object InformationSigns extends TrafficSignTypeGroup{ def value = 9 }
   case object ServiceSigns extends TrafficSignTypeGroup{ def value = 10 }
+  case object CycleAndWalkwaySigns extends TrafficSignTypeGroup{ def value = 11 }
   case object Unknown extends TrafficSignTypeGroup{ def value = 99 }
 }
 
@@ -29,6 +30,9 @@ sealed trait TrafficSignType {
   val values = Seq()
 
   def group: TrafficSignTypeGroup
+
+  //This is only used to put CycleAndWalkwaySigns group at the moment
+  def additionalGroup: Option[TrafficSignTypeGroup] = None
 
   val OTHvalue: Int
 
@@ -84,6 +88,10 @@ object TrafficSignType {
 
   def apply(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
     values.filter(_.group == TrafficSignTypeGroup).map(_.OTHvalue)
+  }
+
+  def applyAdditionalGroup(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
+    values.filter(_.additionalGroup.contains(TrafficSignTypeGroup)).map(_.TRvalue)
   }
 
   case object Unknown extends TrafficSignType {
@@ -797,6 +805,7 @@ case object CompulsoryFootPath extends MandatorySignsType {
   override val OTHvalue = 70
   override val TRvalue = 421
   override val NewLawCode = "D4"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -807,6 +816,7 @@ case object CompulsoryCycleTrack extends MandatorySignsType {
   override val OTHvalue = 71
   override val TRvalue = 422
   override val NewLawCode = "D5"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -817,6 +827,7 @@ case object CombinedCycleTrackAndFootPath extends MandatorySignsType {
   override val OTHvalue = 72
   override val TRvalue = 423
   override val NewLawCode = "D6"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -826,6 +837,7 @@ case object ParallelCycleTrackAndFootPath extends MandatorySignsType {
   override val OTHvalue = 72
   override val TRvalue = 424
   override val NewLawCode = "D7.1"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -836,6 +848,7 @@ case object ParallelCycleTrackAndFootPath2 extends MandatorySignsType {
   override val OTHvalue = 72
   override val TRvalue = 425
   override val NewLawCode = "D7.2"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -1399,6 +1412,7 @@ case object AdditionalPanelWithText  extends AdditionalPanelsType {
   override val OTHvalue = 61
   override val TRvalue = 871
   override val NewLawCode = "H24"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object DrivingInServicePurposesAllowed  extends AdditionalPanelsType {
