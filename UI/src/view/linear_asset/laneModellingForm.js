@@ -71,16 +71,16 @@
 
     me.editModeRender = function (currentValue, sideCode, setValue, getValue){};
 
-    me.setSelectedValue = function(setValue, getValue){
+    me.setSelectedValue = function(setValue, getValue, sideCode){
 
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
       if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
         lanesAssets.setEndAddressesValues(currentPropertyValue);
       }else{
-        var properties = _.filter(getValue(currentLane), function(property){ return property.publicId !== currentPropertyValue.publicId; });
+        var properties = _.filter(getValue(currentLane, sideCode), function(property){ return property.publicId !== currentPropertyValue.publicId; });
         properties.push(currentPropertyValue);
-        setValue(currentLane, {properties: properties});
+        setValue(currentLane, {properties: properties}, sideCode);
       }
     };
   };
@@ -101,10 +101,10 @@
         '</div>');
 
       if (!isDisabled && me.hasDefaultValue() && !value)
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
       me.element.find('input[type=text]').on('keyup', function(){
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
       return me.element;
     };
@@ -126,10 +126,10 @@
         '</div>');
 
       if (!isDisabled && me.hasDefaultValue() && !value)
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
       me.element.find('textarea').on('keyup', function () {
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -164,10 +164,10 @@
         '</div>');
 
       if (!isDisabled && me.hasDefaultValue() && !value)
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
       me.element.find('input').on('keyup', function () {
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -220,10 +220,10 @@
 
 
       if (!isDisabled && me.hasDefaultValue()&& !value)
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
       me.element.find('input[type=text]').on('keyup', function () {
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -257,11 +257,11 @@
         return me.element.find(":selected").val();
       };
       if (!isDisabled && me.hasDefaultValue() && !value){
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       }
 
       me.element.find('select').on('change', function(){
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -310,7 +310,7 @@
       me.element =  $(template({divCheckBox: divCheckBox}));
 
       if (!isDisabled && me.hasDefaultValue() && !value)
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
       me.getValue = function() {
         return _.map($('.multiChoice-'+sideCode+':checked'), function(fields) {
@@ -318,7 +318,7 @@
       };
 
       me.element.find('input').on('click', function(){
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -373,11 +373,11 @@
           if (target.keyCode === 9) {
             return;
           }
-          me.setSelectedValue(setValue, getValue);
+          me.setSelectedValue(setValue, getValue, sideCode);
         }, 500));
 
       if (!isDisabled && me.hasDefaultValue() && !value)
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
       me.element.append(inputLabel);
       addDatePickers(field, me.element);
@@ -419,12 +419,12 @@
 
       if(!isDisabled && (me.hasDefaultValue() || me.isRequired()) && !value) {
         me.setValue(me.getValue());
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       }
 
       me.element.find('input').on('click', function(){
         me.setValue(me.getValue());
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -567,11 +567,11 @@
 
       me.element.on('click', '.existing-validity-period .delete', function(event) {
         $(event.target).parent().parent().remove();
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       me.element.on('change', '.existing-validity-period .select', function(event) {
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       me.element.on('change', '.new-validity-period select', function(event) {
@@ -583,7 +583,7 @@
           endHour: 24,
           endMinute: 0
         }));
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       return me.element;
@@ -680,13 +680,13 @@
               return;
             }
             me.setValue(me.getValue());
-            me.setSelectedValue(setValue, getValue);
+            me.setSelectedValue(setValue, getValue, sideCode);
           }, 500));
       };
 
       if (!isDisabled && me.hasDefaultValue() && !value) {
         me.setValue(me.getValue());
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       }
 
       var existingDatePeriodElements =
@@ -726,13 +726,13 @@
 
       me.element.on('click', '.remove-period', function(event) {
         $(event.target).parent().parent().remove();
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
 
         handleButton();
       });
 
       me.element.on('datechange', function() {
-        me.setSelectedValue(setValue, getValue);
+        me.setSelectedValue(setValue, getValue, sideCode);
       });
 
       me.element.on('click', '.add-period', function() {
@@ -1071,13 +1071,9 @@
 
     var createHeaderElement = function(selectedAsset) {
       var title = function () {
-        var asset = _.find(selectedAsset.get(), function (lane){
-          return _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
-          });
-        });
+        var asset = selectedAsset.getLane(currentLane);
 
-        return asset.id !== 0 ?
+        return asset.id !== 0 && !selectedAsset.isSplit(currentLane) ?
           '<span>Kohteen ID: ' + asset.id + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
       };
 
@@ -1208,10 +1204,10 @@
           '</div>');
 
         if (!isDisabled && me.hasDefaultValue() && !value)
-          me.setSelectedValue(setValue, getValue);
+          me.setSelectedValue(setValue, getValue, sideCode);
 
         me.element.find('input[type=text]').on('keyup', function(){
-          me.setSelectedValue(setValue, getValue);
+          me.setSelectedValue(setValue, getValue, sideCode);
         });
         return me.element;
       };
@@ -1279,21 +1275,21 @@
 
       if(selectedAsset.isSplit(currentLane)) {
         //Render form A
-        renderFormElements(asset[0], isReadOnly, 'a', selectedAsset.setAValue, selectedAsset.getAValue, selectedAsset.removeAValue, false, body);
+        renderFormElements(asset[0], isReadOnly, 'A', selectedAsset.setValue, selectedAsset.getValue, false, body);
 
         if(!isReadOnly)
           renderExpireAndDeleteButtonsElement(selectedAsset, body, 'A');
 
         body.find('.form').append('<hr class="form-break">');
         //Render form B
-        renderFormElements(asset[1], isReadOnly, 'b', selectedAsset.setBValue, selectedAsset.getBValue, selectedAsset.removeBValue, false, body);
+        renderFormElements(asset[1], isReadOnly, 'B', selectedAsset.setValue, selectedAsset.getValue, false, body);
 
         if(!isReadOnly)
           renderExpireAndDeleteButtonsElement(selectedAsset, body, 'B');
 
         body.find('.form').append('<hr class="form-break">');
       }else{
-        renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, selectedAsset.removeValue, isDisabled, body);
+        renderFormElements(asset[0], isReadOnly, '', selectedAsset.setValue, selectedAsset.getValue, isDisabled, body);
 
         if(!isReadOnly)
           renderExpireAndDeleteButtonsElement(selectedAsset, body);
@@ -1310,11 +1306,7 @@
       var deleteLane = $('<button class="btn btn-secondary lane-button">Poista kaista</button>').click(function() {
         selectedAsset.removeLane(currentLane, sidecode);
 
-        var asset = _.find(selectedAsset.get(), function (lane){
-          return _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
-          });
-        });
+        var asset = selectedAsset.getLane(currentLane);
 
         if(_.isUndefined(asset)){
           if(currentLane.toString()[1] == "2"){
@@ -1336,11 +1328,7 @@
       var expireLane = $('<button class="btn btn-secondary lane-button">Paata kaista</button>').click(function() {
         selectedAsset.expireLane(currentLane, sidecode);
 
-        var asset = _.find(selectedAsset.get(), function (lane){
-          return _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
-          });
-        });
+        var asset = selectedAsset.getLane(currentLane);
 
         if(_.isUndefined(asset)){
           if(currentLane.toString()[1] == "2"){
@@ -1359,22 +1347,18 @@
         reloadForm($('#feature-attributes'));
       });
 
-      var lane = _.find(selectedAsset.get(), function (lane) {
-        return (_.isUndefined(sidecode) || lane.marker == sidecode) && _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
-        });
-      });
-      expireLane.prop('disabled', lane.id === 0 || !_.isUndefined(sidecode));
+      var lane = selectedAsset.getLane(currentLane, sidecode);
+      expireLane.prop('disabled', lane.id === 0);
 
       if(currentLane.toString()[1] !== "1")
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
     }
 
-    function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
+    function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
       var sideCodeClass = generateClassName(sideCode);
 
       var formGroup = $('' + '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' + '</div>');
-      setValueFn(currentLane, {properties: asset.properties});
+      setValueFn(currentLane, {properties: asset.properties}, sideCode);
 
       formGroup.append($('' + createSideCodeMarker(sideCode)));
       body.find('.form').append(formGroup);

@@ -86,6 +86,18 @@
       return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
     };
 
+    var getProperty = function(fields, prop) {
+      return _.find(fields, function (field) {
+        return field.publicId === prop;
+      });
+    };
+
+    var filterFieldsByPropertyType = function(fields, type) {
+      return _.filter(fields, function (field) {
+        return field.propertyType === type;
+      });
+    };
+
     var linearAssetSpecs = [
       {
         typeId: assetType.totalWeightLimit,
@@ -921,41 +933,26 @@
         saveCondition:function (lanes) {
           var isValidLane = function (fields) {
             var isValidDatePeriod = function (fields) {
-            var dateFields = _.filter(fields, function (field) {
-              return field.propertyType === 'date';
-            });
-            var isValidDate = true;
+              var isValidDate = true;
+              var dateFields = filterFieldsByPropertyType(fields, 'date');
 
-            if (dateFields.length == 2) {
-              var startDate = _.find(dateFields, function (field) {
-                return field.publicId === 'start_date';
-              });
+              if (dateFields.length == 2) {
+                var startDate = getProperty(dateFields, 'start_date');
+                var endDate = getProperty(dateFields, 'end_date');
 
-              var endDate = _.find(dateFields, function (field) {
-                return field.publicId === 'end_date';
-              });
-
-              if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
-                isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
-            }
-            return isValidDate;
-          };
+                if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+                  isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
+              }
+              return isValidDate;
+            };
 
             var isValidRoadAddress = function (fields) {
               var isValidRoadAddress = true;
+              var roadAddressesFields = filterFieldsByPropertyType(fields, 'number');
 
-              var roadAddressesFields = _.filter(fields, function (field) {
-                return field.propertyType === 'number';
-              });
-
-              if (roadAddressesFields.length >= 1) {
-                var endRoadPartNumber = _.find(roadAddressesFields, function (field) {
-                  return field.publicId === 'end_road_part_number';
-                });
-
-                var endDistance = _.find(roadAddressesFields, function (field) {
-                  return field.publicId === 'end_distance';
-                });
+              if (!_.isEmpty(roadAddressesFields)) {
+                var endRoadPartNumber = getProperty(roadAddressesFields, 'end_road_part_number');
+                var endDistance = getProperty(roadAddressesFields, 'end_distance');
 
                 if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
                   _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0])) {
@@ -965,7 +962,7 @@
               return isValidRoadAddress;
             };
 
-              return isValidDatePeriod(fields) && isValidRoadAddress(fields);
+            return isValidDatePeriod(fields) && isValidRoadAddress(fields);
           };
 
           return !_.some(_.map(lanes, function (lane) {

@@ -263,16 +263,15 @@ trait LaneOperations {
   }
 
   def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
-
     val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(linkId).head
 
     val existingAssets =
       withDynTransaction {
-        dao.fetchLanesByLinkIdAndSideCode( linkId, sideCode)
+        dao.fetchLanesByLinkIdAndSideCode(linkId, sideCode)
       }
 
     existingAssets.map { lane =>
-    val geometry = GeometryUtils.truncateGeometry3D(  roadLink.geometry, lane.startMeasure, lane.endMeasure)
+    val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, lane.startMeasure, lane.endMeasure)
     val endPoints = GeometryUtils.geometryEndpoints(geometry)
 
     PieceWiseLane(lane.id, lane.linkId, lane.sideCode, lane.expired, geometry,

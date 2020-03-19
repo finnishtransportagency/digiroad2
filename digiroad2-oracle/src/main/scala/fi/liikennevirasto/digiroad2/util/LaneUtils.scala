@@ -53,14 +53,14 @@ object LaneUtils {
   }
 
 
-  def processNewIncomeLanes (newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
-                             sideCode: Int, username: String) ={
+  def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
+                             sideCode: Int, username: String) = {
 
     val (toDelete, toHistory, toUpdate, toInsert) = separateNewIncomeLanes(newIncomeLanes)
     laneService.deleteMultipleLanes(toDelete)
     laneService.multipleLanesToHistory(toHistory, username)
-    laneService.create ( toInsert.toSeq, linkIds, sideCode, username )
-    laneService.update (toUpdate.toSeq, linkIds, sideCode, username )
+    laneService.create(toInsert.toSeq, linkIds, sideCode, username)
+    laneService.update(toUpdate.toSeq, linkIds, sideCode, username)
 
   }
 

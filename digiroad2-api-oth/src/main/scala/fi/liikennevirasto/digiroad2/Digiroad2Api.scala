@@ -1541,10 +1541,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def validateUserRightsForLanes(linkIds: Set[Long], user: User ) : Unit = {
+  private def validateUserRightsForLanes(linkIds: Set[Long], user: User) : Unit = {
 
-    val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary( linkIds  )
-    roadLinks.foreach(a => validateUserAccess( user )(a.municipalityCode, a.administrativeClass))
+    val roadLinks = roadLinkService.fetchVVHRoadlinksAndComplementary(linkIds)
+    roadLinks.foreach(a => validateUserAccess(user)(a.municipalityCode, a.administrativeClass))
   }
 
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
@@ -2184,21 +2184,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   post("/lanes") {
     val user = userProvider.getCurrentUser()
-    val usedService =  laneService
 
     val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
-
     val incomingLanes = (parsedBody \ "lanes").extract[Set[NewIncomeLane]]
 
-    validateUserRightsForLanes( linkIds , user )
-
+    validateUserRightsForLanes(linkIds, user)
     LaneUtils.processNewIncomeLanes(incomingLanes, linkIds, sideCode, user.username)
   }
 
   post("/lanesByRoadAddress") {
     val user = userProvider.getCurrentUser()
-    val usedService =  laneService
 
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val initialRoadNumber = (parsedBody \ "initial_road_number")extractOrElse[Long](halt(BadRequest("Malformed 'initial_road_number' parameter")))
@@ -2206,7 +2202,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val initialDistance = (parsedBody \ "initial_distance")extractOrElse[Long](halt(BadRequest("Malformed 'initial_distance' parameter")))
     val endRoadPartNumber = (parsedBody \ "end_road_part")extractOrElse[Long](halt(BadRequest("Malformed 'end_road_part_number' parameter")))
     val endDistance = (parsedBody \ "end_distance")extractOrElse[Long](halt(BadRequest("Malformed 'end_distance' parameter")))
-
     val track  = (parsedBody \ "track")extractOrElse[Int](halt(BadRequest("Malformed 'track' parameter")))
 
     val laneRoadAddressInfo = LaneRoadAddressInfo(initialRoadNumber, initialRoadPartNumber, initialDistance, endRoadPartNumber, endDistance, track)
@@ -2219,16 +2214,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkId = params("linkId").toLong
     val sideCode = params("sideCode").toInt
 
-    val usedService =  laneService
-    val existingLanes = usedService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode)
-
-    existingLanes.map { lane =>
+    laneService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode).map { lane =>
       Map(
         "id" -> lane.id,
         "linkId" -> lane.linkId,
         "sideCode" -> lane.sideCode,
         "startMeasure" -> lane.startMeasure,
         "endMeasure" -> lane.endMeasure,
+        "points" -> lane.geometry,
         "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
         "properties" -> lane.laneAttributes.properties
       )
