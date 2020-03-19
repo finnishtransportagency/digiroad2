@@ -443,7 +443,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       )
     }.toSeq
 
-    if(additionalPanelsProperty.nonEmpty)
+    if (additionalPanelsProperty.nonEmpty)
       Set(SimplePointAssetProperty(additionalPublicId, additionalPanelsProperty))
     else
       Set()

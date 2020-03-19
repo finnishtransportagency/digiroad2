@@ -217,11 +217,10 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       case _ => true
     }
 
-    if(isValidDate){
+    if(isValidDate) {
       (optLon, optLat) match {
         case (Some(lon), Some(lat)) =>
-
-          val roadLinks = optTrafficSignType match{
+          val roadLinks = optTrafficSignType match {
             case Some(signType) if TrafficSignType.applyAdditionalGroup(TrafficSignTypeGroup.CycleAndWalkwaySigns).contains(signType) => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
             case _ => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
           }

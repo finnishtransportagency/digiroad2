@@ -816,7 +816,8 @@
             return date.hasValue() ? isEndDateAfterStartdate(date) : true;
           });
         },
-        hasMunicipalityValidation: false
+        hasMunicipalityValidation: false,
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.parkingProhibition,
@@ -1068,9 +1069,7 @@
         title: 'Liikennemerkit',
         allowComplementaryLinks: true,
         newAsset: { validityDirection: 2, propertyData: [
-          {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
-          {'name': 'Päämerkin teksti', 'propertyType': 'text', 'publicId': 'main_sign_text', values: []},
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
           {'name': "Sijaintitarkenne", 'propertyType': 'single_choice', 'publicId': "location_specifier", values: [{ propertyValue: 999 }]},

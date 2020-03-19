@@ -192,6 +192,10 @@ object DataFixture {
     new TrafficSignProhibitionGenerator(roadLinkService)
   }
 
+  lazy val trafficSignRoadWorkGenerator: TrafficSignRoadWorkGenerator = {
+    new TrafficSignRoadWorkGenerator(roadLinkService)
+  }
+
   lazy val trafficSignHazmatTransportProhibitionGenerator: TrafficSignHazmatTransportProhibitionGenerator = {
     new TrafficSignHazmatTransportProhibitionGenerator(roadLinkService)
   }
@@ -2056,6 +2060,58 @@ object DataFixture {
     }
   }
 
+  def createRoadWorksCreatedLastYear(): Unit = {
+    println("\nStart process to remove all road works assets created during the last year")
+    println(DateTime.now())
+
+    val actualYear = DateTime.now().getYear
+    val username = "batch_to_expire_roadworks_on_previous_year"
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nWorking on... municipality -> " + municipality)
+      println("Fetching roadlinks")
+      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+        println("Fetching assets")
+        val existingAssets =
+          roadWorkService.enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(RoadWorksAsset.typeId, roadLinks.map(_.linkId))).filterNot(_.expired)
+
+        val existingAssetsOnLastYear = existingAssets.filter { asset =>
+          asset.value.map(_.asInstanceOf[DynamicValue]) match {
+            case Some(value) =>
+              val roadWorkProps = value.value.properties
+              roadWorkProps.find(_.publicId == "arvioitu_kesto") match {
+                case Some(dateProperty) =>
+                  dateProperty.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).exists { property =>
+                    val endDateYear = DateParser.stringToDate(property.endDate, DateParser.DatePropertyFormat).getYear
+                    endDateYear < actualYear
+                  }
+                case _ => false
+              }
+            case _ => false
+          }
+        }
+
+        println(s"Number of existing assets: ${existingAssetsOnLastYear.length}")
+        println(s"Start expiring valid roadWorks assets")
+
+
+        existingAssetsOnLastYear.foreach { asset =>
+          roadWorkService.expireAsset(RoadWorksAsset.typeId, asset.id, username, true, false)
+          println(s"Asset id ${asset.id} expired. ")
+        }
+      }
+      println("Complete at time: " + DateTime.now())
+    }
+  }
+
   def resolvingFrozenLinks(): Unit = {
     case class AddressCreateInfo(toCreate : Seq[RoadAddressTEMP] , possibleToCreate: Seq[RoadAddressTEMP])
 
@@ -2443,6 +2499,8 @@ object DataFixture {
         trafficSignHazmatTransportProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("create_parking_prohibition_using_traffic_signs") =>
         trafficSignParkingProhibitionGenerator.createLinearAssetUsingTrafficSigns()
+      case Some("create_roadWorks_using_traffic_signs") =>
+        trafficSignRoadWorkGenerator.createRoadWorkAssetUsingTrafficSign()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
@@ -2472,9 +2530,11 @@ object DataFixture {
         " verify_inaccurate_speed_limit_assets | update_information_source_on_existing_assets  | update_traffic_direction_on_roundabouts |" +
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
-        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
-        " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2")
+        " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | " +
+        " resolving_Frozen_Links | create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
+        " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | " +
+        " get_state_roads_with_undefined_functional_class | add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | " +
+        " create_roadWorks_using_traffic_signs")
     }
   }
 }

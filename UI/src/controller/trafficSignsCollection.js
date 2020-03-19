@@ -34,16 +34,10 @@
         additionalPanels: { values : [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 148, 149, 150, 151], groupName: 'Lisakilvet'}
     };
 
-    var trafficSignsTurnRestriction = [10, 11, 12];
-    var trafficSignRestriction = [13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 20, 100, 101];
+    var pointToLinearSign = [85, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 100, 101];
 
-    var isTurningRestriction = function(current) {
-      return _.includes(trafficSignsTurnRestriction, parseInt(getValue(current)));
-    };
-
-    var isTrafficSignRestriction = function(current) {
-      var propertyValue = _.head(_.find(current.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue;
-      return _.includes(trafficSignRestriction, parseInt(propertyValue));
+    var isPointToLinearSign = function(current) {
+      return _.includes(pointToLinearSign, parseInt(getValue(current)));
     };
 
     var getValue = function(current) {
@@ -116,9 +110,9 @@
 
     var isRelevant = function(current) {
 
-      if (isTurningRestriction(current) || isTrafficSignRestriction(current)) {
+      if (isPointToLinearSign(current)) {
         var oldTrafficSign = _.find(me.trafficSignsAsset, function (oldAsset) { return oldAsset.id === current.id; });
-        var oldTrafficSignTypeValue = _.head(_.find(oldTrafficSign.propertyData, function(property) { return property.publicId === "trafficSigns_type";}).values).propertyValue;
+        var oldTrafficSignTypeValue = getValue(oldTrafficSign);
 
         //if traffic type changes, should be relevant to Manoeuvres
         if (oldTrafficSignTypeValue !== getValue(current))
@@ -137,7 +131,7 @@
     };
 
     var getTrafficSignsMessage = function (current, action) {
-      if ((isTrafficSignRestriction(current) || isTurningRestriction(current)) && action !== 'updated') {
+      if (isPointToLinearSign(current) && action !== 'updated') {
         return trafficSignsActionMessages[action].message;
       } else if (isRelevant(current)) {
         return trafficSignsActionMessages[action].message;
