@@ -90,8 +90,8 @@ object TrafficSignType {
     values.filter(_.group == TrafficSignTypeGroup).map(_.OTHvalue)
   }
 
-  def applyAdditionalGroup(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
-    values.filter(_.additionalGroup.contains(TrafficSignTypeGroup)).map(_.TRvalue)
+  def applyAdditionalGroup(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[String] = {
+    values.filter(_.additionalGroup.contains(TrafficSignTypeGroup)).map(_.NewLawCode)
   }
 
   case object Unknown extends TrafficSignType {

@@ -51,9 +51,9 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
-    var dateValueExtract = function (date) {
-      var dateValue = _.head(date).values;
-      return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : undefined;
+    var dateValueExtract = function (fields, publicId) {
+      var dateValue = _.find(fields, function(field) { return field.publicId === publicId; }).values;
+      return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : dateValue;
     };
 
     var saveConditionWithSuggested = function(selectedAsset, authorizationPolicy) {
@@ -1060,7 +1060,7 @@
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         label: new SuggestionLabel(),
         showRoadLinkInfo: true,
-        layer : TrafficLayer
+        layer : TrafficSignLayer
       },
       {
         typeId: assetType.trafficSigns,
@@ -1105,7 +1105,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        layer : TrafficLayer,
+        layer : TrafficSignLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
@@ -1117,7 +1117,7 @@
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
           var lifecycleValidations = [
-            { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
+            { values: [4, 5], validate: function (startDate, endDate) { return !_.isEmpty(startDate) && !_.isEmpty(endDate) && endDate >= startDate; }}
           ];
 
           var opposite_side_sign =  _.find( selectedAsset.get().propertyData, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
@@ -1132,22 +1132,20 @@
 
           /* Begin: Special validate for roadwork sign */
           var fields = selectedAsset.get().propertyData;
-          var dateValueStartField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_start_date'; });
-          var dateValueEndField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_end_date'; });
-          var trafficSignTypeField = _.filter(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
+          var trafficSignTypeField = _.find(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
 
-          var trafficSignTypeExtracted = _.head(_.head(trafficSignTypeField).values).propertyValue;
-          var startDateExtracted = dateValueExtract(dateValueStartField);
-          var endDateExtracted = dateValueExtract(dateValueEndField);
+          var trafficSignTypeExtracted = _.head(trafficSignTypeField.values).propertyValue;
+          var startDateExtracted = dateValueExtract(fields, 'trafficSign_start_date');
+          var endDateExtracted = dateValueExtract(fields, 'trafficSign_end_date');
 
           var roadworksTrafficCode = "85";
-          var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
+          var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isEmpty(startDateExtracted) && !_.isEmpty(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
 
           if (trafficSignTypeExtracted === roadworksTrafficCode)
             return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;
           /* End: Special validate for roadwork sign */
 
-          var lifecycleField = _.head(_.filter(fields, function(field) { return field.publicId === 'life_cycle'; }));
+          var lifecycleField = _.find(fields, function(field) { return field.publicId === 'life_cycle'; });
           var lifecycleValidator = _.find(lifecycleValidations, function (validator) { return _.includes(validator.values, parseInt(_.head(lifecycleField.values).propertyValue)); });
           var validLifecycleDates = _.isUndefined(lifecycleValidator) ? true : lifecycleValidator.validate(startDateExtracted, endDateExtracted);
 

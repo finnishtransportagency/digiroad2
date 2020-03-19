@@ -1,5 +1,5 @@
 (function(root) {
-    root.TrafficLayer = function(params) {
+    root.TrafficSignLayer = function(params) {
         PointAssetLayer.call(this, params);
 
         var me = this;

@@ -911,30 +911,26 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val diagonal = Vector3d(vectorRadius, vectorRadius, 0)
 
     val roadLinks =
-      if (user.isOperator())
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
-      else
-        getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
+      if (user.isOperator()) getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+      else getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
 
-    if (roadLinks.isEmpty)
-      None
-    else
-      Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
+    if (roadLinks.isEmpty) None
+    else Some(roadLinks.minBy(roadlink => minimumDistance(point, roadlink.geometry)))
   }
 
   def getClosestRoadlinkForCarTrafficFromVVH(user: User, point: Point, forCarTraffic: Boolean = true): Seq[RoadLink] = {
     val diagonal = Vector3d(10, 10, 0)
 
-    val roadLinks = user.isOperator() match {
-      case true =>  getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
-      case false => getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
-    }
+    val roadLinks =
+      if (user.isOperator()) getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal))
+      else getVVHRoadLinks(BoundingRectangle(point - diagonal, point + diagonal), user.configuration.authorizedMunicipalities)
 
-    val closestRoadLinks = roadLinks.isEmpty match {
-      case true => Seq.empty[RoadLink]
-      case false => enrichRoadLinksFromVVH(roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0))
-    }
-    if (forCarTraffic) closestRoadLinks.filter(_.linkType != CycleOrPedestrianPath ) else closestRoadLinks
+    val closestRoadLinks =
+      if (roadLinks.isEmpty) Seq.empty[RoadLink]
+      else  enrichRoadLinksFromVVH(roadLinks.filter(rl => GeometryUtils.minimumDistance(point, rl.geometry) <= 10.0))
+
+    if (forCarTraffic) closestRoadLinks.filter(_.linkType != CycleOrPedestrianPath )
+    else closestRoadLinks
   }
 
   protected def removeIncompleteness(linkId: Long): Unit = {
