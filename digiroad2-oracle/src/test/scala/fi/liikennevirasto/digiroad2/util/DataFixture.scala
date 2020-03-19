@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import java.sql.SQLIntegrityConstraintViolationException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.util.{Date, Properties}
+import java.util.{Date, NoSuchElementException, Properties}
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao._
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.dao.pointasset.{Obstacle, ObstacleShapefile}
+import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -176,6 +176,11 @@ object DataFixture {
   lazy val dynamicLinearAssetDao : DynamicLinearAssetDao = {
     new DynamicLinearAssetDao()
   }
+
+  lazy val dynamicLinearAssetService : DynamicLinearAssetService = {
+    new DynamicLinearAssetService(roadLinkService, new DummyEventBus)
+  }
+
 
   lazy val speedLimitDao: OracleSpeedLimitDao = {
     new OracleSpeedLimitDao(null, null)
@@ -1735,7 +1740,7 @@ object DataFixture {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
 
-        val privateRoadInfo = Queries.getPrivateRoadExternalInfo(municipality).groupBy(_._1)
+        val privateRoadInfo = ImportShapeFileDAO.getPrivateRoadExternalInfo(municipality).groupBy(_._1)
 
         if (privateRoadInfo.nonEmpty) {
           println(s"Number of records to update ${privateRoadInfo.keySet.size}")
@@ -1831,7 +1836,7 @@ object DataFixture {
 
     println("\nGetting all obstacles information from the table created by the shapefile import")
     val obstaclesInformation: Seq[ObstacleShapefile] = OracleDatabase.withDynSession {
-      obstacleService.getObstaclesFromShapefileTable()
+      ImportShapeFileDAO.getObstaclesFromShapefileTable
     }
 
     OracleDatabase.withDynTransaction {
@@ -1866,6 +1871,50 @@ object DataFixture {
       }
     }
     println("")
+    println("Complete at time: " + DateTime.now())
+  }
+
+  def importCyclingAndWalkingInfo(): Unit = {
+    println("\nStart process to insert all cycling and walking info")
+    println(DateTime.now())
+
+    val username = "batch_to_import_cycling_walking"
+    val assetType = asset.CyclingAndWalking.typeId
+
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    OracleDatabase.withDynTransaction {
+      municipalities.foreach { municipality =>
+        println(s"Working on municipality : $municipality")
+        val cyclingAndWalkingInfo = ImportShapeFileDAO.getCyclingAndWalkingInfo(municipality)
+
+        println(s"Number of records to update ${cyclingAndWalkingInfo.size}")
+        if (cyclingAndWalkingInfo.nonEmpty) {
+          val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+
+          cyclingAndWalkingInfo.foreach { asset =>
+            val roadlink = roadLinks.find(_.linkId == asset.linkId)
+            val value = DynamicValue(DynamicAssetValue(Seq(DynamicProperty("cyclingAndWalking_type", "single_choice", true, Seq(DynamicPropertyValue(asset.value))))))
+
+            roadlink match {
+              case Some(link) =>
+                val id = dynamicLinearAssetService.createWithoutTransaction(typeId = assetType,
+                  linkId = asset.linkId,
+                  value = value,
+                  sideCode = SideCode.BothDirections.value,
+                  measures = Measures(0, GeometryUtils.geometryLength(link.geometry)),
+                  username = username,
+                  roadLink = roadlink)
+                println(s"Asset created with id $id in the roadlink ${asset.linkId}")
+              case _ => println(s"Error: Can't create asset in the roadlink ${asset.linkId}")
+            }
+          }
+        }
+        println()
+      }
+    }
     println("Complete at time: " + DateTime.now())
   }
 
@@ -2308,52 +2357,125 @@ object DataFixture {
   }
 
   def fillNewRoadLinksWithPreviousInfo(): Unit = {
+    def getAdjacentsRoadLinks(allAdjacentsRoadLinks: Seq[RoadLink], point: Point): Seq[RoadLink] = {
+      allAdjacentsRoadLinks.filter(r => GeometryUtils.areAdjacent(r.geometry, point))
+    }
+
+    def createNewSpeedLimits(newSpeedLimits: Seq[SpeedLimit], roadlink: RoadLink): Unit = {
+      //Create new SpeedLimits on gaps
+      newSpeedLimits.foreach { speedLimit =>
+        speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, speedLimit.linkId, Measures(speedLimit.startMeasure, speedLimit.endMeasure), speedLimit.sideCode, speedLimit.value.get, Some(vvhClient.roadLinkData.createVVHTimeStamp()), linkSource = roadlink.linkSource)
+        println("New SpeedLimit created at Link Id: " + speedLimit.linkId + " with value: " + speedLimit.value.get.value + " and sidecode: " + speedLimit.sideCode)
+
+        //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
+        speedLimitDao.purgeFromUnknownSpeedLimits(speedLimit.linkId, GeometryUtils.geometryLength(roadlink.geometry))
+        println("\nRemoved linkId " + speedLimit.linkId + " from UnknownSpeedLimits working list")
+        println("")
+      }
+    }
+
     println("\nStart process to fill new road links with previous data, only for change type 12")
     println(DateTime.now())
-    println("\n")
 
     //Get All Municipalities
     val municipalities: Seq[Int] = OracleDatabase.withDynSession {
       Queries.getMunicipalities
     }
 
-    OracleDatabase.withDynTransaction {
-      municipalities.foreach { municipality =>
+
+    municipalities.foreach { municipality =>
+      OracleDatabase.withDynTransaction {
         println("\nWorking at Municipailty: " + municipality)
         val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality, newTransaction = false)
         val filteredRoadLinks = roadLinks.filter(r => r.isCarRoadOrCyclePedestrianPath)
         val changesToTreat = changes.filter(c => c.changeType == New.value && c.newId.nonEmpty && filteredRoadLinks.exists(_.linkId == c.newId.get))
-        val roadLinksToTreat = filteredRoadLinks.filter(r => changesToTreat.exists(_.newId.get == r.linkId)).map(_.linkId).toSet
-        val speedLimitsAlreadyExistents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(roadLinksToTreat))
+        val roadLinksToTreat = filteredRoadLinks.filter(r => changesToTreat.exists(_.newId.get == r.linkId))
+        val speedLimitsAlreadyExistents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(roadLinksToTreat.map(_.linkId).toSet))
 
         val changesWithoutSpeedLimitCreated = changesToTreat.filterNot(ctt => speedLimitsAlreadyExistents.exists(_.linkId == ctt.newId.get))
-        println("\nNumber of Changes to Treat: "+ changesWithoutSpeedLimitCreated.size)
+        println("Number of Changes to Treat: " + changesWithoutSpeedLimitCreated.size + "(RoadLinks without asset values in the adjacents are not treated)")
 
         changesWithoutSpeedLimitCreated.foreach { cws =>
-          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false).map(_.linkId).toSet
-          if (adjacents.size >= 2) {
-            val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents))
-            if (speedLimitsOnAdjacents.size >= 2) {
-              val speedLimitsToCreate = speedLimitService.newChangeAsset(filteredRoadLinks, speedLimitsOnAdjacents, Seq(cws))
+          val adjacents = roadLinkService.getAdjacent(cws.newId.get, false)
+          val speedLimitsOnAdjacents = speedLimitDao.getCurrentSpeedLimitsByLinkIds(Some(adjacents.map(_.linkId).toSet))
 
-              //Create new SpeedLimits on gaps
-              speedLimitsToCreate.foreach { sl =>
-                speedLimitDao.createSpeedLimit(LinearAssetTypes.VvhGenerated, sl.linkId, Measures(sl.startMeasure, sl.endMeasure), sl.sideCode, sl.value.get, vvhClient.roadLinkData.createVVHTimeStamp(), (_, _) => Unit)
-                println("\nNew SpeedLimit created at Link Id: " + sl.linkId + " with value: " + sl.value.get.value)
+          roadLinksToTreat.find(_.linkId == cws.newId.get).foreach { changeRoadLink =>
+            val assetAndPoints: Seq[(Point, SpeedLimit)] = speedLimitService.getAssetsAndPoints(speedLimitsOnAdjacents, roadLinks, (cws, changeRoadLink))
 
-                //Remove linkIds from Unknown Speed Limits working list after speedLimit creation
-                speedLimitDao.purgeFromUnknownSpeedLimits(sl.linkId, GeometryUtils.geometryLength(sl.geometry))
-                println("Removed linkId " + sl.linkId + " from UnknownSpeedLimits working list")
-              }
+            if (assetAndPoints.nonEmpty) {
+              println("\nTreating changes for the LinkId: " + cws.newId.get)
+              val (firstRoadLinkPoint, lastRoadLinkPoint) = GeometryUtils.geometryEndpoints(changeRoadLink.geometry)
+
+              val assetAdjFirst = speedLimitService.getAdjacentAssetByPoint(assetAndPoints, firstRoadLinkPoint)
+              val assetAdjLast = speedLimitService.getAdjacentAssetByPoint(assetAndPoints, lastRoadLinkPoint)
+
+              val groupBySideCodeFirst = assetAdjFirst.groupBy(_.sideCode)
+              val groupBySideCodeLast = assetAdjLast.groupBy(_.sideCode)
+
+              val adjacentsToFirstPoint = getAdjacentsRoadLinks(adjacents, firstRoadLinkPoint)
+              val adjacentsToLastPoint = getAdjacentsRoadLinks(adjacents, lastRoadLinkPoint)
+
+              val speedLimitsToCreate =
+                if (assetAdjFirst.nonEmpty && assetAdjLast.nonEmpty) {
+                  groupBySideCodeFirst.keys.flatMap { sideCode =>
+                    groupBySideCodeFirst(sideCode).find { asset =>
+                      val lastAdjsWithFirstSideCode = groupBySideCodeLast.get(sideCode)
+                      lastAdjsWithFirstSideCode.isDefined && lastAdjsWithFirstSideCode.get.exists(_.value.equals(asset.value))
+                    }.map { asset =>
+                      asset.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+                    }
+                  }.toSeq
+
+                } else if (assetAdjFirst.isEmpty && adjacentsToFirstPoint.isEmpty && assetAdjLast.nonEmpty) {
+                  groupBySideCodeLast.keys.map { sideCode =>
+                    groupBySideCodeLast(sideCode).head.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+                  }.toSeq
+
+                } else if (assetAdjFirst.nonEmpty && adjacentsToLastPoint.isEmpty && assetAdjLast.isEmpty) {
+                  groupBySideCodeFirst.keys.map { sideCode =>
+                    groupBySideCodeFirst(sideCode).head.copy(id = 0, linkId = changeRoadLink.linkId, startMeasure = 0L.toDouble, endMeasure = GeometryUtils.geometryLength(changeRoadLink.geometry))
+                  }.toSeq
+
+                } else {
+                  Seq()
+                }
+
+              createNewSpeedLimits(speedLimitsToCreate, changeRoadLink)
             }
           }
         }
       }
+    }
 
-      println("\n")
-      println("Complete at time: ")
-      println(DateTime.now())
-      println("\n")
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def updateLastModifiedAssets(): Unit = {
+    println("\nUpdating last modified assets information")
+    println(DateTime.now())
+
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities }
+
+    println("\n")
+    println("Municipalities fetched after: " + DateTime.now())
+    println("\n")
+
+
+    municipalities.foreach { municipality =>
+      OracleDatabase.withDynTransaction {
+        println("Working on municipality " + municipality)
+        val municipalityRoadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).toSet
+        val modifiedAssetTypes = verificationService.dao.getModifiedAssetTypes(municipalityRoadLinks.map(_.linkId))
+
+        modifiedAssetTypes.foreach { asset =>
+          verificationService.dao.insertAssetModified(municipality, asset)
+        }
+        println("Modified assets transferred for municipality " + municipality + " in " + DateTime.now())
+        println("\n")
+      }
     }
   }
 
@@ -2514,6 +2636,10 @@ object DataFixture {
         transformLorryParkingIntoDatex2()
       case Some("fill_new_roadLinks_info") =>
         fillNewRoadLinksWithPreviousInfo()
+      case Some("update_last_modified_assets_info") =>
+        updateLastModifiedAssets()
+      case Some("import_cycling_walking_info") =>
+        importCyclingAndWalkingInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2527,7 +2653,7 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info")
+        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info")
     }
   }
 }

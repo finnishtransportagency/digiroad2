@@ -371,13 +371,6 @@ object Queries {
     """
   }
 
-  //Table external_road_private_info created using an shape file importer, does't exist on Flyway
-  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
-    sql"""
-      select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
-    """.as[(Long, Long, Int, Option[String], Option[String])].list
-  }
-
   //Table lorry_parking_to_datex2 created using an shape file importer, does't exist on Flyway
   def getLorryParkingToTransform(): Set[LorryParkingInDATEX2] = {
     //When getting the geometry column it need to be in the SRID 4258

@@ -544,7 +544,7 @@
         if(readOnly) {
             var item = $('<p />');
             item.addClass('form-control-static');
-            item.text('Kylla');
+            item.text('Kyllä');
             return item;
         } else {
           var input = $('<input type="checkbox" class="suggested-box"/>');

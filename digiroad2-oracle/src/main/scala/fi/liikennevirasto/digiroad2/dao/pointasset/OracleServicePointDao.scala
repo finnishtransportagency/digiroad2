@@ -22,7 +22,8 @@ case class IncomingService(serviceType: Int,
                            additionalInfo: Option[String],
                            typeExtension: Option[Int],
                            parkingPlaceCount: Option[Int],
-                           isAuthorityData: Boolean = true)
+                           isAuthorityData: Boolean = true,
+                           weightLimit: Option[Int])
 
 case class Service(id: Long,
                    assetId: Long,
@@ -31,7 +32,8 @@ case class Service(id: Long,
                    additionalInfo: Option[String],
                    typeExtension: Option[Int],
                    parkingPlaceCount: Option[Int],
-                   isAuthorityData: Boolean = true)
+                   isAuthorityData: Boolean = true,
+                   weightLimit: Option[Int])
 
 case class ServicePoint(id: Long,
                         lon: Double,
@@ -79,8 +81,8 @@ object OracleServicePointDao {
     servicePoint.services.foreach { service =>
       val serviceId = Sequences.nextPrimaryKeySeqValue
       sqlu"""
-        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data) values
-        ($serviceId, $servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData})
+        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data, WEIGHT_LIMIT) values
+        ($serviceId, $servicePointId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData}, ${service.weightLimit})
       """.execute
     }
 
@@ -99,8 +101,8 @@ object OracleServicePointDao {
     updatedAsset.services.foreach { service =>
       val id = Sequences.nextPrimaryKeySeqValue
       sqlu"""
-        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data) values
-        ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData})
+        insert into SERVICE_POINT_VALUE (ID, ASSET_ID, TYPE, ADDITIONAL_INFO, NAME, TYPE_EXTENSION, PARKING_PLACE_COUNT, is_authority_data, WEIGHT_LIMIT) values
+        ($id, $assetId, ${service.serviceType}, ${service.additionalInfo}, ${service.name}, ${service.typeExtension}, ${service.parkingPlaceCount}, ${service.isAuthorityData}, ${service.weightLimit})
       """.execute
     }
 
@@ -162,7 +164,8 @@ object OracleServicePointDao {
           s"""
           select ID, ASSET_ID, TYPE, NAME, ADDITIONAL_INFO, TYPE_EXTENSION, PARKING_PLACE_COUNT,
           CASE WHEN IS_AUTHORITY_DATA IS NULL AND (TYPE = 10 OR TYPE = 17)THEN '0'
-          WHEN IS_AUTHORITY_DATA IS NULL THEN '1' ELSE IS_AUTHORITY_DATA END AS IS_AUTHORITY_DATA
+          WHEN IS_AUTHORITY_DATA IS NULL THEN '1' ELSE IS_AUTHORITY_DATA END AS IS_AUTHORITY_DATA,
+          WEIGHT_LIMIT
           from SERVICE_POINT_VALUE
           where (ASSET_ID, ASSET_ID) in (${servicePoints.map(_.id).map({ x => s"($x, $x)" }).mkString(",")})
         """)(getService).iterator.toSet.groupBy(_.assetId)
@@ -234,8 +237,9 @@ object OracleServicePointDao {
       val typeExtension = r.nextIntOption()
       val parkingPlaceCount = r.nextIntOption()
       val isAuthorityData = r.nextBoolean()
+      val weightLimit = r.nextIntOption()
 
-      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount, isAuthorityData)
+      Service(id, assetId, serviceType, name, additionalInfo, typeExtension, parkingPlaceCount, isAuthorityData, weightLimit)
     }
   }
 

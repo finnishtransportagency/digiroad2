@@ -1,21 +1,18 @@
 package fi.liikennevirasto.digiroad2.middleware
 
 import java.sql.SQLIntegrityConstraintViolationException
-import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.service.pointasset.{TrafficSignInfo, TrafficSignService}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.service.{AdditionalInformation, RoadLinkService}
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.ManoeuvreService
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
-import org.json4s
 import org.json4s.jackson.Json
-import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject, JString}
+import org.json4s.{CustomSerializer, DefaultFormats, Formats, JInt, JString}
 
 object TrafficSignManager {
   val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
@@ -61,10 +58,11 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
     new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
   }
 
-  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true): Unit = {
+
+  def createAssets(trafficSignInfo: TrafficSignInfo, newTransaction: Boolean = true, fromTierekisteriGenerator: Boolean = false ): Unit = {
     trafficSignInfo match {
       case trSign if TrafficSignManager.belongsToManoeuvre(trSign.signType) =>
-        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction)
+        manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction, fromTierekisteriGenerator)
 
       case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
         insertTrafficSignToProcess(trSign.id, Prohibition)
@@ -89,22 +87,26 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
           manoeuvreService.deleteManoeuvreFromSign(manoeuvreService.withIds(Set(trSign.id)), username, newTransaction)
 
         case signType if TrafficSignManager.belongsToProhibition(signType) =>
-          insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign))
+          insertTrafficSignToProcess(trSign.id, Prohibition, Some(trSign), newTransaction)
 
         case signType if TrafficSignManager.belongsToHazmat(signType) =>
-          insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign))
+          insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, Some(trSign), newTransaction)
 
         case signType if TrafficSignManager.belongsToParking(signType) =>
-          insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign))
+          insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign), newTransaction)
 
         case _ => None
       }
     }
   }
 
-  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo, persistedTrafficSign: Option[PersistedTrafficSign] = None) : Unit = {
+  def insertTrafficSignToProcess(id: Long, assetInfo: AssetTypeInfo, persistedTrafficSign: Option[PersistedTrafficSign] = None, newTransaction: Boolean = false) : Unit = {
     try {
-      withDynTransaction {
+      if(newTransaction) {
+        withDynTransaction {
+          linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId, Json(jsonFormats).write(persistedTrafficSign.getOrElse("")))
+        }
+      } else {
         linearAssetDao.insertTrafficSignsToProcess(id, assetInfo.typeId, Json(jsonFormats).write(persistedTrafficSign.getOrElse("")))
       }
     } catch {
