@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -13,7 +10,7 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId, updateSingleChoiceProperty}
+import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
@@ -814,17 +811,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getTrafficSignsToProcessById(ids: Seq[Long]) : Seq[(Long, String)] = {
-    sql""" select traffic_sign_id, sign
-           from traffic_sign_manager
-           where traffic_sign_id in (#${ids.mkString(",")})
+    MassQuery.withIds(ids.toSet) { idTableName =>
+      sql""" select tsm.traffic_sign_id, tsm.sign
+           from traffic_sign_manager tsm
+              JOIN #$idTableName i on tsm.traffic_sign_id = i.id
            """.as[(Long, String)].list
+    }
   }
 
   def deleteTrafficSignsToProcess(ids: Seq[Long], typeId: Int) : Unit = {
-    sqlu"""delete from traffic_sign_manager
-           where linear_asset_type_id = $typeId
-           and traffic_sign_id in (#${ids.mkString(",")})
+    MassQuery.withIds(ids.toSet) { idTableName =>
+      sqlu"""DELETE FROM traffic_sign_manager
+           WHERE linear_asset_type_id = $typeId
+           AND traffic_sign_id IN ( SELECT id FROM #$idTableName )
          """.execute
+    }
   }
 
   def getConnectedAssetFromTrafficSign(id: Long): Seq[Long] = {
@@ -889,7 +890,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first
     val currentIdsAndValue = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(id, propertyId).list
 
-    if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
+    if (currentIdsAndValue.isEmpty) {
+      insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
+    } else if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
       Queries.deleteMultipleChoiceValue(currentIdsAndValue.head._1).execute
       insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
     }

@@ -79,6 +79,15 @@ object OracleTrafficSignDao {
     queryToPersistedTrafficSign(queryWithFilter)
   }
 
+
+  def fetchByFilterWithExpiredByIds(ids: Set[Long]): Seq[PersistedTrafficSign] = {
+    MassQuery.withIds(ids) { idTableName =>
+      val filter = s"join $idTableName i on i.id = a.id "
+      queryToPersistedTrafficSign( query + " "+ filter )
+    }
+
+  }
+
   def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
     val recordLimit = token match {
       case Some(tk) =>
