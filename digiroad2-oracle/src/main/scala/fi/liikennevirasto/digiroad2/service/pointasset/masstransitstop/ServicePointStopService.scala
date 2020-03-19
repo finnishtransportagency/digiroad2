@@ -27,21 +27,20 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
   }
 
   def create(lon: Double, lat: Double, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int, withTransaction: Boolean = true): Long = {
-    val assetId = Sequences.nextPrimaryKeySeqValue
-    def create = {
+    def createAssetAndProperties = {
+      val assetId = Sequences.nextPrimaryKeySeqValue
       servicePointBusStopDao.insertAsset(assetId, lon, lat, username, municipalityCode)
       servicePointBusStopDao.updateAssetProperties(assetId, properties)
+      assetId
     }
 
-    if(withTransaction){
+    if (withTransaction) {
       withDynTransaction {
-        create
+        createAssetAndProperties
       }
-    }else{
-      create
+    } else {
+      createAssetAndProperties
     }
-
-    assetId
   }
 
   def getById(id: Long): Option[ServicePoint] = {
