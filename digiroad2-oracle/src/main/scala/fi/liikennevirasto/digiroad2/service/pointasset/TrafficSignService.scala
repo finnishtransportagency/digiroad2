@@ -52,6 +52,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpired(queryFilter)
 
+  def fetchByFilterWithExpiredByIds(ids: Set[Long]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpiredByIds(ids)
+
   override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilterWithExpiredLimited(queryFilter, token)
 
   override def setFloating(persistedAsset: PersistedTrafficSign, floating: Boolean): PersistedTrafficSign = {

@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -80,6 +77,15 @@ object OracleTrafficSignDao {
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PersistedTrafficSign] = {
     val queryWithFilter = queryFilter(query())
     queryToPersistedTrafficSign(queryWithFilter)
+  }
+
+
+  def fetchByFilterWithExpiredByIds(ids: Set[Long]): Seq[PersistedTrafficSign] = {
+    MassQuery.withIds(ids) { idTableName =>
+      val filter = s"join $idTableName i on i.id = a.id "
+      queryToPersistedTrafficSign( query + " "+ filter )
+    }
+
   }
 
   def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
