@@ -156,10 +156,11 @@
 
     function extractServicePointsAuxiliarsValues() {
       var resultValues = {palvelu: undefined, tarkenne: undefined};
+      var auxiliarData = data.payload ? data.payload.properties : data.propertyData;
 
-      if (data.propertyData !== undefined) {
-        resultValues.palvelu = _.find(data.propertyData, function(prop) {return prop.publicId == "palvelu";});
-        resultValues.tarkenne = _.find(data.propertyData, function(prop) {return prop.publicId == "tarkenne";});
+      if (auxiliarData !== undefined) {
+        resultValues.palvelu = _.find(auxiliarData, function(prop) {return prop.publicId == "palvelu";});
+        resultValues.tarkenne = _.find(auxiliarData, function(prop) {return prop.publicId == "tarkenne";});
       }
 
       if (resultValues.palvelu !== undefined) {

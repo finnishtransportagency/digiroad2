@@ -442,7 +442,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       });
     }
 
-    if (_.includes(['pysakin_tyyppi', 'nimi_suomeksi', 'palvelun_nimi', 'palvelun_lisätieto', 'suggest_box'], propertyData.propertyData.publicId)) {
+    if (_.includes(['pysakin_tyyppi', 'nimi_suomeksi', 'palvelu', 'tarkenne', 'suggest_box'], propertyData.propertyData.publicId)) {
       var assetProperties = selectedMassTransitStopModel.getProperties();
       _.each(features.getArray(), function(feature){
         var properties = feature.getProperties();
