@@ -543,6 +543,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if(uiAsset) {
       removeAssetFromMap(uiAsset);
       massTransitStopsCollection.destroyAsset(backendAsset.id);
+      selectedMassTransitStopModel.close();
     }
   };
 
