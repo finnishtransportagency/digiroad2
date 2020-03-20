@@ -407,22 +407,19 @@
     };
 
     var changeByNationalId = function(assetNationalId) {
-      var fetchFromMassServiceStopByNationalId = function () {
-        backend.getMassServiceStopByNationalId(assetNationalId, function (asset) {
-          eventbus.trigger('asset:fetched', asset);
-        });
-      };
-
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
+        backend.getMassServiceStopByNationalId(assetNationalId, function (asset) {
+          if (_.isUndefined(asset.success)) { eventbus.trigger('asset:fetched', asset); }
+        });
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
             if (errorObject.status == NON_AUTHORITATIVE_INFORMATION_203) {
               eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
             }
           }
-          if (!_.isUndefined(asset)) { eventbus.trigger('asset:fetched', asset); } else {fetchFromMassServiceStopByNationalId();}
+          eventbus.trigger('asset:fetched', asset);
         });
       }
     };
