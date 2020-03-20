@@ -96,7 +96,8 @@
       'tarkenne',
       'palvelun_nimi',
       'palvelun_lisätieto',
-      'viranomaisdataa'];
+      'viranomaisdataa',
+      'suggest_box'];
 
     var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);

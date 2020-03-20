@@ -76,7 +76,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
       val createdServicePointId = testMassTransitStopService.create(dummyPoint.x, dummyPoint.y, dummyProperties, "ServicePointBusStopServiceSpec", 749, false)
       val createdServicePoint = testMassTransitStopService.fetchAsset(createdServicePointId)
 
-      testMassTransitStopService.expire(createdServicePoint, "ServicePointBusStopServiceSpec")
+      testMassTransitStopService.expire(createdServicePoint, "ServicePointBusStopServiceSpec", false)
       assertThrows[NoSuchElementException] {testMassTransitStopService.fetchAsset(createdServicePointId)}
 
       dynamicSession.rollback()

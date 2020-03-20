@@ -850,7 +850,8 @@
             'tarkenne',
             'palvelun_nimi',
             'palvelun_lisätieto',
-            'viranomaisdataa'];
+            'viranomaisdataa',
+            'suggest_box'];
 
         return _.sortBy(properties, function(property) {
           return _.indexOf(propertyOrdering, property.publicId);
@@ -1126,7 +1127,8 @@
 
         var result = $('<div />').addClass('form-group new-service');
 
-        result = result.append( $('<select />').addClass('form-control select').change(newServiceSelectOnChange)
+        result = result.append($('<label />').text('Palvelu').addClass('control-label'))
+                        .append($('<select />').addClass('form-control select').change(newServiceSelectOnChange)
                         .append($('<option />').text('Lisää uusi palvelu').addClass('empty').attr('disabled', true).attr('selected', true))
                         .append(enumVals.map(function (enumVal) {
                             return $('<option>').text(enumVal.propertyDisplayValue).attr('value', enumVal.propertyValue);

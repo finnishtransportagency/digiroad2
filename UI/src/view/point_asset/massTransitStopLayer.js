@@ -115,7 +115,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   servicePointLayer.set('name', 'servicePointLayer');
   servicePointLayer.setOpacity(1);
-  showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
+  servicePointLayer.setVisible(true);
   map.addLayer(servicePointLayer);
 
   function onSelectMassTransitStop(event) {

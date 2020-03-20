@@ -59,8 +59,14 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
     servicePointBusStopDao.fetchAsset(withId(id)).headOption.getOrElse(throw new NoSuchElementException)
   }
 
-  def expire(asset: ServicePoint, username: String) = {
-    servicePointBusStopDao.expire(asset.id, username)
+  def expire(asset: ServicePoint, username: String, withTransaction: Boolean = true) = {
+    if (withTransaction) {
+      withDynTransaction {
+        servicePointBusStopDao.expire(asset.id, username)
+      }
+    } else {
+      servicePointBusStopDao.expire(asset.id, username)
+    }
   }
 
   protected def updatePosition(id: Long, position: PositionCoordinates, municipalityCode: Int) = {

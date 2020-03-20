@@ -125,7 +125,7 @@ class ServicePointBusStopDao {
           join property p on a.asset_type_id = p.asset_type_id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
-          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and (p.property_type = 'multiple_choice' or p.property_type = 'checkbox')
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
         where exists (
             select '1'
@@ -245,7 +245,7 @@ class ServicePointBusStopDao {
           updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
 
-      case MultipleChoice =>
+      case MultipleChoice | CheckBox =>
         createOrUpdateMultipleChoiceProperty(propertyValues.asInstanceOf[Seq[PropertyValue]], assetId, propertyId)
 
       case SingleChoice =>
