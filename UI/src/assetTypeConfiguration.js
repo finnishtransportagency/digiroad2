@@ -53,7 +53,7 @@
 
     var dateValueExtract = function (fields, publicId) {
       var dateValue = _.find(fields, function(field) { return field.publicId === publicId; }).values;
-      return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : dateValue;
+      return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : undefined;
     };
 
     var saveConditionWithSuggested = function(selectedAsset, authorizationPolicy) {
@@ -1069,7 +1069,9 @@
         title: 'Liikennemerkit',
         allowComplementaryLinks: true,
         newAsset: { validityDirection: 2, propertyData: [
+          {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
+          {'name': 'Päämerkin teksti', 'propertyType': 'text', 'publicId': 'main_sign_text', values: []},
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
           {'name': "Sijaintitarkenne", 'propertyType': 'single_choice', 'publicId': "location_specifier", values: [{ propertyValue: 999 }]},
@@ -1116,7 +1118,7 @@
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
           var lifecycleValidations = [
-            { values: [4, 5], validate: function (startDate, endDate) { return !_.isEmpty(startDate) && !_.isEmpty(endDate) && endDate >= startDate; }}
+            { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
           ];
 
           var opposite_side_sign =  _.find( selectedAsset.get().propertyData, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
@@ -1138,7 +1140,7 @@
           var endDateExtracted = dateValueExtract(fields, 'trafficSign_end_date');
 
           var roadworksTrafficCode = "85";
-          var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isEmpty(startDateExtracted) && !_.isEmpty(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
+          var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
 
           if (trafficSignTypeExtracted === roadworksTrafficCode)
             return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;

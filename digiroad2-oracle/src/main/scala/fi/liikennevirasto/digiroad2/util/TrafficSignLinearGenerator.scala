@@ -1136,8 +1136,8 @@ class TrafficSignRoadWorkGenerator(roadLinkServiceImpl: RoadLinkService) extends
   override def createValue(trafficSigns: Seq[PersistedTrafficSign]): Option[DynamicValue] = {
     if (debbuger) println("createValue")
     val value = trafficSigns.flatMap { trafficSign =>
-      val startDate = trafficSignService.getProperty(trafficSign, trafficSignService.startDatePublicId).get.propertyValue
-      val endDate = trafficSignService.getProperty(trafficSign, trafficSignService.endDatePublicId).get.propertyValue
+      val startDate = trafficSignService.getProperty(trafficSign, trafficSignService.trafficSignStartDate).get.propertyValue
+      val endDate = trafficSignService.getProperty(trafficSign, trafficSignService.trafficSignEndDate).get.propertyValue
 
       val additionalInfo = if (endDate.nonEmpty)
         Seq( DynamicPropertyValue(

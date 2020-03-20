@@ -116,7 +116,8 @@
         var checkedValue = suggestedBoxValue ? 'checked' : '';
         return renderSuggestBoxElement(asset, checkedValue);
       } else {
-        return '';
+        // empty div placed for correct positioning on the form for the validity direction button
+        return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box"></div>';
       }
     };
 
@@ -142,6 +143,7 @@
 
       rootElement.find("#feature-attributes-header").html(header);
       rootElement.find("#feature-attributes-form").html(form);
+      rootElement.find(".suggestion-box").before(me.renderValidityDirection(selectedAsset));
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
       rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
       rootElement.find("#feature-attributes-footer").html(footer);
@@ -350,11 +352,11 @@
           propertyValue = property.values[0].propertyDisplayValue;
 
       return '' +
-          '<div><div class="form-group editable form-traffic-sign">' +
-          '        <label class="control-label">' + property.localizedName + '</label>' +
-          '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-          '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
-          '    </div></div>';
+          '<div class="form-group editable form-traffic-sign">' +
+          '     <label class="control-label">' + property.localizedName + '</label>' +
+          '     <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+          '     <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+          '</div>';
     };
 
     var textHandler = function (property) {
