@@ -214,7 +214,7 @@ class ServicePointBusStopDao {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
     } else {
-      val propertyId = Q.query[String, Long](propertyIdByPublicId).apply(property.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+      val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
       (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
     }
   }
