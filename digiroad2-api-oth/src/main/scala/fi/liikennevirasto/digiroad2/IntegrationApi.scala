@@ -300,8 +300,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Some(DynamicValue(x)) =>
         x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
           case Some(propValue) =>
-            if ( propValue.value.toString.trim == "1") true
-            else false
+            propValue.value.toString.trim == "1"
 
           case _ => false
         }
@@ -312,8 +311,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   private def isSuggested(asset: PersistedPointAsset): Boolean = {
     asset.propertyData.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
       case Some(value) =>
-        if (value.asInstanceOf[PropertyValue].propertyValue.toString.trim == "1") true
-        else false
+        value.asInstanceOf[PropertyValue].propertyValue.toString.trim == "1"
 
       case _ => false
     }

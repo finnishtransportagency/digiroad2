@@ -76,7 +76,7 @@ object OracleObstacleDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[Property] = {
-    val specialCases = Seq("opposite_side_sign", "suggest_box")
+    val specialCases = Seq("suggest_box" )
 
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
