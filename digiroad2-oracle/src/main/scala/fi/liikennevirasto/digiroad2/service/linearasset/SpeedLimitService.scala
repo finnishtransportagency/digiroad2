@@ -191,12 +191,16 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   /**
     * Removes speed limit from unknown speed limits list if speed limit exists. Used by SpeedLimitUpdater actor.
     */
-  def purgeUnknown(linkIds: Set[Long]): Unit = {
+  def purgeUnknown(linkIds: Set[Long], expiredLinkIds: Seq[Long]): Unit = {
     val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(linkIds)
     withDynTransaction {
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
       }
+
+      //To remove nonexistent road links of unknown speed limits list
+      if (expiredLinkIds.nonEmpty)
+        dao.deleteUnknownSpeedLimits(expiredLinkIds)
     }
   }
 
@@ -249,7 +253,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     eventbus.publish("speedLimits:update", changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ changeSet.droppedAssetIds, droppedAssetIds = Set()))
     eventbus.publish("speedLimits:saveProjectedSpeedLimits", filledTopology.filter(sl => sl.id <= 0 && sl.value.nonEmpty))
 
-    eventbus.publish("speedLimits:purgeUnknownLimits", changeSet.adjustedMValues.map(_.linkId).toSet)
+    eventbus.publish("speedLimits:purgeUnknownLimits", (changeSet.adjustedMValues.map(_.linkId).toSet, oldRoadLinkIds))
     val unknownLimits = createUnknownLimits(filledTopology, roadLinksByLinkId)
     eventbus.publish("speedLimits:persistUnknownLimits", unknownLimits)
 
@@ -418,7 +422,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       }
     }
     // Add them to checks to remove unknown limits
-    eventbus.publish("speedLimits:purgeUnknownLimits", limits.map(_.linkId).toSet)
+    eventbus.publish("speedLimits:purgeUnknownLimits", (limits.map(_.linkId).toSet, Seq()))
   }
 
   /**
@@ -606,7 +610,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       }
     }
 
-    eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
+    eventbus.publish("speedLimits:purgeUnknownLimits", (newLimits.map(_.linkId).toSet, Seq()))
     createdIds
   }
 
@@ -618,7 +622,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       val createdIds = newLimits.flatMap { limit =>
         dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.roadLinkData.createVVHTimeStamp(), municipalityValidation)
       }
-      eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
+      eventbus.publish("speedLimits:purgeUnknownLimits", (newLimits.map(_.linkId).toSet, Seq()))
       createdIds
     }
   }
