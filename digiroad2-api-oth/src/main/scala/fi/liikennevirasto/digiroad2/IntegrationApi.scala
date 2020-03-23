@@ -518,7 +518,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     pavedRoads.map { pavedRoad =>
       val dynamicMultiValueLinearAssetsMap =
         pavedRoad.value match {
-          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "paallysteluokka").map(_.values.map(_.value.toString.toInt)))
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "paallysteluokka").map(_.values.head.value.toString.toInt))
           case _ => Map()
         }
 
@@ -532,7 +532,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     roadsWidth.map { roadWidth =>
       val dynamicMultiValueLinearAssetsMap =
         roadWidth.value match {
-          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "width").map(_.values.map(_.value.toString.toInt)))
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "width").map(_.values.head.value.toString.toInt))
           case _ => Map()
         }
 
