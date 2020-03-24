@@ -87,7 +87,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       asset.vvhTimeStamp should not be(0)
 
       val propertyId = asset.propertyData.head.id
-      val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("", None, false)))
+      val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
 
       asset should be(TrafficLight(
         id = id,
