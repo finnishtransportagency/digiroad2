@@ -5,13 +5,12 @@ import fi.liikennevirasto.digiroad2.{PersistedPointAsset, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingRailwayCrossing
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 
 case class RailwayCrossingRow(id: Long, linkId: Long,
                               lon: Double, lat: Double,
@@ -70,7 +69,11 @@ object OracleRailwayCrossingDao {
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
-          Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+
+          val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+          Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
+
         }.toSeq)
     }.toSeq
   }
