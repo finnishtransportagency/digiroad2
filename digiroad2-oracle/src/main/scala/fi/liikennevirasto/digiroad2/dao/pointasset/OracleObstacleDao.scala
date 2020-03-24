@@ -1,24 +1,17 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Decode, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
 case class ObstacleRow(id: Long, linkId: Long,
                        lon: Double, lat: Double,
@@ -85,7 +78,6 @@ object OracleObstacleDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[Property] = {
-    val specialCases = Seq("suggest_box" )
 
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
@@ -96,11 +88,7 @@ object OracleObstacleDao {
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
 
-          val isSpecialCase = specialCases.contains(assetRow.property.publicId.toString )
-          val isPropertyValueEmpty = assetRow.property.propertyValue.toString.trim.isEmpty
-
-          val finalValue = if ( isSpecialCase && isPropertyValueEmpty ) "0"
-                           else assetRow.property.propertyValue
+          val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
 
           Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
 
