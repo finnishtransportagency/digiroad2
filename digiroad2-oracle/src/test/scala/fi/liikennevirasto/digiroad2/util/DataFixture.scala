@@ -471,10 +471,11 @@ object DataFixture {
   }
 
   def checkUnknownSpeedlimits(): Unit = {
-    val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val speedLimitService = new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
+    println("\nCleaning SpeedLimits with value from UnknownSpeedlimit working list")
+    println(DateTime.now())
+
     val unknowns = speedLimitService.getUnknown(Set(), None)
+    println("\nVerifying " + unknowns.size + " Unknowns Speedlimits")
     unknowns.foreach { case (_, mapped) =>
       mapped.foreach {
         case (_, x) =>
@@ -486,6 +487,11 @@ object DataFixture {
         case _ =>
       }
     }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
   }
 
   def transisStopAssetsFloatingReason() : Unit = {
@@ -1664,16 +1670,27 @@ object DataFixture {
 
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
-        println(s"Obtaining all Road Links for Municipality: $municipality")
+        println(s"Obtaining all Road Links and unknown SpeedLimits for Municipality: $municipality")
 
         val unknownSpeedLimitByMunicipality = speedLimitDao.getMunicipalitiesWithUnknown(municipality)
-        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(unknownSpeedLimitByMunicipality.toSet, false)
+        val allUnknownSpeedLimitLinkIds = unknownSpeedLimitByMunicipality.map(_._1)
 
-        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad).map(_.linkId) ++ unknownSpeedLimitByMunicipality.diff(roadLinks.map(_.linkId))
+        val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(allUnknownSpeedLimitLinkIds.toSet, false)
+        val filterRoadLinks = roadLinks.filterNot(_.isSimpleCarTrafficRoad).map(_.linkId) ++ allUnknownSpeedLimitLinkIds.diff(roadLinks.map(_.linkId))
 
-        if(filterRoadLinks.nonEmpty) {
+        if (filterRoadLinks.nonEmpty) {
           println(s"Deleting linkIds - $filterRoadLinks")
           speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks)
+        }
+
+        // Validate and update AdminClass at unknown SpeedLimit table
+        unknownSpeedLimitByMunicipality.foreach { case (unknownLinkId, unknownAdminClass) =>
+          roadLinks.find(_.linkId == unknownLinkId) match {
+            case Some(r) if r.administrativeClass != AdministrativeClass.apply(unknownAdminClass) =>
+              println("In LinkId " + unknownLinkId + " Admin class updated to: " + r.administrativeClass.value)
+              speedLimitDao.updateUnknownSpeedLimitAdminClass(unknownLinkId, r.administrativeClass)
+            case _ => None
+          }
         }
       }
     }
