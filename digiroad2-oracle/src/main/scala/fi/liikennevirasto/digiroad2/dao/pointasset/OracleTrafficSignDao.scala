@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -359,7 +356,6 @@ object OracleTrafficSignDao {
   }
 
   def assetRowToProperty(assetRows: Seq[TrafficSignRow]): Seq[Property] = {
-    val specialCases = Seq("opposite_side_sign", "suggest_box")
 
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
@@ -376,11 +372,8 @@ object OracleTrafficSignDao {
                 case _ => Seq()
               }
             case _  =>
-              val isSpecialCase = specialCases.contains(assetRow.property.publicId.toString )
-              val isPropertyValueEmpty = assetRow.property.propertyValue.toString.trim.isEmpty
 
-              val finalValue = if ( isSpecialCase && isPropertyValueEmpty ) "0"
-              else assetRow.property.propertyValue
+              val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
 
               Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
           }
