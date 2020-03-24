@@ -280,12 +280,14 @@
       return selection.length;
     };
 
-    this.setValue = function(value) {
+    this.setValue = function(value, silently) {
       if (value != selection[0].value) {
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
-        dirty = true;
-        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
+        if (!silently) {
+          dirty = true;
+          eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
+        }
       }
     };
 
