@@ -11,6 +11,8 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingDirectionalTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import com.github.tototoshi.slick.MySQLJodaSupport._
+
 
 case class DirectionalTrafficSignRow(id: Long, linkId: Long,
                                     lon: Double, lat: Double,
