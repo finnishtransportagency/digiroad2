@@ -203,6 +203,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
       }
+
+      //To remove nonexistent road links of unknown speed limits list
       if (expiredLinkIds.nonEmpty)
         dao.deleteUnknownSpeedLimits(expiredLinkIds)
     }
@@ -286,7 +288,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
 
     val newLinearAsset = if((speedLimits ++ existingSpeedLimit).nonEmpty) {
-      newChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes)
+//      newChangeAsset(roadLinks, speedLimits ++ existingSpeedLimit, changes) //Temporarily disabled according to DROTH-2327
+      Seq()
     } else Seq()
 
     (speedLimits ++ newLinearAsset, changeSetF)

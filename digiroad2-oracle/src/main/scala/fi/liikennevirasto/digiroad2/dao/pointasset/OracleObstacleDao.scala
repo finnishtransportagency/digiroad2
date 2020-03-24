@@ -1,24 +1,19 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Decode, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+
 
 case class ObstacleRow(id: Long, linkId: Long,
                        lon: Double, lat: Double,
@@ -45,8 +40,6 @@ case class Obstacle(id: Long, linkId: Long,
                     modifiedAt: Option[DateTime] = None,
                     expired: Boolean = false,
                     linkSource: LinkGeomSource) extends PersistedPoint
-
-case class ObstacleShapefile(lon: Double, lat: Double, obstacleType: Int = 1)
 
 object OracleObstacleDao {
 
@@ -85,6 +78,7 @@ object OracleObstacleDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[Property] = {
+
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
       Property(
@@ -93,7 +87,11 @@ object OracleObstacleDao {
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
-           Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+
+          val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+          Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
+
         }.toSeq)
     }.toSeq
   }
@@ -324,20 +322,5 @@ object OracleObstacleDao {
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
-  }
-
-  implicit val getObstacleShapefile = new GetResult[ObstacleShapefile] {
-    def apply(r: PositionedResult): ObstacleShapefile = {
-      val lon = r.nextDouble()
-      val lat = r.nextDouble()
-
-      ObstacleShapefile(lon, lat)
-    }
-  }
-
-  def getObstaclesFromShapefileTable: Seq[ObstacleShapefile] = {
-    sql"""
-           SELECT X_KOORDI, Y_KOORDI FROM DRSTA_PUUTTUVAT_VVH_ESTEET
-           """.as[ObstacleShapefile].list
   }
 }

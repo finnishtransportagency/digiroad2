@@ -320,6 +320,51 @@
   }
 }
 
+.cycling-and-walking-legend {
+  .legend-entry {
+
+    .label {
+      display: inline-block;
+      line-height: 20px;
+    }
+
+    .cycling-and-walking-5, .cycling-and-walking-7, .cycling-and-walking-9,
+    .cycling-and-walking-12, .cycling-and-walking-14, .cycling-and-walking-17, .cycling-and-walking-19, .cycling-and-walking-20 {
+      &:extend(.dotted-linear-asset);
+    }
+
+    .cycling-and-walking-1 { .linear-asset-legend-entry(@cycling-and-walking-13, @linear-asset-node-12); }
+    .cycling-and-walking-2 { .linear-asset-legend-entry(@cycling-and-walking-1, @linear-asset-node-5); }
+    .cycling-and-walking-3 { .linear-asset-legend-entry(@cycling-and-walking-2, @linear-asset-node-4); }
+    .cycling-and-walking-4 { .linear-asset-legend-entry(@cycling-and-walking-3, @linear-asset-14); }
+    .cycling-and-walking-5 { .linear-asset-legend-entry(@cycling-and-walking-3, @linear-asset-14); }
+    .cycling-and-walking-6 { .linear-asset-legend-entry(@cycling-and-walking-4, @linear-asset-18); }
+    .cycling-and-walking-7 { .linear-asset-legend-entry(@cycling-and-walking-4, @linear-asset-18); }
+    .cycling-and-walking-8 { .linear-asset-legend-entry(@cycling-and-walking-5, @linear-asset-node-14); }
+    .cycling-and-walking-9 { .linear-asset-legend-entry(@cycling-and-walking-5, @linear-asset-node-14); }
+    .cycling-and-walking-10 { .linear-asset-legend-entry(@cycling-and-walking-14, @linear-asset-20); }
+    .cycling-and-walking-11 { .linear-asset-legend-entry(@cycling-and-walking-7, @linear-asset-node-2); }
+    .cycling-and-walking-12 { .linear-asset-legend-entry(@cycling-and-walking-7, @linear-asset-node-2); }
+    .cycling-and-walking-13 { .linear-asset-legend-entry(@cycling-and-walking-8, @linear-asset-node-15); }
+    .cycling-and-walking-14 { .linear-asset-legend-entry(@cycling-and-walking-8, @linear-asset-node-15); }
+    .cycling-and-walking-15 { .linear-asset-legend-entry(@cycling-and-walking-10, @linear-asset-node-17); }
+    .cycling-and-walking-16 { .linear-asset-legend-entry(@cycling-and-walking-9, @linear-asset-node-1); }
+    .cycling-and-walking-17 { .linear-asset-legend-entry(@cycling-and-walking-9, @linear-asset-node-1); }
+    .cycling-and-walking-18 { .linear-asset-legend-entry(@cycling-and-walking-15, @linear-asset-21); }
+    .cycling-and-walking-19 { .linear-asset-legend-entry(@cycling-and-walking-15, @linear-asset-21); }
+    .cycling-and-walking-20 { .linear-asset-legend-entry(@cycling-and-walking-12, @linear-asset-6); }
+
+  }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
+}
+
+
+
 .limitation-label-legend{
   .labeling-entry {
     padding: 0 6px 5px 0;

@@ -1,24 +1,18 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, PedestrianCrossings}
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, PedestrianCrossings, _}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
-import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import slick.jdbc
+import scala.language.reflectiveCalls
 
 case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  lon: Double, lat: Double,
@@ -244,7 +238,11 @@ class OraclePedestrianCrossingDao() {
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
-          Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+
+          val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+          Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
+
         }.toSeq)
     }.toSeq
   }
