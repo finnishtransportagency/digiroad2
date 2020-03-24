@@ -251,14 +251,14 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
 
-  def getMunicipalitiesWithUnknown(municipality: Int): Seq[Long] = {
+  def getMunicipalitiesWithUnknown(municipality: Int): Seq[(Long, Int)] = {
 
     val municipalitiesQuery =
       s"""
-      select LINK_ID from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
+      select LINK_ID, ADMINISTRATIVE_CLASS from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
       """
 
-    Q.queryNA[Long](municipalitiesQuery).list
+    Q.queryNA[(Long, Int)](municipalitiesQuery).list
   }
 
 
@@ -583,9 +583,16 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */
   def deleteUnknownSpeedLimits(linkIds: Seq[Long]): Unit = {
-      MassQuery.withIds(linkIds.toSet) { idTableName =>
-        sqlu"""delete from unknown_speed_limit where link_id in (select id from #$idTableName)""".execute
-      }
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sqlu"""delete from unknown_speed_limit where link_id in (select id from #$idTableName)""".execute
+    }
+  }
+
+  /**
+    * Update administrative_class of from unknown speed limits list. Used by removeUnnecessaryUnknownSpeedLimits batch.
+    */
+  def updateUnknownSpeedLimitAdminClass(linkId: Long, administrativeClass: AdministrativeClass): Unit = {
+    sqlu"""update unknown_speed_limit set administrative_class = ${administrativeClass.value} where link_id = $linkId""".execute
   }
 
   def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {

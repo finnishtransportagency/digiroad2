@@ -203,6 +203,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       roadLinks.foreach { rl =>
         dao.purgeFromUnknownSpeedLimits(rl.linkId, GeometryUtils.geometryLength(rl.geometry))
       }
+
+      //To remove nonexistent road links of unknown speed limits list
       if (expiredLinkIds.nonEmpty)
         dao.deleteUnknownSpeedLimits(expiredLinkIds)
     }
