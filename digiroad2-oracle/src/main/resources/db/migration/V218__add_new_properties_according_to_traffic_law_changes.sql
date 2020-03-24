@@ -141,12 +141,12 @@ VALUES (primary_key_seq.nextval,'Kaista','db_migration_v218', sysdate);
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'number', 0, 'db_migration_v218', 'lane', (select id from LOCALIZED_STRING where VALUE_FI = 'Kaista'));
 
---Add property Elinkaari
+--Add property Tila
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval,'Elinkaari','db_migration_v218', sysdate);
+VALUES (primary_key_seq.nextval,'Tila','db_migration_v218', sysdate);
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'single_choice', 0, 'db_migration_v218', 'life_cycle', (select id from LOCALIZED_STRING where VALUE_FI = 'Elinkaari'));
+VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'single_choice', 0, 'db_migration_v218', 'life_cycle', (select id from LOCALIZED_STRING where VALUE_FI = 'Tila'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 1, 'Suunnitteilla', ' ', 'db_migration_v218', (select id from property where public_ID = 'life_cycle'));

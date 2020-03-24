@@ -70,7 +70,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     "merkin materiaali" -> "signMaterial",
     "sijaintitarkenne" -> "locationSpecifier",
     "kaistan tyyppi" -> "laneType",
-    "elinkaari" -> "lifeCycle",
+    "tila" -> "lifeCycle",
     "vauriotyyppi" -> "typeOfDamage",
     "korjauksen kiireellisyys" -> "urgencyOfRepair"
   )
