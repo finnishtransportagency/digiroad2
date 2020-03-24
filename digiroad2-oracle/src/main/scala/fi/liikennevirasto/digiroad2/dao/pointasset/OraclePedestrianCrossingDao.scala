@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, _}
-
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import scala.language.reflectiveCalls
 
 case class PedestrianCrossingRow(id: Long, linkId: Long,
