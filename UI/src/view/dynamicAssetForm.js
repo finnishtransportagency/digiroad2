@@ -85,13 +85,13 @@
             return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value, layerMode) ? '' : element.hide();
         };
 
-        me.setSelectedValue = function(setValue, getValue){
+        me.setSelectedValue = function(setValue, getValue, silently) {
 
             var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
             var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
             var value = properties.concat(currentPropertyValue);
-            setValue({ properties: value});
+            setValue({ properties: value}, silently);
         };
     };
 
@@ -111,10 +111,10 @@
                 '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
 
             me.element.find('input[type=text]').on('keyup', function(){
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
             return me.element;
         };
@@ -136,10 +136,10 @@
                 '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
 
             me.element.find('textarea').on('keyup', function () {
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -174,10 +174,10 @@
           '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
 
             me.element.find('input').on('keyup', function () {
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -229,11 +229,11 @@
                 '</div>');
 
 
-      if (!isDisabled && me.hasDefaultValue()&& !value)
-        me.setSelectedValue(setValue, getValue);
+            if (!isDisabled && me.hasDefaultValue()&& !value)
+                me.setSelectedValue(setValue, getValue, true);
 
             me.element.find('input[type=text]').on('keyup', function () {
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -269,11 +269,11 @@
                 return me.element.find(":selected").val();
             };
             if (!isDisabled && me.hasDefaultValue() && !value){
-              me.setSelectedValue(setValue, getValue);
+              me.setSelectedValue(setValue, getValue, true);
             }
 
             me.element.find('select').on('change', function(){
-              me.setSelectedValue(setValue, getValue);
+              me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -322,7 +322,7 @@
             me.element =  $(template({divCheckBox: divCheckBox}));
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
 
             me.getValue = function() {
                 return _.map($('.multiChoice-'+sideCode+':checked'), function(fields) {
@@ -330,7 +330,7 @@
             };
 
             me.element.find('input').on('click', function(){
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -385,11 +385,11 @@
                     if (target.keyCode === 9) {
                         return;
                     }
-                    me.setSelectedValue(setValue, getValue);
+                    me.setSelectedValue(setValue, getValue, false);
                 }, 500));
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
 
             me.element.append(inputLabel);
             addDatePickers(field, me.element);
@@ -435,12 +435,12 @@
 
             if(!isDisabled && (me.hasDefaultValue() || me.isRequired()) && !value) {
                 me.setValue(me.getValue());
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
             }
 
             me.element.find('input').on('click', function(){
                 me.setValue(me.getValue());
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -452,7 +452,7 @@
             var template = _.template('<div class="form-group">' +
               '   <label class="control-label">' + field.label + '</label>' +
               '   <p class="form-control-static">' +
-              ' Kyllä ' +
+              ' <%= divCheckBox %>  ' +
               '</p>' +
               '</div>' );
 
@@ -588,11 +588,11 @@
 
             me.element.on('click', '.existing-validity-period .delete', function(event) {
                 $(event.target).parent().parent().remove();
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             me.element.on('change', '.existing-validity-period .select', function(event) {
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             me.element.on('change', '.new-validity-period select', function(event) {
@@ -604,7 +604,7 @@
                     endHour: 24,
                     endMinute: 0
                 }));
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             return me.element;
@@ -701,13 +701,13 @@
                         return;
                     }
                     me.setValue(me.getValue());
-                    me.setSelectedValue(setValue, getValue);
+                    me.setSelectedValue(setValue, getValue, false);
                 }, 500));
             };
 
             if (!isDisabled && me.hasDefaultValue() && !value) {
                 me.setValue(me.getValue());
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, true);
             }
 
             var existingDatePeriodElements =
@@ -747,13 +747,13 @@
 
             me.element.on('click', '.remove-period', function(event) {
                 $(event.target).parent().parent().remove();
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
 
                 handleButton();
             });
 
             me.element.on('datechange', function() {
-                me.setSelectedValue(setValue, getValue);
+                me.setSelectedValue(setValue, getValue, false);
             });
 
             me.element.on('click', '.add-period', function() {
