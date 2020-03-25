@@ -85,13 +85,13 @@
             return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value, layerMode) ? '' : element.hide();
         };
 
-        me.setSelectedValue = function(setValue, getValue, silently) {
+        me.setSelectedValue = function(setValue, getValue, withoutEventTriggers) {
 
             var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
             var properties = _.filter(getValue() ? getValue().properties : getValue(), function(property){ return property.publicId !== currentPropertyValue.publicId; });
             var value = properties.concat(currentPropertyValue);
-            setValue({ properties: value}, silently);
+            setValue({ properties: value}, withoutEventTriggers);
         };
     };
 
