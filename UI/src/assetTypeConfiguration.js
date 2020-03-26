@@ -1088,8 +1088,8 @@
           {'name': "Korjauksen kiireellisyys", 'propertyType': 'single_choice', 'publicId': "urgency_of_repair", values: [{ propertyValue: 999 }] },
           {'name': "Arvioitu käyttöikä", 'propertyType': 'number', 'publicId': "lifespan_left", values: [] },
           {'name': "Kunnan ID", 'propertyType': 'text', 'publicId': "municipality_id", values: [] },
-          {'name': "Maastokoordinaatti X", 'propertyType': 'text', 'publicId': "terrain_coordinates_x", values: [] },
-          {'name': "Maastokoordinaatti Y", 'propertyType': 'text', 'publicId': "terrain_coordinates_y", values: [] },
+          {'name': "Maastokoordinaatti X", 'propertyType': 'number', 'publicId': "terrain_coordinates_x", values: [] },
+          {'name': "Maastokoordinaatti Y", 'propertyType': 'number', 'publicId': "terrain_coordinates_y", values: [] },
           {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue:
                 {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 999, coating_type: 999, additional_panel_color: 999 }},
           {'name': "Lisää vanhan lain mukainen koodi", 'propertyType': 'checkbox', 'publicId': "old_traffic_code", values: [ {propertyValue: 0} ]},

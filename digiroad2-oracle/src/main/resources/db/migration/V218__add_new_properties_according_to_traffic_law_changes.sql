@@ -333,7 +333,7 @@ VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liiken
 
 --Add property relation terrain_coordinates
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'text', 0, 'db_migration_v218', 'terrain_coordinates_x', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastokoordinaatti X'));
+VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'number', 0, 'db_migration_v218', 'terrain_coordinates_x', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastokoordinaatti X'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'text', 0, 'db_migration_v218', 'terrain_coordinates_y', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastokoordinaatti Y'));
+VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'number', 0, 'db_migration_v218', 'terrain_coordinates_y', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastokoordinaatti Y'));
