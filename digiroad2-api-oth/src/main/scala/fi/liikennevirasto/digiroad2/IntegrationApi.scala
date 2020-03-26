@@ -99,7 +99,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (massTransitStop: PersistedMassTransitStop) => Map(
+        case (massTransitStop: PersistedMassTransitStop) =>
+          val isMassServicePoint = massTransitStop.stopTypes.head == 7
+          Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
@@ -108,14 +110,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
             lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
             extractBearing(massTransitStop),
-            extractExternalId(massTransitStop),
+            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
             extractLinkId(massTransitStop),
             extractMvalue(massTransitStop),
             extractLinkSource(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue(if(isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if(isMassServicePoint) Option("nimi_suomeksi") else None),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
