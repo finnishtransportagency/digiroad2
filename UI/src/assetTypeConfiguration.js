@@ -1149,7 +1149,21 @@
           var lifecycleValidator = _.find(lifecycleValidations, function (validator) { return _.includes(validator.values, parseInt(_.head(lifecycleField.values).propertyValue)); });
           var validLifecycleDates = _.isUndefined(lifecycleValidator) ? true : lifecycleValidator.validate(startDateExtracted, endDateExtracted);
 
-          return isValidFunc && suggestedAssetCondition && validLifecycleDates;
+          var numericalFields = _.filter(fields, function(field) {return field.propertyType === 'number';});
+          var isValidNumericalFields = _.every(numericalFields, function(field) {return _.isEmpty(field.values) || !isNaN(_.head(field.values).propertyValue);});
+
+          /* Begin: Lane Validation */
+          var laneValues = _.head(_.filter(fields, function(field) { return field.publicId === 'lane'; })).values;
+          var isValidLaneValue = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue) || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
+
+          var laneTypeValue = _.head(_.filter(fields, function(field) { return field.publicId === 'lane_type'; })).values;
+
+          var isValidLane = isValidLaneValue && (_.isEmpty(laneValues) || _.head(laneTypeValue).propertyValue == 999 ||
+            (_.head(laneValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValue).propertyValue != 1) ||
+            (_.head(laneValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValue).propertyValue == 1));
+          /* End: Lane Validation */
+
+          return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer,
         showRoadLinkInfo: true
