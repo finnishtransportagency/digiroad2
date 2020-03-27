@@ -501,12 +501,14 @@
         var currAsset = this.getCurrentAsset();
         if(isServiceStop(currAsset.payload.properties)){
           backend.deleteAllMassServiceStopData(currAsset.id, function () {
+            assetHasBeenModified = false;
             eventbus.trigger('massTransitStopDeleted', currAsset);
           }, function () {
             cancel();
           });
         }else{
           backend.deleteAllMassTransitStopData(currAsset.id, function () {
+            assetHasBeenModified = false;
             eventbus.trigger('massTransitStopDeleted', currAsset);
           }, function (errorObject) {
             cancel();

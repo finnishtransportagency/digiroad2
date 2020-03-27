@@ -10,10 +10,10 @@
     var palveluProp = getPropByPublicId('palvelu' );
     var tarkeneProp =  getPropByPublicId('tarkenne');
 
-    if(_.isEmpty(palveluProp.values) || _.isEmpty(tarkeneProp.values) || palveluProp.values[0].propertyValue != "11"){
+    if(!_.isEmpty(palveluProp.values) && palveluProp.values[0].propertyValue != "11"){
       return true;
     }else{
-      return tarkeneProp.values[0].propertyValue != "99";
+      return !_.isEmpty(tarkeneProp.values) && tarkeneProp.values[0].propertyValue != "99";
     }
   }
 
