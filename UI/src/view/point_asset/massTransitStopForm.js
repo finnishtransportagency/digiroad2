@@ -1171,7 +1171,7 @@
                   $('.tarkenne-select').parent().hide();
                 } else {
                   $('.tarkenne-select').parent().remove();
-                  if(selectedMassTransitStopModel.getId() === 0)
+                  if((_.isEmpty(tarkeneProp.values) || _.head(tarkeneProp.values).propertyValue != "99"))
                     selectedMassTransitStopModel.setProperty('tarkenne', [{propertyValue: "99"}], 'single_choice', undefined, undefined);
                 }
             }
