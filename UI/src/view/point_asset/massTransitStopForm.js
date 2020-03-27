@@ -7,13 +7,13 @@
   var rootElement = $("#feature-attributes");
 
   function isValidServicePoint(){
-    var palveluProp = getPropByPublicId('palvelu' );
-    var tarkeneProp =  getPropByPublicId('tarkenne');
+    var palveluPropValues = getPropByPublicId('palvelu').values;
+    var tarkenePropValues =  getPropByPublicId('tarkenne').values;
 
-    if(!_.isEmpty(palveluProp.values) && palveluProp.values[0].propertyValue != "11"){
+    if(!_.isEmpty(palveluPropValues) && _.head(palveluPropValues).propertyValue != "11"){
       return true;
     }else{
-      return !_.isEmpty(tarkeneProp.values) && tarkeneProp.values[0].propertyValue != "99";
+      return !_.isEmpty(tarkenePropValues) && _.head(tarkenePropValues).propertyValue != "99";
     }
   }
 
@@ -1168,9 +1168,10 @@
 
             } else if (palveluProp !== undefined && palveluProp.values.length > 0 && palveluProp.values[0].propertyValue != "11") {
                 if (readOnly) {
-                    $('.tarkenne-select').parent().hide();
+                  $('.tarkenne-select').parent().hide();
                 } else {
-                    $('.tarkenne-select').parent().remove();
+                  $('.tarkenne-select').parent().remove();
+                  if(selectedMassTransitStopModel.getId() === 0)
                     selectedMassTransitStopModel.setProperty('tarkenne', [{propertyValue: "99"}], 'single_choice', undefined, undefined);
                 }
             }

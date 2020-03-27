@@ -147,6 +147,14 @@
 
         var highlightLayer = function(){
           layer.setOpacity(1);
+          _.each(settings.editableLayers, function(cLayer){
+            if(cLayer.setOpacity)
+              cLayer.setOpacity(1);
+
+            if(cLayer.highLightLayer)
+              cLayer.highLightLayer();
+          });
+
 
           _.each(settings.layers, function(cLayer){
             if(cLayer.setOpacity)
@@ -159,6 +167,12 @@
 
         var unhighlightLayer = function(){
           layer.setOpacity(settings.backgroundOpacity);
+          _.each(settings.editableLayers, function(cLayer){
+            if(cLayer.setOpacity)
+              cLayer.setOpacity(settings.backgroundOpacity);
+            if(cLayer.unHighLightLayer)
+              cLayer.unHighLightLayer();
+          });
 
           _.each(settings.layers, function(cLayer){
             if(cLayer.setOpacity)

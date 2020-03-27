@@ -217,14 +217,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     asset.data = assetData;
     asset.massTransitStop = massTransitStop;
     marker.feature.setProperties(asset);
-    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
 
-    if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod)){
-      if(asset.data.stopTypes[0] == 7){
-        servicePointSource.addFeature(marker.feature);
-      }else{
-        assetSource.addFeature(marker.feature);
-      }
+    if(_.head(asset.data.stopTypes) == 7){
+      servicePointSource.addFeature(marker.feature);
+    }else if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod)){
+      assetSource.addFeature(marker.feature);
     }
 
     return asset;
@@ -328,10 +325,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     _.each(massTransitStopsCollection.getAssets(), function(asset) {
       var marker = asset.massTransitStop.getMarker();
 
-      if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod) && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))){
-        if(asset.data.stopTypes[0] == 7){
+      if(zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))){
+        if(_.head(asset.data.stopTypes) == 7){
           servicePointSource.addFeature(marker.feature);
-        }else{
+        }else if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod)){
           assetSource.addFeature(marker.feature);
         }
       }
