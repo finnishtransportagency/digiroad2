@@ -41,9 +41,6 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
 VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'single_choice', 0, 'db_migration_v218', 'structure', (select id from LOCALIZED_STRING where VALUE_FI = 'Rakenne'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 0, 'Ei tiedossa', ' ', 'db_migration_v218', (select id from property where public_ID = 'structure'));
-
-INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 1, 'Tolppa', ' ', 'db_migration_v218', (select id from property where public_ID = 'structure'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
@@ -187,13 +184,6 @@ VALUES (primary_key_seq.nextval, 3, 'Muu', ' ', 'db_migration_v218', (select id 
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 999, 'Ei tietoa', ' ', 'db_migration_v218', (select id from property where public_ID = 'sign_material'));
-
---Add property tien nimi
-INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval,'Tien nimi','db_migration_v218', sysdate);
-
-INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennemerkki'), 'text', 0, 'db_migration_v218', 'road_name', (select id from LOCALIZED_STRING where VALUE_FI = 'Tien nimi'));
 
 --Add property old_traffic_code
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
