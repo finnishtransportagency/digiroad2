@@ -258,7 +258,7 @@
     }
 
     function isCulvert(selectedServiceType) {
-      return selectedServiceType === 19 || selectedServiceType.value === 19;
+      return (selectedServiceType.value ? selectedServiceType.value : selectedServiceType) === 19;
     }
 
     function showParkingPlaceCount(selectedServiceType) {
