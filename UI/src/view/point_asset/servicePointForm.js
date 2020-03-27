@@ -251,14 +251,14 @@
         delete service.weightLimit;
     }
 
-    function checkNimiField(service, modifications)  {
+    function checkNameField(service, modifications)  {
       var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
       if(isCulvert(serviceType))
-        delete service.nimi;
+        delete service.name;
     }
 
     function isCulvert(selectedServiceType) {
-      return selectedServiceType.value === 19;
+      return selectedServiceType === 19 || selectedServiceType.value === 19;
     }
 
     function showParkingPlaceCount(selectedServiceType) {
@@ -303,7 +303,7 @@
         if (service.id === id) {
           checkTypeExtension(service, modifications);
           checkWeightField(service, modifications);
-          checkNimiField(service, modifications);
+          checkNameField(service, modifications);
           return _.merge({}, service, modifications);
         }
         return service;
