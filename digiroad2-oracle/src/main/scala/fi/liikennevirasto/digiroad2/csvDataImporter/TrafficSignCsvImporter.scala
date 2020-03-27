@@ -309,8 +309,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val optLane = getPropertyValueOption(parsedRow, "lane").asInstanceOf[Option[String]]
     val lanesValidator = (optLaneType, optLane) match {
       case (Some(laneType), Some(lane)) =>
-        if (laneType == 1 && lane.trim.nonEmpty && lane.trim.charAt(1) == 1)  true
-        else if (laneType != 1 && lane.trim.nonEmpty && lane.trim.charAt(1) != 1)  true
+        if (laneType == 1 && lane.trim.nonEmpty && lane.trim.charAt(1) == '1') true
+        else if (laneType != 1 && lane.trim.nonEmpty && lane.trim.charAt(1) != '1')  true
         else {
           errorMessages = (errorMessages._1 ++ List("Invalid lane and lane type match"), Seq())
           false
