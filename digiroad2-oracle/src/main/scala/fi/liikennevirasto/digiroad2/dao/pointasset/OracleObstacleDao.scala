@@ -45,7 +45,7 @@ object OracleObstacleDao {
 
   private def query() = {
     """
-      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
       case
         when ev.name_fi is not null then ev.name_fi
         else null
@@ -127,7 +127,7 @@ object OracleObstacleDao {
     val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
     val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
-     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
      s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
