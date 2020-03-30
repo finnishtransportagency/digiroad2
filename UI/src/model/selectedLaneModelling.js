@@ -28,6 +28,9 @@
     var reorganizeLanes = function (laneNumber) {
       var lanesToUpdate = _.map(selection, function (lane){
         var foundValidProperty =  _.find(lane.properties, function (property) {
+          if(_.isEmpty(property.values))
+            return false;
+
           var value = _.head(property.values).value;
           return property.publicId == "lane_code" && value > laneNumber && ((value % 2 !== 0 && laneNumber % 2 !== 0) || (value % 2 === 0 && laneNumber % 2 === 0));
         });
