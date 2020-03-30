@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
 import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
@@ -15,6 +16,7 @@ import org.joda.time.DateTime
 object LaneUtils {
   lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
   val eventbus = new DummyEventBus
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   lazy val laneService = new LaneService(roadLinkService, eventbus)
 
@@ -65,138 +67,147 @@ object LaneUtils {
   }
 
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
-                                   sideCode: Int, username: String ): Any = {
+                                   sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
     //if (!newIncomeLanes.exists(_.id == 0) )
     // return Seq()
 
 
     // used TierekisteriAssetImporterOperations.importAssets as example
-    val roadParts = laneRoadAddressInfo.initialRoadPartNumber to laneRoadAddressInfo.endRoadPartNumber
+    def process() = {
+      val roadParts = laneRoadAddressInfo.initialRoadPartNumber to laneRoadAddressInfo.endRoadPartNumber
 
-    val roadAddresses = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
-    val vkmRoadAddress = roadLinkTempDAO.getByRoadNumberRoadPartTrack(laneRoadAddressInfo.roadNumber.toInt, laneRoadAddressInfo.track, roadParts.toSet)
+      val roadAddresses = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
+      val vkmRoadAddress = roadLinkTempDAO.getByRoadNumberRoadPartTrack(laneRoadAddressInfo.roadNumber.toInt, laneRoadAddressInfo.track, roadParts.toSet)
 
-    val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks((roadAddresses.map(ra => ra.linkId) ++ vkmRoadAddress.map(_.linkId)).toSet)
+      val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks((roadAddresses.map(ra => ra.linkId) ++ vkmRoadAddress.map(_.linkId)).toSet)
 
-    val filteredLinkIds = mappedRoadLinks.filter { x =>
-      val roadPartNumber = x.attributes("ROADPARTNUMBER").toString.toInt
-      roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber || roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
-    }
-      .map(_.linkId)
+      val filteredLinkIds = mappedRoadLinks.filter { x =>
+        val roadPartNumber = x.attributes("ROADPARTNUMBER").toString.toInt
+        roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber || roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
+      }
+        .map(_.linkId)
 
 
-    val filteredRoadAddresses = roadAddresses.filter(x => filteredLinkIds.contains(x.linkId))
+      val filteredRoadAddresses = roadAddresses.filter(x => filteredLinkIds.contains(x.linkId))
 
-    val lanesToInsert = newIncomeLanes.filter(_.id == 0)
+      val lanesToInsert = newIncomeLanes.filter(_.id == 0)
 
-    val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
+      val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
 
-      val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
-      val vvhRoadLink = mappedRoadLinks.find(_.linkId == road.linkId).get
-      val municipalityCode = vvhRoadLink.municipalityCode
+        val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
+        val vvhRoadLink = mappedRoadLinks.find(_.linkId == road.linkId).get
+        val municipalityCode = vvhRoadLink.municipalityCode
 
-      lanesToInsert.map { lane =>
+        lanesToInsert.map { lane =>
 
-        val laneCodeProperty = lane.attributes.properties.find(_.publicId == "lane_code").getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
-        val laneCode = laneCodeProperty.values.head.value.toString.toInt
-        val isMainLane = laneCode.toString.charAt(1).getNumericValue == 1
+          val laneCodeProperty = lane.attributes.properties.find(_.publicId == "lane_code").getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          val laneCode = laneCodeProperty.values.head.value.toString.toInt
+          val isMainLane = laneCode.toString.charAt(1).getNumericValue == 1
 
-        // Conversion from AddressMValue to MValue we used in LinkIds
-        val startDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.initialDistance
-        val startPoint = if(isMainLane) 0 else Math.abs(road.startMValue - (startDifferenceAddr * road.endMValue / road.endAddrMValue))
-        val endDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.endDistance
-        val endPoint = if(isMainLane) vvhRoadLink.length else Math.abs(road.startMValue - (endDifferenceAddr * road.endMValue / road.endAddrMValue))
+          // Conversion from AddressMValue to MValue we used in LinkIds
+          val startDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.initialDistance
+          val startPoint = if (isMainLane) 0 else Math.abs(road.startMValue - (startDifferenceAddr * road.endMValue / road.endAddrMValue))
+          val endDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.endDistance
+          val endPoint = if (isMainLane) vvhRoadLink.length else Math.abs(road.startMValue - (endDifferenceAddr * road.endMValue / road.endAddrMValue))
 
-        if (road.roadPartNumber > laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber < laneRoadAddressInfo.endRoadPartNumber) {
+          if (road.roadPartNumber > laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber < laneRoadAddressInfo.endRoadPartNumber) {
 
-          PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-            road.startMValue, road.endMValue,
-            Some(username), Some(DateTime.now()),
-            None, None, expired = false,
-            vvhTimeStamp, None, lane.attributes)
-
-        }
-        else if (road.roadPartNumber == laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber == laneRoadAddressInfo.endRoadPartNumber) {
-
-          if ( !(road.endAddrMValue > laneRoadAddressInfo.initialDistance && road.startAddrMValue < laneRoadAddressInfo.endDistance) )
-            None
-
-          else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
-
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              startPoint, endPoint,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
-          }
-          else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue < laneRoadAddressInfo.endDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              startPoint, road.endMValue,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
-          }
-          else if (road.startAddrMValue > laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              road.startMValue, endPoint,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
-          }
-          else {
             PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
               road.startMValue, road.endMValue,
               Some(username), Some(DateTime.now()),
               None, None, expired = false,
               vvhTimeStamp, None, lane.attributes)
-          }
 
-        }
-        else if (road.roadPartNumber == laneRoadAddressInfo.initialRoadPartNumber) {
-          if (road.endAddrMValue < laneRoadAddressInfo.initialDistance) {
-            None
-          } else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              startPoint, road.endMValue,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
-          } else {
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              road.startMValue, road.endMValue,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
           }
+          else if (road.roadPartNumber == laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber == laneRoadAddressInfo.endRoadPartNumber) {
 
-        }
-        else if (road.roadPartNumber == laneRoadAddressInfo.endRoadPartNumber) {
-          if (road.endAddrMValue < laneRoadAddressInfo.endDistance) {
-            None
-          } else if (road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              road.startMValue, endPoint,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
-          } else {
-            PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
-              road.startMValue, road.endMValue,
-              Some(username), Some(DateTime.now()),
-              None, None, expired = false,
-              vvhTimeStamp, None, lane.attributes)
+            if (!(road.endAddrMValue > laneRoadAddressInfo.initialDistance && road.startAddrMValue < laneRoadAddressInfo.endDistance))
+              None
+
+            else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
+
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                startPoint, endPoint,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            }
+            else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance && road.endAddrMValue < laneRoadAddressInfo.endDistance) {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                startPoint, road.endMValue,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            }
+            else if (road.startAddrMValue > laneRoadAddressInfo.initialDistance && road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                road.startMValue, endPoint,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            }
+            else {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                road.startMValue, road.endMValue,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            }
+
+          }
+          else if (road.roadPartNumber == laneRoadAddressInfo.initialRoadPartNumber) {
+            if (road.endAddrMValue < laneRoadAddressInfo.initialDistance) {
+              None
+            } else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance) {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                startPoint, road.endMValue,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            } else {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                road.startMValue, road.endMValue,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            }
+
+          }
+          else if (road.roadPartNumber == laneRoadAddressInfo.endRoadPartNumber) {
+            if (road.endAddrMValue < laneRoadAddressInfo.endDistance) {
+              None
+            } else if (road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                road.startMValue, endPoint,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            } else {
+              PersistedLane(0, road.linkId, sideCode, laneCode, municipalityCode,
+                road.startMValue, road.endMValue,
+                Some(username), Some(DateTime.now()),
+                None, None, expired = false,
+                vvhTimeStamp, None, lane.attributes)
+            }
           }
         }
       }
+
+      //Create lanes
+      allLanesToCreate.flatMap {
+        case lane: PersistedLane => laneService.createWithoutTransaction(lane, username).toString
+        case _ => None
+      }
     }
 
-    //Create lanes
-    allLanesToCreate.flatMap {
-      case lane: PersistedLane => laneService.createWithoutTransaction(lane, username).toString
-      case _ => None
+    if(withTransaction) {
+      withDynTransaction {
+        process()
+      }
+    }else{
+      process()
     }
-
   }
 
 

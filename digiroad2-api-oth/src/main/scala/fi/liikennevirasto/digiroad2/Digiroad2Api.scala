@@ -1067,7 +1067,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
          // "informationSource" -> link.informationSource,
           "roadPartNumber" -> lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")),
           "roadNumber" -> lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")),
-         // "track" -> lane.attributes.getOrElse("VIITE_TRACK",  lane.attributes.get("TEMP_TRACK")),
+          "track" -> lane.attributes.getOrElse("VIITE_TRACK",  lane.attributes.get("TEMP_TRACK")),
           "startAddrMValue" -> lane.attributes.getOrElse("VIITE_START_ADDR", lane.attributes.get("TEMP_START_ADDR")),
           "endAddrMValue" ->  lane.attributes.getOrElse("VIITE_END_ADDR", lane.attributes.get("TEMP_END_ADDR")),
           "administrativeClass" -> lane.administrativeClass.value
@@ -2162,7 +2162,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = laneService
-      val withRoadAddress = params.getOrElse("withRoadAddress", false).asInstanceOf[Boolean]
 
       zoom >= minVisibleZoom && zoom <= maxZoom match {
         case true => mapLightLane(usedService.getByZoomLevel(boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
@@ -2170,12 +2169,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           validateBoundingBox(boundingRectangle)
           val assets = usedService.getByBoundingBox(boundingRectangle)
 
-          if(withRoadAddress) {
-            val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
-            val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress(updatedInfo.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty)))
-            mapLanes(updatedInfo ++ frozenInfo)
-          } else
-            mapLanes(assets)
+          val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
+          val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress(updatedInfo.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty)))
+          mapLanes(updatedInfo ++ frozenInfo)
+
       }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
@@ -2198,9 +2195,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
     val initialRoadNumber = (parsedBody \ "initial_road_number")extractOrElse[Long](halt(BadRequest("Malformed 'initial_road_number' parameter")))
-    val initialRoadPartNumber = (parsedBody \ "initial_road_part")extractOrElse[Long](halt(BadRequest("Malformed 'initial_road_part_number' parameter")))
+    val initialRoadPartNumber = (parsedBody \ "initial_road_part_number")extractOrElse[Long](halt(BadRequest("Malformed 'initial_road_part_number' parameter")))
     val initialDistance = (parsedBody \ "initial_distance")extractOrElse[Long](halt(BadRequest("Malformed 'initial_distance' parameter")))
-    val endRoadPartNumber = (parsedBody \ "end_road_part")extractOrElse[Long](halt(BadRequest("Malformed 'end_road_part_number' parameter")))
+    val endRoadPartNumber = (parsedBody \ "end_road_part_number")extractOrElse[Long](halt(BadRequest("Malformed 'end_road_part_number' parameter")))
     val endDistance = (parsedBody \ "end_distance")extractOrElse[Long](halt(BadRequest("Malformed 'end_distance' parameter")))
     val track  = (parsedBody \ "track")extractOrElse[Int](halt(BadRequest("Malformed 'track' parameter")))
 
