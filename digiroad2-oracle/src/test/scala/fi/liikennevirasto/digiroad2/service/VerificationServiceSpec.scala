@@ -40,23 +40,23 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,190,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_Old', (sysdate - interval '5' day ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,190,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_Old', (sysdate - interval '5' day ))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, 1100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),190,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_new', (sysdate - interval '3' day ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),190,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_new', (sysdate - interval '3' day ))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId +1, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 1), $lrmPositionId + 1)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 2),100,'dr2_test_data', (sysdate - interval '1' month ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 2),100,'dr2_test_data', (add_months(sysdate, -1)))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 2, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 2), $lrmPositionId + 2)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),100,'dr2_test_data', (sysdate - interval '1' month ), 'testuser', (sysdate - interval '1' day ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),100,'dr2_test_data', (add_months(sysdate, -1)), 'testuser', (sysdate - interval '1' day ))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 3, 5100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 3), $lrmPositionId + 3)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 4),210,'dr2_test_data', (sysdate - interval '1' month ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 4),210,'dr2_test_data', (add_months(sysdate, -1)))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 4, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 4), $lrmPositionId + 4)""".execute
 
@@ -72,11 +72,11 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   test("get last point asset modification") {
     runWithRollback {
       val assetId = Sequences.nextPrimaryKeySeqValue
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,220, 235,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_Old', (sysdate - interval '5' day ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),220, 235,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_new', (sysdate - interval '3' day ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 2),230, 235,'dr2_test_data', (sysdate - interval '1' month ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),230, 235,'dr2_test_data', (sysdate - interval '1' month ), 'testuser', (sysdate - interval '1' day ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 4),240, 235, 'dr2_test_data', (sysdate - interval '1' month ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,220, 235,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_Old', (sysdate - interval '5' day ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),220, 235,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_new', (sysdate - interval '3' day ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 2),230, 235,'dr2_test_data', (add_months(sysdate, -1)))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),230, 235,'dr2_test_data', (add_months(sysdate, -1)), 'testuser', (sysdate - interval '1' day ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 4),240, 235, 'dr2_test_data', (add_months(sysdate, -1)))""".execute
 
       val lastModification = ServiceWithDao.getLastModificationPointAssets(235)
 
