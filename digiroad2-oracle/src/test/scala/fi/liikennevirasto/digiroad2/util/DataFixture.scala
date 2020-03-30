@@ -2238,8 +2238,10 @@ object DataFixture {
 
           if (addressOriginalF.roadPart != addressOriginalL.roadPart) {
             val geomAux = GeometryUtils.truncateGeometry2D(frozen.geometry, 0.05, GeometryUtils.geometryLength(frozen.geometry)-0.05)
-            val addrF = geometryTransform.vkmGeometryTransform.coordToAddress(geomAux.head, includePedestrian = Some(true))
-            val addrL = geometryTransform.vkmGeometryTransform.coordToAddress(geomAux.last, includePedestrian = Some(true))
+            val (p1New, p2New) = GeometryUtils.geometryEndpoints(geomAux)
+
+            val addrF = geometryTransform.vkmGeometryTransform.coordToAddress(p1New, includePedestrian = Some(true))
+            val addrL = geometryTransform.vkmGeometryTransform.coordToAddress(p2New, includePedestrian = Some(true))
 
             (addrF, addrL )
 
