@@ -308,9 +308,12 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val optLaneType = getPropertyValueOption(parsedRow, "laneType").asInstanceOf[Option[Int]]
     val optLane = getPropertyValueOption(parsedRow, "lane").asInstanceOf[Option[String]]
     val lanesValidator = (optLaneType, optLane) match {
-      case (Some(laneType), Some(lane)) =>
-        if (laneType == 1 && lane.trim.nonEmpty && lane.trim.charAt(1) == '1') true
-        else if (laneType != 1 && lane.trim.nonEmpty && lane.trim.charAt(1) != '1')  true
+      case (_, Some(lane)) if lane.trim.nonEmpty && !lane.matches("^([1-3][1-9])$") =>
+        errorMessages = (errorMessages._1 ++ List("Invalid lane"), Seq())
+        false
+      case (Some(laneType), Some(lane)) if laneType != 999 && lane.trim.nonEmpty =>
+        if (laneType == 1 && lane.trim.charAt(1) == '1') true
+        else if (laneType != 1 && lane.trim.charAt(1) != '1')  true
         else {
           errorMessages = (errorMessages._1 ++ List("Invalid lane and lane type match"), Seq())
           false
@@ -355,9 +358,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   private def generateBasePanelProperties(trafficSignAttributes: ParsedProperties): Set[Option[SimplePointAssetProperty]] = {
 
-    def getSingleChoiceValue(target: String): String = {
+    def getSingleChoiceValue(target: String): Int = {
       getPropertyValueOption(trafficSignAttributes, target) match {
-        case Some(targetValue) if !isBlank(targetValue.toString) => targetValue.toString
+        case Some(targetValue) if !isBlank(targetValue.toString) => targetValue.toString.toInt
         case _ => trafficSignService.getDefaultSingleChoiceValue
       }
     }
