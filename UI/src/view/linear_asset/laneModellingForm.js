@@ -1148,7 +1148,7 @@
         return number % 2 === 0;
       });
 
-      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
+      var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
         $(".preview .lane").css('border', '1px solid white');
 
         var nextLaneNumber;
@@ -1167,7 +1167,7 @@
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(even) && _.max(even).toString()[1] == 8));
 
-      var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
+      var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
         $(".preview .lane").css('border', '1px solid white');
 
         var nextLaneNumber = parseInt(_.max(odd)) + 2;

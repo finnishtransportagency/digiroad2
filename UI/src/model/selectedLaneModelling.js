@@ -292,8 +292,11 @@
 
     function omitUnrelevantProperties(lanes){
       return _.map(lanes, function (lane) {
-        return _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker', 'initial_road_number',
-          'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance']);
+        var laneWithoutUnrelevantInfo = _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker']);
+        laneWithoutUnrelevantInfo.properties = _.filter(laneWithoutUnrelevantInfo.properties, function (prop) {
+          return !_.includes(['initial_road_number', 'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance'], prop.publicId);
+        });
+        return laneWithoutUnrelevantInfo;
       });
     }
 
@@ -307,13 +310,6 @@
 
       var payload;
       if(isAddByRoadAddressActive) {
-
-        var selectedLane = _.find(lanes, function (lane){
-          return _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
-          });
-        });
-
         payload = {
           sideCode: sideCode,
           initial_road_number: initial_road_number,
@@ -322,10 +318,9 @@
           end_road_part_number: parseInt(end_road_part_number),
           end_distance: parseInt(end_distance),
           track: track,
-          lane: selectedLane
+          lanes: lanes
         };
       }else{
-
         payload = {
           linkIds: linkIds,
           sideCode: sideCode,
