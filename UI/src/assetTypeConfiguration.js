@@ -385,7 +385,8 @@
             return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
-          return isValidPeriodDate && isValidIntervalDate;
+          var checkBoxField = _.some(_.filter(fields, function(field) {return field.getPropertyValue().publicId === 'annual_repetition';}), function(checkBox) { return checkBox.getValue(); });
+          return checkBoxField ? isValidPeriodDate : isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
