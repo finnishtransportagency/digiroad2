@@ -96,8 +96,7 @@ object LaneUtils {
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
 
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
-        val vvhRoadLink = mappedRoadLinks.find(_.linkId == road.linkId).get
-        val municipalityCode = vvhRoadLink.municipalityCode
+        val municipalityCode = mappedRoadLinks.find(_.linkId == road.linkId).get.municipalityCode
 
         lanesToInsert.map { lane =>
 
@@ -105,11 +104,10 @@ object LaneUtils {
           val laneCode = laneCodeProperty.values.head.value.toString.toInt
           val isMainLane = laneCode.toString.charAt(1).getNumericValue == 1
 
-          // Conversion from AddressMValue to MValue we used in LinkIds
-          val startDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.initialDistance
-          val startPoint = if (isMainLane) 0 else Math.abs(road.startMValue - (startDifferenceAddr * road.endMValue / road.endAddrMValue))
+          val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddrMValue
+          val startPoint = if (isMainLane || startDifferenceAddr <= 0) 0 else startDifferenceAddr
           val endDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.endDistance
-          val endPoint = if (isMainLane) vvhRoadLink.length else Math.abs(road.startMValue - (endDifferenceAddr * road.endMValue / road.endAddrMValue))
+          val endPoint = if (isMainLane || endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
 
           if (road.roadPartNumber > laneRoadAddressInfo.initialRoadPartNumber && road.roadPartNumber < laneRoadAddressInfo.endRoadPartNumber) {
 
