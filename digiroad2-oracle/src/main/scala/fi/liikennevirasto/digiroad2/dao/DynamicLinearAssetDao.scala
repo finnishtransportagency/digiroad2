@@ -105,20 +105,17 @@ class DynamicLinearAssetDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[DynamicAssetRow]): Seq[DynamicProperty] = {
-    assetRows.groupBy(_.value.publicId).map { case (_, rows) =>
-      val row = rows.head
+    assetRows.toSeq.sortBy(_.value.publicId).map { row =>
       DynamicProperty(
         publicId = row.value.publicId,
         propertyType = row.value.propertyType,
         required = row.value.required,
-        values = rows.flatMap(assetRow =>
-          assetRow.value.propertyValue match {
-            case Some(value) => Some(DynamicPropertyValue(value))
-            case _ => None
-          }
-        ).toSeq
+        values = row.value.propertyValue match {
+          case Some(value) => Seq(DynamicPropertyValue(value))
+          case _ => Seq.empty
+        }
       )
-    }.toSeq
+    }
   }
 
   implicit val getDynamicAssetRow: GetResult[DynamicAssetRow] = new GetResult[DynamicAssetRow] {
