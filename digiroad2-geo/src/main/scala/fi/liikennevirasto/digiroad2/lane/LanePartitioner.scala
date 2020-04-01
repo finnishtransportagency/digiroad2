@@ -7,7 +7,7 @@ object LanePartitioner extends GraphPartitioner {
 
   def partition[T <: Lane](links: Seq[T], roadLinksForSpeedLimits: Map[Long, RoadLink]): Seq[Seq[T]] = {
     val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
-    val linkGroups = twoWayLinks.groupBy { link =>
+    val linkGroups = oneWayLinks.groupBy { link =>
       val roadLink = roadLinksForSpeedLimits.get(link.linkId)
       val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
       (roadIdentifier, roadLink.map(_.administrativeClass), link.laneAttributes, link.id == 0)
@@ -20,7 +20,7 @@ object LanePartitioner extends GraphPartitioner {
 
     val linkPartitions = clusters.map(linksFromCluster)
 
-    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ oneWayLinks.map(x => Seq(x))
+    linkPartitions ++ linksToPass.values.flatten.map(x => Seq(x)) ++ twoWayLinks.map(x => Seq(x))
   }
 
 }
