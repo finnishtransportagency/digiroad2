@@ -996,7 +996,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectedMassTransitStopModel.close();
     selectControl.clear();
     assetLayer.setVisible(false);
-    showOrHideServicePointLayer(massTransitStopsCollection.getShowHideServicePoints());
+    showOrHideServicePointLayer(false);
     stopListening();
     roadAddressInfoPopup.stop();
     me.stop();
