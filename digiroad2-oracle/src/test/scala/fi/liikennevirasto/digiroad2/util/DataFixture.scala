@@ -2349,8 +2349,6 @@ object DataFixture {
         //roadLinks to process
         val roadLinks = (vvhRoadLinksAsStateNotInOth ++ vvhRoadLinksExistsInOthAsState).toSet
 
-        //val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, newTransaction = false).filter(_.administrativeClass == State)
-
         val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId).toSeq)
         val allRoadAddressesGroupBy = allRoadAddress.groupBy(_.linkId)
 
