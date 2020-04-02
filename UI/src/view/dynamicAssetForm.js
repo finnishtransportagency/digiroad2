@@ -822,6 +822,14 @@
         };
     };
 
+    root.renderPreview = function(selectedAsset) {
+        if (!selectedAsset.isSeparated()) {
+            var asset = _.head(selectedAsset.get());
+            var lanes = laneUtils.filterByValidityDirection(asset.sideCode, asset.lanes);
+            return _.isEmpty(lanes) ? '' : laneUtils.createPreviewHeaderElement(_.uniq(lanes));
+        }
+    };
+
     root.dynamicFormFields = [
         {name: 'long_text', fieldType: TextualLongField},
         {name: 'single_choice', fieldType: SingleChoiceField},
@@ -882,6 +890,8 @@
               rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
               rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
               rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
+                if(assetTypeConfiguration.lanePreview)
+                    rootElement.find("#feature-attributes-form").prepend(renderPreview(_assetTypeConfiguration.selectedLinearAsset));
             });
 
             eventbus.on(events('unselect'), function() {
@@ -907,6 +917,8 @@
                   rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
                   rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
                   rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
+                    if(assetTypeConfiguration.lanePreview)
+                        rootElement.find("#feature-attributes-form").prepend(renderPreview(_assetTypeConfiguration.selectedLinearAsset));
                 }
             });
 

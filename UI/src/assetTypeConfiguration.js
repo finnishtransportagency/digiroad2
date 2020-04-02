@@ -98,6 +98,8 @@
       });
     };
 
+    //To use the new lane preview on the assets form(point and dynamic forms) put lanePreview: true
+
     var linearAssetSpecs = [
       {
         typeId: assetType.totalWeightLimit,
