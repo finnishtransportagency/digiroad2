@@ -118,7 +118,7 @@
       selectedRoadlink = linearAsset;
       backend.getLanesByLinkIdAndSidecode(linearAsset.linkId, linearAsset.sideCode, function(asset) {
         _.forEach(asset, function (lane) {
-          lane.linkId = _.map(linearAssets, function (linearAsset) {
+          lane.linkIds = _.map(linearAssets, function (linearAsset) {
             return linearAsset.linkId;
           });
           lane.selectedLinks = linearAssets;
@@ -309,7 +309,7 @@
     this.save = function(isAddByRoadAddressActive, currentLane) {
       eventbus.trigger(singleElementEvent('saving'));
 
-      var linkIds = selection[0].linkId;
+      var linkIds = selection[0].linkIds;
       var sideCode = selection[0].sideCode;
 
       var lanes = omitUnrelevantProperties(selection);

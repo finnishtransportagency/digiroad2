@@ -494,7 +494,8 @@
 
     this.drawLinearAssets = function(linearAssets) {
       var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
-        return selectedAsset.linkId === asset.linkId && selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
+        return selectedAsset.linkId === asset.linkId && selectedAsset.sideCode == asset.sideCode &&
+          selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
       vectorSource.addFeatures(style.renderFeatures(allButSelected));
       readOnlyLayer.showLayer();
@@ -556,9 +557,6 @@
         removeOldAssetFeatures();
         vectorSource.addFeatures(selectedFeatures);
         selectToolControl.addSelectionFeatures(selectedFeatures);
-
-        if (_.isUndefined(laneNumber))
-          removeOldAssetFeatures();
 
         if (selectedLinearAsset.isSplit(laneNumber)) {
           me.drawIndicators(_.map(_.cloneDeep(_.filter(selectedLinearAsset.get(), function (lane){
