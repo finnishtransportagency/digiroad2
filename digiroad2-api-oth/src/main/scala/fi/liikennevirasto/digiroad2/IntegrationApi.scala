@@ -655,9 +655,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
-        "safetyEquipment" -> railwayCrossing.propertyData.find(_.publicId == "turvavarustus").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
-        "name" -> railwayCrossing.propertyData.find(_.publicId == "rautatien_tasoristeyksen_nimi").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
-        "railwayCrossingId" -> railwayCrossing.propertyData.find(_.publicId == "tasoristeystunnus").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
+        "safetyEquipment" -> railwayCrossingService.getProperty(railwayCrossing, "turvavarustus").map(_.propertyValue).getOrElse(""),
+        "name" -> railwayCrossingService.getProperty(railwayCrossing, "rautatien_tasoristeyksen_nimi").map(_.propertyValue).getOrElse(""),
+        "railwayCrossingId" -> railwayCrossingService.getProperty(railwayCrossing, "tasoristeystunnus").map(_.propertyValue).getOrElse(""),
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)
@@ -671,7 +671,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
-        "obstacle_type" -> obstacle.propertyData.find(_.publicId == "esterakennelma").get.values.map(_.asInstanceOf[PropertyValue]).headOption,
+        "obstacle_type" -> obstacleService.getProperty(obstacle, "esterakennelma").map(_.propertyValue).getOrElse(""),
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
         "linkSource" -> obstacle.linkSource.value)
