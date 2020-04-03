@@ -1134,7 +1134,8 @@
     };
 
     var createLaneButtons = function(selectedAsset){
-      var laneNumbers = _.map(selectedAsset.get(), function (lane){
+      var laneAssets = selectedAsset.get();
+      var laneNumbers = _.map(laneAssets, function (lane){
         return _.head(_.find(lane.properties, function (property) {
           return property.publicId == "lane_code";
         }).values).value;
@@ -1188,7 +1189,8 @@
 
         reloadForm($('#feature-attributes'));
       }).prop("disabled", _.isUndefined(selectedRoadLink.roadNumber) || _.isUndefined(selectedRoadLink.roadPartNumber) ||
-        _.isUndefined(selectedRoadLink.startAddrMValue) || selectedRoadLink.administrativeClass != 1 || selectedAsset.configurationIsCut()));
+        _.isUndefined(selectedRoadLink.startAddrMValue) || selectedRoadLink.administrativeClass != 1 || selectedAsset.configurationIsCut() ||
+        !selectedAsset.haveNewLane() || _.filter(laneAssets, function (lane) {return lane.id !==0;}).length > 1));
 
       return $('<ul class="list-lane-buttons">').append(addByRoadAddress).append(addLeftLane).append(addRightLane);
     };
@@ -1325,7 +1327,7 @@
         reloadForm($('#feature-attributes'));
       });
 
-      var expireLane = $('<button class="btn btn-secondary lane-button">Paata kaista</button>').click(function() {
+      var expireLane = $('<button class="btn btn-secondary lane-button">Päätä Kaista</button>').click(function() {
         selectedAsset.expireLane(currentLane, sidecode);
 
         var asset = selectedAsset.getLane(currentLane);
@@ -1485,9 +1487,10 @@
 
     me.isSaveable = function(){
       var otherSaveCondition = function() {
-        if(_assetTypeConfiguration.saveCondition)
-          return _assetTypeConfiguration.saveCondition(_assetTypeConfiguration.selectedLinearAsset.get());
-        return true;
+        var selectedLanesAsset = _assetTypeConfiguration.selectedLinearAsset;
+        if(isAddByRoadAddressActive && !selectedLanesAsset.haveNewLane())
+          return false;
+        return _assetTypeConfiguration.saveCondition(selectedLanesAsset.get());
       };
 
       return _.every(forms.getAllFields(), function(field){

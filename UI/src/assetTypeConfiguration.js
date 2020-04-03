@@ -875,6 +875,7 @@
       {
         typeId: assetType.laneModellingTool,
         singleElementEventCategory: 'laneModellingTool',
+        multiElementEventCategory: 'lanesModellingTool',
         layerName: 'laneModellingTool',
         title: 'Kaistan mallinnustyökalu',
         newTitle: 'Uusi kaistan mallinnustyökalu',
@@ -950,14 +951,19 @@
 
             var isValidRoadAddress = function (fields) {
               var isValidRoadAddress = true;
-              var roadAddressesFields = filterFieldsByPropertyType(fields, 'number');
+              var initialRoadAddressesFields = filterFieldsByPropertyType(fields, 'read_only_number');
+              var initialRoadPartNumber = getProperty(initialRoadAddressesFields, 'initial_road_part_number');
+              var initialDistance = getProperty(initialRoadAddressesFields, 'initial_distance');
 
-              if (!_.isEmpty(roadAddressesFields)) {
+              if (!_.isUndefined(initialRoadPartNumber)) {
+                var roadAddressesFields = filterFieldsByPropertyType(fields, 'number');
                 var endRoadPartNumber = getProperty(roadAddressesFields, 'end_road_part_number');
                 var endDistance = getProperty(roadAddressesFields, 'end_distance');
 
                 if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
-                  _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0])) {
+                  _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0]) ||
+                  _.head(endRoadPartNumber.values).value < _.head(initialRoadPartNumber.values).value ||
+                  (_.head(endRoadPartNumber.values).value == _.head(initialRoadPartNumber.values).value && _.head(endDistance.values).value <= _.head(initialDistance.values).value)) {
                   isValidRoadAddress = false;
                 }
               }

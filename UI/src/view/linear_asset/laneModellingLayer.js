@@ -354,7 +354,6 @@
       eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
       eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
       eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-      eventListener.listenTo(eventbus, 'layer:linearAsset', refreshReadOnlyLayer);
     };
 
     var startListeningExtraEvents = function(){
@@ -377,7 +376,7 @@
       selectToolControl.clear();
       if (application.getSelectedTool() !== 'Cut'){
         changeTool(eventListener, application.getSelectedTool());
-      }else if (application.getSelectedTool() === 'Cut'){}else{
+      }else{
         me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       }
     };

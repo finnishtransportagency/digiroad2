@@ -4,11 +4,16 @@
     var multiElementEventCategory = spec.multiElementEventCategory;
     this.linearAssets = [];
     var dirty = false;
+    var selection = null;
     var self = this;
     var splitLaneAssets = {};
 
     var multiElementEvent = function (eventName) {
       return multiElementEventCategory + ':' + eventName;
+    };
+
+    this.setSelection = function(sel) {
+      selection = sel;
     };
 
     var generateUnknownLimitId = function(laneAsset) {
@@ -39,6 +44,26 @@
         self.linearAssets = knownLaneAssets.concat(unknownLaneAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
       });
+    };
+
+    this.getAll = function () {
+      return maintainSelectedLinearAssetChain(self.linearAssets);
+    };
+
+    var maintainSelectedLinearAssetChain = function (collection) {
+      if (!selection) return collection;
+
+      var isSelected = function (linearAsset) { return selection.isSelected(linearAsset); };
+
+      var collectionPartitionedBySelection = _.groupBy(collection, function (linearAssetGroup) {
+        return _.some(linearAssetGroup, isSelected);
+      });
+      var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
+
+      var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
+      var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
+
+      return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
     };
 
     var isEqual = function(a, b) {
