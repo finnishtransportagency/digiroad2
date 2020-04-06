@@ -7,7 +7,7 @@
     var assetsToBeRemoved = [];
     var self = this;
     var dirty = false;
-    var originalLinearAssetValue = null;
+    var linksSelected = null;
     var multipleSelected;
 
     var initial_road_number;
@@ -118,15 +118,15 @@
       selectedRoadlink = linearAsset;
       backend.getLanesByLinkIdAndSidecode(linearAsset.linkId, linearAsset.sideCode, function(asset) {
         _.forEach(asset, function (lane) {
-          lane.linkId = _.map(linearAssets, function (linearAsset) {
+          lane.linkIds = _.map(linearAssets, function (linearAsset) {
             return linearAsset.linkId;
           });
           lane.selectedLinks = linearAssets;
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
-        originalLinearAssetValue = _.cloneDeep(lanesWithSplitMarkers);
         selection = _.cloneDeep(lanesWithSplitMarkers);
         lanesFetched = _.cloneDeep(lanesWithSplitMarkers);
+        linksSelected = linearAssets;
         collection.setSelection(self);
         assetsToBeExpired=[];
         assetsToBeRemoved=[];
@@ -248,6 +248,12 @@
       return !_.isUndefined(lane);
     };
 
+    this.haveNewLane = function () {
+      return _.some(selection, function(lane){
+        return lane.id === 0;
+      });
+    };
+
     this.isAddByRoadAddress = function() {
       var lane = _.find(selection, function (lane){
         return _.find(lane.properties, function (property) {
@@ -303,7 +309,7 @@
     this.save = function(isAddByRoadAddressActive, currentLane) {
       eventbus.trigger(singleElementEvent('saving'));
 
-      var linkIds = selection[0].linkId;
+      var linkIds = selection[0].linkIds;
       var sideCode = selection[0].sideCode;
 
       var lanes = omitUnrelevantProperties(selection);
@@ -373,13 +379,13 @@
     };
 
     this.setEndAddressesValues = function(currentPropertyValue) {
-      var endValue = _.head(currentPropertyValue.values).value;
+      var endValue = _.head(currentPropertyValue.values);
       switch(currentPropertyValue.publicId) {
         case "end_road_part_number":
-          end_road_part_number = endValue;
+          end_road_part_number = _.isEmpty(endValue) ? endValue : endValue.value;
           break;
         case "end_distance":
-          end_distance = endValue;
+          end_distance = _.isEmpty(endValue) ? endValue : endValue.value;
           break;
       }
 
@@ -461,6 +467,7 @@
 
       newLane.id = 0;
       selection.push(newLane);
+      dirty = true;
     };
 
     this.removeLane = function(laneNumber, marker) {
@@ -533,9 +540,9 @@
       dirty = dirtyValue;
     };
 
-    this.isSelected = function(linearAsset) {
-      return _.some(selection, function(selectedLinearAsset) {
-        return isEqual(linearAsset, selectedLinearAsset);
+    this.isSelected = function(roadLink) {
+      return _.some(linksSelected, function(link) {
+        return isEqual(roadLink, link);
       });
     };
 

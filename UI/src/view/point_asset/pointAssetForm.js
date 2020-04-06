@@ -88,6 +88,8 @@ root.PointAssetForm = function() {
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
+    if(me.pointAsset.lanePreview)
+      rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
 
     rootElement.find('#delete-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
@@ -128,6 +130,8 @@ root.PointAssetForm = function() {
     rootElement.find('button#change-validity-direction').on('click', function() {
       var previousValidityDirection = selectedAsset.get().validityDirection;
       selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+      if(me.pointAsset.lanePreview)
+        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
     });
 
     rootElement.find('.pointasset button.save').on('click', function() {
@@ -277,5 +281,17 @@ root.PointAssetForm = function() {
   this.switchSuggestedValue = function(disabledValue) {
     $('.suggested-checkbox').attr('disabled', disabledValue);
   };
+
+  this.renderPreview = function(roadCollection, selectedAsset) {
+    var asset = selectedAsset.get();
+    var lanes;
+    if (!asset.floating){
+      lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
+      lanes = laneUtils.filterByValidityDirection(asset.validityDirection, lanes);
+    }
+
+    return _.isEmpty(lanes) ? '' : laneUtils.createPreviewHeaderElement(_.uniq(lanes));
+  };
+
 };
 })(this);
