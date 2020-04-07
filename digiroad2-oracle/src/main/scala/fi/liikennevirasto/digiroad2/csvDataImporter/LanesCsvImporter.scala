@@ -63,8 +63,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def verifyLaneNumber(parameterName: String, parameterValue: String): ParsedRow = {
-    if (parameterValue.forall(_.isDigit) && parameterValue.length == 2 && Seq(1, 2, 3).contains(parameterValue.charAt(0).getNumericValue)) {
-      (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = parameterValue)))
+    val trimmedValue = parameterValue.trim
+
+    if ( Seq("11", "21", "31").contains(trimmedValue) ) {
+      (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = trimmedValue)))
     } else {
       (List(parameterName), Nil)
     }
