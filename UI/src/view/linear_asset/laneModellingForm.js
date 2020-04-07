@@ -78,9 +78,10 @@
       if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
         lanesAssets.setEndAddressesValues(currentPropertyValue);
       }else{
-        var properties = _.filter(getValue(currentLane, sideCode), function(property){ return property.publicId !== currentPropertyValue.publicId; });
+        var laneNumber = lanesAssets.getCurrentLaneNumber();
+        var properties = _.filter(getValue(laneNumber, sideCode), function(property){ return property.publicId !== currentPropertyValue.publicId; });
         properties.push(currentPropertyValue);
-        setValue(currentLane, {properties: properties}, sideCode);
+        setValue(laneNumber, {properties: properties}, sideCode);
       }
     };
   };
@@ -929,11 +930,11 @@
         defaultFormStructure = formStructure;
         currentFormStructure = mainLaneFormStructure;
         isAddByRoadAddressActive = false;
-        currentLane = parseInt(_.min(_.map(_assetTypeConfiguration.selectedLinearAsset.get(), function (lane) {
+        lanesAssets.setCurrentLane(parseInt(_.min(_.map(_assetTypeConfiguration.selectedLinearAsset.get(), function (lane) {
           return _.head(_.find(lane.properties, function (property) {
             return property.publicId == "lane_code";
           }).values).value;
-        })));
+        }))));
       }
 
       new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
@@ -1033,7 +1034,7 @@
 
       if (alreadyRendered)
         forms.removeFields(sideCode);
-      var fieldGroupElement = $('<div class = "input-unit-combination lane-' + currentLane + '" >');
+      var fieldGroupElement = $('<div class = "input-unit-combination lane-' + lanesAssets.getCurrentLaneNumber() + '" >');
 
       var formFields = currentFormStructure.fields;
       if (isAddByRoadAddressActive)
@@ -1071,10 +1072,11 @@
 
     var createHeaderElement = function(selectedAsset) {
       var title = function () {
-        var asset = selectedAsset.getLane(currentLane);
+        var asset = selectedAsset.getCurrentLane();
 
-        return asset.id !== 0 && !selectedAsset.isSplit(currentLane) ?
-          '<span>Kohteen ID: ' + asset.id + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
+        return asset.id !== 0 && !selectedAsset.isSplit() ?
+            '<span>Kohteen ID: ' + asset.id + '</span>' :
+            '<span>' + _assetTypeConfiguration.title + '</span>';
       };
 
       return $(title());
@@ -1085,18 +1087,19 @@
         var previewButton = $('<td class="preview-lane">' + number + '</td>').click(function() {
           $(".preview .lane").removeClass("not-highlight-lane highlight-lane").addClass("not-highlight-lane");
           $(this).removeClass("not-highlight-lane").addClass("highlight-lane");
-          currentLane = parseInt(number);
+          var laneNumber = parseInt(number);
+          lanesAssets.setCurrentLane(laneNumber);
 
-          if(currentLane.toString()[1] == "1"){
+          if(laneNumber.toString()[1] == "1"){
             currentFormStructure = mainLaneFormStructure;
           }else{
-            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
+            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 6};
             currentFormStructure = defaultFormStructure;
           }
           reloadForm($('#feature-attributes'));
         });
 
-        if(number == currentLane){
+        if(number == lanesAssets.getCurrentLaneNumber()){
           return previewButton.addClass("highlight-lane");
         }else{
           return previewButton.addClass("not-highlight-lane");
@@ -1159,10 +1162,10 @@
           nextLaneNumber = parseInt(_.max(even)) + 2;
         }
 
-        currentLane = nextLaneNumber;
         selectedAsset.setNewLane(nextLaneNumber);
+        selectedAsset.setCurrentLane(nextLaneNumber);
 
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: nextLaneNumber, weight: 6};
         currentFormStructure = defaultFormStructure;
 
         reloadForm($('#feature-attributes'));
@@ -1173,10 +1176,10 @@
 
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
 
-        currentLane = nextLaneNumber;
         selectedAsset.setNewLane(nextLaneNumber);
+        selectedAsset.setCurrentLane(nextLaneNumber);
 
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
+        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: nextLaneNumber, weight: 6};
         currentFormStructure = defaultFormStructure;
 
         reloadForm($('#feature-attributes'));
@@ -1269,13 +1272,13 @@
       var isReadOnly = _isReadOnly(selectedAsset);
       var asset = _.filter(selectedAsset.get(), function (lane){
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && _.head(property.values).value == currentLane;
+          return property.publicId == "lane_code" && _.head(property.values).value == selectedAsset.getCurrentLaneNumber();
         });
       });
 
       var body = createBodyElement(selectedAsset);
 
-      if(selectedAsset.isSplit(currentLane)) {
+      if(selectedAsset.isSplit()) {
         //Render form A
         renderFormElements(asset[0], isReadOnly, 'A', selectedAsset.setValue, selectedAsset.getValue, false, body);
 
@@ -1305,54 +1308,42 @@
     };
 
     function renderExpireAndDeleteButtonsElement(selectedAsset, body, sidecode){
+      var currentLaneNumber = selectedAsset.getCurrentLaneNumber();
+
       var deleteLane = $('<button class="btn btn-secondary lane-button">Poista kaista</button>').click(function() {
-        selectedAsset.removeLane(currentLane, sidecode);
-
-        var asset = selectedAsset.getLane(currentLane);
-
-        if(_.isUndefined(asset)){
-          if(currentLane.toString()[1] == "2"){
-            currentLane = parseInt(currentLane.toString()[0] + '1');
-          }else{
-            currentLane = currentLane-2;
-          }
-        }
-
-        if(currentLane.toString()[1] == "1"){
-          currentFormStructure = mainLaneFormStructure;
-        }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
-          currentFormStructure = defaultFormStructure;
-        }
+        selectedAsset.removeLane(currentLaneNumber, sidecode);
+        prepareLanesStructure();
         reloadForm($('#feature-attributes'));
       });
 
       var expireLane = $('<button class="btn btn-secondary lane-button">Päätä Kaista</button>').click(function() {
-        selectedAsset.expireLane(currentLane, sidecode);
-
-        var asset = selectedAsset.getLane(currentLane);
-
-        if(_.isUndefined(asset)){
-          if(currentLane.toString()[1] == "2"){
-            currentLane = parseInt(currentLane.toString()[0] + '1');
-          }else{
-            currentLane = currentLane-2;
-          }
-        }
-
-        if(currentLane.toString()[1] == "1"){
-          currentFormStructure = mainLaneFormStructure;
-        }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLane, weight: 6};
-          currentFormStructure = defaultFormStructure;
-        }
+        selectedAsset.expireLane(currentLaneNumber, sidecode);
+        prepareLanesStructure();
         reloadForm($('#feature-attributes'));
       });
 
-      var lane = selectedAsset.getLane(currentLane, sidecode);
+      var prepareLanesStructure = function () {
+        if(_.isUndefined(selectedAsset.getLane(currentLaneNumber))){
+          if(currentLaneNumber.toString()[1] == "2"){
+            currentLaneNumber = parseInt(currentLaneNumber.toString()[0] + '1');
+          }else{
+            currentLaneNumber = currentLaneNumber-2;
+          }
+          selectedAsset.setCurrentLane(currentLaneNumber);
+        }
+
+        if(currentLaneNumber.toString()[1] == "1"){
+          currentFormStructure = mainLaneFormStructure;
+        }else{
+          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLaneNumber, weight: 6};
+          currentFormStructure = defaultFormStructure;
+        }
+      };
+
+      var lane = selectedAsset.getLane(currentLaneNumber, sidecode);
       expireLane.prop('disabled', lane.id === 0);
 
-      if(currentLane.toString()[1] !== "1")
+      if(currentLaneNumber.toString()[1] !== "1")
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
     }
 
@@ -1360,7 +1351,7 @@
       var sideCodeClass = generateClassName(sideCode);
 
       var formGroup = $('' + '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' + '</div>');
-      setValueFn(currentLane, {properties: asset.properties}, sideCode);
+      setValueFn(lanesAssets.getCurrentLaneNumber(), {properties: asset.properties}, sideCode);
 
       formGroup.append($('' + createSideCodeMarker(sideCode)));
       body.find('.form').append(formGroup);
@@ -1503,15 +1494,17 @@
     }
 
     var SaveButton = function(assetTypeConfiguration) {
+      var selectedLinearAsset = assetTypeConfiguration.selectedLinearAsset;
+      var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
-      var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
-        assetTypeConfiguration.selectedLinearAsset.save(isAddByRoadAddressActive, currentLane);
-        currentLane = parseInt(currentLane.toString()[0] + '1');
+      var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
+        selectedLinearAsset.save(isAddByRoadAddressActive, laneNumber);
+        selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
         currentFormStructure = mainLaneFormStructure;
       });
 
       var updateStatus = function(element) {
-          element.prop('disabled', !(me.isSaveable() && assetTypeConfiguration.selectedLinearAsset.isDirty() && !assetTypeConfiguration.selectedLinearAsset.lanesCutAreEqual()));
+          element.prop('disabled', !(me.isSaveable() && selectedLinearAsset.isDirty() && !selectedLinearAsset.lanesCutAreEqual()));
       };
 
       updateStatus(element);
@@ -1526,15 +1519,17 @@
     };
 
     var CancelButton = function(assetTypeConfiguration) {
+      var selectedLinearAsset = assetTypeConfiguration.selectedLinearAsset;
+      var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
-      var element = $('<button />').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
-        currentLane = parseInt(currentLane.toString()[0] + '1');
+      var element = $('<button />').prop('disabled', !selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
+        selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
         currentFormStructure = mainLaneFormStructure;
-        assetTypeConfiguration.selectedLinearAsset.cancel();
+        selectedLinearAsset.cancel();
       });
 
       eventbus.on(events('valueChanged'), function() {
-        if(assetTypeConfiguration.selectedLinearAsset.isDirty()){
+        if(selectedLinearAsset.isDirty()){
           $('.cancel').prop('disabled', false);
         }else{
           $('.cancel').prop('disabled', true);

@@ -488,7 +488,7 @@
       vectorSource.clear();
       indicatorLayer.getSource().clear();
       var linearAssets = _.flatten(linearAssetChains);
-      me.decorateSelection();
+      me.decorateSelection(selectedLinearAsset.exists() ? selectedLinearAsset.getCurrentLaneNumber() : undefined);
       me.drawLinearAssets(linearAssets, vectorSource);
     };
 

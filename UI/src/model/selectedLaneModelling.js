@@ -9,6 +9,7 @@
     var dirty = false;
     var linksSelected = null;
     var multipleSelected;
+    var currentLane;
 
     var initial_road_number;
     var initial_road_part_number;
@@ -24,6 +25,16 @@
           });
         });
     };
+
+    this.getCurrentLaneNumber = function() {
+      if(!_.isUndefined(currentLane)) {
+        return _.head(_.find(currentLane.properties, {'publicId': 'lane_code'}).values).value;
+      }
+    };
+
+    this.getCurrentLane = function () { return currentLane; };
+
+    this.setCurrentLane = function (lane) { currentLane = self.getLane(lane); };
 
     var reorganizeLanes = function (laneNumber) {
       var lanesToUpdate = _.map(selection, function (lane){
@@ -227,7 +238,8 @@
       return isUnknown(self.getLane(laneNumber));
     };
 
-    this.isSplit = function(laneNumber) {
+    this.isSplit = function() {
+      var laneNumber = self.getCurrentLaneNumber();
       if(_.isUndefined(laneNumber))
         return false;
 
