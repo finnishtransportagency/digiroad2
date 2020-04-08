@@ -143,10 +143,10 @@
         return showServicePoints;
       },
       showHideServicePoints: function(checked) {
-        if(!showServicePoints && checked){
-          showServicePoints = checked;
+        if (checked) {
           eventbus.trigger('servicePointCheckbox:changed', showServicePoints);
         }
+
         showServicePoints = checked;
         eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       },
