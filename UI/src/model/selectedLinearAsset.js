@@ -370,11 +370,13 @@
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
 
-    this.isSuggested = function() {
-        var  suggestedProp = getProperty('isSuggested');
+    this.isSuggested = function () {
+      var suggestedProp = getProperty('isSuggested');
+
       return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp) ||
-          _.some(selection, function(asset) {
-        return asset.value.isSuggested;});
+        _.some(selection, function (asset) {
+          return _.isUndefined(asset.value) ? true : asset.value.isSuggested;
+        });
     };
   };
 })(this);
