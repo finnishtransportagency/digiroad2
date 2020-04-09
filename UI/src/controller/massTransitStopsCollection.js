@@ -28,9 +28,10 @@
       }));
     };
 
-    var refreshAssets = function(mapMoveEvent) {
+    var refreshAssets = function(mapMoveEvent, useOldRefresh) {
       var treatAssets = function (backendAssets) {
-        backendAssets = filterComplementaries(backendAssets);
+        if (useOldRefresh){ backendAssets = filterComplementaries(backendAssets); }
+
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
@@ -38,25 +39,10 @@
         }
       };
 
-      if(showServicePoints) {
-        backend.getAssetsWithCallbackServiceStops(mapMoveEvent.bbox, treatAssets);
-      }
-      backend.getAssetsWithCallback(mapMoveEvent.bbox, treatAssets);
-      verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
-    };
+      if(showServicePoints){ backend.getAssetsWithCallbackServiceStops(mapMoveEvent.bbox, treatAssets); }
 
-    var refreshAssetsServiceStops = function(mapMoveEvent) {
-      var treatAssets = function (backendAssets) {
-        if (mapMoveEvent.hasZoomLevelChanged) {
-          eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
-        } else {
-          eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
-        }
-      };
+      if (useOldRefresh){ backend.getAssetsWithCallback(mapMoveEvent.bbox, treatAssets); }
 
-      if(showServicePoints) {
-        backend.getAssetsWithCallbackServiceStops(mapMoveEvent.bbox, treatAssets);
-      }
       verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
     };
 
@@ -114,7 +100,6 @@
         }, showServicePoints);
       },
       refreshAssets: refreshAssets,
-      refreshAssetsServiceStops: refreshAssetsServiceStops,
       fetchLightAssets: fetchLightAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {

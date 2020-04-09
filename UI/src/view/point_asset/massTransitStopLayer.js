@@ -736,7 +736,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectedControl = action;
     pointTool.deactivate();
 
-    if ( isAnAddToolOption(selectedControl) && zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map)) )
+    if (selectedMassTransitStopModel.isAnAddToolOption(selectedControl) && zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map)))
     {
       if ( selectedControl !== 'AddPointAsset')
         pointTool.activate();
@@ -793,7 +793,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleMapClick = function(coordinates) {
 
-    if ( isAnAddToolOption(selectedControl) && zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map))) {
+    if (selectedMassTransitStopModel.isAnAddToolOption(selectedControl) && zoomlevels.isInRoadLinkZoomLevel(zoomlevels.getViewZoom(map))) {
 
       selectControl.deactivate();
       var stopType = [];
@@ -824,7 +824,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var center = map.getView().getCenter();
 
     if (zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
-      massTransitStopsCollection.refreshAssetsServiceStops({bbox: extent, hasZoomLevelChanged: true, center: center});
+      massTransitStopsCollection.refreshAssets({bbox: extent, hasZoomLevelChanged: true, center: center});
       if (massTransitStopsCollection.isComplementaryActive()) {
         roadCollection.fetchWithComplementary(extent);
       } else {
@@ -850,7 +850,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       });
     } else {
       hideClusterLayer();
-      massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true , center: center});
+      massTransitStopsCollection.refreshAssets({bbox: extent, hasZoomLevelChanged: true, center: center}, true);
       if (massTransitStopsCollection.isComplementaryActive()) {
         roadCollection.fetchWithComplementary(extent);
       } else {
@@ -1022,10 +1022,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return _.filter(roadCollection, function (road) {
       return authorizationPolicy.filterRoadLinks(road);
     });
-  }
-
-  function isAnAddToolOption(optionTool){
-    return ['Add','AddTerminal','AddPointAsset'].indexOf(optionTool) >= 0 ;
   }
 
   var refreshSelectedView = function(){

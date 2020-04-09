@@ -50,7 +50,7 @@ case class ServicePointRow(id: Long, externalId: Long, assetTypeId: Long, point:
 class ServicePointBusStopDao {
   val logger = LoggerFactory.getLogger(getClass)
   def typeId: Int = MassTransitStopAsset.typeId
-  val idField = "external_id" //???
+  val idField = "external_id"
 
   private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
     def apply(r: PositionedResult) : Option[LocalDate] = {

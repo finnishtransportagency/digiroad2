@@ -32,9 +32,7 @@
     var element = $('<span class="validation-error">Pakollisia tietoja puuttuu</span>');
 
     var updateVisibility = function() {
-      if (pointAssetToSave && !isValidServicePoint()) {
-        element.show();
-      }else if (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.requiredPropertiesMissing()) {
+      if (pointAssetToSave && !isValidServicePoint() || (selectedMassTransitStopModel.isDirty() && selectedMassTransitStopModel.requiredPropertiesMissing())) {
         element.show();
       } else {
         element.hide();

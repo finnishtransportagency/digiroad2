@@ -19,6 +19,14 @@
     var currentAsset = {};
     var changedProps = [];
 
+    function getMethodToRequestByNationalId(properties) {
+      return isServiceStop(properties) ? "getMassServiceStopByNationalId" : "getMassTransitStopByNationalId";
+    }
+
+    function isAnAddToolOption(optionTool){
+      return _.includes(['Add', 'AddTerminal', 'AddPointAsset'], optionTool);
+    }
+
     var close = function() {
       assetHasBeenModified = false;
       currentAsset = {};
@@ -26,18 +34,11 @@
       eventbus.trigger('asset:closed');
     };
 
-    eventbus.on('tool:changed', function(tool) {
-      /* if ((tool !== 'Add' && tool !== 'AddTerminal')  && exists()) { */
-      if ( ['Add','AddTerminal','AddPointAsset'].indexOf(tool) < 0 && exists() )  {
-        if(isServiceStop(currentAsset.payload.properties)){
-          backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-            if (exists()) { eventbus.trigger('asset:fetched', asset); }
-          });
-        }else{
-          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-            if (exists()) { eventbus.trigger('asset:fetched', asset); }
-          });
-        }
+    eventbus.on('tool:changed', function (tool) {
+      if (!isAnAddToolOption(tool) && exists()) {
+        backend[getMethodToRequestByNationalId(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
+          eventbus.trigger('asset:fetched', asset);
+        });
       }
     });
 
@@ -676,7 +677,8 @@
       getMunicipalityCode: getMunicipalityCode,
       hasRoadAddress: hasRoadAddress,
       setAdditionalProperty: setAdditionalProperty,
-      isSuggested: isSuggested
+      isSuggested: isSuggested,
+      isAnAddToolOption: isAnAddToolOption
     };
   };
 
