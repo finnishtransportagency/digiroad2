@@ -495,7 +495,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       };
 
       data.group = createDummyGroup(lon, lat, data);
-      var massTransitStop = new MassTransitStop(data, massTransitStopsCollection);
       var currentAsset = selectedMassTransitStopModel.getCurrentAsset();
       deselectAsset();
       if(placement){
@@ -503,7 +502,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       }else {
         selectedMassTransitStopModel.place(data);
       }
-      eventbus.trigger('terminalBusStop:selected', stopTypes[0]);
+      eventbus.trigger('busStop:selected', stopTypes[0]);
       selectedAsset = createAsset(data);
       var feature = selectedAsset.massTransitStop.getMarkerFeature();
       selectControl.addSelectionFeatures([feature], false, false);

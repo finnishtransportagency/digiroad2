@@ -158,12 +158,12 @@
       var resultValues = {palvelu: undefined, tarkenne: undefined};
       var auxiliarData = data.payload ? data.payload.properties : data.propertyData;
 
-      if (auxiliarData !== undefined) {
+      if (!_.isUndefined(auxiliarData)) {
         resultValues.palvelu = _.find(auxiliarData, function(prop) {return prop.publicId == "palvelu";});
         resultValues.tarkenne = _.find(auxiliarData, function(prop) {return prop.publicId == "tarkenne";});
       }
 
-      if (resultValues.palvelu !== undefined) {
+      if (!_.isUndefined(resultValues.palvelu)) {
         if (resultValues.palvelu.values.length > 0) {
           resultValues.palvelu = resultValues.palvelu.values[0].propertyValue;
         } else {
@@ -171,7 +171,7 @@
         }
       }
 
-      if (resultValues.tarkenne !== undefined ) {
+      if (!_.isUndefined(resultValues.tarkenne)) {
         if (resultValues.tarkenne.values.length > 0) {
           resultValues.tarkenne = resultValues.tarkenne.values[0].propertyValue;
         } else {
@@ -187,49 +187,38 @@
       var imgMargin = margin ? margin : 0;
       stopTypes.sort();
       var i = 0;
+      var srcImg;
+      var anchor;
 
-      if (stopTypes.length > 0 && stopTypes[0] == 7) {
+      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {
+        i++;
+        if (selectedMassTransitStopModel.isServicePointType(stopType)) {
+          var auxServicePointInfo = extractServicePointsAuxiliarsValues();
+          anchor = [0, (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset + 13];
 
-        var auxServicePointInfo = extractServicePointsAuxiliarsValues();
-        var srcImg;
-
-        if (auxServicePointInfo.palvelu !== "11") {
-          srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.palvelu) return spi;});
-          srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE]: srcImg.imgUrl;
-        }
-        else if (auxServicePointInfo.tarkenne !== undefined ) {
+          if (auxServicePointInfo.palvelu !== "11") {
+            srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.palvelu) return spi;});
+            srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE] : srcImg.imgUrl;
+          }
+          else if (auxServicePointInfo.tarkenne !== undefined) {
             srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.tarkenne ) return spi;});
-            srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE]: srcImg.imgUrl;
+            srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE] : srcImg.imgUrl;
+          }
+        } else {
+          anchor = [-(IMAGE_PADDING + 1 + imgMargin), (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset];
+          srcImg = 'images/mass-transit-stops/' + stopType + '.png';
         }
 
-        return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {
-          i++;
-          return new ol.style.Style({
-            image: new ol.style.Icon(({
-              anchor: [0, (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset+13],
-              anchorXUnits: 'pixels',
-              anchorYUnits: 'pixels',
-              src: srcImg,
-              scale: styleScale
-            }))
-          });
+        return new ol.style.Style({
+          image: new ol.style.Icon(({
+            anchor: anchor,
+            anchorXUnits: 'pixels',
+            anchorYUnits: 'pixels',
+            src: srcImg,
+            scale: styleScale
+          }))
         });
-
-      } else {
-
-        return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {
-          i++;
-          return new ol.style.Style({
-            image: new ol.style.Icon(({
-              anchor: [-(IMAGE_PADDING + 1 + imgMargin), (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset],
-              anchorXUnits: 'pixels',
-              anchorYUnits: 'pixels',
-              src: 'images/mass-transit-stops/' + stopType + '.png',
-              scale: styleScale
-            }))
-          });
-        });
-      }
+      });
     };
 
     var createSelectionBackgroundStyle = function(stopTypes, text){

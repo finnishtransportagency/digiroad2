@@ -19,8 +19,16 @@
     var currentAsset = {};
     var changedProps = [];
 
-    function getMethodToRequestByNationalId(properties) {
+    function getMethodToRequestAssetByType(properties) {
       return isServiceStop(properties) ? "getMassServiceStopByNationalId" : "getMassTransitStopByNationalId";
+    }
+
+    function getMethodToUpdateAssetByType(properties) {
+      return isServiceStop(properties) ? "updateServiceStopAsset" : "updateAsset";
+    }
+
+    function getMethodToDeleteAssetByType(properties) {
+      return isServiceStop(properties) ? "deleteAllMassServiceStopData" : "deleteAllMassTransitStopData";
     }
 
     function isAnAddToolOption(optionTool){
@@ -36,7 +44,7 @@
 
     eventbus.on('tool:changed', function (tool) {
       if (!isAnAddToolOption(tool) && exists()) {
-        backend[getMethodToRequestByNationalId(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
+        backend[getMethodToRequestAssetByType(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -144,19 +152,19 @@
       changedProps = [];
       assetHasBeenModified = false;
       if (currentAsset.id) {
-        backend[getMethodToRequestByNationalId(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
+        backend[getMethodToRequestAssetByType(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
           eventbus.trigger('asset:updateCancelled', asset);
         });
       } else {
         currentAsset = {};
         eventbus.trigger('asset:creationCancelled');
       }
-      eventbus.trigger('terminalBusStop:selected', false);
+      eventbus.trigger('busStop:selected', 99);
     };
 
     eventbus.on('application:readOnly', function () {
       if (exists()) {
-        backend[getMethodToRequestByNationalId(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
+        backend[getMethodToRequestAssetByType(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
           eventbus.trigger('asset:fetched', asset);
         });
       }
@@ -186,10 +194,10 @@
 
       if (asset.stopTypes !== undefined && asset.stopTypes.length > 0)
       {
-        eventbus.trigger('terminalBusStop:selected', asset.stopTypes[0]);
+        eventbus.trigger('busStop:selected', asset.stopTypes[0]);
       }
       else {
-        eventbus.trigger('terminalBusStop:selected', false);
+        eventbus.trigger('busStop:selected', 99);
       }
 
       eventbus.trigger('asset:modified');
@@ -237,18 +245,22 @@
       });
     };
 
-    var requiredPropertiesMissing = function() {
-      var isRequiredProperty = function(publicId) {
+    var requiredPropertiesMissing = function () {
+      var isRequiredProperty = function (publicId) {
+        var isNormalBusStop = currentAsset.stopTypes && isTerminalType(currentAsset.stopTypes[0]) && _.some();
+        var isTerminal = currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties);
+        var isServiceBusStop = currentAsset.stopTypes && isServicePointType(currentAsset.stopTypes[0]) || currentAsset.payload && isServiceStop(currentAsset.payload.properties);
+
         //ignore if it is a terminal
         //TODO we need to get a way to know the mandatory fields depending on the bus stop type (this was code after merging)
-        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 6 && _.some())
+        if (isNormalBusStop || isTerminal) {
           return 'liitetyt_pysakit' == publicId;
-        if(currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties))
-          return 'liitetyt_pysakit' == publicId;
-        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 7 || isServiceStop(currentAsset.payload.properties))
+        } else if (isServiceBusStop)
           return 'palvelu' == publicId;
+
         return getPropertyMetadata(publicId).required;
       };
+
       var isChoicePropertyWithUnknownValue = function(property) {
         var propertyType = getPropertyMetadata(property.publicId).propertyType;
         return _.some((propertyType === "single_choice" || propertyType === "multiple_choice") && property.values, function(value) { return value.propertyValue == 99; });
@@ -264,7 +276,7 @@
 
     var save = function () {
       if (currentAsset.id === undefined) {
-        if (currentAsset.stopTypes[0] == "7") {
+        if (isServicePointType(currentAsset.stopTypes[0])) {
           backend.createServiceStopAsset(currentAsset.payload, function () {
             eventbus.trigger('asset:creationFailed');
             close();
@@ -287,41 +299,23 @@
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
 
-        if (isServiceStop(payload.properties)) {
-          backend.updateServiceStopAsset(currentAsset.id, payload, function (asset) {
-            changedProps = [];
-            assetHasBeenModified = false;
-            if (currentAsset.id != asset.id) {
-              eventbus.trigger('massTransitStop:expired', currentAsset);
-              eventbus.trigger('asset:created', asset);
-            } else {
-              open(asset);
-              eventbus.trigger('asset:saved', asset, positionUpdated);
-            }
-          }, function () {
-            backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function (asset) {
-              open(asset);
-              eventbus.trigger('asset:updateFailed', asset);
-            });
+        backend[getMethodToUpdateAssetByType(payload.properties)](currentAsset.id, payload, function (asset) {
+          changedProps = [];
+          assetHasBeenModified = false;
+          if (currentAsset.id != asset.id) {
+            eventbus.trigger('massTransitStop:expired', currentAsset);
+            eventbus.trigger('asset:created', asset);
+          } else {
+            open(asset);
+            eventbus.trigger('asset:saved', asset, positionUpdated);
+          }
+        }, function () {
+          backend[getMethodToRequestAssetByType(payload.properties)](currentAsset.payload.nationalId, function (asset) {
+            open(asset);
+            eventbus.trigger('asset:updateFailed', asset);
           });
-        }else{
-          backend.updateAsset(currentAsset.id, payload, function (asset) {
-            changedProps = [];
-            assetHasBeenModified = false;
-            if (currentAsset.id != asset.id) {
-              eventbus.trigger('massTransitStop:expired', currentAsset);
-              eventbus.trigger('asset:created', asset);
-            } else {
-              open(asset);
-              eventbus.trigger('asset:saved', asset, positionUpdated);
-            }
-          }, function () {
-            backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function (asset) {
-              open(asset);
-              eventbus.trigger('asset:updateFailed', asset);
-            });
-          });
-        }
+        });
+
       }
     };
 
@@ -488,24 +482,15 @@
     var deleteMassTransitStop = function (poistaSelected) {
       if (poistaSelected) {
         var currAsset = this.getCurrentAsset();
-        if(isServiceStop(currAsset.payload.properties)){
-          backend.deleteAllMassServiceStopData(currAsset.id, function () {
-            assetHasBeenModified = false;
-            eventbus.trigger('massTransitStopDeleted', currAsset);
-          }, function () {
-            cancel();
-          });
-        }else{
-          backend.deleteAllMassTransitStopData(currAsset.id, function () {
-            assetHasBeenModified = false;
-            eventbus.trigger('massTransitStopDeleted', currAsset);
-          }, function (errorObject) {
-            cancel();
-            if (errorObject.status == FAILED_DEPENDENCY_424) {
-              eventbus.trigger('asset:deleteTierekisteriFailed');
-            }
-          });
-        }
+        backend[getMethodToDeleteAssetByType(currAsset.payload.properties)](currAsset.id, function () {
+          assetHasBeenModified = false;
+          eventbus.trigger('massTransitStopDeleted', currAsset);
+        }, function (errorObject) {
+          cancel();
+          if (errorObject.status == FAILED_DEPENDENCY_424) {
+            eventbus.trigger('asset:deleteTierekisteriFailed');
+          }
+        });
       }
     };
 
@@ -626,6 +611,14 @@
         return false;
     }
 
+    function isTerminalType(busStopType) {
+      return busStopType == 6;
+    }
+
+    function isServicePointType(busStopType) {
+      return busStopType == 7;
+    }
+
     return {
       close: close,
       save: save,
@@ -666,7 +659,9 @@
       hasRoadAddress: hasRoadAddress,
       setAdditionalProperty: setAdditionalProperty,
       isSuggested: isSuggested,
-      isAnAddToolOption: isAnAddToolOption
+      isAnAddToolOption: isAnAddToolOption,
+      isTerminalType: isTerminalType,
+      isServicePointType: isServicePointType
     };
   };
 

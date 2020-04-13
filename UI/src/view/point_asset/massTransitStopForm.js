@@ -197,7 +197,7 @@
       poistaSelected = false;
       var streetViewHandler;
       var isTRMassTransitStop = false;
-      var busStopTypeSelected = false;
+      var busStopTypeSelected = 99;
       var roadAddressInfoLabel;
       authorizationPolicy = new MassTransitStopAuthorizationPolicy();
       new FeedbackDataTool(feedbackCollection, 'massTransitStop', authorizationPolicy);
@@ -1023,21 +1023,12 @@
       eventbus.on('asset:modified', function(){
         readOnly = authorizationPolicy.formEditModeAccess();
 
-        if (busStopTypeSelected == 7 && !readOnly && readOnly !== undefined &&
-              selectedMassTransitStopModel.getCurrentAsset() !== undefined && selectedMassTransitStopModel.getCurrentAsset().id === undefined) {
-          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{
-            propertyValue: "7",
-            propertyDisplayValue: "", checked: true
-          }], "multiple_choice", true);
-
-          //this property update will fire an event that will call renderAssetForm
-          selectedMassTransitStopModel.setProperty("tietojen_yllapitaja", [{
-            propertyValue: "1",
-            propertyDisplayValue: ""
-          }], "single_choice", true);
+        if (selectedMassTransitStopModel.isServicePointType(busStopTypeSelected) && !readOnly && _.isUndefined(selectedMassTransitStopModel.getCurrentAsset().id)) {
+          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: "7", propertyDisplayValue: "", checked: true}], "multiple_choice", true);
+          selectedMassTransitStopModel.setProperty("tietojen_yllapitaja", [{propertyValue: "1", propertyDisplayValue: ""}], "single_choice", true); //this property update will fire an event that will call renderAssetForm
         }
-        else{
-        renderAssetForm();
+        else {
+          renderAssetForm();
         }
       });
 
@@ -1106,7 +1097,7 @@
 
       });
 
-      eventbus.on('terminalBusStop:selected', function(value) {
+      eventbus.on('busStop:selected', function(value) {
         busStopTypeSelected = value;
       });
 
