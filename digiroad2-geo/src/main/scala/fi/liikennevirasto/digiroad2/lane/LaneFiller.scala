@@ -183,15 +183,12 @@ class LaneFiller {
                       Seq()
 
         val toRemove = lanesToProcess.map{ lane =>
-          lane.attributes.properties.find(_.publicId == "lane_code") match  {
-            case Some(x) => x.values match {
-                                    case Seq(LanePropertyValue(v)) => if (v.toString.toInt >= 21 && v.toString.toInt <= 29) lane.id
-                                                                  else 0L
-                                    case _ => 0L
-                                  }
-            case _ => 0L
-          }
-        }.filterNot( _ == 0L)
+                                            if ( lane.laneCode >= 21 && lane.laneCode <= 29)
+                                              lane.id
+                                            else
+                                              0L
+                                          }.filterNot( _ == 0L)
+
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
@@ -200,23 +197,19 @@ class LaneFiller {
       case TrafficDirection.AgainstDigitizing =>
 
         val toAdd = if ( !lanesToProcess.exists(_.laneCode == 21)) {
-                   Seq( PersistedLane(0L, roadLink.linkId,  SideCode.AgainstDigitizing.value, 11, baseLane.municipalityCode,
-                      0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-                      LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))))
-                   )
-        } else
-          Seq()
+                     Seq( PersistedLane(0L, roadLink.linkId,  SideCode.AgainstDigitizing.value, 11, baseLane.municipalityCode,
+                        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
+                        LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))))
+                     )
+                  } else
+                      Seq()
 
         val toRemove = lanesToProcess.map{ lane =>
-          lane.attributes.properties.find(_.publicId == "lane_code") match  {
-            case Some(x) => x.values match {
-              case Seq(LanePropertyValue(v)) => if (v.toString.toInt >= 11 && v.toString.toInt <= 19) lane.id
-                                             else 0L
-              case _ => 0L
-            }
-            case _ => 0L
-          }
-        }.filterNot( _ == 0L)
+                                                if ( lane.laneCode >= 11 && lane.laneCode <= 19)
+                                                  lane.id
+                                                else
+                                                  0L
+                                          }.filterNot( _ == 0L)
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
@@ -294,9 +287,8 @@ class LaneFiller {
       */
     def SegmentPieceCreation(startM: Double, endM: Double, lanes: Seq[PersistedLane]): Seq[SegmentPiece] = {
 
-      val sl = lanes.filter(lane => lane.startMeasure <= startM && lane.endMeasure >= endM)
-
-      sl.map( x => SegmentPiece(x.id, startM, endM, SideCode(x.sideCode), x.attributes) )
+      lanes.filter(lane => lane.startMeasure <= startM && lane.endMeasure >= endM)
+           .map( x => SegmentPiece(x.id, startM, endM, SideCode(x.sideCode), x.attributes) )
     }
 
 
@@ -367,14 +359,20 @@ class LaneFiller {
       }
     }
 
-    val lanesZipped = lanes.zipWithIndex.map(n => replaceUnknownAssetIds(n._1, 0L-n._2))
+
+    val lanesZipped = lanes//.zipWithIndex .map( _._1) // ._1 ==> contains LaneInformation
+    //  .map(n => replaceUnknownAssetIds(n._1, 0L-n._2)) not make sense since we treat id = 0 as new lane
+
     val pointsOfInterest = (lanesZipped.map(_.startMeasure) ++ lanesZipped.map(_.endMeasure)).distinct.sorted
     if (pointsOfInterest.length < 2)
       return (lanesZipped, changeSet)
 
     val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
-    val segmentPieces = pieces.flatMap(p => SegmentPieceCreation(p._1, p._2, lanesZipped)).sortBy(_.laneId)
-    val segmentsAndOrphanPieces = segmentPieces.groupBy(_.laneId).map(n => extendOrDivide(n._2, lanesZipped.find(_.id == n._1).get))
+    val segmentPieces = pieces.flatMap(p => SegmentPieceCreation(p._1, p._2, lanesZipped))
+                              //.sortBy(_.laneId)
+                              .groupBy(_.laneId)
+
+    val segmentsAndOrphanPieces = segmentPieces.map(n => extendOrDivide(n._2, lanesZipped.find(_.id == n._1).get))
     val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
     val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
 
@@ -384,7 +382,9 @@ class LaneFiller {
     val resultingNumericalLimits = combinedSegment ++ newSegments
     val expiredIds = lanesZipped.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
 
-    val returnSegments = if (resultingNumericalLimits.nonEmpty) cleanNumericalLimitIds(resultingNumericalLimits, Seq()) else Seq()
+    val returnSegments = if (resultingNumericalLimits.nonEmpty) cleanNumericalLimitIds(resultingNumericalLimits, Seq())
+                         else Seq()
+    
     (returnSegments, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
   }
@@ -443,6 +443,5 @@ class LaneFiller {
       case (None, None) => true
     }
   }
-
 
 }

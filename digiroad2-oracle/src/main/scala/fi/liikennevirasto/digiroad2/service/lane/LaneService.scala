@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
+import java.security.InvalidParameterException
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory
 
 
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LaneOperations {
-  override def roadLinkService: RoadLinkService =roadLinkServiceImpl
+  override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
@@ -189,20 +190,23 @@ trait LaneOperations {
   private def projectAssetsConditionally(change: ChangeInfo, lanes: Seq[PersistedLane],
                                          condition: (Seq[PersistedLane], Long, Double, Double, Long) => Boolean,
                                          useOldId: Boolean): Option[Projection] = {
-    val id = useOldId match {
-      case true => change.oldId
-      case _ => change.newId
-    }
+    val id = if (useOldId) {
+                change.oldId
+              } else {
+                change.newId
+              }
+
     (id, change.oldStartMeasure, change.oldEndMeasure, change.newStartMeasure, change.newEndMeasure, change.vvhTimeStamp) match {
       case (Some(targetId), Some(oldStart:Double), Some(oldEnd:Double),
-      Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
-        condition(lanes, targetId, oldStart, oldEnd, vvhTimeStamp) match {
-          case true => Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
-          case false =>
-            None
-        }
-      case _ =>
-        None
+            Some(newStart:Double), Some(newEnd:Double), vvhTimeStamp) =>
+
+              if (condition(lanes, targetId, oldStart, oldEnd, vvhTimeStamp)) {
+                Some(Projection(oldStart, oldEnd, newStart, newEnd, vvhTimeStamp))
+              } else {
+                None
+              }
+
+      case _ => None
     }
   }
 
@@ -321,28 +325,89 @@ trait LaneOperations {
       dao.fetchLanesByIds( ids )
   }
 
+  def getPropertyValue(newLane: NewIncomeLane, publicId: String) = {
+    val laneProperty = newLane.attributes.properties.find(_.publicId == publicId)
+                                            .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
 
+    val finalValue = if (laneProperty.values.nonEmpty)
+                        laneProperty.values.head.value
+                      else
+                        None
+
+    finalValue
+  }
+
+  def getLaneCode (newIncomeLane: NewIncomeLane): String = {
+    val laneCodeValue = getPropertyValue(newIncomeLane, "lane_code")
+
+    val laneCode = if (laneCodeValue.toString.trim.nonEmpty)
+      laneCodeValue.toString.trim
+    else
+      throw new IllegalArgumentException("Lane code attribute not found!")
+
+    laneCode
+  }
+
+  /**
+    * @param newIncomeLane The lanes that will be updated
+    * @param linkIds  If only 1 means the user are change a specific lane and it can be cut or properties update
+    *                 If multiple means the chain is being updated and only properties are change ( Lane size / cut cannot be done)
+    * @param sideCode To know the direction
+    * @param username Username of the user is doing the changes
+    * @return
+    */
   def update ( newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long] ,sideCode: Int, username: String ): Seq[Long] = {
     if (newIncomeLane.isEmpty || linkIds.isEmpty)
       return Seq()
 
     withDynTransaction {
-      val result = linkIds.map { linkId =>
+     if (linkIds.size == 1) {
+        val linkId = linkIds.head
+
         newIncomeLane.map { lane =>
 
-          val laneCode = lane.attributes.properties.find( _.publicId == "lane_code").getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          val laneCode = getLaneCode(lane)
 
-          val lameToUpdate = PersistedLane(lane.id, linkId, sideCode, laneCode.values.head.value.toString.toInt, lane.municipalityCode, lane.startMeasure, lane.endMeasure,
-            Some(username), None, None, None, false, 0, None, lane.attributes )
+          val lameToUpdate = PersistedLane(lane.id, linkId, sideCode, laneCode.toInt, lane.municipalityCode,
+            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, false, 0, None, lane.attributes)
 
           dao.updateEntryLane(lameToUpdate, username)
         }
-      }
 
-      if (result.isEmpty)
-       Seq()
-     else
-       result.head
+      } else {
+
+        // get all lane codes from lanes to update
+        val laneCodes = newIncomeLane.map( lane => getLaneCode(lane).toInt )
+
+        // fetch from db the existing lanes
+        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodes )
+                                  .groupBy(_.linkId)
+
+        // Iterate through the links
+        val result = linkIds.map { linkId =>
+          newIncomeLane.map { lane =>
+
+            val laneCode = getLaneCode(lane).toInt
+
+            val currentLanes = allExistingLanes.getOrElse(linkId, throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $laneCode for update!"))
+            val auxLane = currentLanes.filter(_.laneCode == laneCode)
+
+            // Since cut lanes will not be in multiple linkIds Update, we can only have the 1st element
+            val currentLane = if ( auxLane.nonEmpty)
+                                auxLane.head
+                              else
+                                throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $laneCode for update!")
+
+
+            val laneToUpdate = PersistedLane(currentLane.id, linkId, sideCode, laneCode, currentLane.municipalityCode,
+              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None, false, 0, None, lane.attributes)
+
+            dao.updateEntryLane(laneToUpdate, username)
+          }
+        }
+
+        result.head
+      }
     }
   }
 
@@ -397,22 +462,51 @@ trait LaneOperations {
 
     withDynTransaction {
 
-      val result = linkIds.map { linkId =>
+      // if it is only 1 link it can be just a new lane with same size as the link or it can be a cut
+      // for that reason we need to use the measure that come inside the newIncomeLane
+      if (linkIds.size == 1) {
+
+        val linkId = linkIds.head
+
         newIncomeLane.map { newLane =>
+          val laneCode = newLane.attributes.properties.find(_.publicId == "lane_code")
+                                                      .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
-          val laneCode = newLane.attributes.properties.find( _.publicId == "lane_code").getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+                                      newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
+                                      expired = false, vvhTimeStamp, None, newLane.attributes)
 
-          val lameToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode, newLane.startMeasure, newLane.endMeasure,
-            Some(username),  Some(DateTime.now()), None, None, expired = false, vvhTimeStamp, None, newLane.attributes )
-
-          createWithoutTransaction(lameToInsert, username,  vvhTimeStamp)
+          createWithoutTransaction(laneToInsert, username, vvhTimeStamp)
         }
-      }
 
-      if (result.isEmpty)
-        Seq()
-      else
+      } else {
+        // If we have more than 1 linkId than we have a chain selected
+        // Lanes will be created with the size of the link
+        val viiteRoadLinks = LaneUtils.viiteClient.fetchAllByLinkIds(linkIds.toSeq)
+                                                  .groupBy(_.linkId)
+
+        val result = linkIds.map { linkId =>
+
+          newIncomeLane.map { newLane =>
+
+            val laneCode = newLane.attributes.properties.find(_.publicId == "lane_code")
+                                                        .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+
+            val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
+                                viiteRoadLinks(linkId).head
+                              else
+                                throw new InvalidParameterException(s"No RoadLink found: $linkId")
+
+            val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
+                                  roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None,
+                                  expired = false, vvhTimeStamp, None, newLane.attributes)
+
+            createWithoutTransaction(laneToInsert, username, vvhTimeStamp)
+          }
+        }
+
         result.head
+      }
     }
   }
 

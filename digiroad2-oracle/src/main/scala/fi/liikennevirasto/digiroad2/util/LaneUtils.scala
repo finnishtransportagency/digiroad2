@@ -71,7 +71,7 @@ object LaneUtils {
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
-    def getRoadAddressToProcess(): Seq[RoadAddressesAux] = {
+    def getRoadAddressToProcess(): Set[RoadAddressesAux] = {
 
       // Generate a sequence from initialRoadPartNumber to endRoadPartNumber
       // If initialRoadPartNumber = 1 and endRoadPartNumber = 4
@@ -94,29 +94,27 @@ object LaneUtils {
       val vkmLinkIds = vkmRoadAddress.map(_.linkId)
 
       // Remove from Viite the information we have updated in our DB and add ou information
-      val allRoadAddress = roadAddresses.filterNot( x => vkmLinkIds.contains( x.linkId)) ++ vkmRoadAddress
+      val allRoadAddress = (roadAddresses.filterNot( x => vkmLinkIds.contains( x.linkId)) ++ vkmRoadAddress).toSet
 
       // Get all updated information from VVH
-      val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId).toSet).groupBy(_.linkId)
+      val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId).toSet)
+                                           .groupBy(_.linkId)
 
+      val finalRoads = allRoadAddress.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
+                                                val existsInVVH = mappedRoadLinks.get(elem.linkId).nonEmpty
+                                                val roadPartNumber = elem.roadPart
+                                                val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber && roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
 
-      val roadAddressToProcess = allRoadAddress.filter( elem => mappedRoadLinks.get(elem.linkId).nonEmpty) //remove the lkinks that are not in VVH
-                                                .map{ elem =>
-                                                  if (elem.municipalityCode == 0) //In case we don't have municipalityCode we will get it from VVH info
-                                                    elem.copy( municipalityCode = mappedRoadLinks(elem.linkId).head.municipalityCode )
-                                                  else
-                                                    elem
-                                                }
+                                                existsInVVH && inInitialAndEndRoadPart
+                                            }
+                                    .map{ elem =>             //In case we don't have municipalityCode we will get it from VVH info
+                                              if (elem.municipalityCode == 0)
+                                                elem.copy( municipalityCode = mappedRoadLinks(elem.linkId).head.municipalityCode )
+                                              else
+                                                elem
+                                        }
 
-      // Remove the information that are outside of our road part to process
-      val filteredLinkIds = roadAddressToProcess.filter { x =>
-                                                    val roadPartNumber = x.roadPart
-                                                    roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber && roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
-                                                  }
-                                                .map(_.linkId)
-
-      // remove from our list the links that are not good or out of our road part to process
-      allRoadAddress.filter(x => filteredLinkIds.contains(x.linkId))
+      finalRoads
     }
 
     def calculateStartAndEndPoint(road: RoadAddressesAux, startPoint: Double, endPoint: Double )= {

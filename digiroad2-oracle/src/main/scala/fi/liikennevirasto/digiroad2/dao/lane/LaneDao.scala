@@ -12,7 +12,6 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
-
 import scala.language.implicitConversions
 
 
@@ -144,6 +143,33 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     convertLaneRowToPersistedLane(lanes)
   }
+
+
+  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int], includeExpired: Boolean = false): Seq[PersistedLane] = {
+    val filterExpired = if (includeExpired) "" else " and (l.valid_to > sysdate or l.valid_to is null) "
+    val laneCodeClause = if (laneCode.isEmpty) "" else s" and l.lane_code in (${laneCode.mkString(",")})"
+
+    val lanes = MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""SELECT l.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure,
+               l.created_by, l.created_date, l.modified_by, l.modified_date,
+               CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
+               pos.adjusted_timestamp, pos.modified_date,
+               la.name, la.value, l.municipality_code, l.lane_code
+          FROM lane l
+          JOIN lane_link ll ON l.id = ll.lane_id
+          JOIN lane_position pos ON ll.lane_position_id = pos.id
+          JOIN lane_attribute la ON la.lane_id = l.id
+          JOIN #$idTableName i ON i.id = pos.link_id
+          WHERE 1 = 1
+          #$filterExpired
+          #$laneCodeClause
+          ORDER BY l.lane_code ASC
+       """.as[LaneRow].list
+    }
+
+    convertLaneRowToPersistedLane(lanes)
+  }
+
 
   def fetchLanesByLinkIdAndSideCode( linkId: Long, sideCode: Int): Seq[PersistedLane] = {
 
@@ -319,12 +345,14 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     if ( MAIN_LANES.contains(laneCode) )
       throw new IllegalArgumentException("Cannot Delete a main lane!")
 
-    val lanePositionId = sql"""SELECT lane_position_id FROM LANE_LINK WHERE lane_id = $laneId""".as[Long].first
-
     sqlu"""DELETE FROM LANE_ATTRIBUTE WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE_LINK WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE WHERE id = $laneId""".execute
-    sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId""".execute
+
+    sqlu"""DELETE FROM LANE_POSITION
+           WHERE id = (SELECT lane_position_id
+                        FROM LANE_LINK
+                        WHERE lane_id = $laneId )""".execute
   }
 
 
