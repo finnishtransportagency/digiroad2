@@ -144,15 +144,9 @@
       changedProps = [];
       assetHasBeenModified = false;
       if (currentAsset.id) {
-        if(isServiceStop(currentAsset.payload.properties)){
-          backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-            eventbus.trigger('asset:updateCancelled', asset);
-          });
-        }else{
-          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-            eventbus.trigger('asset:updateCancelled', asset);
-          });
-        }
+        backend[getMethodToRequestByNationalId(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
+          eventbus.trigger('asset:updateCancelled', asset);
+        });
       } else {
         currentAsset = {};
         eventbus.trigger('asset:creationCancelled');
@@ -160,17 +154,11 @@
       eventbus.trigger('terminalBusStop:selected', false);
     };
 
-    eventbus.on('application:readOnly', function() {
+    eventbus.on('application:readOnly', function () {
       if (exists()) {
-        if(isServiceStop(currentAsset.payload.properties)){
-          backend.getMassServiceStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-            if (exists()) { eventbus.trigger('asset:fetched', asset); }
-          });
-        }else{
-          backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-            if (exists()) { eventbus.trigger('asset:fetched', asset); }
-          });
-        }
+        backend[getMethodToRequestByNationalId(currentAsset.payload.properties)](currentAsset.payload.nationalId, function (asset) {
+          eventbus.trigger('asset:fetched', asset);
+        });
       }
     });
 
