@@ -31,7 +31,7 @@
         var propertyType = feature.propertyType;
 
         switch (propertyType) {
-          case "text":
+          case "text": return textHandler(feature);
           case "number": return textHandler(feature);
           case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection, asset) : singleChoiceHandler(feature);
           case "read_only_number": return readOnlyHandler(feature);
@@ -684,9 +684,12 @@
 
     me.renderPreview = function(roadCollection, selectedAsset) {
       var asset = selectedAsset.get();
-      var lanes =  roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
-      lanes = validitydirections.filterLanesByDirection(lanes, asset.validityDirection);
-      return createPreviewHeaderElement(_.uniq(lanes));
+      var lanes;
+      if (!asset.floating){
+        lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
+        lanes = validitydirections.filterLanesByDirection(lanes, asset.validityDirection);
+      }
+      return _.isEmpty(lanes) ? '' : createPreviewHeaderElement(_.uniq(lanes));
     };
 
     me.renderValidityDirection = function (selectedAsset) {

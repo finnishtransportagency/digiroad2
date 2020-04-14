@@ -382,6 +382,10 @@ object OracleTrafficSignDao {
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
           assetRow.property.propertyType match {
+            case Number =>
+              val propertyValue = assetRow.property.propertyValue.replace(',', '.')
+              val propertyDisplayValue = Try(assetRow.property.propertyDisplayValue.replace(',', '.')).toOption
+              Seq(PropertyValue(propertyValue, propertyDisplayValue))
             case AdditionalPanelType =>
               assetRow.additionalPanel match {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition, panel.panelText, panel.panelSize, panel.panelCoatingType, panel.panelColor))

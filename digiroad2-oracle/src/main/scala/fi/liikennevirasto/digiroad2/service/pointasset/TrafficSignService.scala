@@ -55,8 +55,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   private val batchProcessName = "batch_process_trafficSigns"
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
-  private val defaultMultiChoiceValue = "0"
-  private val defaultSingleChoiceValue = "999"
+  private val defaultMultiChoiceValue = 0
+  private val defaultSingleChoiceValue = 999
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
@@ -418,14 +418,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     oldCode.get.propertyValue == checkedValue
   }
 
-  def getDefaultMultiChoiceValue: String = defaultMultiChoiceValue
-  def getDefaultSingleChoiceValue: String = defaultSingleChoiceValue
+  def getDefaultMultiChoiceValue: Int = defaultMultiChoiceValue
+  def getDefaultSingleChoiceValue: Int = defaultSingleChoiceValue
 
   def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimplePointAssetProperty] = {
 
-    def getSingleChoiceValue(additionalPanelInfo: AdditionalPanelInfo, target: String): String = {
+    def getSingleChoiceValue(additionalPanelInfo: AdditionalPanelInfo, target: String): Int = {
       val targetValue = getProperty(additionalPanelInfo.propertyData, target).get.propertyValue
-      if (targetValue.nonEmpty) targetValue
+      if (targetValue.nonEmpty) targetValue.toInt
       else getDefaultSingleChoiceValue
     }
 
@@ -437,9 +437,9 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
         getProperty(panel.propertyData, valuePublicId).getOrElse(PropertyValue("")).propertyValue,
         index,
         getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
-        getSingleChoiceValue(panel, additionalPanelSize).toInt,
-        getSingleChoiceValue(panel, additionalPanelCoatingType).toInt,
-        getSingleChoiceValue(panel, additionalPanelColor).toInt
+        getSingleChoiceValue(panel, additionalPanelSize),
+        getSingleChoiceValue(panel, additionalPanelCoatingType),
+        getSingleChoiceValue(panel, additionalPanelColor)
       )
     }.toSeq
 
