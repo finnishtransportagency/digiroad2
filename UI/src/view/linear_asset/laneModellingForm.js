@@ -946,7 +946,7 @@
           element.prop('disabled', !(me.isSaveable()));
       };
 
-      eventbus.on(events('selected', 'cancelled'), function () {
+      eventbus.on(events('selected'), function () {
         var isDisabled = false;
         setInitialForm();
         rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
@@ -956,7 +956,7 @@
         rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
       });
 
-      eventbus.on(events('unselect'), function() {
+      eventbus.on(events('unselect', 'cancelled'), function() {
         rootElement.find('#feature-attributes-header').empty();
         rootElement.find('#feature-attributes-form').empty();
         rootElement.find('#feature-attributes-footer').empty();

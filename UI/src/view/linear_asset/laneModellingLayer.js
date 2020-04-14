@@ -520,7 +520,7 @@
     };
 
     var geometryAndValuesEqual = function(feature, comparison) {
-      var toCompare = ["linkId", "sideCode", "startMeasure", "endMeasure"];
+      var toCompare = ["linkIds", "sideCode", "startMeasure", "endMeasure"];
       _.each(toCompare, function(value){
         return feature[value] === comparison[value];
       });
@@ -554,9 +554,9 @@
               }), me.uiState.zoomLevel));
         }
 
-        removeOldAssetFeatures();
         vectorSource.addFeatures(selectedFeatures);
         selectToolControl.addSelectionFeatures(selectedFeatures);
+        removeOldAssetFeatures();
 
         if (selectedLinearAsset.isSplit(laneNumber)) {
           me.drawIndicators(_.map(_.cloneDeep(_.filter(selectedLinearAsset.get(), function (lane){

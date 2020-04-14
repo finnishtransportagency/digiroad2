@@ -198,6 +198,7 @@
         eventbus.trigger(singleElementEvent('unselect'), self);
         collection.setSelection(null);
         selection = [];
+        eventbus.trigger(singleElementEvent('cancelled'), self);
       }
     };
 
