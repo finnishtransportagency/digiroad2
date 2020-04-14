@@ -368,7 +368,7 @@
         }
       }
 
-      if(data.stopTypes[0] == 6 || data.stopTypes[0] == 7 )
+      if (selectedMassTransitStopModel.isTerminalType(data.stopTypes[0]) || selectedMassTransitStopModel.isServicePointType(data.stopTypes[0]))
         direction = '';
 
       var styles = [];
@@ -376,7 +376,7 @@
       styles = styles.concat(createStickStyle());
 
       /* Due the impact of the order of the concats*/
-      if (data.stopTypes.length > 0 && data.stopTypes[0] == 7) {
+      if (!_.isEmpty(data.stopTypes) && selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
         styles = styles.concat(createStopTypeStyles(data.stopTypes));
       }
       else {
@@ -397,7 +397,7 @@
       styles = styles.concat(createStickStyle());
 
       /* if it is a servicePoint don't add the background */
-     if (data.stopTypes.length > 0 && data.stopTypes[0] != 7) {
+      if (!_.isEmpty(data.stopTypes) && !selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
         styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
       }
       styles = styles.concat(createStopTypeStyles(data.stopTypes));

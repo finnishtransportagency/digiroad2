@@ -17,15 +17,11 @@
     }
   }
 
-  function getPropByPublicId(public_id){
-    var property;
-
-    property = selectedMassTransitStopModel.getCurrentAsset().payload.properties.find(function(prop){
-      if ( prop.publicId == public_id)
+  function getPropByPublicId(public_id) {
+    return _.find(selectedMassTransitStopModel.getCurrentAsset().payload.properties, function (prop) {
+      if (prop.publicId == public_id)
         return prop;
     });
-
-    return property;
   }
 
   var ValidationErrorLabel = function() {
