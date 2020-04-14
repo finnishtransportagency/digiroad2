@@ -19,7 +19,7 @@
     };
 
     this.getNewFeatureProperties = function(linearAssets, laneNumber){
-      var isRoadlink = _.isUndefined(_.head(linearAssets).selectedLinks);
+      var isRoadlink = _.isEmpty(linearAssets) || _.isUndefined(_.head(linearAssets).selectedLinks);
       var relevantLinears = linearAssets;
       if(!isRoadlink){
         relevantLinears = _.filter(linearAssets, function (linear) {

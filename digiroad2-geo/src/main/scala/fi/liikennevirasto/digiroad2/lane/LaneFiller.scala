@@ -13,11 +13,13 @@ object  LaneFiller {
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
   case class ValueAdjustment(lane: PersistedLane)
 
-  case class ChangeSet( adjustedMValues: Seq[MValueAdjustment],
-                       adjustedVVHChanges: Seq[VVHChangesAdjustment],
-                       adjustedSideCodes: Seq[SideCodeAdjustment],
-                       expiredLaneIds: Set[Long],
-                       valueAdjustments: Seq[ValueAdjustment])
+  case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
+                        adjustedVVHChanges: Seq[VVHChangesAdjustment] = Seq.empty[VVHChangesAdjustment],
+                        adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
+                        expiredLaneIds: Set[Long] = Set.empty[Long],
+                        valueAdjustments: Seq[ValueAdjustment] = Seq.empty[ValueAdjustment],
+                        generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane])
+
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: LanePropertiesValues)
 }
@@ -40,12 +42,7 @@ class LaneFiller {
 
     val changeSet = changedSet match {
       case Some(change) => change
-      case None => ChangeSet(
-        expiredLaneIds = Set.empty[Long],
-        adjustedMValues = Seq.empty[MValueAdjustment],
-        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-        valueAdjustments = Seq.empty[ValueAdjustment])
+      case None => ChangeSet()
     }
 
     topology.foldLeft(Seq.empty[PieceWiseLane], changeSet) { case (acc, roadLink) =>
@@ -169,7 +166,7 @@ class LaneFiller {
           case _ => Seq()
         }
 
-        (lanes ++ toAdd, changeSet)
+        (lanes ++ toAdd, changeSet.copy( generatedPersistedLanes = changeSet.generatedPersistedLanes ++ toAdd ))
 
       case TrafficDirection.TowardsDigitizing =>
 
@@ -192,7 +189,7 @@ class LaneFiller {
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
-        (lanesToAdd, changeSet.copy( expiredLaneIds = changeSet.expiredLaneIds ++ toRemove ))
+        (lanesToAdd, changeSet.copy( expiredLaneIds = changeSet.expiredLaneIds ++ toRemove, generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd ))
 
       case TrafficDirection.AgainstDigitizing =>
 
@@ -213,7 +210,7 @@ class LaneFiller {
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
-        (lanesToAdd, changeSet.copy( expiredLaneIds = changeSet.expiredLaneIds ++ toRemove ))
+        (lanesToAdd, changeSet.copy( expiredLaneIds = changeSet.expiredLaneIds ++ toRemove, generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd ))
 
       case _ => (lanes, changeSet)
     }

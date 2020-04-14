@@ -78,11 +78,8 @@ trait LaneOperations {
     val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
 
     val initChangeSet = ChangeSet(
-      expiredLaneIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L),
-      adjustedMValues = Seq.empty[MValueAdjustment],
-      adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-      adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-      valueAdjustments = Seq.empty[ValueAdjustment])
+      expiredLaneIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L)
+    )
 
     val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
 
@@ -102,6 +99,7 @@ trait LaneOperations {
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedLanes: Seq[PersistedLane]) {
     eventBus.publish("lanes:updater", changeSet)
+    eventBus.publish("lanes:generator", changeSet.generatedPersistedLanes.filter(_.id == 0L))
     eventBus.publish("lanes:saveProjectedLanes", projectedLanes.filter(_.id == 0L))
   }
 
@@ -309,6 +307,20 @@ trait LaneOperations {
 
       if (toInsert.nonEmpty)
         logger.info("Added lanes for linkids " + newLanes.map(_.linkId))
+    }
+  }
+
+  def generateLanes (toCreate: Seq[PersistedLane]): Unit = {
+    if (toCreate.nonEmpty)
+      logger.info("Saving new lanes")
+
+    withDynTransaction {
+      toCreate.foreach{ lane =>
+        createWithoutTransaction( lane , "lanesGenerator")
+      }
+
+      if (toCreate.nonEmpty)
+        logger.info("Added lanes for linkids " + toCreate.map(_.linkId))
     }
   }
 

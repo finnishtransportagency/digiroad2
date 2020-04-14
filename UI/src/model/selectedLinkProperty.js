@@ -137,6 +137,12 @@
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
     };
 
+    var cancelDirectionChange = function() {
+      _.each(current, function(selected) { selected.cancelDirectionChange(); });
+      var originalData = _.head(current).getData();
+      eventbus.trigger('linkProperties:cancelledDirectionChange', _.cloneDeep(originalData));
+    };
+
     var setLinkProperty = function(key, value) {
       dirty = true;
       _.each(current, function(selected) { selected.setLinkProperty(key, value); });
@@ -166,6 +172,7 @@
       isDirty: isDirty,
       save: save,
       cancel: cancel,
+      cancelDirectionChange: cancelDirectionChange,
       isSelected: isSelected,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
