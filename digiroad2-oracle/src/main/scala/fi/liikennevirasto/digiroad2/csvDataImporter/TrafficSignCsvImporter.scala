@@ -416,14 +416,12 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       val point = getCoordinatesFromProperties(props)
       val (assetBearing, assetValidityDirection) = recalculateBearing(optBearing)
 
-      val closestRoadLinks = roadLinkService.enrichRoadLinksFromVVH(nearbyLinks)
-
-      var possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, closestRoadLinks)
+      var possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
 
       if (possibleRoadLinks.size > 1) {
         getPropertyValue(props, "roadName") match {
           case name: String =>
-            val possibleRoadLinksByName = closestRoadLinks.filter(_.roadNameIdentifier == Option(name))
+            val possibleRoadLinksByName = nearbyLinks.filter(_.roadNameIdentifier == Option(name))
             if (possibleRoadLinksByName.size == 1)
               possibleRoadLinks = possibleRoadLinksByName
           case _ =>
@@ -434,7 +432,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       val roadLink = if (roadLinks.nonEmpty) {
         roadLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
       } else
-        closestRoadLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
+        nearbyLinks.minBy(r => GeometryUtils.minimumDistance(point, r.geometry))
 
       val validityDirection = if(assetBearing.isEmpty) {
         trafficSignService.getValidityDirection(point, roadLink, assetBearing, twoSided)
