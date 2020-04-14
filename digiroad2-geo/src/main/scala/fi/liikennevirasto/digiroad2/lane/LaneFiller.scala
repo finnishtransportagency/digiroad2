@@ -132,7 +132,7 @@ class LaneFiller {
       return (lanes, changeSet)
 
     val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
-    val baseLane = lanesToProcess.head
+    val baseLane = lanesToProcess.sortBy(_.laneCode).head
     val baseProps = baseLane.attributes.properties.filterNot(_.publicId == "lane_code")
 
     roadLink.trafficDirection match {
