@@ -252,7 +252,7 @@ class VerificationDao {
       select SUM(REGEXP_COUNT(suggested_assets , ',') + 1)
       from municipality_verification
       where valid_to is null
-      and municipality_id in (${municipalityCode.mkString(",")})
+      and municipality_id in (#${municipalityCode.mkString(",")})
           """.as[Long].first
   }
 }
