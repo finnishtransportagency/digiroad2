@@ -3,7 +3,7 @@
     var map = params.map,
       application = params.application,
       collection = params.collection,
-      selectedLinearAsset = params.selectedLinearAsset,
+      selectedLane = params.selectedLinearAsset,
       roadLayer = params.roadLayer,
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
@@ -62,7 +62,7 @@
 
       this.deactivate = function() {
         eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-        eventListener.stopListening(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+        eventListener.stopListening(eventbus, 'map:clicked', selectedLane.cancel);
         eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
         eventListener.stopListening(eventbus, 'map:mouseMoved');
         remove();
@@ -70,7 +70,7 @@
 
       this.activate = function() {
         eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-        eventListener.stopListening(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+        eventListener.stopListening(eventbus, 'map:clicked', selectedLane.cancel);
         eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
         eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
           if (application.getSelectedTool() === 'Cut') {
@@ -95,11 +95,11 @@
           .reject(function(feature) {
             var properties = feature.getProperties();
             var laneNumber = _.head(_.find(properties.properties, function(property){
-              return property.publicId == "lane_code";
+              return property.publicId === "lane_code";
             }).values).value;
 
-            return !selectedLinearAsset.isOuterLane(laneNumber) || laneNumber.toString()[1] == "1" ||
-              !_.isUndefined(properties.marker) || properties.selectedLinks.length > 1 || selectedLinearAsset.isAddByRoadAddress();
+            return !selectedLane.isOuterLane(laneNumber) || laneNumber.toString()[1] == "1" ||
+              !_.isUndefined(properties.marker) || properties.selectedLinks.length > 1 || selectedLane.isAddByRoadAddress();
           })
           .map(function(feature) {
             var closestP = feature.getGeometry().getClosestPoint(point);
@@ -155,7 +155,7 @@
         var nearestLinearAsset = nearest.feature.getProperties();
         if(authorizationPolicy.formEditModeAccess(nearestLinearAsset)) {
           var splitProperties = calculateSplitProperties(GeometryUtils.revertOffsetByLaneNumber(nearestLinearAsset), mousePoint);
-          selectedLinearAsset.splitLinearAsset(_.head(_.find(nearestLinearAsset.properties, function(property){
+          selectedLane.splitLinearAsset(_.head(_.find(nearestLinearAsset.properties, function(property){
             return property.publicId === "lane_code";
           }).values).value, splitProperties);
 
@@ -189,26 +189,25 @@
     });
     map.addLayer(indicatorLayer);
     indicatorLayer.setVisible(false);
-    var readOnlyLayer = new GroupedLinearAssetLayer(params, map);
 
+    var readOnlyLayer = new GroupedLinearAssetLayer(params, map);
     var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
     var selectableZoomLevel = function() {
       return me.uiState.zoomLevel >= zoomlevels.minZoomForAssets;
     };
 
-    var onSelect = function(evt) {
+    var selectLane = function(evt) {
       if(selectableZoomLevel()) {
         if(evt.selected.length !== 0) {
           var feature = evt.selected[0];
           var properties = feature.getProperties();
-          verifyClickEvent(properties, evt);
-        }else{
-          if (selectedLinearAsset.exists()) {
-            selectedLinearAsset.close();
-            readOnlyLayer.showLayer();
-            highLightReadOnlyLayer();
-          }
+          verifyClickEvent(evt, properties);
+
+        }else if (selectedLane.exists()) {
+          selectedLane.close();
+          readOnlyLayer.showLayer();
+          highLightReadOnlyLayer();
         }
       }
     };
@@ -216,19 +215,21 @@
     var onMultipleSelect = function(evt) {
       if(selectableZoomLevel()){
         if(evt.selected.length !== 0) {
-          selectedLinearAsset.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
+          selectedLane.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
         }
-        else{
-          if (selectedLinearAsset.exists()) {
-            selectedLinearAsset.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
-          }
+        else if (selectedLane.exists()) {
+          selectedLane.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
         }
       }
     };
 
-    var verifyClickEvent = function(properties, evt){
-      var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
-      selectedLinearAsset.open(properties, singleLinkSelect);
+    var verifyClickEvent = function(evt, properties){
+      var singleLinkSelect;
+      if(evt) {
+        singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
+      }
+
+      selectedLane.open(properties, singleLinkSelect);
       me.highlightMultipleLinearAssetFeatures();
     };
 
@@ -240,7 +241,7 @@
     var selectToolControl = new SelectToolControl(application, vectorLayer, map, isMultipleLinkSelectionAllowed, {
       style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
       onInteractionEnd: onInteractionEnd,
-      onSelect: onSelect,
+      onSelect: selectLane,
       onMultipleSelect: onMultipleSelect,
       onClose: onCloseForm,
       enableSelect: selectableZoomLevel
@@ -262,37 +263,37 @@
       if(_.isEmpty(linearAssets))
         return;
 
-      selectedLinearAsset.openMultiple(linearAssets);
+      selectedLane.openMultiple(linearAssets);
 
-      var features = style.renderFeatures(selectedLinearAsset.get());
-      if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
+      var features = style.renderFeatures(selectedLane.get());
+      if(assetLabel) {
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLane.get(), offsetBySideCode), me.uiState.zoomLevel));
+      }
       selectToolControl.addSelectionFeatures(features);
 
       LinearAssetMassUpdateDialog.show({
-        count: selectedLinearAsset.count(),
+        count: selectedLane.count(),
         onCancel: cancelSelection,
         onSave: function (value) {
-          selectedLinearAsset.saveMultiple(value);
+          selectedLane.saveMultiple(value);
           selectToolControl.clear();
-          selectedLinearAsset.closeMultiple();
+          selectedLane.closeMultiple();
           selectToolControl.deactivateDraw();},
-        validator: selectedLinearAsset.validator,
+        validator: selectedLane.validator,
         formElements: params.formElements,
-        selectedLinearAsset: selectedLinearAsset,
+        selectedLinearAsset: selectedLane,
         assetTypeConfiguration: params
       });
+
     };
 
     function onInteractionEnd(linearAssets) {
-      if (selectedLinearAsset.isDirty()) {
+      if (selectedLane.isDirty()) {
         me.displayConfirmMessage();
-      } else {
-        if (linearAssets.length > 0 && selectableZoomLevel()) {
-          selectedLinearAsset.close();
+      } else if (linearAssets.length > 0 && selectableZoomLevel()) {
+          selectedLane.close();
           showDialog(linearAssets);
           onCloseForm();
-        }
       }
     }
 
@@ -301,8 +302,9 @@
         showWithComplementary();
       else
         hideComplementary();
+
       selectToolControl.clear();
-      selectedLinearAsset.closeMultiple();
+      selectedLane.closeMultiple();
     }
 
     var adjustStylesByZoomLevel = function(zoom) {
@@ -324,12 +326,14 @@
       }
 
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-      eventListener.stopListening(eventbus, 'map:clicked', selectedLinearAsset.cancel);
-      if (selectedLinearAsset.isDirty() && application.getSelectedTool() !== 'Cut') {
+      eventListener.stopListening(eventbus, 'map:clicked', selectedLane.cancel);
+
+      if (selectedLane.isDirty() && application.getSelectedTool() !== 'Cut') {
         eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
       }else if(application.getSelectedTool() !== 'Cut'){
-        eventListener.listenTo(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+        eventListener.listenTo(eventbus, 'map:clicked', selectedLane.cancel);
       }
+
     };
 
     function onCloseForm()  {
@@ -341,8 +345,9 @@
       var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
       var linearAssetUnSelected = _.partial(handleLinearAssetUnSelected, eventListener);
       var switchTool = _.partial(changeTool, eventListener);
+
       eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
-      eventListener.listenTo(eventbus, singleElementEvents('selected'), linearAssetSelected);
+      eventListener.listenTo(eventbus, singleElementEvents('selected','multiSelected'), linearAssetSelected);
       eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
       eventListener.listenTo(eventbus, 'tool:changed', switchTool);
       eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
@@ -354,6 +359,8 @@
       eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
       eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
       eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
+      eventListener.listenTo(eventbus, singleElementEvents('linearAsset'), refreshReadOnlyLayer);
+
     };
 
     var startListeningExtraEvents = function(){
@@ -373,13 +380,10 @@
     };
 
     var handleLinearAssetUnSelected = function (eventListener) {
-      selectToolControl.clear();
-      if (application.getSelectedTool() !== 'Cut'){
-        changeTool(eventListener, application.getSelectedTool());
-      }else{
-        me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-      }
+      changeTool(eventListener, application.getSelectedTool());
+      me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
+
 
     var linearAssetSelected = function(){
       me.decorateSelection();
@@ -391,14 +395,7 @@
     };
 
     var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, laneNumber) {
-      selectToolControl.deactivate();
-      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-      eventListener.stopListening(eventbus, 'map:clicked', selectedLinearAsset.cancel);
-      if (selectedLinearAsset.isDirty() && application.getSelectedTool() !== 'Cut') {
-        eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-      }else if(!selectedLinearAsset.isDirty() && application.getSelectedTool() !== 'Cut'){
-        eventListener.listenTo(eventbus, 'map:clicked', selectedLinearAsset.cancel);
-      }
+      changeTool(eventListener, application.getSelectedTool());
       me.decorateSelection(laneNumber);
     };
 
@@ -414,18 +411,21 @@
     this.refreshView = function() {
       vectorLayer.setVisible(true);
       adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
+
       if (isComplementaryChecked) {
         collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-          eventbus.trigger('layer:linearAsset');
+          eventbus.trigger(singleElementEvents('linearAsset'));
         });
       } else {
         collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-          eventbus.trigger('layer:linearAsset');
+          eventbus.trigger(singleElementEvents('linearAsset'));
         });
       }
+
       if(trafficSignReadOnlyLayer){
         trafficSignReadOnlyLayer.refreshView();
       }
+
     };
 
     this.activateSelection = function() {
@@ -442,10 +442,8 @@
 
     var handleLinearAssetCancelled = function(eventListener) {
       selectToolControl.clear();
-      if(application.getSelectedTool() !== 'Cut'){
-        selectToolControl.activate();
-      }
-      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      changeTool(eventListener, application.getSelectedTool());
+
       redrawLinearAssets(collection.getAll());
     };
 
@@ -488,12 +486,12 @@
       vectorSource.clear();
       indicatorLayer.getSource().clear();
       var linearAssets = _.flatten(linearAssetChains);
-      me.decorateSelection(selectedLinearAsset.exists() ? selectedLinearAsset.getCurrentLaneNumber() : undefined);
+      me.decorateSelection(selectedLane.exists() ? selectedLane.getCurrentLaneNumber() : undefined);
       me.drawLinearAssets(linearAssets, vectorSource);
     };
 
     this.drawLinearAssets = function(linearAssets) {
-      var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
+      var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLane.get(), function(selectedAsset){
         return selectedAsset.linkId === asset.linkId && selectedAsset.sideCode == asset.sideCode &&
           selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
@@ -531,13 +529,15 @@
         var features = _.reject(vectorSource.getFeatures(), function (feature) {
           return _.isUndefined(feature.values_.properties);
         });
+
         _.forEach(features, function (feature) {
           vectorSource.removeFeature(feature);
         });
+
       }
 
-      if (selectedLinearAsset.exists()) {
-        var linearAssets = selectedLinearAsset.get();
+      if (selectedLane.exists()) {
+        var linearAssets = selectedLane.get();
         var selectedFeatures = style.renderFeatures(linearAssets, laneNumber);
 
         if (assetLabel) {
@@ -558,10 +558,10 @@
         selectToolControl.addSelectionFeatures(selectedFeatures);
         removeOldAssetFeatures();
 
-        if (selectedLinearAsset.isSplit(laneNumber)) {
-          me.drawIndicators(_.map(_.cloneDeep(_.filter(selectedLinearAsset.get(), function (lane){
+        if (selectedLane.isSplit(laneNumber)) {
+          me.drawIndicators(_.map(_.cloneDeep(_.filter(selectedLane.get(), function (lane){
             return _.find(lane.properties, function (property) {
-              return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+              return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
             });
           })), offsetByLaneNumber));
         }
@@ -592,7 +592,7 @@
       if(trafficSignReadOnlyLayer)
         trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
       selectToolControl.clear();
-      selectedLinearAsset.close();
+      selectedLane.close();
       isComplementaryChecked = false;
       readOnlyLayer.hideComplementary();
       roadAddressInfoPopup.stop();
@@ -624,7 +624,7 @@
       vectorLayer.setVisible(false);
       indicatorLayer.setVisible(false);
       readOnlyLayer.hideLayer();
-      selectedLinearAsset.close();
+      selectedLane.close();
       stopListeningExtraEvents();
       me.stop();
       me.hide();
@@ -634,6 +634,7 @@
       if(applicationModel.getSelectedLayer() == layerName)
         me.refreshView();
     };
+
 
     return {
       vectorLayer: vectorLayer,

@@ -21,7 +21,7 @@
     this.getLane = function (laneNumber, marker) {
         return _.find(selection, function (lane){
           return (_.isEmpty(marker) || lane.marker == marker) && _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+            return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
           });
         });
     };
@@ -43,7 +43,7 @@
             return false;
 
           var value = _.head(property.values).value;
-          return property.publicId == "lane_code" && value > laneNumber && ((value % 2 !== 0 && laneNumber % 2 !== 0) || (value % 2 === 0 && laneNumber % 2 === 0));
+          return property.publicId === "lane_code" && value > laneNumber && ((value % 2 !== 0 && laneNumber % 2 !== 0) || (value % 2 === 0 && laneNumber % 2 === 0));
         });
 
         if(_.isUndefined(foundValidProperty)){
@@ -64,7 +64,7 @@
       if (!_.isEmpty(listLanesIndexes))
         _.forEach(listLanesIndexes, function (number) {
           var propertyIndex =  _.findIndex(selection[number].properties, function (property) {
-            return property.publicId == "lane_code";
+            return property.publicId === "lane_code";
           });
           selection[number].properties[propertyIndex].values[0].value = parseInt(selection[number].properties[propertyIndex].values[0].value) - 2;
         });
@@ -73,7 +73,7 @@
     var giveSplitMarkers = function(lanes){
       var numberOfLanesByLaneCode = _.countBy(lanes, function (lane) {
         return _.head(_.find(lane.properties, function (property) {
-          return property.publicId == "lane_code";
+          return property.publicId === "lane_code";
         }).values).value;
       });
 
@@ -84,7 +84,7 @@
       var duplicateLaneCounter = 0;
       return _.map(lanes, function (lane) {
         var laneCode = _.head(_.find(lane.properties, function (property) {
-          return property.publicId == "lane_code";
+          return property.publicId === "lane_code";
         }).values).value;
 
         if(_.includes(laneCodesToPutMarkers, laneCode)) {
@@ -123,7 +123,7 @@
     };
 
     this.open = function(linearAsset, singleLinkSelect) {
-      multipleSelected = false;
+      multipleSelected = _.isUndefined(singleLinkSelect) ? false : !singleLinkSelect;
       self.close();
       var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       selectedRoadlink = linearAsset;
@@ -198,7 +198,7 @@
         eventbus.trigger(singleElementEvent('unselect'), self);
         collection.setSelection(null);
         selection = [];
-        eventbus.trigger(singleElementEvent('cancelled'), self);
+       // eventbus.trigger(singleElementEvent('cancelled'), self);
       }
     };
 
@@ -246,7 +246,7 @@
 
       var lane = _.filter(selection, function (lane){
         return _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
+          return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
         });
       });
 
@@ -368,6 +368,7 @@
     this.cancel = function() {
       cancelExisting();
       self.close();
+      eventbus.trigger(singleElementEvent('cancelled'), self);
     };
 
     this.verify = function() {
