@@ -64,11 +64,7 @@ pipeline {
                         ].join(" && ")
 
                         STAGE_FIXTURE_RESET = [
-                            "./sbt",
-                            "$java_opts",
-                            "-Ddigiroad2.env=dev",
-                            "\'project digiroad2-oracle\'",
-                            "\'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture test\'"
+                            "./sbt -Ddigiroad2.env=dev $java_opts 'project digiroad2-oracle' 'test:run-main fi.liikennevirasto.digiroad2.util.DataFixture test'"
                         ].join(" ")
                     }
                 }
