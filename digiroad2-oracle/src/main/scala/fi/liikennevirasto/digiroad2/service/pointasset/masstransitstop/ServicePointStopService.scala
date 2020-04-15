@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, MassTransitStopAsset, Modification, PositionCoordinates, Property, PropertyValue, ServicePointsClass, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, MassTransitStopAsset, Modification, Property, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries.updateAssetGeometry
 import fi.liikennevirasto.digiroad2.dao.{Sequences, ServicePoint, ServicePointBusStopDao}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -62,17 +62,16 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
   def expire(asset: ServicePoint, username: String, withTransaction: Boolean = true) = {
     if (withTransaction) {
       withDynTransaction {
-        servicePointBusStopDao.expire(asset.id, username)
+        servicePointBusStopDao.expireMassTransitStop(username, asset.id)
       }
     } else {
-      servicePointBusStopDao.expire(asset.id, username)
+      servicePointBusStopDao.expireMassTransitStop(username, asset.id)
     }
   }
 
-  protected def updatePosition(id: Long, position: PositionCoordinates, municipalityCode: Int) = {
-    val point = Point(position.lon, position.lat)
+  protected def updatePosition(id: Long, position: Point, municipalityCode: Int) = {
     servicePointBusStopDao.updateMunicipality(id, municipalityCode)
-    updateAssetGeometry(id, point)
+    updateAssetGeometry(id, position)
   }
 
 
@@ -99,22 +98,19 @@ class ServicePointStopService(eventbus: DigiroadEventBus) {
     }
   }
 
-  def update(assetId: Long, position: PositionCoordinates, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int, withTransaction: Boolean = true): ServicePoint = {
-    def update = {
-      servicePointBusStopDao.updateAssetLastModified(assetId, username)
+  def update(assetId: Long, position: Point, properties: Seq[SimplePointAssetProperty], username: String, municipalityCode: Int, withTransaction: Boolean = true): ServicePoint = {
+    def updateAssetAndProperties = {
       updatePosition(assetId, position, municipalityCode)
       servicePointBusStopDao.update(assetId, properties, username)
-
-      val resultAsset = fetchAsset(assetId)
-      resultAsset
+      fetchAsset(assetId)
     }
 
     if(withTransaction){
       withDynTransaction {
-        update
+        updateAssetAndProperties
       }
     }else{
-      update
+      updateAssetAndProperties
     }
   }
 

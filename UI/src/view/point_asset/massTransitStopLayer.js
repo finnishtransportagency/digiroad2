@@ -218,7 +218,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     asset.massTransitStop = massTransitStop;
     marker.feature.setProperties(asset);
 
-    if(_.head(asset.data.stopTypes) == 7){
+    if(selectedMassTransitStopModel.isServicePointType(_.head(asset.data.stopTypes))){
       servicePointSource.addFeature(marker.feature);
     }else if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod)){
       assetSource.addFeature(marker.feature);
@@ -326,14 +326,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var marker = asset.massTransitStop.getMarker();
 
       if(zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))){
-        if(_.head(asset.data.stopTypes) == 7){
+        if(selectedMassTransitStopModel.isServicePointType(_.head(asset.data.stopTypes))){
           servicePointSource.addFeature(marker.feature);
         }else if(massTransitStopsCollection.selectedValidityPeriodsContain(asset.data.validityPeriod)){
           assetSource.addFeature(marker.feature);
         }
       }
     });
-    if (selectedAsset && selectedAsset.data.validityPeriod === undefined) {
+    if (selectedAsset && _.isUndefined(selectedAsset.data.validityPeriod)) {
       return;
     }
 
@@ -474,7 +474,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, coordinate);
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
-      if ( stopTypes !== undefined && stopTypes[0] == '7') {
+      if (!_.isUndefined(stopTypes) && selectedMassTransitStopModel.isServicePointType(_.head(stopTypes))) {
         lon = coordinate.x ;
         lat = coordinate.y;
       }

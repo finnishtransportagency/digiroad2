@@ -7,10 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.MassTransitStopOperations
-import org.joda.time.{DateTime, LocalDate}
 import org.slf4j.LoggerFactory
-import fi.liikennevirasto.digiroad2.dao.Queries._
-import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.Point
@@ -21,7 +18,6 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, Modification, Property}
 import fi.liikennevirasto.digiroad2.dao.Queries.PropertyRow
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
-import org.joda.time.LocalDate
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
@@ -34,9 +30,8 @@ import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{LightGeometryMassTransitStop, MassTransitStopOperations, MassTransitStopRow, PersistedMassTransitStop}
-import org.joda.time.{DateTime, Interval, LocalDate}
+import org.joda.time.{DateTime, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
-import org.slf4j.LoggerFactory
 import scala.language.reflectiveCalls
 
 case class ServicePoint(id: Long, nationalId: Long, stopTypes: Seq[Int],
@@ -47,17 +42,7 @@ case class ServicePointRow(id: Long, externalId: Long, assetTypeId: Long, point:
                            validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                            created: Modification, modified: Modification, municipalityCode: Int)
 
-class ServicePointBusStopDao {
-  val logger = LoggerFactory.getLogger(getClass)
-  def typeId: Int = MassTransitStopAsset.typeId
-  val idField = "external_id"
-
-  private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
-    def apply(r: PositionedResult) : Option[LocalDate] = {
-      r.nextDateOption().map(new LocalDate(_))
-    }
-  }
-
+class ServicePointBusStopDao extends MassTransitStopDao {
   private implicit val getServicePointRow = new GetResult[ServicePointRow] {
     def apply(r: PositionedResult): ServicePointRow = {
       val id = r.nextLong
@@ -89,7 +74,7 @@ class ServicePointBusStopDao {
     }
   }
 
-  def assetRowToProperty(assetRows: Iterable[ServicePointRow]): Seq[Property] = {
+  def servicePointRowToProperty(assetRows: Iterable[ServicePointRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
       Property(
@@ -137,12 +122,12 @@ class ServicePointBusStopDao {
   }
 
   private def queryToServicePoint(query: String): Seq[ServicePoint] = {
-    val rows = Q.queryNA[ServicePointRow](query).iterator.toSeq
+    val rows = Q.queryNA[ServicePointRow](query)(getServicePointRow).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, stopRows) =>
       val row = stopRows.head
       val commonProperties: Seq[Property] = AssetPropertyConfiguration.assetRowToCommonProperties(row)
-      val properties: Seq[Property] = commonProperties ++ assetRowToProperty(stopRows)
+      val properties: Seq[Property] = commonProperties ++ servicePointRowToProperty(stopRows)
       val point = row.point.get
       val stopTypes = extractStopTypes(stopRows)
 
@@ -155,17 +140,8 @@ class ServicePointBusStopDao {
     rows.filter(_.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId)).map { row => row.property.propertyValue.toInt }
   }
 
-  def expire(id: Long, username: String) = {
-    Queries.updateAssetModified(id, username).execute
-    sqlu"update asset set valid_to = sysdate where id = $id".execute
-  }
-
   def update(assetId: Long, properties: Seq[SimplePointAssetProperty], user: String) = {
-    sqlu"""
-           UPDATE asset
-            SET modified_by = $user, modified_date = sysdate
-            WHERE id = $assetId""".execute
-
+    updateAssetLastModified(assetId, user)
     updateAssetProperties(assetId, properties)
     assetId
   }
@@ -178,38 +154,6 @@ class ServicePointBusStopDao {
       """.execute
   }
 
-  def updateMunicipality(id: Long, municipalityCode: Int) {
-    sqlu"""
-           update asset
-           set municipality_code = $municipalityCode
-           where id = $id
-      """.execute
-  }
-
-  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
-    val newValues = propertyValues.map(_.propertyValue.toLong)
-    val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
-    val currentValues = currentIdsAndValues.map(_._2)
-    // remove values as necessary
-    currentIdsAndValues.foreach {
-      case (multipleChoiceId, enumValue) =>
-        if (!newValues.contains(enumValue)) {
-          deleteMultipleChoiceValue(multipleChoiceId).execute
-        }
-    }
-    // add values as necessary
-    newValues.filter {
-      !currentValues.contains(_)
-    }.foreach {
-      v =>
-        insertMultipleChoiceValue(assetId, propertyId, v).execute
-    }
-  }
-
-  def updateAssetLastModified(assetId: Long, modifier: String) {
-    updateAssetModified(assetId, modifier).execute
-  }
-
   private def propertyWithTypeAndId(property: SimplePointAssetProperty): (String, Option[Long], SimplePointAssetProperty) = {
     if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
       (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
@@ -219,7 +163,7 @@ class ServicePointBusStopDao {
     }
   }
 
-  def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
+  override def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
     properties.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
       updateProperties(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
     }

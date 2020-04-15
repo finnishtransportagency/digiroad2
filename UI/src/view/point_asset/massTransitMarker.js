@@ -200,7 +200,7 @@
             srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.palvelu) return spi;});
             srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE] : srcImg.imgUrl;
           }
-          else if (auxServicePointInfo.tarkenne !== undefined) {
+          else if (!_.isUndefined(auxServicePointInfo.tarkenne)) {
             srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.tarkenne ) return spi;});
             srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE] : srcImg.imgUrl;
           }

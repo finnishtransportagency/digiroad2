@@ -298,8 +298,9 @@
         changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"], ["osoite_suomeksi"], ["osoite_ruotsiksi"], ["trSave"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
+        var payloadProperties = payload.properties;
 
-        backend[getMethodToUpdateAssetByType(payload.properties)](currentAsset.id, payload, function (asset) {
+        backend[getMethodToUpdateAssetByType(payloadProperties)](currentAsset.id, payload, function (asset) {
           changedProps = [];
           assetHasBeenModified = false;
           if (currentAsset.id != asset.id) {
@@ -309,10 +310,18 @@
             open(asset);
             eventbus.trigger('asset:saved', asset, positionUpdated);
           }
-        }, function () {
-          backend[getMethodToRequestAssetByType(payload.properties)](currentAsset.payload.nationalId, function (asset) {
+        }, function (errorObject) {
+          backend[getMethodToRequestAssetByType(payloadProperties)](currentAsset.payload.nationalId, function (asset) {
             open(asset);
-            eventbus.trigger('asset:updateFailed', asset);
+            if(isServiceStop(payloadProperties)){
+              eventbus.trigger('asset:updateFailed', asset);
+            } else if (errorObject.status == FAILED_DEPENDENCY_424) {
+              eventbus.trigger('asset:updateTierekisteriFailed', asset);
+            } else if (errorObject.status == PRECONDITION_FAILED_412) {
+              eventbus.trigger('asset:updateNotFoundRoadAddressVKM', asset);
+            } else {
+              eventbus.trigger('asset:updateFailed', asset);
+            }
           });
         });
 

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 import java.util.NoSuchElementException
 
 import fi.liikennevirasto.digiroad2.{DummyEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset.{PositionCoordinates, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.ServicePoint
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{NewMassTransitStop, ServicePointStopService}
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
@@ -22,7 +22,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
     SimplePointAssetProperty("tarkenne", List(PropertyValue("5"))),
     SimplePointAssetProperty("palvelun_nimi", List(PropertyValue("name"))),
     SimplePointAssetProperty("palvelun_lisätieto", List(PropertyValue("additional info"))),
-    SimplePointAssetProperty("viranomaisdataa", List(PropertyValue("Kylla")))
+    SimplePointAssetProperty("viranomaisdataa", List(PropertyValue("Kyllä")))
   )
   val dummyPoint = Point(532963.6175279296, 6995180.002037556)
   val dummyNewMassTransitStop = NewMassTransitStop(dummyPoint.x, dummyPoint.y, 0, 0, dummyProperties)
@@ -41,7 +41,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
       getPropertyValueByPublicId(createdServicePoint, "tarkenne") should be("5")
       getPropertyValueByPublicId(createdServicePoint, "palvelun_nimi") should be("name")
       getPropertyValueByPublicId(createdServicePoint, "palvelun_lisätieto") should be("additional info")
-      getPropertyValueByPublicId(createdServicePoint, "viranomaisdataa") should be("Kylla")
+      getPropertyValueByPublicId(createdServicePoint, "viranomaisdataa") should be("Kyllä")
       createdServicePoint.propertyData.size should be(53)
       createdServicePoint.stopTypes.head should be(7)
 
@@ -57,7 +57,7 @@ class ServicePointStopServiceSpec extends FunSuite with Matchers with BeforeAndA
       val newProperty = SimplePointAssetProperty("palvelun_lisätieto", List(PropertyValue("updated info")))
       val newProperty1 = SimplePointAssetProperty("palvelun_nimi", List(PropertyValue("updated name")))
 
-      val updatedServicePoint = testMassTransitStopService.update(createdServicePointId, PositionCoordinates(createdServicePoint.lon, createdServicePoint.lat), Seq(newProperty, newProperty1), "ServicePointBusStopServiceSpec", 749, false)
+      val updatedServicePoint = testMassTransitStopService.update(createdServicePointId, Point(createdServicePoint.lon, createdServicePoint.lat), Seq(newProperty, newProperty1), "ServicePointBusStopServiceSpec", 749, false)
 
       getPropertyValueByPublicId(updatedServicePoint, "pysakin_tyyppi") should be(getPropertyValueByPublicId(createdServicePoint, "pysakin_tyyppi"))
       getPropertyValueByPublicId(updatedServicePoint, "palvelu") should be(getPropertyValueByPublicId(createdServicePoint, "palvelu"))

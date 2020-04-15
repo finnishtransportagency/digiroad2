@@ -85,11 +85,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     }
 
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = {
-      if(Some(massTransitStop.linkId).contains(0)) "link_id" -> None else "link_id" -> Some(massTransitStop.linkId)
+      "link_id" -> Some(massTransitStop.linkId)
     }
 
     def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = {
-      if(Some(massTransitStop.mValue).contains(0)) "m_value" -> None else "m_value" -> Some(massTransitStop.mValue)
+      "m_value" -> Some(massTransitStop.mValue)
     }
 
     def extractLinkSource(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = {
@@ -112,8 +112,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             extractBearing(massTransitStop),
             if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
-            extractLinkId(massTransitStop),
-            extractMvalue(massTransitStop),
+            if(isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
+            if(isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
             extractLinkSource(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),

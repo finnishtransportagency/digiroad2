@@ -387,7 +387,7 @@ class MassTransitStopDao {
     }
   }
 
-  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
+  protected def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
     val newValues = propertyValues.map(_.propertyValue.toLong)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
     val currentValues = currentIdsAndValues.map(_._2)
@@ -625,20 +625,12 @@ class MassTransitStopDao {
     query + s" where a.id = $id"
   }
 
-  def withIdAndNotExpired(id: Long)(query: String): String = {
-    query + s" where a.id = $id and (a.valid_to > sysdate or a.valid_to is null)"
-  }
-
   def withTerminalId(terminalId: Long)(query: String): String = {
     query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > sysdate)"
   }
 
   def withNationalId(nationalId: Long)(query: String): String = {
     query + s" where a.external_id = $nationalId"
-  }
-
-  def withNationalIdAndNotExpired(nationalId: Long)(query: String): String = {
-    query + s" where a.external_id = $nationalId and (a.valid_to > sysdate or a.valid_to is null)"
   }
 
   def withNationalIds(nationalIds: Seq[Long])(query: String): String = {

@@ -670,14 +670,7 @@ case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[Str
 case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue]) extends AbstractProperty
-
-trait Coordinates {
-  def lon: Double
-  def lat: Double
-}
-case class PositionCoordinates(lon: Double, lat: Double) extends Coordinates
-case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int]) extends Coordinates
-
+case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 case class DatePeriodValue(startDate: String, endDate: String)
 object DatePeriodValue {
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")

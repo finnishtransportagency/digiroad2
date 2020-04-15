@@ -215,8 +215,8 @@
       expandedRoadTypeCheckboxSelector.change(roadTypeSelected);
 
       var expandedPointAssetCheckboxSelector = $(me.expanded).find('.point-asset-checkbox').find('input[type=checkbox]');
-      expandedPointAssetCheckboxSelector.change( function (e){
-        var checked = e.currentTarget.checked;
+      expandedPointAssetCheckboxSelector.change( function (paCheckbox){
+        var checked = paCheckbox.currentTarget.checked;
         togglePointAsset(checked);
         massTransitStopsCollection.showHideServicePoints(checked);
           }
