@@ -82,9 +82,9 @@ class LanesUpdater(laneService: LaneService) extends Actor {
   }
 }
 
-class LanesGenerator(laneService: LaneService) extends Actor {
+class LanesGenerator[T](laneService: LaneService) extends Actor {
   def receive = {
-    case persistedLanes: Seq[PersistedLane] =>  laneService.generateLanes(persistedLanes)
+    case persistedLanes: Seq[T] =>  laneService.generateLanes(persistedLanes.asInstanceOf[Seq[PersistedLane]])
     case _ => println("LaneAssetGenerator: Received unknown message")
   }
 }
@@ -440,7 +440,7 @@ object Digiroad2Context {
   val lanesUpdater = system.actorOf(Props(classOf[LanesUpdater], laneService), name = "lanesUpdater")
   eventbus.subscribe(lanesUpdater, "lanes:updater")
 
-  val lanesGenerator = system.actorOf(Props(classOf[LanesGenerator], laneService), name = "lanesGenerator")
+  val lanesGenerator = system.actorOf(Props(classOf[LanesGenerator[PersistedLane]], laneService), name = "lanesGenerator")
   eventbus.subscribe(lanesGenerator, "lanes:generator")
 
   val lanesSaveProjected = system.actorOf(Props(classOf[LanesSaveProjected[PersistedLane]], laneService), name = "lanesSaveProjected")

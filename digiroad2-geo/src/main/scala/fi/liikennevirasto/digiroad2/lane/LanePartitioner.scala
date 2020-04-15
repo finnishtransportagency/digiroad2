@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{GraphPartitioner, RoadLink}
 object LanePartitioner extends GraphPartitioner {
 
   def partition[T <: Lane](links: Seq[T], roadLinksForSpeedLimits: Map[Long, RoadLink]): Seq[Seq[T]] = {
-    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections)
+    val (twoWayLinks, oneWayLinks) = links.partition(_.sideCode == SideCode.BothDirections.value)
     val linkGroups = oneWayLinks.groupBy { link =>
       val roadLink = roadLinksForSpeedLimits.get(link.linkId)
       val roadIdentifier = roadLink.flatMap(_.roadIdentifier)

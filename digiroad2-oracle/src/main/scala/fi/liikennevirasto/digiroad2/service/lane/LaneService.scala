@@ -78,8 +78,11 @@ trait LaneOperations {
     val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
 
     val initChangeSet = ChangeSet(
-      expiredLaneIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet.filterNot( _ == 0L)
-    )
+      expiredLaneIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)) // Get only the assets marked to remove
+                                      .map(_.id)                                             // Get only the Ids
+                                      .toSet
+                                      .filterNot( _ == 0L)                                   // Remove the new assets (ID == 0 )
+                      )
 
     val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
 
