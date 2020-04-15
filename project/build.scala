@@ -29,7 +29,7 @@ object Digiroad2Build extends Build {
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
         "com.typesafe.akka" %% "akka-actor" % "2.5.12",
-        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "javax.media" % "jai_core" % "1.1.3" from "http://livibuild04.vally.local/nexus/repository/maven-public/javax/media/jai-core/1.1.3/jai-core-1.1.3.jar",
         "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
         "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
         "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
