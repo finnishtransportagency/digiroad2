@@ -3,17 +3,20 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, Manoeuvre, ManoeuvreElement}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, LinearLengthLimitService, Manoeuvre, ManoeuvreElement}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Mockito._
+import org.mockito.Mockito.{when, _}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
+import org.mockito.ArgumentMatchers.any
 import org.slf4j.LoggerFactory
+
+import scala.collection.immutable.Stream.Empty
 
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
@@ -21,6 +24,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
     PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, 0, Modification(None, None), Modification(None, None), Seq(), NormalLinkInterface)
   }
+  val mockLinearLengthLimitService = MockitoSugar.mock[LinearLengthLimitService]
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
   private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger)
@@ -274,4 +278,27 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     returntxt should be ("LINESTRING ZM (0.0 0.0 0.0 0.0, 1.0 0.0 0.5 1.0, 4.0 4.0 1.5 6.0)")
 
   }
+
+  test("sevenRestrictionToApi length_limits"){
+    val mockResult = PieceWiseLinearAsset(639470,5361927,SideCode.BothDirections,
+      Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("length","integer",required = true, Seq(DynamicPropertyValue(44))),
+                                              DynamicProperty("suggest_box","checkbox",required = false,Seq(DynamicPropertyValue(0))))))),
+      Seq(Point(148620.0,6682323.0,4.0), Point(148591.0,6682389.0,3.9)),
+      expired = false,0.0,72.466,
+      Set(Point(148620.0,6682323.0,4.0), Point(148591.0,6682389.0,3.9)),
+      None,None,Some("silari"),Some(DateTime.now()),70,TrafficDirection.BothDirections,1586995200000L,
+      Some(DateTime.now()),NormalLinkInterface,State,Map(),Some("silari"),Some(DateTime.now()),None)
+
+    val requiredKeys = Set("id","linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value")
+
+    when( mockLinearLengthLimitService.getByMunicipality(any[Int], any[Int]) ).thenReturn( Seq(mockResult) )
+
+    val jsonResult = integrationApi.sevenRestrictionToApi(70, 766)
+    val jsonToValidate = jsonResult.head.filterNot(_._2 == None)
+
+    jsonToValidate.keySet.size should be (requiredKeys.size)
+    jsonToValidate.keySet.equals(requiredKeys) should be (true)
+
+  }
+
 }
