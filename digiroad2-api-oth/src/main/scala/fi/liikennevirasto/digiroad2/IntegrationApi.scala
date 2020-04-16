@@ -396,13 +396,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     sevenRestriction.map { asset =>
       val dynamicWeightLinearAssetsMap = asset.value match {
         case Some(DynamicValue(value)) =>
-          value.properties.flatMap { asset =>
-            Map("value" ->  (asset.publicId match {
-              case "height" | "length" | "weight" | "width" =>
-                asset.values.map(_.value)
-              case _ => None
-            }))
-          }
+          value.properties.filterNot(_.publicId == "suggest_box") // Remove suggest_box to be added as Value
+                          .flatMap { asset =>
+                            Map("value" ->  (asset.publicId match {
+                                case "height" | "length" | "weight" | "width" =>
+                                    asset.values.map(_.value).head
+
+                                case _ => None
+                                })
+                            )
+                          }
         case _ => Map()
       }
 
