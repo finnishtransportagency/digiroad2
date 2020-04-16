@@ -399,15 +399,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
                           .flatMap { asset =>
                             Map("value" ->  (asset.publicId match {
                                 case "height" | "length" | "weight" | "width" =>
-                                    val finalValue = asset.values.map(_.value)
-
-                                    if (finalValue.nonEmpty)
-                                      finalValue.head
-                                    else
-                                      None
+                                    asset.values.map(_.value).head
 
                                 case _ => None
-                              })
+                                })
                             )
                           }
         case _ => Map()
