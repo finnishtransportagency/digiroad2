@@ -279,7 +279,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   }
 
-  test("sevenRestrictionToApi length_limits"){
+  test("Validate if sevenRestriction JSON generator return all required keys"){
     val mockResult = PieceWiseLinearAsset(639470,5361927,SideCode.BothDirections,
       Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("length","integer",required = true, Seq(DynamicPropertyValue(44))),
                                               DynamicProperty("suggest_box","checkbox",required = false,Seq(DynamicPropertyValue(0))))))),
