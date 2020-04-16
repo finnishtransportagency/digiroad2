@@ -274,12 +274,6 @@
       };
     });
 
-    this.getLanesWithComplementaryByBoundingBox = latestResponseRequestor(function(boundingBox, zoom) {
-      return {
-        url: 'api/lanes/complementary?bbox=' + boundingBox + '&zoom=' + zoom
-      };
-    });
-
     this.getReadOnlyLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
         url: 'api/linearassets/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress

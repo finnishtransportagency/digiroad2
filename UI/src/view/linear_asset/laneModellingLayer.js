@@ -412,20 +412,13 @@
       vectorLayer.setVisible(true);
       adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
 
-      if (isComplementaryChecked) {
-        collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-          eventbus.trigger(singleElementEvents('linearAsset'));
-        });
-      } else {
-        collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-          eventbus.trigger(singleElementEvents('linearAsset'));
-        });
-      }
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
+        eventbus.trigger(singleElementEvents('linearAsset'));
+      });
 
       if(trafficSignReadOnlyLayer){
         trafficSignReadOnlyLayer.refreshView();
       }
-
     };
 
     this.activateSelection = function() {

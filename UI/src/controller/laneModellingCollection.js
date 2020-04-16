@@ -26,10 +26,6 @@
       return fetch(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom));
     };
 
-    this.fetchAssetsWithComplementary = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getLanesWithComplementaryByBoundingBox(boundingBox, zoom));
-    };
-
     var fetch = function(boundingBox, assets) {
       return assets.then(function(laneAssetGroups) {
         var partitionedLaneAssetGroups = _.groupBy(laneAssetGroups, function(laneAssetGroup) {
