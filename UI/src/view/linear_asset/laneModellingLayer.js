@@ -526,7 +526,6 @@
         _.forEach(features, function (feature) {
           vectorSource.removeFeature(feature);
         });
-
       }
 
       if (selectedLane.exists()) {
@@ -547,9 +546,12 @@
               }), me.uiState.zoomLevel));
         }
 
+        removeOldAssetFeatures();
         vectorSource.addFeatures(selectedFeatures);
         selectToolControl.addSelectionFeatures(selectedFeatures);
-        removeOldAssetFeatures();
+
+        if(_.isUndefined(laneNumber))
+          removeOldAssetFeatures();
 
         if (selectedLane.isSplit(laneNumber)) {
           me.drawIndicators(_.map(_.cloneDeep(_.filter(selectedLane.get(), function (lane){
