@@ -40,7 +40,7 @@ dlog () {
 }
 
 jar_file () {
-  echo "$(cygwinpath "${sbt_home}/bin/sbt-launch.jar")"
+  echo "$(cygwinpath "${sbt_home}/sbt-launch.jar")"
 }
 
 acquire_sbt_jar () {
