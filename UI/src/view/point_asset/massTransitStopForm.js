@@ -762,7 +762,7 @@
       };
 
       var sortAndFilterProperties = function(properties) {
-        var propertyOrdering = [
+        var busStopPropertyOrdering = [
           'lisatty_jarjestelmaan',
           'muokattu_viimeksi',
           'nimi_suomeksi',
@@ -812,15 +812,7 @@
           'suggest_box',
           'trSave'];
 
-        return _.sortBy(properties, function(property) {
-          return _.indexOf(propertyOrdering, property.publicId);
-        }).filter(function(property){
-          return _.indexOf(propertyOrdering, property.publicId) >= 0;
-        });
-      };
-
-      var sortAndFilterTerminalProperties = function(properties) {
-        var propertyOrdering = [
+        var terminalPropertyOrdering = [
           'lisatty_jarjestelmaan',
           'muokattu_viimeksi',
           'nimi_suomeksi',
@@ -828,26 +820,27 @@
           'suggest_box',
           'liitetyt_pysakit'];
 
+        var servicePointPropertyOrdering = [
+          'palvelu',
+          'tarkenne',
+          'palvelun_nimi',
+          'palvelun_lisätieto',
+          'viranomaisdataa',
+          'suggest_box'];
+
+        var propertyOrdering;
+        if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected)) {
+          propertyOrdering = terminalPropertyOrdering;
+        } else if  (selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)){
+          propertyOrdering = servicePointPropertyOrdering;
+        }else{
+          propertyOrdering = busStopPropertyOrdering;
+        }
+
         return _.sortBy(properties, function(property) {
           return _.indexOf(propertyOrdering, property.publicId);
         }).filter(function(property){
-          return _.indexOf(propertyOrdering, property.publicId) >= 0;
-        });
-      };
-
-      var sortAndFilterServicePointProperties = function(properties) {
-        var propertyOrdering = [
-            'palvelu',
-            'tarkenne',
-            'palvelun_nimi',
-            'palvelun_lisätieto',
-            'viranomaisdataa',
-            'suggest_box'];
-
-        return _.sortBy(properties, function(property) {
-          return _.indexOf(propertyOrdering, property.publicId);
-        }).filter(function(property){
-          return _.indexOf(propertyOrdering, property.publicId) >= 0;
+          return _.includes(propertyOrdering, property.publicId);
         });
       };
 
@@ -886,16 +879,11 @@
       var getAssetForm = function() {
         roadAddressInfoLabel = '';
         var allProperties = selectedMassTransitStopModel.getProperties();
-        var properties;
+        var properties = sortAndFilterProperties(allProperties);
 
         /* don't change == to ===
         * sometimes the value is int other times is string*/
-        if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected)) {
-          properties = sortAndFilterTerminalProperties(allProperties);
-        } else if  (selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)){
-          properties = sortAndFilterServicePointProperties(allProperties);
-        }else{
-          properties = sortAndFilterProperties(allProperties);
+        if (!selectedMassTransitStopModel.isTerminalType(busStopTypeSelected) && !selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)) {
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
           disableFormIfTRMassTransitStopHasEndDate(properties);
         }
@@ -1142,8 +1130,8 @@
         var tarkeneProp =  getPropByPublicId('tarkenne');
         var readOnly = authorizationPolicy.formEditModeAccess();
 
-        if (palveluProp !== undefined && palveluProp.values.length > 0) {
-            if (palveluProp.values[0].propertyValue == "11" && $('.tarkenne-select').length === 0) { /* Rautatieasema */
+        if (!_.isUndefined(palveluProp) && !_.isEmpty(palveluProp.values)) {
+            if (_.head(palveluProp.values).propertyValue == "11" && _.isEmpty($('.tarkenne-select'))) { /* Rautatieasema */
                 tarkeneProp.localizedName = window.localizedStrings[tarkeneProp.publicId];
                 $('.palvelu-select').parent().after(singleChoiceHandler(tarkeneProp, enumeratedPropertyValues));
 

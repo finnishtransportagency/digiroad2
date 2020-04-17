@@ -192,13 +192,8 @@
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
 
-      if (asset.stopTypes !== undefined && asset.stopTypes.length > 0)
-      {
-        eventbus.trigger('busStop:selected', asset.stopTypes[0]);
-      }
-      else {
-        eventbus.trigger('busStop:selected', 99);
-      }
+      var busStopTypeValue = (!_.isUndefined(asset.stopTypes) && !_.isEmpty(asset.stopTypes)) ? _.head(asset.stopTypes) : 99;
+      eventbus.trigger('busStop:selected', busStopTypeValue);
 
       eventbus.trigger('asset:modified');
     };
@@ -247,13 +242,11 @@
 
     var requiredPropertiesMissing = function () {
       var isRequiredProperty = function (publicId) {
-        var isNormalBusStop = currentAsset.stopTypes && isTerminalType(currentAsset.stopTypes[0]) && _.some();
-        var isTerminal = currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties);
-        var isServiceBusStop = currentAsset.stopTypes && isServicePointType(currentAsset.stopTypes[0]) || currentAsset.payload && isServiceStop(currentAsset.payload.properties);
+        var isTerminal = currentAsset.stopTypes && isTerminalType(_.head(currentAsset.stopTypes)) || currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties);
+        var isServiceBusStop = currentAsset.stopTypes && isServicePointType(_.head(currentAsset.stopTypes)) || currentAsset.payload && isServiceStop(currentAsset.payload.properties);
 
-        //ignore if it is a terminal
         //TODO we need to get a way to know the mandatory fields depending on the bus stop type (this was code after merging)
-        if (isNormalBusStop || isTerminal) {
+        if (isTerminal) {
           return 'liitetyt_pysakit' == publicId;
         } else if (isServiceBusStop)
           return 'palvelu' == publicId;

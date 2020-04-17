@@ -288,7 +288,8 @@
     var createDirectionArrowStyle = function() {
       var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
       var directionArrowSrc, rotation;
-      if (data.stopTypes[0] == 6 || data.stopTypes[0] == 7 ) {
+      var stopType = _.head(data.stopTypes);
+      if (selectedMassTransitStopModel.isTerminalType(stopType) || selectedMassTransitStopModel.isServicePointType(stopType)) {
         directionArrowSrc = basePath + (data.floating ? 'no-direction-warning.svg' : 'no-direction.svg');
         rotation = 0;
       } else {
