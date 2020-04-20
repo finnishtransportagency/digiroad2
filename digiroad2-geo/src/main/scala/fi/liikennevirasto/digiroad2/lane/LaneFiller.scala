@@ -194,7 +194,7 @@ class LaneFiller {
       case TrafficDirection.AgainstDigitizing =>
 
         val toAdd = if ( !lanesToProcess.exists(_.laneCode == 21)) {
-                     Seq( PersistedLane(0L, roadLink.linkId,  SideCode.AgainstDigitizing.value, 11, baseLane.municipalityCode,
+                     Seq( PersistedLane(0L, roadLink.linkId,  SideCode.AgainstDigitizing.value, 21, baseLane.municipalityCode,
                         0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
                         LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))))
                      )
