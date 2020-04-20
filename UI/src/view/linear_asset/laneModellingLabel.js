@@ -3,10 +3,6 @@
     LinearAssetLabel.call(this);
     var me = this;
 
-    this.isVisibleZoom = function(zoomLevel){
-      return zoomLevel >= 12;
-    };
-
     var backgroundStyle = function () {
       var image = 'images/smallBlueLabeling.png';
       return new ol.style.Style({

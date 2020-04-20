@@ -4,49 +4,28 @@
       application = params.application,
       collection = params.collection,
       selectedLane = params.selectedLinearAsset,
-      roadLayer = params.roadLayer,
-      multiElementEventCategory = params.multiElementEventCategory,
-      singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
-      layerName = params.layerName,
       assetLabel = params.assetLabel,
-      roadAddressInfoPopup = params.roadAddressInfoPopup,
-      massLimitation = params.massLimitation,
-      trafficSignReadOnlyLayer = params.readOnlyLayer,
-      isMultipleLinkSelectionAllowed = params.isMultipleLinkSelectionAllowed,
-      authorizationPolicy = params.authorizationPolicy,
-      isExperimental = params.isExperimental,
-      minZoomForContent = params.minZoomForContent;
+      authorizationPolicy = params.authorizationPolicy;
 
-    Layer.call(this, layerName, roadLayer);
+    LinearAssetLayer.call(this, params);
     var me = this;
-    me.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
-    var isComplementaryChecked = false;
-    var extraEventListener = _.extend({running: false}, eventbus);
 
-    var singleElementEvents = function() {
-      return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
-    };
-
-    var multiElementEvent = function(eventName) {
-      return multiElementEventCategory + ':' + eventName;
-    };
-
-    var LinearAssetCutter = function(eventListener, vectorLayer, collection) {
+    var LinearAssetCutter = function(eventListener, vectorLayer) {
       var scissorFeatures = [];
       var CUT_THRESHOLD = 20;
       var vectorSource = vectorLayer.getSource();
 
       var moveTo = function(x, y) {
         scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-        selectToolControl.removeFeatures(function(feature) {
+        me.selectToolControl.removeFeatures(function(feature) {
           return feature.getProperties().type === 'cutter';
         });
-        selectToolControl.addNewFeature(scissorFeatures, true);
+        me.selectToolControl.addNewFeature(scissorFeatures, true);
       };
 
       var remove = function () {
-        selectToolControl.removeFeatures(function(feature) {
+        me.selectToolControl.removeFeatures(function(feature) {
           return feature && feature.getProperties().type === 'cutter';
         });
         scissorFeatures = [];
@@ -55,7 +34,7 @@
       var self = this;
 
       var clickHandler = function(evt) {
-        if (application.getSelectedTool() === 'Cut' && selectableZoomLevel()) {
+        if (application.getSelectedTool() === 'Cut' && me.selectableZoomLevel()) {
           self.cut(evt);
         }
       };
@@ -164,41 +143,10 @@
       };
     };
 
-    this.uiState = { zoomLevel: 9 };
+    var linearAssetCutter = new LinearAssetCutter(me.eventListener, me.vectorLayer);
 
-    var vectorSource = new ol.source.Vector();
-    var vectorLayer = new ol.layer.Vector({
-      source : vectorSource,
-      style : function(feature) {
-        return me.getLayerStyle(feature);
-      }
-    });
-
-    this.getLayerStyle = function(feature)  {
-      return style.browsingStyleProvider.getStyle(feature, {zoomLevel: me.uiState.zoomLevel});
-    };
-
-    vectorLayer.set('name', layerName);
-    vectorLayer.setOpacity(1);
-    vectorLayer.setVisible(false);
-    map.addLayer(vectorLayer);
-
-    var indicatorVector = new ol.source.Vector({});
-    var indicatorLayer = new ol.layer.Vector({
-      source : indicatorVector
-    });
-    map.addLayer(indicatorLayer);
-    indicatorLayer.setVisible(false);
-
-    var readOnlyLayer = new GroupedLinearAssetLayer(params, map);
-    var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
-
-    var selectableZoomLevel = function() {
-      return me.uiState.zoomLevel >= zoomlevels.minZoomForAssets;
-    };
-
-    var selectLane = function(evt) {
-      if(selectableZoomLevel()) {
+    this.onSelect = function(evt) {
+      if(me.selectableZoomLevel()) {
         if(evt.selected.length !== 0) {
           var feature = evt.selected[0];
           var properties = feature.getProperties();
@@ -206,19 +154,8 @@
 
         }else if (selectedLane.exists()) {
           selectedLane.close();
-          readOnlyLayer.showLayer();
-          highLightReadOnlyLayer();
-        }
-      }
-    };
-
-    var onMultipleSelect = function(evt) {
-      if(selectableZoomLevel()){
-        if(evt.selected.length !== 0) {
-          selectedLane.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
-        }
-        else if (selectedLane.exists()) {
-          selectedLane.removeSelection(_.map(evt.deselected, function(feature){ return feature.getProperties();}));
+          me.readOnlyLayer.showLayer();
+          me.highLightReadOnlyLayer();
         }
       }
     };
@@ -233,94 +170,16 @@
       me.highlightMultipleLinearAssetFeatures();
     };
 
-    this.highlightMultipleLinearAssetFeatures = function() {
-      readOnlyLayer.hideLayer();
-      unHighLightReadOnlyLayer();
-    };
-
-    var selectToolControl = new SelectToolControl(application, vectorLayer, map, isMultipleLinkSelectionAllowed, {
-      style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
-      onInteractionEnd: onInteractionEnd,
-      onSelect: selectLane,
-      onMultipleSelect: onMultipleSelect,
-      onClose: onCloseForm,
-      enableSelect: selectableZoomLevel
-    });
-
-    this.getSelectToolControl = function() {
-      return selectToolControl;
-    };
-
-    this.getVectorSource = function() {
-      return vectorSource;
-    };
-
-    var showDialog = function (linearAssets) {
-      linearAssets = _.filter(linearAssets, function(asset){
-        return asset && !(asset.geometry instanceof ol.geom.Point) && authorizationPolicy.formEditModeAccess(asset);
-      });
-
-      if(_.isEmpty(linearAssets))
-        return;
-
-      selectedLane.openMultiple(linearAssets);
-
-      var features = style.renderFeatures(selectedLane.get());
-      if(assetLabel) {
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLane.get(), offsetBySideCode), me.uiState.zoomLevel));
-      }
-      selectToolControl.addSelectionFeatures(features);
-
-      LinearAssetMassUpdateDialog.show({
-        count: selectedLane.count(),
-        onCancel: cancelSelection,
-        onSave: function (value) {
-          selectedLane.saveMultiple(value);
-          selectToolControl.clear();
-          selectedLane.closeMultiple();
-          selectToolControl.deactivateDraw();},
-        validator: selectedLane.validator,
-        formElements: params.formElements,
-        selectedLinearAsset: selectedLane,
-        assetTypeConfiguration: params
-      });
-
-    };
-
-    function onInteractionEnd(linearAssets) {
-      if (selectedLane.isDirty()) {
-        me.displayConfirmMessage();
-      } else if (linearAssets.length > 0 && selectableZoomLevel()) {
-          selectedLane.close();
-          showDialog(linearAssets);
-          onCloseForm();
-      }
-    }
-
-    function cancelSelection() {
-      if(isComplementaryChecked)
-        showWithComplementary();
-      else
-        hideComplementary();
-
-      selectToolControl.clear();
-      selectedLane.closeMultiple();
-    }
-
-    var adjustStylesByZoomLevel = function(zoom) {
-      me.uiState.zoomLevel = zoom;
-    };
-
     var changeTool = function(eventListener, tool) {
       switch(tool) {
         case 'Cut':
-          selectToolControl.deactivate();
+          me.selectToolControl.deactivate();
           linearAssetCutter.activate();
           break;
         case 'Select':
           linearAssetCutter.deactivate();
-          selectToolControl.deactivateDraw();
-          selectToolControl.activate();
+          me.selectToolControl.deactivateDraw();
+          me.selectToolControl.activate();
           break;
         default:
       }
@@ -333,49 +192,33 @@
       }else if(application.getSelectedTool() !== 'Cut'){
         eventListener.listenTo(eventbus, 'map:clicked', selectedLane.cancel);
       }
-
     };
 
-    function onCloseForm()  {
-      eventbus.trigger('closeForm');
-    }
-
-    var bindEvents = function(eventListener) {
+    this.bindEvents = function(eventListener) {
       var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
       var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
       var linearAssetUnSelected = _.partial(handleLinearAssetUnSelected, eventListener);
       var switchTool = _.partial(changeTool, eventListener);
 
-      eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
-      eventListener.listenTo(eventbus, singleElementEvents('selected','multiSelected'), linearAssetSelected);
-      eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
+      eventListener.listenTo(eventbus, me.singleElementEvents('unselect'), linearAssetUnSelected);
+      eventListener.listenTo(eventbus, me.singleElementEvents('selected','multiSelected'), me.linearAssetSelected);
+      eventListener.listenTo(eventbus, me.multiElementEvent('fetched'), redrawLinearAssets);
       eventListener.listenTo(eventbus, 'tool:changed', switchTool);
-      eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
-      eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
-      eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
-      eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
-      eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
-      eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
-      eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-      eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
-      eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-      eventListener.listenTo(eventbus, singleElementEvents('linearAsset'), refreshReadOnlyLayer);
-
-    };
-
-    var startListeningExtraEvents = function(){
-      extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:show', showWithComplementary);
-      extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:hide', hideComplementary);
-    };
-
-    var stopListeningExtraEvents = function(){
-      extraEventListener.stopListening(eventbus);
+      eventListener.listenTo(eventbus, me.singleElementEvents('saved'), me.handleLinearAssetSaved);
+      eventListener.listenTo(eventbus, me.multiElementEvent('massUpdateSucceeded'), me.handleLinearAssetSaved);
+      eventListener.listenTo(eventbus, me.singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
+      eventListener.listenTo(eventbus, me.singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
+      eventListener.listenTo(eventbus, me.multiElementEvent('cancelled'), linearAssetCancelled);
+      eventListener.listenTo(eventbus, me.singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
+      eventListener.listenTo(eventbus, me.multiElementEvent('massUpdateFailed'), me.cancelSelection);
+      eventListener.listenTo(eventbus, me.multiElementEvent('valueChanged'), linearAssetChanged);
+      eventListener.listenTo(eventbus, me.singleElementEvents('linearAsset'), me.refreshReadOnlyLayer);
     };
 
     var selectLinearAssetByLinkId = function(linkId) {
-      var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
+      var feature = _.find(me.vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
       if (feature) {
-        selectToolControl.addSelectionFeatures([feature]);
+        me.selectToolControl.addSelectionFeatures([feature]);
       }
     };
 
@@ -384,64 +227,22 @@
       me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
 
-
-    var linearAssetSelected = function(){
-      me.decorateSelection();
-    };
-
-    var handleLinearAssetSaved = function() {
-      me.refreshView();
-      applicationModel.setSelectedTool('Select');
-    };
-
     var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, laneNumber) {
       changeTool(eventListener, application.getSelectedTool());
       me.decorateSelection(laneNumber);
     };
 
-    var refreshReadOnlyLayer = function () {
-      if(massLimitation)
-        readOnlyLayer.refreshView();
-    };
-
-    this.layerStarted = function(eventListener) {
-      bindEvents(eventListener);
-    };
-
     this.refreshView = function() {
-      vectorLayer.setVisible(true);
-      adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
+      me.vectorLayer.setVisible(true);
+      me.adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
 
-      if (isComplementaryChecked) {
-        collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-          eventbus.trigger(singleElementEvents('linearAsset'));
-        });
-      } else {
-        collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-          eventbus.trigger(singleElementEvents('linearAsset'));
-        });
-      }
-
-      if(trafficSignReadOnlyLayer){
-        trafficSignReadOnlyLayer.refreshView();
-      }
-
-    };
-
-    this.activateSelection = function() {
-      selectToolControl.activate();
-    };
-    this.deactivateSelection = function() {
-      selectToolControl.deactivate();
-    };
-    this.removeLayerFeatures = function() {
-      vectorLayer.getSource().clear();
-      indicatorLayer.getSource().clear();
-      readOnlyLayer.removeLayerFeatures();
+      collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
+        eventbus.trigger(me.singleElementEvents('linearAsset'));
+      });
     };
 
     var handleLinearAssetCancelled = function(eventListener) {
-      selectToolControl.clear();
+      me.selectToolControl.clear();
       changeTool(eventListener, application.getSelectedTool());
 
       redrawLinearAssets(collection.getAll());
@@ -479,15 +280,15 @@
       };
 
       indicatorsForSplit();
-      selectToolControl.addNewFeature(features);
+      me.selectToolControl.addNewFeature(features);
     };
 
     var redrawLinearAssets = function(linearAssetChains) {
-      vectorSource.clear();
-      indicatorLayer.getSource().clear();
+      me.vectorSource.clear();
+      me.indicatorLayer.getSource().clear();
       var linearAssets = _.flatten(linearAssetChains);
       me.decorateSelection(selectedLane.exists() ? selectedLane.getCurrentLaneNumber() : undefined);
-      me.drawLinearAssets(linearAssets, vectorSource);
+      me.drawLinearAssets(linearAssets, me.vectorSource);
     };
 
     this.drawLinearAssets = function(linearAssets) {
@@ -495,45 +296,29 @@
         return selectedAsset.linkId === asset.linkId && selectedAsset.sideCode == asset.sideCode &&
           selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
       });
-      vectorSource.addFeatures(style.renderFeatures(allButSelected));
-      readOnlyLayer.showLayer();
-      highLightReadOnlyLayer();
+      me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
+      me.readOnlyLayer.showLayer();
+      me.highLightReadOnlyLayer();
       if(assetLabel) {
         var splitChangedAssets = _.partition(allButSelected, function(a){ return (a.sideCode !== 1 && _.has(a, 'value'));});
-        vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
-        vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
+        me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), me.offsetBySideCode), me.uiState.zoomLevel));
+        me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), me.offsetBySideCode), me.uiState.zoomLevel));
       }
-    };
-
-    var offsetBySideCode = function (linearAsset) {
-      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
     };
 
     var offsetByLaneNumber = function (linearAsset) {
       return GeometryUtils.offsetByLaneNumber(applicationModel.zoom.level, linearAsset, false);
     };
 
-    var removeFeature = function(feature) {
-      return vectorSource.removeFeature(feature);
-    };
-
-    var geometryAndValuesEqual = function(feature, comparison) {
-      var toCompare = ["linkIds", "sideCode", "startMeasure", "endMeasure"];
-      _.each(toCompare, function(value){
-        return feature[value] === comparison[value];
-      });
-    };
-
     this.decorateSelection = function (laneNumber) {
       function removeOldAssetFeatures() {
-        var features = _.reject(vectorSource.getFeatures(), function (feature) {
+        var features = _.reject(me.vectorSource.getFeatures(), function (feature) {
           return _.isUndefined(feature.values_.properties);
         });
 
         _.forEach(features, function (feature) {
-          vectorSource.removeFeature(feature);
+          me.vectorSource.removeFeature(feature);
         });
-
       }
 
       if (selectedLane.exists()) {
@@ -541,22 +326,25 @@
         var selectedFeatures = style.renderFeatures(linearAssets, laneNumber);
 
         if (assetLabel) {
-            var currentFeatures = _.filter(vectorSource.getFeatures(), function (layerFeature) {
+            var currentFeatures = _.filter(me.vectorSource.getFeatures(), function (layerFeature) {
               return _.some(selectedFeatures, function (selectedFeature) {
-                return geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
+                return me.geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
               });
             });
 
-            _.each(currentFeatures, removeFeature);
+            _.each(currentFeatures, me.removeFeature);
 
               selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedFeatures, function (feature) {
                 return feature.values_;
               }), me.uiState.zoomLevel));
         }
 
-        vectorSource.addFeatures(selectedFeatures);
-        selectToolControl.addSelectionFeatures(selectedFeatures);
         removeOldAssetFeatures();
+        me.vectorSource.addFeatures(selectedFeatures);
+        me.selectToolControl.addSelectionFeatures(selectedFeatures);
+
+        if(_.isUndefined(laneNumber))
+          removeOldAssetFeatures();
 
         if (selectedLane.isSplit(laneNumber)) {
           me.drawIndicators(_.map(_.cloneDeep(_.filter(selectedLane.get(), function (lane){
@@ -572,72 +360,20 @@
       linearAssetCutter.deactivate();
     };
 
-    this.showLayer = function(map) {
-      startListeningExtraEvents();
-      vectorLayer.setVisible(true);
-      indicatorLayer.setVisible(true);
-      roadAddressInfoPopup.start();
-      me.show(map);
-    };
-
-    var showWithComplementary = function() {
-      if(trafficSignReadOnlyLayer)
-        trafficSignReadOnlyLayer.showTrafficSignsComplementary();
-      isComplementaryChecked = true;
-      readOnlyLayer.showWithComplementary();
-      me.refreshView();
-    };
-
-    var hideComplementary = function() {
-      if(trafficSignReadOnlyLayer)
-        trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
-      selectToolControl.clear();
-      selectedLane.close();
-      isComplementaryChecked = false;
-      readOnlyLayer.hideComplementary();
-      roadAddressInfoPopup.stop();
-      me.refreshView();
-    };
-
-    var hideReadOnlyLayer = function(){
-      if(trafficSignReadOnlyLayer){
-        trafficSignReadOnlyLayer.hide();
-        trafficSignReadOnlyLayer.removeLayerFeatures();
-      }
-    };
-
-    var unHighLightReadOnlyLayer = function(){
-      if(trafficSignReadOnlyLayer){
-        trafficSignReadOnlyLayer.unHighLightLayer();
-      }
-    };
-
-    var highLightReadOnlyLayer = function(){
-      if(trafficSignReadOnlyLayer){
-        trafficSignReadOnlyLayer.highLightLayer();
-      }
-    };
-
     this.hideLayer = function() {
       reset();
-      hideReadOnlyLayer();
-      vectorLayer.setVisible(false);
-      indicatorLayer.setVisible(false);
-      readOnlyLayer.hideLayer();
+      me.hideReadOnlyLayer();
+      me.vectorLayer.setVisible(false);
+      me.indicatorLayer.setVisible(false);
+      me.readOnlyLayer.hideLayer();
       selectedLane.close();
-      stopListeningExtraEvents();
+      me.stopListeningExtraEvents();
       me.stop();
       me.hide();
     };
 
-    var refreshSelectedView = function(){
-      if(applicationModel.getSelectedLayer() == layerName)
-        me.refreshView();
-    };
-
-
     return {
-      vectorLayer: vectorLayer,
+      vectorLayer: me.vectorLayer,
       show: me.showLayer,
       hide: me.hideLayer,
       minZoomForContent: me.minZoomForContent
