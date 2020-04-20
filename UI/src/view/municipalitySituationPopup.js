@@ -108,7 +108,7 @@ window.MunicipalitySituationPopup = function (models) {
     };
 
     var renderDialog = function(verificationsInfo, modificationsInfo, totalSuggestedAssets) {
-        $('#work-list').append(me.createMunicipalitySituationPopUp(verificationsInfo, modificationsInfo, totalSuggestedAssets)).show();
+        $('#municipality-situation').append(me.createMunicipalitySituationPopUp(verificationsInfo, modificationsInfo, totalSuggestedAssets)).show();
 
         $('.confirm-modal#municipalitySituation .cancel').on('click', function() {
             options.cancelCallback();
