@@ -982,8 +982,7 @@
         selected: SelectedLaneModelling,
         collection: LaneModellingCollection,
         layer: LaneModellingLayer,
-        label: new LaneModellingLabel(),
-        hasMunicipalityValidation: true
+        label: new LaneModellingLabel()
       }
     ];
 

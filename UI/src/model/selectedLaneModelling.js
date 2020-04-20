@@ -532,18 +532,8 @@
       eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
     };
 
-    this.setMultiValue = function(value) {
-      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
-      selection = collection.replaceSegments(selection, newGroup);
-      eventbus.trigger(multiElementEvent('valueChanged'), self);
-    };
-
     this.removeValue = function(laneNumber, marker) {
       self.setValue(laneNumber, undefined, marker);
-    };
-
-    this.removeMultiValue = function() {
-      self.setMultiValue();
     };
 
     this.isDirty = function() {
