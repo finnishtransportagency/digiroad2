@@ -293,7 +293,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
     when( mockLinearLengthLimitService.getByMunicipality(any[Int], any[Int]) ).thenReturn( Seq(mockResult) )
 
-    val jsonResult = integrationApi.sevenRestrictionToApi(70, 766)
+    val jsonResult = integrationApi.sevenRestrictionToApi(30, 5)
     val jsonToValidate = jsonResult.head.filterNot(_._2 == None)
 
     jsonToValidate.keySet.size should be (requiredKeys.size)
