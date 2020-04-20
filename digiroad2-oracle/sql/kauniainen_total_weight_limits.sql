@@ -12,3 +12,4 @@ insert into asset (id, asset_type_id, CREATED_DATE, CREATED_BY, valid_to) values
 INSERT INTO LRM_POSITION (ID, LINK_ID, MML_ID, START_MEASURE, END_MEASURE, SIDE_CODE) VALUES (22224, 1611374, 1621077551, 120.000, 136.000, 1);
 insert into asset_link (asset_id, position_id) values (11113, 22224);
 insert into number_property_value(id, asset_id, property_id, value) values (primary_key_seq.nextval, 11113, (select id from property where public_id = 'mittarajoitus'), 10000);
+insert into number_property_value(id, asset_id, property_id, value) values (primary_key_seq.nextval, 11113, (select id from property where public_id = 'weight'), 10000);
