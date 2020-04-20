@@ -1,14 +1,12 @@
 (function(root) {
   root.SelectedLaneModelling = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType) {
+    SelectedLinearAsset.call(this, backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType);
     var lanesFetched = [];
-    var selection = [];
     var selectedRoadlink = null;
     var assetsToBeExpired = [];
     var assetsToBeRemoved = [];
     var self = this;
-    var dirty = false;
     var linksSelected = null;
-    var multipleSelected;
     var currentLane;
 
     var initial_road_number;
@@ -19,7 +17,7 @@
     var track;
 
     this.getLane = function (laneNumber, marker) {
-        return _.find(selection, function (lane){
+        return _.find(self.selection, function (lane){
           return (_.isEmpty(marker) || lane.marker == marker) && _.find(lane.properties, function (property) {
             return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
           });
@@ -37,7 +35,7 @@
     this.setCurrentLane = function (lane) { currentLane = self.getLane(lane); };
 
     var reorganizeLanes = function (laneNumber) {
-      var lanesToUpdate = _.map(selection, function (lane){
+      var lanesToUpdate = _.map(self.selection, function (lane){
         var foundValidProperty =  _.find(lane.properties, function (property) {
           if(_.isEmpty(property.values))
             return false;
@@ -46,15 +44,11 @@
           return property.publicId === "lane_code" && value > laneNumber && ((value % 2 !== 0 && laneNumber % 2 !== 0) || (value % 2 === 0 && laneNumber % 2 === 0));
         });
 
-        if(_.isUndefined(foundValidProperty)){
-          return undefined;
-        }else{
-          return lane;
-        }
+        return _.isUndefined(foundValidProperty) ? foundValidProperty : lane;
       });
 
       var listLanesIndexes = _.filter(_.map(lanesToUpdate,function (laneToUpdate) {
-        return _.findIndex(selection, function (lane) {
+        return _.findIndex(self.selection, function (lane) {
           return lane == laneToUpdate;
         });
       }),function (index) {
@@ -63,10 +57,10 @@
 
       if (!_.isEmpty(listLanesIndexes))
         _.forEach(listLanesIndexes, function (number) {
-          var propertyIndex =  _.findIndex(selection[number].properties, function (property) {
+          var propertyIndex =  _.findIndex(self.selection[number].properties, function (property) {
             return property.publicId === "lane_code";
           });
-          selection[number].properties[propertyIndex].values[0].value = parseInt(selection[number].properties[propertyIndex].values[0].value) - 2;
+          self.selection[number].properties[propertyIndex].values[0].value = parseInt(self.selection[number].properties[propertyIndex].values[0].value) - 2;
         });
     };
 
@@ -100,15 +94,7 @@
       });
     };
 
-    var singleElementEvent = function(eventName) {
-      return singleElementEventCategory + ':' + eventName;
-    };
-
-    var multiElementEvent = function(eventName) {
-      return multiElementEventCategory + ':' + eventName;
-    };
-
-    this.splitLinearAsset = function(laneNumber, split) {
+    self.splitLinearAsset = function(laneNumber, split) {
       collection.splitLinearAsset(self.getLane(laneNumber), split, function(splitLinearAssets) {
         if (self.getLane(laneNumber).id === 0) {
           self.removeLane(laneNumber);
@@ -116,14 +102,13 @@
           self.expireLane(laneNumber);
         }
 
-        selection.push(splitLinearAssets.created, splitLinearAssets.existing);
-        dirty = true;
+        self.selection.push(splitLinearAssets.created, splitLinearAssets.existing);
+        self.dirty = true;
         eventbus.trigger('laneModellingForm: reload');
       });
     };
 
-    this.open = function(linearAsset, singleLinkSelect) {
-      multipleSelected = _.isUndefined(singleLinkSelect) ? false : !singleLinkSelect;
+    self.open = function(linearAsset, singleLinkSelect) {
       self.close();
       var linearAssets = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       selectedRoadlink = linearAsset;
@@ -135,18 +120,14 @@
           lane.selectedLinks = linearAssets;
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
-        selection = _.cloneDeep(lanesWithSplitMarkers);
+        self.selection = _.cloneDeep(lanesWithSplitMarkers);
         lanesFetched = _.cloneDeep(lanesWithSplitMarkers);
         linksSelected = linearAssets;
         collection.setSelection(self);
         assetsToBeExpired=[];
         assetsToBeRemoved=[];
-        eventbus.trigger(singleElementEvent('selected'), self);
+        eventbus.trigger(self.singleElementEvent('selected'), self);
       });
-    };
-
-    this.getLinearAsset = function(id) {
-      return collection.getById(id);
     };
 
     this.getSelectedRoadlink = function() {
@@ -163,88 +144,17 @@
       initial_distance = selectedRoadlink.startAddrMValue;
       track = selectedRoadlink.track;
 
-      _.forEach(selection, function (lane) {
+      _.forEach(self.selection, function (lane) {
         lane.properties.push(roadNumberElement, roadPartNumberElement, startAddrMValueElement);
       });
     };
 
-    this.addSelection = function(linearAssets){
-      var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
-      selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
-    };
-
-    this.removeSelection = function(linearAssets){
-      selection = _.filter(selection, function(asset){
-        if(isUnknown(asset))
-          return !_.some(linearAssets, function(iasset){ return iasset.generatedId === asset.generatedId;});
-
-        return !_.some(linearAssets, function(iasset){ return iasset.id === asset.id;});
-      });
-    };
-
-    this.openMultiple = function(linearAssets) {
-      multipleSelected = true;
-      var partitioned = _.groupBy(linearAssets, isUnknown);
-      var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
-      var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
-      selection = existingLinearAssets.concat(unknownLinearAssets);
-      eventbus.trigger(singleElementEvent('multiSelected'));
-    };
-
-    this.close = function() {
-      if (!_.isEmpty(selection) && !dirty) {
-        eventbus.trigger(singleElementEvent('unselect'), self);
-        collection.setSelection(null);
-        selection = [];
-       // eventbus.trigger(singleElementEvent('cancelled'), self);
-      }
-    };
-
-    this.closeMultiple = function() {
-      eventbus.trigger(singleElementEvent('unselect'), self);
-      dirty = false;
-      collection.setSelection(null);
-      selection = [];
-    };
-
-    this.saveMultiple = function(value) {
-      eventbus.trigger(singleElementEvent('saving'));
-      var partition = _.groupBy(_.map(selection, function(item){ return _.omit(item, 'geometry'); }), isUnknown);
-      var unknownLinearAssets = partition[true];
-      var knownLinearAssets = partition[false];
-
-      var payload = {
-        newLimits: _.map(unknownLinearAssets, function(x) { return _.merge(x, {value: value, isExpired: false }); }),
-        ids: _.map(knownLinearAssets, 'id'),
-        value: value,
-        typeId: typeId
-      };
-      var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
-      backendOperation(payload, function() {
-        dirty = false;
-        self.closeMultiple();
-        eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
-      }, function() {
-        eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
-      });
-    };
-
-    var isUnknown = function(linearAsset) {
-      return !_.has(linearAsset, 'id');
-    };
-
-    this.isUnknown = function(laneNumber) {
-      return isUnknown(self.getLane(laneNumber));
-    };
-
-    this.isSplit = function() {
+    self.isSplit = function() {
       var laneNumber = self.getCurrentLaneNumber();
       if(_.isUndefined(laneNumber))
         return false;
 
-      var lane = _.filter(selection, function (lane){
+      var lane = _.filter(self.selection, function (lane){
         return _.find(lane.properties, function (property) {
           return property.publicId === "lane_code" && _.head(property.values).value == laneNumber;
         });
@@ -254,7 +164,7 @@
     };
 
     this.configurationIsCut = function() {
-      var lane = _.find(selection, function (lane){
+      var lane = _.find(self.selection, function (lane){
         return !_.isUndefined(lane.marker);
       });
 
@@ -262,13 +172,13 @@
     };
 
     this.haveNewLane = function () {
-      return _.some(selection, function(lane){
+      return _.some(self.selection, function(lane){
         return lane.id === 0;
       });
     };
 
     this.isAddByRoadAddress = function() {
-      var lane = _.find(selection, function (lane){
+      var lane = _.find(self.selection, function (lane){
         return _.find(lane.properties, function (property) {
           return property.publicId == "initial_road_number";
         });
@@ -277,8 +187,8 @@
       return !_.isUndefined(lane);
     };
 
-    this.lanesCutAreEqual = function() {
-      var laneNumbers = _.map(selection, function (lane){
+    self.lanesCutAreEqual = function() {
+      var laneNumbers = _.map(self.selection, function (lane){
         return _.head(_.find(lane.properties, function (property) {
           return property.publicId == "lane_code";
         }).values).value;
@@ -289,7 +199,7 @@
       }, []);
 
       return _.some(cuttedLaneNumbers, function (laneNumber){
-        var lanes = _.filter(selection, function (lane){
+        var lanes = _.filter(self.selection, function (lane){
           return _.find(lane.properties, function (property) {
             return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
           });
@@ -300,13 +210,7 @@
     };
 
     this.isOuterLane= function(laneNumber) {
-      var lane = self.getLane(parseInt(laneNumber) + 2);
-
-      return _.isUndefined(lane);
-    };
-
-    this.isSplitOrSeparated = function() {
-      return this.isSplit();
+      return _.isUndefined(self.getLane(parseInt(laneNumber) + 2));
     };
 
     function omitUnrelevantProperties(lanes){
@@ -319,13 +223,13 @@
       });
     }
 
-    this.save = function(isAddByRoadAddressActive, currentLane) {
-      eventbus.trigger(singleElementEvent('saving'));
+    self.save = function(isAddByRoadAddressActive) {
+      eventbus.trigger(self.singleElementEvent('saving'));
 
-      var linkIds = selection[0].linkIds;
-      var sideCode = selection[0].sideCode;
+      var linkIds = _.head(self.selection).linkIds;
+      var sideCode = _.head(self.selection).sideCode;
 
-      var lanes = omitUnrelevantProperties(selection);
+      var lanes = omitUnrelevantProperties(self.selection);
 
       var payload;
       if(isAddByRoadAddressActive) {
@@ -350,9 +254,9 @@
       var backendOperation = isAddByRoadAddressActive ? backend.updateLaneAssetsByRoadAddress : backend.updateLaneAssets;
 
       backendOperation(payload, function() {
-        dirty = false;
+        self.dirty = false;
         self.close();
-        eventbus.trigger(singleElementEvent('saved'));
+        eventbus.trigger(self.singleElementEvent('saved'));
       }, function(error) {
         jQuery('.spinner-overlay').remove();
         alert(error.responseText);
@@ -360,36 +264,19 @@
     };
 
     var cancelExisting = function() {
-      selection = lanesFetched;
-      dirty = false;
-      eventbus.trigger(singleElementEvent('valueChanged'), self);
+      self.selection = lanesFetched;
+      self.dirty = false;
+      eventbus.trigger(self.singleElementEvent('valueChanged'), self);
     };
 
-    this.cancel = function() {
+    self.cancel = function() {
       cancelExisting();
       self.close();
-      eventbus.trigger(singleElementEvent('cancelled'), self);
-    };
-
-    this.verify = function() {
-      eventbus.trigger(singleElementEvent('saving'));
-      var knownLinearAssets = _.reject(selection, isUnknown);
-      var payload = {ids: _.map(knownLinearAssets, 'id'), typeId: typeId};
-      collection.verifyLinearAssets(payload);
-      dirty = false;
-      self.close();
-    };
-
-    this.exists = function() {
-      return !_.isEmpty(selection);
+      eventbus.trigger(self.singleElementEvent('cancelled'), self);
     };
 
     var getProperty = function(lane, propertyName) {
       return _.has(lane, propertyName) ? lane[propertyName] : null;
-    };
-
-    this.getId = function() {
-      return getProperty('id');
     };
 
     this.setEndAddressesValues = function(currentPropertyValue) {
@@ -403,7 +290,7 @@
           break;
       }
 
-      _.forEach(selection, function (lane) {
+      _.forEach(self.selection, function (lane) {
         var currentLaneNumber = _.head(_.find(lane.properties,function (prop) {
           return prop.publicId == "lane_code";
         }).values).value;
@@ -414,48 +301,8 @@
       });
     };
 
-    this.getValue = function(laneNumber, marker) {
-      var lane = self.getLane(laneNumber, marker);
-
-      var value = getProperty(lane, 'properties');
-      return value;
-    };
-
-    this.getModifiedBy = function() {
-      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedBy;
-    };
-
-    this.getModifiedDateTime = function() {
-      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedAt;
-    };
-
-    this.getCreatedBy = function(laneNumber) {
-      return getProperty(self.getLane(laneNumber), 'createdBy');
-    };
-
-    this.getCreatedDateTime = function(laneNumber) {
-      return getProperty(self.getLane(laneNumber), 'createdAt');
-    };
-
-    this.getAdministrativeClass = function(laneNumber) {
-      var value = getProperty(self.getLane(laneNumber), 'administrativeClass');
-      return _.isNull(value) ? undefined : value;
-    };
-
-    this.getVerifiedBy = function(laneNumber) {
-      return getProperty(self.getLane(laneNumber), 'verifiedBy');
-    };
-
-    this.getVerifiedDateTime = function(laneNumber) {
-      return getProperty(self.getLane(laneNumber), 'verifiedAt');
-    };
-
-    this.get = function() {
-      return selection;
-    };
-
-    this.count = function() {
-      return selection.length;
+    self.getValue = function(laneNumber, marker) {
+      return getProperty(self.getLane(laneNumber, marker), 'properties');
     };
 
     this.setNewLane = function(laneNumber) {
@@ -480,99 +327,60 @@
       newLane.properties = properties;
 
       newLane.id = 0;
-      selection.push(newLane);
-      dirty = true;
+      self.selection.push(newLane);
+      self.dirty = true;
     };
 
-    this.removeLane = function(laneNumber, marker) {
-        var laneIndex = _.findIndex(selection, function (lane) {
-          return (_.isEmpty(marker) || lane.marker == marker) && _.find(lane.properties, function (property) {
-            return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
-          });
+    function getLaneIndex(laneNumber, marker) {
+      return _.findIndex(self.selection, function (lane) {
+        return (_.isEmpty(marker) || lane.marker == marker) && _.find(lane.properties, function (property) {
+          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
         });
+      });
+    }
 
-      var removeLane = selection.splice(laneIndex,1)[0];
+    this.removeLane = function(laneNumber, marker) {
+      var laneIndex = getLaneIndex(laneNumber, marker);
+      var removeLane = self.selection.splice(laneIndex,1)[0];
       removeLane.isDeleted = true;
 
       if(removeLane.id !== 0)
         assetsToBeRemoved.push(removeLane);
 
       reorganizeLanes(laneNumber);
-      dirty = true;
+      self.dirty = true;
     };
 
-    this.expireLane = function(laneNumber, sidecode) {
-      var laneIndex = _.findIndex(selection, function (lane) {
-        return (_.isUndefined(sidecode) || lane.marker == sidecode) && _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
-        });
-      });
-
-      var expireLane = selection.splice(laneIndex,1)[0];
+    this.expireLane = function(laneNumber, marker) {
+      var laneIndex = getLaneIndex(laneNumber, marker);
+      var expireLane = self.selection.splice(laneIndex,1)[0];
       expireLane.isExpired = true;
       assetsToBeExpired.push(expireLane);
 
       reorganizeLanes(laneNumber);
-      dirty = true;
+      self.dirty = true;
     };
 
-    this.setValue = function(laneNumber, value, marker) {
-      var laneIndex = _.findIndex(selection, function (lane) {
-        return (_.isEmpty(marker) || lane.marker == marker) && _.find(lane.properties, function (property) {
-          return property.publicId == "lane_code" && _.head(property.values).value == laneNumber;
-        });
-      });
-      var newGroup = _.assign([], selection[laneIndex].properties, value);
-      if(!dirty && _.isEqual(selection[laneIndex].properties, newGroup.properties)){
-        dirty = false;
+    self.setValue = function(laneNumber, value, marker) {
+      var laneIndex = getLaneIndex(laneNumber, marker);
+      var newGroup = _.assign([], self.selection[laneIndex].properties, value);
+      if(!self.dirty && _.isEqual(self.selection[laneIndex].properties, newGroup.properties)){
+        self.dirty = false;
       }else{
-        selection[laneIndex].properties = newGroup.properties;
-        dirty = true;
+        self.selection[laneIndex].properties = newGroup.properties;
+        self.dirty = true;
       }
-      eventbus.trigger(singleElementEvent('valueChanged'), self, laneNumber);
+      eventbus.trigger(self.singleElementEvent('valueChanged'), self, laneNumber);
     };
 
-    this.removeValue = function(laneNumber, marker) {
+    self.removeValue = function(laneNumber, marker) {
       self.setValue(laneNumber, undefined, marker);
     };
 
-    this.isDirty = function() {
-      return dirty;
-    };
-
-    this.setDirty = function(dirtyValue) {
-      dirty = dirtyValue;
-    };
-
-    this.isSelected = function(roadLink) {
+    self.isSelected = function(roadLink) {
       return _.some(linksSelected, function(link) {
-        return isEqual(roadLink, link);
+        return self.isEqual(roadLink, link);
       });
-    };
-
-    this.isSeparable = function() {
-      return isSeparableAssetType &&
-        getProperty('sideCode') === validitydirections.bothDirections &&
-        getProperty('trafficDirection') === 'BothDirections' &&
-        !self.isSplit() &&
-        selection.length === 1;
-    };
-
-    this.isSaveable = function() {
-      var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
-      if (this.isDirty()) {
-            if (this.isSplitOrSeparated() && valuesDiffer())
-              return true;
-
-            if (!this.isSplitOrSeparated())
-              return true;
-      }
-      return false;
-    };
-
-    var isEqual = function(a, b) {
-      return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
-        ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
   };
 })(this);

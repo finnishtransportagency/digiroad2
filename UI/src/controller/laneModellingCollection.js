@@ -3,11 +3,11 @@
     LinearAssetsCollection.call(this, backend, verificationCollection, spec);
     var self = this;
 
-    this.fetch = function(boundingBox, center, zoom) {
+    self.fetch = function(boundingBox, center, zoom) {
       return self.fetchAssets(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom), center);
     };
 
-      self.getGroup = function(segment) {
+    self.getGroup = function(segment) {
       return _.find(self.linearAssets, function(linearAssetGroup) {
         return _.some(linearAssetGroup, function(s) {return s.linkId == segment.linkId && s.sideCode == segment.sideCode;});
       });

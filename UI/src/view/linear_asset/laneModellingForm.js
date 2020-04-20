@@ -940,7 +940,7 @@
       new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
       var updateStatusForMassButton = function(element) {
-        if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+        if(assetTypeConfiguration.selectedLinearAsset.isSplit()) {
           element.prop('disabled', !(me.isSaveable() && me.isSplitOrSeparatedAllowed()));
         } else
           element.prop('disabled', !(me.isSaveable()));
@@ -1276,7 +1276,7 @@
         });
       });
 
-      var body = createBodyElement(selectedAsset);
+      var body = createBodyElement();
 
       if(selectedAsset.isSplit()) {
         //Render form A
@@ -1408,40 +1408,10 @@
         return '';
     };
 
-    var informationLog = function (date, username) {
-      return date ? (date + ' / ' + username) : '-';
-    };
-
-    function createBodyElement(selectedAsset) {
-      var info = {
-        // modifiedBy :  selectedAsset.getModifiedBy() || '',
-        // modifiedDate : selectedAsset.getModifiedDateTime() ? ' ' + selectedAsset.getModifiedDateTime(): '',
-        // createdBy : selectedAsset.getCreatedBy() || '',
-        // createdDate : selectedAsset.getCreatedDateTime() ? ' ' + selectedAsset.getCreatedDateTime(): '',
-        // verifiedBy : selectedAsset.getVerifiedBy(),
-        // verifiedDateTime : selectedAsset.getVerifiedDateTime()
-      };
-
-      var verifiedFields = function() {
-        return (_assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
-          '<div class="form-group">' +
-          '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
-          '</div>' : '';
-      };
-
+    function createBodyElement() {
       return $('<div class="wrapper read-only">' +
         '   <div class="form form-horizontal form-dark asset-factory">' +
-        // '     <div class="form-group">' +
-        // '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
-        // '     </div>' +
-        // '     <div class="form-group">' +
-        // '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
-        // '     </div>' +
-        // verifiedFields() +
-        // '     <div class="form-group">' +
-        // '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
-        // '     </div>' +
-        // userInformationLog() +
+        userInformationLog() +
         '   </div>' +
         '</div>');
     }
@@ -1498,7 +1468,7 @@
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
-        selectedLinearAsset.save(isAddByRoadAddressActive, laneNumber);
+        selectedLinearAsset.save(isAddByRoadAddressActive);
         selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
         currentFormStructure = mainLaneFormStructure;
       });

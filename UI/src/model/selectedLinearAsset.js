@@ -1,46 +1,46 @@
 (function(root) {
   root.SelectedLinearAsset = function(backend, collection, typeId, singleElementEventCategory, multiElementEventCategory, isSeparableAssetType, validator) {
-    var selection = [];
+    this.selection = [];
     var self = this;
-    var dirty = false;
+    this.dirty = false;
     var originalLinearAssetValue = null;
     var isSeparated = false;
     var isValid = true;
     var multipleSelected;
 
-    var singleElementEvent = function(eventName) {
+    this.singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
     };
 
-    var multiElementEvent = function(eventName) {
+    this.multiElementEvent = function(eventName) {
       return multiElementEventCategory + ':' + eventName;
     };
 
     this.splitLinearAsset = function(id, split) {
       collection.splitLinearAsset(id, split, function(splitLinearAssets) {
-        selection = [splitLinearAssets.created, splitLinearAssets.existing];
+        self.selection = [splitLinearAssets.created, splitLinearAssets.existing];
         originalLinearAssetValue = splitLinearAssets.existing.value;
-        dirty = true;
+        self.dirty = true;
         collection.setSelection(self);
-        eventbus.trigger(singleElementEvent('selected'), self);
+        eventbus.trigger(self.singleElementEvent('selected'), self);
       });
     };
 
     this.separate = function() {
-      selection = collection.separateLinearAsset(_.head(selection));
+      self.selection = collection.separateLinearAsset(_.head(self.selection));
       isSeparated = true;
-      dirty = true;
-      eventbus.trigger(singleElementEvent('separated'), self);
-      eventbus.trigger(singleElementEvent('selected'), self);
+      self.dirty = true;
+      eventbus.trigger(self.singleElementEvent('separated'), self);
+      eventbus.trigger(self.singleElementEvent('selected'), self);
     };
 
     this.open = function(linearAsset, singleLinkSelect) {
       multipleSelected = false;
       self.close();
-      selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
+      self.selection = singleLinkSelect ? [linearAsset] : collection.getGroup(linearAsset);
       originalLinearAssetValue = self.getValue();
       collection.setSelection(self);
-      eventbus.trigger(singleElementEvent('selected'), self);
+      eventbus.trigger(self.singleElementEvent('selected'), self);
     };
 
     this.getLinearAsset = function(id) {
@@ -51,11 +51,11 @@
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
       var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
-      selection = selection.concat(existingLinearAssets.concat(unknownLinearAssets));
+      self.selection = self.selection.concat(existingLinearAssets.concat(unknownLinearAssets));
     };
 
     this.removeSelection = function(linearAssets){
-      selection = _.filter(selection, function(asset){
+      self.selection = _.filter(self.selection, function(asset){
         if(isUnknown(asset))
           return !_.some(linearAssets, function(iasset){ return iasset.generatedId === asset.generatedId;});
 
@@ -68,28 +68,28 @@
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.uniq(partitioned[false] || [], 'id');
       var unknownLinearAssets = _.uniq(partitioned[true] || [], 'generatedId');
-      selection = existingLinearAssets.concat(unknownLinearAssets);
-      eventbus.trigger(singleElementEvent('multiSelected'));
+      self.selection = existingLinearAssets.concat(unknownLinearAssets);
+      eventbus.trigger(self.singleElementEvent('multiSelected'));
     };
 
     this.close = function() {
-      if (!_.isEmpty(selection) && !dirty) {
-        eventbus.trigger(singleElementEvent('unselect'), self);
+      if (!_.isEmpty(self.selection) && !self.dirty) {
+        eventbus.trigger(self.singleElementEvent('unselect'), self);
         collection.setSelection(null);
-        selection = [];
+        self.selection = [];
       }
     };
 
     this.closeMultiple = function() {
-      eventbus.trigger(singleElementEvent('unselect'), self);
-      dirty = false;
+      eventbus.trigger(self.singleElementEvent('unselect'), self);
+      self.dirty = false;
       collection.setSelection(null);
-      selection = [];
+      self.selection = [];
     };
 
     this.saveMultiple = function(value) {
-      eventbus.trigger(singleElementEvent('saving'));
-      var partition = _.groupBy(_.map(selection, function(item){ return _.omit(item, 'geometry'); }), isUnknown);
+      eventbus.trigger(self.singleElementEvent('saving'));
+      var partition = _.groupBy(_.map(self.selection, function(item){ return _.omit(item, 'geometry'); }), isUnknown);
       var unknownLinearAssets = partition[true];
       var knownLinearAssets = partition[false];
 
@@ -101,47 +101,47 @@
       };
       var backendOperation = _.isUndefined(value) ? backend.deleteLinearAssets : backend.createLinearAssets;
       backendOperation(payload, function() {
-        dirty = false;
+        self.dirty = false;
         self.closeMultiple();
-        eventbus.trigger(multiElementEvent('massUpdateSucceeded'), selection.length);
+        eventbus.trigger(self.multiElementEvent('massUpdateSucceeded'), self.selection.length);
       }, function() {
-        eventbus.trigger(multiElementEvent('massUpdateFailed'), selection.length);
+        eventbus.trigger(self.multiElementEvent('massUpdateFailed'), self.selection.length);
       });
     };
 
     var saveSplit = function() {
-      eventbus.trigger(singleElementEvent('saving'));
+      eventbus.trigger(self.singleElementEvent('saving'));
       collection.saveSplit(function() {
-        dirty = false;
+        self.dirty = false;
         self.close();
       });
     };
 
     var saveSeparation = function() {
-      eventbus.trigger(singleElementEvent('saving'));
+      eventbus.trigger(self.singleElementEvent('saving'));
       collection.saveSeparation(function() {
-        dirty = false;
+        self.dirty = false;
         isSeparated = false;
         self.close();
       });
     };
 
     var saveExisting = function() {
-      eventbus.trigger(singleElementEvent('saving'));
+      eventbus.trigger(self.singleElementEvent('saving'));
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
+          return { newLimits: _.map(self.selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
-          return { ids: _.map(selection, 'id') };
+          return { ids: _.map(self.selection, 'id') };
         }
       };
       var payload = _.merge({value: self.getValue(), typeId: typeId}, payloadContents());
       var backendOperation = _.isUndefined(self.getValue()) ? backend.deleteLinearAssets : backend.createLinearAssets;
 
       backendOperation(payload, function() {
-        dirty = false;
+        self.dirty = false;
         self.close();
-        eventbus.trigger(singleElementEvent('saved'));
+        eventbus.trigger(self.singleElementEvent('saved'));
       }, function() {
         eventbus.trigger('asset:updateFailed');
       });
@@ -152,11 +152,11 @@
     };
 
     this.isUnknown = function() {
-      return isUnknown(selection[0]);
+      return isUnknown(self.selection[0]);
     };
 
     this.isSplit = function() {
-      return !isSeparated && !_.isEmpty(selection[0]) && selection[0].id === null;
+      return !isSeparated && !_.isEmpty(self.selection[0]) && self.selection[0].id === null;
     };
 
     this.isSeparated = function() {
@@ -179,24 +179,24 @@
 
     var cancelCreation = function() {
       if (isSeparated) {
-        var originalLinearAsset = _.cloneDeep(selection[0]);
+        var originalLinearAsset = _.cloneDeep(self.selection[0]);
         originalLinearAsset.value = originalLinearAssetValue;
         originalLinearAsset.sideCode = 1;
-        collection.replaceSegments([selection[0]], [originalLinearAsset]);
+        collection.replaceSegments([self.selection[0]], [originalLinearAsset]);
       }
       collection.setSelection(null);
-      selection = [];
-      dirty = false;
+      self.selection = [];
+      self.dirty = false;
       isSeparated = false;
       collection.cancelCreation();
-      eventbus.trigger(singleElementEvent('unselect'), self);
+      eventbus.trigger(self.singleElementEvent('unselect'), self);
     };
 
     var cancelExisting = function() {
-      var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
-      selection = collection.replaceSegments(selection, newGroup);
-      dirty = false;
-      eventbus.trigger(singleElementEvent('cancelled'), self);
+      var newGroup = _.map(self.selection, function(s) { return _.assign({}, s, { value: originalLinearAssetValue }); });
+      self.selection = collection.replaceSegments(self.selection, newGroup);
+      self.dirty = false;
+      eventbus.trigger(self.singleElementEvent('cancelled'), self);
     };
 
     this.cancel = function() {
@@ -209,24 +209,24 @@
     };
 
     this.verify = function() {
-      eventbus.trigger(singleElementEvent('saving'));
-      var knownLinearAssets = _.reject(selection, isUnknown);
+      eventbus.trigger(self.singleElementEvent('saving'));
+      var knownLinearAssets = _.reject(self.selection, isUnknown);
       var payload = {ids: _.map(knownLinearAssets, 'id'), typeId: typeId};
       collection.verifyLinearAssets(payload);
-      dirty = false;
+      self.dirty = false;
       self.close();
     };
 
     this.exists = function() {
-      return !_.isEmpty(selection);
+      return !_.isEmpty(self.selection);
     };
 
     var getProperty = function(propertyName) {
-      return _.has(selection[0], propertyName) ? selection[0][propertyName] : null;
+      return _.has(self.selection[0], propertyName) ? self.selection[0][propertyName] : null;
     };
 
     var getPropertyB = function(propertyName) {
-      return _.has(selection[1], propertyName) ? selection[1][propertyName] : null;
+      return _.has(self.selection[1], propertyName) ? self.selection[1][propertyName] : null;
     };
 
     this.getId = function() {
@@ -244,19 +244,19 @@
     };
 
     this.getModifiedBy = function() {
-      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedBy;
+      return dateutil.extractLatestModifications(self.selection, 'modifiedAt').modifiedBy;
     };
 
     this.getModifiedDateTime = function() {
-      return dateutil.extractLatestModifications(selection, 'modifiedAt').modifiedAt;
+      return dateutil.extractLatestModifications(self.selection, 'modifiedAt').modifiedAt;
     };
 
     this.getCreatedBy = function() {
-      return selection.length === 1 ? getProperty('createdBy') : null;
+      return self.selection.length === 1 ? getProperty('createdBy') : null;
     };
 
     this.getCreatedDateTime = function() {
-      return selection.length === 1 ? getProperty('createdAt') : null;
+      return self.selection.length === 1 ? getProperty('createdAt') : null;
     };
 
     this.getAdministrativeClass = function() {
@@ -265,49 +265,49 @@
     };
 
     this.getVerifiedBy = function() {
-      return selection.length === 1 ? getProperty('verifiedBy') : null;
+      return self.selection.length === 1 ? getProperty('verifiedBy') : null;
     };
 
     this.getVerifiedDateTime = function() {
-      return selection.length === 1 ? getProperty('verifiedAt') : null;
+      return self.selection.length === 1 ? getProperty('verifiedAt') : null;
     };
 
     this.get = function() {
-      return selection;
+      return self.selection;
     };
 
     this.count = function() {
-      return selection.length;
+      return self.selection.length;
     };
 
     this.setValue = function(value) {
-      if (value != selection[0].value) {
-        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
-        selection = collection.replaceSegments(selection, newGroup);
-        dirty = true;
-        eventbus.trigger(singleElementEvent('valueChanged'), self, multipleSelected);
+      if (value != self.selection[0].value) {
+        var newGroup = _.map(self.selection, function(s) { return _.assign({}, s, { value: value }); });
+        self.selection = collection.replaceSegments(self.selection, newGroup);
+        self.dirty = true;
+        eventbus.trigger(self.singleElementEvent('valueChanged'), self, multipleSelected);
       }
     };
 
     this.setMultiValue = function(value) {
-        var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
-        selection = collection.replaceSegments(selection, newGroup);
-        eventbus.trigger(multiElementEvent('valueChanged'), self, multipleSelected);
+        var newGroup = _.map(self.selection, function(s) { return _.assign({}, s, { value: value }); });
+        self.selection = collection.replaceSegments(self.selection, newGroup);
+        eventbus.trigger(self.multiElementEvent('valueChanged'), self, multipleSelected);
     };
 
     this.setAValue = function (value) {
-      if (value != selection[0].value) {
-        var newGroup = _.assign({}, selection[0], { value: value });
-        selection[0] = collection.replaceCreatedSplit(selection[0], newGroup);
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
+      if (value != self.selection[0].value) {
+        var newGroup = _.assign({}, self.selection[0], { value: value });
+        self.selection[0] = collection.replaceCreatedSplit(self.selection[0], newGroup);
+        eventbus.trigger(self.singleElementEvent('valueChanged'), self);
       }
     };
 
     this.setBValue = function (value) {
-      if (value != selection[1].value) {
-        var newGroup = _.assign({}, selection[1], { value: value });
-        selection[1] = collection.replaceExistingSplit(selection[1], newGroup);
-        eventbus.trigger(singleElementEvent('valueChanged'), self);
+      if (value != self.selection[1].value) {
+        var newGroup = _.assign({}, self.selection[1], { value: value });
+        self.selection[1] = collection.replaceExistingSplit(self.selection[1], newGroup);
+        eventbus.trigger(self.singleElementEvent('valueChanged'), self);
       }
     };
 
@@ -328,16 +328,16 @@
     };
 
     this.isDirty = function() {
-      return dirty;
+      return self.dirty;
     };
 
     this.setDirty = function(dirtyValue) {
-      dirty = dirtyValue;
+      self.dirty = dirtyValue;
     };
 
     this.isSelected = function(linearAsset) {
-      return _.some(selection, function(selectedLinearAsset) {
-        return isEqual(linearAsset, selectedLinearAsset);
+      return _.some(self.selection, function(selectedLinearAsset) {
+        return self.isEqual(linearAsset, selectedLinearAsset);
       });
     };
 
@@ -346,24 +346,24 @@
         getProperty('sideCode') === validitydirections.bothDirections &&
         getProperty('trafficDirection') === 'BothDirections' &&
         !self.isSplit() &&
-        selection.length === 1;
+        self.selection.length === 1;
     };
 
     this.isSaveable = function() {
-      var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
+      var valuesDiffer = function () { return (self.selection[0].value !== self.selection[1].value); };
       if (this.isDirty()) {
         if (this.isSplitOrSeparated() && valuesDiffer())
-              return validator(selection[0].value) && validator(selection[1].value);
+              return validator(self.selection[0].value) && validator(self.selection[1].value);
 
         if (!this.isSplitOrSeparated())
-          return validator(selection[0].value);
+          return validator(self.selection[0].value);
         }
       return false;
     };
 
     this.validator = validator;
 
-    var isEqual = function(a, b) {
+    this.isEqual = function(a, b) {
       return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId)) ||
         ((!isUnknown(a) && !isUnknown(b)) && (a.id === b.id));
     };
@@ -371,7 +371,7 @@
     this.isSuggested = function() {
         var  suggestedProp = getProperty('isSuggested');
       return !_.isEmpty(suggestedProp) && !!parseInt(suggestedProp) ||
-          _.some(selection, function(asset) {
+          _.some(self.selection, function(asset) {
         return asset.value.isSuggested;});
     };
   };
