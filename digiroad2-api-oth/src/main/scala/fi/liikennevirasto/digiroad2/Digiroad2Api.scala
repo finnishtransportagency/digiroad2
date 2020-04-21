@@ -636,10 +636,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    val laneInfo = laneService.fetchExistingLanesByRoadLinks(Seq(roadLink)).map(_.laneCode).sorted.mkString(",").toString
+    val laneInfo = laneService.fetchExistingLanesByRoadLinks(Seq(roadLink)).map(_.laneCode)
 
     Map(
-      "lanes" ->  ( if (laneInfo.toString.isEmpty ) "" else laneInfo ),
+      "lanes" ->  ( if (laneInfo.isEmpty ) "" else laneInfo.sorted ),
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
       "points" -> roadLink.geometry,
@@ -1050,7 +1050,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "id" -> (if (lane.id == 0) None else Some(lane.id)),
           "linkId" -> lane.linkId,
           "sideCode" -> lane.sideCode,
-       //   "trafficDirection" -> link.trafficDirection,
           "value" -> lane.laneAttributes,
           "points" -> lane.geometry,
           "expired" -> lane.expired,
@@ -1060,11 +1059,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "modifiedAt" -> lane.modifiedDateTime,
           "createdBy" -> lane.createdBy,
           "createdAt" -> lane.createdDateTime,
-         // "verifiedBy" -> link.verifiedBy,
-        //  "verifiedAt" -> link.verifiedDate,
-        //  "area" -> extractIntValue(lane.attributes, "area"),
           "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
-         // "informationSource" -> link.informationSource,
           "roadPartNumber" -> lane.attributes.getOrElse("VIITE_ROAD_PART_NUMBER", lane.attributes.get("TEMP_ROAD_PART_NUMBER")),
           "roadNumber" -> lane.attributes.getOrElse("VIITE_ROAD_NUMBER", lane.attributes.get("TEMP_ROAD_NUMBER")),
           "track" -> lane.attributes.getOrElse("VIITE_TRACK",  lane.attributes.get("TEMP_TRACK")),
