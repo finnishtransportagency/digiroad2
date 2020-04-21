@@ -44,16 +44,13 @@ object LaneUtils {
 
   def separateNewIncomeLanes( newIncomeLanes: Set[NewIncomeLane]) : (Set[Long],Set[Long],Set[NewIncomeLane],Set[NewIncomeLane]) = {
 
-    val lanesWithoutFlags = newIncomeLanes.filter( _.isDeleted == false)
-                                        .filter(_.isExpired == false)
+    val lanesWithoutFlags = newIncomeLanes.filterNot( lane => lane.isDeleted  && lane.isExpired ) // Remove records with those flags as true
 
     val toDelete = newIncomeLanes.filter( _.isDeleted == true ).map( _.id )
     val toHistory = newIncomeLanes.filter( _.isExpired == true ).map( _.id )
-    val toUpdate = lanesWithoutFlags.filter( _.id != 0 )
-    val toInsert = lanesWithoutFlags.filter( _.id == 0 )
+    val (toInsert, toUpdate) = lanesWithoutFlags.partition(_.id == 0)
 
     (toDelete, toHistory, toUpdate, toInsert)
-
   }
 
 
@@ -101,7 +98,7 @@ object LaneUtils {
                                            .groupBy(_.linkId)
 
       val finalRoads = allRoadAddress.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
-                                                val existsInVVH = mappedRoadLinks.get(elem.linkId).nonEmpty
+                                                val existsInVVH = mappedRoadLinks.contains(elem.linkId)
                                                 val roadPartNumber = elem.roadPart
                                                 val inInitialAndEndRoadPart = roadPartNumber >= laneRoadAddressInfo.initialRoadPartNumber && roadPartNumber <= laneRoadAddressInfo.endRoadPartNumber
 

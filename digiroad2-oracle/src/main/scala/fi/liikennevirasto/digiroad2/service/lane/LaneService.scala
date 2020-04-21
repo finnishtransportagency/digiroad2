@@ -169,7 +169,7 @@ trait LaneOperations {
       case ChangeType.LengthenedCommonPart | ChangeType.ShortenedCommonPart | ChangeType.ReplacedCommonPart |
            ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetOutdated, useOldId=false)
-      //TODO check if it is OK, this ChangeType.ReplacedNewPart never used
+
       case ChangeType.LengthenedNewPart | ChangeType.ReplacedNewPart =>
         projectAssetsConditionally(change, linearAssets, testAssetsContainSegment, useOldId=true)
       case _ =>
@@ -251,20 +251,18 @@ trait LaneOperations {
 
   def fetchExistingMainLanesByRoadLinks( roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long]): Seq[PersistedLane] = {
     val linkIds = roadLinks.map(_.linkId)
-    val existingAssets =
-      withDynTransaction {
-        dao.fetchMainLanesByLinkIds( linkIds ++ removedLinkIds)
-      }.filterNot(_.expired)
-    existingAssets
+
+    withDynTransaction {
+      dao.fetchMainLanesByLinkIds( linkIds ++ removedLinkIds)
+    }.filterNot(_.expired)
   }
 
   def fetchExistingLanesByRoadLinks(roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
     val linkIds = roadLinks.map(_.linkId)
-    val existingAssets =
-      withDynTransaction {
-        dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds)
-      }.filterNot(_.expired)
-    existingAssets
+
+    withDynTransaction {
+      dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds)
+    }.filterNot(_.expired)
   }
 
   def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
@@ -314,16 +312,16 @@ trait LaneOperations {
   }
 
   def generateLanes (toCreate: Seq[PersistedLane]): Unit = {
-    if (toCreate.nonEmpty)
+    if (toCreate.nonEmpty) {
       logger.info("Saving new lanes")
 
-    withDynTransaction {
-      toCreate.foreach{ lane =>
-        createWithoutTransaction( lane , "lanesGenerator")
+      withDynTransaction {
+        toCreate.foreach { lane =>
+          createWithoutTransaction(lane, "lanesGenerator")
+        }
       }
 
-      if (toCreate.nonEmpty)
-        logger.info("Added lanes for linkids " + toCreate.map(_.linkId))
+      logger.info("Added lanes for linkids " + toCreate.map(_.linkId))
     }
   }
 
@@ -344,23 +342,19 @@ trait LaneOperations {
     val laneProperty = newLane.attributes.properties.find(_.publicId == publicId)
                                             .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
 
-    val finalValue = if (laneProperty.values.nonEmpty)
-                        laneProperty.values.head.value
-                      else
-                        None
-
-    finalValue
+    if (laneProperty.values.nonEmpty)
+      laneProperty.values.head.value
+    else
+      None
   }
 
   def getLaneCode (newIncomeLane: NewIncomeLane): String = {
     val laneCodeValue = getPropertyValue(newIncomeLane, "lane_code")
 
-    val laneCode = if (laneCodeValue.toString.trim.nonEmpty)
+    if (laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty)
       laneCodeValue.toString.trim
     else
       throw new IllegalArgumentException("Lane code attribute not found!")
-
-    laneCode
   }
 
   /**
@@ -427,22 +421,14 @@ trait LaneOperations {
   }
 
   def updatePersistedLanes ( lanes: Seq[PersistedLane], username: String ): Seq[Long] = {
-    if ( lanes.isEmpty )
-      return Seq()
-
     withDynTransaction {
-      val result = lanes.map { lane =>
+      lanes.map { lane =>
         dao.updateEntryLane(lane, username)
       }
-
-      if (result.isEmpty)
-        Seq()
-      else
-        result
     }
   }
 
-  def createWithoutTransaction( newLane: PersistedLane, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Long = {
+  def createWithoutTransaction( newLane: PersistedLane, username: String ): Long = {
 
     val laneId = dao.createLane( newLane, username )
     val lanePositionId = dao.createLanePosition(newLane, username)
@@ -491,7 +477,7 @@ trait LaneOperations {
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
                                       expired = false, vvhTimeStamp, None, newLane.attributes)
 
-          createWithoutTransaction(laneToInsert, username, vvhTimeStamp)
+          createWithoutTransaction(laneToInsert, username)
         }
 
       } else {
@@ -508,15 +494,15 @@ trait LaneOperations {
                                                         .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
             val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
-                                viiteRoadLinks(linkId).head
-                              else
-                                throw new InvalidParameterException(s"No RoadLink found: $linkId")
+                            viiteRoadLinks(linkId).head
+                           else
+                            throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
             val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                   roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None,
                                   expired = false, vvhTimeStamp, None, newLane.attributes)
 
-            createWithoutTransaction(laneToInsert, username, vvhTimeStamp)
+            createWithoutTransaction(laneToInsert, username)
           }
         }
 
