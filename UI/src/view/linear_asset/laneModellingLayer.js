@@ -362,6 +362,7 @@
 
     this.hideLayer = function() {
       reset();
+      me.selectToolControl.clear();
       me.hideReadOnlyLayer();
       me.vectorLayer.setVisible(false);
       me.indicatorLayer.setVisible(false);
