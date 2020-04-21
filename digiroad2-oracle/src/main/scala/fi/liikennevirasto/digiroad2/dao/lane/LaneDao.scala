@@ -252,8 +252,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     }.toSeq
 
-    val finalAttributes = props ++ laneCodeAttribute
-    finalAttributes
+    props ++ laneCodeAttribute
   }
 
   /**
@@ -269,20 +268,14 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def updateLane( id: Long, lane: PieceWiseLane, username: String): Option[Long]  = {
+  def updateLane( id: Long, lane: PieceWiseLane, username: String) = {
     val laneCode =lane.laneAttributes.properties.find( _.publicId == "lane_code" ).head.values
 
-  val laneUpdated =
     sqlu"""UPDATE lane
           SET lane_code =${laneCode.head.value.toString},  modified_date = sysdate, modified_by = $username
           WHERE id = $id
           AND lane_code = ${lane.linkId}
-    """.first
-
-    if ( laneUpdated == 1)
-      Some(id)
-    else
-      None
+    """.execute
   }
 
 
@@ -413,10 +406,10 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
   def updateLaneModifiedFields (laneId: Long, username: String) = {
     sqlu"""
-      update LANE
-      set modified_by = $username,
+      UPDATE LANE
+      SET modified_by = $username,
           modified_date = SYSDATE
-      where id = $laneId
+      WHERE id = $laneId
     """.execute
   }
 
@@ -432,7 +425,6 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
   def updateMValuesChangeInfo(laneId: Long, linkMeasures: (Double, Double), vvhTimestamp: Long, username: String): Unit = {
-    println("lane_id -> " + laneId)
 
     val (startMeasure, endMeasure) = linkMeasures
 
