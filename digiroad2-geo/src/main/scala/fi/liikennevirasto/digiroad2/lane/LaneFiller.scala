@@ -272,13 +272,7 @@ class LaneFiller {
   }
 
   private def combine(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
-
-    def replaceUnknownAssetIds(lane: PersistedLane, pseudoId: Long) = {
-      lane.id match {
-        case 0 => lane.copy(id = pseudoId)
-        case _ => lane
-      }
-    }
+    
     /**
       * Convert the lanes with startMeasure and endMeasure equals to startM and endM to SegmentPiece
       */
@@ -344,10 +338,11 @@ class LaneFiller {
     def cleanNumericalLimitIds(toProcess: Seq[PersistedLane], processed: Seq[PersistedLane]): Seq[PersistedLane] = {
       val (current, rest) = (toProcess.head, toProcess.tail)
 
-      val modified = processed.exists(_.id == current.id) || current.id < 0L match {
-              case true => current.copy(id = 0L)
-              case _ => current
-            }
+      val modified = if (processed.exists(_.id == current.id) || current.id < 0L) {
+                      current.copy(id = 0L)
+                    } else {
+                      current
+                    }
 
       if (rest.nonEmpty) {
         cleanNumericalLimitIds(rest, processed ++ Seq(modified))
@@ -357,8 +352,7 @@ class LaneFiller {
     }
 
 
-    val lanesZipped = lanes//.zipWithIndex .map( _._1) // ._1 ==> contains LaneInformation
-    //  .map(n => replaceUnknownAssetIds(n._1, 0L-n._2)) not make sense since we treat id = 0 as new lane
+    val lanesZipped = lanes
 
     val pointsOfInterest = (lanesZipped.map(_.startMeasure) ++ lanesZipped.map(_.endMeasure)).distinct.sorted
     if (pointsOfInterest.length < 2)
@@ -366,7 +360,6 @@ class LaneFiller {
 
     val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
     val segmentPieces = pieces.flatMap(p => SegmentPieceCreation(p._1, p._2, lanesZipped))
-                              //.sortBy(_.laneId)
                               .groupBy(_.laneId)
 
     val segmentsAndOrphanPieces = segmentPieces.map(n => extendOrDivide(n._2, lanesZipped.find(_.id == n._1).get))
