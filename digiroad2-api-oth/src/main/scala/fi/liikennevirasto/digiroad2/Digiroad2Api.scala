@@ -2158,17 +2158,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       val usedService = laneService
 
-      zoom >= minVisibleZoom && zoom <= maxZoom match {
-        case true => mapLightLane(usedService.getByZoomLevel(boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
-        case false =>
-          validateBoundingBox(boundingRectangle)
-          val assets = usedService.getByBoundingBox(boundingRectangle)
+      if (zoom >= minVisibleZoom && zoom <= maxZoom) {
+        mapLightLane(usedService.getByZoomLevel(boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
+      } else {
+        validateBoundingBox(boundingRectangle)
+        val assets = usedService.getByBoundingBox(boundingRectangle)
 
-          val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
-          val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress(updatedInfo.map(_.filter(_.attributes.get("VIITE_ROAD_NUMBER").isEmpty)))
-          mapLanes(updatedInfo ++ frozenInfo)
-
+        val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
+        val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
+        mapLanes(updatedInfo ++ frozenInfo)
       }
+
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
