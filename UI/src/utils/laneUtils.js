@@ -41,6 +41,43 @@
       };
 
       return preview();
+    },
+
+    offsetByLaneNumber: function (asset, isRoadlink, reverse) {
+      function getOffsetPoint(asset, baseOffset) {
+        asset.points = _.map(asset.points, function (point, index, geometry) {
+          return GeometryUtils.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
+        });
+        return asset;
+      }
+
+      var baseOffset = reverse ? 3.5 : -3.5;
+
+      if(isRoadlink) {
+        if (asset.sideCode === 1) {
+          return asset;
+        }
+
+        return getOffsetPoint(asset, baseOffset);
+      }else{
+        var laneCode = _.find(asset.properties, function (property) {
+          return property.publicId === "lane_code";
+        });
+
+        if (_.head(laneCode.values).value.toString()[1] == '1') {
+          if (asset.sideCode === 1) {
+            return asset;
+          }
+          return getOffsetPoint(asset, baseOffset);
+        }
+
+        if (asset.sideCode === 1) {
+          baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? -1.5 : 1.5) : (reverse ? 1.5 : -1.5);
+        }else{
+          baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? 2 : -2) : (reverse ? 5 : -5);
+        }
+        return getOffsetPoint(asset, baseOffset);
+      }
     }
   };
 })();

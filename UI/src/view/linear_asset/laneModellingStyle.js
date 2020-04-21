@@ -47,7 +47,7 @@
       }));
 
       var offsetBySideCode = function(linearAsset) {
-        return GeometryUtils.offsetByLaneNumber(applicationModel.zoom.level, linearAsset, isRoadlink);
+        return laneUtils.offsetByLaneNumber(linearAsset, isRoadlink);
       };
 
       var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);

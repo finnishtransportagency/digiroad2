@@ -133,7 +133,7 @@
 
         var nearestLinearAsset = nearest.feature.getProperties();
         if(authorizationPolicy.formEditModeAccess(nearestLinearAsset)) {
-          var splitProperties = calculateSplitProperties(GeometryUtils.revertOffsetByLaneNumber(nearestLinearAsset), mousePoint);
+          var splitProperties = calculateSplitProperties(laneUtils.offsetByLaneNumber(nearestLinearAsset, false, true), mousePoint);
           selectedLane.splitLinearAsset(_.head(_.find(nearestLinearAsset.properties, function(property){
             return property.publicId === "lane_code";
           }).values).value, splitProperties);
@@ -307,7 +307,7 @@
     };
 
     var offsetByLaneNumber = function (linearAsset) {
-      return GeometryUtils.offsetByLaneNumber(applicationModel.zoom.level, linearAsset, false);
+      return laneUtils.offsetByLaneNumber(linearAsset);
     };
 
     this.decorateSelection = function (laneNumber) {

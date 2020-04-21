@@ -16,6 +16,10 @@
     var end_distance;
     var track;
 
+    function getLaneCodeValue(lane) {
+      return _.head(_.find(lane.properties, {'publicId': 'lane_code'}).values).value;
+    }
+
     this.getLane = function (laneNumber, marker) {
         return _.find(self.selection, function (lane){
           return (_.isEmpty(marker) || lane.marker == marker) && _.find(lane.properties, function (property) {
@@ -26,7 +30,7 @@
 
     this.getCurrentLaneNumber = function() {
       if(!_.isUndefined(currentLane)) {
-        return _.head(_.find(currentLane.properties, {'publicId': 'lane_code'}).values).value;
+        return getLaneCodeValue(currentLane);
       }
     };
 
@@ -65,23 +69,17 @@
     };
 
     var giveSplitMarkers = function(lanes){
-      var numberOfLanesByLaneCode = _.countBy(lanes, function (lane) {
-        return _.head(_.find(lane.properties, function (property) {
-          return property.publicId === "lane_code";
-        }).values).value;
-      });
+      var numberOfLanesByLaneCode = _.countBy(lanes, getLaneCodeValue);
 
       var laneCodesToPutMarkers = _.filter(_.keys(numberOfLanesByLaneCode), function(key){
         return numberOfLanesByLaneCode[key] > 1;
       });
 
-      var duplicateLaneCounter = 0;
-      return _.map(lanes, function (lane) {
-        var laneCode = _.head(_.find(lane.properties, function (property) {
-          return property.publicId === "lane_code";
-        }).values).value;
+      var lanesSortedByLaneCode = _.sortBy(lanes, getLaneCodeValue);
 
-        if(_.includes(laneCodesToPutMarkers, laneCode)) {
+      var duplicateLaneCounter = 0;
+      return _.map(lanesSortedByLaneCode, function (lane) {
+        if(_.includes(laneCodesToPutMarkers, getLaneCodeValue(lane))) {
           if (duplicateLaneCounter === 0){
             lane.marker = 'A';
             duplicateLaneCounter++;
@@ -188,12 +186,7 @@
     };
 
     self.lanesCutAreEqual = function() {
-      var laneNumbers = _.map(self.selection, function (lane){
-        return _.head(_.find(lane.properties, function (property) {
-          return property.publicId == "lane_code";
-        }).values).value;
-      });
-
+      var laneNumbers = _.map(self.selection, getLaneCodeValue);
       var cuttedLaneNumbers = _.transform(_.countBy(laneNumbers), function(result, count, value) {
         if (count > 1) result.push(value);
       }, []);
@@ -291,9 +284,7 @@
       }
 
       _.forEach(self.selection, function (lane) {
-        var currentLaneNumber = _.head(_.find(lane.properties,function (prop) {
-          return prop.publicId == "lane_code";
-        }).values).value;
+        var currentLaneNumber = getLaneCodeValue(lane);
 
         var properties = _.filter(self.getValue(currentLaneNumber), function(property){ return property.publicId !== currentPropertyValue.publicId; });
         properties.push(currentPropertyValue);

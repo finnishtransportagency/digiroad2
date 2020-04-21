@@ -1244,9 +1244,7 @@
         }).values).value;
       });
 
-      var previewHeader = createPreviewHeaderElement(_.uniq(laneNumbers));
-
-      return previewHeader;
+      return createPreviewHeaderElement(_.uniq(laneNumbers));
     };
 
     me.renderLaneButtons = function(selectedAsset) {
