@@ -128,6 +128,16 @@ class LaneFiller {
 
   private def adjustLanesSideCodes(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
 
+    // auxiliary function to create PersistedLane object
+    def createPersistedLane(laneCode: Int, sideCode: Int, municipalityCode: Long, baseProperties: Seq[LaneProperty] ): PersistedLane = {
+      val lanePropertiesValues = LanePropertiesValues(baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode)))))
+
+      PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode,
+        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
+        lanePropertiesValues)
+    }
+
+
     if(lanes.isEmpty )
       return (lanes, changeSet)
 
@@ -143,26 +153,13 @@ class LaneFiller {
 
         val toAdd = mainLanes match {
           case (true, true) => Seq()
-          case (false, true) => Seq(
-                            PersistedLane(0L, roadLink.linkId, SideCode.TowardsDigitizing.value, 11, baseLane.municipalityCode,
-                          0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-                          LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))))
-                        )
+          case (false, true) => Seq( createPersistedLane(11, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ) )
 
-          case (true, false) => Seq(
-                            PersistedLane(0L, roadLink.linkId, SideCode.AgainstDigitizing.value, 21, baseLane.municipalityCode,
-                            0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-                            LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))))
-                      )
+          case (true, false) => Seq( createPersistedLane(21, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
           case (false, false) => Seq(
-            PersistedLane(0L, roadLink.linkId, SideCode.TowardsDigitizing.value, 11, baseLane.municipalityCode,
-              0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-              LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))))),
-
-            PersistedLane(0L, roadLink.linkId, SideCode.AgainstDigitizing.value, 21, baseLane.municipalityCode,
-              0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-              LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))))
-          )
+                                createPersistedLane(11, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ),
+                                createPersistedLane(21, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps )
+                              )
           case _ => Seq()
         }
 
@@ -170,21 +167,15 @@ class LaneFiller {
 
       case TrafficDirection.TowardsDigitizing =>
 
-        val toAdd = if ( !lanesToProcess.exists(_.laneCode == 11 )) {
-                     Seq( PersistedLane(0L, roadLink.linkId, SideCode.TowardsDigitizing.value, 11, baseLane.municipalityCode,
-                        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-                        LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))))
-                     )
+        val toAdd = if ( !lanesToProcess.exists(_.laneCode == 11 ))
+                    Seq( createPersistedLane(11, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps) )
+                  else
+                    Seq()
 
-                  } else
-                      Seq()
 
-        val toRemove = lanesToProcess.map{ lane =>
-                                            if ( lane.laneCode >= 21 && lane.laneCode <= 29)
-                                              lane.id
-                                            else
-                                              0L
-                                          }.filterNot( _ == 0L)
+        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= 21 && lane.laneCode <= 29)
+                                      .map(_.id)
+                                      .filterNot(_ == 0L)
 
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
@@ -193,20 +184,14 @@ class LaneFiller {
 
       case TrafficDirection.AgainstDigitizing =>
 
-        val toAdd = if ( !lanesToProcess.exists(_.laneCode == 21)) {
-                     Seq( PersistedLane(0L, roadLink.linkId,  SideCode.AgainstDigitizing.value, 21, baseLane.municipalityCode,
-                        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-                        LanePropertiesValues(baseProps ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))))
-                     )
-                  } else
+        val toAdd = if ( !lanesToProcess.exists(_.laneCode == 21))
+                      Seq( createPersistedLane(21, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
+                    else
                       Seq()
 
-        val toRemove = lanesToProcess.map{ lane =>
-                                                if ( lane.laneCode >= 11 && lane.laneCode <= 19)
-                                                  lane.id
-                                                else
-                                                  0L
-                                          }.filterNot( _ == 0L)
+        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= 11 && lane.laneCode <= 19)
+                                      .map(_.id)
+                                      .filterNot(_ == 0L)
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
@@ -272,7 +257,7 @@ class LaneFiller {
   }
 
   private def combine(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
-    
+
     /**
       * Convert the lanes with startMeasure and endMeasure equals to startM and endM to SegmentPiece
       */
