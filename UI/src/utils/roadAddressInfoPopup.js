@@ -101,7 +101,7 @@
                 'Ajorata: ' + (roadData.track || '') + '<br>' +
                 'AET: ' + (roadData.startAddrMValue || '') + '<br>' +
                 'LET: ' + (roadData.endAddrMValue || '') + '<br>' +
-                'Kaistat: ' + _.join(roadData.lanes, ', ') + '<br>'+ '</p>';
+                'Kaistat: ' + _.join(_.uniq(roadData.lanes), ', ') + '<br>'+ '</p>';
               overlay.setPosition(map.getEventCoordinate(event.originalEvent));
             };
 
