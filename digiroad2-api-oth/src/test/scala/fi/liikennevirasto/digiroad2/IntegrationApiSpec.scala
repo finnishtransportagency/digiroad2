@@ -281,7 +281,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("Validate if sevenRestriction JSON generator return all required keys"){
 
-    val requiredKeys = Set("id","linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value")
+    val requiredKeys = Set("linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value","id")
     val jsonResult = integrationApi.sevenRestrictionToApi(30, 766)
 
     val jsonToValidate = jsonResult.head.filterNot(x => x._2 == None ||  x._2.toString.trim.isEmpty )
