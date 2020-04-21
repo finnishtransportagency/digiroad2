@@ -73,12 +73,8 @@ class ValluTerminalActor(massTransitStopService: MassTransitStopService) extends
 
 class LanesUpdater(laneService: LaneService) extends Actor {
   def receive = {
-    case x: LaneFiller.ChangeSet => persistLaneChanges(x )
+    case x: LaneFiller.ChangeSet => laneService.updateChangeSet(x )
     case _            => println("LinearAssetUpdater: Received unknown message")
-  }
-
-  def persistLaneChanges(changeSet: LaneFiller.ChangeSet) {
-    laneService.updateChangeSet(changeSet)
   }
 }
 
