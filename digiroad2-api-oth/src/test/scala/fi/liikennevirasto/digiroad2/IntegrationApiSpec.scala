@@ -284,7 +284,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     val requiredKeys = Set("linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value","id")
     val jsonResult = integrationApi.sevenRestrictionToApi(30, 766)
 
-    val jsonToValidate = jsonResult.head.filterNot(x => x._2 == None ||  x._2.toString.trim.isEmpty )
+    val jsonToValidate = jsonResult.head.filterNot{ case (key, value) => value == None ||  value.toString.trim.isEmpty }
 
     jsonToValidate.keySet.size should be (requiredKeys.size)
     jsonToValidate.keySet.equals(requiredKeys) should be (true)
