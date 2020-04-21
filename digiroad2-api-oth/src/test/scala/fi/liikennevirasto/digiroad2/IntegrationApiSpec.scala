@@ -280,21 +280,11 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("Validate if sevenRestriction JSON generator return all required keys"){
-    val mockResult = PieceWiseLinearAsset(639470,5361927,SideCode.BothDirections,
-      Some(DynamicValue(DynamicAssetValue(Seq(DynamicProperty("length","integer",required = true, Seq(DynamicPropertyValue(44))),
-                                              DynamicProperty("suggest_box","checkbox",required = false,Seq(DynamicPropertyValue(0))))))),
-      Seq(Point(148620.0,6682323.0,4.0), Point(148591.0,6682389.0,3.9)),
-      expired = false,0.0,72.466,
-      Set(Point(148620.0,6682323.0,4.0), Point(148591.0,6682389.0,3.9)),
-      None,None,Some("silari"),Some(DateTime.now()),70,TrafficDirection.BothDirections,1586995200000L,
-      Some(DateTime.now()),NormalLinkInterface,State,Map(),Some("silari"),Some(DateTime.now()),None)
 
-    val requiredKeys = Set("id","linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value")
+    val requiredKeys = Set("linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value","id")
+    val jsonResult = integrationApi.sevenRestrictionToApi(30, 766)
 
-    when( mockLinearLengthLimitService.getByMunicipality(any[Int], any[Int]) ).thenReturn( Seq(mockResult) )
-
-    val jsonResult = integrationApi.sevenRestrictionToApi(70, 766)
-    val jsonToValidate = jsonResult.head.filterNot(_._2 == None)
+    val jsonToValidate = jsonResult.head.filterNot{ case (key, value) => value == None ||  value.toString.trim.isEmpty }
 
     jsonToValidate.keySet.size should be (requiredKeys.size)
     jsonToValidate.keySet.equals(requiredKeys) should be (true)
