@@ -19,7 +19,11 @@
       2: 'Avattava puomi'
     };
 
-    this.renderValueElement = function(asset) {
+    //TODO: investigate obstacle to be created by point asset form
+    var propertyOrdering = ['suggest_box'];
+
+    this.renderValueElement = function(asset, collection, authorizationPolicy) {
+      var components = me.renderComponents(asset, propertyOrdering, authorizationPolicy);
       return '' +
         '    <div class="form-group editable form-obstacle">' +
         '      <label class="control-label">Esterakennelma</label>' +
@@ -28,7 +32,8 @@
         '        <option value="1" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 1 ? 'selected' : '') +'>Suljettu yhteys</option>' +
         '        <option value="2" '+ (parseInt(me.selectedAsset.getByProperty('esterakennelma')) === 2 ? 'selected' : '') +'>Avattava puomi</option>' +
         '      </select>' +
-        '    </div>';
+        '    </div>' +
+          components;
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {

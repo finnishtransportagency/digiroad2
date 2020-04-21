@@ -26,7 +26,7 @@
       { value:99, label: 'Ei tietoa'}
     ];
 
-    this.renderValueElement = function(asset) {
+    this.renderValueElement = function(asset, collection, authorizationPolicy) {
       if(asset.limit || asset.limit === 0){
         var selectedReason = _.find(widthLimitReason, { value: asset.reason });
         return '' +

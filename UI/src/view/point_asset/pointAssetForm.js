@@ -20,6 +20,12 @@ root.PointAssetForm = function() {
     me.selectedAsset = parameters.pointAsset.selectedPointAsset;
   };
 
+  this.getProperties = function(properties, publicId) {
+    return _.find(properties, function(feature){
+      return feature.publicId === publicId;
+    });
+  };
+
   this.bindEvents = function(parameters) {
     var rootElement = $('#feature-attributes');
     var typeId = parameters.pointAsset.typeId;
@@ -75,7 +81,29 @@ root.PointAssetForm = function() {
     });
   };
 
-  this.renderValueElement = function(asset, collection) { return ''; };
+  var propertyOrdering = ['suggest_box'];
+
+  this.renderValueElement = function(asset, collection, authorizationPolicy) { return me.renderComponents(asset, propertyOrdering, authorizationPolicy); };
+
+  this.renderComponents = function (asset, propertyOrdering, authorizationPolicy) {
+    var allProperties = asset.propertyData;
+    var SortedProperties = me.sortAndFilterProperties(allProperties, propertyOrdering);
+
+    return _.reduce(_.map(SortedProperties, function (feature) {
+      feature.localizedName = window.localizedStrings[feature.publicId];
+      var propertyType = feature.propertyType;
+
+      switch (propertyType) {
+        case "number":
+        case "text": return me.textHandler(feature);
+        case "single_choice": return me.singleChoiceHandler(feature);
+        case "read_only_number": return me.readOnlyHandler(feature);
+        case "date": return me.dateHandler(feature);
+        case "checkbox": return feature.publicId === 'suggest_box' ? me.suggestedBoxHandler (feature, authorizationPolicy) : me.checkboxHandler(feature);
+      }
+
+    }), function(prev, curr) { return prev + curr; }, '');
+  };
 
   this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
     var id = selectedAsset.getId();
@@ -89,58 +117,79 @@ root.PointAssetForm = function() {
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
 
-    rootElement.find('#delete-checkbox').on('change', function (event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
-    });
-
-    rootElement.find('.suggested-checkbox').on('change', function (event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), +eventTarget.prop('checked'));
-
-      if(id) {
-        me.switchSuggestedValue(true);
-        rootElement.find('.suggested-checkbox').prop('checked', false);
-      }
-    });
-
-    rootElement.find('.editable').not('.suggestion-box').on('change', function() {
-      if(id) {
-        me.switchSuggestedValue(true);
-        rootElement.find('.suggested-checkbox').prop('checked', false);
-        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), 0);
-      }
-    });
-
-    rootElement.find('input[type="text"]').on('input change', function (event) {
-      var eventTarget = $(event.currentTarget);
-      var obj = {};
-      obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
-      selectedAsset.setPropertyByPublicId(eventTarget.attr('name'), eventTarget.val());
-
-      if(id) {
-        me.switchSuggestedValue(true);
-        rootElement.find('.suggested-checkbox').prop('checked', false);
-        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), 0);
-      }
-    });
+    me.addingPreBoxEventListeners(rootElement, selectedAsset, id);
 
     rootElement.find('button#change-validity-direction').on('click', function() {
       var previousValidityDirection = selectedAsset.get().validityDirection;
       selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
     });
 
-    rootElement.find('.pointasset button.save').on('click', function() {
+    this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+  };
+
+  this.addingPreBoxEventListeners = function (rootElement, selectedAsset, id) {
+    rootElement.find('#delete-checkbox').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
+    });
+
+    rootElement.find('input[type=checkbox]').not('.suggested-checkbox').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      var propertyPublicId = eventTarget.attr('id');
+      var propertyValue = +eventTarget.prop('checked');
+      selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+    });
+
+    rootElement.find('.suggested-checkbox').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.setPropertyByPublicId(eventTarget.attr('id'), +eventTarget.prop('checked'));
+
+      if(id) {
+        me.switchSuggestedValue(true);
+        rootElement.find('.suggested-checkbox').prop('checked', false);
+      }
+    });
+
+    rootElement.find('.editable').not('.suggestion-box').on('change, click', function() {
+      if(id) {
+        me.switchSuggestedValue(true);
+        rootElement.find('.suggested-checkbox').prop('checked', false);
+        selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('id'), 0);
+      }
+    });
+
+    rootElement.find('.point-asset button.save').on('click', function() {
       selectedAsset.save();
     });
 
-    rootElement.find('.pointasset button.cancel').on('click', function() {
+    rootElement.find('.point-asset button.cancel').on('click', function() {
       me.switchSuggestedValue(false);
       selectedAsset.cancel();
     });
 
+    /*
+     TODO: -removed during traffic light implementation, can't find a reason for this code
+           -test all point assets find out where it belongs.
+           -tested, feels like it doesn't belong anywhere works just fine without this, continuing search
+    */
+    /* rootElement.find('input[type="text"]').on('input change', function (event) {
+       var eventTarget = $(event.currentTarget);
+       var obj = {};
+       obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
+       selectedAsset.setPropertyByPublicId(eventTarget.attr('name'), eventTarget.val());
 
-    this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+       if(id) {
+         me.switchSuggestedValue(true);
+         rootElement.find('.suggested-checkbox').prop('checked', false);
+         selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), 0);
+       }
+     });*/
+  };
+
+   this.bindSingleChoiceElement = function (rootElement, selectedAsset, publicId) {
+    rootElement.find('.form-point-asset select#main-' + publicId).on('change', function (event) {
+      selectedAsset.setPropertyByPublicId(publicId, $('.form-point-asset select#main-' + publicId).val());
+    });
   };
 
   this.userInformationLog = function(authorizationPolicy, asset) {
@@ -166,68 +215,72 @@ root.PointAssetForm = function() {
     return date ? (date + ' / ' + username) : '-';
   };
 
-  var getSuggestedBoxValue = function() {
+  this.getSuggestedBoxValue = function() {
     return !!parseInt(me.selectedAsset.getByProperty("suggest_box"));
   };
 
-  var suggestedAssetCheckBox = function(selectedAsset, authorizationPolicy) {
-    var suggestedBoxValue = getSuggestedBoxValue();
-    var suggestedBoxDisabledState = getSuggestedBoxDisabledState();
+  this.suggestedBoxHandler = function(asset, authorizationPolicy) {
+    var suggestedBoxValue = me.getSuggestedBoxValue();
+    var suggestedBoxDisabledState = me.getSuggestedBoxDisabledState();
 
     if(suggestedBoxDisabledState) {
-      var disabledValue = 'disabled';
-      return me.renderSuggestBoxElement(disabledValue);
-    } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(selectedAsset, suggestedBoxValue)) {
+      return me.renderSuggestBoxElement(asset, 'disabled');
+    } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(me.selectedAsset, suggestedBoxValue)) {
       var checkedValue = suggestedBoxValue ? 'checked' : '';
-      return me.renderSuggestBoxElement(checkedValue);
+      return me.renderSuggestBoxElement(asset, checkedValue);
     } else {
-      return '';
+      // empty div placed for correct positioning on the form for some elements to appear before or after the suggestion-box
+      return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box"></div>';
     }
+  };
+
+  this.renderSuggestBoxElement = function(asset, state) {
+    return '<div class="form-group editable form-point-asset suggestion-box">' +
+        '<label class="control-label">' + asset.localizedName + '</label>' +
+        '<p class="form-control-static">Kylla</p>' +
+        '<input type="checkbox" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + '"' + state + '>' +
+        '</div>';
   };
 
   this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){};
 
   this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
     var asset = selectedAsset.get();
+    var wrapper = $('<div class="wrapper">');
+    var formRootElement = $('<div class="form form-horizontal form-dark form-point-asset">');
 
     if (selectedAsset.isNew()) {
-      return '' +
-        '<div class="wrapper">' +
-        '  <div class="form form-horizontal form-dark form-pointasset">' +
-        me.renderValueElement(asset, collection) +
-        suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
-        '  </div>' +
-        '</div>';
+      formRootElement = formRootElement.append(me.renderValueElement(asset, collection, authorizationPolicy));
     } else {
-      return '' +
-        '<div class="wrapper">' +
-        '  <div class="form form-horizontal form-dark form-pointasset">' +
-        me.renderFloatingNotification(asset.floating, localizedTexts) +
-        '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + me.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
-        '    </div>' +
-        '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + me.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
-        '    </div>' +
-        me.userInformationLog(authorizationPolicy, selectedAsset) +
-        me.renderValueElement(asset, collection, authorizationPolicy) +
-        suggestedAssetCheckBox(selectedAsset, authorizationPolicy) +
-        '    <div class="form-group form-group delete">' +
-        '      <div class="checkbox">' +
-        '        <input type="checkbox" id="delete-checkbox">' +
-        '      </div>' +
-        '      <p class="form-control-static">Poista</p>' +
-        '    </div>' +
-        '  </div>' +
-        '</div>';
-    }
-  };
+      var deleteCheckbox = $(''+
+          '    <div class="form-group form-group delete">' +
+          '      <div class="checkbox" >' +
+          '        <input id="delete-checkbox" type="checkbox">' +
+          '      </div>' +
+          '      <p class="form-control-static">Poista</p>' +
+          '    </div>' +
+          '  </div>' );
+      var logInfoGroup = $( '' +
+          '    <div class="form-group">' +
+          '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + this.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
+          '    </div>' +
+          '    <div class="form-group">' +
+          '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + this.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
+          '    </div>');
 
-  this.renderValueElement = function(asset, collection) { return ''; };
+      formRootElement = formRootElement
+          .append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
+          .append(logInfoGroup)
+          .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
+          .append(me.renderValueElement(asset, collection, authorizationPolicy))
+          .append(deleteCheckbox);
+    }
+    return wrapper.append(formRootElement);
+  };
 
   this.renderButtons = function() {
     return '' +
-      '<div class="pointasset form-controls">' +
+      '<div class="point-asset form-controls">' +
       '  <button id="save-button" class="save btn btn-primary" disabled>Tallenna</button>' +
       '  <button id ="cancel-button" class="cancel btn btn-secondary" disabled>Peruuta</button>' +
       '</div>';
@@ -236,14 +289,6 @@ root.PointAssetForm = function() {
   this.renderLinktoWorkList = function(layerName, localizedTexts) {
     $('ul[class=information-content]').append('' +
       '<li><button id="point-asset-work-list-link" class="floating-point-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</button></li>');
-  };
-
-  this.renderSuggestBoxElement = function(inputProperty) {
-    return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
-            '<label class="control-label">Vihjetieto</label>' +
-            '<p class="form-control-static">' + 'Kylla' + '</p>' +
-            '<input type="checkbox" class="form-control suggested-checkbox" name="suggest_box"' + inputProperty + '>' +
-           '</div>';
   };
 
   this.toggleMode = function(rootElement, readOnly) {
@@ -270,17 +315,90 @@ root.PointAssetForm = function() {
     }
   };
 
+  this.textHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    return '' +
+        '    <div class="form-group editable form-point-asset">' +
+        '        <label class="control-label">' + property.localizedName + '</label>' +
+        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+        '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+        '    </div>';
+  };
+
+  this.singleChoiceHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+    var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
+    var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
+    var selectableValues = _.map(propertyValues, function (label) {
+      return $('<option>',
+          { selected: propertyValue == label.propertyValue,
+            value: parseInt(label.propertyValue),
+            text: label.propertyDisplayValue}
+      )[0].outerHTML; }).join('');
+    return '' +
+        '    <div class="form-group editable form-point-asset">' +
+        '      <label class="control-label">' + property.localizedName + '</label>' +
+        '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
+        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+        selectableValues +
+        '      </select>' +
+        '    </div>';
+  };
+
+  this.readOnlyHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
+    return '' +
+        '    <div class="form-group editable form-point-asset">' +
+        '        <label class="control-label">' + displayValue + '</label>' +
+        '        <p class="form-control-static">' + propertyValue + '</p>' +
+        '    </div>';
+  };
+
+  this.dateHandler = function(property) {
+    var propertyValue = '';
+
+    if ( !_.isEmpty(property.values) && !_.isEmpty(property.values[0].propertyDisplayValue) )
+      propertyValue = property.values[0].propertyDisplayValue;
+
+    return '' +
+        '<div class="form-group editable form-point-asset">' +
+        '     <label class="control-label">' + property.localizedName + '</label>' +
+        '     <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+        '     <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+        '</div>';
+  };
+
+  this.checkboxHandler = function(property) {
+    var checked = _.head(property.values).propertyValue == "0" ? '' : 'checked';
+    return '' +
+        '    <div id= "' + property.publicId + '-checkbox-div" class="form-group editable edit-only form-point-asset">' +
+        '      <div class="checkbox" >' +
+        '        <input id="' + property.publicId + '" type="checkbox"' + checked + '>' +
+        '      </div>' +
+        '        <label class="' + property.publicId + '-checkbox-label">' + property.localizedName + '</label>' +
+        '    </div>';
+  };
+
   var renderInaccurateWorkList= function renderInaccurateWorkList(layerName) {
     $('ul[class=information-content]').append('' +
       '<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
   };
 
-  var getSuggestedBoxDisabledState = function() {
+  this.getSuggestedBoxDisabledState = function() {
     return $('.suggested-checkbox').is(':disabled');
   };
 
   this.switchSuggestedValue = function(disabledValue) {
     $('.suggested-checkbox').attr('disabled', disabledValue);
+  };
+
+  this.sortAndFilterProperties = function(properties, propertyOrdering) {
+    return _.sortBy(properties, function(property) {
+      return _.indexOf(propertyOrdering, property.publicId);
+    }).filter(function(property){
+      return _.indexOf(propertyOrdering, property.publicId) >= 0;
+    });
   };
 };
 })(this);

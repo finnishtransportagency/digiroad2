@@ -1041,9 +1041,23 @@
       {
         typeId: assetType.trafficLights,
         layerName: 'trafficLights',
-        title: 'Liikennevalo',
+        title: 'Liikennevalot',
         allowComplementaryLinks: true,
         newAsset: { propertyData: [
+            {'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
+            {'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
+            {'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 999} ]},
+            {'name': "Alituskorkeus", 'propertyType': 'number', 'publicId': "trafficLight_height", values: []},
+            {'name': "Äänimerkki", 'propertyType': 'single_choice', 'publicId': "trafficLight_sound_signal", values: [ {propertyValue: 999} ]},
+            {'name': "Ajoneuvon tunnistus", 'propertyType': 'single_choice', 'publicId': "trafficLight_vehicle_detection", values: [ {propertyValue: 999} ]},
+            {'name': "Painonappi", 'propertyType': 'single_choice', 'publicId': "trafficLight_push_button", values: [ {propertyValue: 999} ]},
+            {'name': "Lisätieto", 'propertyType': 'text', 'publicId': "trafficLight_info", values: []},
+            {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_lane_type", values: [ {propertyValue: 999} ]},
+            {'name': "Kaista", 'propertyType': 'number', 'publicId': "trafficLight_lane", values: []},
+            {'name': "Maastosijainti X", 'propertyType': 'text', 'publicId': "location_coordinates_x", values: [] },
+            {'name': "Maastosijainti Y", 'propertyType': 'text', 'publicId': "location_coordinates_y", values: [] },
+            {'name': "Kunta ID", 'propertyType': 'text', 'publicId': "trafficLight_municipality_id", values: []},
+            {'name': "Tila", 'propertyType': 'single_choice', 'publicId': "trafficLight_state", values: [ {propertyValue: 3} ]},
             {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         isSuggestedAsset: true,
@@ -1059,9 +1073,10 @@
         hasMunicipalityValidation: true,
         saveCondition: saveConditionWithSuggested,
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: TrafficLightForm,
         label: new SuggestionLabel(),
         showRoadLinkInfo: true,
-        layer : TrafficSignLayer
+        layer : TrafficRegulationLayer
       },
       {
         typeId: assetType.trafficSigns,
@@ -1106,7 +1121,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        layer : TrafficSignLayer,
+        layer : TrafficRegulationLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,

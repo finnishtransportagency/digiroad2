@@ -14,7 +14,11 @@
       me.selectedAsset = parameters.pointAsset.selectedPointAsset;
     };
 
-    this.renderValueElement = function(asset) {
+    //TODO: investigate DirectionalTrafficSign to be created by point asset form
+    var propertyOrdering = ['suggest_box'];
+
+    this.renderValueElement = function(asset, collection, authorizationPolicy) {
+      var components = me.renderComponents(asset, propertyOrdering, authorizationPolicy);
       return '' +
         '  <div class="form-group editable form-directional-traffic-sign">' +
         '      <label class="control-label">Teksti</label>' +
@@ -24,7 +28,8 @@
         '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
         '      <label class="control-label">Vaikutussuunta</label>' +
         '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-        '    </div>';
+        '    </div>' +
+          components;
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {

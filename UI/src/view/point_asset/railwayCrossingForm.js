@@ -26,13 +26,17 @@
       5: 'Kokopuomi'
     };
 
-    this.renderValueElement = function(asset) {
+    //TODO: investigate railway crossing to be created by point asset form
+    var propertyOrdering = ['suggest_box'];
+
+    this.renderValueElement = function(asset, collection, authorizationPolicy) {
+      var components = me.renderComponents(asset, propertyOrdering, authorizationPolicy);
       var safetyEquipmentValue = me.selectedAsset.getByProperty(safetyEquipmentPublicId);
         return '' +
           '    <div class="form-group editable form-railway-crossing">' +
           '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
           '        <p class="form-control-static">' + ( me.selectedAsset.getByProperty(codePublicId) || '–') + '</p>' +
-          '        <input type="text" class="form-control"  maxlength="15" name="tasoristeystunnus" value="' + ( me.selectedAsset.getByProperty(codePublicId) || '')  + '">' +
+          '        <input type="text" class="form-control"  maxlength="15" name="tasoristeystunnus" id="tasoristeystunnus" value="' + ( me.selectedAsset.getByProperty(codePublicId) || '')  + '">' +
           '    </div>' +
           '    <div class="form-group editable form-railway-crossing">' +
           '      <label class="control-label">Turvavarustus</label>' +
@@ -48,8 +52,9 @@
           '    <div class="form-group editable form-railway-crossing">' +
           '        <label class="control-label">' + 'Nimi' + '</label>' +
           '        <p class="form-control-static">' + ( me.selectedAsset.getByProperty(namePublicId) || '–') + '</p>' +
-          '        <input type="text" class="form-control" name="rautatien_tasoristeyksen_nimi" value="' + ( me.selectedAsset.getByProperty(namePublicId) || '')  + '">' +
-          '    </div>';
+          '        <input type="text" class="form-control" name="rautatien_tasoristeyksen_nimi" id="rautatien_tasoristeyksen_nimi" value="' + ( me.selectedAsset.getByProperty(namePublicId) || '')  + '">' +
+          '    </div>' +
+            components;
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -59,6 +64,12 @@
         selectedAsset.setPropertyByPublicId(safetyEquipmentPublicId, parseInt(eventTarget.val(), 10));
       });
 
+      rootElement.find('.form-railway-crossing input[type=text]').on('change input', function (event) {
+        var eventTarget = $(event.currentTarget);
+        var propertyPublicId = eventTarget.attr('id');
+        var propertyValue = eventTarget.val();
+        selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+      });
     };
   };
 })(this);
