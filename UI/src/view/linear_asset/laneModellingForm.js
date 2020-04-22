@@ -12,7 +12,7 @@
     dynamicFieldParent.call(this, fieldSettings, isDisabled);
     var me = this;
 
-    me.setSelectedValue = function(setValue, getValue, sideCode){
+    me.setSelectedValue = function(setValue, getValue, sideCode, withoutEventTriggers){
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
       if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
@@ -391,14 +391,14 @@
 
       if(selectedAsset.isSplit()) {
         //Render form A
-        renderFormElements(asset[0], isReadOnly, 'A', selectedAsset.setValue, selectedAsset.getValue, false, body);
+        renderFormElements(_.find(asset,{'marker': 'A'}), isReadOnly, 'A', selectedAsset.setValue, selectedAsset.getValue, false, body);
 
         if(!isReadOnly)
           renderExpireAndDeleteButtonsElement(selectedAsset, body, 'A');
 
         body.find('.form').append('<hr class="form-break">');
         //Render form B
-        renderFormElements(asset[1], isReadOnly, 'B', selectedAsset.setValue, selectedAsset.getValue, false, body);
+        renderFormElements(_.find(asset,{'marker': 'B'}), isReadOnly, 'B', selectedAsset.setValue, selectedAsset.getValue, false, body);
 
         if(!isReadOnly)
           renderExpireAndDeleteButtonsElement(selectedAsset, body, 'B');
