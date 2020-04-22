@@ -47,8 +47,11 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
 
   /*this need to be first because Scalatra route order starts from the bottom and this post method is the most generic*/
   post("/:assetTypeImport") {
-    validateOperation()
     val assetType = params("assetTypeImport")
+    if(assetType == Lanes.layerName && !userProvider.getCurrentUser().isOperator())
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    else
+      validateOperation()
     importAssets(fileParams("csv-file"), assetType)
   }
 
@@ -74,15 +77,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     }
 
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
-  }
-
-  post("/:assetTypeImport") {
-    val assetType = params("assetTypeImport")
-    if(assetType == Lanes.layerName && !userProvider.getCurrentUser().isOperator())
-      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-    else
-      validateOperation()
-    importAssets(fileParams("csv-file"), assetType)
   }
 
   post("/roadLinks") {
