@@ -202,13 +202,13 @@ INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 VALUES (primary_key_seq.nextval,'Maastosijainti X','db_migration_v224', sysdate);
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennevalo'), 'text', 0, 'db_migration_v224', 'location_coordinates_x', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastosijainti X'));
+VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennevalo'), 'number', 0, 'db_migration_v224', 'location_coordinates_x', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastosijainti X'));
 
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 VALUES (primary_key_seq.nextval,'Maastosijainti Y','db_migration_v224', sysdate);
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennevalo'), 'text', 0, 'db_migration_v224', 'location_coordinates_y', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastosijainti Y'));
+VALUES (primary_key_seq.nextval, (select id from asset_type where name = 'Liikennevalo'), 'number', 0, 'db_migration_v224', 'location_coordinates_y', (select id from LOCALIZED_STRING where VALUE_FI = 'Maastosijainti Y'));
 
 --Add property traffic light municipality id -> Kunta ID
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
