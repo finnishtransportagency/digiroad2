@@ -58,14 +58,14 @@
       return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
     };
 
-    var dateExtract = function (date) {
-      return new Date(_.head(date.values).value.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+    var dateExtract = function (value) {
+      return new Date(value.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
     };
 
     var datePeriodValueExtract = function (date) {
       var datePeriodValue = date.getPropertyValue().values;
-      var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-      var endDate = new Date(_.head(datePeriodValue).value.endDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+      var startDate = dateExtract(_.head(datePeriodValue).value.startDate);
+      var endDate = dateExtract(_.head(datePeriodValue).value.endDate);
 
       return {startDate: startDate, endDate: endDate};
     };
@@ -76,7 +76,7 @@
 
     var isEndDateAfterStartdate = function (date) {
       var datePeriods = datePeriodValueExtract(date);
-      return datePeriods.startDate <= datePeriods.endDate;
+      return isValidPeriodDate(datePeriods.startDate, datePeriods.endDate);
     };
 
     var showSuggestBox = function (authorizationPolicy, selectedLinearAsset, value, layerMode) {
@@ -102,18 +102,6 @@
           default: return false;
         }
       };
-    };
-
-    var getProperty = function(fields, prop) {
-      return _.find(fields, function (field) {
-        return field.publicId === prop;
-      });
-    };
-
-    var filterFieldsByPropertyType = function(fields, type) {
-      return _.filter(fields, function (field) {
-        return field.propertyType === type;
-      });
     };
 
     //To use the new lane preview on the assets form(point and dynamic forms) put lanePreview: true
@@ -404,12 +392,12 @@
             return date.hasValue() ? isEndDateAfterStartdate(date) : true;
           });
 
-          var isValidPeriodDate =  _.every(datePeriodField, function(date) {
+          var datesAreValid =  _.every(datePeriodField, function(date) {
             return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
           var isAnnualRepetition = _.some(_.filter(fields, function(field) {return field.getPropertyValue().publicId === 'annual_repetition';}), function(checkBox) { return checkBox.getValue(); });
-          return isAnnualRepetition ? isValidPeriodDate : isValidIntervalDate;
+          return isAnnualRepetition ? datesAreValid : isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
@@ -1016,28 +1004,28 @@
           var isValidLane = function (fields) {
             var isValidDatePeriod = function (fields) {
               var isValidDate = true;
-              var dateFields = filterFieldsByPropertyType(fields, 'date');
+              var dateFields = Property.filterPropertiesByPropertyType(fields, 'date');
 
               if (dateFields.length == 2) {
-                var startDate = getProperty(dateFields, 'start_date');
-                var endDate = getProperty(dateFields, 'end_date');
+                var startDate = Property.getPropertyByPublicId(dateFields, 'start_date');
+                var endDate = Property.getPropertyByPublicId(dateFields, 'end_date');
 
                 if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
-                  isValidDate = isValidPeriodDate(dateExtract(startDate), dateExtract(endDate));
+                  isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
               }
               return isValidDate;
             };
 
             var isValidRoadAddress = function (fields) {
               var isValidRoadAddress = true;
-              var initialRoadAddressesFields = filterFieldsByPropertyType(fields, 'read_only_number');
-              var initialRoadPartNumber = getProperty(initialRoadAddressesFields, 'initial_road_part_number');
-              var initialDistance = getProperty(initialRoadAddressesFields, 'initial_distance');
+              var initialRoadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'read_only_number');
+              var initialRoadPartNumber = Property.getPropertyByPublicId(initialRoadAddressesFields, 'initial_road_part_number');
+              var initialDistance = Property.getPropertyByPublicId(initialRoadAddressesFields, 'initial_distance');
 
               if (!_.isUndefined(initialRoadPartNumber)) {
-                var roadAddressesFields = filterFieldsByPropertyType(fields, 'number');
-                var endRoadPartNumber = getProperty(roadAddressesFields, 'end_road_part_number');
-                var endDistance = getProperty(roadAddressesFields, 'end_distance');
+                var roadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'number');
+                var endRoadPartNumber = Property.getPropertyByPublicId(roadAddressesFields, 'end_road_part_number');
+                var endDistance = Property.getPropertyByPublicId(roadAddressesFields, 'end_distance');
 
                 if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
                   _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0]) ||

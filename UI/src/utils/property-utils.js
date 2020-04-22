@@ -17,8 +17,18 @@
         .value();
     };
 
+    this.getPropertyByPublicId = function(properties, publicId){
+      return _.find(properties, {'publicId': publicId});
+    };
+
+    this.filterPropertiesByPropertyType = function(properties, propertyType) {
+      return _.filter(properties, {'propertyType': propertyType});
+    };
+
   root.Property = {
-    getPropertyValue: getPropertyValue
+    getPropertyValue: getPropertyValue,
+    getPropertyByPublicId: getPropertyByPublicId,
+    filterPropertiesByPropertyType: filterPropertiesByPropertyType
   };
 
 }(this));

@@ -25,8 +25,8 @@
     };
 
     this.getValue = function (asset) {
-      var property = _.isUndefined(asset.value) ?  _.find(asset.properties, function(prop) {return prop.publicId === "lane_code";}) : _.find(asset.value.properties, function(prop) {return prop.publicId === "lane_code";});
-      return _.head(property.values).value.toString();
+      var properties = _.isUndefined(asset.value) ? asset.properties: asset.value.properties;
+      return _.head(Property.getPropertyByPublicId(properties, 'lane_code').values).value.toString();
     };
 
     this.renderFeaturesByLinearAssets = function(linearAssets, zoomLevel){
