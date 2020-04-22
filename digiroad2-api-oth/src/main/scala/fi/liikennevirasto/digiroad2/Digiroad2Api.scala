@@ -87,6 +87,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val damagedByThawService: DamagedByThawService = Digiroad2Context.damagedByThawService,
                    val roadWorkService: RoadWorkService = Digiroad2Context.roadWorkService,
                    val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
+                   val cyclingAndWalkingService : CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService)
 
   extends ScalatraServlet
@@ -1037,7 +1038,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "track" -> link.attributes.getOrElse("VIITE_TRACK",  link.attributes.get("TEMP_TRACK")),
           "startAddrMValue" -> link.attributes.getOrElse("VIITE_START_ADDR", link.attributes.get("TEMP_START_ADDR")),
           "endAddrMValue" ->  link.attributes.getOrElse("VIITE_END_ADDR", link.attributes.get("TEMP_END_ADDR")),
-          "administrativeClass" -> link.administrativeClass.value
+          "administrativeClass" -> link.administrativeClass.value,
+          "constructionType" -> extractIntValue(link.attributes, "constructionType"),
+          "linkType" -> (if (extractIntValue(link.attributes, "linkType") != None) LinkType(extractIntValue(link.attributes, "linkType").asInstanceOf[Int]) else UnknownLinkType.value),
+          "functionalClass" -> extractIntValue(link.attributes, "functionalClass")
         )
       }
     }
@@ -1153,6 +1157,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  def createFakeNewLinearAssetsForValidations(existingAssets: Seq[PersistedLinearAsset], inputValues: Option[Value]): Seq[NewLinearAsset] = {
+    inputValues match {
+      case Some(values) => existingAssets.map(existingAsset => NewLinearAsset(existingAsset.linkId, existingAsset.startMeasure,
+        existingAsset.endMeasure, values, existingAsset.sideCode, existingAsset.vvhTimeStamp, existingAsset.geomModifiedDate))
+      case _ => Seq()
+    }
+  }
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -1164,8 +1176,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
     val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
+    val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
+
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
-    validateValues(valueOption, usedService)
+    assets.foreach(usedService.validateCondition)
 
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {
@@ -1547,10 +1561,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
-  private def validateValues(value: Option[Value], service: LinearAssetOperations): Unit = {
-    service.validateAssetValue(value)
-  }
-
   get("/manoeuvres") {
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
@@ -1910,6 +1920,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case DamagedByThaw.typeId => damagedByThawService
       case RoadWorksAsset.typeId => roadWorkService
       case ParkingProhibition.typeId => parkingProhibitionService
+      case CyclingAndWalking.typeId => cyclingAndWalkingService
       case _ => linearAssetService
     }
   }
@@ -2051,7 +2062,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         val municipalitiesNumbers =  userConfiguration.authorizedMunicipalities ++ userConfiguration.municipalityNumber
         val verifiedAssetTypes = verificationService.getCriticalAssetTypesByMunicipality(municipalitiesNumbers.head)
         val totalSuggestedAssets = verificationService.getNumberSuggestedAssetNumber(municipalitiesNumbers)
-        val modifiedAssetTypes = verificationService.getAssetLatestModifications(municipalitiesNumbers)
+        val modifiedAssetTypes = verificationService.getAssetsLatestModifications(municipalitiesNumbers)
 
         val updateUserLastLoginDate = user.copy(configuration = userConfiguration.copy(lastLoginDate = Some(LocalDate.now().toString)))
         userProvider.updateUserConfiguration(updateUserLastLoginDate)

@@ -45,7 +45,8 @@
       carryingCapacity: 400,
       roadWorksAsset: 420,
       parkingProhibition: 430,
-      laneModellingTool: 440
+      cyclingAndWalking: 440,
+      laneModellingTool: 450
     };
 
     var assetGroups = {
@@ -84,6 +85,23 @@
 
     var isSuggestBoxUnset = function (selectedLinearAsset) {
       return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
+    };
+
+    var cyclingAndWalkingValidator = function(selectedLinearAsset, id) {
+      if (_.isUndefined(selectedLinearAsset) || _.isUndefined(id))
+        return false;
+
+      var currentAsset = _.head(selectedLinearAsset);
+
+      return function() {
+        switch (id) {
+          case 3: return currentAsset.functionalClass !== 8 || currentAsset.linkType !== 8;
+          case 4: return ![1,3].includes(currentAsset.administrativeClass);
+          case 5: return currentAsset.administrativeClass !== 2;
+          case 18: return currentAsset.linkType !== 12;
+          default: return false;
+        }
+      };
     };
 
     var getProperty = function(fields, prop) {
@@ -130,7 +148,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -162,7 +180,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -194,7 +212,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "massarajoitus", type: 'integer', publicId: "weight", unit: "Kg", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -227,7 +245,7 @@
         fields: [
             {label: "2-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_2_axel", unit: "Kg", weight: 1},
             {label: "3-akselisen telin rajoitus", type: 'integer', publicId: "bogie_weight_3_axel", unit: "Kg", weight: 2},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -258,7 +276,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "korkeusrajoitus", type: 'integer', publicId: "height", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -289,7 +307,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "pituusrajoitus", type: 'integer', publicId: "length", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -321,7 +339,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveysrajoitus", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -349,7 +367,7 @@
         label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm({
           fields: [
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 1, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 1, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -390,14 +408,15 @@
             return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
-          return isValidPeriodDate && isValidIntervalDate;
+          var isAnnualRepetition = _.some(_.filter(fields, function(field) {return field.getPropertyValue().publicId === 'annual_repetition';}), function(checkBox) { return checkBox.getValue(); });
+          return isAnnualRepetition ? isValidPeriodDate : isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
             { publicId: 'kelirikko', label: 'rajoitus', type: 'number', weight: 1, unit: 'kg'},
             { publicId: 'spring_thaw_period', label: 'Kelirikkokausi', type: 'date_period', multiElement: true, weight: 2},
             { publicId: "annual_repetition", label: 'Vuosittain toistuva', type: 'checkbox', values: [{id: 0, label: 'Ei toistu'}, {id: 1, label: 'Jokavuotinen'}], defaultValue: 0, weight: 3},
-            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox',  weight: 4, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            { publicId: "suggest_box", label: "vihjetieto", type: 'checkbox', defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}],  weight: 4, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -429,7 +448,7 @@
         form: new DynamicAssetForm({
           fields: [
             {label: "leveys", type: 'integer', publicId: "width", unit: "cm", required: true, weight: 1},
-            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         })
       },
@@ -467,7 +486,7 @@
                   {id: 50, label: 'Muut pinnoitteet'}
                 ]
               },
-              {label: "vihjetieto", type: 'checkbox', defaultValue: "0", publicId: "suggest_box", weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+              {label: "vihjetieto", type: 'checkbox', defaultValue: "0", publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 2, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
             ]
           }
         ),
@@ -719,17 +738,17 @@
                         {
                             label: 'Talvihoitoluokka', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "20",
                             values: [
-                                {hidden: true, id: 1, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
-                                {hidden: true, id: 2, label: '(Is) Normaalisti aina paljaana'},
-                                {hidden: true, id: 3, label: '(I) Normaalisti paljaana'},
-                                {hidden: true, id: 4, label: '(Ib) Pääosin suolattava, ajoittain hieman liukas'},
-                                {hidden: true, id: 5, label: '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'},
-                                {hidden: true, id: 6, label: '(II) Pääosin lumipintainen'},
-                                {hidden: true, id: 7, label: '(III) Pääosin lumipintainen, pisin toimenpideaika'},
-                                {hidden: true, id: 8, label: '(L) Kevyen liikenteen laatukäytävät'},
-                                {hidden: true, id: 9, label: '(K1) Melko vilkkaat kevyen liikenteen väylät'},
-                                {hidden: true, id: 10, label: '(K2) Kevyen liikenteen väylien perus talvihoitotaso'},
-                                {hidden: true, id: 11, label: '(ei talvih.) Kevyen liikenteen väylät, joilla ei talvihoitoa'},
+                                {hidden: function() {return true;} , id: 1, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa'},
+                                {hidden: function() {return true;}, id: 2, label: '(Is) Normaalisti aina paljaana'},
+                                {hidden: function() {return true;}, id: 3, label: '(I) Normaalisti paljaana'},
+                                {hidden: function() {return true;}, id: 4, label: '(Ib) Pääosin suolattava, ajoittain hieman liukas'},
+                                {hidden: function() {return true;}, id: 5, label: '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'},
+                                {hidden: function() {return true;}, id: 6, label: '(II) Pääosin lumipintainen'},
+                                {hidden: function() {return true;}, id: 7, label: '(III) Pääosin lumipintainen, pisin toimenpideaika'},
+                                {hidden: function() {return true;}, id: 8, label: '(L) Kevyen liikenteen laatukäytävät'},
+                                {hidden: function() {return true;}, id: 9, label: '(K1) Melko vilkkaat kevyen liikenteen väylät'},
+                                {hidden: function() {return true;}, id: 10, label: '(K2) Kevyen liikenteen väylien perus talvihoitotaso'},
+                                {hidden: function() {return true;}, id: 11, label: '(ei talvih.) Kevyen liikenteen väylät, joilla ei talvihoitoa'},
                                 {id: 20, label: 'Pääkadut ja vilkkaat väylät'},
                                 {id: 30, label: 'Kokoojakadut'},
                                 {id: 40, label: 'Tonttikadut'},
@@ -823,7 +842,7 @@
           fields : [
             {label: 'Työn tunnus', publicId: 'tyon_tunnus', type: 'text', weight: 1},
             {label: 'Arvioitu kesto', publicId: 'arvioitu_kesto', type: 'date_period', required: true, multiElement: false, weight: 2},
-	          {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
+            {label: "Vihjetieto", type: 'checkbox', publicId: "suggest_box", defaultValue: "0", values: [{id: 0, label: 'Tarkistettu'}, {id: 1, label: 'Vihjetieto'}], weight: 3, showAndHide: showSuggestBox, isUnSet: isSuggestBoxUnset}
           ]
         }),
         isMultipleLinkSelectionAllowed: true,
@@ -871,6 +890,66 @@
         hasMunicipalityValidation: true,
         readOnlyLayer: TrafficSignReadOnlyLayer,
         minZoomForContent: oneKmZoomLvl
+      },
+      {
+        typeId: assetType.cyclingAndWalking,
+        singleElementEventCategory: 'cyclingAndWalking',
+        multiElementEventCategory: 'cyclingAndWalkings',
+        layerName: 'cyclingAndWalking',
+        title: 'Käpy tietolaji',
+        newTitle: 'Uusi Käpy tietolaji',
+        className: 'cycling-and-walking',
+        isSeparable: true,
+        allowComplementaryLinks: true,
+        editControlLabels: {
+          title: 'Käpy tietolaji',
+          enabled: 'Käpy tietolaji',
+          disabled: 'Ei käpy tietolaji'
+        },
+        authorizationPolicy: new CyclingAndWalkingAuthorizationPolicy(),
+        isVerifiable: false,
+        style: new CyclingAndWalkingStyle(),
+        form: new DynamicAssetForm ( {
+          fields : [
+            {
+              label: 'Käpy tietolaji', required: 'required', type: 'single_choice', publicId: "cyclingAndWalking_type", defaultValue: "99", weight: 1,
+              values: [
+                {id: 99, label: 'Ei tietoa', disabled: true },
+                {id: 1 , label:'Pyöräily ja kävely kielletty'},
+                {id: 2 , label:'Pyöräily kielletty'},
+                {id: 3 , label:'Jalankulun ja pyöräilyn väylä', hidden: cyclingAndWalkingValidator },
+                {id: 4 , label:'Maantie tai yksityistie', hidden: cyclingAndWalkingValidator},
+                {id: 5 , label:'Katu', hidden: cyclingAndWalkingValidator},
+                {id: 6 , label:'Pyöräkatu'},
+                {id: 7 , label:'Kylätie'},
+                {id: 9 , label:'Pihakatu'},
+                {id: 8 , label:'Kävelykatu'},
+                {id: 10 , label:'Pyöräkaista'},
+                {id: 11 , label:'Pyörätie'},
+                {id: 12 , label:'Kaksisuuntainen pyörätie'},
+                {id: 13 , label:'Yhdistetty pyörätie ja jalkakäytävä, yksisuuntainen pyörille'},
+                {id: 14 , label:'Yhdistetty pyörätie ja jalkakäytävä, kaksisuuntainen pyörille'},
+                {id: 16 , label:'Puistokäytävä'},
+                {id: 15 , label:'Jalkakäytävä'},
+                {id: 17 , label:'Pururata'},
+                {id: 18 , label:'Ajopolku', hidden: cyclingAndWalkingValidator},
+                {id: 19 , label:'Polku'},
+                {id: 20 , label:'Lossi tai lautta'}
+              ]
+            }
+          ]
+        }),
+        isMultipleLinkSelectionAllowed: true,
+        hasMunicipalityValidation: true,
+        readOnlyLayer: TrafficSignReadOnlyLayer,
+        minZoomForContent: oneKmZoomLvl,
+        saveCondition: function (fields) {
+
+            return _.isEmpty(fields) ||  _.some(fields, function (field) {
+              var publicId = field.getPropertyValue().publicId;
+              return field.hasValue() && (publicId === "cyclingAndWalking_type" && field.getValue() !== "99");
+            });
+        }
       },
       {
         typeId: assetType.laneModellingTool,
@@ -1148,8 +1227,8 @@
           {symbolUrl: 'images/service_points/borderCrossingLeftMenu.png', label: 'Rajanylityspaikka', cssClass: 'border-crossing'},
           {symbolUrl: 'images/service_points/loadingTerminalForCarsLeftMenu.png', label: 'Autojen lastausterminaali', cssClass: 'loading-terminal'},
           {symbolUrl: 'images/service_points/parkingAreaBusesAndTrucksLeftMenu.png', label: 'Linja- ja kuorma-autojen pysäköintialue', cssClass: 'parking-area'},
-          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste', cssClass: 'charging-point'}
-
+          {symbolUrl: 'images/service_points/chargingPointElectricCarsLeftMenu.png', label: 'Sähköautojen latauspiste', cssClass: 'charging-point'},
+          {symbolUrl: 'images/service_points/culvert.png', label: 'Tierumpu', cssClass: 'culvert-point'}
         ],
         formLabels: {
           singleFloatingAssetLabel: 'palvelupisteen',
@@ -1160,8 +1239,11 @@
         authorizationPolicy: new ServicePointAuthorizationPolicy(),
         form: ServicePointForm,
         saveCondition: function (selectedAsset, authorizationPolicy) {
-          var selected = selectedAsset.get();
-          return selected.services.length > 0 && (authorizationPolicy.isMunicipalityMaintainer() || authorizationPolicy.isOperator());
+          return  saveConditionWithSuggested(selectedAsset, authorizationPolicy) &&
+                 _.chain(selectedAsset.get().services)
+                  .filter(function(x) {return x.serviceType === 19;})
+                  .value()
+                  .every(function (x) {return _.isUndefined(x.weightLimit) || !_.isNaN(x.weightLimit) && !!parseInt(x.weightLimit);});
         },
         isSuggestedAsset: true,
         hasMunicipalityValidation: true,

@@ -17,9 +17,9 @@ class SpeedLimitUpdaterSpec extends FunSuite with Matchers {
     val eventBus = new DigiroadEventBus()
     val updater = TestActorRef[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]](Props(classOf[SpeedLimitUpdater[Long, UnknownSpeedLimit, ChangeSet]], mockProvider), name = "testSpeedLimitUpdater")(system)
     eventBus.subscribe(updater, "testSpeedLimits:purgeUnknownSpeedLimits")
-    eventBus.publish("testSpeedLimits:purgeUnknownSpeedLimits", Set(1l))
+    eventBus.publish("testSpeedLimits:purgeUnknownSpeedLimits", (Set(1l), Seq()))
 
-    verify(mockProvider, times(1)).purgeUnknown(Set(1l))
+    verify(mockProvider, times(1)).purgeUnknown(Set(1l), Seq())
   }
 
   test("should persist unknown speed limits") {

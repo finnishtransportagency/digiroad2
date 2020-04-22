@@ -119,9 +119,24 @@ trait LinearAssetOperations {
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("municipality" -> roadLink.municipalityCode))
   }
 
+  private def addConstructionTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
+  }
+
+  private def addFunctionalClassAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("functionalClass" -> roadLink.functionalClass))
+  }
+
+  private def addLinkTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("linkType" -> roadLink.linkType.value))
+  }
+
   private def enrichLinearAssetAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val linearAssetAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
-      addMunicipalityCodeAttribute
+      addMunicipalityCodeAttribute,
+      addConstructionTypeAttribute,
+      addFunctionalClassAttribute,
+      addLinkTypeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
@@ -307,7 +322,8 @@ trait LinearAssetOperations {
     val generatedChangeSet = linearAssetsAndChanges.map(_._2)
     val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
     val newLinearAsset = if((linearAssets ++ existingAssets).nonEmpty) {
-      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes)
+//      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes) //Temporarily disabled according to DROTH-2327
+      Seq()
     } else Seq()
 
     (linearAssets ++ newLinearAsset, changeSetF)
@@ -888,7 +904,7 @@ trait LinearAssetOperations {
     ids
   }
 
-  def validateAssetValue(value: Option[Value]): Unit = {}
+  def validateCondition(asset: NewLinearAsset): Unit = {}
 
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 

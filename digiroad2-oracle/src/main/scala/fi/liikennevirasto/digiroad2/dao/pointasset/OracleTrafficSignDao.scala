@@ -1,8 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -10,12 +7,12 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, Point, Traff
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
                                 lon: Double, lat: Double,
@@ -80,6 +77,15 @@ object OracleTrafficSignDao {
   def fetchByFilterWithExpired(queryFilter: String => String): Seq[PersistedTrafficSign] = {
     val queryWithFilter = queryFilter(query())
     queryToPersistedTrafficSign(queryWithFilter)
+  }
+
+
+  def fetchByFilterWithExpiredByIds(ids: Set[Long]): Seq[PersistedTrafficSign] = {
+    MassQuery.withIds(ids) { idTableName =>
+      val filter = s"join $idTableName i on i.id = a.id "
+      queryToPersistedTrafficSign( query + " "+ filter )
+    }
+
   }
 
   def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
@@ -359,6 +365,7 @@ object OracleTrafficSignDao {
   }
 
   def assetRowToProperty(assetRows: Seq[TrafficSignRow]): Seq[Property] = {
+
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
       Property(
@@ -373,7 +380,11 @@ object OracleTrafficSignDao {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition))
                 case _ => Seq()
               }
-            case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+            case _  =>
+
+              val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+              Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
           }
         })
     }.toSeq

@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.Point
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import com.github.tototoshi.slick.MySQLJodaSupport._
 
 object OracleWidthLimitDao {
   val typeId = TrWidthLimit.typeId

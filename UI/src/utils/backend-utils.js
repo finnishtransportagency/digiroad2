@@ -524,10 +524,6 @@
       return $.getJSON('api/suggested/' + municipalityCode + '/' + typeId);
     };
 
-    this.getStructuredInfo = function(municipalityName, municipalityCode) {
-      return $.getJSON('api/buildInfo/' + municipalityName + '/' + municipalityCode);
-    };
-
     this.verifyMunicipalityAssets = function(typeIds, municipalityCode) {
       eventbus.trigger('municipality:verifying');
       $.ajax({
@@ -655,7 +651,7 @@
     };
 
     this.getGeocode = function(address) {
-      var addressNormalized = address.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      var addressNormalized = address.normalize("NFC");
       var parsedAddress = addressNormalized.split(/^(\s*\w.*)(\s)(\s*\d+\s*),(\s*\w.*)/)
         .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
         .map(function(elem) { return elem.trim(); });

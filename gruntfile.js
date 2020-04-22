@@ -112,14 +112,11 @@ module.exports = function(grunt) {
           },
           {
             context: '/vkm-api',
-            host: 'julkinen.vayla.fi',
-            port: '443',
-            https: true,
-            changeOrigin: true,
-            xforward: false,
-            headers: {
-              host: 'https://julkinen.vayla.fi/vkm-api/'
-            }
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
           }
         ]
       }
