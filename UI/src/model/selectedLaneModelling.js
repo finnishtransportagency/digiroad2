@@ -208,7 +208,7 @@
 
     function omitUnrelevantProperties(lanes){
       return _.map(lanes, function (lane) {
-        var laneWithoutUnrelevantInfo = _.omit(lane, ['linkId', 'sideCode', 'selectedLinks', 'points', 'marker']);
+        var laneWithoutUnrelevantInfo = _.omit(lane, ['linkId', 'linkIds', 'sideCode', 'selectedLinks', 'points', 'marker']);
         laneWithoutUnrelevantInfo.properties = _.filter(laneWithoutUnrelevantInfo.properties, function (prop) {
           return !_.includes(['initial_road_number', 'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance'], prop.publicId);
         });
