@@ -46,10 +46,10 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
   }
 
   /*this need to be first because Scalatra route order starts from the bottom and this post method is the most generic*/
-  post("/:pointAssetTypeImport") {
+  post("/:assetTypeImport") {
     validateOperation()
-    val assetType = params("pointAssetTypeImport")
-    importPointAssets(fileParams("csv-file"), assetType)
+    val assetType = params("assetTypeImport")
+    importAssets(fileParams("csv-file"), assetType)
   }
 
   post("/maintenanceRoads") {
