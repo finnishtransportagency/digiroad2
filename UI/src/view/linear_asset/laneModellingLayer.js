@@ -82,7 +82,6 @@
           })
           .map(function(feature) {
             var closestP = feature.getGeometry().getClosestPoint(point);
-            //TODO be sure about this distance
             var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
             return {
               feature: feature,
@@ -147,7 +146,7 @@
 
     this.onSelect = function(evt) {
       if(me.selectableZoomLevel()) {
-        if(evt.selected.length !== 0) {
+        if(!_.isEmpty(evt.selected)) {
           var feature = evt.selected[0];
           var properties = feature.getProperties();
           verifyClickEvent(evt, properties);

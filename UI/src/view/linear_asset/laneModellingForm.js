@@ -79,6 +79,7 @@
       rootElement.find('#feature-attributes-form').html(self.renderForm(self._assetTypeConfiguration.selectedLinearAsset, false));
       rootElement.find('#feature-attributes-form').prepend(self.renderPreview(self._assetTypeConfiguration.selectedLinearAsset));
       rootElement.find('#feature-attributes-form').append(self.renderLaneButtons(self._assetTypeConfiguration.selectedLinearAsset));
+      rootElement.find('#feature-attributes-footer').html(self.renderFooter(self._assetTypeConfiguration.selectedLinearAsset));
     }
 
     var AvailableForms = function(){
@@ -135,13 +136,8 @@
       new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
       eventbus.on(self.events('selected'), function () {
-        var isDisabled = false;
         setInitialForm();
-        rootElement.find('#feature-attributes-header').html(self.renderHeader(self._assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-form').html(self.renderForm(self._assetTypeConfiguration.selectedLinearAsset, isDisabled));
-        rootElement.find('#feature-attributes-form').prepend(self.renderPreview(self._assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-form').append(self.renderLaneButtons(self._assetTypeConfiguration.selectedLinearAsset));
-        rootElement.find('#feature-attributes-footer').html(self.renderFooter(self._assetTypeConfiguration.selectedLinearAsset));
+        reloadForm(rootElement);
       });
 
       eventbus.on(self.events('unselect', 'cancelled'), function() {
@@ -169,13 +165,8 @@
 
       eventbus.on('application:readOnly', function(){
         if(self._assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && self._assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
-          var isDisabled = false;
           setInitialForm();
-          rootElement.find('#feature-attributes-header').html(self.renderHeader(self._assetTypeConfiguration.selectedLinearAsset));
-          rootElement.find('#feature-attributes-form').html(self.renderForm(self._assetTypeConfiguration.selectedLinearAsset, isDisabled));
-          rootElement.find('#feature-attributes-form').prepend(self.renderPreview(self._assetTypeConfiguration.selectedLinearAsset));
-          rootElement.find('#feature-attributes-form').append(self.renderLaneButtons(self._assetTypeConfiguration.selectedLinearAsset));
-          rootElement.find('#feature-attributes-footer').html(self.renderFooter(self._assetTypeConfiguration.selectedLinearAsset));
+          reloadForm(rootElement);
         }
       });
     };
