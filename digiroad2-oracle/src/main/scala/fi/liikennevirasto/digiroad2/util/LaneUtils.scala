@@ -189,7 +189,7 @@ object LaneUtils {
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
 
-        lanesToInsert.map { lane =>
+        lanesToInsert.flatMap { lane =>
           val laneCodeProperty = lane.properties.find(_.publicId == "lane_code")
                                                 .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
@@ -207,23 +207,17 @@ object LaneUtils {
           val endPoint = if (isMainLane || endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
 
           calculateStartAndEndPoint(road, startPoint, endPoint) match{
-            case (start: Double, end: Double) =>  PersistedLane(0, road.linkId, sideCode, laneCode, road.municipalityCode,
+            case (start: Double, end: Double) =>  Some(PersistedLane(0, road.linkId, sideCode, laneCode, road.municipalityCode,
                                                       start, end, Some(username), Some(DateTime.now()),
                                                       None, None, expired = false,
-                                                      vvhTimeStamp, None, lane.properties)
-
+                                                      vvhTimeStamp, None, lane.properties))
             case _ => None
           }
-
         }
       }
 
       //Create lanes
-      allLanesToCreate.filterNot(_ == None)
-                      .flatMap {
-                        case lane: PersistedLane => laneService.createWithoutTransaction(lane, username).toString
-                        case _ => None //Just in case of something weird happened
-                      }
+      allLanesToCreate.map(laneService.createWithoutTransaction(_, username))
       
     }
 
