@@ -409,11 +409,11 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     assets.malformedRows.size should be (2)
     assets.malformedRows.last.malformedParameters should contain allOf ("kaista", "tie")
-    assets.malformedRows.head.malformedParameters should contain allOf ("katyyppi", "aet", "let")
+    assets.malformedRows.head.malformedParameters should contain allOf ("kaista", "katyyppi", "aet", "let")
   }
 
   test("validation for lanes import fails if parameters combinations are invalid", Tag("db")) {
-    val laneRow = Map("kaista" -> 12, "katyyppi" -> 1, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
+    val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
 
     val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
     val assets = lanesCsvImporter.processing(invalidCsv, testUser)
