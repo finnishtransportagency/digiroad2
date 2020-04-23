@@ -60,9 +60,7 @@
 
         return getOffsetPoint(asset, baseOffset);
       }else{
-        var laneCode = _.find(asset.properties, function (property) {
-          return property.publicId === "lane_code";
-        });
+        var laneCode = Property.getPropertyByPublicId(asset.properties, 'lane_code');
 
         if (_.head(laneCode.values).value.toString()[1] == '1') {
           if (asset.sideCode === 1) {

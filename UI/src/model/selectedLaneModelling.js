@@ -79,7 +79,7 @@
 
       var duplicateLaneCounter = 0;
       return _.map(lanesSortedByLaneCode, function (lane) {
-        if(_.includes(laneCodesToPutMarkers, getLaneCodeValue(lane))) {
+        if(_.includes(laneCodesToPutMarkers, getLaneCodeValue(lane).toString())) {
           if (duplicateLaneCounter === 0){
             lane.marker = 'A';
             duplicateLaneCounter++;

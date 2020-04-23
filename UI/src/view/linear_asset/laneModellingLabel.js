@@ -25,7 +25,7 @@
     };
 
     this.getValue = function (asset) {
-      var properties = _.isUndefined(asset.value) ? asset.properties: asset.value.properties;
+      var properties = _.isUndefined(asset.value) ? asset.properties: asset.value;
       return _.head(Property.getPropertyByPublicId(properties, 'lane_code').values).value.toString();
     };
 
