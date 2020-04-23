@@ -100,8 +100,7 @@ trait LaneOperations {
     val modifiedLanes = projectedLanes.filterNot {lane => generatedMappedById(lane.id).nonEmpty } ++ changeSet.generatedPersistedLanes
 
     publish(eventBus, changeSet, modifiedLanes)
-    filledTopology.filter(lane => lane.laneAttributes.find(_.publicId == "lane_code").head.values.head.value.toString.charAt(1) == '1')
-
+    filledTopology.filter(lane => dao.MAIN_LANES.contains(lane.laneAttributes.find(_.publicId == "lane_code").head.values.head.value))
   }
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]) {
