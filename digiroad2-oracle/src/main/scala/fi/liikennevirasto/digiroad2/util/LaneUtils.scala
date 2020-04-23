@@ -14,7 +14,12 @@ import org.joda.time.DateTime
 
 case class RoadAddressesAux( linkId: Long, roadNumber: Long, roadPart: Long, track: Track, municipalityCode: Int,
                           startMValue: Double, endMValue: Double, startAddrMValue:Long, endAddrMValue: Long)
-
+case class LaneUtils(){
+  def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
+    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
+    LaneUtils.processNewLanesByRoadAddress(newIncomeLanes, laneRoadAddressInfo, sideCode, username, withTransaction)
+  }
+}
 object LaneUtils {
   lazy val roadLinkTempDAO: RoadLinkTempDAO = new RoadLinkTempDAO
   val eventbus = new DummyEventBus

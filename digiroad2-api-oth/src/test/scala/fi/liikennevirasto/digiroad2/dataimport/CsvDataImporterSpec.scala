@@ -2,6 +2,7 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{ByteArrayInputStream, InputStream}
+
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -9,11 +10,12 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitS
 import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.GeometryTransform
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils}
 import javax.sql.DataSource
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
@@ -46,6 +48,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val testUserProvider = userProvider
   private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  private val mockLaneUtils = MockitoSugar.mock[LaneUtils]
 
   val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
@@ -65,8 +68,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   object lanesCsvImporter extends LanesCsvImporter(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def laneUtils = mockLaneUtils
     override def eventBus: DigiroadEventBus = mockEventBus
-
   }
 
   object roadLinkCsvImporter extends RoadLinkCsvImporter(mockRoadLinkService, mockEventBus) {
@@ -424,6 +427,9 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   test("Create valid lane", Tag("db")) {
     runWithRollback {
+      when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewIncomeLane]], any[LaneRoadAddressInfo],
+        any[Int], any[String], any[Boolean])).thenReturn()
+
       val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
 
       val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
