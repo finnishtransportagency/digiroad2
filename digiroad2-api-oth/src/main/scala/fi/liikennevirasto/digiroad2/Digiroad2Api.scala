@@ -2158,15 +2158,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
 
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
-    val initialRoadNumber = (parsedBody \ "initial_road_number")extractOrElse[Long](halt(BadRequest("Malformed 'initial_road_number' parameter")))
-    val initialRoadPartNumber = (parsedBody \ "initial_road_part_number")extractOrElse[Long](halt(BadRequest("Malformed 'initial_road_part_number' parameter")))
-    val initialDistance = (parsedBody \ "initial_distance")extractOrElse[Long](halt(BadRequest("Malformed 'initial_distance' parameter")))
-    val endRoadPartNumber = (parsedBody \ "end_road_part_number")extractOrElse[Long](halt(BadRequest("Malformed 'end_road_part_number' parameter")))
-    val endDistance = (parsedBody \ "end_distance")extractOrElse[Long](halt(BadRequest("Malformed 'end_distance' parameter")))
-    val track  = (parsedBody \ "track")extractOrElse[Int](halt(BadRequest("Malformed 'track' parameter")))
-
-    val laneRoadAddressInfo = LaneRoadAddressInfo(initialRoadNumber, initialRoadPartNumber, initialDistance, endRoadPartNumber, endDistance, track)
-    val incomingLanes = (parsedBody \ "lanes").extract[Set[NewIncomeLane]]
+    val laneRoadAddressInfo = (parsedBody \ "laneRoadAddressInfo").extractOrElse[LaneRoadAddressInfo](halt(BadRequest("Malformed 'laneRoadAddressInfo' parameter")))
+    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
 
     LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)
   }
