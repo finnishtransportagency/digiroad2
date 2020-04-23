@@ -99,27 +99,20 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   /**
     * Iterates a set of link ids  and returns lanes. Used by LaneService.getByRoadLinks.
     */
-  def fetchMainLanesByLinkIds( linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLane] = {
-    val filterExpired = if (includeExpired) "" else " AND (l.valid_to > sysdate OR l.valid_to is null) "
+  def fetchLanesByLinkIds( linkIds: Seq[Long], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
+    val filterExpired = " (l.valid_to > sysdate OR l.valid_to IS NULL ) "
+    val laneCodeClause = " l.lane_code IN (11, 21, 31)"
+
+    val whereClause = (includeExpired, mainLanes ) match {
+      case (true, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
+      case (_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
+      case (true, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
+      case _ => " ORDER BY l.lane_code ASC"
+    }
 
     MassQuery.withIds(linkIds.toSet) { idTableName =>
         val filter = s""" JOIN $idTableName i ON i.id = pos.link_id
-                  WHERE l.lane_code IN (11, 21, 31)
-                  $filterExpired
-                  ORDER BY l.lane_code ASC """
-
-      getLanesFilterQuery( withFilter(filter))
-    }
-  }
-
-
-  def fetchLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false): Seq[PersistedLane] = {
-    val filterExpired = if (includeExpired) "" else " WHERE (l.valid_to > sysdate OR l.valid_to IS NULL ) "
-
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
-      val filter = s""" JOIN $idTableName i ON i.id = pos.link_id
-                   $filterExpired
-                   ORDER BY l.lane_code ASC """
+                        $whereClause """
 
       getLanesFilterQuery( withFilter(filter))
     }
@@ -132,12 +125,12 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
   def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int], includeExpired: Boolean = false): Seq[PersistedLane] = {
-    val filterExpired = s" (l.valid_to > sysdate or l.valid_to is null) "
+    val filterExpired = s" (l.valid_to > sysdate or l.valid_to IS NULL ) "
     val laneCodeClause = s" l.lane_code in (${laneCode.mkString(",")})"
 
     val whereClause = (includeExpired, laneCode.nonEmpty ) match {
       case (true, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
-      case(_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
+      case (_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
       case (true, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
     }

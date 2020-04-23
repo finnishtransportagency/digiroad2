@@ -228,12 +228,7 @@ trait LaneOperations {
         case _ => false
       }
     }
-    def givenAndEqualLongs(v1: Option[Long], v2: Option[Long]) = {
-      (v1, v2) match {
-        case (Some(l1), Some(l2)) => l1 == l2
-        case _ => false
-      }
-    }
+
     // Test if these change infos extend each other. Then take the small little piece just after tolerance value to test if it is true there
     val (mStart, mEnd) = (givenAndEqualDoubles(replacementChangeInfo.newStartMeasure, extensionChangeInfo.newEndMeasure),
       givenAndEqualDoubles(replacementChangeInfo.newEndMeasure, extensionChangeInfo.newStartMeasure)) match {
@@ -256,7 +251,7 @@ trait LaneOperations {
     val linkIds = roadLinks.map(_.linkId)
 
     withDynTransaction {
-      dao.fetchMainLanesByLinkIds( linkIds ++ removedLinkIds)
+      dao.fetchLanesByLinkIds( linkIds ++ removedLinkIds,mainLanes = true)
     }.filterNot(_.expired)
   }
 
@@ -453,7 +448,7 @@ trait LaneOperations {
 
         newIncomeLane.map { newLane =>
           val laneCode = newLane.properties.find(_.publicId == "lane_code")
-                                                      .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+                                          .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
@@ -548,7 +543,7 @@ trait LaneOperations {
     }
   }
 
-  def deleteMultipleLanes(ids: Set[Long]) = {
+  def deleteMultipleLanes(ids: Set[Long]): Set[Unit] = {
     withDynTransaction {
       ids.map(id => dao.deleteEntryLane(id))
     }
