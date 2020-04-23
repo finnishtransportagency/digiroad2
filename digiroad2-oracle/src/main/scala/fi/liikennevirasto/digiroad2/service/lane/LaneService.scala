@@ -526,7 +526,8 @@ trait LaneOperations {
 
   def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
     val oldAsset = getPersistedLanesByIds( Set(adjustment.laneId), newTransaction = false).head
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
+                                  .getOrElse(throw new IllegalStateException("Road link no longer available"))
 
     val newLane = PersistedLane (0, oldAsset.linkId, adjustment.sideCode.value, oldAsset.laneCode, roadLink.municipalityCode,
       oldAsset.startMeasure, oldAsset.endMeasure, Some(VvhGenerated), Some( DateTime.now() ),
@@ -536,30 +537,22 @@ trait LaneOperations {
    createWithoutTransaction( newLane, VvhGenerated )
   }
 
-  def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String) = {
-    attributes.map { prop =>
+  def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String): Unit = {
+    attributes.foreach{ prop =>
       dao.updateLaneAttributes(id, prop, username)
     }
   }
 
-  def deleteMultipleLanes(ids: Set[Long]): Set[Unit] = {
+  def deleteMultipleLanes(ids: Set[Long]): Unit = {
     withDynTransaction {
-      ids.map(id => dao.deleteEntryLane(id))
+      ids.foreach(id => dao.deleteEntryLane(id))
     }
   }
 
-  def multipleLanesToHistory (ids: Set[Long], username: String):  Set[Long] ={
+  def multipleLanesToHistory (ids: Set[Long], username: String): Unit = {
     withDynTransaction {
-      ids.map(id => dao.updateLaneExpiration(id, username) )
+      ids.foreach(id => dao.updateLaneExpiration(id, username) )
     }
-    ids
-  }
-
-  def laneToHistory (id: Long, username: String): Long ={
-    withDynTransaction {
-      dao.updateLaneExpiration(id, username)
-    }
-    id
   }
 
 }
