@@ -422,6 +422,26 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
   }
 
+  test("Create valid lane", Tag("db")) {
+    runWithRollback {
+      val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
+
+      val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
+      val assets = lanesCsvImporter.processing(invalidCsv, testUser)
+
+      val propertiesCreated = List(AssetProperty("end distance","1000"),
+        AssetProperty("road part","999"),
+        AssetProperty("lane","11"),
+        AssetProperty("initial distance","0"),
+        AssetProperty("track","1"),
+        AssetProperty("lane type","1"),
+        AssetProperty("road number","999"))
+
+      assets.createdData.size should be(1)
+      assets.createdData.head.foreach(propertiesCreated.contains(_) should be(true))
+    }
+  }
+
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
 
