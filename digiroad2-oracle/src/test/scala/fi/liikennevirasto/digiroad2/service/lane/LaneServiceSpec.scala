@@ -1,14 +1,14 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.asset.{ ConstructionType, EnclosedTrafficArea, LinkGeomSource, Motorway, Municipality, State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
-import fi.liikennevirasto.digiroad2.lane.{ LaneProperty, LanePropertyValue, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -120,7 +120,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       newLane.length should be(1)
 
       val thrown = intercept[IllegalArgumentException] {
-        ServiceWithDao.deleteEntryLane(newLane.head)
+        ServiceWithDao.deleteMultipleLanes(newLane.toSet)
       }
 
       thrown.getMessage should be("Cannot Delete a main lane!")

@@ -554,12 +554,6 @@ trait LaneOperations {
     }
   }
 
-  def deleteEntryLane(id: Long ): Unit = {
-    withDynTransaction {
-      dao.deleteEntryLane(id)
-    }
-  }
-
   def multipleLanesToHistory (ids: Set[Long], username: String):  Set[Long] ={
     withDynTransaction {
       ids.map(id => dao.updateLaneExpiration(id, username) )
