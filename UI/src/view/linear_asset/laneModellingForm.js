@@ -12,7 +12,7 @@
     dynamicFieldParent.call(this, fieldSettings, isDisabled);
     var me = this;
 
-    me.setSelectedValue = function(setValue, getValue, sideCode, withoutEventTriggers){
+    me.setSelectedValue = function(setValue, getValue, sideCode){
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
       if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
@@ -26,11 +26,61 @@
     };
   };
 
+    self.DateField = function(assetTypeConfiguration, field, isDisabled){
+      self.DynamicField.call(this, field, isDisabled);
+      var me = this;
+
+      me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
+        var someValue = _.head(fieldValue, function(values) { return values.value ; });
+        var value = _.isEmpty(someValue) ? (fieldValue.defaultValue ? fieldValue.defaultValue : '') : someValue.value;
+
+        me.element = $('' +
+          '<div class="form-group">' +
+          '<label class="control-label">' + field.label + '</label>' +
+          '</div>');
+
+        var inputLabel = $('<input type="text" ' + me.disabled() + '/>').addClass('form-control')
+          .attr('id', field.publicId + sideCode)
+          .attr('required', me.required())
+          .attr('placeholder',"pp.kk.vvvv")
+          .attr('fieldType', fieldValue.type)
+          .attr('value', value )
+          .attr('name', field.publicId).on('keyup datechange', _.debounce(function (target) {
+            // tab press
+            if (target.keyCode === 9) {
+              return;
+            }
+            me.setSelectedValue(setValue, getValue, sideCode, false);
+          }, 500));
+
+        if (!isDisabled && me.hasDefaultValue() && !value)
+          me.setSelectedValue(setValue, getValue, sideCode, true);
+
+        me.element.append(inputLabel);
+        return me.element;
+      };
+    };
+
+    //need to put this here to override the DateField
+    self.dynamicFormFields = [
+      {name: 'long_text', fieldType: self.TextualLongField},
+      {name: 'single_choice', fieldType: self.SingleChoiceField},
+      {name: 'date', fieldType: self.DateField},
+      {name: 'multiple_choice', fieldType: self.MultiSelectField},
+      {name: 'integer', fieldType: self.IntegerField},
+      {name: 'number', fieldType: self.NumericalField},
+      {name: 'text', fieldType: self.TextualField},
+      {name: 'checkbox', fieldType: self.CheckboxField},
+      {name: 'read_only_number', fieldType: self.ReadOnlyFields},
+      {name: 'read_only_text', fieldType: self.ReadOnlyFields},
+      {name: 'time_period', fieldType: self.TimePeriodField},
+      {name: 'date_period', fieldType: self.DatePeriodField},
+      {name: 'hidden_read_only_number', fieldType: self.HiddenReadOnlyFields}
+    ];
+
   var mainLaneFormStructure = {
     fields : [
-      {
-        label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6
-      },
+      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6},
       {
         label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 7,
         values: [
@@ -48,33 +98,22 @@
           {id: 6, label: 'Jatkuva, osoitettu myös vasemmalle kääntyville'},
         ]
       },
-      {
-        label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9
-      }
+      {label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9}
     ]
   };
 
   var roadAddressFormStructure = {
     fields : [
-      {
-        label: 'Tie', type: 'read_only_number', publicId: "initial_road_number", weight: 1
-      },
-      {
-        label: 'Osa', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2
-      },
-      {
-        label: 'Etäisyys', type: 'read_only_number', publicId: "initial_distance", weight: 3
-      },
-      {
-        label: 'Osa', required: 'required', type: 'number', publicId: "end_road_part_number", weight: 4
-      },
-      {
-        label: 'Etäisyys', required: 'required', type: 'number', publicId: "end_distance", weight: 5
-      }
+      {label: 'Tie', type: 'read_only_number', publicId: "initial_road_number", weight: 1},
+      {label: 'Osa', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2},
+      {label: 'Etäisyys', type: 'read_only_number', publicId: "initial_distance", weight: 3},
+      {label: 'Osa', required: 'required', type: 'number', publicId: "end_road_part_number", weight: 4},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "end_distance", weight: 5}
     ]
   };
 
     function reloadForm(rootElement){
+      dateutil.removeDatePickersFromDom();
       rootElement.find('#feature-attributes-header').html(self.renderHeader(self._assetTypeConfiguration.selectedLinearAsset));
       rootElement.find('#feature-attributes-form').html(self.renderForm(self._assetTypeConfiguration.selectedLinearAsset, false));
       rootElement.find('#feature-attributes-form').prepend(self.renderPreview(self._assetTypeConfiguration.selectedLinearAsset));
@@ -144,12 +183,14 @@
         rootElement.find('#feature-attributes-header').empty();
         rootElement.find('#feature-attributes-form').empty();
         rootElement.find('#feature-attributes-footer').empty();
+        dateutil.removeDatePickersFromDom();
       });
 
       eventbus.on('closeForm', function() {
         rootElement.find('#feature-attributes-header').empty();
         rootElement.find('#feature-attributes-form').empty();
         rootElement.find('#feature-attributes-footer').empty();
+        dateutil.removeDatePickersFromDom();
       });
 
       eventbus.on('layer:selected', function(layer) {
@@ -459,6 +500,13 @@
     }
 
     function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled, body) {
+      function setupDatePickers() {
+        var $startDateElement = body.find('#start_date' + sideCode);
+        var $endDateElement = body.find('#end_date' + sideCode);
+        if(!_.isEmpty($startDateElement) && !_.isEmpty($endDateElement))
+          dateutil.addTwoDependentDatePickers($startDateElement, $endDateElement);
+      }
+
       var sideCodeClass = self.generateClassName(sideCode);
 
       var formGroup = $('' + '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' + '</div>');
@@ -468,10 +516,7 @@
       body.find('.form').append(formGroup);
       body.find('.form-editable-' + sideCodeClass).append(self.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
-      // var $startElement = body.find('#start_date' + sideCode);
-      // var $endElement = body.find('#end_date' + sideCode);
-      // dateutil.addTwoDependentDatePickers($startElement, $endElement);
-
+      setupDatePickers();
       return body;
     }
 
