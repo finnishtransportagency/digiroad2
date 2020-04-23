@@ -143,7 +143,7 @@ class LaneFiller {
       return (lanes, changeSet)
 
     val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
-    val baseLane = lanesToProcess.sortBy(_.laneCode).head
+    val baseLane = lanesToProcess.minBy(_.laneCode)
     val baseProps = baseLane.attributes.filterNot(_.publicId == "lane_code")
 
     roadLink.trafficDirection match {
@@ -300,7 +300,7 @@ class LaneFiller {
       */
     def generateLimitsForOrphanSegments(origin: PersistedLane, orphans: Seq[SegmentPiece]): Seq[PersistedLane] = {
       if (orphans.nonEmpty) {
-        val segmentPiece = orphans.sortBy(_.startM).head
+        val segmentPiece = orphans.minBy(_.startM)
         if (orphans.tail.nonEmpty) {
           // Try to extend this segment as far as possible: if SegmentPieces are consecutive produce just one Segments
           val t = extendOrDivide(orphans, origin.copy(startMeasure = segmentPiece.startM, endMeasure = segmentPiece.endM, sideCode = segmentPiece.sideCode.value))

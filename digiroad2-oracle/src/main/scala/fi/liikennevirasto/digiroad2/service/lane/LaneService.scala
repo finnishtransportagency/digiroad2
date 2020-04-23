@@ -431,9 +431,6 @@ trait LaneOperations {
   def createWithoutTransaction( newLane: PersistedLane, username: String ): Long = {
 
     val laneId = dao.createLane( newLane, username )
-    val lanePositionId = dao.createLanePosition(newLane, username)
-
-    dao.createLanePositionRelation(laneId, lanePositionId)
 
     newLane.attributes match {
       case props: Seq[LaneProperty] =>

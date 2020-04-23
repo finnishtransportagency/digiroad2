@@ -1,6 +1,5 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.{PersistedLane, _}
@@ -9,6 +8,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult}
@@ -26,7 +26,7 @@ case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 
 class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
-  val MAIN_LANES = Seq(11,21,31)
+  val MAIN_LANES = Seq(MainLane.towardsDirection,MainLane.againstDirection,MainLane.motorwayMaintenance)
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
@@ -281,30 +281,24 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def createLanePosition(persistedLane: PersistedLane, username: String): Long = {
-    val lanePositionId = Sequences.nextPrimaryKeySeqValue
-
-    sqlu"""INSERT INTO LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
-          VALUES ( $lanePositionId, ${persistedLane.sideCode}, ${persistedLane.startMeasure}, ${persistedLane.endMeasure},
-              ${persistedLane.linkId}, ${persistedLane.vvhTimeStamp})
-    """.execute
-
-    lanePositionId
-  }
-
-  def createLanePositionRelation (laneId: Long, lanePositionId: Long): Unit = {
-    sqlu"""INSERT INTO LANE_LINK (lane_id, lane_position_id)
-          VALUES ($laneId, $lanePositionId )
-    """.execute
-  }
-
   def createLane ( newIncomeLane: PersistedLane, username: String): Long = {
 
     val laneId = Sequences.nextPrimaryKeySeqValue
+    val lanePositionId = Sequences.nextPrimaryKeySeqValue
 
-    sqlu"""INSERT INTO LANE (id, lane_code, created_date, created_by, municipality_code)
-          VALUES ($laneId, ${newIncomeLane.laneCode}, sysdate, ${username}, ${newIncomeLane.municipalityCode} )
-    """.execute
+    sqlu"""
+        insert all
+          into LANE (id, lane_code, created_date, created_by, municipality_code)
+          values ($laneId, ${newIncomeLane.laneCode}, sysdate, $username, ${newIncomeLane.municipalityCode} )
+
+          into LANE_POSITION (id, side_code, start_measure, end_measure, link_id, adjusted_timestamp)
+          values ( $lanePositionId, ${newIncomeLane.sideCode}, ${newIncomeLane.startMeasure}, ${newIncomeLane.endMeasure},
+                   ${newIncomeLane.linkId}, ${newIncomeLane.vvhTimeStamp})
+
+          into LANE_LINK (lane_id, lane_position_id)
+          values ($laneId, $lanePositionId )
+        select * from dual
+      """.execute
 
     laneId
   }
