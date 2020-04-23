@@ -48,9 +48,9 @@ trait LaneOperations {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val VvhGenerated = "vvh_generated"
 
-  def getByZoomLevel( boundingRectangle: BoundingRectangle, linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLane]] = {
+  def getByZoomLevel( linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLane]] = {
     withDynTransaction {
-      val assets = dao.fetchLanes(  boundingRectangle, linkGeomSource)
+      val assets = dao.fetchLanes( linkGeomSource)
       Seq(assets)
     }
   }
@@ -522,7 +522,7 @@ trait LaneOperations {
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
       changeSet.adjustedVVHChanges.foreach { adjustment =>
-        dao.updateMValuesChangeInfo(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), adjustment.vvhTimestamp, VvhGenerated)
+        dao.updateMValues(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), VvhGenerated, adjustment.vvhTimestamp)
       }
 
       val ids = changeSet.expiredLaneIds.toSeq

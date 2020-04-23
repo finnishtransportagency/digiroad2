@@ -2128,7 +2128,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val usedService = laneService
 
       if (zoom >= minVisibleZoom && zoom <= maxZoom) {
-        mapLightLane(usedService.getByZoomLevel(boundingRectangle, Some(LinkGeomSource.NormalLinkInterface)))
+        mapLightLane(usedService.getByZoomLevel( Some(LinkGeomSource.NormalLinkInterface)))
       } else {
         validateBoundingBox(boundingRectangle)
         val assets = usedService.getByBoundingBox(boundingRectangle)
