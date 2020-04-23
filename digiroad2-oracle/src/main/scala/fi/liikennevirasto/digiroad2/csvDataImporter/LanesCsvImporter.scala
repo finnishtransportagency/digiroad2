@@ -22,6 +22,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
                                    createdData: List[ParsedProperties] = Nil)  extends ImportResult
   type ImportResultData = ImportResultLaneAsset
   type ParsedCsv = (MalformedParameters, List[ParsedProperties])
+  def laneUtils = LaneUtils()
 
   private val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "id" -> "id",
@@ -155,7 +156,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         //id, start measure, end measure and municipalityCode doesnt matter
         val incomingLane = NewIncomeLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
         val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)
-        LaneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username, false)
+        laneUtils.processNewLanesByRoadAddress(Set(incomingLane), laneRoadAddressInfo, sideCode.value, user.username, false)
       }
     }
     result

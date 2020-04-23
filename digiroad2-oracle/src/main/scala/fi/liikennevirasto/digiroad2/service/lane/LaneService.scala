@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
+
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -95,15 +96,17 @@ trait LaneOperations {
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks).groupBy(_.linkId)
     val (filledTopology, changeSet) = laneFilter.fillTopology(roadLinks, groupedAssets, Some(changedSet))
 
-    publish(eventBus, changeSet, projectedLanes)
+    val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
+    val modifiedLanes = projectedLanes.filterNot {lane => generatedMappedById(lane.id).nonEmpty } ++ changeSet.generatedPersistedLanes
+
+    publish(eventBus, changeSet, modifiedLanes)
     filledTopology.filter(lane => lane.laneAttributes.find(_.publicId == "lane_code").head.values.head.value.toString.charAt(1) == '1')
 
   }
 
-  def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, projectedLanes: Seq[PersistedLane]) {
+  def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]) {
     eventBus.publish("lanes:updater", changeSet)
-    eventBus.publish("lanes:generator", changeSet.generatedPersistedLanes.filter(_.id == 0L))
-    eventBus.publish("lanes:saveProjectedLanes", projectedLanes.filter(_.id == 0L))
+    eventBus.publish("lanes:saveModifiedLanes", modifiedLanes.filter(_.id == 0L))
   }
 
 
@@ -286,45 +289,27 @@ trait LaneOperations {
   }
 
 
-  def persistProjectedLinearAssets(newLanes: Seq[PersistedLane]): Unit ={
-    if (newLanes.nonEmpty)
-      logger.info("Saving projected lanes")
+  def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit ={
+    if (newLanes.nonEmpty) {
+      logger.info("Saving modified lanes")
 
-    val username = "projectedLanes"
-    val (toInsert, toUpdate) = newLanes.partition(_.id == 0L)
-
-    withDynTransaction {
-      if(toUpdate.nonEmpty) {
-
-        updatePersistedLanes(toUpdate, username)
-
-        if (newLanes.nonEmpty)
-          logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
-      }
-
-      toInsert.foreach{ lane =>
-         createWithoutTransaction( lane , username)
-      }
-
-      if (toInsert.nonEmpty)
-        logger.info("Added lanes for linkids " + newLanes.map(_.linkId))
-    }
-  }
-
-  def generateLanes (toCreate: Seq[PersistedLane]): Unit = {
-    if (toCreate.nonEmpty) {
-      logger.info("Saving new lanes")
+      val username = "modifiedLanes"
+      val (toInsert, toUpdate) = newLanes.partition(_.id == 0L)
 
       withDynTransaction {
-        toCreate.foreach { lane =>
-          createWithoutTransaction(lane, "lanesGenerator")
+        if(toUpdate.nonEmpty) {
+          updatePersistedLanes(toUpdate, username)
+          logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
+        }
+        if (toInsert.nonEmpty){
+          toInsert.foreach{ lane =>
+            createWithoutTransaction( lane , username)
+          }
+          logger.info("Added lanes for linkids " + toInsert.map(_.linkId))
         }
       }
-
-      logger.info("Added lanes for linkids " + toCreate.map(_.linkId))
     }
   }
-
 
   /**
     * Returns lanes ids. Used by Digiroad2Api /lane POST and /lane DELETE endpoints.
