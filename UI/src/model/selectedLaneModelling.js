@@ -228,12 +228,14 @@
       if(isAddByRoadAddressActive) {
         payload = {
           sideCode: sideCode,
-          initial_road_number: initial_road_number,
-          initial_road_part_number: initial_road_part_number,
-          initial_distance: initial_distance,
-          end_road_part_number: parseInt(end_road_part_number),
-          end_distance: parseInt(end_distance),
-          track: track,
+          laneRoadAddressInfo:{
+            roadNumber: initial_road_number,
+            initialRoadPartNumber: initial_road_part_number,
+            initialDistance: initial_distance,
+            endRoadPartNumber: parseInt(end_road_part_number),
+            endDistance: parseInt(end_distance),
+            track: track
+          },
           lanes: lanes
         };
       }else{
