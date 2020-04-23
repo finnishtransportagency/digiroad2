@@ -5,11 +5,13 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+
 
 class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   case class NotImportedData(reason: String, csvRow: String)
@@ -36,6 +38,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     "aet" -> "initial distance",
     "let" -> "end distance"
   )
+
+  private val mainLanes = Seq( MainLane.againstDirection.toString, MainLane.towardsDirection.toString, MainLane.motorwayMaintenance.toString)
 
   private val laneNumberFieldMapping: Map[String, String] = Map("kaista" -> "lane")
   private val laneTypeFieldMapping: Map[String, String] = Map("katyyppi" -> "lane type")
@@ -65,7 +69,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   def verifyLaneNumber(parameterName: String, parameterValue: String): ParsedRow = {
     val trimmedValue = parameterValue.trim
 
-    if ( Seq("11", "21", "31").contains(trimmedValue) ) {
+    if ( mainLanes.contains(trimmedValue) ) {
       (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = trimmedValue)))
     } else {
       (List(parameterName), Nil)
@@ -144,9 +148,10 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           case _ => if (laneCode.charAt(0).getNumericValue == 1) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         }
 
-        val properties = LanePropertiesValues(Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
-                                                  LaneProperty("lane_type", Seq(LanePropertyValue(laneType))),
-                                                  LaneProperty("lane_continuity", Seq(LanePropertyValue(LaneContinuity.Continuous.value)))))
+        val properties = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))),
+                        LaneProperty("lane_type", Seq(LanePropertyValue(laneType))),
+                        LaneProperty("lane_continuity", Seq(LanePropertyValue(LaneContinuity.Continuous.value))))
+
         //id, start measure, end measure and municipalityCode doesnt matter
         val incomingLane = NewIncomeLane(0, 0, 0, 0, isExpired = false, isDeleted = false, properties)
         val laneRoadAddressInfo = LaneRoadAddressInfo(lane._1.toLong, roadPartNumber, initialDistance, roadPartNumber, endDistance, track)

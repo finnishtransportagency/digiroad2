@@ -32,14 +32,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     def apply(r: PositionedResult) = {
       val expired = r.nextBoolean()
       val value = r.nextInt()
-      val startPoint_x = r.nextDouble()
-      val startPoint_y = r.nextDouble()
-      val endPoint_x = r.nextDouble()
-      val endPoint_y = r.nextDouble()
-      val geometry = Seq(Point(startPoint_x, startPoint_y), Point(endPoint_x, endPoint_y))
       val sideCode = r.nextInt()
 
-      LightLane(geometry, value, expired, sideCode)
+      LightLane(value, expired, sideCode)
     }
   }
 
@@ -69,7 +64,6 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     }
   }
 
-  //TODO Rever a query
   def fetchLanes( bounds: BoundingRectangle, linkSource: Option[LinkGeomSource] = None): Seq[LightLane] = {
     val linkGeomCondition = linkSource match {
       case Some(LinkGeomSource.NormalLinkInterface) => s" and pos.link_source = ${LinkGeomSource.NormalLinkInterface.value}"
@@ -77,14 +71,13 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     }
 
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
+
     sql"""SELECT CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
                 1 AS value,
-                t.X, t.Y, t2.X, t2.Y, pos.side_code
+                pos.side_code
           FROM lane l
           JOIN lane_link ll ON l.id = ll.lane_id
           JOIN lane_position pos ON  ll.lane_position_id = pos.id
-          CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t
-          CROSS JOIN TABLE(SDO_UTIL.GETVERTICES(a.geometry)) t2
           WHERE l.valid_to IS NULL
           AND #$boundingBoxFilter
           #$linkGeomCondition
@@ -220,7 +213,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def convertLaneRowToPersistedLane(lanes: Seq[LaneRow]): Seq[PersistedLane] = {
     lanes.groupBy(_.id).map { case (id, assetRows) =>
         val row = assetRows.head
-        val attributeValues = LanePropertiesValues(laneRowToProperty(assetRows))
+        val attributeValues = laneRowToProperty(assetRows)
 
         id -> PersistedLane (id = row.id, linkId = row.linkId, sideCode = row.sideCode, laneCode = row.laneCode,
           municipalityCode = row.municipalityCode, startMeasure = row.startMeasure, endMeasure = row.endMeasure,
@@ -269,7 +262,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
 
   def updateLane( id: Long, lane: PieceWiseLane, username: String) = {
-    val laneCode =lane.laneAttributes.properties.find( _.publicId == "lane_code" ).head.values
+    val laneCode =lane.laneAttributes.find( _.publicId == "lane_code" ).head.values
 
     sqlu"""UPDATE lane
           SET lane_code =${laneCode.head.value.toString},  modified_date = sysdate, modified_by = $username
@@ -355,8 +348,8 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     updateLanePosition(lane, username)
 
     lane.attributes match {
-      case props: LanePropertiesValues =>
-        props.properties.filterNot( _.publicId == "lane_code" )
+      case props: Seq[LaneProperty] =>
+        props.filterNot( _.publicId == "lane_code" )
                         .foreach( attr => updateLaneAttributes(lane.id, attr, username) )
 
       case _ => None

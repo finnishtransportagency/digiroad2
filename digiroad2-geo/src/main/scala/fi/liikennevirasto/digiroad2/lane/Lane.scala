@@ -11,29 +11,29 @@ trait Lane extends PolyLine{
   val sideCode: Int
   val vvhTimeStamp: Long
   val geomModifiedDate: Option[DateTime]
-  val laneAttributes: LanePropertiesValues
+  val laneAttributes: Seq[LaneProperty]
 }
 
-case class LightLane ( geometry: Seq[Point], value: Int, expired: Boolean,  sideCode: Int )
+case class LightLane ( value: Int, expired: Boolean,  sideCode: Int )
 
 case class PieceWiseLane ( id: Long, linkId: Long, sideCode: Int, expired: Boolean, geometry: Seq[Point],
                                 startMeasure: Double, endMeasure: Double,
                                 endpoints: Set[Point], modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
                                 createdBy: Option[String], createdDateTime: Option[DateTime],
                                 vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], administrativeClass: AdministrativeClass,
-                           laneAttributes: LanePropertiesValues,  attributes: Map[String, Any] = Map() ) extends Lane
+                           laneAttributes: Seq[LaneProperty],  attributes: Map[String, Any] = Map() ) extends Lane
 
 case class PersistedLane ( id: Long, linkId: Long, sideCode: Int, laneCode: Int, municipalityCode: Long,
                            startMeasure: Double, endMeasure: Double,
                            createdBy: Option[String], createdDateTime: Option[DateTime],
                            modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
-                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: LanePropertiesValues )
+                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty] )
 
 case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, value: LanePropertyValue, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime] )
 
 case class NewIncomeLane ( id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
-                           isExpired: Boolean, isDeleted: Boolean, attributes: LanePropertiesValues )
+                           isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty] )
 
 sealed trait LaneValue {
   def toJson: Any
@@ -41,12 +41,89 @@ sealed trait LaneValue {
 
 case class LanePropertyValue(value: Any)
 case class LaneProperty(publicId: String,  values: Seq[LanePropertyValue])
-case class LanePropertiesValues(properties: Seq[LaneProperty]) extends LaneValue {
-  override def toJson: Any = this
-}
 
 case class LaneRoadAddressInfo ( roadNumber: Long, initialRoadPartNumber: Long, initialDistance: Long,
                                  endRoadPartNumber: Long, endDistance: Long, track: Int )
+
+/**
+  * Values for lane numbers
+  */
+sealed trait LaneNumber {
+  def towardsDirection: Int
+  def againstDirection : Int
+}
+
+object LaneNumber {
+  val values = Set(MainLane, FirstLeftAdditional, FirstRightAdditional, SecondLeftAdditional, SecondRightAdditional,
+    ThirdLeftAdditional, ThirdRightAdditional, FourthLeftAdditional, FourthRightAdditional, Unknown)
+
+  def apply(value: Int): LaneNumber = {
+    val valueAsStr = value.toString
+
+    if(valueAsStr.length != 2 ) {
+      Unknown
+
+    } else {
+      val index = valueAsStr.substring(0, 1).toInt
+
+      if (index == 3)
+        MainLane
+      else if (index == 1)
+        values.find(_.towardsDirection == value).getOrElse(Unknown)
+      else
+        values.find(_.againstDirection == value).getOrElse(Unknown)
+    }
+  }
+
+  case object MainLane extends LaneNumber {
+    def towardsDirection = 11
+    def againstDirection = 21
+    def motorwayMaintenance: Int = 31
+  }
+
+  case object FirstLeftAdditional extends LaneNumber {
+    def towardsDirection = 12
+    def againstDirection = 22
+  }
+
+  case object FirstRightAdditional extends LaneNumber {
+    def towardsDirection = 13
+    def againstDirection = 23
+  }
+
+  case object SecondLeftAdditional extends LaneNumber {
+    def towardsDirection = 14
+    def againstDirection = 24
+  }
+
+  case object SecondRightAdditional extends LaneNumber {
+    def towardsDirection = 15
+    def againstDirection = 25
+  }
+
+  case object ThirdLeftAdditional extends LaneNumber {
+    def towardsDirection = 16
+    def againstDirection = 26
+  }
+
+  case object ThirdRightAdditional extends LaneNumber {
+    def towardsDirection = 17
+    def againstDirection = 27
+  }
+
+  case object FourthLeftAdditional extends LaneNumber {
+    def towardsDirection = 18
+    def againstDirection = 28
+  }
+
+  case object FourthRightAdditional extends LaneNumber {
+    def towardsDirection = 19
+    def againstDirection = 29
+  }
+
+  case object Unknown extends LaneNumber { def towardsDirection = 99;  def againstDirection = 99; }
+}
+
 
 /**
   * Values for lane types

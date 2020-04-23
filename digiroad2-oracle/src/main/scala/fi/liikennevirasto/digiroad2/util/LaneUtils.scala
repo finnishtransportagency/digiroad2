@@ -185,8 +185,8 @@ object LaneUtils {
         val vvhTimeStamp = vvhClient.roadLinkData.createVVHTimeStamp()
 
         lanesToInsert.map { lane =>
-          val laneCodeProperty = lane.attributes.properties.find(_.publicId == "lane_code")
-                                                           .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+          val laneCodeProperty = lane.properties.find(_.publicId == "lane_code")
+                                                .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
           val laneCodeValue = laneCodeProperty.values.head.value.toString
           val laneCode = if ( laneCodeValue.nonEmpty )
@@ -205,7 +205,7 @@ object LaneUtils {
             case (start: Double, end: Double) =>  PersistedLane(0, road.linkId, sideCode, laneCode, road.municipalityCode,
                                                       start, end, Some(username), Some(DateTime.now()),
                                                       None, None, expired = false,
-                                                      vvhTimeStamp, None, lane.attributes)
+                                                      vvhTimeStamp, None, lane.properties)
 
             case _ => None
           }

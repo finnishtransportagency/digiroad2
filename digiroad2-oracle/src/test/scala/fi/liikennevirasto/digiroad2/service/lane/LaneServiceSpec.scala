@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.{ ConstructionType, EnclosedTrafficAre
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
-import fi.liikennevirasto.digiroad2.lane.{LanePropertiesValues, LaneProperty, LanePropertyValue, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.{ LaneProperty, LanePropertyValue, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
@@ -31,46 +31,36 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   when(mockRoadLinkService.getRoadLinkByLinkIdFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
-
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
 
-  val lanePropertiesValues11 = LanePropertiesValues(
-    Seq(
-      LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-      LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-      LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-      LaneProperty("lane_information", Seq(LanePropertyValue("13")))
-    )
-  )
-
-  val lanePropertiesValues12 = LanePropertiesValues(
-    Seq(
-      LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-      LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-      LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-      LaneProperty("lane_information", Seq(LanePropertyValue("13")))
-    )
-  )
+  val lanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
+                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+                                LaneProperty("lane_information", Seq(LanePropertyValue("13")))
+                              )
 
 
-  val lanePropertiesValues21 = LanePropertiesValues(
-    Seq(
-      LaneProperty("lane_code", Seq(LanePropertyValue(21))),
-      LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-      LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-      LaneProperty("lane_information", Seq(LanePropertyValue("10")))
-    )
-  )
+  val lanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+                                LaneProperty("lane_information", Seq(LanePropertyValue("13")))
+                              )
 
-  val lanePropertiesValues22 = LanePropertiesValues(
-    Seq(
-      LaneProperty("lane_code", Seq(LanePropertyValue(22))),
-      LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-      LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-      LaneProperty("lane_information", Seq(LanePropertyValue("10")))
-    )
-  )
+
+  val lanePropertiesValues21 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(21))),
+                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+                                LaneProperty("lane_information", Seq(LanePropertyValue("10")))
+                              )
+
+
+  val lanePropertiesValues22 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(22))),
+                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+                                LaneProperty("lane_information", Seq(LanePropertyValue("10")))
+                              )
+
 
 
   object PassThroughLaneService extends LaneOperations {
@@ -113,8 +103,8 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane = laneDao.fetchLanesByIds( Set(newLane.head)).head
       lane.expired should be (false)
 
-      lane.attributes.properties.foreach{ laneProp =>
-        val attr = lanePropertiesValues11.properties.find(_.publicId == laneProp.publicId)
+      lane.attributes.foreach{ laneProp =>
+        val attr = lanePropertiesValues11.find(_.publicId == laneProp.publicId)
 
         attr should not be (None)
         attr.head.values.head.value should be  (laneProp.values.head.value)
@@ -183,14 +173,12 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Update Lane Information") {
     runWithRollback {
 
-      val updateValues11 = LanePropertiesValues(
-        Seq(
-          LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-          LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-          LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-          LaneProperty("lane_information", Seq(LanePropertyValue("12")))
-        )
-      )
+      val updateValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
+                            LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
+                            LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
+                            LaneProperty("lane_information", Seq(LanePropertyValue("12")))
+                          )
+
 
       val newLane11 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
       newLane11.length should be(1)
@@ -204,14 +192,12 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Should not be able to Update main Lane") {
     runWithRollback {
 
-      val updateValues11 = LanePropertiesValues(
-        Seq(
-          LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-          LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-          LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-          LaneProperty("lane_information", Seq(LanePropertyValue("12")))
-        )
-      )
+      val updateValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+                            LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
+                            LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
+                            LaneProperty("lane_information", Seq(LanePropertyValue("12")))
+                          )
+
 
       val newLane11 = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
       newLane11.length should be(1)

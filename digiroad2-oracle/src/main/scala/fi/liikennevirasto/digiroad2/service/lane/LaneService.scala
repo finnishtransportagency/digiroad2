@@ -96,7 +96,7 @@ trait LaneOperations {
     val (filledTopology, changeSet) = laneFilter.fillTopology(roadLinks, groupedAssets, Some(changedSet))
 
     publish(eventBus, changeSet, projectedLanes)
-    filledTopology.filter(lane => lane.laneAttributes.properties.find(_.publicId == "lane_code").head.values.head.value.toString.charAt(1) == '1')
+    filledTopology.filter(lane => lane.laneAttributes.find(_.publicId == "lane_code").head.values.head.value.toString.charAt(1) == '1')
 
   }
 
@@ -339,8 +339,8 @@ trait LaneOperations {
   }
 
   def getPropertyValue(newLane: NewIncomeLane, publicId: String) = {
-    val laneProperty = newLane.attributes.properties.find(_.publicId == publicId)
-                                            .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
+    val laneProperty = newLane.properties.find(_.publicId == publicId)
+                                        .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
 
     if (laneProperty.values.nonEmpty)
       laneProperty.values.head.value
@@ -378,7 +378,7 @@ trait LaneOperations {
           val laneCode = getLaneCode(lane)
 
           val lameToUpdate = PersistedLane(lane.id, linkId, sideCode, laneCode.toInt, lane.municipalityCode,
-            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, false, 0, None, lane.attributes)
+            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
 
           dao.updateEntryLane(lameToUpdate, username)
         }
@@ -409,7 +409,7 @@ trait LaneOperations {
 
 
             val laneToUpdate = PersistedLane(currentLane.id, linkId, sideCode, laneCode, currentLane.municipalityCode,
-              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None, false, 0, None, lane.attributes)
+              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
 
             dao.updateEntryLane(laneToUpdate, username)
           }
@@ -436,9 +436,9 @@ trait LaneOperations {
     dao.createLanePositionRelation(laneId, lanePositionId)
 
     newLane.attributes match {
-      case props: LanePropertiesValues =>
-        props.properties.filterNot( _.publicId == "lane_code" )
-                        .map( attr => dao.insertLaneAttributes(laneId, attr, username) )
+      case props: Seq[LaneProperty] =>
+        props.filterNot( _.publicId == "lane_code" )
+             .map( attr => dao.insertLaneAttributes(laneId, attr, username) )
 
       case _ => None
     }
@@ -470,12 +470,12 @@ trait LaneOperations {
         val linkId = linkIds.head
 
         newIncomeLane.map { newLane =>
-          val laneCode = newLane.attributes.properties.find(_.publicId == "lane_code")
+          val laneCode = newLane.properties.find(_.publicId == "lane_code")
                                                       .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
-                                      expired = false, vvhTimeStamp, None, newLane.attributes)
+                                      expired = false, vvhTimeStamp, None, newLane.properties)
 
           createWithoutTransaction(laneToInsert, username)
         }
@@ -490,8 +490,8 @@ trait LaneOperations {
 
           newIncomeLane.map { newLane =>
 
-            val laneCode = newLane.attributes.properties.find(_.publicId == "lane_code")
-                                                        .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
+            val laneCode = newLane.properties.find(_.publicId == "lane_code")
+                                             .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
             val roadLink = if (viiteRoadLinks(linkId).nonEmpty)
                             viiteRoadLinks(linkId).head
@@ -500,7 +500,7 @@ trait LaneOperations {
 
             val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                   roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None,
-                                  expired = false, vvhTimeStamp, None, newLane.attributes)
+                                  expired = false, vvhTimeStamp, None, newLane.properties)
 
             createWithoutTransaction(laneToInsert, username)
           }
@@ -560,8 +560,8 @@ trait LaneOperations {
    createWithoutTransaction( newLane, VvhGenerated )
   }
 
-  def updatePersistedLaneAttributes( id: Long, attributes: LanePropertiesValues, username: String) = {
-    attributes.properties.map { prop =>
+  def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String) = {
+    attributes.map { prop =>
       dao.updateLaneAttributes(id, prop, username)
     }
   }

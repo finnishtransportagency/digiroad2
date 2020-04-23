@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.{FourthRightAdditional, MainLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
 
@@ -21,7 +22,7 @@ object  LaneFiller {
                         generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane])
 
 
-  case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: LanePropertiesValues)
+  case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
 }
 
 class LaneFiller {
@@ -130,7 +131,7 @@ class LaneFiller {
 
     // auxiliary function to create PersistedLane object
     def createPersistedLane(laneCode: Int, sideCode: Int, municipalityCode: Long, baseProperties: Seq[LaneProperty] ): PersistedLane = {
-      val lanePropertiesValues = LanePropertiesValues(baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode)))))
+      val lanePropertiesValues = baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
 
       PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode,
         0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
@@ -143,22 +144,21 @@ class LaneFiller {
 
     val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
     val baseLane = lanesToProcess.sortBy(_.laneCode).head
-    val baseProps = baseLane.attributes.properties.filterNot(_.publicId == "lane_code")
+    val baseProps = baseLane.attributes.filterNot(_.publicId == "lane_code")
 
     roadLink.trafficDirection match {
 
       case TrafficDirection.BothDirections =>
 
-        val mainLanes = ( lanesToProcess.exists(_.laneCode == 11),  lanesToProcess.exists(_.laneCode == 21) )
+        val mainLanes = ( lanesToProcess.exists(_.laneCode == MainLane.towardsDirection),  lanesToProcess.exists(_.laneCode == MainLane.againstDirection) )
 
         val toAdd = mainLanes match {
-          case (true, true) => Seq()
-          case (false, true) => Seq( createPersistedLane(11, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ) )
+          case (false, true) => Seq( createPersistedLane(MainLane.towardsDirection, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ) )
 
-          case (true, false) => Seq( createPersistedLane(21, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
+          case (true, false) => Seq( createPersistedLane(MainLane.againstDirection, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
           case (false, false) => Seq(
-                                createPersistedLane(11, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ),
-                                createPersistedLane(21, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps )
+                                createPersistedLane(MainLane.towardsDirection, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ),
+                                createPersistedLane(MainLane.againstDirection, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps )
                               )
           case _ => Seq()
         }
@@ -167,13 +167,13 @@ class LaneFiller {
 
       case TrafficDirection.TowardsDigitizing =>
 
-        val toAdd = if ( !lanesToProcess.exists(_.laneCode == 11 ))
-                    Seq( createPersistedLane(11, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps) )
+        val toAdd = if ( !lanesToProcess.exists(_.laneCode == MainLane.towardsDirection ))
+                    Seq( createPersistedLane(MainLane.towardsDirection, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps) )
                   else
                     Seq()
 
 
-        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= 21 && lane.laneCode <= 29)
+        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection)
                                       .map(_.id)
                                       .filterNot(_ == 0L)
 
@@ -184,12 +184,12 @@ class LaneFiller {
 
       case TrafficDirection.AgainstDigitizing =>
 
-        val toAdd = if ( !lanesToProcess.exists(_.laneCode == 21))
-                      Seq( createPersistedLane(21, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
+        val toAdd = if ( !lanesToProcess.exists(_.laneCode == MainLane.againstDirection))
+                      Seq( createPersistedLane(MainLane.againstDirection, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
                     else
                       Seq()
 
-        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= 11 && lane.laneCode <= 19)
+        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection)
                                       .map(_.id)
                                       .filterNot(_ == 0L)
 

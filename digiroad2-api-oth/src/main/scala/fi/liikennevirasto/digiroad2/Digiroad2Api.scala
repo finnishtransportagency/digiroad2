@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
 import java.time.LocalDate
-
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
@@ -165,50 +164,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ai: AdditionalInformation => JString(ai.toString)
   }))
 
-  case object NewIncomeLaneSerializer extends CustomSerializer[NewIncomeLane](format =>
-    ( {
-      case jsonObj: JObject =>
-        val id = (jsonObj \ "id").extract[Long]
-        val startMeasure = (jsonObj \ "startMeasure").extract[Double]
-        val endMeasure = (jsonObj \ "endMeasure").extract[Double]
-        val municipalityCode = (jsonObj \ "municipalityCode").extract[Long]
-        val isExpired = (jsonObj \ "isExpired").extractOrElse[Boolean](false)
-        val isDeleted = (jsonObj \ "isDeleted").extractOrElse[Boolean](false)
-        val properties = (jsonObj \ "properties").extract[Seq[LaneProperty]]
-
-        NewIncomeLane(id, startMeasure, endMeasure, municipalityCode,isExpired, isDeleted, LanePropertiesValues(properties))
-    },
-      {
-        case tv : NewIncomeLane => Extraction.decompose(tv)
-      }))
-
-  case object LanePropertySerializer extends CustomSerializer[LaneProperty](format =>
-    ({
-      case jsonObj: JObject =>
-        val publicId = (jsonObj \ "publicId").extract[String]
-        val values = (jsonObj \ "values").extract[Seq[LanePropertyValue]]
-
-        LaneProperty(publicId, values)
-    },
-      {
-        case tv : LaneProperty => JObject(JField("publicId", JString(tv.publicId)), JField("values", Extraction.decompose(tv.values)))
-      }))
-
-  case object LanePropertyValueSerializer extends CustomSerializer[LanePropertyValue](format =>
-    ({
-      case jsonObj: JObject =>
-        val value = (jsonObj \ "value").extract[Any]
-
-        LanePropertyValue(value)
-    },
-      {
-        case tv : LanePropertyValue => JObject(JField("value", JString(tv.value.toString)))
-      }))
 
   protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer +
                         TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer +
-                        WidthLimitReasonSerializer + AdditionalInfoClassSerializer + PointAssetSerializer +
-                        NewIncomeLaneSerializer + LanePropertySerializer + LanePropertyValueSerializer
+                        WidthLimitReasonSerializer + AdditionalInfoClassSerializer + PointAssetSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -1093,7 +1052,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       lane.map { a =>
         Map(
           "value" -> a.value,
-          "points" -> a.geometry,
           "expired" -> a.expired,
           "sideCode" -> a.sideCode
         )
@@ -2190,10 +2148,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val linkIds = (parsedBody \ "linkIds")extractOrElse[Set[Long]](halt(BadRequest("Malformed 'linkIds' parameter")))
     val sideCode = (parsedBody \ "sideCode")extractOrElse[Int](halt(BadRequest("Malformed 'sideCode' parameter")))
-    val incomingLanes = (parsedBody \ "lanes").extract[Set[NewIncomeLane]]
+    val incomingLanes = (parsedBody \ "lanes").extractOrElse[Seq[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
 
     validateUserRightsForLanes(linkIds, user)
-    LaneUtils.processNewIncomeLanes(incomingLanes, linkIds, sideCode, user.username)
+    LaneUtils.processNewIncomeLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
   }
 
   post("/lanesByRoadAddress") {
@@ -2226,7 +2184,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "endMeasure" -> lane.endMeasure,
         "points" -> lane.geometry,
         "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
-        "properties" -> lane.laneAttributes.properties
+        "properties" -> lane.laneAttributes
       )
     }
   }
