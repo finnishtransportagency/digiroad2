@@ -4,6 +4,7 @@
     var dirty = false;
     var originalAsset;
     var endPointName = assetName;
+    var wasOldAsset;
     return {
       open: open,
       getId: getId,
@@ -26,12 +27,15 @@
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
       getCoordinates: getCoordinates,
       setAdditionalPanels: setAdditionalPanels,
-      setAdditionalPanel: setAdditionalPanel
+      setAdditionalPanel: setAdditionalPanel,
+      getWasOldAsset: getWasOldAsset,
+      setWasOldAsset: setWasOldAsset
     };
 
     function place(asset) {
       dirty = true;
       current = asset;
+      wasOldAsset = false;
       eventbus.trigger(assetName + ':selected');
     }
 
@@ -58,11 +62,12 @@
     }
 
     function cancel() {
-      if (isNew()) {
+      if (isNew() && !wasOldAsset) {
         reset();
         eventbus.trigger(assetName + ':creationCancelled');
       } else {
         dirty = false;
+        wasOldAsset = false;
         current = _.cloneDeep(originalAsset);
         eventbus.trigger(assetName + ':cancelled');
       }
@@ -70,6 +75,7 @@
 
     function reset() {
       dirty = false;
+      wasOldAsset = false;
       current = null;
     }
 
@@ -98,7 +104,7 @@
     }
 
     function isNew() {
-      return getId() === 0;
+      return getId() === 0 || wasOldAsset;
     }
 
     function save() {
@@ -107,7 +113,7 @@
       if (current.toBeDeleted) {
         eventbus.trigger(endPointName + ':deleted', current, 'deleted');
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
-      } else if (isNew()) {
+      } else if (isNew() && !wasOldAsset) {
         eventbus.trigger(endPointName + ':created', current, 'created');
         backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
@@ -200,6 +206,14 @@
         }
       });
       eventbus.trigger(assetName + ':changed');
+    }
+
+    function getWasOldAsset() {
+      return wasOldAsset;
+    }
+
+    function setWasOldAsset(value) {
+      wasOldAsset = value;
     }
   };
 })(this);

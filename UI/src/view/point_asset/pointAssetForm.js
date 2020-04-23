@@ -237,7 +237,7 @@ root.PointAssetForm = function() {
   this.renderSuggestBoxElement = function(asset, state) {
     return '<div class="form-group editable form-point-asset suggestion-box">' +
         '<label class="control-label">' + asset.localizedName + '</label>' +
-        '<p class="form-control-static">Kylla</p>' +
+        '<p class="form-control-static">'+ _.head(asset.values).propertyDisplayValue +'</p>' +
         '<input type="checkbox" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + '"' + state + '>' +
         '</div>';
   };
@@ -249,7 +249,7 @@ root.PointAssetForm = function() {
     var wrapper = $('<div class="wrapper">');
     var formRootElement = $('<div class="form form-horizontal form-dark form-point-asset">');
 
-    if (selectedAsset.isNew()) {
+    if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
       formRootElement = formRootElement.append(me.renderValueElement(asset, collection, authorizationPolicy));
     } else {
       var deleteCheckbox = $(''+
@@ -297,11 +297,7 @@ root.PointAssetForm = function() {
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
-    var element = rootElement.find('#wrongSideInfo');
-    if (!_.isUndefined(element)){
-      if (readOnly) element.show();
-      else element.hide();
-    }
+    rootElement.find('.form-directional-traffic-sign').toggle(readOnly);
   };
 
   this.renderFloatingNotification = function(floating, localizedTexts) {
