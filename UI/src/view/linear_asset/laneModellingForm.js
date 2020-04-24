@@ -130,12 +130,6 @@
         formFields['sidecode_'+sideCode].push(field);
       };
 
-      this.getFields = function(sideCode){
-        if(!formFields['sidecode_'+sideCode])
-          Error("The form of the sidecode " + sideCode + " doesn't exist");
-        return formFields['sidecode_'+sideCode];
-      };
-
       this.getAllFields = function(){
         return _.flatten(_.map(formFields, function(form) {
           return form;
@@ -172,13 +166,6 @@
         }))));
       }
 
-      function removeAllFrom(){
-        rootElement.find('#feature-attributes-header').empty();
-        rootElement.find('#feature-attributes-form').empty();
-        rootElement.find('#feature-attributes-footer').empty();
-        dateutil.removeDatePickersFromDom();
-      }
-
       new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
       eventbus.on(self.events('selected'), function () {
@@ -186,12 +173,11 @@
         reloadForm(rootElement);
       });
 
-      eventbus.on(self.events('unselect', 'cancelled'), function() {
-        removeAllFrom();
-      });
-
-      eventbus.on('closeForm', function() {
-        removeAllFrom();
+      eventbus.on(self.events('unselect', 'cancelled') + 'closeForm', function() {
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
+        dateutil.removeDatePickersFromDom();
       });
 
       eventbus.on('layer:selected', function(layer) {
@@ -206,7 +192,7 @@
       });
 
       eventbus.on('application:readOnly', function(){
-        if(self._assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && !_.isEmpty(self._assetTypeConfiguration.selectedLinearAsset)) {
+        if(self._assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && !_.isEmpty(self._assetTypeConfiguration.selectedLinearAsset.get())) {
           setInitialForm();
           reloadForm(rootElement);
         }
@@ -231,7 +217,7 @@
         }
 
         if(info)
-          infoElement = $('<div class="form-group"><label class="control-label" style="text-align: left;">' + info + '</label></div>');
+          infoElement = $('<div class="form-group"><label class="info-label">' + info + '</label></div>');
 
         if(publicId == "lane_code" && isAddByRoadAddressActive)
           return infoElement.prepend($('<hr class="form-break">'));
@@ -285,6 +271,10 @@
       return $(title());
     };
 
+    function separateOddEvenNumbers(numbers){
+      return _.partition(_.sortBy(numbers), function(number){return number % 2 === 0;});
+    }
+
     var createPreviewHeaderElement = function(laneNumbers) {
       var createNumber = function (number) {
         var previewButton = $('<td class="preview-lane">' + number + '</td>').click(function() {
@@ -309,19 +299,14 @@
         }
       };
 
-      var numbers = _.sortBy(laneNumbers);
-
-      var odd = _.filter(numbers, function (number) {
-        return number % 2 !== 0;
-      });
-      var even = _.filter(numbers, function (number) {
-        return number % 2 === 0;
-      });
+      var numbersPartitioned = separateOddEvenNumbers(laneNumbers);
+      var odd = _.last(numbersPartitioned);
+      var even = _.head(numbersPartitioned);
 
       var preview = function () {
         var previewList = $('<table class="preview">');
 
-        var numberHeaders =$('<tr style="font-size: 10px;">').append(_.map(_.reverse(even).concat(odd), function (number) {
+        var numberHeaders =$('<tr class="number-header">').append(_.map(_.reverse(even).concat(odd), function (number) {
           return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
         }));
 
@@ -347,17 +332,11 @@
         }).values).value;
       });
 
-      var odd =_.filter(laneNumbers, function (number) {
-        return number % 2 !== 0;
-      });
-
-      var even = _.filter(laneNumbers, function (number) {
-        return number % 2 === 0;
-      });
+      var numbersPartitioned = separateOddEvenNumbers(laneNumbers);
+      var odd = _.last(numbersPartitioned);
+      var even = _.head(numbersPartitioned);
 
       var addLeftLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista vasemmalle puolelle</button>').click(function() {
-        $(".preview .lane").css('border', '1px solid white');
-
         var nextLaneNumber;
         if(_.isEmpty(even)){
           nextLaneNumber = parseInt(odd.toString()[0] + '2');
@@ -375,8 +354,6 @@
       }).prop("disabled", !_.isEmpty(even) && _.max(even).toString()[1] == 8));
 
       var addRightLane = $('<li>').append($('<button class="btn btn-secondary">Lisää kaista oikealle puolelle</button>').click(function() {
-        $(".preview .lane").css('border', '1px solid white');
-
         var nextLaneNumber = parseInt(_.max(odd)) + 2;
 
         selectedAsset.setNewLane(nextLaneNumber);
@@ -420,7 +397,7 @@
       return laneButtons;
     };
 
-    self.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
+    self.renderForm = function (selectedAsset, isDisabled) {
       forms = new AvailableForms();
       var isReadOnly = self._isReadOnly(selectedAsset);
       var asset = _.filter(selectedAsset.get(), function (lane){

@@ -47,6 +47,12 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                 LaneProperty("lane_information", Seq(LanePropertyValue("13")))
                               )
 
+  val lanePropertiesValues14 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(14))),
+                                   LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
+                                   LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+                                   LaneProperty("lane_information", Seq(LanePropertyValue("sub lane 14")))
+                                  )
+
 
   val lanePropertiesValues21 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(21))),
                                 LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
@@ -211,4 +217,102 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Expire a sub lane") {
+    runWithRollback {
+      val newSubLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
+      ServiceWithDao.multipleLanesToHistory(Set(newSubLaneId), usernameTest)
+
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(12), true)
+
+      val expiredLane = lanes.find(_.id == newSubLaneId).head
+      lanes.find(_.id == newSubLaneId).head.expired should be (true)
+      expiredLane.attributes.foreach{ laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+      expiredLane.startMeasure should be (0.0)
+      expiredLane.endMeasure should be (500.0)
+    }
+  }
+
+  test("Delete a sub lane") {
+    runWithRollback {
+      val newSubLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
+      ServiceWithDao.deleteMultipleLanes(Set(newSubLaneId))
+
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(12), true)
+      lanes.find(_.id == newSubLaneId) should be(None)
+    }
+  }
+
+  test("Split lane asset. Expire lane and create two new lanes") {
+    runWithRollback {
+      val lanePropertiesSubLaneSplit2 = Seq(
+        LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("4"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("splitted 2")))
+      )
+
+      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
+      val newSubLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
+
+      val subLaneSplit1 = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val subLaneSplit2 = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
+      ServiceWithDao.update(Seq(mainLane.copy(id = mainLaneId)), Set(100L), 1, usernameTest)
+      ServiceWithDao.multipleLanesToHistory(Set(newSubLaneId), usernameTest)
+
+      val subLaneSplit1Id = ServiceWithDao.create(Seq(subLaneSplit1), Set(100L), 1, usernameTest).head
+      val subLaneSplit2Id = ServiceWithDao.create(Seq(subLaneSplit2), Set(100L), 1, usernameTest).head
+
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
+
+      lanes.find(_.id == newSubLaneId).head.expired should be (true)
+
+      val split1 = lanes.find(_.id == subLaneSplit1Id).head
+      split1.attributes.foreach{ laneProp =>
+       lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+      split1.startMeasure should be (0.0)
+      split1.endMeasure should be (250.0)
+
+      val split2 = lanes.find(_.id == subLaneSplit2Id).head
+      split2.attributes.foreach{ laneProp =>
+        lanePropertiesSubLaneSplit2.contains(laneProp) should be(true)
+      }
+      split2.startMeasure should be (250.0)
+      split2.endMeasure should be (500.0)
+    }
+  }
+
+  test("Delete sub lane in middle of lanes") {
+    runWithRollback {
+      val lanePropertiesValues14To12 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("updated sub lane 14 to 12")))
+      )
+
+      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane14 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
+
+      val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
+      val newSubLane12Id = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
+      val newSubLane14Id = ServiceWithDao.create(Seq(subLane14), Set(100L), 1, usernameTest).head
+
+      ServiceWithDao.deleteMultipleLanes(Set(newSubLane12Id))
+      ServiceWithDao.update(Seq(mainLane.copy(id = mainLaneId), subLane14.copy(id = newSubLane14Id, properties = lanePropertiesValues14To12)), Set(100L), 1, usernameTest)
+
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
+      lanes.length should be (2)
+      lanes.find(_.id == newSubLane12Id) should be (None)
+
+      val updatedSubLane12 = lanes.find(_.id == newSubLane14Id).head
+      updatedSubLane12.attributes.foreach{ laneProp =>
+        lanePropertiesValues14To12.contains(laneProp) should be(true)
+      }
+      updatedSubLane12.startMeasure should be (0.0)
+      updatedSubLane12.endMeasure should be (500.0)
+    }
+  }
 }

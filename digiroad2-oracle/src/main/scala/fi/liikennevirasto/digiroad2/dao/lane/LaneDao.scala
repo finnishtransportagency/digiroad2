@@ -104,9 +104,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     val laneCodeClause = " l.lane_code IN (11, 21, 31)"
 
     val whereClause = (includeExpired, mainLanes ) match {
-      case (true, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
+      case (false, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
       case (_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
-      case (true, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
+      case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
     }
 
@@ -129,9 +129,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     val laneCodeClause = s" l.lane_code in (${laneCode.mkString(",")})"
 
     val whereClause = (includeExpired, laneCode.nonEmpty ) match {
-      case (true, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
+      case (false, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
       case (_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
-      case (true, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
+      case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
     }
 
