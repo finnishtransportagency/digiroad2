@@ -288,7 +288,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     sqlu"""DELETE FROM LANE_ATTRIBUTE WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE_LINK WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE WHERE id = $laneId""".execute
-    sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId)""".execute
+    sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId""".execute
   }
 
 
