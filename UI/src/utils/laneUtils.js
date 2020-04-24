@@ -13,19 +13,14 @@
         return $('<td class="preview-lane not-highlight-lane">' + number + '</td>');
       };
 
-      var numbers = _.sortBy(laneNumbers);
-
-      var odd = _.filter(numbers, function (number) {
-        return number % 2 !== 0;
-      });
-      var even = _.filter(numbers, function (number) {
-        return number % 2 === 0;
-      });
+      var numbersPartitioned = _.partition(_.sortBy(laneNumbers), function(number){return number % 2 === 0;});
+      var odd = _.last(numbersPartitioned);
+      var even = _.head(numbersPartitioned);
 
       var preview = function () {
         var previewList = $('<table class="preview">');
 
-        var numberHeaders = $('<tr style="font-size: 11px;">').append(_.map(_.reverse(even).concat(odd), function (number) {
+        var numberHeaders = $('<tr class="number-header">').append(_.map(_.reverse(even).concat(odd), function (number) {
           return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
         }));
 
