@@ -172,6 +172,13 @@
         }))));
       }
 
+      function removeAllFrom(){
+        rootElement.find('#feature-attributes-header').empty();
+        rootElement.find('#feature-attributes-form').empty();
+        rootElement.find('#feature-attributes-footer').empty();
+        dateutil.removeDatePickersFromDom();
+      }
+
       new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
       eventbus.on(self.events('selected'), function () {
@@ -180,17 +187,11 @@
       });
 
       eventbus.on(self.events('unselect', 'cancelled'), function() {
-        rootElement.find('#feature-attributes-header').empty();
-        rootElement.find('#feature-attributes-form').empty();
-        rootElement.find('#feature-attributes-footer').empty();
-        dateutil.removeDatePickersFromDom();
+        removeAllFrom();
       });
 
       eventbus.on('closeForm', function() {
-        rootElement.find('#feature-attributes-header').empty();
-        rootElement.find('#feature-attributes-form').empty();
-        rootElement.find('#feature-attributes-footer').empty();
-        dateutil.removeDatePickersFromDom();
+        removeAllFrom();
       });
 
       eventbus.on('layer:selected', function(layer) {
@@ -205,7 +206,7 @@
       });
 
       eventbus.on('application:readOnly', function(){
-        if(self._assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && self._assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
+        if(self._assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && !_.isEmpty(self._assetTypeConfiguration.selectedLinearAsset)) {
           setInitialForm();
           reloadForm(rootElement);
         }
