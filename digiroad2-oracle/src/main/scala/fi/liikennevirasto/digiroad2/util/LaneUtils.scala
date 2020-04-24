@@ -51,7 +51,7 @@ object LaneUtils {
 
   def separateNewIncomeLanes( newIncomeLanes: Set[NewIncomeLane]) : (Set[Long],Set[Long],Set[NewIncomeLane],Set[NewIncomeLane]) = {
 
-    val lanesWithoutFlags = newIncomeLanes.filterNot( lane => lane.isDeleted  && lane.isExpired ) // Remove records with those flags as true
+    val lanesWithoutFlags = newIncomeLanes.filterNot( lane => lane.isDeleted  || lane.isExpired ) // Remove records with those flags as true
 
     val toDelete = newIncomeLanes.filter( _.isDeleted == true ).map( _.id )
     val toHistory = newIncomeLanes.filter( _.isExpired == true ).map( _.id )
