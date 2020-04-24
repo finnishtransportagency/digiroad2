@@ -280,6 +280,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def deleteEntryLane( laneId: Long ): Unit = {
 
     val laneCode = sql"""SELECT lane_code FROM LANE WHERE id = $laneId""".as[Int].first
+    val lanePositionId = sql"""SELECT lane_position_id FROM LANE_LINK WHERE lane_id = $laneId""".as[Int].first
 
     if ( MAIN_LANES.contains(laneCode) )
       throw new IllegalArgumentException("Cannot Delete a main lane!")
@@ -287,11 +288,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     sqlu"""DELETE FROM LANE_ATTRIBUTE WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE_LINK WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE WHERE id = $laneId""".execute
-
-    sqlu"""DELETE FROM LANE_POSITION
-           WHERE id = (SELECT lane_position_id
-                        FROM LANE_LINK
-                        WHERE lane_id = $laneId )""".execute
+    sqlu"""DELETE FROM LANE_POSITION WHERE id = $lanePositionId)""".execute
   }
 
 

@@ -151,10 +151,10 @@ object LaneUtils {
 
       }
       else if (road.roadPart == laneRoadAddressInfo.initialRoadPartNumber) {
-        if (road.endAddrMValue < laneRoadAddressInfo.initialDistance) {
+        if (road.endAddrMValue <= laneRoadAddressInfo.initialDistance) {
           (None, None)
 
-        } else if (road.startAddrMValue <= laneRoadAddressInfo.initialDistance) {
+        } else if (road.startAddrMValue < laneRoadAddressInfo.initialDistance) {
           ( startPoint, road.endMValue )
 
         } else {
@@ -163,10 +163,10 @@ object LaneUtils {
 
       }
       else if (road.roadPart == laneRoadAddressInfo.endRoadPartNumber) {
-        if (road.endAddrMValue < laneRoadAddressInfo.endDistance) {
+        if (road.startAddrMValue >= laneRoadAddressInfo.endDistance) {
           (None, None)
 
-        } else if (road.endAddrMValue >= laneRoadAddressInfo.endDistance) {
+        } else if (road.endAddrMValue > laneRoadAddressInfo.endDistance) {
           ( road.startMValue, endPoint )
 
         } else {
