@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
-import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -25,13 +27,13 @@ object LaneUtils {
   val eventbus = new DummyEventBus
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  lazy val laneService = new LaneService(roadLinkService, eventbus)
-
-  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val laneService: LaneService = new LaneService(roadLinkService, eventbus)
+  lazy val roadLinkService: RoadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
   lazy val vvhClient: VVHClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
-
   lazy val viiteClient: SearchViiteClient = { new SearchViiteClient(getProperty("digiroad2.viiteRestApiEndPoint"), HttpClientBuilder.create().build()) }
-  lazy val roadAddressService : RoadAddressService = new RoadAddressService(viiteClient)
+  lazy val roadAddressService: RoadAddressService = new RoadAddressService(viiteClient)
+
+  lazy val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
   lazy val dr2properties: Properties = {
     val props = new Properties()
@@ -96,10 +98,10 @@ object LaneUtils {
       val vkmLinkIds = vkmRoadAddress.map(_.linkId)
 
       // Remove from Viite the information we have updated in our DB and add ou information
-      val allRoadAddress = (roadAddresses.filterNot( x => vkmLinkIds.contains( x.linkId)) ++ vkmRoadAddress).toSet
+      val allRoadAddress = (roadAddresses.filterNot( ra => vkmLinkIds.contains( ra.linkId)) ++ vkmRoadAddress).toSet
 
       // Get all updated information from VVH
-      val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId).toSet)
+      val mappedRoadLinks = roadLinkService.fetchVVHRoadlinks(allRoadAddress.map(_.linkId))
                                            .groupBy(_.linkId)
 
       val finalRoads = allRoadAddress.filter { elem =>       // Remove the links that are not in VVH and roadPart between our initial and end
@@ -193,13 +195,13 @@ object LaneUtils {
           val laneCodeProperty = lane.properties.find(_.publicId == "lane_code")
                                                 .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
-          val laneCodeValue = laneCodeProperty.values.head.value.toString
-          val laneCode = if ( laneCodeValue.nonEmpty )
-                           laneCodeValue.toInt
+          val laneCodeValue = laneCodeProperty.values.head.value
+          val laneCode = if ( laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty )
+                          laneCodeValue.toString.trim.toInt
                          else
-                           throw new IllegalArgumentException("Lane Code attribute Empty!")
+                          throw new IllegalArgumentException("Lane Code attribute Empty!")
 
-          val isMainLane = laneCodeValue.charAt(1).getNumericValue == 1
+          val isMainLane = MAIN_LANES.contains(laneCode)
 
           val startDifferenceAddr = laneRoadAddressInfo.initialDistance - road.startAddrMValue
           val startPoint = if (isMainLane || startDifferenceAddr <= 0) road.startMValue else startDifferenceAddr
