@@ -1514,6 +1514,18 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     roadLinks.foreach(a => validateUserAccess(user)(a.municipalityCode, a.administrativeClass))
   }
 
+  private def validateUserRightsForRoadAddress(laneRoadAddressInfo: LaneRoadAddressInfo, user: User) : Unit = {
+
+    val roadParts = laneRoadAddressInfo.initialRoadPartNumber to laneRoadAddressInfo.endRoadPartNumber
+
+    // Get the LinkIds from road address information from Viite
+    val linkIds = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
+                                    .map(_.linkId)
+
+    //Validate the user rights on those LinkIds
+    validateUserRightsForLanes(linkIds.toSet, user)
+  }
+
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
     if (administrativeClass == State && StateRoadRestrictedAssets.contains(typeId))
       halt(BadRequest("Modification restriction for this asset on state roads"))
@@ -2161,6 +2173,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val laneRoadAddressInfo = (parsedBody \ "laneRoadAddressInfo").extractOrElse[LaneRoadAddressInfo](halt(BadRequest("Malformed 'laneRoadAddressInfo' parameter")))
     val incomingLanes = (parsedBody \ "lanes").extractOrElse[Set[NewIncomeLane]](halt(BadRequest("Malformed 'lanes' parameter")))
 
+    validateUserRightsForRoadAddress(laneRoadAddressInfo, user)
     LaneUtils.processNewLanesByRoadAddress(incomingLanes, laneRoadAddressInfo,sideCode, user.username)
   }
 
