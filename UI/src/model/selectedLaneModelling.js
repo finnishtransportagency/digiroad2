@@ -118,8 +118,8 @@
           lane.selectedLinks = linearAssets;
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
-        self.selection = _.cloneDeep(lanesWithSplitMarkers);
-        lanesFetched = _.cloneDeep(lanesWithSplitMarkers);
+        self.selection = lanesWithSplitMarkers;
+        lanesFetched = lanesWithSplitMarkers;
         linksSelected = linearAssets;
         collection.setSelection(self);
         assetsToBeExpired=[];
