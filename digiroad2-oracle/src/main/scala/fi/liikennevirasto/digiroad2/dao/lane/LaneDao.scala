@@ -162,7 +162,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   def fetchLanesByIds(ids: Set[Long] ): Seq[PersistedLane] = {
 
     MassQuery.withIds(ids) { idTableName =>
-      val filter = s" JOIN $idTableName i ON i.id = pos.link_id "
+      val filter = s" JOIN $idTableName i ON i.id = l.id "
 
       getLanesFilterQuery( withFilter(filter))
     }
