@@ -167,13 +167,14 @@ class LaneFiller {
 
       case TrafficDirection.TowardsDigitizing =>
 
-        val toAdd = if ( !lanesToProcess.exists(_.laneCode == MainLane.towardsDirection ))
-                    Seq( createPersistedLane(MainLane.towardsDirection, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps) )
+        val toAdd = if ( !lanesToProcess.exists(lane => lane.laneCode == MainLane.towardsDirection && lane.sideCode == SideCode.BothDirections.value))
+                    Seq( createPersistedLane(MainLane.towardsDirection, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps) )
                   else
                     Seq()
 
 
-        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection)
+        val toRemove = lanesToProcess.filter(lane => (lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection) ||
+                                                      lane.sideCode != SideCode.BothDirections.value)
                                       .map(_.id)
                                       .filterNot(_ == 0L)
 
@@ -184,12 +185,13 @@ class LaneFiller {
 
       case TrafficDirection.AgainstDigitizing =>
 
-        val toAdd = if ( !lanesToProcess.exists(_.laneCode == MainLane.againstDirection))
-                      Seq( createPersistedLane(MainLane.againstDirection, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
+        val toAdd = if ( !lanesToProcess.exists(lane => lane.laneCode == MainLane.againstDirection && lane.sideCode == SideCode.BothDirections.value))
+                      Seq( createPersistedLane(MainLane.againstDirection, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps ) )
                     else
                       Seq()
 
-        val toRemove = lanesToProcess.filter( lane => lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection)
+        val toRemove = lanesToProcess.filter( lane => (lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection) ||
+                                              lane.sideCode != SideCode.BothDirections.value)
                                       .map(_.id)
                                       .filterNot(_ == 0L)
 
