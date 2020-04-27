@@ -96,6 +96,14 @@
       });
     };
 
+
+    var extractSearchResultInfo = function (massTransitStop) {
+      return { lon: _.get(massTransitStop, 'lon'),
+        lat: _.get(massTransitStop, 'lat'),
+        id: _.get(massTransitStop, 'id')
+      };
+    };
+
     /**
      * Mass transit stop national id search, combined with road number search
      *
@@ -103,18 +111,24 @@
      * @returns {*}
      */
     var roadNumberAndNationalIdSearch = function(input) {
-      return $.when(backend.getMassTransitStopByNationalIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-         if (_.get(result[0], 'success')) {
-          var lon = _.get(result[0], 'lon');
-          var lat = _.get(result[0], 'lat');
+      return $.when(backend.getMassTransitStopByNationalIdForSearch(input.text) ).then(function(result) {
+        var returnObject = [];
+        var finalValue = result;
+
+        if (result instanceof Array)
+          finalValue = result[0];
+
+        if (_.get(finalValue, 'success')) {
+          var info = extractSearchResultInfo(finalValue);
           var title = input.text + ' (valtakunnallinen ID)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: input.text,resultType:"Mtstop"});
-         }
+          returnObject.push({title: title, lon: info.lon, lat: info.lat, id: info.id,resultType:"Mtstop"});
+        }
+
         if (returnObject.length === 0){
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
         }
-            return returnObject;
+
+        return returnObject;
       });
     };
 
@@ -147,19 +161,24 @@
      * @returns {*}
      */
     var  massTransitStopLiviIdSearch = function(input) {
-      return $.when(backend.getMassTransitStopByLiviIdForSearch(input.text), backend.getCoordinatesFromRoadAddress(input.text)).then(function(result,roadData) {
-        var returnObject = roadLocationAPIResultParser(roadData);
-        if (_.get(result[0], 'success')) {
-          var lon = _.get(result[0], 'lon');
-          var lat = _.get(result[0], 'lat');
-          var nationalid=_.get(result[0], 'nationalId');
+      return $.when(backend.getMassTransitStopByLiviIdForSearch(input.text)).then(function(result) {
+        var returnObject = [];
+        var massTransitStop = result;
+
+        if (result instanceof Array)
+          massTransitStop = result[0];
+
+        if (_.get(massTransitStop, 'success')) {
+          var info = extractSearchResultInfo(massTransitStop);
           var title = input.text + ' (pysäkin Livi-tunniste)';
-          returnObject.push({title: title, lon: lon, lat: lat, nationalId: nationalid, resultType:"Mtstop"});
+          returnObject.push({title: title, lon: info.lon, lat: info.lat, id: info.id, resultType:"Mtstop"});
         }
-          if (returnObject.length === 0){
-            return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-          }
-          return returnObject;
+
+        if (returnObject.length === 0){
+          return $.Deferred().reject('Haulla ei löytynyt tuloksia');
+        }
+
+        return returnObject;
       });
     };
 
