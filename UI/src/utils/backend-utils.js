@@ -262,6 +262,12 @@
       };
     });
 
+    this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom) {
+      return {
+        url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom
+      };
+    });
+
     this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
       return {
         url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
@@ -293,6 +299,29 @@
       };
     });
 
+    this.updateLaneAssets = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/lanes",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.updateLaneAssetsByRoadAddress = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/lanesByRoadAddress",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
 
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
@@ -368,6 +397,10 @@
 
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
+    };
+
+    this.getLanesByLinkIdAndSidecode = function(linkId, sidecode, callback) {
+      $.get('api/lane/' + linkId + "/" + sidecode, callback);
     };
 
     this.getMassTransitStopById = function(id, callback) {

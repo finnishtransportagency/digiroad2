@@ -11,7 +11,7 @@ window.SpeedLimitLayer = function(params) {
   var isActive = false;
   var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
-  var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+  var authorizationPolicy = new LinearAssetAuthorizationPolicy();
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {

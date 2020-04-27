@@ -205,6 +205,7 @@
         'manoeuvres/:id': 'manoeuvres',
         'parkingProhibition/:id': 'parkingProhibition',
         'cyclingAndWalking/:id': 'cyclingAndWalking',
+        'laneModellingTool/id': 'laneModellingTool',
         'work-list/speedLimit(/:administrativeClass)': 'speedLimitWorkList',
         'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
         'work-list/speedLimitErrors(/:administrativeClass)': 'speedLimitErrorsWorkList',
@@ -610,7 +611,11 @@
       },
 
       cyclingAndWalking: function (id) {
-            linearCentering('cyclingAndWalking', id);
+        linearCentering('cyclingAndWalking', id);
+      },
+
+      laneModellingTool: function (id) {
+        linearCentering('laneModellingTool', id);
       },
 
       unverifiedLinearAssetWorkList: function(layerName) {

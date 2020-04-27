@@ -5,56 +5,56 @@
       var multiElementEventCategory = spec.multiElementEventCategory;
       var hasMunicipalityValidation = spec.hasMunicipalityValidation;
       this.linearAssets = [];
-      var dirty = false;
+      this.dirty = false;
       var selection = null;
       var self = this;
-      var splitLinearAssets = {};
+      this.splitLinearAssets = {};
       var separatedLimit = {};
 
       var singleElementEvent = function (eventName) {
           return singleElementEventCategory + ':' + eventName;
       };
 
-      var multiElementEvent = function (eventName) {
+      this.multiElementEvent = function (eventName) {
           return multiElementEventCategory + ':' + eventName;
       };
 
-      var maintainSelectedLinearAssetChain = function (collection) {
-          if (!selection) return collection;
+    this.maintainSelectedLinearAssetChain = function (collection) {
+      if (!selection) return collection;
 
       var isSelected = function (linearAsset) { return selection.isSelected(linearAsset); };
 
-          var collectionPartitionedBySelection = _.groupBy(collection, function (linearAssetGroup) {
-              return _.some(linearAssetGroup, isSelected);
-          });
-          var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
+      var collectionPartitionedBySelection = _.groupBy(collection, function (linearAssetGroup) {
+        return _.some(linearAssetGroup, isSelected);
+      });
+      var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
 
-          var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
-          var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
+      var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
+      var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
 
-          return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
-      };
+      return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
+    };
 
       this.getAll = function () {
-          return maintainSelectedLinearAssetChain(self.linearAssets);
+          return self.maintainSelectedLinearAssetChain(self.linearAssets);
       };
 
       this.getById = function (Id) {
           return _.find(_.flatten(self.linearAssets), {id: Id});
       };
 
-    var generateUnknownLimitId = function(linearAsset) {
+    this.generateUnknownLimitId = function(linearAsset) {
       return linearAsset.linkId.toString() +
           linearAsset.startMeasure.toFixed(2) +
           linearAsset.endMeasure.toFixed(2);
     };
 
     this.fetch = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
+      return self.fetchAssets(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox, center, zoom) {
-      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
+      return self.fetchAssets(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId, applicationModel.getWithRoadAddress(), zoom), center);
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
@@ -75,7 +75,7 @@
       });
     };
 
-    var fetch = function(boundingBox, assets, center) {
+    this.fetchAssets = function(boundingBox, assets, center) {
       return assets.then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
           return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
@@ -83,11 +83,11 @@
         var knownLinearAssets = partitionedLinearAssetGroups[true] || [];
         var unknownLinearAssets = _.map(partitionedLinearAssetGroups[false], function(linearAssetGroup) {
             return _.map(linearAssetGroup, function(linearAsset) {
-              return _.merge({}, linearAsset, { generatedId: generateUnknownLimitId(linearAsset) });
+              return _.merge({}, linearAsset, { generatedId: self.generateUnknownLimitId(linearAsset) });
             });
           }) || [];
         self.linearAssets = knownLinearAssets.concat(unknownLinearAssets);
-        eventbus.trigger(multiElementEvent('fetched'), self.getAll());
+        eventbus.trigger(self.multiElementEvent('fetched'), self.getAll());
         verificationCollection.fetch(boundingBox, center, typeId, hasMunicipalityValidation);
       });
     };
@@ -137,20 +137,20 @@
     };
 
     this.replaceCreatedSplit = function(selection, newSegment) {
-      splitLinearAssets.created = newSegment;
+      self.splitLinearAssets.created = newSegment;
       separatedLimit.A = newSegment;
       return newSegment;
     };
 
     this.replaceExistingSplit = function(selection, existingSegment) {
-      splitLinearAssets.existing = existingSegment;
+      self.splitLinearAssets.existing = existingSegment;
       separatedLimit.B = existingSegment;
       return existingSegment;
     };
 
     this.replaceSegments = function(selection, newSegments) {
-      if (splitLinearAssets.created) {
-        splitLinearAssets.created.value = newSegments[0].value;
+      if (self.splitLinearAssets.created) {
+        self.splitLinearAssets.created.value = newSegments[0].value;
       }
       else if (selection.length === 1) {
         self.linearAssets = replaceOneSegment(self.linearAssets, selection[0], newSegments[0]);
@@ -168,7 +168,7 @@
       });
     };
 
-    var calculateMeasure = function(link) {
+    this.calculateMeasure = function(link) {
       var points = _.map(link.points, function(point) {
         return [point.x, point.y];
       });
@@ -184,30 +184,30 @@
       var right = _.cloneDeep(link);
       right.points = split.secondSplitVertices;
 
-      if (calculateMeasure(left) < calculateMeasure(right)) {
-        splitLinearAssets.created = left;
-        splitLinearAssets.existing = right;
+      if (self.calculateMeasure(left) < self.calculateMeasure(right)) {
+        self.splitLinearAssets.created = left;
+        self.splitLinearAssets.existing = right;
       } else {
-        splitLinearAssets.created = right;
-        splitLinearAssets.existing = left;
+        self.splitLinearAssets.created = right;
+        self.splitLinearAssets.existing = left;
       }
 
-      splitLinearAssets.created.id = null;
-      splitLinearAssets.splitMeasure = split.splitMeasure;
+      self.splitLinearAssets.created.id = null;
+      self.splitLinearAssets.splitMeasure = split.splitMeasure;
 
-      splitLinearAssets.created.marker = 'A';
-      splitLinearAssets.existing.marker = 'B';
+      self.splitLinearAssets.created.marker = 'A';
+      self.splitLinearAssets.existing.marker = 'B';
 
-      dirty = true;
-      callback(splitLinearAssets);
-      eventbus.trigger(multiElementEvent('fetched'), self.getAll());
+      self.dirty = true;
+      callback(self.splitLinearAssets);
+      eventbus.trigger(self.multiElementEvent('fetched'), self.getAll());
     };
 
     this.saveSplit = function(callback) {
-      backend.splitLinearAssets(typeId, splitLinearAssets.existing.id, splitLinearAssets.splitMeasure, splitLinearAssets.created.value, splitLinearAssets.existing.value, function() {
+      backend.splitLinearAssets(typeId, self.splitLinearAssets.existing.id, self.splitLinearAssets.splitMeasure, self.splitLinearAssets.created.value, self.splitLinearAssets.existing.value, function() {
         eventbus.trigger(singleElementEvent('saved'));
-        splitLinearAssets = {};
-        dirty = false;
+        self.splitLinearAssets = {};
+        self.dirty = false;
         callback();
       }, function() {
         eventbus.trigger('asset:updateFailed');
@@ -217,7 +217,7 @@
     this.saveSeparation = function(callback) {
       var success = function() {
         eventbus.trigger(singleElementEvent('saved'));
-        dirty = false;
+        self.dirty = false;
         callback();
       };
       var failure = function() {
@@ -234,13 +234,13 @@
     };
 
     this.cancelCreation = function() {
-      dirty = false;
-      splitLinearAssets = {};
-      eventbus.trigger(multiElementEvent('cancelled'), self.getAll());
+      self.dirty = false;
+      self.splitLinearAssets = {};
+      eventbus.trigger(self.multiElementEvent('cancelled'), self.getAll());
     };
 
     this.isDirty = function() {
-      return dirty;
+      return self.dirty;
     };
 
     this.separateLinearAsset = function(selectedLinearAsset) {
@@ -254,7 +254,7 @@
       limitB.sideCode = 3;
       limitB.marker = 'B';
       limitB.id = null;
-      dirty = true;
+      self.dirty = true;
 
       separatedLimit.A = limitA;
       separatedLimit.B = limitB;

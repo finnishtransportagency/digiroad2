@@ -1,6 +1,8 @@
 (function(root) {
+    root.DynamicAssetForm = function (formStructure) {
+    var self = this;
 
-    var DynamicField = function (fieldSettings, isDisabled) {
+    this.DynamicField = function (fieldSettings, isDisabled) {
         var me = this;
         me.element = undefined;
 
@@ -85,7 +87,7 @@
             return _.isUndefined(fieldSettings.showAndHide) ? true : fieldSettings.showAndHide(assetConfig.authorizationPolicy, assetConfig.selectedLinearAsset, value, layerMode) ? '' : element.hide();
         };
 
-        me.setSelectedValue = function(setValue, getValue, withoutEventTriggers) {
+        me.setSelectedValue = function(setValue, getValue, sideCode, withoutEventTriggers) {
 
             var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
@@ -95,8 +97,8 @@
         };
     };
 
-    var TextualField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.TextualField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className =  assetTypeConfiguration.className;
 
@@ -111,17 +113,17 @@
                 '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
 
             me.element.find('input[type=text]').on('keyup', function(){
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
             return me.element;
         };
     };
 
-    var TextualLongField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.TextualLongField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
 
@@ -136,18 +138,18 @@
                 '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
 
             me.element.find('textarea').on('keyup', function () {
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
         };
     };
 
-    var NumericalField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.NumericalField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
 
@@ -174,18 +176,18 @@
           '</div>');
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
 
             me.element.find('input').on('keyup', function () {
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
         };
     };
 
-    var ReadOnlyFields = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.ReadOnlyFields = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
 
         me.editModeRender = function (fieldValue) {
@@ -200,8 +202,8 @@
         };
     };
 
-    var IntegerField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.IntegerField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
 
@@ -230,18 +232,18 @@
 
 
             if (!isDisabled && me.hasDefaultValue()&& !value)
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
 
             me.element.find('input[type=text]').on('keyup', function () {
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
         };
     };
 
-    var SingleChoiceField = function (assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.SingleChoiceField = function (assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
 
@@ -269,11 +271,11 @@
                 return me.element.find(":selected").val();
             };
             if (!isDisabled && me.hasDefaultValue() && !value){
-              me.setSelectedValue(setValue, getValue, true);
+              me.setSelectedValue(setValue, getValue, sideCode, true);
             }
 
             me.element.find('select').on('change', function(){
-              me.setSelectedValue(setValue, getValue, false);
+              me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
@@ -295,8 +297,8 @@
         };
     };
 
-    var MultiSelectField = function (assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.MultiSelectField = function (assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -322,7 +324,7 @@
             me.element =  $(template({divCheckBox: divCheckBox}));
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
 
             me.getValue = function() {
                 return _.map($('.multiChoice-'+sideCode+':checked'), function(fields) {
@@ -330,7 +332,7 @@
             };
 
             me.element.find('input').on('click', function(){
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
@@ -355,8 +357,8 @@
         };
     };
 
-    var DateField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.DateField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -385,11 +387,11 @@
                     if (target.keyCode === 9) {
                         return;
                     }
-                    me.setSelectedValue(setValue, getValue, false);
+                    me.setSelectedValue(setValue, getValue, sideCode, false);
                 }, 500));
 
             if (!isDisabled && me.hasDefaultValue() && !value)
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
 
             me.element.append(inputLabel);
             addDatePickers(field, me.element);
@@ -397,8 +399,8 @@
         };
     };
 
-    var CheckboxField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.CheckboxField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
 
         me.editModeRender = function (fieldValue, sideCode, setValue, getValue) {
@@ -435,12 +437,12 @@
 
             if(!isDisabled && (me.hasDefaultValue() || me.isRequired()) && !value) {
                 me.setValue(me.getValue());
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
             }
 
             me.element.find('input').on('click', function(){
                 me.setValue(me.getValue());
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
@@ -467,8 +469,8 @@
         };
     };
 
-    var TimePeriodField = function(assetTypeConfiguration, field, isDisabled){
-        DynamicField.call(this, field, isDisabled);
+    this.TimePeriodField = function(assetTypeConfiguration, field, isDisabled){
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = assetTypeConfiguration.className;
         var dayLabels = {1: "Su", 2: "Ma–Pe", 7: "La"};
@@ -588,11 +590,11 @@
 
             me.element.on('click', '.existing-validity-period .delete', function(event) {
                 $(event.target).parent().parent().remove();
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             me.element.on('change', '.existing-validity-period .select', function(event) {
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             me.element.on('change', '.new-validity-period select', function(event) {
@@ -604,7 +606,7 @@
                     endHour: 24,
                     endMinute: 0
                 }));
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             return me.element;
@@ -629,8 +631,8 @@
         };
     };
 
-    var DatePeriodField = function(assetTypeConfiguration, field, isDisabled) {
-        DynamicField.call(this, field, isDisabled);
+    this.DatePeriodField = function(assetTypeConfiguration, field, isDisabled) {
+        self.DynamicField.call(this, field, isDisabled);
         var me = this;
         var className = field.publicId;
         var elementNumber = 0;
@@ -701,13 +703,13 @@
                         return;
                     }
                     me.setValue(me.getValue());
-                    me.setSelectedValue(setValue, getValue, false);
+                    me.setSelectedValue(setValue, getValue, sideCode, false);
                 }, 500));
             };
 
             if (!isDisabled && me.hasDefaultValue() && !value) {
                 me.setValue(me.getValue());
-                me.setSelectedValue(setValue, getValue, true);
+                me.setSelectedValue(setValue, getValue, sideCode, true);
             }
 
             var existingDatePeriodElements =
@@ -747,13 +749,13 @@
 
             me.element.on('click', '.remove-period', function(event) {
                 $(event.target).parent().parent().remove();
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
 
                 handleButton();
             });
 
             me.element.on('datechange', function() {
-                me.setSelectedValue(setValue, getValue, false);
+                me.setSelectedValue(setValue, getValue, sideCode, false);
             });
 
             me.element.on('click', '.add-period', function() {
@@ -804,8 +806,8 @@
     };
 
     //hides field when in edit mode, show in view mode
-    var HiddenReadOnlyFields = function(assetTypeConfiguration){
-        DynamicField.call(this, assetTypeConfiguration);
+    this.HiddenReadOnlyFields = function(assetTypeConfiguration){
+        self.DynamicField.call(this, assetTypeConfiguration);
         var me = this;
 
         me.viewModeRender = function (field, currentValue) {
@@ -824,25 +826,30 @@
         };
     };
 
-    root.dynamicFormFields = [
-        {name: 'long_text', fieldType: TextualLongField},
-        {name: 'single_choice', fieldType: SingleChoiceField},
-        {name: 'date', fieldType: DateField},
-        {name: 'multiple_choice', fieldType: MultiSelectField},
-        {name: 'integer', fieldType: IntegerField},
-        {name: 'number', fieldType: NumericalField},
-        {name: 'text', fieldType: TextualField},
-        {name: 'checkbox', fieldType: CheckboxField},
-        {name: 'read_only_number', fieldType: ReadOnlyFields},
-        {name: 'read_only_text', fieldType: ReadOnlyFields},
-        {name: 'time_period', fieldType: TimePeriodField},
-        {name: 'date_period', fieldType: DatePeriodField},
-        {name: 'hidden_read_only_number', fieldType: HiddenReadOnlyFields}
+    this.renderPreview = function(selectedAsset) {
+        if (!selectedAsset.isSeparated()) {
+            var asset = _.head(selectedAsset.get());
+            var lanes = laneUtils.filterByValidityDirection(asset.sideCode, asset.lanes);
+            return _.isEmpty(lanes) ? '' : laneUtils.createPreviewHeaderElement(_.uniq(lanes));
+        }
+    };
+
+    this.dynamicFormFields = [
+        {name: 'long_text', fieldType: self.TextualLongField},
+        {name: 'single_choice', fieldType: self.SingleChoiceField},
+        {name: 'date', fieldType: self.DateField},
+        {name: 'multiple_choice', fieldType: self.MultiSelectField},
+        {name: 'integer', fieldType: self.IntegerField},
+        {name: 'number', fieldType: self.NumericalField},
+        {name: 'text', fieldType: self.TextualField},
+        {name: 'checkbox', fieldType: self.CheckboxField},
+        {name: 'read_only_number', fieldType: self.ReadOnlyFields},
+        {name: 'read_only_text', fieldType: self.ReadOnlyFields},
+        {name: 'time_period', fieldType: self.TimePeriodField},
+        {name: 'date_period', fieldType: self.DatePeriodField},
+        {name: 'hidden_read_only_number', fieldType: self.HiddenReadOnlyFields}
     ];
 
-    root.DynamicAssetForm = function (formStructure) {
-        var me = this;
-        var _assetTypeConfiguration;
         var AvailableForms = function(){
             var formFields = {};
 
@@ -874,16 +881,18 @@
 
         var forms = new AvailableForms();
 
-        me.initialize = function(assetTypeConfiguration, feedbackModel){
+        self.initialize = function(assetTypeConfiguration, feedbackModel){
             var rootElement = $('#feature-attributes');
-            _assetTypeConfiguration = assetTypeConfiguration;
+            self._assetTypeConfiguration = assetTypeConfiguration;
             new FeedbackDataTool(feedbackModel, assetTypeConfiguration.layerName, assetTypeConfiguration.authorizationPolicy, assetTypeConfiguration.singleElementEventCategory);
 
             eventbus.on(events('selected', 'cancelled'), function () {
-                var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
-              rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
-              rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-              rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
+                var isDisabled = _.isNull(self._assetTypeConfiguration.selectedLinearAsset.getId());
+              rootElement.find('#feature-attributes-header').html(self.renderHeader(self._assetTypeConfiguration.selectedLinearAsset));
+              rootElement.find('#feature-attributes-form').html(self.renderForm(self._assetTypeConfiguration.selectedLinearAsset, isDisabled));
+              rootElement.find('#feature-attributes-footer').html(self.renderFooter(self._assetTypeConfiguration.selectedLinearAsset));
+                if(assetTypeConfiguration.lanePreview)
+                    rootElement.find("#feature-attributes-form").prepend(self.renderPreview(self._assetTypeConfiguration.selectedLinearAsset));
             });
 
             eventbus.on(events('unselect'), function() {
@@ -893,31 +902,33 @@
             });
 
             eventbus.on('layer:selected', function(layer) {
-                if(_assetTypeConfiguration.layerName === layer){
+                if(self._assetTypeConfiguration.layerName === layer){
                   $('ul[class=information-content]').empty();
 
-                  if(_assetTypeConfiguration.isVerifiable)
-                    renderLinkToWorkList(layer);
-                  if(_assetTypeConfiguration.hasInaccurate)
-                    renderInaccurateWorkList(layer);
+                  if(self._assetTypeConfiguration.isVerifiable)
+                    self.renderLinkToWorkList(layer);
+                  if(self._assetTypeConfiguration.hasInaccurate)
+                    self.renderInaccurateWorkList(layer);
                 }
             });
 
             eventbus.on('application:readOnly', function(){
-                if(_assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && _assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
-                    var isDisabled = _.isNull(_assetTypeConfiguration.selectedLinearAsset.getId());
-                  rootElement.find('#feature-attributes-header').html(me.renderHeader(_assetTypeConfiguration.selectedLinearAsset));
-                  rootElement.find('#feature-attributes-form').html(me.renderForm(_assetTypeConfiguration.selectedLinearAsset, isDisabled));
-                  rootElement.find('#feature-attributes-footer').html(me.renderFooter(_assetTypeConfiguration.selectedLinearAsset));
+                if(self._assetTypeConfiguration.layerName ===  applicationModel.getSelectedLayer() && self._assetTypeConfiguration.selectedLinearAsset.count() !== 0) {
+                    var isDisabled = _.isNull(self._assetTypeConfiguration.selectedLinearAsset.getId());
+                  rootElement.find('#feature-attributes-header').html(self.renderHeader(self._assetTypeConfiguration.selectedLinearAsset));
+                  rootElement.find('#feature-attributes-form').html(self.renderForm(self._assetTypeConfiguration.selectedLinearAsset, isDisabled));
+                  rootElement.find('#feature-attributes-footer').html(self.renderFooter(self._assetTypeConfiguration.selectedLinearAsset));
+                    if(assetTypeConfiguration.lanePreview)
+                        rootElement.find("#feature-attributes-form").prepend(self.renderPreview(self._assetTypeConfiguration.selectedLinearAsset));
                 }
             });
 
             function events() {
-                return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+                return _.map(arguments, function(argument) { return self._assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
             }
         };
 
-        me.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled, alreadyRendered) {
+        self.renderAvailableFormElements = function(asset, isReadOnly, sideCode, setAsset, getValue, isDisabled, alreadyRendered) {
             if(alreadyRendered)
               forms.removeFields(sideCode);
             var fieldGroupElement = $('<div class = "input-unit-combination" >');
@@ -928,8 +939,8 @@
                     if(!_.isUndefined(existingProperty))
                         fieldValues = existingProperty.values;
                 }
-                var dynamicField = _.find(dynamicFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
-                var fieldType = new dynamicField.fieldType(_assetTypeConfiguration, field, isDisabled);
+                var dynamicField = _.find(self.dynamicFormFields, function (availableFieldType) { return availableFieldType.name === field.type; });
+                var fieldType = new dynamicField.fieldType(self._assetTypeConfiguration, field, isDisabled);
                 forms.addField(fieldType, sideCode);
                 var fieldElement = isReadOnly ? fieldType.viewModeRender(field, fieldValues) : fieldType.editModeRender(fieldValues, sideCode, setAsset, getValue);
 
@@ -938,40 +949,40 @@
             });
 
             fieldGroupElement.find('input, select').one('click', function() {
-                me.unSetElement(_assetTypeConfiguration.selectedLinearAsset);
+                self.unSetElement(self._assetTypeConfiguration.selectedLinearAsset);
             });
 
             return fieldGroupElement;
         };
 
-        function _isReadOnly(selectedAsset){
+        this._isReadOnly = function(selectedAsset){
             return applicationModel.isReadOnly() || !checkAuthorizationPolicy(selectedAsset);
-        }
+        };
 
-        var createHeaderElement = function(selectedAsset) {
+        this.createHeaderElement = function(selectedAsset) {
           var title = function () {
             if(selectedAsset.isUnknown() || selectedAsset.isSplit()) {
-              return '<span class="read-only-title" style="display: block">' +_assetTypeConfiguration.title + '</span>' +
-                '<span class="edit-mode-title" style="display: block">' + _assetTypeConfiguration.newTitle + '</span>';
+              return '<span class="read-only-title" style="display: block">' +self._assetTypeConfiguration.title + '</span>' +
+                '<span class="edit-mode-title" style="display: block">' + self._assetTypeConfiguration.newTitle + '</span>';
             }
             return selectedAsset.count() === 1 ?
-            '<span>Kohteen ID: ' + selectedAsset.getId() + '</span>' : '<span>' + _assetTypeConfiguration.title + '</span>';
+            '<span>Kohteen ID: ' + selectedAsset.getId() + '</span>' : '<span>' + self._assetTypeConfiguration.title + '</span>';
           };
 
           return $(title());
         };
 
-      var createFooterElement = function() {
+      this.createFooterElement = function() {
           return $('<div class="linear-asset form-controls" style="display: none"></div>')
-            .append(new VerificationButton(_assetTypeConfiguration).element)
-            .append(new SaveButton(_assetTypeConfiguration, formStructure).element)
-            .append(new CancelButton(_assetTypeConfiguration).element);
+            .append(self.verificationButton(self._assetTypeConfiguration).element)
+            .append(self.saveButton(self._assetTypeConfiguration, formStructure).element)
+            .append(self.cancelButton(self._assetTypeConfiguration).element);
         };
 
-        me.renderHeader = function(selectedAsset) {
-          var isReadOnly = _isReadOnly(selectedAsset);
+        this.renderHeader = function(selectedAsset) {
+          var isReadOnly = self._isReadOnly(selectedAsset);
 
-          var header = createHeaderElement(selectedAsset);
+          var header = self.createHeaderElement(selectedAsset);
 
           header.filter('.read-only-title').toggle(isReadOnly);
           header.filter('.edit-mode-title').toggle(!isReadOnly);
@@ -980,9 +991,9 @@
           return header;
         };
 
-        me.renderFooter = function(selectedAsset) {
-          var isReadOnly = _isReadOnly(selectedAsset);
-          var footer = createFooterElement();
+        this.renderFooter = function(selectedAsset) {
+          var isReadOnly = self._isReadOnly(selectedAsset);
+          var footer = self.createFooterElement();
           //Hide or show elements depending on the readonly mode
           footer.filter('.form-controls').toggle(!isReadOnly);
 
@@ -991,14 +1002,14 @@
 
         function setMassUpdateEvents() {
             function multiEvents() {
-                return _.map(arguments, function(argument) { return _assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
+                return _.map(arguments, function(argument) { return self._assetTypeConfiguration.multiElementEventCategory + ':' + argument; }).join(' ');
             }
 
             var updateStatusForMassButton = function(element) {
-                if(_assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-                    element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && me.isSplitOrSeparatedAllowed()));
+                if(self._assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
+                    element.prop('disabled', !(self.isSaveable(forms.getAllFields()) && self.isSplitOrSeparatedAllowed()));
                 } else
-                    element.prop('disabled', !(me.isSaveable(forms.getAllFields())));
+                    element.prop('disabled', !(self.isSaveable(forms.getAllFields())));
             };
 
             eventbus.on("massDialog:rendered", function (massUpdateBox, buttonElement) {
@@ -1009,12 +1020,12 @@
             });
         }
 
-        me.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
+        this.renderForm = function (selectedAsset, isDisabled, isMassUpdate) {
             if(isMassUpdate)
                 setMassUpdateEvents();
 
             forms = new AvailableForms();
-            var isReadOnly = _isReadOnly(selectedAsset);
+            var isReadOnly = self._isReadOnly(selectedAsset);
             var asset = selectedAsset.get();
 
             var body = createBodyElement(selectedAsset);
@@ -1034,43 +1045,43 @@
             renderSeparateButtonElement(selectedAsset, body, isMassUpdate);
 
             //Hide or show elements depending on the readonly mode
-            toggleBodyElements(body, isReadOnly);
+            self.toggleBodyElements(body, isReadOnly);
             return body;
         };
 
         function renderSeparateButtonElement(selectedAsset, body, isMassUpdate){
-            if(selectedAsset.isSeparable() && !_isReadOnly(selectedAsset) && !isMassUpdate){
+            if(selectedAsset.isSeparable() && !self._isReadOnly(selectedAsset) && !isMassUpdate){
                 var separateElement = $(''+
                   '<div class="form-group editable">' +
                   '  <label class="control-label"></label>' +
                   '  <button class="cancel btn btn-secondary" id="separate-limit">Jaa kaksisuuntaiseksi</button>' +
                   '</div>');
 
-                separateElement.find('#separate-limit').on('click', function() { _assetTypeConfiguration.selectedLinearAsset.separate(); });
+                separateElement.find('#separate-limit').on('click', function() { self._assetTypeConfiguration.selectedLinearAsset.separate(); });
 
                 body.find('.form').append(separateElement);
             }
         }
 
         function renderFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, removeValueFn, isDisabled, body) {
-            var sideCodeClass = generateClassName(sideCode);
+            var sideCodeClass = self.generateClassName(sideCode);
 
             var unit = asset.value ? 'on' : 'ei ole';
 
             var formGroup = $('' +
               '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' +
-              '  <label class="control-label">' + _assetTypeConfiguration.editControlLabels.title + '</label>' +
-              '  <p class="form-control-static ' + _assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
+              '  <label class="control-label">' + self._assetTypeConfiguration.editControlLabels.title + '</label>' +
+              '  <p class="form-control-static ' + self._assetTypeConfiguration.className + '" style="display:none;">' + unit.replace(/[\n\r]+/g, '<br>') + '</p>' +
               '</div>');
 
             var disableChecked = isDisabled ? 'checked' : '';
             var enableChecked = isDisabled ? '' : 'checked';
 
             var toggleElement = $('' +
-              createSideCodeMarker(sideCode) +
+              self.createSideCodeMarker(sideCode) +
               '<div class="edit-control-group choice-group">' +
               '  <div class="radio">' +
-              '    <label>' + _assetTypeConfiguration.editControlLabels.disabled +
+              '    <label>' + self._assetTypeConfiguration.editControlLabels.disabled +
               '      <input ' +
               '      class= "' + sideCodeClass + '"' +
               '      type="radio" name="' + sideCodeClass + '" ' +
@@ -1078,7 +1089,7 @@
               '    </label>' +
               '  </div>' +
               '  <div class="radio">' +
-              '    <label>' + _assetTypeConfiguration.editControlLabels.enabled +
+              '    <label>' + self._assetTypeConfiguration.editControlLabels.enabled +
               '      <input ' +
               '      class= "' + sideCodeClass + '"' +
               '      type="radio" name="' + sideCodeClass + '" ' +
@@ -1095,40 +1106,40 @@
                 if(disabled){
                     forms.removeFields(sideCode);
                     removeValueFn();
-                    _assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
+                    self._assetTypeConfiguration.selectedLinearAsset.setDirty(!isDisabled);
                 }else{
                     setValueFn(asset.value || {properties: []} );
-                    formGroup.find('.input-unit-combination').replaceWith(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled, true));
+                    formGroup.find('.input-unit-combination').replaceWith(self.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, disabled, true));
                 }
                 eventbus.trigger("radio-trigger-dirty");
             });
 
             formGroup.append(toggleElement);
             body.find('.form').append(formGroup);
-            body.find('.form-editable-' + sideCodeClass).append(me.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
+            body.find('.form-editable-' + sideCodeClass).append(self.renderAvailableFormElements(asset, isReadOnly, sideCode, setValueFn, getValueFn, isDisabled));
 
             return body;
         }
 
-        function renderLinkToWorkList(layerName) {
+        this.renderLinkToWorkList = function(layerName) {
             $('ul[class=information-content]').append('' +
               '<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
-        }
+        };
 
-        function renderInaccurateWorkList(layerName) {
+        this.renderInaccurateWorkList = function(layerName) {
             $('ul[class=information-content]').append('<li><button id="work-list-link-errors" class="wrong-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + 'Errors">Laatuvirhelista</button></li>');
-        }
+        };
 
-        function createSideCodeMarker(sideCode) {
+        this.createSideCodeMarker = function(sideCode) {
             if (_.isUndefined(sideCode) || sideCode === '')
                 return '';
 
             return '<span class="marker">' + sideCode + '</span>';
-        }
+        };
 
-        var userInformationLog = function() {
-            var selectedAsset = _assetTypeConfiguration.selectedLinearAsset;
-            var authorizationPolicy = _assetTypeConfiguration.authorizationPolicy;
+        this.userInformationLog = function() {
+            var selectedAsset = self._assetTypeConfiguration.selectedLinearAsset;
+            var authorizationPolicy = self._assetTypeConfiguration.authorizationPolicy;
 
             var hasMunicipality = function(linearAsset) {
                 return _.some(linearAsset.get(), function(asset){
@@ -1169,7 +1180,7 @@
             };
 
             var verifiedFields = function() {
-                return (_assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
+                return (self._assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
                   '<div class="form-group">' +
                   '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
                   '</div>' : '';
@@ -1187,26 +1198,26 @@
               '     <div class="form-group">' +
               '       <p class="form-control-static asset-log-info">Linkkien lukumäärä: ' + selectedAsset.count() + '</p>' +
               '     </div>' +
-              userInformationLog() +
+              self.userInformationLog() +
               '   </div>' +
               '</div>');
         }
 
-        function toggleBodyElements(rootElement, isReadOnly) {
+        this.toggleBodyElements = function(rootElement, isReadOnly) {
             rootElement.find('.editable .form-control-static').toggle(isReadOnly);
             rootElement.find('.editable .edit-control-group').toggle(!isReadOnly);
-        }
+        };
 
-        function generateClassName(sideCode) {
-            return sideCode ? _assetTypeConfiguration.className + '-' + sideCode : _assetTypeConfiguration.className;
-        }
+        this.generateClassName = function(sideCode) {
+            return sideCode ? self._assetTypeConfiguration.className + '-' + sideCode : self._assetTypeConfiguration.className;
+        };
 
         function checkAuthorizationPolicy(selectedAsset){
-            var auth = _assetTypeConfiguration.authorizationPolicy || function() { return false; };
+            var auth = self._assetTypeConfiguration.authorizationPolicy || function() { return false; };
             return auth.validateMultiple(selectedAsset.get());
         }
 
-        me.isSplitOrSeparatedAllowed = function(){
+        this.isSplitOrSeparatedAllowed = function(){
             //When both are deleted
             if(_.isEmpty(forms.getAllFields()))
                 return false;
@@ -1222,10 +1233,10 @@
             });
         };
 
-        me.isSaveable = function(field){
+        self.isSaveable = function(field){
             var otherSaveCondition = function () {
-                if(_assetTypeConfiguration.saveCondition)
-                    return _assetTypeConfiguration.saveCondition(field);
+                if(self._assetTypeConfiguration.saveCondition)
+                    return self._assetTypeConfiguration.saveCondition(field);
                 return true;
             };
             return _.every(forms.getAllFields(), function(field){
@@ -1233,11 +1244,11 @@
             })&& otherSaveCondition();
         };
 
-        function events() {
-            return _.map(arguments, function(argument) { return _assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
-        }
+        this.events = function() {
+            return _.map(arguments, function(argument) { return self._assetTypeConfiguration.singleElementEventCategory + ':' + argument; }).join(' ');
+        };
 
-        me.unSetElement = function(selectedAsset){
+        self.unSetElement = function(selectedAsset){
             _.map(forms.getAllFields(), function(field) {
                 if (field.isUnSet(selectedAsset)) {
 	                var currentPropertyValue = field.hasDefaultValue() ? field.getPropertyDefaultValue() :  field.emptyPropertyValue();
@@ -1255,21 +1266,21 @@
             });
         };
 
-        var SaveButton = function(assetTypeConfiguration) {
+        this.saveButton = function(assetTypeConfiguration) {
             var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
                 assetTypeConfiguration.selectedLinearAsset.save();
             });
 
             var updateStatus = function(element) {
                 if(assetTypeConfiguration.selectedLinearAsset.isSplitOrSeparated()) {
-                    element.prop('disabled', !(me.isSaveable(forms.getFields('a')) && me.isSaveable(forms.getFields('b')) && me.isSplitOrSeparatedAllowed()));
+                    element.prop('disabled', !(self.isSaveable(forms.getFields('a')) && self.isSaveable(forms.getFields('b')) && self.isSplitOrSeparatedAllowed()));
                 } else
-                    element.prop('disabled', !(me.isSaveable(forms.getAllFields()) && assetTypeConfiguration.selectedLinearAsset.isDirty()));
+                    element.prop('disabled', !(self.isSaveable(forms.getAllFields()) && assetTypeConfiguration.selectedLinearAsset.isDirty()));
             };
 
             updateStatus(element);
 
-            eventbus.on(events('valueChanged'), function() {
+            eventbus.on(self.events('valueChanged'), function() {
                 updateStatus(element);
             });
 
@@ -1282,13 +1293,13 @@
             };
         };
 
-        var CancelButton = function(assetTypeConfiguration) {
+        this.cancelButton = function(assetTypeConfiguration) {
 
             var element = $('<button />').prop('disabled', !assetTypeConfiguration.selectedLinearAsset.isDirty()).addClass('cancel btn btn-secondary').text('Peruuta').click(function() {
                 assetTypeConfiguration.selectedLinearAsset.cancel();
             });
 
-            eventbus.on(events('valueChanged'), function() {
+            eventbus.on(self.events('valueChanged'), function() {
                 $('.cancel').prop('disabled', false);
             });
 
@@ -1297,21 +1308,21 @@
             };
         };
 
-        var VerificationButton = function(assetTypeConfiguration) {
+        this.verificationButton = function(assetTypeConfiguration) {
             var visible = (assetTypeConfiguration.isVerifiable && !_.isNull(assetTypeConfiguration.selectedLinearAsset.getId()) && assetTypeConfiguration.selectedLinearAsset.count() === 1);
 
-            var element = visible ? $('<button />').prop('disabled', me.isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
+            var element = visible ? $('<button />').prop('disabled', self.isSaveable()).addClass('verify btn btn-primary').text('Merkitse tarkistetuksi').click(function() {
                 assetTypeConfiguration.selectedLinearAsset.verify();
             }) : '';
 
             var updateStatus = function() {
                 if(!_.isEmpty(element))
-                    element.prop('disabled', me.isSaveable());
+                    element.prop('disabled', self.isSaveable());
             };
 
             updateStatus();
 
-            eventbus.on(events('valueChanged'), function() {
+            eventbus.on(self.events('valueChanged'), function() {
                 updateStatus();
             });
 

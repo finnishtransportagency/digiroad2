@@ -45,7 +45,8 @@
       carryingCapacity: 400,
       roadWorksAsset: 420,
       parkingProhibition: 430,
-      cyclingAndWalking: 440
+      cyclingAndWalking: 440,
+      laneModellingTool: 450
     };
 
     var assetGroups = {
@@ -57,17 +58,25 @@
       return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
     };
 
+    var dateExtract = function (value) {
+      return new Date(value.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+    };
+
     var datePeriodValueExtract = function (date) {
       var datePeriodValue = date.getPropertyValue().values;
-      var startDate = new Date(_.head(datePeriodValue).value.startDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
-      var endDate = new Date(_.head(datePeriodValue).value.endDate.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3"));
+      var startDate = dateExtract(_.head(datePeriodValue).value.startDate);
+      var endDate = dateExtract(_.head(datePeriodValue).value.endDate);
 
       return {startDate: startDate, endDate: endDate};
     };
 
+    var isValidPeriodDate = function (startDate, endDate) {
+      return startDate <= endDate;
+    };
+
     var isEndDateAfterStartdate = function (date) {
       var datePeriods = datePeriodValueExtract(date);
-      return datePeriods.startDate <= datePeriods.endDate;
+      return isValidPeriodDate(datePeriods.startDate, datePeriods.endDate);
     };
 
     var showSuggestBox = function (authorizationPolicy, selectedLinearAsset, value, layerMode) {
@@ -94,6 +103,8 @@
         }
       };
     };
+
+    //To use the new lane preview on the assets form(point and dynamic forms) put lanePreview: true
 
     var linearAssetSpecs = [
       {
@@ -381,12 +392,12 @@
             return date.hasValue() ? isEndDateAfterStartdate(date) : true;
           });
 
-          var isValidPeriodDate =  _.every(datePeriodField, function(date) {
+          var datesAreValid =  _.every(datePeriodField, function(date) {
             return date.hasValue() && isInDatePeriod(date) && isEndDateAfterStartdate(date);
           });
 
           var isAnnualRepetition = _.some(_.filter(fields, function(field) {return field.getPropertyValue().publicId === 'annual_repetition';}), function(checkBox) { return checkBox.getValue(); });
-          return isAnnualRepetition ? isValidPeriodDate : isValidIntervalDate;
+          return isAnnualRepetition ? datesAreValid : isValidIntervalDate;
         },
         form: new DynamicAssetForm ( {
           fields : [
@@ -927,6 +938,118 @@
               return field.hasValue() && (publicId === "cyclingAndWalking_type" && field.getValue() !== "99");
             });
         }
+      },
+      {
+        typeId: assetType.laneModellingTool,
+        singleElementEventCategory: 'laneModellingTool',
+        multiElementEventCategory: 'lanesModellingTool',
+        layerName: 'laneModellingTool',
+        title: 'Kaistan mallinnustyökalu',
+        newTitle: 'Uusi kaistan mallinnustyökalu',
+        className: 'lane-modelling-tool',
+        authorizationPolicy: new LinearAssetAuthorizationPolicy(),
+        editControlLabels: {
+          title: 'Kaistan mallinnustyökalu',
+        },
+        isSeparable: false,
+        allowComplementaryLinks: true,
+        isVerifiable: false,
+        style: new LaneModellingStyle(),
+        form: new LaneModellingForm({
+          fields : [
+            {
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6
+            },
+            {
+              label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
+              values: [
+                {id: 2, label: 'Ohituskaista'},
+                {id: 3, label: 'Kääntymiskaista oikealle'},
+                {id: 4, label: 'Kääntymiskaista vasemmalle'},
+                {id: 5, label: 'Lisäkaista suoraan ajaville'},
+                {id: 6, label: 'Liittymiskaista'},
+                {id: 7, label: 'Erkanemiskaista'},
+                {id: 8, label: 'Sekoittumiskaista'},
+                {id: 9, label: 'Joukkoliikenteen kaista / taksikaista'},
+                {id: 10, label: 'Raskaan liikenteen kaista'},
+                {id: 11, label: 'Vaihtuvasuuntainen kaista'},
+                {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
+                {id: 21, label: 'Jalankulun kaista'},
+                {id: 22, label: 'Pyöräilykaista'},
+              ],  defaultValue: "2", weight: 7
+            },
+            {
+              label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 8,
+              values: [
+                {id: 1, label: 'Jatkuva'},
+                {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
+                {id: 3, label: 'Kääntyvä'},
+                {id: 4, label: 'Päättyvä'},
+                {id: 5, label: 'Jatkuva, osoitettu myös oikealle kääntyville'},
+                {id: 6, label: 'Jatkuva, osoitettu myös vasemmalle kääntyville'},
+              ]
+            },
+            {
+              label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9
+            },
+            {
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 10
+            },
+            {
+              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 11
+            }
+          ]
+        }),
+        saveCondition:function (lanes) {
+          var isValidLane = function (fields) {
+            var isValidDatePeriod = function (fields) {
+              var isValidDate = true;
+              var dateFields = Property.filterPropertiesByPropertyType(fields, 'date');
+
+              if (dateFields.length == 2) {
+                var startDate = Property.getPropertyByPublicId(dateFields, 'start_date');
+                var endDate = Property.getPropertyByPublicId(dateFields, 'end_date');
+
+                if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+                  isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
+              }
+              return isValidDate;
+            };
+
+            var isValidRoadAddress = function (fields) {
+              var isValidRoadAddress = true;
+              var initialRoadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'read_only_number');
+              var initialRoadPartNumber = Property.getPropertyByPublicId(initialRoadAddressesFields, 'initial_road_part_number');
+              var initialDistance = Property.getPropertyByPublicId(initialRoadAddressesFields, 'initial_distance');
+
+              if (!_.isUndefined(initialRoadPartNumber)) {
+                var roadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'number');
+                var endRoadPartNumber = Property.getPropertyByPublicId(roadAddressesFields, 'end_road_part_number');
+                var endDistance = Property.getPropertyByPublicId(roadAddressesFields, 'end_distance');
+
+                if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
+                  _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0]) ||
+                  _.head(endRoadPartNumber.values).value < _.head(initialRoadPartNumber.values).value ||
+                  (_.head(endRoadPartNumber.values).value == _.head(initialRoadPartNumber.values).value && _.head(endDistance.values).value <= _.head(initialDistance.values).value)) {
+                  isValidRoadAddress = false;
+                }
+              }
+              return isValidRoadAddress;
+            };
+
+            return isValidDatePeriod(fields) && isValidRoadAddress(fields);
+          };
+
+          return !_.some(_.map(lanes, function (lane) {
+            return isValidLane(lane.properties);
+          }), function (boolean) {
+            return boolean === false;
+          });
+        },
+        selected: SelectedLaneModelling,
+        collection: LaneModellingCollection,
+        layer: LaneModellingLayer,
+        label: new LaneModellingLabel()
       }
     ];
 
