@@ -226,8 +226,20 @@
       me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     };
 
+    /*
+    Seems not possible to use the same behaviour as changeTool
+     */
     var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, laneNumber) {
-      changeTool(eventListener, application.getSelectedTool());
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      eventListener.stopListening(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+
+      if (selectedLinearAsset.isDirty() && application.getSelectedTool() !== 'Cut') {
+        me.selectToolControl.deactivate();
+        eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
+      }else if(!selectedLinearAsset.isDirty() && application.getSelectedTool() !== 'Cut'){
+        eventListener.listenTo(eventbus, 'map:clicked', selectedLinearAsset.cancel);
+      }
+
       me.decorateSelection(laneNumber);
     };
 
