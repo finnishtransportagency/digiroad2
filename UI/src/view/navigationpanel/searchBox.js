@@ -83,7 +83,7 @@
         });
         eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
       } else if (result.resultType.indexOf("Mtstop")>-1) {
-        window.location.hash="#massTransitStop/"+result.nationalId;
+        window.location.hash="#massTransitStop/"+result.id;
       } else if (result.resultType.indexOf("association")>-1) {
         window.location.hash = "#linkProperty/" + result.linkId;
       } else {
