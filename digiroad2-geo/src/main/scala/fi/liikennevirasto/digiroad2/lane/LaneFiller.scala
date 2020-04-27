@@ -34,6 +34,7 @@ class LaneFiller {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
+      expireOverlappingSegments,
       combine,
       fuse,
       dropShortSegments,
@@ -82,6 +83,50 @@ class LaneFiller {
     }
 
     (segmentsWithinGeometry ++ lanesWithFixedLength, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredLaneIds))
+  }
+
+  private def expireOverlappingSegments(roadLink: RoadLink, segments: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
+    def isChanged(p : PersistedLane) : Boolean = {
+      segments.exists(s => p.id == s.id && (p.startMeasure != s.startMeasure || p.endMeasure != s.endMeasure))
+    }
+
+    if (segments.size > 1) {
+      val sortedSegments = expireOverlappedRecursively(sortNewestFirst(segments), Seq())
+      val alteredSegments = sortedSegments.filterNot(_.id == 0)
+
+      // Creates for each linear asset a new MValueAdjustment if the start or end measure have changed
+      val mValueChanges = alteredSegments.filter(isChanged).
+        map(s => MValueAdjustment(s.id, s.linkId, s.startMeasure, s.endMeasure))
+
+      val expiredIds = segments.map(_.id).filterNot(_ == 0).toSet -- alteredSegments.map(_.id) ++ changeSet.expiredLaneIds
+      (sortedSegments,
+        changeSet.copy(adjustedMValues = (changeSet.adjustedMValues ++ mValueChanges).filterNot(mvc => expiredIds.contains(mvc.laneId)),
+          expiredLaneIds = expiredIds))
+    } else
+      (segments, changeSet)
+  }
+
+  private def expireOverlappedRecursively(sortedAssets: Seq[PersistedLane], result: Seq[PersistedLane]): Seq[PersistedLane] = {
+    val keeperOpt = sortedAssets.headOption
+    if (keeperOpt.nonEmpty) {
+      val keeper = keeperOpt.get
+      val overlapping = sortedAssets.tail.flatMap(asset => GeometryUtils.overlap(toSegment(keeper), toSegment(asset)) match {
+        case Some(overlap) if keeper.laneCode == asset.laneCode =>
+          Seq(
+            asset.copy(startMeasure = asset.startMeasure, endMeasure = overlap._1),
+            asset.copy(id = 0L, startMeasure = overlap._2, endMeasure = asset.endMeasure)
+          ).filter(a => a.endMeasure - a.startMeasure >= AllowedTolerance)
+        case _ =>
+          Seq(asset)
+      })
+      expireOverlappedRecursively(overlapping, result ++ Seq(keeper))
+    } else {
+      result
+    }
+  }
+
+  private def toSegment(persistedLinearAsset: PersistedLane) = {
+    (persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure)
   }
 
   private def capSegmentsThatOverflowGeometry(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {

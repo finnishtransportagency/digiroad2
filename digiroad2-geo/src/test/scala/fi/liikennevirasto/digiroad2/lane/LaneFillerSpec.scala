@@ -336,4 +336,41 @@ class LaneFillerSpec extends FunSuite with Matchers {
     changeSet.expiredLaneIds should be (Set())
   }
 
+  test("Expire duplicate lane") {
+    val topology = Seq(roadLinkTowards1)
+
+    val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
+      11, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
+    )
+
+    val lane12 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
+      12, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
+    )
+
+    val lane12Duplicated = PersistedLane(3L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
+      12, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
+    )
+
+    val lane13 = PersistedLane(4L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
+      13, 745L, 5.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(13))))
+    )
+
+    val linearAssets = Map(
+      roadLinkTowards1.linkId -> Seq(lane11, lane12, lane12Duplicated, lane13)
+    )
+
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+
+    filledTopology should have size 3
+    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value, SideCode.BothDirections.value))
+    filledTopology.map(_.id) should be (Seq(2L, 1L, 4L))
+    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId, roadLinkTowards1.linkId))
+    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
+
+    changeSet.expiredLaneIds should be (Set(3L))
+  }
 }
