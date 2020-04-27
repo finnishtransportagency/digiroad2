@@ -63,7 +63,10 @@
 
             rootElement.find("#feature-attributes-header").html(header);
             rootElement.find("#feature-attributes-form").html(form);
+            rootElement.find(".suggestion-box").before(me.renderValidityDirection(selectedAsset));
             rootElement.find("#feature-attributes-footer").html(footer);
+            if(me.pointAsset.lanePreview)
+                rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
 
             if (isOldTrafficLight) {
                 rootElement.find('button#old-to-new-traffic-light').on('click', function() {
@@ -80,6 +83,8 @@
                 rootElement.find('button#change-validity-direction').on('click', function() {
                     var previousValidityDirection = selectedAsset.get().validityDirection;
                     selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+                    if(me.pointAsset.lanePreview)
+                        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
                 });
 
                 me.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);

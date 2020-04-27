@@ -80,7 +80,7 @@
         '    </div>';
 
       var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
-        '    <div id="wrongSideInfo" class="form-group form-directional-traffic-sign">' +
+        '    <div id="wrongSideInfo" class="form-group read-only">' +
         '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
         '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
         '    </div>' : '';
@@ -100,7 +100,8 @@
       rootElement.find("#feature-attributes-form").html(form);
       rootElement.find(".suggestion-box").before(me.renderValidityDirection(selectedAsset));
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
-      rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
+      if(me.pointAsset.lanePreview)
+        rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
       rootElement.find("#feature-attributes-footer").html(footer);
 
       me.addingPreBoxEventListeners(rootElement, selectedAsset, id);
@@ -155,7 +156,8 @@
       rootElement.find('button#change-validity-direction').on('click', function() {
         var previousValidityDirection = selectedAsset.get().validityDirection;
         selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
-        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
+        if(me.pointAsset.lanePreview)
+          $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
       });
 
       function bindPanelEvents(){
@@ -480,62 +482,6 @@
         '    <div class="form-group editable form-traffic-sign-panel">' +
         '        <label class="traffic-panel-label">Lisäkilpi ' + index + '</label>' +
         '    </div>';
-    };
-
-    me.renderPreview = function(roadCollection, selectedAsset) {
-      var asset = selectedAsset.get();
-      var lanes;
-      if (!asset.floating){
-        lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
-        lanes = validitydirections.filterLanesByDirection(lanes, asset.validityDirection);
-      }
-      return _.isEmpty(lanes) ? '' : createPreviewHeaderElement(_.uniq(lanes));
-    };
-
-    me.renderValidityDirection = function (selectedAsset) {
-      if(selectedAsset.get().validityDirection){
-        return $(
-            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
-            '      <label class="control-label">Vaikutussuunta</label>' +
-            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-            '    </div>');
-      }
-      else return '';
-    };
-
-    var createPreviewHeaderElement = function(laneNumbers) {
-      var createNumber = function (number) {
-        return $('<td class="preview-lane-traffic-signs">' + number + '</td>');
-      };
-
-      var numbers = _.sortBy(laneNumbers);
-
-      var odd = _.filter(numbers, function (number) {
-        return number % 2 !== 0;
-      });
-      var even = _.filter(numbers, function (number) {
-        return number % 2 === 0;
-      });
-
-      var preview = function () {
-        var previewList = $('<table class="preview">');
-
-        var numberHeaders = $('<tr style="font-size: 11px;">').append(_.map(_.reverse(even).concat(odd), function (number) {
-          return $('<th>' + (number.toString()[1] == '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
-        }));
-
-        var oddListElements = _.map(odd, function (number) {
-          return createNumber(number);
-        });
-
-        var evenListElements = _.map(even, function (number) {
-          return createNumber(number);
-        });
-
-        return $('<div class="preview-div">').append(previewList.append(numberHeaders).append($('<tr>').append(evenListElements).append(oddListElements))).append('<hr class="form-break">');
-      };
-
-      return preview();
     };
   };
 })(this);

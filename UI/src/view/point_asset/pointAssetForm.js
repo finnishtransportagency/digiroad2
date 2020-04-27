@@ -116,12 +116,16 @@ root.PointAssetForm = function() {
     rootElement.find("#feature-attributes-header").html(header);
     rootElement.find("#feature-attributes-form").html(form);
     rootElement.find("#feature-attributes-footer").html(footer);
+    if(me.pointAsset.lanePreview)
+      rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
 
     me.addingPreBoxEventListeners(rootElement, selectedAsset, id);
 
     rootElement.find('button#change-validity-direction').on('click', function() {
       var previousValidityDirection = selectedAsset.get().validityDirection;
       selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
+      if(me.pointAsset.lanePreview)
+        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
     });
 
     this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
@@ -297,7 +301,7 @@ root.PointAssetForm = function() {
     rootElement.find('.editable .form-control-static').toggle(readOnly);
     rootElement.find('.editable .form-control').toggle(!readOnly);
     rootElement.find('.edit-only').toggle(!readOnly);
-    rootElement.find('.form-directional-traffic-sign').toggle(readOnly);
+    rootElement.find('.read-only').toggle(readOnly);
   };
 
   this.renderFloatingNotification = function(floating, localizedTexts) {
@@ -395,6 +399,28 @@ root.PointAssetForm = function() {
     }).filter(function(property){
       return _.indexOf(propertyOrdering, property.publicId) >= 0;
     });
+  };
+
+  me.renderValidityDirection = function (selectedAsset) {
+    if(selectedAsset.get().validityDirection){
+      return $(
+          '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+          '      <label class="control-label">Vaikutussuunta</label>' +
+          '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+          '    </div>');
+    }
+    else return '';
+  };
+
+  this.renderPreview = function(roadCollection, selectedAsset) {
+    var asset = selectedAsset.get();
+    var lanes;
+    if (!asset.floating){
+      lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
+      lanes = laneUtils.filterByValidityDirection(asset.validityDirection, lanes);
+    }
+
+    return _.isEmpty(lanes) ? '' : laneUtils.createPreviewHeaderElement(_.uniq(lanes));
   };
 };
 })(this);

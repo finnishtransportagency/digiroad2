@@ -1059,7 +1059,7 @@
         layerName: 'trafficLights',
         title: 'Liikennevalot',
         allowComplementaryLinks: true,
-        newAsset: { propertyData: [
+        newAsset: { validityDirection: 2, propertyData: [
             {'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
             {'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
             {'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 999} ]},
@@ -1102,7 +1102,8 @@
         form: TrafficLightForm,
         label: new SuggestionLabel(),
         showRoadLinkInfo: true,
-        layer : TrafficRegulationLayer
+        layer : TrafficRegulationLayer,
+        lanePreview: true
       },
       {
         typeId: assetType.trafficSigns,
@@ -1198,7 +1199,8 @@
           return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer,
-        showRoadLinkInfo: true
+        showRoadLinkInfo: true,
+        lanePreview: true
       },
       {
         typeId: assetType.trHeightLimits,
