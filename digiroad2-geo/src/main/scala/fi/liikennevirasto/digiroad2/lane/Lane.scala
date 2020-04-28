@@ -75,6 +75,12 @@ object LaneNumber {
     }
   }
 
+  def isMainLane (laneCode : Int): Boolean = {
+    val mainLanes = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
+
+    mainLanes.contains(laneCode)
+  }
+
   case object MainLane extends LaneNumber {
     def towardsDirection = 11
     def againstDirection = 21
