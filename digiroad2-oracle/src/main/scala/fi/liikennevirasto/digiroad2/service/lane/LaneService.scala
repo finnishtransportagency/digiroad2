@@ -65,12 +65,20 @@ trait LaneOperations {
     */
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLane]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getMainLanesByRoadLinks(roadLinks, change)
+    val linearAssets = getLanesByRoadLinks(roadLinks, change)
 
-    LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    val partitionedLanes = LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+
+    partitionedLanes.map(_.filter { lane =>
+      getPropertyValue(lane, "lane_code") match {
+        case Some(laneValue) =>
+          LaneNumber.isMainLane(laneValue.value.asInstanceOf[Int])
+        case _ => false
+      }
+    })
   }
 
-  protected def getMainLanesByRoadLinks(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
+  protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
     val existingAssets = fetchExistingLanesByRoadLinks(roadLinks, removedLinkIds)
@@ -100,7 +108,7 @@ trait LaneOperations {
     val modifiedLanes = projectedLanes.filterNot {lane => generatedMappedById(lane.id).nonEmpty } ++ changeSet.generatedPersistedLanes
 
     publish(eventBus, changeSet, modifiedLanes)
-    filledTopology.filter(lane => dao.MAIN_LANES.contains(lane.laneAttributes.find(_.publicId == "lane_code").head.values.head.value))
+    filledTopology
   }
 
   def publish(eventBus: DigiroadEventBus, changeSet: ChangeSet, modifiedLanes: Seq[PersistedLane]) {
@@ -325,6 +333,10 @@ trait LaneOperations {
       laneProperty.values.head.value
     else
       None
+  }
+
+  def getPropertyValue(pwLane: PieceWiseLane, publicIdToSearch: String): Option[LanePropertyValue] = {
+    pwLane.laneAttributes.find(_.publicId == publicIdToSearch).get.values.headOption
   }
 
   def getLaneCode (newIncomeLane: NewIncomeLane): String = {

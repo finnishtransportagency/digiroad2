@@ -2,16 +2,16 @@ package fi.liikennevirasto.digiroad2.dao.lane
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.lane.{PersistedLane, _}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, PersistedLane, _}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+
 import scala.language.implicitConversions
 
 
@@ -25,8 +25,6 @@ case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 
 
 class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
-
-  val MAIN_LANES = Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
 
   implicit val getLightLane = new GetResult[LightLane] {
     def apply(r: PositionedResult) = {
@@ -282,7 +280,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     val laneCode = sql"""SELECT lane_code FROM LANE WHERE id = $laneId""".as[Int].first
     val lanePositionId = sql"""SELECT lane_position_id FROM LANE_LINK WHERE lane_id = $laneId""".as[Int].first
 
-    if ( MAIN_LANES.contains(laneCode) )
+    if (LaneNumber.isMainLane(laneCode))
       throw new IllegalArgumentException("Cannot Delete a main lane!")
 
     sqlu"""DELETE FROM LANE_ATTRIBUTE WHERE lane_id = $laneId""".execute
@@ -312,7 +310,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     val oldLaneCode = sql"""SELECT lane_code FROM LANE WHERE id = ${lane.id}""".as[Int].first
 
-    if ( MAIN_LANES.contains(oldLaneCode) && oldLaneCode != lane.laneCode )
+    if (LaneNumber.isMainLane(oldLaneCode) && oldLaneCode != lane.laneCode)
       throw new IllegalArgumentException("Cannot change the code of main lane!")
 
     sqlu"""UPDATE LANE
