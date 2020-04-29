@@ -83,11 +83,10 @@ root.PointAssetForm = function() {
 
   var propertyOrdering = ['suggest_box'];
 
-  this.renderValueElement = function(asset, collection, authorizationPolicy) { return me.renderComponents(asset, propertyOrdering, authorizationPolicy); };
+  this.renderValueElement = function(asset, collection, authorizationPolicy) { return me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy); };
 
-  this.renderComponents = function (asset, propertyOrdering, authorizationPolicy) {
-    var allProperties = asset.propertyData;
-    var SortedProperties = me.sortAndFilterProperties(allProperties, propertyOrdering);
+  this.renderComponents = function (propertyData, propertyOrdering, authorizationPolicy) {
+    var SortedProperties = me.sortAndFilterProperties(propertyData, propertyOrdering);
 
     return _.reduce(_.map(SortedProperties, function (feature) {
       feature.localizedName = window.localizedStrings[feature.publicId];
@@ -137,7 +136,7 @@ root.PointAssetForm = function() {
       selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
     });
 
-    rootElement.find('input[type=checkbox]').not('.suggested-checkbox').on('change', function (event) {
+    rootElement.find('input[type=checkbox]').not('.suggested-checkbox,#delete-checkbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       var propertyPublicId = eventTarget.attr('id');
       var propertyValue = +eventTarget.prop('checked');
@@ -154,7 +153,7 @@ root.PointAssetForm = function() {
       }
     });
 
-    rootElement.find('.editable').not('.suggestion-box').on('change, click', function() {
+    rootElement.find('.editable').not('.suggestion-box').on('change', function() {
       if(id) {
         me.switchSuggestedValue(true);
         rootElement.find('.suggested-checkbox').prop('checked', false);
@@ -169,30 +168,6 @@ root.PointAssetForm = function() {
     rootElement.find('.point-asset button.cancel').on('click', function() {
       me.switchSuggestedValue(false);
       selectedAsset.cancel();
-    });
-
-    /*
-     TODO: -removed during traffic light implementation, can't find a reason for this code
-           -test all point assets find out where it belongs.
-           -tested, feels like it doesn't belong anywhere works just fine without this, continuing search
-    */
-    /* rootElement.find('input[type="text"]').on('input change', function (event) {
-       var eventTarget = $(event.currentTarget);
-       var obj = {};
-       obj[eventTarget.attr('name') ? eventTarget.attr('name') : 'name' ] = eventTarget.val();
-       selectedAsset.setPropertyByPublicId(eventTarget.attr('name'), eventTarget.val());
-
-       if(id) {
-         me.switchSuggestedValue(true);
-         rootElement.find('.suggested-checkbox').prop('checked', false);
-         selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('name'), 0);
-       }
-     });*/
-  };
-
-   this.bindSingleChoiceElement = function (rootElement, selectedAsset, publicId) {
-    rootElement.find('.form-point-asset select#main-' + publicId).on('change', function (event) {
-      selectedAsset.setPropertyByPublicId(publicId, $('.form-point-asset select#main-' + publicId).val());
     });
   };
 
@@ -242,7 +217,7 @@ root.PointAssetForm = function() {
     return '<div class="form-group editable form-point-asset suggestion-box">' +
         '<label class="control-label">' + asset.localizedName + '</label>' +
         '<p class="form-control-static">'+ _.head(asset.values).propertyDisplayValue +'</p>' +
-        '<input type="checkbox" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + '"' + state + '>' +
+        '<input type="checkbox" data-creation-id="'+ asset.creationId +'" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + (asset.creationId || '') + '"' + state + '>' +
         '</div>';
   };
 
@@ -321,7 +296,7 @@ root.PointAssetForm = function() {
         '    <div class="form-group editable form-point-asset">' +
         '        <label class="control-label">' + property.localizedName + '</label>' +
         '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-        '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+        '        <input type="text" data-creation-id="'+ property.creationId +'" class="form-control" id="' + property.publicId + (property.creationId || '') +'" value="' + propertyValue + '">' +
         '    </div>';
   };
 
@@ -339,7 +314,7 @@ root.PointAssetForm = function() {
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+        '      <select class="form-control" data-creation-id="'+ property.creationId +'" style="display:none" id=' + property.publicId + (property.creationId || '') +'>' +
         selectableValues +
         '      </select>' +
         '    </div>';
@@ -365,7 +340,7 @@ root.PointAssetForm = function() {
         '<div class="form-group editable form-point-asset">' +
         '     <label class="control-label">' + property.localizedName + '</label>' +
         '     <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-        '     <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+        '     <input type="text" data-creation-id="'+ property.creationId +'" class="form-control" id="' + property.publicId + (asset.creationId || '') + '" value="' + propertyValue + '">' +
         '</div>';
   };
 
@@ -374,7 +349,7 @@ root.PointAssetForm = function() {
     return '' +
         '    <div id= "' + property.publicId + '-checkbox-div" class="form-group editable edit-only form-point-asset">' +
         '      <div class="checkbox" >' +
-        '        <input id="' + property.publicId + '" type="checkbox"' + checked + '>' +
+        '        <input data-creation-id="'+ property.creationId +'" id="' + property.publicId + (property.creationId || '') + '" type="checkbox"' + checked + '>' +
         '      </div>' +
         '        <label class="' + property.publicId + '-checkbox-label">' + property.localizedName + '</label>' +
         '    </div>';

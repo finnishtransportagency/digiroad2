@@ -18,7 +18,7 @@
     var propertyOrdering = ['suggest_box'];
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
-      var components = me.renderComponents(asset, propertyOrdering, authorizationPolicy);
+      var components = me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy);
       return '' +
         '  <div class="form-group editable form-directional-traffic-sign">' +
         '      <label class="control-label">Teksti</label>' +

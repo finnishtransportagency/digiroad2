@@ -45,7 +45,7 @@
             return wrapper.append(formRootElement);
         };
 
-        this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+        this.renderForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
             var id = selectedAsset.getId();
             var asset = selectedAsset.get();
 
@@ -63,7 +63,6 @@
 
             rootElement.find("#feature-attributes-header").html(header);
             rootElement.find("#feature-attributes-form").html(form);
-            rootElement.find(".suggestion-box").before(me.renderValidityDirection(selectedAsset));
             rootElement.find("#feature-attributes-footer").html(footer);
             if(me.pointAsset.lanePreview)
                 rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
@@ -91,6 +90,43 @@
             }
         };
 
+        this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
+            var asset = selectedAsset.get();
+            var wrapper = $('<div class="wrapper">');
+            var formRootElement = $('<div class="form form-horizontal form-dark form-point-asset">');
+
+            if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
+                formRootElement = formRootElement
+                    .append(me.renderValueElement(asset, collection, authorizationPolicy))
+                    .append(me.renderValidityDirection(selectedAsset));
+            } else {
+                var deleteCheckbox = $(''+
+                    '    <div class="form-group form-group delete">' +
+                    '      <div class="checkbox" >' +
+                    '        <input id="delete-checkbox" type="checkbox">' +
+                    '      </div>' +
+                    '      <p class="form-control-static">Poista</p>' +
+                    '    </div>' +
+                    '  </div>' );
+                var logInfoGroup = $( '' +
+                    '    <div class="form-group">' +
+                    '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + this.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
+                    '    </div>' +
+                    '    <div class="form-group">' +
+                    '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + this.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
+                    '    </div>');
+
+                formRootElement = formRootElement
+                    .append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
+                    .append(logInfoGroup)
+                    .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
+                    .append(me.renderValueElement(asset, collection, authorizationPolicy))
+                    .append(me.renderValidityDirection(selectedAsset))
+                    .append(deleteCheckbox);
+            }
+            return wrapper.append(formRootElement);
+        };
+
         var reloadForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
             rootElement.find("#feature-attributes-header").empty();
             rootElement.find("#feature-attributes-form").empty();
@@ -101,6 +137,7 @@
             rootElement.find('button#cancel-button').prop('disabled', false);
         };
 
+        //TODO: change this
         this.addingPreBoxEventListeners = function (rootElement, selectedAsset, id) {
             rootElement.find('#delete-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
@@ -124,7 +161,7 @@
                 }
             });
 
-            rootElement.find('.editable').not('.suggestion-box').on('change, click', function () {
+            rootElement.find('.editable').not('.suggestion-box').on('change click', function () {
                 if (id && !selectedAsset.getWasOldAsset()) {
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
@@ -143,24 +180,85 @@
         };
 
         this.renderValueElement = function(asset, collection, authorizationPolicy) {
-            return me.renderComponents(asset, propertyOrdering, authorizationPolicy);
+            var toRet = $();
+            var allProperties = _.orderBy(asset.propertyData, ['index'], ['asc']);
+            for (var i = 1; allProperties.length/(propertyOrdering.length - 1) >= i ; i++) {
+                var currentProperties = allProperties.slice((i - 1) * (propertyOrdering.length - 1) , i * (propertyOrdering.length - 1));
+                var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+i+'">');
+                toRet = toRet.add(
+                    trafficLightContainer
+                        .append(me.renderComponents(currentProperties, propertyOrdering, authorizationPolicy))
+                        .append(me.attachControlButtons(i))
+                        .append($('<hr>'))
+                );
+            }
+            return toRet;
+        };
+
+        this.attachControlButtons = function (id) {
+           return '' +
+                '    <div class="form-group editable edit-only">' +
+                '       <button class="btn edit-only btn-secondary button-remove-traffic-light" id="button-remove-traffic-light-'+id+'" data-index="'+id+'" >Poista opastinlaite</button>' +
+                '       <button class="btn edit-only editable btn-secondary button-add-traffic-light" id="button-add-traffic-light-'+id+'" data-index="'+id+'" >Lisää opastinlaite</button>' +
+                '    </div>';
         };
 
         this.boxEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection){
 
-            rootElement.find('.form-point-asset input[type=text]').on('change input', function (event) {
+            rootElement.find('.form-point-asset input[type=text],select').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
-                var propertyPublicId = eventTarget.attr('id');
-                var propertyValue = eventTarget.val();
-                selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+                var propertyCreationId = eventTarget.data('creation-id');
+                selectedAsset.setPropertyByCreationId(propertyCreationId,  eventTarget.val());
             });
 
-            var singleChoiceIds =
-                ['trafficLight_type', 'trafficLight_relative_position', 'trafficLight_structure', 'trafficLight_sound_signal', 'trafficLight_vehicle_detection',
-                 'trafficLight_push_button', 'trafficLight_lane_type', 'trafficLight_state'];
-            _.forEach(singleChoiceIds, function (publicId) {
-                me.bindSingleChoiceElement(rootElement, selectedAsset, publicId);
+            me.bindExtendedFormEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+        };
+
+        this.bindExtendedFormEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+            rootElement.find('.button-remove-traffic-light').on('click', function (event) {
+                var index = $(event.currentTarget).data('index');
+                var containerProperties = $('#traffic-light-container-' + index).children();
+                _.forEach(containerProperties, function (property) {
+                    var creationId = getDatasetFromChild(property);
+                    if(creationId)
+                        selectedAsset.removePropertyByCreationId(creationId);
+                });
+                reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
             });
+
+            rootElement.find('.button-add-traffic-light').on('click', function (event) {
+                var form = $('.form-point-asset').children();
+                var lastChild = form.get(form.length - 1);
+                var lastKnownCreationId = $(lastChild).data('creation-id');
+                addPropertiesForNewTrafficLight(selectedAsset, lastKnownCreationId);
+                reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+            });
+
+           toggleButtonVisibility(rootElement);
+        };
+
+        var addPropertiesForNewTrafficLight = function (selectedAsset, lastKnownCreationId) {
+            var newProperties = _.cloneDeep(me.pointAsset.newAsset.propertyData);
+            var newId = lastKnownCreationId;
+            _.forEach(newProperties, function (property) {
+               property.creationId = ++newId;
+            });
+            selectedAsset.addAdditionalTrafficLight(newProperties);
+        };
+
+        var getDatasetFromChild = function(property) {
+            var elementWithDataset = _.find(property.children, function (child) {
+                return child.getAttribute('data-creation-id') !== null;
+            });
+            return elementWithDataset ? elementWithDataset.getAttribute('data-creation-id') : elementWithDataset;
+        };
+
+        var toggleButtonVisibility = function (rootElement) {
+            var containers = rootElement.find('.traffic-light-container');
+            var amount = containers.length;
+
+            containers.find('.button-remove-traffic-light').prop("disabled", amount === 1);
+            containers.find('.button-add-traffic-light').prop("disabled", amount === 6);
         };
     };
 })(this);

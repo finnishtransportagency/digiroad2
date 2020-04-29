@@ -30,7 +30,7 @@
     var propertyOrdering = ['suggest_box'];
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
-      var components = me.renderComponents(asset, propertyOrdering, authorizationPolicy);
+      var components = me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy);
       var safetyEquipmentValue = me.selectedAsset.getByProperty(safetyEquipmentPublicId);
         return '' +
           '    <div class="form-group editable form-railway-crossing">' +

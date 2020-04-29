@@ -23,13 +23,16 @@
       getAdministrativeClass: getAdministrativeClass,
       checkSelectedSign: checkSelectedSign,
       setPropertyByPublicId: setPropertyByPublicId,
+      setPropertyByCreationId: setPropertyByCreationId,
+      removePropertyByCreationId: removePropertyByCreationId,
       getMunicipalityCode: getMunicipalityCode,
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
       getCoordinates: getCoordinates,
       setAdditionalPanels: setAdditionalPanels,
       setAdditionalPanel: setAdditionalPanel,
       getWasOldAsset: getWasOldAsset,
-      setWasOldAsset: setWasOldAsset
+      setWasOldAsset: setWasOldAsset,
+      addAdditionalTrafficLight: addAdditionalTrafficLight
     };
 
     function place(asset) {
@@ -53,6 +56,11 @@
         if(_.isArray(a)) { return b; }
       });
       eventbus.trigger(assetName + ":changed");
+    }
+
+    function addAdditionalTrafficLight(newProperties) {
+      dirty = true;
+      current.propertyData = current.propertyData.concat(newProperties);
     }
 
     function open(asset) {
@@ -185,6 +193,21 @@
         }
       });
       eventbus.trigger(assetName + ':changed');
+    }
+
+    function setPropertyByCreationId(propertyCreationId, propertyValue) {
+      dirty = true;
+      _.map(current.propertyData, function (prop) {
+        if (prop.creationId === propertyCreationId) {
+          prop.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
+        }
+      });
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function removePropertyByCreationId(propertyCreationId) {
+      dirty = true;
+      _.remove(current.propertyData, {'creationId': parseInt(propertyCreationId)});
     }
 
     function setAdditionalPanels(panels) {

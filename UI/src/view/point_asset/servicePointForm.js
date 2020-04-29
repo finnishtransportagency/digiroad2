@@ -108,7 +108,7 @@
     };
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
-      var components = me.renderComponents(asset, propertyOrdering, authorizationPolicy);
+      var components = me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy);
       var services = _(asset.services)
         .sortBy('serviceType', 'id')
         .map(renderService)

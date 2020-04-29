@@ -114,21 +114,15 @@
         selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
       });
 
-      rootElement.find('.form-point-asset input[type=text],.form-point-asset select#trafficSigns_type').on('change input, datechange', function (event) {
+      rootElement.find('.form-point-asset input[type=text],select').on('change datechange', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
-        var propertyValue = eventTarget.val();
-        selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+        selectedAsset.setPropertyByPublicId(propertyPublicId, eventTarget.val());
       });
 
-      rootElement.find('.form-point-asset select#main-trafficSigns_type').on('change', function (event) {
+      rootElement.find('.form-point-asset select#trafficSigns_type').on('change', function (event) {
         $('.form-point-asset select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
         selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-point-asset select#trafficSigns_type').val());
-      });
-
-      var singleChoiceIds = ['location_specifier', 'structure', 'condition', 'size', 'life_cycle', 'coating_type', 'sign_material', 'lane_type', 'type_of_damage', 'urgency_of_repair'];
-      _.forEach(singleChoiceIds, function (publicId) {
-        me.bindSingleChoiceElement(rootElement, selectedAsset, publicId);
       });
 
       rootElement.find('#additional-panel-checkbox').on('change', function (event) {
@@ -319,7 +313,7 @@
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+        '      <select class="form-control" style="display:none" id=' + property.publicId +'>' +
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +
