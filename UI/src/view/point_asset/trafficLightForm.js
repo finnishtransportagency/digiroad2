@@ -137,23 +137,16 @@
             rootElement.find('button#cancel-button').prop('disabled', false);
         };
 
-        //TODO: change this
+        //TODO: this needs to be tested with new form and multiple lights on an update of existing
         this.addingPreBoxEventListeners = function (rootElement, selectedAsset, id) {
             rootElement.find('#delete-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
                 selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
             });
 
-            rootElement.find('input[type=checkbox]').not('.suggested-checkbox').on('change', function (event) {
-                var eventTarget = $(event.currentTarget);
-                var propertyPublicId = eventTarget.attr('id');
-                var propertyValue = +eventTarget.prop('checked');
-                selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
-            });
-
             rootElement.find('.suggested-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
-                selectedAsset.setPropertyByPublicId(eventTarget.attr('id'), +eventTarget.prop('checked'));
+                selectedAsset.setPropertyByCreationId(eventTarget.data('creationId'), +eventTarget.prop('checked'));
 
                 if (id && !selectedAsset.getWasOldAsset()) {
                     me.switchSuggestedValue(true);
@@ -161,11 +154,13 @@
                 }
             });
 
-            rootElement.find('.editable').not('.suggestion-box').on('change click', function () {
+            rootElement.find('.editable').not('.suggestion-box').on('change', function () {
                 if (id && !selectedAsset.getWasOldAsset()) {
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
-                    selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('id'), 0);
+                    _.forEach(rootElement.find('.suggested-checkbox'), function (element) {
+                        selectedAsset.setPropertyByCreationId(element.data('creationId'), 0);
+                    });
                 }
             });
 

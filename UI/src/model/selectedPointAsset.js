@@ -198,7 +198,7 @@
     function setPropertyByCreationId(propertyCreationId, propertyValue) {
       dirty = true;
       _.map(current.propertyData, function (prop) {
-        if (prop.creationId === propertyCreationId) {
+        if (prop.creationId == propertyCreationId) {
           prop.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
         }
       });
