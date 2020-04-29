@@ -619,18 +619,20 @@
 
     this.getGeocode = function(address) {
       var addressNormalized = address.normalize("NFC");
-      var parsedAddress = addressNormalized.split(/^(\s*\w.*)(\s)(\s*\d+\s*),(\s*\w.*)/)
+      var parsedAddress = addressNormalized.split(/^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/)
         .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
         .map(function(elem) { return elem.trim(); });
 
       return this.getMunicipalityIdByName(parsedAddress[2]).then(
         function(municipalityInfo) {
+          if (_.isEmpty(municipalityInfo))
+            return municipalityInfo;
           var params = {
             katunimi :   parsedAddress[0],
             katunumero : parsedAddress[1],
             kuntakoodi : _.head(municipalityInfo).id
           };
-          return $.get("vkm-api/geocode", params ).then(function(x) { return x; });
+          return $.get("vkm-api/geocode", params).then(function(x) { return x; });
         });
     };
 
