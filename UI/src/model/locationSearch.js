@@ -152,21 +152,15 @@
     var  massTransitStopLiviIdSearch = function(input) {
       return $.when(backend.getMassTransitStopByLiviIdForSearch(input.text)).then(function(result) {
         var returnObject = [];
-        var massTransitStop = result;
 
-        if ( _.isArray(result) )
-          massTransitStop = result[0];
-
-        if (_.get(massTransitStop, 'success')) {
-          var info = extractSearchResultInfo(massTransitStop);
+        if (_.get(result, 'success')) {
+          var info = extractSearchResultInfo(result);
           var title = input.text + ' (pysäkin Livi-tunniste)';
           returnObject.push({title: title, lon: info.lon, lat: info.lat, nationalId: info.nationalId, resultType:"Mtstop"});
         }
 
-        if (returnObject.length === 0){
+        if (_.isEmpty(returnObject))
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        }
-
         return returnObject;
       });
     };
