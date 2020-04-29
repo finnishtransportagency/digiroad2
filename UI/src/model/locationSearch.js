@@ -108,21 +108,15 @@
     var massTransitStopSearchByNationalId = function(input) {
       return $.when(backend.getMassTransitStopByNationalIdForSearch(input.text)).then(function(result) {
         var returnObject = [];
-        var finalValue = result;
 
-        if ( _.isArray(result) )
-          finalValue = result[0];
-
-        if (_.get(finalValue, 'success')) {
-          var info = extractSearchResultInfo(finalValue);
+        if (_.get(result, 'success')) {
+          var info = extractSearchResultInfo(result);
           var title = input.text + ' (valtakunnallinen ID)';
           returnObject.push({title: title, lon: info.lon, lat: info.lat, nationalId: info.nationalId,resultType:"Mtstop"});
         }
 
-        if (returnObject.length === 0){
+        if (_.isEmpty(returnObject))
           return $.Deferred().reject('Haulla ei löytynyt tuloksia');
-        }
-
         return returnObject;
       });
     };
