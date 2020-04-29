@@ -100,7 +100,7 @@
     var extractSearchResultInfo = function (massTransitStop) {
       return { lon: _.get(massTransitStop, 'lon'),
         lat: _.get(massTransitStop, 'lat'),
-        id: _.get(massTransitStop, 'id')
+        nationalId: _.get(massTransitStop, 'nationalId')
       };
     };
 
@@ -115,13 +115,13 @@
         var returnObject = [];
         var finalValue = result;
 
-        if (result instanceof Array)
+        if ( _.isArray(result) )
           finalValue = result[0];
 
         if (_.get(finalValue, 'success')) {
           var info = extractSearchResultInfo(finalValue);
           var title = input.text + ' (valtakunnallinen ID)';
-          returnObject.push({title: title, lon: info.lon, lat: info.lat, id: info.id,resultType:"Mtstop"});
+          returnObject.push({title: title, lon: info.lon, lat: info.lat, nationalId: info.nationalId,resultType:"Mtstop"});
         }
 
         if (returnObject.length === 0){
@@ -165,13 +165,13 @@
         var returnObject = [];
         var massTransitStop = result;
 
-        if (result instanceof Array)
+        if ( _.isArray(result) )
           massTransitStop = result[0];
 
         if (_.get(massTransitStop, 'success')) {
           var info = extractSearchResultInfo(massTransitStop);
           var title = input.text + ' (pysäkin Livi-tunniste)';
-          returnObject.push({title: title, lon: info.lon, lat: info.lat, id: info.id, resultType:"Mtstop"});
+          returnObject.push({title: title, lon: info.lon, lat: info.lat, nationalId: info.nationalId, resultType:"Mtstop"});
         }
 
         if (returnObject.length === 0){
