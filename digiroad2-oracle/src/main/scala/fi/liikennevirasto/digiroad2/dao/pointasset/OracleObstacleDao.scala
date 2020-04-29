@@ -1,24 +1,19 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
-import java.nio.charset.StandardCharsets
-import java.util.Base64
-
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Decode, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+
 
 case class ObstacleRow(id: Long, linkId: Long,
                        lon: Double, lat: Double,
@@ -50,7 +45,7 @@ object OracleObstacleDao {
 
   private def query() = {
     """
-      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id, p.public_id, p.property_type, p.required, ev.value,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
       case
         when ev.name_fi is not null then ev.name_fi
         else null
@@ -83,6 +78,7 @@ object OracleObstacleDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[ObstacleRow]): Seq[Property] = {
+
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
       Property(
@@ -91,7 +87,11 @@ object OracleObstacleDao {
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
-           Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+
+          val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+          Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
+
         }.toSeq)
     }.toSeq
   }
@@ -127,7 +127,7 @@ object OracleObstacleDao {
     val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
     val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
-     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+     s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
      s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())

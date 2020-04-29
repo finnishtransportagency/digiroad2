@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, SpeedLimitValue, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
@@ -59,7 +59,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
-    val token = params.get("pageNumber").map(_.toString)
+    val token = params.get("token").map(_.toString)
 
     val withAdjust = params.get("withAdjust") match{
       case Some(value)=> true
@@ -141,9 +141,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         }
     )
 
-  private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
-    changedLinearAssets.filterNot(isSuggested).map { case ChangedLinearAsset(linearAsset, _) =>
-      val dynamicMultiValueLinearAssetMap: Seq[(String, Any)] = linearAsset.value match {
+  private def bogieWeightLimitsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Map[String, Any] = {
+    def mapValues(value: Option[Value]): Seq[(String, Any)] = {
+      value match {
         case Some(DynamicValue(value)) =>
           value.properties.flatMap { bogieWeightAxel =>
             bogieWeightAxel.publicId match {
@@ -160,9 +160,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           }
         case _ => Seq()
       }
-
-      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, dynamicMultiValueLinearAssetMap)
     }
+    dynamicLinearAssetsToGeoJson(since, changedLinearAssets.filterNot(isSuggested), mapValues)
   }
 
   private def isSuggested(asset: ChangedLinearAsset): Boolean = {
@@ -185,25 +184,23 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     }
   }
 
-  private def sevenRestrictionToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Seq[Map[String, Any]] = {
-    changedLinearAssets.filterNot(isSuggested).map { case ChangedLinearAsset(linearAsset, _) =>
-      val sevenRestrictionValueAssetMap: Seq[(String, Any)] = linearAsset.value match {
+  private def sevenRestrictionToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]): Map[String, Any] = {
+      def mapValues(value: Option[Value]): Seq[(String, Any)] =
+        value match {
         case Some(DynamicValue(value)) =>
           value.properties.flatMap { asset =>
-            Map("value" ->  (asset.publicId match {
+             asset.publicId match {
               case "height" | "length" | "weight" | "width" =>
-                asset.values.map(_.value)
+                Map("value" ->  asset.values.flatMap(_.value.asInstanceOf[Option[String]]).head.toInt)
               case _ => None
-            }))
+            }
           }
         case _ => Seq()
       }
-
-      dynamicLinearAssetsToGeoJson(since, changedLinearAssets, sevenRestrictionValueAssetMap)
-    }
+      dynamicLinearAssetsToGeoJson(since, changedLinearAssets.filterNot(isSuggested), mapValues)
   }
 
-  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], values: Seq[(String, Any)]): Map[String, Any] = {
+  private def dynamicLinearAssetsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset], mapValues: Option[Value] => Seq[(String, Any)]): Map[String, Any] = {
     Map(
       "type" -> "FeatureCollection",
       "features" ->
@@ -245,11 +242,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
                 "createdAt" -> linearAsset.createdDateTime.map(DateTimePropertyFormat.print(_)),
                 "modifiedBy" -> linearAsset.modifiedBy,
                 "changeType" -> extractChangeType(since, linearAsset.expired, linearAsset.createdDateTime)
-              ) ++ values)
+              ) ++ mapValues(linearAsset.value))
           )
         }
     )
-}
+  }
 
   private def prohibitionsToGeoJson(since: DateTime, changedLinearAssets: Seq[ChangedLinearAsset]) =
     Map(

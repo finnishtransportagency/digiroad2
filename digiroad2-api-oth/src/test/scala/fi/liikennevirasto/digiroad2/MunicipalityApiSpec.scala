@@ -293,8 +293,8 @@ class MunicipalityApiSpec extends FunSuite with Matchers with BeforeAndAfter {
       createdPavementClass.head.linkId should be (5000)
       createdPavementClass.head.value.toString should be(
         Some(DynamicValue(DynamicAssetValue(List(
-          DynamicProperty("suggest_box", "checkbox", false, List()),
-          DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(1)))
+          DynamicProperty("paallysteluokka", "single_choice", false, List(DynamicPropertyValue(1))),
+          DynamicProperty("suggest_box", "checkbox", false, List())
         )))).toString
       )
       createdPavementClass.head.startMeasure should be (0.0)

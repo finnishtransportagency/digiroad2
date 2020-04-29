@@ -78,10 +78,10 @@ class DynamicLinearAssetDaoSpec extends FunSuite with Matchers {
       persistedAssets.head.linkId should be(linkId)
 
       val assetValues = persistedAssets.head.value.get.asInstanceOf[DynamicValue].value.properties
-      assetValues.find(_.publicId == "test_data_text").get.values.head.value should be (textValue)
-      assetValues.find(_.publicId == "test_multiple_choice").get.values should be (Seq(DynamicPropertyValue(enumeratedValue2_value.toString()), DynamicPropertyValue(enumeratedValue1_value.toString())))
-      assetValues.find(_.publicId == "test_single_choice").get.values.head.value should be (enumeratedValue1_value.toString())
-      assetValues.find(_.publicId == "test_data_number").get.values.sortBy(_.value.asInstanceOf[String]) should be (Seq(DynamicPropertyValue(numberValue1.toString), DynamicPropertyValue(numberValue2.toString)))
+      assetValues.filter(_.publicId == "test_data_text").flatMap(_.values).head should be (DynamicPropertyValue(textValue))
+      assetValues.filter(_.publicId == "test_multiple_choice").flatMap(_.values) should be (Seq(DynamicPropertyValue(enumeratedValue2_value.toString()), DynamicPropertyValue(enumeratedValue1_value.toString())))
+      assetValues.filter(_.publicId == "test_single_choice").flatMap(_.values).head should be (DynamicPropertyValue(enumeratedValue1_value.toString()))
+      assetValues.filter(_.publicId == "test_data_number").flatMap(_.values) should be (Seq(DynamicPropertyValue(numberValue1.toString), DynamicPropertyValue(numberValue2.toString)))
     }
   }
 
