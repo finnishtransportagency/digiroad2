@@ -881,8 +881,6 @@
         var allProperties = selectedMassTransitStopModel.getProperties();
         var properties = sortAndFilterProperties(allProperties);
 
-        /* don't change == to ===
-        * sometimes the value is int other times is string*/
         if (!selectedMassTransitStopModel.isTerminalType(busStopTypeSelected) && !selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)) {
           setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
           disableFormIfTRMassTransitStopHasEndDate(properties);
