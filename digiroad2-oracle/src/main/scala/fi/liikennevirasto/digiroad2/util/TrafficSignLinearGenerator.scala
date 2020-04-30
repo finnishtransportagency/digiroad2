@@ -3,8 +3,8 @@ package fi.liikennevirasto.digiroad2.util
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{PointAssetValue, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.DynamicLinearAssetDao
@@ -18,8 +18,8 @@ import fi.liikennevirasto.digiroad2.service.linearasset._
 import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
-import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject}
 import org.json4s.jackson.Json
+import org.json4s.{CustomSerializer, DefaultFormats, Extraction, Formats, JInt, JObject}
 
 import scala.util.Try
 
@@ -624,7 +624,7 @@ trait TrafficSignLinearGenerator {
     val roadLinks = withDynTransaction {
       val trafficSignsToProcess = oracleLinearAssetDao.getTrafficSignsToProcess(assetType)
 
-      val trafficSigns = if(trafficSignsToProcess.nonEmpty) trafficSignService.fetchPointAssetsWithExpired(withFilter(s"Where a.id in (${trafficSignsToProcess.mkString(",")}) ")) else Seq()
+      val trafficSigns = if(trafficSignsToProcess.nonEmpty) trafficSignService.fetchByFilterWithExpiredByIds(trafficSignsToProcess.toSet) else Seq()
       val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(trafficSigns.map(_.linkId).toSet, false).filter(_.administrativeClass != State)
       val trafficSignsToTransform = trafficSigns.filter(asset => roadLinks.exists(_.linkId == asset.linkId))
 

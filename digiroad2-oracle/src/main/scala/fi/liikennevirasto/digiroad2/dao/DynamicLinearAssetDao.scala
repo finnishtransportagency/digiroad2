@@ -1,5 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.Queries._
@@ -102,20 +105,17 @@ class DynamicLinearAssetDao {
   }
 
   def assetRowToProperty(assetRows: Iterable[DynamicAssetRow]): Seq[DynamicProperty] = {
-    assetRows.groupBy(_.value.publicId).map { case (_, rows) =>
-      val row = rows.head
+    assetRows.toSeq.sortBy(_.value.publicId).map { row =>
       DynamicProperty(
         publicId = row.value.publicId,
         propertyType = row.value.propertyType,
         required = row.value.required,
-        values = rows.flatMap(assetRow =>
-          assetRow.value.propertyValue match {
-            case Some(value) => Some(DynamicPropertyValue(value))
-            case _ => None
-          }
-        ).toSeq
+        values = row.value.propertyValue match {
+          case Some(value) => Seq(DynamicPropertyValue(value))
+          case _ => Seq.empty
+        }
       )
-    }.toSeq
+    }
   }
 
   implicit val getDynamicAssetRow: GetResult[DynamicAssetRow] = new GetResult[DynamicAssetRow] {
@@ -430,8 +430,16 @@ class DynamicLinearAssetDao {
     }
   }
 
-  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String) : List[PersistedLinearAsset] = {
+  def getDynamicLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, public_id, property_type, required,

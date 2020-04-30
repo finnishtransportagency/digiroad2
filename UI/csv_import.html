@@ -24,6 +24,10 @@
                     return value.length >= 1;
                 }
             });
+            $('#municipalities_search_rightSelected, #municipalities_search_leftSelected').on('click', function(event) {
+                var disableStatus = _.isEmpty($('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
+                $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
+            });
         });
     </script>
     <!-- Google Analytics loaded asynchronously -->
@@ -57,6 +61,7 @@
                     <option value="railwayCrossings">Tasoristeys</option>
                     <option value="pedestrianCrossings">Suojatie</option>
                     <option value="servicePoints">Palvelupiste</option>
+                    <option value="lanes">Kaistatiedot</option>
                 </select>
 
                 <div class="checkbox" id="csvImportPoistaCheckbox">

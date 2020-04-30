@@ -20,16 +20,8 @@
         $('#work-list').show();
         $('body').addClass('scrollable');
         me.generateWorkList(listP);
-        addSpinner();
+        me.addSpinner();
       });
-    };
-
-    var addSpinner = function () {
-      $('#work-list').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-    };
-
-    var removeSpinner = function(){
-      $('.spinner-overlay').remove();
     };
 
     this.downloadCSV = function(csv, filename) {
@@ -107,7 +99,7 @@
 
     this.generateWorkList = function(listP) {
       listP.then(function (result){
-        removeSpinner();
+        me.removeSpinner();
         $('#work-list').html('' +
           '<div style="overflow: auto;">' +
           '<div class="page">' +

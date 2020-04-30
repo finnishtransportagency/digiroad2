@@ -1,33 +1,28 @@
 
 package fi.liikennevirasto.digiroad2.dataimport
 
-import java.io.{ByteArrayInputStream, InputStream, InputStreamReader}
+import java.io.{ByteArrayInputStream, InputStream}
 
-import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import javax.sql.DataSource
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.dao.{MassTransitStopDao, MunicipalityDao, RoadLinkDAO}
+import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficSignCsvImporter}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils}
+import javax.sql.DataSource
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
-import fi.liikennevirasto.digiroad2.csvDataImporter.{Creator, MassTransitStopCsvImporter, MassTransitStopCsvOperation, PositionUpdater, RoadLinkCsvImporter, TrafficSignCsvImporter, Updater}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
-import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, MassTransitStopWithProperties, PersistedMassTransitStop}
-import fi.liikennevirasto.digiroad2.util.{GeometryTransform, RoadAddress, RoadSide, Track}
-import org.mockito.ArgumentMatchers
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
 
 object sTestTransactions {
   def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
@@ -53,7 +48,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val testUserProvider = userProvider
   private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  private val mockVVHClient = MockitoSugar.mock[VVHClient]
+  private val mockLaneUtils = MockitoSugar.mock[LaneUtils]
 
   val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
@@ -68,6 +63,13 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def eventBus: DigiroadEventBus = mockEventBus
 
+  }
+
+  object lanesCsvImporter extends LanesCsvImporter(mockRoadLinkService, mockEventBus) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def laneUtils = mockLaneUtils
+    override def eventBus: DigiroadEventBus = mockEventBus
   }
 
   object roadLinkCsvImporter extends RoadLinkCsvImporter(mockRoadLinkService, mockEventBus) {
@@ -107,6 +109,14 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       trafficSignCsvImporter.mappings.keys.toList.map { key => asset.getOrElse(key, "") }.mkString(";")
     }.mkString("\n")
     headers + rows
+  }
+
+  private def createCsvLanes(lanes: Map[String, Any]*): String = {
+    val headers = lanesCsvImporter.mandatoryFieldsMapping.keys.toList
+    val rows = lanes.map { lane =>
+      headers.map { key => lane.getOrElse(key, "") }.mkString(";")
+    }.mkString("\n")
+    headers.mkString(";") + "\n" + rows
   }
 
   test("validation fails if field type \"Linkin ID\" is not filled", Tag("db")) {
@@ -362,6 +372,69 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
         reason = "No Rights for Municipality or nonexistent road links near asset position",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
+  }
+
+  test("validation for lanes import fails if parameters are missing", Tag("db")) {
+    def createBadCsvLanes(lanes: Map[String, Any]*): String = {
+      val headers = List("kaista")
+      val rows = lanes.map { lane =>
+        headers.map { key => lane.getOrElse(key, "") }.mkString(";")
+      }.mkString("\n")
+      headers.mkString(";") + "\n" + rows
+    }
+
+    val laneRow = Map("kaista" -> 11)
+
+    val invalidCsv = csvToInputStream(createBadCsvLanes(laneRow))
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser)
+
+    assets.incompleteRows.size should be (1)
+    assets.incompleteRows.head.missingParameters should contain allOf ("katyyppi", "tie", "osa", "ajorata", "aet", "let")
+  }
+
+  test("validation for lanes import fails if parameters are malformed", Tag("db")) {
+    val laneRow1 = Map("kaista" -> 100, "katyyppi" -> 1, "tie" -> "abc", "osa" -> 67, "ajorata" -> 671, "aet" -> 0, "let" -> 2113)
+    val laneRow2 = Map("kaista" -> 13, "katyyppi" -> 100, "tie" -> 2, "osa" -> 67, "ajorata" -> 671, "aet" -> "", "let" -> "")
+
+    val invalidCsv = csvToInputStream(createCsvLanes(laneRow1, laneRow2))
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser)
+
+    assets.malformedRows.size should be (2)
+    assets.malformedRows.last.malformedParameters should contain allOf ("kaista", "tie")
+    assets.malformedRows.head.malformedParameters should contain allOf ("kaista", "katyyppi", "aet", "let")
+  }
+
+  test("validation for lanes import fails if parameters combinations are invalid", Tag("db")) {
+    val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 7, "osa" -> 67, "ajorata" -> 2, "aet" -> 0, "let" -> 1000)
+
+    val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
+    val assets = lanesCsvImporter.processing(invalidCsv, testUser)
+
+    assets.notImportedData.size should be (1)
+    assets.notImportedData.head.csvRow should be (lanesCsvImporter.rowToString(laneRow))
+  }
+
+  test("Create valid lane", Tag("db")) {
+    runWithRollback {
+      when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewIncomeLane]], any[LaneRoadAddressInfo],
+        any[Int], any[String], any[Boolean])).thenReturn()
+
+      val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
+
+      val invalidCsv = csvToInputStream(createCsvLanes(laneRow))
+      val assets = lanesCsvImporter.processing(invalidCsv, testUser)
+
+      val propertiesCreated = List(AssetProperty("end distance","1000"),
+        AssetProperty("road part","999"),
+        AssetProperty("lane","11"),
+        AssetProperty("initial distance","0"),
+        AssetProperty("track","1"),
+        AssetProperty("lane type","1"),
+        AssetProperty("road number","999"))
+
+      assets.createdData.size should be(1)
+      assets.createdData.head.foreach(propertiesCreated.contains(_) should be(true))
+    }
   }
 
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]

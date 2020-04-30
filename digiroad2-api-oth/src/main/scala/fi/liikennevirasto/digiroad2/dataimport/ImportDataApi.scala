@@ -45,6 +45,16 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     response.setHeader("Digiroad2-Server-Originated-Response", "true")
   }
 
+  /*this need to be first because Scalatra route order starts from the bottom and this post method is the most generic*/
+  post("/:assetTypeImport") {
+    val assetType = params("assetTypeImport")
+    if(assetType == Lanes.layerName && !userProvider.getCurrentUser().isOperator())
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    else
+      validateOperation()
+    importAssets(fileParams("csv-file"), assetType)
+  }
+
   post("/maintenanceRoads") {
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
@@ -67,12 +77,6 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     }
 
    importTrafficSigns(fileParams("csv-file"), municipalitiesToExpire)
-  }
-
-  post("/:pointAssetTypeImport") {
-    validateOperation()
-    val assetType = params("pointAssetTypeImport")
-    importPointAssets(fileParams("csv-file"), assetType)
   }
 
   post("/roadLinks") {
@@ -127,7 +131,7 @@ class ImportDataApi(roadLinkService: RoadLinkService, val userProvider: UserProv
     }
   }
 
-  def importPointAssets(csvFileItem: FileItem, layerName: String): Option[ImportStatusInfo] = {
+  def importAssets(csvFileItem: FileItem, layerName: String): Option[ImportStatusInfo] = {
     val fileName = csvFileItem.getName
     val csvFileInputStream = csvFileItem.getInputStream
     if(csvFileInputStream.available() == 0)

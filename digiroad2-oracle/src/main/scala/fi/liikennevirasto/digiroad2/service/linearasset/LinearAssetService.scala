@@ -7,9 +7,9 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType._
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment, VVHChangesAdjustment}
+import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleAssetDao, Queries}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller._
 import fi.liikennevirasto.digiroad2.linearasset.{AssetFiller, _}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -65,7 +65,6 @@ trait LinearAssetOperations {
 
   val logger = LoggerFactory.getLogger(getClass)
   val verifiableAssetType = Set(30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 190, 210)
-  private val RECORD_NUMBER = 4000
 
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
     withDynTransaction {
@@ -94,16 +93,6 @@ trait LinearAssetOperations {
     (maxMeasure - minMeasure) > minDistanceAllow
   }
 
-  def getRecordLimit(pageNumber: Option[Int]): String = {
-    pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
-        s"WHERE line_number between $startNum and $endNum"
-      case _ => ""
-    }
-  }
-
   /**
     * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
     *
@@ -130,9 +119,24 @@ trait LinearAssetOperations {
     linearAsset.copy(attributes = linearAsset.attributes ++ Map("municipality" -> roadLink.municipalityCode))
   }
 
+  private def addConstructionTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("constructionType" -> roadLink.constructionType.value))
+  }
+
+  private def addFunctionalClassAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("functionalClass" -> roadLink.functionalClass))
+  }
+
+  private def addLinkTypeAttribute(linearAsset: PieceWiseLinearAsset, roadLink: RoadLink): PieceWiseLinearAsset = {
+    linearAsset.copy(attributes = linearAsset.attributes ++ Map("linkType" -> roadLink.linkType.value))
+  }
+
   private def enrichLinearAssetAttributes(linearAssets: Seq[PieceWiseLinearAsset], roadLinks: Seq[RoadLink]): Seq[PieceWiseLinearAsset] = {
     val linearAssetAttributeOperations: Seq[(PieceWiseLinearAsset, RoadLink) => PieceWiseLinearAsset] = Seq(
-      addMunicipalityCodeAttribute
+      addMunicipalityCodeAttribute,
+      addConstructionTypeAttribute,
+      addFunctionalClassAttribute,
+      addLinkTypeAttribute
       //In the future if we need to add more attributes just add a method here
     )
 
@@ -247,7 +251,7 @@ trait LinearAssetOperations {
     val linkIds = roadLinks.map(_.linkId)
     val existingAssets =
       withDynTransaction {
-         dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
+        dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
       }.filterNot(_.expired)
     existingAssets
   }
@@ -318,7 +322,8 @@ trait LinearAssetOperations {
     val generatedChangeSet = linearAssetsAndChanges.map(_._2)
     val changeSetF = if (generatedChangeSet.nonEmpty) { generatedChangeSet.last } else { changeSet }
     val newLinearAsset = if((linearAssets ++ existingAssets).nonEmpty) {
-      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes)
+//      newChangeAsset(roadLinks, linearAssets ++ existingAssets, changes) //Temporarily disabled according to DROTH-2327
+      Seq()
     } else Seq()
 
     (linearAssets ++ newLinearAsset, changeSetF)
@@ -522,9 +527,9 @@ trait LinearAssetOperations {
     * @param withAutoAdjust
     * @return Changed linear assets
     */
-  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, pageNumber: Option[Int] = None): Seq[ChangedLinearAsset] = {
+  def getChanged(typeId: Int, since: DateTime, until: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[ChangedLinearAsset] = {
     val persistedLinearAssets = withDynTransaction {
-      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, getRecordLimit(pageNumber))
+      dao.getLinearAssetsChangedSince(typeId, since, until, withAutoAdjust, token)
     }
     val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(persistedLinearAssets.map(_.linkId).toSet).filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
     mapPersistedAssetChanges(persistedLinearAssets, roadLinks)
@@ -783,6 +788,7 @@ trait LinearAssetOperations {
         logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.asset.id).mkString(", "))
       changeSet.valueAdjustments.foreach { adjustment =>
         updateWithoutTransaction(Seq(adjustment.asset.id), adjustment.asset.value.get, adjustment.asset.modifiedBy.get)
+
       }
     }
   }
@@ -898,7 +904,7 @@ trait LinearAssetOperations {
     ids
   }
 
-  def validateAssetValue(value: Option[Value]): Unit = {}
+  def validateCondition(asset: NewLinearAsset): Unit = {}
 
   protected def createLinearAssetFromTrafficSign(trafficSignInfo: TrafficSignInfo): Seq[Long] = {Seq()}
 

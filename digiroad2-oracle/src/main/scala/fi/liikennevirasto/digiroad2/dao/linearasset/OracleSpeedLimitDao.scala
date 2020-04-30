@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao.linearasset
 
-import java.util.NoSuchElementException
+import java.nio.charset.StandardCharsets
+import java.util.{Base64, NoSuchElementException}
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -75,7 +76,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
            left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
            left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'checkbox'
            left join enumerated_value e on s.enumerated_value_id = e.id or mc.enumerated_value_id = e.id
-		   where a.asset_type_id = 20 #$queryFilter""".as[SpeedLimitRow].list
+		   where a.asset_type_id = 20 and floating = 0 #$queryFilter""".as[SpeedLimitRow].list
     }
     groupSpeedLimitsResult(speedLimitRows)
   }
@@ -85,8 +86,13 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     groupedSpeedLimit.keys.map { assetId =>
       val rows = groupedSpeedLimit(assetId)
       val asset = rows.head
+      val suggestBoxValue =
+        rows.find(_.publicId == "suggest_box") match {
+          case Some(suggested) => suggested.value
+          case _ => 0
+        }
 
-      val speedLimitValue = (rows.find(_.publicId == "suggest_box").head.value.map(_.asInstanceOf[Long]), rows.find(_.publicId == "rajoitus").head.value.map(_.asInstanceOf[Int])) match {
+      val speedLimitValue = (suggestBoxValue, rows.find(_.publicId == "rajoitus").head.value.map(_.asInstanceOf[Int])) match {
         case (Some(isSuggested), Some(value)) => Some(SpeedLimitValue(value, isSuggested == 1 ))
         case (None, Some(value)) => Some(SpeedLimitValue(value))
         case _ => None
@@ -208,11 +214,12 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       select s.link_id, m.name_fi, s.administrative_class
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0
       """
 
     val filterAdministrativeClass = administrativeClass match {
-      case Some(ac) if ac == Municipality => s" where s.administrative_class not in ( ${State.value}, ${Private.value})"
-      case Some(ac) if ac == State => s" where s.administrative_class = ${ac.value}"
+      case Some(ac) if ac == Municipality => s" and s.administrative_class not in ( ${State.value}, ${Private.value})"
+      case Some(ac) if ac == State => s" and s.administrative_class = ${ac.value}"
       case _ => ""
     }
 
@@ -244,14 +251,14 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   }
 
 
-  def getMunicipalitiesWithUnknown(municipality: Int): Seq[Long] = {
+  def getMunicipalitiesWithUnknown(municipality: Int): Seq[(Long, Int)] = {
 
     val municipalitiesQuery =
       s"""
-      select LINK_ID from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
+      select LINK_ID, ADMINISTRATIVE_CLASS from UNKNOWN_SPEED_LIMIT uk where uk.MUNICIPALITY_CODE = $municipality
       """
 
-    Q.queryNA[Long](municipalitiesQuery).list
+    Q.queryNA[(Long, Int)](municipalitiesQuery).list
   }
 
 
@@ -291,8 +298,16 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     (speedLimitLinks, roadLinks)
   }
 
-  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String): Seq[PersistedSpeedLimit] = {
+  def getSpeedLimitsChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String]): Seq[PersistedSpeedLimit] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val speedLimitRows =  sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, modified_by, modified_date, expired, created_by, created_date,
@@ -568,7 +583,21 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
     * Removes speed limits from unknown speed limits list. Used by SpeedLimitService.purgeUnknown.
     */
   def deleteUnknownSpeedLimits(linkIds: Seq[Long]): Unit = {
-    sqlu"""delete from unknown_speed_limit where link_id in (#${linkIds.mkString(",")})""".execute
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sqlu"""delete from unknown_speed_limit where link_id in (select id from #$idTableName)""".execute
+    }
+  }
+
+  /**
+    * Update administrative_class of from unknown speed limits list. Used by removeUnnecessaryUnknownSpeedLimits batch.
+    */
+  def updateUnknownSpeedLimitAdminClass(linkId: Long, administrativeClass: AdministrativeClass): Unit = {
+    sqlu"""update unknown_speed_limit set administrative_class = ${administrativeClass.value} where link_id = $linkId""".execute
+  }
+
+  def hideUnknownSpeedLimits(linkIds: Set[Long]): Set[Long] = {
+    sqlu"""update unknown_speed_limit set unnecessary = 1 where link_id in (#${linkIds.mkString(",")})""".execute
+    linkIds
   }
 
   private def addCountsFor(unknownLimitsByMunicipality: Map[String, Map[String, Any]]): Map[String, Map[String, Any]] = {
@@ -576,6 +605,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
       select name_fi, s.administrative_class, count(*), m.id
       from unknown_speed_limit s
       join municipality m on s.municipality_code = m.id
+      where s.unnecessary = 0
       group by name_fi, administrative_class, m.id
     """.as[(String, Int, Int, Int)].list
 

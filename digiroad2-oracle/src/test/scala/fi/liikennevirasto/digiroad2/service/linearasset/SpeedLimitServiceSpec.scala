@@ -807,7 +807,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
       verify(mockEventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), List(), Set(), List()))
       verify(mockEventBus, times(1)).publish("speedLimits:saveProjectedSpeedLimits", List())
-      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(mockEventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq()))
       verify(mockEventBus, times(1)).publish("speedLimits:persistUnknownLimits", List())
 
     }
@@ -1554,12 +1554,38 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       verify(eventBus, times(1)).publish("speedLimits:update", ChangeSet(Set(), List(), List(), Seq(), Set(asset), Seq()))
       val captor = ArgumentCaptor.forClass(classOf[Seq[SpeedLimit]])
       verify(eventBus, times(1)).publish(org.mockito.ArgumentMatchers.eq("speedLimits:saveProjectedSpeedLimits"), captor.capture())
-      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", Set())
+      verify(eventBus, times(1)).publish("speedLimits:purgeUnknownLimits", (Set(), Seq(oldLinkId)))
       verify(eventBus, times(1)).publish("speedLimits:persistUnknownLimits", Seq.empty)
       apeedLimits.length should be(3)
       apeedLimits.head.foreach(_.value should be(Some(SpeedLimitValue(80,false))))
       dynamicSession.rollback()
 
+    }
+  }
+
+  test("Delete link id from unknown speed limit list when that link does not exist anymore"){
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val eventBus = MockitoSugar.mock[DigiroadEventBus]
+    val service = new SpeedLimitService(eventBus, mockVVHClient, mockRoadLinkService) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq())
+
+    val oldLinkId = 5000
+    val municipalityCode = 235
+
+    OracleDatabase.withDynTransaction {
+      sqlu"""INSERT INTO UNKNOWN_SPEED_LIMIT (MUNICIPALITY_CODE, ADMINISTRATIVE_CLASS, LINK_ID) VALUES ($municipalityCode, ${Municipality.value}, $oldLinkId)""".execute
+
+      service.purgeUnknown(Set(), Seq(oldLinkId))
+      val unknownSpeedLimits = service.dao.getMunicipalitiesWithUnknown(municipalityCode)
+
+      unknownSpeedLimits.isEmpty should be (true)
+      dynamicSession.rollback()
     }
   }
 }

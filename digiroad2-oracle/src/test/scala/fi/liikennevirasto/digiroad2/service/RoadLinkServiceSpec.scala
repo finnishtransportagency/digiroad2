@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.client.vvh._
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.LinkAttributesDao
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummyEventBus, DummySerializer, Point}
 import org.joda.time.DateTime
@@ -19,12 +18,10 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
-
 import scala.collection.immutable.Stream.Empty
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
-import scala.util.matching.Regex
+
 
 class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -1301,13 +1298,13 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Update roadLink attributes based on geometry changes") {
+  test("Update roadLink attributes based on geometry changes with old links passing to new links") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val dummyRoadAssociationNameNumber = "Test Road Association"
 
       val changeInfoTest = Seq(
-        ChangeInfo(Some(11111111), None, 1, 1, None, None, None, None, 1),
+        ChangeInfo(Some(22222222), Some(5), 1, 1, None, None, None, None, 1),
         ChangeInfo(Some(22222222), Some(3), 1, 1, None, None, None, None, 1),
 
         ChangeInfo(Some(33333333), Some(4), 1, 1, None, None, None, None, 1),
@@ -1316,8 +1313,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val testUser = "test_user"
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (11111111, 'PRIVATE_ROAD_ASSOCIATION', 11111111, $dummyRoadAssociationNameNumber, $testUser)""".execute
-      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (22222222, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (2, 'PRIVATE_ROAD_ASSOCIATION', 22222222, $dummyRoadAssociationNameNumber, $testUser)""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333331, 'PRIVATE_ROAD_ASSOCIATION', 33333333, $dummyRoadAssociationNameNumber, $testUser)""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (33333332, 'ADDITIONAL_INFO', 33333333, '2', $testUser)""".execute
       sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (44444441, 'PRIVATE_ROAD_ASSOCIATION', 44444444, $dummyRoadAssociationNameNumber, $testUser)""".execute
@@ -1329,17 +1325,89 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
       service.fillRoadLinkAttributes(Seq(), changeInfoTest)
 
+      val attributesRoadLink22222222 = LinkAttributesDao.getExistingValues(22222222)
+      attributesRoadLink22222222.isEmpty should be(false)
+
+      val attributesRoadLink44444444 = LinkAttributesDao.getExistingValues(44444444)
+      attributesRoadLink44444444.isEmpty should be(false)
+
       val attributesRoadLink4 = LinkAttributesDao.getExistingValues(4)
       attributesRoadLink4.size should be (2)
       attributesRoadLink4.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
       attributesRoadLink4.get("ADDITIONAL_INFO") should be(Some("2"))
 
-      val attributesRoadLink11111111 = LinkAttributesDao.getExistingValues(11111111)
-      attributesRoadLink11111111.isEmpty should be(true)
-
       val attributesRoadLink3 = LinkAttributesDao.getExistingValues(3)
       attributesRoadLink3.size should be (1)
       attributesRoadLink3.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
+
+      val attributesRoadLink5 = LinkAttributesDao.getExistingValues(5)
+      attributesRoadLink5.size should be (1)
+      attributesRoadLink5.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Update roadLink attributes based on geometry changes with new roadlink"){
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val dummyRoadAssociationNameNumber = "Test Road Association"
+
+      val changeInfoTest = Seq(
+        ChangeInfo(None, Some(3), 1, 4, None, None, None, None, 1),
+        ChangeInfo(None, Some(4), 1, 12, None, None, None, None, 1)
+      )
+
+      val roadLinks = Seq(
+        RoadLink(1, Seq(Point(111111, 1111111, 10), Point(386136, 6671029, 15)), 100, Municipality, 1, BothDirections, Motorway, None, None),
+        RoadLink(2, Seq(Point(386133, 6671115, 21), Point(222222, 2222222, 25)), 100, Municipality, 1, BothDirections, Motorway, None, None),
+        RoadLink(3, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), 100, Municipality, 1, BothDirections, Motorway, None, None),
+        RoadLink(4, Seq(Point(386136, 6671029, 15), Point(386133, 6671115, 21)), 100, Municipality, 1, BothDirections, Motorway, None, None)
+      )
+
+      val testUser = "test_user"
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (1, 'PRIVATE_ROAD_ASSOCIATION', 1, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (2, 'ADDITIONAL_INFO', 1, '2', $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (3, 'PRIVATE_ROAD_ASSOCIATION', 2, $dummyRoadAssociationNameNumber, $testUser)""".execute
+
+
+      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+      service.fillRoadLinkAttributes(roadLinks, changeInfoTest)
+
+      val attributesRoadLink3 = LinkAttributesDao.getExistingValues(3)
+      attributesRoadLink3.isEmpty should be(true)
+
+      val attributesRoadLink4 = LinkAttributesDao.getExistingValues(4)
+      attributesRoadLink4.size should be (1)
+      attributesRoadLink4.get("PRIVATE_ROAD_ASSOCIATION") should be(Some(dummyRoadAssociationNameNumber))
+
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Update roadLink attributes based on geometry changes with old roadlink"){
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val dummyRoadAssociationNameNumber = "Test Road Association"
+
+      val changeInfoTest = Seq(
+        ChangeInfo(Some(1), None, 1, 1, None, None, None, None, 1),
+        ChangeInfo(Some(2), None, 1, 11, None, None, None, None, 1)
+      )
+
+      val testUser = "test_user"
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (1, 'PRIVATE_ROAD_ASSOCIATION', 1, $dummyRoadAssociationNameNumber, $testUser)""".execute
+      sqlu"""Insert into ROAD_LINK_ATTRIBUTES (ID, NAME, LINK_ID, VALUE, CREATED_BY) values (2, 'ADDITIONAL_INFO', 2, '2', $testUser)""".execute
+
+
+      val service = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
+      service.fillRoadLinkAttributes(Seq(), changeInfoTest)
+
+      val attributesRoadLink1 = LinkAttributesDao.getExistingValues(1)
+      attributesRoadLink1.size should be (1)
+
+      val attributesRoadLink2 = LinkAttributesDao.getExistingValues(2)
+      attributesRoadLink2.isEmpty should be(true)
 
       dynamicSession.rollback()
     }
