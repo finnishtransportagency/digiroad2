@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser.{DatePropertyFormat, _}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
 import fi.liikennevirasto.digiroad2.lane.PersistedLane
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, SpeedLimitValue, Value}
@@ -34,6 +35,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
         queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
+        queryParam[String]("withGeometry").description("With the field withGeometry, we allow or not to print the geometry values for lane_information. The value is False by default").optional,
         pathParam[String]("assetType").description("Asset type name to get the changes")
       )
       tags "Change API"
@@ -87,7 +89,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
       case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
       case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
-      case "lane_information"            => laneToGeoJson(withGeometry, laneService.getChanged(since, until, token))
+      case "lane_information"            => laneToGeoJson(laneService.getChanged(since, until, token), withGeometry)
     }
   }
 
@@ -521,17 +523,15 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         }
     )
 
-  def laneToGeoJson(withGeometry: Boolean = false, lanes: Seq[PersistedLane] ): Map[String, Any] = {
+  def laneToGeoJson(lanes: Seq[PersistedLane], withGeometry: Boolean = false ): Map[String, Any] = {
     val mainLanes = laneService.dao.MAIN_LANES
 
-    def getGeometryMap(lane: PersistedLane) = {
+    def getGeometryMap(roadLink:Seq[VVHRoadlink]) = {
       if (withGeometry) {
-        val road =  roadLinkService.fetchVVHRoadlinks( Set(lane.linkId) )
 
+        //TODO: Need to be updated
         Map( "type" -> "LineString",
-          //TODO: Need to be updated
-
-          "coordinates" -> "Need to be updated"
+          "coordinates" -> roadLink.map( _.geometry.map(p => Seq(p.x, p.y, p.z) ))
         )
       } else {
         //With None value geometry will be 'removed' form Json and not sent as empty
@@ -562,13 +562,16 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         laneService.getPropertyValue(lane, "end_date")
     }
 
+    val roadLinks =  roadLinkService.fetchVVHRoadlinks( lanes.map(_.linkId).toSet )
+                                    .groupBy(_.linkId)
+
 
     Map( "type" -> "FeatureCollection",
       "features"  ->  lanes.map{ lane =>
         Map("type" -> "Feature",
           "id" -> lane.id,
 
-          "geometry" -> getGeometryMap(lane),
+          "geometry" -> getGeometryMap( roadLinks(lane.linkId) ),
 
         "properties" -> Map(
           "changeType" -> getChangeType(lane: PersistedLane),
