@@ -527,12 +527,12 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     val mainLanes = laneService.dao.MAIN_LANES
 
     def getGeometryMap(roadLink:Seq[VVHRoadlink]) = {
-      if (withGeometry) {
 
-        //TODO: Need to be updated
+      if (withGeometry) {
         Map( "type" -> "LineString",
           "coordinates" -> roadLink.map( _.geometry.map(p => Seq(p.x, p.y, p.z) ))
         )
+
       } else {
         //With None value geometry will be 'removed' form Json and not sent as empty
         None
@@ -562,28 +562,35 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         laneService.getPropertyValue(lane, "end_date")
     }
 
-    val roadLinks =  roadLinkService.fetchVVHRoadlinks( lanes.map(_.linkId).toSet )
+    val lanesLinkIds = lanes.map(_.linkId)
+    val roadLinks =  roadLinkService.fetchVVHRoadlinks( lanesLinkIds.toSet )
                                     .groupBy(_.linkId)
 
+    val roadAddresses = viiteClient.fetchAllByLinkIds( lanesLinkIds )
+                                   .groupBy(_.linkId)
 
     Map( "type" -> "FeatureCollection",
       "features"  ->  lanes.map{ lane =>
+
+        val currentRoadLink = roadLinks(lane.linkId)
+        val currentRoadAddress = roadAddresses(lane.linkId).head
+
         Map("type" -> "Feature",
           "id" -> lane.id,
 
-          "geometry" -> getGeometryMap( roadLinks(lane.linkId) ),
+          "geometry" -> getGeometryMap(currentRoadLink ),
 
         "properties" -> Map(
-          "changeType" -> getChangeType(lane: PersistedLane),
+          "changeType" -> getChangeType(lane),
           "link" -> Map(
             "linkId" -> lane.linkId,
             "startMeasure" -> lane.startMeasure,
-            "endMeasure" -> lane.endMeasure
-            /*"roadNumber" -> 1,
-            "roadPart" -> 123,
-            "roadTrack" -> 1,
-            "roadStartAddr" -> 123,
-            "roadEndAddr" -> 456*/
+            "endMeasure" -> lane.endMeasure,
+            "roadNumber" -> currentRoadAddress.roadNumber,
+            "roadPart" -> currentRoadAddress.roadPartNumber,
+            "roadTrack" -> currentRoadAddress.track.value,
+            "roadStartAddr" -> currentRoadAddress.startAddrMValue,
+            "roadEndAddr" -> currentRoadAddress.endAddrMValue
           ),
           "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
           "modifiedAt" -> lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
