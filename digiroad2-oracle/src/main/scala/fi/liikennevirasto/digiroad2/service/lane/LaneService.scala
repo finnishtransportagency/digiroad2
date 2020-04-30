@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
-
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -283,6 +282,13 @@ trait LaneOperations {
   }
 
 
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[PersistedLane] = {
+    withDynSession{
+      dao.getLanesChangedSince(sinceDate, untilDate, token)
+    }
+  }
+
+
   def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit ={
     if (newLanes.nonEmpty) {
       logger.info("Saving modified lanes")
@@ -315,6 +321,16 @@ trait LaneOperations {
       }
     else
       dao.fetchLanesByIds( ids )
+  }
+
+  def getPropertyValue(lane: PersistedLane, publicId: String) = {
+    val laneProperty = lane.attributes.find(_.publicId == publicId)
+                                      .getOrElse( LaneProperty("Error", Seq()) )
+
+    if (laneProperty.values.nonEmpty)
+      laneProperty.values.head.value
+    else
+      None
   }
 
   def getPropertyValue(newLane: NewIncomeLane, publicId: String) = {
@@ -357,7 +373,7 @@ trait LaneOperations {
           val laneCode = getLaneCode(lane)
 
           val lameToUpdate = PersistedLane(lane.id, linkId, sideCode, laneCode.toInt, lane.municipalityCode,
-            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
+            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, lane.properties)
 
           dao.updateEntryLane(lameToUpdate, username)
         }
@@ -388,7 +404,7 @@ trait LaneOperations {
 
 
             val laneToUpdate = PersistedLane(currentLane.id, linkId, sideCode, laneCode, currentLane.municipalityCode,
-              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
+              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None,  None, None, false, 0, None, lane.properties)
 
             dao.updateEntryLane(laneToUpdate, username)
           }
@@ -451,7 +467,7 @@ trait LaneOperations {
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                       newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
-                                      expired = false, vvhTimeStamp, None, newLane.properties)
+                                      None, None, expired = false, vvhTimeStamp, None, newLane.properties)
 
           createWithoutTransaction(laneToInsert, username)
         }
@@ -476,7 +492,7 @@ trait LaneOperations {
 
             val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
                                   roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None,
-                                  expired = false, vvhTimeStamp, None, newLane.properties)
+                                  None, None, expired = false, vvhTimeStamp, None, newLane.properties)
 
             createWithoutTransaction(laneToInsert, username)
           }
@@ -531,7 +547,7 @@ trait LaneOperations {
 
     val newLane = PersistedLane (0, oldAsset.linkId, adjustment.sideCode.value, oldAsset.laneCode, roadLink.municipalityCode,
       oldAsset.startMeasure, oldAsset.endMeasure, Some(VvhGenerated), Some( DateTime.now() ),
-      None,None, expired = false, vvhClient.roadLinkData.createVVHTimeStamp(), oldAsset.geomModifiedDate, oldAsset.attributes)
+      None,None, None,None, expired = false, vvhClient.roadLinkData.createVVHTimeStamp(), oldAsset.geomModifiedDate, oldAsset.attributes)
 
     dao.updateExpiration(oldAsset.id, VvhGenerated)
    createWithoutTransaction( newLane, VvhGenerated )

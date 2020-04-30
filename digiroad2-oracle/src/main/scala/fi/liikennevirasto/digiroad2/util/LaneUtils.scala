@@ -1,12 +1,11 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -211,7 +210,7 @@ object LaneUtils {
           calculateStartAndEndPoint(road, startPoint, endPoint) match{
             case (start: Double, end: Double) =>  Some(PersistedLane(0, road.linkId, sideCode, laneCode, road.municipalityCode,
                                                       start, end, Some(username), Some(DateTime.now()),
-                                                      None, None, expired = false,
+                                                      None, None, None,None, expired = false,
                                                       vvhTimeStamp, None, lane.properties))
             case _ => None
           }

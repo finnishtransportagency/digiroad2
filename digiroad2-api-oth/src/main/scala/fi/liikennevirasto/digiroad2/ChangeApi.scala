@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.DateParser._
+import fi.liikennevirasto.digiroad2.asset.DateParser.{DatePropertyFormat, _}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, SpeedLimitValue, Value}
+import fi.liikennevirasto.digiroad2.lane.PersistedLane
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
@@ -62,7 +63,12 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     val token = params.get("token").map(_.toString)
 
     val withAdjust = params.get("withAdjust") match{
-      case Some(value)=> true
+      case Some(value) => true
+      case _ => false
+    }
+
+    val withGeometry = params.get("withGeometry") match{
+      case Some(value) => true
       case _ => false
     }
 
@@ -81,6 +87,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
       case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
       case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
+      case "lane_information"            => laneToGeoJson(withGeometry, laneService.getChanged(since, until, token))
     }
   }
 
@@ -513,4 +520,80 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           )
         }
     )
+
+  def laneToGeoJson(withGeometry: Boolean = false, lanes: Seq[PersistedLane] ): Map[String, Any] = {
+    val mainLanes = laneService.dao.MAIN_LANES
+
+    def getGeometryMap(lane: PersistedLane) = {
+      if (withGeometry) {
+        val road =  roadLinkService.fetchVVHRoadlinks( Set(lane.linkId) )
+
+        Map( "type" -> "LineString",
+          //TODO: Need to be updated
+
+          "coordinates" -> "Need to be updated"
+        )
+      } else {
+        //With None value geometry will be 'removed' form Json and not sent as empty
+        None
+      }
+    }
+
+    def getChangeType(lane: PersistedLane): String = {
+      if (lane.expired || (lane.expiredDateTime.nonEmpty && lane.expiredDateTime.head.isBefore(DateTime.now())))
+        "Remove"
+      else if (lane.modifiedDateTime.nonEmpty)
+        "Modify"
+      else
+        "Add"
+    }
+
+    def getStartDate(lane: PersistedLane) = {
+      if (mainLanes.contains(lane.laneCode))
+        lane.createdDateTime.map(DatePropertyFormat.print(_))
+      else
+        laneService.getPropertyValue(lane, "start_date")
+    }
+
+    def getEndDate(lane: PersistedLane) = {
+      if( lane.expired || lane.expiredDateTime.nonEmpty)
+        lane.modifiedDateTime.map(DatePropertyFormat.print(_))
+      else
+        laneService.getPropertyValue(lane, "end_date")
+    }
+
+
+    Map( "type" -> "FeatureCollection",
+      "features"  ->  lanes.map{ lane =>
+        Map("type" -> "Feature",
+          "id" -> lane.id,
+
+          "geometry" -> getGeometryMap(lane),
+
+        "properties" -> Map(
+          "changeType" -> getChangeType(lane: PersistedLane),
+          "link" -> Map(
+            "linkId" -> lane.linkId,
+            "startMeasure" -> lane.startMeasure,
+            "endMeasure" -> lane.endMeasure
+            /*"roadNumber" -> 1,
+            "roadPart" -> 123,
+            "roadTrack" -> 1,
+            "roadStartAddr" -> 123,
+            "roadEndAddr" -> 456*/
+          ),
+          "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
+          "modifiedAt" -> lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+          "createdBy" -> lane.createdBy,
+          "laneNumber" -> lane.laneCode,
+          "laneType" -> laneService.getPropertyValue(lane, "lane_type"),
+          "startDate" -> getStartDate(lane),
+          "endDate" -> getEndDate(lane)
+        )
+        )
+      }
+    )
+
+  }
+
 }

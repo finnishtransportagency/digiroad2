@@ -178,9 +178,8 @@ class LaneFiller {
     def createPersistedLane(laneCode: Int, sideCode: Int, municipalityCode: Long, baseProperties: Seq[LaneProperty] ): PersistedLane = {
       val lanePropertiesValues = baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
 
-      PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode,
-        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-        lanePropertiesValues)
+      PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode, 0, roadLink.length,
+        None, None, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None, lanePropertiesValues)
     }
 
 
@@ -263,8 +262,8 @@ class LaneFiller {
     }
 
     (PersistedLane(laneId, newLinkId, newSideCode,lane.laneCode, lane.municipalityCode, newStart, newEnd, lane.createdBy,
-      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, expired = false, projection.vvhTimeStamp,
-      lane.geomModifiedDate, lane.attributes), changeSet)
+      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, lane.expiredBy, lane.expiredDateTime,
+      expired = false, projection.vvhTimeStamp, lane.geomModifiedDate, lane.attributes), changeSet)
 
   }
 
