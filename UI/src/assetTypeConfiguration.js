@@ -1077,10 +1077,16 @@
             {'creationId': 14, 'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         isSuggestedAsset: true,
-        legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
-          {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
-        ],
+        legendValues: {
+          oldValues: [
+            {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
+            {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+          ],
+          newValues: [
+            {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg', label: 'Opastinlaite'},
+            {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg', label: 'Useita erisuuntaisia opastinlaitteita'}
+          ]
+        },
         formLabels: {
           singleFloatingAssetLabel: 'liikennevalojen',
           manyFloatingAssetsLabel: 'liikennevalot',

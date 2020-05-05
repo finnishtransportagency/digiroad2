@@ -135,7 +135,23 @@
 
     function determineRotation(asset) {
       var rotation = 0;
-      if (!asset.floating && asset.geometry && asset.geometry.length > 0){
+      //TODO: when bearing and sidecode(validityDirection) passes to properties this can be uncommented
+      /*if (layerName == 'trafficLights'){
+        var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
+        var isOld = _.head(typeProp.values).propertyValue === "";
+        if(!isOld){
+          var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+          var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
+          var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
+
+          var sideCodeProps = _.filter(asset.propertyData, {'publicId': 'sidecode'});
+          var sideCodeValue = _.head(_.head(sideCodeProps).values).propertyValue;
+          var sameSideCode = _.every(sideCodeProps, function(prop){return _.head(prop.values).propertyValue == sideCodeValue;});
+
+          if(sameBearing && sameSideCode)
+            return validitydirections.calculateRotation(bearingValue, sideCodeValue);
+        }
+      } else*/ if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
       } else if (layerName == 'directionalTrafficSigns' || !_.isUndefined(asset.bearing) && layerName == 'trafficSigns'){
