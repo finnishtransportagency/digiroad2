@@ -22,10 +22,9 @@
     var feedbackCollection = new FeedbackModel(backend, assetConfiguration);
     new FeedbackApplicationTool(authorizationPolicy, feedbackCollection);
 
-
     var linearAssets = _.map(enabledLinearAssetSpecs, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec) ;
-      var selectedLinearAsset = SelectedLinearAssetFactory.construct(backend, collection, spec);
+      var collection = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec);
+      var selectedLinearAsset = _.isUndefined(spec.selected) ? SelectedLinearAssetFactory.construct(backend, collection, spec) : new spec.selected(backend, collection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.isSeparable);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
       return _.merge({}, spec, {
         collection: collection,
@@ -301,6 +300,7 @@
     new CoordinatesDisplay(map, mapPluginsContainer);
     new MunicipalityDisplay(map, mapPluginsContainer, backend);
     new DefaultLocationButton(map, mapPluginsContainer, backend, assetConfiguration, getAssetTitle(), defaultLocation);
+    new LoadingBarDisplay(map, mapPluginsContainer);
 
     function getAssetTitle() {
       if (!_.isUndefined(startupAssetTypeId) && startupAssetTypeId !== 0) {
@@ -501,13 +501,17 @@
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
+    var cyclingAndWalking = new CyclingAndWalkingBox(_.find(linearAssets, {typeId: assetType.cyclingAndWalking}));
+    var laneModellingBox = new LaneModellingBox(_.find(linearAssets, {typeId: assetType.laneModellingTool}));
     return [
       [roadLinkBox]
+          .concat(laneModellingBox)
           .concat([speedLimitBox])
           .concat([manoeuvreBox])
           .concat(getLinearAsset(assetType.prohibition))
           .concat([parkingProhibitionBox])
-        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition)),
+          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
+          .concat([cyclingAndWalking]),
       []
           .concat(getLinearAsset(assetType.totalWeightLimit))
           .concat(getLinearAsset(assetType.trailerTruckWeightLimit))

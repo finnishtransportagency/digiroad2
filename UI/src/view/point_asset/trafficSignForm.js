@@ -705,7 +705,7 @@
 
     var createPreviewHeaderElement = function(laneNumbers) {
       var createNumber = function (number) {
-        return $('<td class="preview-lane-traffic-signs">' + number + '</td>');
+        return $('<td class="preview-lane">' + number + '</td>');
       };
 
       var numbers = _.sortBy(laneNumbers);

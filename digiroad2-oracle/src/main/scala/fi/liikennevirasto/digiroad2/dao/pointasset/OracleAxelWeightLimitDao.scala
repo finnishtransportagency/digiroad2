@@ -25,7 +25,7 @@ object OracleAxleWeightLimitDao {
         left join number_property_value npv on npv.asset_id = a.id
       """
     val queryWithFilter = queryFilter(query) + " and (a.valid_to > sysdate or a.valid_to is null)"
-    StaticQuery.queryNA[WeightLimit](queryWithFilter).iterator.toSeq
+    StaticQuery.queryNA[WeightLimit](queryWithFilter)(getPointAsset).iterator.toSeq
   }
 
   def create(asset: IncomingAxleWeightLimit, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
@@ -54,7 +54,7 @@ object OracleAxleWeightLimitDao {
   }
 
   implicit val getPointAsset = new GetResult[WeightLimit] {
-    def apply(r: PositionedResult) = {
+    def apply(r: PositionedResult): WeightLimit = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val point = r.nextBytesOption().map(bytesToPoint).get

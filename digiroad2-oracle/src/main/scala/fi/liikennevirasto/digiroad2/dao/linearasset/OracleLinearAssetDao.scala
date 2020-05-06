@@ -10,13 +10,14 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId, updateSingleChoiceProperty}
+import fi.liikennevirasto.digiroad2.dao.Queries.{insertMultipleChoiceValue, multipleChoicePropertyValuesByAssetIdAndPropertyId}
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.linearasset.Measures
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
+
 import scala.language.implicitConversions
 
 case class ProhibitionsRow(id: Long, linkId: Long, sideCode: Int, prohibitionId: Long, prohibitionType: Int, validityPeriodType: Option[Int],
@@ -31,7 +32,7 @@ case class AssetLink(id: Long, linkId: Long)
 
 class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
   implicit def bool2int(b:Boolean) = if (b) 1 else 0
-  val logger = LoggerFactory.getLogger(getClass)
+  val logger: Logger = LoggerFactory.getLogger(getClass)
 
   /**
     * No usages in OTH.
@@ -416,8 +417,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     groupProhibitionsResult(assets, prohibitionAssetTypeId)
   }
 
-  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, recordLimit: String) : List[PersistedLinearAsset] = {
+  def getLinearAssetsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None) : List[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, value, start_measure, end_measure, created_by, created_date, modified_by, modified_date,
@@ -468,9 +477,18 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       .as[LightLinearAsset].list
   }
 
-  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, recordLimit: String): Seq[PersistedLinearAsset] = {
+  def getProhibitionsChangedSince(assetTypeId: Int, sinceDate: DateTime, untilDate: DateTime, excludedTypes: Seq[ProhibitionClass], withAdjust: Boolean, token: Option[String] = None): Seq[PersistedLinearAsset] = {
     val withAutoAdjustFilter = if (withAdjust) "" else "and (a.modified_by is null OR a.modified_by != 'vvh_generated')"
     val excludedTypesValues = excludedTypes.map(_.value)
+
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
 
     val assets = sql"""
         select asset_id, link_id, side_code, pv_id, pv_type, pvp_type, start_hour, end_hour,pe_type,
@@ -793,17 +811,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getTrafficSignsToProcessById(ids: Seq[Long]) : Seq[(Long, String)] = {
-    sql""" select traffic_sign_id, sign
-           from traffic_sign_manager
-           where traffic_sign_id in (#${ids.mkString(",")})
+    MassQuery.withIds(ids.toSet) { idTableName =>
+      sql""" select tsm.traffic_sign_id, tsm.sign
+           from traffic_sign_manager tsm
+              JOIN #$idTableName i on tsm.traffic_sign_id = i.id
            """.as[(Long, String)].list
+    }
   }
 
   def deleteTrafficSignsToProcess(ids: Seq[Long], typeId: Int) : Unit = {
-    sqlu"""delete from traffic_sign_manager
-           where linear_asset_type_id = $typeId
-           and traffic_sign_id in (#${ids.mkString(",")})
+    MassQuery.withIds(ids.toSet) { idTableName =>
+      sqlu"""DELETE FROM traffic_sign_manager
+           WHERE linear_asset_type_id = $typeId
+           AND traffic_sign_id IN ( SELECT id FROM #$idTableName )
          """.execute
+    }
   }
 
   def getConnectedAssetFromTrafficSign(id: Long): Seq[Long] = {
@@ -868,7 +890,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val propertyId = Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply("suggest_box", typeId).first
     val currentIdsAndValue = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(id, propertyId).list
 
-    if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
+    if (currentIdsAndValue.isEmpty) {
+      insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
+    } else if(bool2int(value.isSuggested) != currentIdsAndValue.head._2 ) {
       Queries.deleteMultipleChoiceValue(currentIdsAndValue.head._1).execute
       insertMultipleChoiceValue(id, propertyId, bool2int(value.isSuggested)).execute
     }
@@ -1008,15 +1032,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   def getLinksWithExpiredAssets(linkIds: Seq[Long], assetType: Int): Seq[Long] = {
-    val withLinkIds = if (linkIds.nonEmpty) s"and pos.link_id in (${linkIds.mkString(",")})" else ""
-
-    sql"""
+    MassQuery.withIds(linkIds.toSet) { idTableName =>
+      sql"""
       select LINK_ID
       from asset a
       join asset_link al on a.id = al.asset_id
       join lrm_position pos on al.position_id = pos.id
+      join #$idTableName i on i.id = pos.link_id
       where a.asset_type_id = $assetType
-      and a.valid_to is not null #${withLinkIds}
+      and a.valid_to is not null
     """.as[Long].list
+    }
   }
 }

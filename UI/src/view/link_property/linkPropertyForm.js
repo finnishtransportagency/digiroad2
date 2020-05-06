@@ -77,13 +77,36 @@
       [2, 'Täydentävä geometria']
     ];
 
+    var laneConfirmationPopUp = function (target, selectedValue) {
+      return {
+        message: "Vastakkaisen suunnan kaistat lakkautetaan.",
+        type: "confirm",
+        yesButtonLbl: 'Kyllä',
+        noButtonLbl: 'Ei',
+        successCallback: function() {
+          selectedLinkProperty.setTrafficDirection(selectedValue);
+        },
+        closeCallback: function() {
+          selectedLinkProperty.cancelDirectionChange();
+        },
+        container: '.container'
+      };
+    };
+
     var getLocalizedLinkType = function(linkType) {
       var localizedLinkType = _.find(linkTypes, function(x) { return x[0] === linkType; });
       return localizedLinkType && localizedLinkType[1];
     };
 
-    var getVerticalLevelType = function(verticalLevel){
-      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === verticalLevel; });
+    var getVerticalLevelType = function(verticalLevel) {
+      if (typeof verticalLevel === 'string') {
+        var multipleLevels = verticalLevel.includes(",");
+        if (multipleLevels) {
+          return "[useita eri arvoja]";
+        }
+      }
+
+      var verticalLevelType = _.find(verticalLevelTypes, function(y) { return y[0] === parseInt(verticalLevel); });
       return verticalLevelType && verticalLevelType[1];
     };
 
@@ -105,6 +128,9 @@
     var checkIfMultiSelection = function(mmlId){
       if(selectedLinkProperty.count() === 1){
         return mmlId;
+      }
+      else{
+        return "[useita eri arvoja]";
       }
     };
 
@@ -234,8 +260,10 @@
       }
     };
 
-    var addressNumberString = function(minAddressNumber, maxAddressNumber) {
-      if(!minAddressNumber && !maxAddressNumber) {
+    var addressNumberString = function (minAddressNumber, maxAddressNumber) {
+      if (selectedLinkProperty.count() > 1) {
+        return "[useita eri arvoja]";
+      } else if (!minAddressNumber && !maxAddressNumber) {
         return '';
       } else {
         var min = minAddressNumber || '';
@@ -352,7 +380,12 @@
         rootElement.find('#feature-attributes-footer').html(footer());
 
         rootElement.find('.traffic-direction').change(function(event) {
-          selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
+          var selectedDirection = $(event.currentTarget).find(':selected').attr('value');
+          var laneConfirmationOptions = laneConfirmationPopUp(event, selectedDirection);
+          if (selectedDirection === "AgainstDigitizing" || selectedDirection === "TowardsDigitizing")
+            GenericConfirmPopup(laneConfirmationOptions.message, laneConfirmationOptions);
+          else
+            selectedLinkProperty.setTrafficDirection(selectedDirection);
         });
         rootElement.find('.functional-class').change(function(event) {
           selectedLinkProperty.setFunctionalClass(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
@@ -379,6 +412,10 @@
 
         toggleMode(applicationModel.isReadOnly() || !authorizationPolicy.validateMultiple(selectedLinkProperty.get()));
         controlAdministrativeClasses(linkProperty.administrativeClass);
+      });
+
+      eventbus.on('linkProperties:cancelledDirectionChange', function(properties) {
+        $('.traffic-direction').val(properties.trafficDirection);
       });
 
       eventbus.on('linkProperties:changed', function() {

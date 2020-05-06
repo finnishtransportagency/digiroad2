@@ -48,6 +48,10 @@
       data.administrativeClass = original.administrativeClass;
     };
 
+    var cancelDirectionChange = function() {
+      data.trafficDirection = original.trafficDirection;
+    };
+
     return {
       getId: getId,
       getData: getData,
@@ -58,7 +62,8 @@
       isCarPedestrianCyclingRoad: isCarPedestrianCyclingRoad,
       select: select,
       unselect: unselect,
-      cancel: cancel
+      cancel: cancel,
+      cancelDirectionChange: cancelDirectionChange
     };
   };
 

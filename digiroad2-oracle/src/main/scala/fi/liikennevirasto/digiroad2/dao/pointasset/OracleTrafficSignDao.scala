@@ -7,12 +7,12 @@ import fi.liikennevirasto.digiroad2.{GeometryUtils, PersistedPoint, Point, Traff
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.dao.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import org.joda.time.format.DateTimeFormat
 import scala.util.Try
 
@@ -49,7 +49,6 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           expired: Boolean = false)
 
 object OracleTrafficSignDao {
-  private val RECORD_NUMBER: Int = 4000
   val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   private def query() =
@@ -88,11 +87,19 @@ object OracleTrafficSignDao {
     queryToPersistedTrafficSign(queryWithFilter)
   }
 
-  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PersistedTrafficSign] = {
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+
+  def fetchByFilterWithExpiredByIds(ids: Set[Long]): Seq[PersistedTrafficSign] = {
+    MassQuery.withIds(ids) { idTableName =>
+      val filter = s"join $idTableName i on i.id = a.id "
+      queryToPersistedTrafficSign( query + " "+ filter )
+    }
+
+  }
+
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedTrafficSign] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
         s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +
@@ -373,6 +380,7 @@ object OracleTrafficSignDao {
   }
 
   def assetRowToProperty(assetRows: Seq[TrafficSignRow]): Seq[Property] = {
+
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
       Property(
@@ -391,7 +399,11 @@ object OracleTrafficSignDao {
                 case Some(panel) => Seq(AdditionalPanel(panel.panelType, panel.panelInfo, panel.panelValue, panel.formPosition, panel.panelText, panel.panelSize, panel.panelCoatingType, panel.panelColor))
                 case _ => Seq()
               }
-            case _ => Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+            case _  =>
+
+              val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+              Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
           }
         })
     }.toSeq

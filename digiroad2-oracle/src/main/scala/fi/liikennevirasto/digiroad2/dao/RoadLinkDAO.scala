@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
@@ -322,6 +323,21 @@ object RoadLinkDAO{
     override def deleteValues(linkId: Long) = {
       throw new UnsupportedOperationException("Administrative Class keeps history, ins't suppost to be deleted any row from db")
     }
+
+    def getExistingValueByLinkIds(linkIds: Seq[Long]) = {
+      val linkTypeInfo = MassQuery.withIds(linkIds.toSet) { idTableName =>
+        sql"""
+        select t.link_id, #$column
+           from #$table t
+           join  #$idTableName i on i.id = t.link_id
+         """.as[(Long, Int)].list
+      }
+      linkTypeInfo.map {
+        case (linkId, administrativeClassValue) =>
+          (linkId, asset.AdministrativeClass(administrativeClassValue))
+      }
+    }
+
   }
 
   case object LinkAttributesDao extends RoadLinkDAO {
