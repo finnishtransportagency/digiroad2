@@ -1060,21 +1060,21 @@
         title: 'Liikennevalot',
         allowComplementaryLinks: true,
         newAsset: { validityDirection: 2, propertyData: [
-            {'creationId': 0, 'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
-            {'creationId': 1, 'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
-            {'creationId': 2, 'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 999} ]},
-            {'creationId': 3, 'name': "Alituskorkeus", 'propertyType': 'number', 'publicId': "trafficLight_height", values: []},
-            {'creationId': 4, 'name': "Äänimerkki", 'propertyType': 'single_choice', 'publicId': "trafficLight_sound_signal", values: [ {propertyValue: 999} ]},
-            {'creationId': 5, 'name': "Ajoneuvon tunnistus", 'propertyType': 'single_choice', 'publicId': "trafficLight_vehicle_detection", values: [ {propertyValue: 999} ]},
-            {'creationId': 6, 'name': "Painonappi", 'propertyType': 'single_choice', 'publicId': "trafficLight_push_button", values: [ {propertyValue: 999} ]},
-            {'creationId': 7, 'name': "Lisätieto", 'propertyType': 'text', 'publicId': "trafficLight_info", values: []},
-            {'creationId': 8, 'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_lane_type", values: [ {propertyValue: 999} ]},
-            {'creationId': 9, 'name': "Kaista", 'propertyType': 'number', 'publicId': "trafficLight_lane", values: []},
-            {'creationId': 10, 'name': "Maastosijainti X", 'propertyType': 'number', 'publicId': "location_coordinates_x", values: [] },
-            {'creationId': 11, 'name': "Maastosijainti Y", 'propertyType': 'number', 'publicId': "location_coordinates_y", values: [] },
-            {'creationId': 12, 'name': "Kunta ID", 'propertyType': 'text', 'publicId': "trafficLight_municipality_id", values: []},
-            {'creationId': 13, 'name': "Tila", 'propertyType': 'single_choice', 'publicId': "trafficLight_state", values: [ {propertyValue: 3} ]},
-            {'creationId': 14, 'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
+            {'groupedId': 1, 'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
+            {'groupedId': 1, 'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
+            {'groupedId': 1, 'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 999} ]},
+            {'groupedId': 1, 'name': "Alituskorkeus", 'propertyType': 'number', 'publicId': "trafficLight_height", values: []},
+            {'groupedId': 1, 'name': "Äänimerkki", 'propertyType': 'single_choice', 'publicId': "trafficLight_sound_signal", values: [ {propertyValue: 999} ]},
+            {'groupedId': 1, 'name': "Ajoneuvon tunnistus", 'propertyType': 'single_choice', 'publicId': "trafficLight_vehicle_detection", values: [ {propertyValue: 999} ]},
+            {'groupedId': 1, 'name': "Painonappi", 'propertyType': 'single_choice', 'publicId': "trafficLight_push_button", values: [ {propertyValue: 999} ]},
+            {'groupedId': 1, 'name': "Lisätieto", 'propertyType': 'text', 'publicId': "trafficLight_info", values: []},
+            {'groupedId': 1, 'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_lane_type", values: [ {propertyValue: 999} ]},
+            {'groupedId': 1, 'name': "Kaista", 'propertyType': 'number', 'publicId': "trafficLight_lane", values: []},
+            {'groupedId': 1, 'name': "Maastosijainti X", 'propertyType': 'number', 'publicId': "location_coordinates_x", values: [] },
+            {'groupedId': 1, 'name': "Maastosijainti Y", 'propertyType': 'number', 'publicId': "location_coordinates_y", values: [] },
+            {'groupedId': 1, 'name': "Kunta ID", 'propertyType': 'text', 'publicId': "trafficLight_municipality_id", values: []},
+            {'groupedId': 1, 'name': "Tila", 'propertyType': 'single_choice', 'publicId': "trafficLight_state", values: [ {propertyValue: 3} ]},
+            {'groupedId': 1, 'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         isSuggestedAsset: true,
         legendValues: {
@@ -1093,6 +1093,7 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
+        //TODO needs to be modified to accommodate multiple traffic lights
         saveCondition: function (selectedAsset, authorizationPolicy) {
           var fields = selectedAsset.get().propertyData;
 

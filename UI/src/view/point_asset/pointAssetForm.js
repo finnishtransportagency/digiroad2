@@ -217,7 +217,7 @@ root.PointAssetForm = function() {
     return '<div class="form-group editable form-point-asset suggestion-box">' +
         '<label class="control-label">' + asset.localizedName + '</label>' +
         '<p class="form-control-static">'+ _.head(asset.values).propertyDisplayValue +'</p>' +
-        '<input type="checkbox" data-creation-id="'+ asset.creationId +'" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + (asset.creationId || '') + '"' + state + '>' +
+        '<input type="checkbox" data-grouped-id="'+ asset.groupedId +'" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + (asset.groupedId ? ('-' + asset.groupedId) : '') + '"' + state + '>' +
         '</div>';
   };
 
@@ -296,7 +296,7 @@ root.PointAssetForm = function() {
         '    <div class="form-group editable form-point-asset">' +
         '        <label class="control-label">' + property.localizedName + '</label>' +
         '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-        '        <input type="text" data-creation-id="'+ property.creationId +'" class="form-control" id="' + property.publicId + (property.creationId || '') +'" value="' + propertyValue + '">' +
+        '        <input type="text" data-grouped-id="'+ property.groupedId +'" class="form-control" id="' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') +'" value="' + propertyValue + '">' +
         '    </div>';
   };
 
@@ -307,14 +307,14 @@ root.PointAssetForm = function() {
     var selectableValues = _.map(propertyValues, function (label) {
       return $('<option>',
           { selected: propertyValue == label.propertyValue,
-            value: parseInt(label.propertyValue),
+            value: parseFloat(label.propertyValue),
             text: label.propertyDisplayValue}
       )[0].outerHTML; }).join('');
     return '' +
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" data-creation-id="'+ property.creationId +'" style="display:none" id=' + property.publicId + (property.creationId || '') +'>' +
+        '      <select class="form-control" data-grouped-id="'+ property.groupedId +'" style="display:none" id=' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') +'>' +
         selectableValues +
         '      </select>' +
         '    </div>';
@@ -333,14 +333,14 @@ root.PointAssetForm = function() {
   this.dateHandler = function(property) {
     var propertyValue = '';
 
-    if ( !_.isEmpty(property.values) && !_.isEmpty(property.values[0].propertyDisplayValue) )
-      propertyValue = property.values[0].propertyDisplayValue;
+    if ( !_.isEmpty(property.values) && !_.isEmpty(_.head(property.values).propertyDisplayValue) )
+      propertyValue = _.head(property.values).propertyDisplayValue;
 
     return '' +
         '<div class="form-group editable form-point-asset">' +
         '     <label class="control-label">' + property.localizedName + '</label>' +
         '     <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-        '     <input type="text" data-creation-id="'+ property.creationId +'" class="form-control" id="' + property.publicId + (asset.creationId || '') + '" value="' + propertyValue + '">' +
+        '     <input type="text" data-grouped-id="'+ property.groupedId +'" class="form-control" id="' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') + '" value="' + propertyValue + '">' +
         '</div>';
   };
 
@@ -349,7 +349,7 @@ root.PointAssetForm = function() {
     return '' +
         '    <div id= "' + property.publicId + '-checkbox-div" class="form-group editable edit-only form-point-asset">' +
         '      <div class="checkbox" >' +
-        '        <input data-creation-id="'+ property.creationId +'" id="' + property.publicId + (property.creationId || '') + '" type="checkbox"' + checked + '>' +
+        '        <input data-grouped-id="'+ property.groupedId +'" id="' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') + '" type="checkbox"' + checked + '>' +
         '      </div>' +
         '        <label class="' + property.publicId + '-checkbox-label">' + property.localizedName + '</label>' +
         '    </div>';
@@ -377,12 +377,12 @@ root.PointAssetForm = function() {
   };
 
   me.renderValidityDirection = function (selectedAsset) {
-    if(selectedAsset.get().validityDirection){
-      return $(
+    if(selectedAsset.validityDirection){
+      return '' +
           '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
           '      <label class="control-label">Vaikutussuunta</label>' +
           '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-          '    </div>');
+          '    </div>';
     }
     else return '';
   };

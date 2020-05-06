@@ -98,7 +98,7 @@
             if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
                 formRootElement = formRootElement
                     .append(me.renderValueElement(asset, collection, authorizationPolicy))
-                    .append(me.renderValidityDirection(selectedAsset));
+                    .append($(me.renderValidityDirection(asset)));
             } else {
                 var deleteCheckbox = $(''+
                     '    <div class="form-group form-group delete">' +
@@ -121,7 +121,7 @@
                     .append(logInfoGroup)
                     .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
                     .append(me.renderValueElement(asset, collection, authorizationPolicy))
-                    .append(me.renderValidityDirection(selectedAsset))
+                    .append($(me.renderValidityDirection(asset)))
                     .append(deleteCheckbox);
             }
             return wrapper.append(formRootElement);
@@ -146,7 +146,9 @@
 
             rootElement.find('.suggested-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
-                selectedAsset.setPropertyByCreationId(eventTarget.data('creationId'), +eventTarget.prop('checked'));
+                var propertyGroupedId = eventTarget.data('grouped-id');
+                var propertyPublicId = _.head(_.split(eventTarget.attr('id'), '-'));
+                selectedAsset.setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, +eventTarget.prop('checked'));
 
                 if (id && !selectedAsset.getWasOldAsset()) {
                     me.switchSuggestedValue(true);
@@ -159,7 +161,9 @@
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
                     _.forEach(rootElement.find('.suggested-checkbox'), function (element) {
-                        selectedAsset.setPropertyByCreationId(element.data('creationId'), 0);
+                        var propertyGroupedId = element.data('grouped-id');
+                        var propertyPublicId = _.head(_.split(element.attr('id'), '-'));
+                        selectedAsset.setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, 0);
                     });
                 }
             });
@@ -176,25 +180,25 @@
 
         this.renderValueElement = function(asset, collection, authorizationPolicy) {
             var toRet = $();
-            var allProperties = _.orderBy(asset.propertyData, ['index'], ['asc']);
-            for (var i = 1; allProperties.length/(propertyOrdering.length - 1) >= i ; i++) {
-                var currentProperties = allProperties.slice((i - 1) * (propertyOrdering.length - 1) , i * (propertyOrdering.length - 1));
-                var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+i+'">');
+            var i = 0;
+            var allProperties = _.groupBy(asset.propertyData, 'groupedId');
+            _.forEach(allProperties, function (currentProperties) {
+                var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+ (++i) +'">');
                 toRet = toRet.add(
                     trafficLightContainer
                         .append(me.renderComponents(currentProperties, propertyOrdering, authorizationPolicy))
                         .append(me.attachControlButtons(i))
                         .append($('<hr>'))
                 );
-            }
+            });
             return toRet;
         };
 
-        this.attachControlButtons = function (id) {
+        this.attachControlButtons = function (index) {
            return '' +
                 '    <div class="form-group editable edit-only">' +
-                '       <button class="btn edit-only btn-secondary button-remove-traffic-light" id="button-remove-traffic-light-'+id+'" data-index="'+id+'" >Poista opastinlaite</button>' +
-                '       <button class="btn edit-only editable btn-secondary button-add-traffic-light" id="button-add-traffic-light-'+id+'" data-index="'+id+'" >Lisää opastinlaite</button>' +
+                '       <button class="btn edit-only btn-secondary button-remove-traffic-light" id="button-remove-traffic-light-'+index+'" data-index="'+index+'" >Poista opastinlaite</button>' +
+                '       <button class="btn edit-only editable btn-secondary button-add-traffic-light" id="button-add-traffic-light-'+index+'" data-index="'+index+'" >Lisää opastinlaite</button>' +
                 '    </div>';
         };
 
@@ -202,8 +206,9 @@
 
             rootElement.find('.form-point-asset input[type=text],select').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
-                var propertyCreationId = eventTarget.data('creation-id');
-                selectedAsset.setPropertyByCreationId(propertyCreationId,  eventTarget.val());
+                var propertyGroupedId = eventTarget.data('grouped-id');
+                var propertyPublicId = _.head(_.split(eventTarget.attr('id'), '-'));
+                selectedAsset.setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId,  eventTarget.val());
             });
 
             me.bindExtendedFormEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
@@ -213,39 +218,37 @@
             rootElement.find('.button-remove-traffic-light').on('click', function (event) {
                 var index = $(event.currentTarget).data('index');
                 var containerProperties = $('#traffic-light-container-' + index).children();
-                _.forEach(containerProperties, function (property) {
-                    var creationId = getDatasetFromChild(property);
-                    if(creationId)
-                        selectedAsset.removePropertyByCreationId(creationId);
-                });
+                var groupedId = getDatasetFromChild(_.head(containerProperties));
+                if(groupedId)
+                    selectedAsset.removePropertyByGroupedId(groupedId);
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
             });
 
             rootElement.find('.button-add-traffic-light').on('click', function (event) {
                 var form = $('.form-point-asset').children();
                 var lastChild = form.get(form.length - 1);
-                var lastKnownCreationId = $(lastChild).data('creation-id');
-                addPropertiesForNewTrafficLight(selectedAsset, lastKnownCreationId);
+                var lastKnownGroupedId = $(lastChild).data('grouped-id');
+                addPropertiesForNewTrafficLight(selectedAsset, lastKnownGroupedId);
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
             });
 
            toggleButtonVisibility(rootElement);
         };
 
-        var addPropertiesForNewTrafficLight = function (selectedAsset, lastKnownCreationId) {
+        var addPropertiesForNewTrafficLight = function (selectedAsset, lastKnownGroupedId) {
             var newProperties = _.cloneDeep(me.pointAsset.newAsset.propertyData);
-            var newId = lastKnownCreationId;
+            var newId = ++lastKnownGroupedId;
             _.forEach(newProperties, function (property) {
-               property.creationId = ++newId;
+               property.groupedId = newId;
             });
             selectedAsset.addAdditionalTrafficLight(newProperties);
         };
 
         var getDatasetFromChild = function(property) {
             var elementWithDataset = _.find(property.children, function (child) {
-                return child.getAttribute('data-creation-id') !== null;
+                return child.getAttribute('data-grouped-id') !== null;
             });
-            return elementWithDataset ? elementWithDataset.getAttribute('data-creation-id') : elementWithDataset;
+            return elementWithDataset ? elementWithDataset.getAttribute('data-grouped-id') : elementWithDataset;
         };
 
         var toggleButtonVisibility = function (rootElement) {

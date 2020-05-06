@@ -98,7 +98,7 @@
 
       rootElement.find("#feature-attributes-header").html(header);
       rootElement.find("#feature-attributes-form").html(form);
-      rootElement.find(".suggestion-box").before(me.renderValidityDirection(selectedAsset));
+      rootElement.find(".suggestion-box").before($(me.renderValidityDirection(selectedAsset.get())));
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
       if(me.pointAsset.lanePreview)
         rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));

@@ -97,7 +97,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 1, 'Ei', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_sound_signal'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Kyllä', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_sound_signal'));
+VALUES (primary_key_seq.nextval, 2, 'Kyllä', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_sound_signal'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_sound_signal'));
@@ -135,7 +135,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 1, 'Ei', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_push_button'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 1, 'Kyllä', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_push_button'));
+VALUES (primary_key_seq.nextval, 2, 'Kyllä', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_push_button'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_push_button'));
@@ -241,3 +241,36 @@ VALUES (primary_key_seq.nextval, 6, 'Poistuva pysyvä laite', ' ', 'db_migration
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v224', (select id from property where public_ID = 'trafficLight_state'));
+
+--grouped Id modifications
+CREATE SEQUENCE grouped_id_seq
+  minvalue 1
+  maxvalue 999999999999999999999999999
+  start with 1
+  increment by 1
+  cache 100
+  nocycle;
+
+--Adding GroupedId Column
+ALTER TABLE MULTIPLE_CHOICE_VALUE
+ADD GROUPED_ID NUMBER DEFAULT 0;
+
+ALTER TABLE TEXT_PROPERTY_VALUE
+ADD GROUPED_ID NUMBER DEFAULT 0;
+
+ALTER TABLE SINGLE_CHOICE_VALUE
+ADD GROUPED_ID NUMBER DEFAULT 0;
+
+ALTER TABLE NUMBER_PROPERTY_VALUE
+ADD GROUPED_ID NUMBER DEFAULT 0;
+
+--Alter Constraints
+ALTER TABLE SINGLE_CHOICE_VALUE
+DROP CONSTRAINT SINGLE_CHOICE_PK;
+
+ALTER TABLE SINGLE_CHOICE_VALUE
+ADD CONSTRAINT SINGLE_CHOICE_PK PRIMARY KEY (ASSET_ID, ENUMERATED_VALUE_ID, GROUPED_ID);
+
+DROP INDEX AID_PID_TEXT_PROPERTY_SX;
+
+CREATE UNIQUE INDEX AID_PID_TEXT_PROPERTY_SX ON TEXT_PROPERTY_VALUE ("ASSET_ID", "PROPERTY_ID", "GROUPED_ID");

@@ -23,8 +23,8 @@
       getAdministrativeClass: getAdministrativeClass,
       checkSelectedSign: checkSelectedSign,
       setPropertyByPublicId: setPropertyByPublicId,
-      setPropertyByCreationId: setPropertyByCreationId,
-      removePropertyByCreationId: removePropertyByCreationId,
+      setPropertyByGroupedIdAndPublicId: setPropertyByGroupedIdAndPublicId,
+      removePropertyByGroupedId: removePropertyByGroupedId,
       getMunicipalityCode: getMunicipalityCode,
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
       getCoordinates: getCoordinates,
@@ -195,19 +195,19 @@
       eventbus.trigger(assetName + ':changed');
     }
 
-    function setPropertyByCreationId(propertyCreationId, propertyValue) {
+    function setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, propertyValue) {
       dirty = true;
       _.map(current.propertyData, function (prop) {
-        if (prop.creationId == propertyCreationId) {
+        if (prop.groupedId == propertyGroupedId && prop.publicId == propertyPublicId) {
           prop.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
         }
       });
       eventbus.trigger(assetName + ':changed');
     }
 
-    function removePropertyByCreationId(propertyCreationId) {
+    function removePropertyByGroupedId(propertyGroupedId) {
       dirty = true;
-      _.remove(current.propertyData, {'creationId': parseInt(propertyCreationId)});
+      _.remove(current.propertyData, {'groupedId': parseInt(propertyGroupedId)});
     }
 
     function setAdditionalPanels(panels) {
