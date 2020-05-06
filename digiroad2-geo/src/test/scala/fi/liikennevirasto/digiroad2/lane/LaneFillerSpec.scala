@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{Motorway, Municipality, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.lane.LaneFiller.BasicRoadAddress
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.scalatest.{FunSuite, Matchers}
 
@@ -92,7 +93,9 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards2.linkId -> Seq( lane11 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
+    val roadAddresses = Seq( BasicRoadAddress(roadLinkTowards2.linkId, 0, SideCode.TowardsDigitizing) )
+
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = roadAddresses )
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))

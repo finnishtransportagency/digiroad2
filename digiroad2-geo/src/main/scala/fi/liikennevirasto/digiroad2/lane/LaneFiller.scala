@@ -230,16 +230,16 @@ class LaneFiller {
                           lanesToProcess.find(lane => lane.laneCode == MainLane.againstDirection && lane.sideCode == mainLane21SideCode.value).getOrElse(false) )
 
         val toAdd = mainLanes match {
-          case (false, Some(_)) => Seq( createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps) )
+          case (false, _) => Seq( createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps) )
 
-          case (Some(_), false) => Seq( createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps) )
+          case (_, false) => Seq( createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps) )
 
           case (false, false) => Seq( createPersistedLane(MainLane.towardsDirection,  mainLane11SideCode.value, baseLane.municipalityCode, baseProps),
                                       createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps) )
           case _ => Seq()
         }
 
-        // to remove the lanes with wrong SideCode
+        // To remove the lanes with wrong SideCode
         val toRemove =  lanesToProcess.find( lane => (lane.laneCode == MainLane.towardsDirection && lane.sideCode != mainLane11SideCode.value)  ||
                                                    (lane.laneCode == MainLane.againstDirection && lane.sideCode != mainLane21SideCode.value) )
                                       .map(_.id)
