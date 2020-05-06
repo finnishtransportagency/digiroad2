@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
-
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkTempDAO
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
@@ -14,8 +14,9 @@ import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
+
 case class RoadAddressesAux( linkId: Long, roadNumber: Long, roadPart: Long, track: Track, municipalityCode: Int,
-                          startMValue: Double, endMValue: Double, startAddrMValue:Long, endAddrMValue: Long)
+                             sideCode: SideCode, startMValue: Double, endMValue: Double, startAddrMValue:Long, endAddrMValue: Long)
 case class LaneUtils(){
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
     sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
@@ -72,6 +73,27 @@ object LaneUtils {
 
   }
 
+
+  def fixSideCode( roadAddress: RoadAddressesAux , laneCode: String ): SideCode = {
+    roadAddress.track.value match {
+      case 1 | 2 => SideCode.BothDirections // This means the road may have both ways with something between them (like highways or similar)
+                                            // The representation of the lane will be in the middle 'of the road'
+
+      case _ => roadAddress.sideCode match { // In this case the road have both ways 'connected' so we need to take attention of the SideCode and laneCode
+                                             // This will have influence in representation of the lane
+                    case SideCode.AgainstDigitizing => if (laneCode.startsWith("1")) SideCode.AgainstDigitizing
+                                                        else SideCode.TowardsDigitizing
+
+                    case SideCode.TowardsDigitizing => if (laneCode.startsWith("1")) SideCode.TowardsDigitizing
+                                                        else SideCode.AgainstDigitizing
+
+                    case _ => SideCode.BothDirections
+                    }
+    }
+
+  }
+
+
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
@@ -84,15 +106,16 @@ object LaneUtils {
 
       // Get the road address information from Viite and convert the data to RoadAddressesAux
       val roadAddresses = roadAddressService.getAllByRoadNumberAndParts(laneRoadAddressInfo.roadNumber, roadParts, Seq(Track.apply(laneRoadAddressInfo.track)))
-                                            .map (elem => RoadAddressesAux(elem.linkId, elem.roadNumber, elem.roadPartNumber,
-                                              elem.track, 0, elem.startMValue, elem.endMValue, elem.startAddrMValue,
-                                              elem.endAddrMValue)
+                                            .map (elem =>
+                                              RoadAddressesAux(elem.linkId, elem.roadNumber, elem.roadPartNumber, elem.track,
+                                                0, elem.sideCode, elem.startMValue, elem.endMValue, elem.startAddrMValue,
+                                                elem.endAddrMValue)
                                             )
       // Get the road address information from our DB and convert the data to RoadAddressesAux
       val vkmRoadAddress = roadLinkTempDAO.getByRoadNumberRoadPartTrack(laneRoadAddressInfo.roadNumber.toInt, laneRoadAddressInfo.track, roadParts.toSet)
-                                          .map(elem => RoadAddressesAux(elem.linkId, elem.road, elem.roadPart,
-                                            elem.track, elem.municipalityCode.getOrElse(0), elem.startMValue, elem.endMValue,
-                                            elem.startAddressM, elem.endAddressM)
+                                          .map(elem => RoadAddressesAux(elem.linkId, elem.road, elem.roadPart, elem.track,
+                                            elem.municipalityCode.getOrElse(0), elem.sideCode.getOrElse(SideCode.BothDirections),
+                                            elem.startMValue, elem.endMValue, elem.startAddressM, elem.endAddressM)
                                           )
 
       val vkmLinkIds = vkmRoadAddress.map(_.linkId)
@@ -208,13 +231,15 @@ object LaneUtils {
           val endDifferenceAddr = road.endAddrMValue - laneRoadAddressInfo.endDistance
           val endPoint = if (isMainLane || endDifferenceAddr <= 0) road.endMValue else road.endMValue - endDifferenceAddr
 
-          calculateStartAndEndPoint(road, startPoint, endPoint) match{
-            case (start: Double, end: Double) =>  Some(PersistedLane(0, road.linkId, sideCode, laneCode, road.municipalityCode,
-                                                      start, end, Some(username), Some(DateTime.now()),
-                                                      None, None, expired = false,
-                                                      vvhTimeStamp, None, lane.properties))
+          val finalSideCode = fixSideCode( road, laneCode.toString )
+
+          calculateStartAndEndPoint(road, startPoint, endPoint) match {
+            case (start: Double, end: Double) => Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode, road.municipalityCode,
+                                                    start, end, Some(username), Some(DateTime.now()), None, None, expired = false,
+                                                    vvhTimeStamp, None, lane.properties))
+
             case _ => None
-          }
+            }
         }
       }
 

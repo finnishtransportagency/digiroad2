@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
-
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -39,7 +38,7 @@ trait LaneOperations {
   def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
   def polygonTools: PolygonTools
-  def laneFilter: LaneFiller = new LaneFiller
+  def laneFiller: LaneFiller = new LaneFiller
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -101,8 +100,11 @@ trait LaneOperations {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newLanes.length, System.currentTimeMillis - timing))
     }
 
+    val roadAddresses = LaneUtils.viiteClient.fetchAllByLinkIds(roadLinks.map(_.linkId))
+                                              .map(road => BasicRoadAddress(road.linkId, road.track.value, road.sideCode) )
+
     val groupedAssets = (assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks).groupBy(_.linkId)
-    val (filledTopology, changeSet) = laneFilter.fillTopology(roadLinks, groupedAssets, Some(changedSet))
+    val (filledTopology, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changedSet), roadAddresses )
 
     val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
     val modifiedLanes = projectedLanes.filterNot {lane => generatedMappedById(lane.id).nonEmpty } ++ changeSet.generatedPersistedLanes
@@ -131,7 +133,7 @@ trait LaneOperations {
 
     val lanes = mapReplacementProjections(lanesToUpdate, currentLanes, roadLinks, fullChanges).foldLeft((Seq.empty[PersistedLane], changeSet)) {
       case ((persistedAsset, cs), (asset, (Some(roadLink), Some(projection)))) =>
-        val (linearAsset, changes) = laneFilter.projectLinearAsset(asset, roadLink, projection, cs)
+        val (linearAsset, changes) = laneFiller.projectLinearAsset(asset, roadLink, projection, cs)
         (persistedAsset ++ Seq(linearAsset), changes)
       case _ => (Seq.empty[PersistedLane], changeSet)
     }
@@ -240,11 +242,11 @@ trait LaneOperations {
     val (mStart, mEnd) = (givenAndEqualDoubles(replacementChangeInfo.newStartMeasure, extensionChangeInfo.newEndMeasure),
       givenAndEqualDoubles(replacementChangeInfo.newEndMeasure, extensionChangeInfo.newStartMeasure)) match {
       case (true, false) =>
-        (replacementChangeInfo.oldStartMeasure.get + laneFilter.AllowedTolerance,
-          replacementChangeInfo.oldStartMeasure.get + laneFilter.AllowedTolerance + laneFilter.MaxAllowedError)
+        (replacementChangeInfo.oldStartMeasure.get + laneFiller.AllowedTolerance,
+          replacementChangeInfo.oldStartMeasure.get + laneFiller.AllowedTolerance + laneFiller.MaxAllowedError)
       case (false, true) =>
-        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - laneFilter.AllowedTolerance - laneFilter.MaxAllowedError),
-          Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - laneFilter.AllowedTolerance))
+        (Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - laneFiller.AllowedTolerance - laneFiller.MaxAllowedError),
+          Math.max(0.0, replacementChangeInfo.oldEndMeasure.get - laneFiller.AllowedTolerance))
       case (_, _) => (0.0, 0.0)
     }
 

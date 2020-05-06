@@ -35,7 +35,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq( lane )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
@@ -68,7 +68,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq( lane11, lane12, lane13 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
@@ -92,7 +92,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards2.linkId -> Seq( lane11 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
@@ -116,7 +116,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards2.linkId -> Seq( lane11 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.AgainstDigitizing.value, SideCode.TowardsDigitizing.value))
@@ -143,7 +143,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq(lane11, lane21)
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(Seq(roadLinkTowards1), linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(Seq(roadLinkTowards1), linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
@@ -167,7 +167,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq( lane )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 1
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
@@ -202,7 +202,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq( lane3 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 3
     filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value))
@@ -235,7 +235,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq( lane, lane12, lane12b )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value,  SideCode.BothDirections.value))
@@ -268,7 +268,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards2.linkId -> Seq( lane, lane12, lane12b )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 3
     filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value,  SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
@@ -297,7 +297,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq( lane, lane12 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value ))
@@ -326,7 +326,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards4.linkId -> Seq( lane, lane12 )
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
@@ -363,7 +363,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
       roadLinkTowards1.linkId -> Seq(lane11, lane12, lane12Duplicated, lane13)
     )
 
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets, roadAddresses = Seq())
 
     filledTopology should have size 3
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value, SideCode.BothDirections.value))
