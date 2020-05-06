@@ -562,6 +562,10 @@ object Digiroad2Context {
     new ProductionMassTransitStopService(eventbus, roadLinkService, roadAddressService)
   }
 
+  lazy val servicePointStopService: ServicePointStopService = {
+    new ServicePointStopService(eventbus)
+  }
+
   lazy val dataImportManager: DataImportManager = {
     new DataImportManager(vvhClient, roadLinkService, eventbus)
   }

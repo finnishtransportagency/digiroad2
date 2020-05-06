@@ -10,6 +10,7 @@
     this.polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
     this.terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
     this.checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
+    this.pointAssetToolIcon = '<img src="images/add-point-asset-tool.svg"/>';
 
     this.Tool = function (toolName, icon) {
       var className = toolName.toLowerCase();

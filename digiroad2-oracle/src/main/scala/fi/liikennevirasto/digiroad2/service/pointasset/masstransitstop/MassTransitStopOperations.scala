@@ -10,7 +10,7 @@ sealed trait BusStopType {
   def value: Int
 }
 object BusStopType {
-  val values = Set(Virtual, Commuter, LongDistance, Terminal, Unknown)
+  val values = Set(Virtual, Commuter, LongDistance, Terminal, ServicePoint, Unknown)
 
   def apply(intValue: Int): BusStopType = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -22,6 +22,7 @@ object BusStopType {
   case object Local extends BusStopType { def value = 4 }
   case object Virtual extends BusStopType { def value = 5 }
   case object Terminal extends BusStopType { def value = 6 }
+  case object ServicePoint extends BusStopType { def value = 7 }
   case object Unknown extends BusStopType { def value = 99 }
 }
 
@@ -34,6 +35,7 @@ object MassTransitStopOperations {
   val CommuterBusStopPropertyValue: String = "2"
   val LongDistanceBusStopPropertyValue: String = "3"
   val VirtualBusStopPropertyValue: String = "5"
+  val ServicePointBusStopPropertyValue: String = "7"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
   val MassTransitStopAdminClassPublicId = "linkin_hallinnollinen_luokka"
 
