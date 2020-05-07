@@ -79,7 +79,7 @@
     this.selectControl = selectControl;
 
     function isAllowedToDrag(features) {
-      if (selectedAsset.exists() && (layerName == 'trafficSigns' && authorizationPolicy.formEditModeAccess(selectedAsset)))
+      if (selectedAsset.exists() && ((layerName == 'trafficSigns' || layerName == 'trafficLights') && authorizationPolicy.formEditModeAccess(selectedAsset)))
         return [];
       return features;
     }
@@ -107,6 +107,15 @@
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
               feature.features.getArray()[0].getGeometry().setCoordinates([newPosition.x, newPosition.y]);
               var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+
+              var asset = selectedAsset.get();
+              if(layerName == "trafficLights" && !isOld(asset)){
+                var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+                _.forEach(bearingProps, function (prop) {
+                  selectedAsset.setPropertyByGroupedIdAndPublicId(prop.groupedId, prop.publicId, newBearing);
+                });
+              }
+
               selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
             }
           }
@@ -141,15 +150,17 @@
       return feature;
     };
 
+    function isOld(asset){
+      var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
+      return _.head(typeProp.values).propertyValue === "";
+    }
+
     function determineRotation(asset) {
       var rotation = 0;
       if (layerName == 'trafficLights'){
-        if(_.isNull(selectedAsset.get()))
-          return validitydirections.calculateRotation(determineBearing(asset), asset.validityDirection);
-
-        var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
-        var isOld = _.head(typeProp.values).propertyValue === "";
-        if(!isOld){
+        if(_.isNull(selectedAsset.get())){
+          rotation = validitydirections.calculateRotation(determineBearing(asset), asset.validityDirection);
+        }else if(!isOld(asset)){
           var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
           _.forEach(bearingProps, function (prop) {
             if(_.isEmpty(prop.values))
@@ -162,7 +173,7 @@
           var sideCodeProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'sidecode');
           var sideCodeValue = _.head(sideCodeProp.values).propertyValue;
 
-          return validitydirections.calculateRotation(bearingValue, sideCodeValue);
+          rotation = validitydirections.calculateRotation(bearingValue, sideCodeValue);
         }
       } else if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);
@@ -175,26 +186,21 @@
 
     function determineBearing(asset) {
       var bearing = 90;
-      //TODO: give right bearing to assets already saved(new and old to new)
-      /*if (layerName == 'trafficLights'){
-        var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
-        var isOld = _.head(typeProp.values).propertyValue === "";
-        if(!isOld) {
-          var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
-          var bearingValues = _.head(bearingProps).values;
-          if(_.isEmpty(bearingValues)){
-            var nearestLineTrafficLight = geometrycalculator.findNearestLine([{ points: new ol.geom.Point([asset.lon, asset.lat]) }], asset.lon, asset.lat);
-            if(!_.isEmpty(nearestLineTrafficLight))
-              bearing = geometrycalculator.getLineDirectionDegAngle(nearestLineTrafficLight);
-          }else{
-            bearing = _.head(bearingValues).propertyValue;
-          }
-        }
-      else */if (!asset.floating && asset.geometry && asset.geometry.length > 0){
-        var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
+      var nearestLine;
+
+      if (!asset.floating && asset.geometry && asset.geometry.length > 0){
+        nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
         bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){
         bearing = asset.bearing;
+      } else if (layerName == 'trafficLights' && !isOld(asset)){
+        var bearingPropValues = _.find(asset.propertyData, {'publicId': 'bearing'}).values;
+        if(_.isEmpty(bearingPropValues)){
+          nearestLine = geometrycalculator.findNearestLine(me.excludeRoadByAdminClass(roadCollection.getRoadsForCarPedestrianCycling()), asset.lon, asset.lat);
+          bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+        }else{
+          bearing = _.head(bearingPropValues).propertyValue;
+        }
       }
       return bearing;
     }

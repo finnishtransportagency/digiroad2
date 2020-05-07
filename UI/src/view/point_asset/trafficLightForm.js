@@ -46,6 +46,11 @@
         };
 
         this.renderForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+            //TODO: check if there is another way to force bearing to be filled
+            //For the bearing to be filled the first time automatically when creating a new trafficLight
+            //we need to force the event "change" to be triggered and this was the solution found
+            selectedAsset.setSelectedGroupedId(selectedAsset.getSelectedGroupedId());
+
             var id = selectedAsset.getId();
             var asset = selectedAsset.get();
 
@@ -168,12 +173,15 @@
             });
         };
 
-        this.selectableAssetButton = function(selectedAsset, id) {
-            var squareButton = $('<span groupedId="' + id + '" class="marker selectable">' + id + '</span>');
-            if (selectedAsset.getSelectedGroupedId() == id)
-                squareButton.addClass('highlight-lane');
+        this.selectableAssetButton = function(selectedAsset, assetNumber, groupedId) {
+            var assetButton = $('<span groupedId="' + groupedId + '" class="selectable">' + assetNumber + '</span>');
+            if (selectedAsset.getSelectedGroupedId() == groupedId){
+                assetButton.addClass('marker-highlight');
+            } else {
+                assetButton.addClass('marker');
+            }
 
-            return squareButton;
+            return assetButton;
         };
 
         this.renderValidityDirection = function (id) {
@@ -189,15 +197,16 @@
             var i = 0;
             var allProperties = _.groupBy(selectedAsset.get().propertyData, 'groupedId');
             _.forEach(allProperties, function (currentProperties) {
+                var currentGroupId = _.head(currentProperties).groupedId;
                 var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+ (++i) +'">');
                 toRet = toRet.add(
                     trafficLightContainer
-                        .append(me.selectableAssetButton(selectedAsset, i))
+                        .append(me.selectableAssetButton(selectedAsset, i, currentGroupId))
                         .append(me.renderComponents(currentProperties, propertyOrdering, authorizationPolicy))
-                        .append($(me.renderValidityDirection(i)))
                         .append(me.attachControlButtons(i))
                         .append($('<hr>'))
                 );
+                trafficLightContainer.find(".suggestion-box").before($(me.renderValidityDirection(currentGroupId)));
             });
             return toRet;
         };
@@ -241,8 +250,11 @@
                 var index = $(event.currentTarget).data('index');
                 var containerProperties = $('#traffic-light-container-' + index).children();
                 var groupedId = getDatasetFromChild(containerProperties[1]);
-                if(groupedId)
+                if (groupedId) {
                     selectedAsset.removePropertyByGroupedId(groupedId);
+                    var firstGroupId = _.head(selectedAsset.get().propertyData).groupedId;
+                    selectedAsset.setSelectedGroupedId(firstGroupId);
+                }
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
             });
 
