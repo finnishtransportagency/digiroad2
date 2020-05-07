@@ -230,9 +230,9 @@ class LaneFiller {
                           lanesToProcess.find(lane => lane.laneCode == MainLane.againstDirection && lane.sideCode == mainLane21SideCode.value).getOrElse(false) )
 
         val toAdd = mainLanes match {
-          case (false, _) => Seq( createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps) )
+          case (false, lane: PersistedLane) => Seq( createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps) )
 
-          case (_, false) => Seq( createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps) )
+          case (lane: PersistedLane, false) => Seq( createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps) )
 
           case (false, false) => Seq( createPersistedLane(MainLane.towardsDirection,  mainLane11SideCode.value, baseLane.municipalityCode, baseProps),
                                       createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps) )
