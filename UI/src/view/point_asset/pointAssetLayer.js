@@ -26,7 +26,11 @@
     me.vectorLayer = new ol.layer.Vector({
        source : vectorSource,
        style : function(feature){
+         if (layerName == 'trafficLights') {
+           return style.browsingStyleProvider.getStyle(feature, {'selectedId': selectedAsset.getId()});
+         } else {
            return style.browsingStyleProvider.getStyle(feature);
+         }
        },
       renderBuffer: 300
     });
@@ -37,7 +41,11 @@
 
     var selectControl = new SelectToolControl(application, me.vectorLayer, map, false,{
         style : function (feature) {
+          if (layerName == 'trafficLights') {
+            return style.browsingStyleProvider.getStyle(feature, {'selectedId': selectedAsset.getId()});
+          } else {
             return style.browsingStyleProvider.getStyle(feature);
+          }
         },
         onSelect : pointAssetOnSelect,
         draggable : false,
@@ -135,23 +143,28 @@
 
     function determineRotation(asset) {
       var rotation = 0;
-      //TODO: when bearing and sidecode(validityDirection) passes to properties this can be uncommented
-      /*if (layerName == 'trafficLights'){
+      if (layerName == 'trafficLights'){
+        if(_.isNull(selectedAsset.get()))
+          return validitydirections.calculateRotation(determineBearing(asset), asset.validityDirection);
+
         var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
         var isOld = _.head(typeProp.values).propertyValue === "";
         if(!isOld){
           var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
-          var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
-          var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
+          _.forEach(bearingProps, function (prop) {
+            if(_.isEmpty(prop.values))
+              selectedAsset.setPropertyByGroupedIdAndPublicId(prop.groupedId, prop.publicId, determineBearing(asset));
+          });
 
-          var sideCodeProps = _.filter(asset.propertyData, {'publicId': 'sidecode'});
-          var sideCodeValue = _.head(_.head(sideCodeProps).values).propertyValue;
-          var sameSideCode = _.every(sideCodeProps, function(prop){return _.head(prop.values).propertyValue == sideCodeValue;});
+          var bearingProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'bearing');
+          var bearingValue = _.head(bearingProp.values).propertyValue;
 
-          if(sameBearing && sameSideCode)
-            return validitydirections.calculateRotation(bearingValue, sideCodeValue);
+          var sideCodeProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'sidecode');
+          var sideCodeValue = _.head(sideCodeProp.values).propertyValue;
+
+          return validitydirections.calculateRotation(bearingValue, sideCodeValue);
         }
-      } else*/ if (!asset.floating && asset.geometry && asset.geometry.length > 0){
+      } else if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
       } else if (layerName == 'directionalTrafficSigns' || !_.isUndefined(asset.bearing) && layerName == 'trafficSigns'){
@@ -162,7 +175,22 @@
 
     function determineBearing(asset) {
       var bearing = 90;
-      if (!asset.floating && asset.geometry && asset.geometry.length > 0){
+      //TODO: give right bearing to assets already saved(new and old to new)
+      /*if (layerName == 'trafficLights'){
+        var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
+        var isOld = _.head(typeProp.values).propertyValue === "";
+        if(!isOld) {
+          var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+          var bearingValues = _.head(bearingProps).values;
+          if(_.isEmpty(bearingValues)){
+            var nearestLineTrafficLight = geometrycalculator.findNearestLine([{ points: new ol.geom.Point([asset.lon, asset.lat]) }], asset.lon, asset.lat);
+            if(!_.isEmpty(nearestLineTrafficLight))
+              bearing = geometrycalculator.getLineDirectionDegAngle(nearestLineTrafficLight);
+          }else{
+            bearing = _.head(bearingValues).propertyValue;
+          }
+        }
+      else */if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
         bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
       } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){

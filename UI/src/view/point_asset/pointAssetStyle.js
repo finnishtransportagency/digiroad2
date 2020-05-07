@@ -48,8 +48,10 @@
 
       var haveSameDirection = function(asset) {
         if (!isOld(asset)) {
-          //TODO: when bearing and sidecode(validityDirection) passes to properties this can be uncommented
-          /*var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+          var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+          if (asset.selectedId == asset.id)
+            return true;
+
           var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
           var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
 
@@ -57,7 +59,8 @@
           var sidecodeValue = _.head(_.head(sidecodeProps).values).propertyValue;
           var sameSideCode = _.every(sidecodeProps, function(prop){return _.head(prop.values).propertyValue == sidecodeValue;});
 
-          return sameBearing && sameSideCode;*/
+          return sameBearing && sameSideCode;
+
         }
       };
 

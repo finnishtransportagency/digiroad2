@@ -78,14 +78,6 @@
                 });
             } else {
                 me.addingPreBoxEventListeners(rootElement, selectedAsset, id);
-
-                rootElement.find('button#change-validity-direction').on('click', function() {
-                    var previousValidityDirection = selectedAsset.get().validityDirection;
-                    selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
-                    if(me.pointAsset.lanePreview)
-                        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
-                });
-
                 me.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
             }
         };
@@ -97,8 +89,7 @@
 
             if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
                 formRootElement = formRootElement
-                    .append(me.renderValueElement(asset, collection, authorizationPolicy))
-                    .append($(me.renderValidityDirection(asset)));
+                    .append(me.renderValueElement(selectedAsset, collection, authorizationPolicy));
             } else {
                 var deleteCheckbox = $(''+
                     '    <div class="form-group form-group delete">' +
@@ -120,8 +111,7 @@
                     .append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
                     .append(logInfoGroup)
                     .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
-                    .append(me.renderValueElement(asset, collection, authorizationPolicy))
-                    .append($(me.renderValidityDirection(asset)))
+                    .append(me.renderValueElement(selectedAsset, collection, authorizationPolicy))
                     .append(deleteCheckbox);
             }
             return wrapper.append(formRootElement);
@@ -178,15 +168,36 @@
             });
         };
 
-        this.renderValueElement = function(asset, collection, authorizationPolicy) {
+        this.selectableAssetButton = function(selectedAsset, id) {
+            var squareButton = $('<div groupedId="' + id + '" class="not-highlight-lane" style="height: 50px; width: 50px; background-color: cornflowerblue;">' + id + '</div>');
+
+            if (selectedAsset.getSelectedGroupedId() == id){
+                squareButton.removeClass('not-highlight-lane');
+                squareButton.addClass('highlight-lane');
+            }
+
+            return squareButton;
+        };
+
+        this.renderValidityDirection = function (id) {
+            return '' +
+              '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+              '      <label class="control-label">Vaikutussuunta</label>' +
+              '      <button groupedId="'+id+'" class="change-validity-direction form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+              '    </div>';
+        };
+
+        this.renderValueElement = function(selectedAsset, collection, authorizationPolicy) {
             var toRet = $();
             var i = 0;
-            var allProperties = _.groupBy(asset.propertyData, 'groupedId');
+            var allProperties = _.groupBy(selectedAsset.get().propertyData, 'groupedId');
             _.forEach(allProperties, function (currentProperties) {
                 var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+ (++i) +'">');
                 toRet = toRet.add(
                     trafficLightContainer
+                        .append(me.selectableAssetButton(selectedAsset, i))
                         .append(me.renderComponents(currentProperties, propertyOrdering, authorizationPolicy))
+                        .append($(me.renderValidityDirection(i)))
                         .append(me.attachControlButtons(i))
                         .append($('<hr>'))
                 );
@@ -215,10 +226,24 @@
         };
 
         this.bindExtendedFormEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+            rootElement.find('.not-highlight-lane').on('click', function (event) {
+                var groupId = $(event.currentTarget).attr('groupedId');
+                selectedAsset.setSelectedGroupedId(groupId);
+                reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+            });
+
+            rootElement.find('button.change-validity-direction').on('click', function (event) {
+                var sidecodePublicId = 'sidecode';
+                var groupId = $(event.currentTarget).attr('groupedId');
+                var previousSidecode = _.head(selectedAsset.getPropertyByGroupedIdAndPublicId(groupId, sidecodePublicId).values).propertyValue;
+                selectedAsset.setPropertyByGroupedIdAndPublicId(groupId, sidecodePublicId, validitydirections.switchDirection(previousSidecode));
+                reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
+            });
+
             rootElement.find('.button-remove-traffic-light').on('click', function (event) {
                 var index = $(event.currentTarget).data('index');
                 var containerProperties = $('#traffic-light-container-' + index).children();
-                var groupedId = getDatasetFromChild(_.head(containerProperties));
+                var groupedId = getDatasetFromChild(containerProperties[1]);
                 if(groupedId)
                     selectedAsset.removePropertyByGroupedId(groupedId);
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);

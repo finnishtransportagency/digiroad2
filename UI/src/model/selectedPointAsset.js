@@ -5,6 +5,7 @@
     var originalAsset;
     var endPointName = assetName;
     var wasOldAsset;
+    var selectedGroupedId = 1;
     return {
       open: open,
       getId: getId,
@@ -24,6 +25,7 @@
       checkSelectedSign: checkSelectedSign,
       setPropertyByPublicId: setPropertyByPublicId,
       setPropertyByGroupedIdAndPublicId: setPropertyByGroupedIdAndPublicId,
+      getPropertyByGroupedIdAndPublicId: getPropertyByGroupedIdAndPublicId,
       removePropertyByGroupedId: removePropertyByGroupedId,
       getMunicipalityCode: getMunicipalityCode,
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
@@ -32,7 +34,9 @@
       setAdditionalPanel: setAdditionalPanel,
       getWasOldAsset: getWasOldAsset,
       setWasOldAsset: setWasOldAsset,
-      addAdditionalTrafficLight: addAdditionalTrafficLight
+      addAdditionalTrafficLight: addAdditionalTrafficLight,
+      setSelectedGroupedId: setSelectedGroupedId,
+      getSelectedGroupedId: getSelectedGroupedId
     };
 
     function place(asset) {
@@ -85,6 +89,7 @@
       dirty = false;
       wasOldAsset = false;
       current = null;
+      selectedGroupedId = 1;
     }
 
     function getId() {
@@ -195,6 +200,12 @@
       eventbus.trigger(assetName + ':changed');
     }
 
+    function getPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId) {
+      return _.find(current.propertyData, function (prop) {
+        return prop.groupedId == propertyGroupedId && prop.publicId == propertyPublicId;
+      });
+    }
+
     function setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, propertyValue) {
       dirty = true;
       _.map(current.propertyData, function (prop) {
@@ -237,6 +248,15 @@
 
     function setWasOldAsset(value) {
       wasOldAsset = value;
+    }
+
+    function setSelectedGroupedId(id) {
+      selectedGroupedId = id;
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function getSelectedGroupedId() {
+      return selectedGroupedId;
     }
   };
 })(this);

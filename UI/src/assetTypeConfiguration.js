@@ -1059,7 +1059,7 @@
         layerName: 'trafficLights',
         title: 'Liikennevalot',
         allowComplementaryLinks: true,
-        newAsset: { validityDirection: 2, propertyData: [
+        newAsset: {propertyData: [
             {'groupedId': 1, 'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
             {'groupedId': 1, 'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
             {'groupedId': 1, 'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 999} ]},
@@ -1074,7 +1074,9 @@
             {'groupedId': 1, 'name': "Maastosijainti Y", 'propertyType': 'number', 'publicId': "location_coordinates_y", values: [] },
             {'groupedId': 1, 'name': "Kunta ID", 'propertyType': 'text', 'publicId': "trafficLight_municipality_id", values: []},
             {'groupedId': 1, 'name': "Tila", 'propertyType': 'single_choice', 'publicId': "trafficLight_state", values: [ {propertyValue: 3} ]},
-            {'groupedId': 1, 'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
+            {'groupedId': 1, 'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]},
+            {'groupedId': 1, 'name': "Suunta", 'propertyType': 'hidden', 'publicId': "bearing", values: []},
+            {'groupedId': 1, 'name': "Sidecode", 'propertyType': 'hidden', 'publicId': "sidecode", values: [ {propertyValue: 2} ]}
         ]},
         isSuggestedAsset: true,
         legendValues: {
