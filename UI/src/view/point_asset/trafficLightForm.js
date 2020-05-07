@@ -169,12 +169,9 @@
         };
 
         this.selectableAssetButton = function(selectedAsset, id) {
-            var squareButton = $('<div groupedId="' + id + '" class="not-highlight-lane" style="height: 50px; width: 50px; background-color: cornflowerblue;">' + id + '</div>');
-
-            if (selectedAsset.getSelectedGroupedId() == id){
-                squareButton.removeClass('not-highlight-lane');
+            var squareButton = $('<span groupedId="' + id + '" class="marker selectable">' + id + '</span>');
+            if (selectedAsset.getSelectedGroupedId() == id)
                 squareButton.addClass('highlight-lane');
-            }
 
             return squareButton;
         };
@@ -226,7 +223,7 @@
         };
 
         this.bindExtendedFormEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
-            rootElement.find('.not-highlight-lane').on('click', function (event) {
+            rootElement.find('.marker').on('click', function (event) {
                 var groupId = $(event.currentTarget).attr('groupedId');
                 selectedAsset.setSelectedGroupedId(groupId);
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
