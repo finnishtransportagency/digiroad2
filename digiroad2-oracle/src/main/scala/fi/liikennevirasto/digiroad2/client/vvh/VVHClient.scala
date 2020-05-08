@@ -371,9 +371,11 @@ trait VVHClientOperations {
 
   protected def fetchVVHFeatures(url: String): Either[List[Map[String, Any]], VVHError] = {
     val fetchVVHStartTime = System.currentTimeMillis()
+    println(s"Prepare request")
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
+    println(s"Request fetched")
     try {
       mapFields(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]], url)
     } finally {

@@ -2002,11 +2002,12 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = Seq(297)
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
         val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false)
+        println(s"Fetched roadLinks from municipality: $municipality")
         verificationService.refreshVerificationInfo(municipality, roadLinks.map(_.linkId), Some(DateTime.now()))
       }
     }

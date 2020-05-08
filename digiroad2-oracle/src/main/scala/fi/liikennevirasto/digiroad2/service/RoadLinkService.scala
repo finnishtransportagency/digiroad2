@@ -162,6 +162,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadLinksFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhRoadLinks = vvhClient.roadLinkData.fetchByMunicipality(municipality)
+    println(s"VVHRoadLinks fetched")
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
