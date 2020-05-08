@@ -2002,7 +2002,7 @@ object DataFixture {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = Seq(297)
+    val municipalities: Seq[Int] = Seq(295, 297, 300)
     OracleDatabase.withDynTransaction {
       municipalities.foreach { municipality =>
         println(s"Working on municipality : $municipality")
