@@ -146,7 +146,11 @@ object OracleTrafficLightDao {
           case Some(double) =>
             val value: AnyVal = if (double % 1 == 0) double.toLong else double
             value.toString
-          case None => propertyDisplayValue.getOrElse("")
+          case None =>
+            propertyType match {
+              case Number => propertyDisplayValue.getOrElse("").replace(",", ".")
+              case _ => propertyDisplayValue.getOrElse("")
+            }
         },
         propertyDisplayValue = propertyDisplayValue.orNull,
         propertyGroupedId = propertyGroupedId)
