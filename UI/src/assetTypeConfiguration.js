@@ -1288,7 +1288,7 @@
           {'name': "Merkin materiaali", 'propertyType': 'single_choice', 'publicId': "sign_material", values: [{ propertyValue: 999 }]},
           {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
           {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] },
-          {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "lane_type", values: [{ propertyValue: 999 }] },
+          {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "lane_type", values: [{ propertyValue: 99 }] },
           {'name': "Vauriotyyppi", 'propertyType': 'single_choice', 'publicId': "type_of_damage", values: [{ propertyValue: 999 }] },
           {'name': "Korjauksen kiireellisyys", 'propertyType': 'single_choice', 'publicId': "urgency_of_repair", values: [{ propertyValue: 999 }] },
           {'name': "Arvioitu käyttöikä", 'propertyType': 'number', 'publicId': "lifespan_left", values: [] },

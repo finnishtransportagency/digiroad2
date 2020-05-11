@@ -390,9 +390,9 @@
     };
 
     function getValuesFromEnumeratedProperty(publicId) {
-      _.map(
-          _.filter(me.enumeratedPropertyValues, { 'publicId': publicId }),
-          function(val) { return val.values; }
+      return _.map(
+              _.filter(me.enumeratedPropertyValues, { 'publicId': publicId }),
+              function(val) { return val.values; }
           );
     }
 
