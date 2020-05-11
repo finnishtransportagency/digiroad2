@@ -5,7 +5,7 @@
     var originalAsset;
     var endPointName = assetName;
     var wasOldAsset;
-    var selectedGroupedId = 1;
+    var selectedGroupedId;
     return {
       open: open,
       getId: getId,
@@ -40,6 +40,7 @@
     };
 
     function place(asset) {
+      selectedGroupedId = undefined;
       dirty = true;
       current = asset;
       wasOldAsset = false;
@@ -68,6 +69,7 @@
     }
 
     function open(asset) {
+      selectedGroupedId = undefined;
       originalAsset = _.cloneDeep(_.omit(asset, "geometry"));
       current = asset;
       eventbus.trigger(assetName + ':selected');
@@ -89,7 +91,7 @@
       dirty = false;
       wasOldAsset = false;
       current = null;
-      selectedGroupedId = 1;
+      selectedGroupedId = undefined;
     }
 
     function getId() {

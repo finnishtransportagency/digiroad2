@@ -158,22 +158,28 @@
     function determineRotation(asset) {
       var rotation = 0;
       if (layerName == 'trafficLights'){
-        if(_.isNull(selectedAsset.get()) && asset.validityDirection){
+        if(asset.id === 0 && selectedAsset.getId() !== 0){
           rotation = validitydirections.calculateRotation(determineBearing(asset), asset.validityDirection);
         }else if(!isOld(asset)){
           var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
-          _.forEach(bearingProps, function (prop) {
-            if(_.isEmpty(prop.values))
-              selectedAsset.setPropertyByGroupedIdAndPublicId(prop.groupedId, prop.publicId, determineBearing(asset));
-          });
+          if (asset.id == selectedAsset.getId() && selectedAsset.getSelectedGroupedId()) {
+            _.forEach(bearingProps, function (prop) {
+              if (_.isEmpty(prop.values))
+                selectedAsset.setPropertyByGroupedIdAndPublicId(prop.groupedId, prop.publicId, determineBearing(asset));
+            });
 
-          var bearingProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'bearing');
-          var bearingValue = _.head(bearingProp.values).propertyValue;
+            var bearingProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'bearing');
+            var bearingValue = _.head(bearingProp.values).propertyValue;
 
-          var sideCodeProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'sidecode');
-          var sideCodeValue = _.head(sideCodeProp.values).propertyValue;
+            var sideCodeProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'sidecode');
+            var sideCodeValue = _.head(sideCodeProp.values).propertyValue;
 
-          rotation = validitydirections.calculateRotation(bearingValue, sideCodeValue);
+            rotation = validitydirections.calculateRotation(parseFloat(_.replace(bearingValue, ',', '.')), parseInt(sideCodeValue));
+          } else {
+            var firstBearingValue = _.head(_.head(bearingProps).values).propertyValue;
+            var firstSideCodeValue = _.head(_.find(asset.propertyData, {'publicId': 'sidecode'}).values).propertyValue;
+            rotation = validitydirections.calculateRotation(parseFloat(_.replace(firstBearingValue, ',', '.')), parseInt(firstSideCodeValue));
+          }
         }
       } else if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);

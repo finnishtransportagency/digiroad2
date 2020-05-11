@@ -46,15 +46,15 @@
         };
 
         this.renderForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
-            //TODO: check if there is another way to force bearing to be filled
-            //For the bearing to be filled the first time automatically when creating a new trafficLight
-            //we need to force the event "change" to be triggered and this was the solution found
-            selectedAsset.setSelectedGroupedId(selectedAsset.getSelectedGroupedId());
-
             var id = selectedAsset.getId();
             var asset = selectedAsset.get();
 
             var isOldTrafficLight = _.head(me.getProperties(asset.propertyData, 'trafficLight_type').values).propertyValue === "";
+
+            if(!isOldTrafficLight && !selectedAsset.getSelectedGroupedId()) {
+                var firstGroupedId = _.head(_.orderBy(asset.propertyData,'groupedId')).groupedId;
+                selectedAsset.setSelectedGroupedId(firstGroupedId);
+            }
 
             var title;
             if (isOldTrafficLight) {
