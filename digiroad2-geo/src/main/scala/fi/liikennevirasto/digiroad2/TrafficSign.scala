@@ -1451,24 +1451,24 @@ object UrgencyOfRepair {
 }
 
 
-sealed trait LifeCycle {
+sealed trait SignLifeCycle {
   def value: Int
   def description: String
 }
-object LifeCycle{
+object SignLifeCycle{
   val values = Set(Unknown, Planned, UnderConstruction, Realized, TemporarilyInUse, TemporarilyOutOfService, OutgoingPermanentDevice )
 
-  def apply(intValue: Int):LifeCycle = {
+  def apply(intValue: Int):SignLifeCycle = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object Planned extends LifeCycle { def value = 1; def description = "Suunnitteilla"  }
-  case object UnderConstruction extends LifeCycle { def value = 2; def description = "Rakenteilla" }
-  case object Realized extends LifeCycle { def value = 3; def description = "Toteutuma" }
-  case object TemporarilyInUse extends LifeCycle { def value = 4; def description = "käytössä tilapäisesti" }
-  case object TemporarilyOutOfService extends LifeCycle { def value = 5; def description = "Pois käytöstä tilapaisesti" }
-  case object OutgoingPermanentDevice extends LifeCycle { def value = 99; def description = "Poistuva pysyvä laite" }
-  case object Unknown extends LifeCycle { def value = 999; def description = "Ei tiedossa" }
+  case object Planned extends SignLifeCycle { def value = 1; def description = "Suunnitteilla"  }
+  case object UnderConstruction extends SignLifeCycle { def value = 2; def description = "Rakenteilla" }
+  case object Realized extends SignLifeCycle { def value = 3; def description = "Toteutuma" }
+  case object TemporarilyInUse extends SignLifeCycle { def value = 4; def description = "käytössä tilapäisesti" }
+  case object TemporarilyOutOfService extends SignLifeCycle { def value = 5; def description = "Pois käytöstä tilapaisesti" }
+  case object OutgoingPermanentDevice extends SignLifeCycle { def value = 99; def description = "Poistuva pysyvä laite" }
+  case object Unknown extends SignLifeCycle { def value = 999; def description = "Ei tiedossa" }
 }
 
 

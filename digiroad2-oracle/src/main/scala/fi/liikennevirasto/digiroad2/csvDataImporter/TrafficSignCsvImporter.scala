@@ -87,8 +87,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                         LaneType.Reversible.value, LaneType.Combined.value, LaneType.Walking.value, LaneType.Cycling.value,
                         LaneType.Unknown.value),
 
-    "tila" -> Seq(LifeCycle.Planned.value, LifeCycle.UnderConstruction.value, LifeCycle.Realized.value, LifeCycle.TemporarilyInUse.value,
-              LifeCycle.TemporarilyOutOfService.value, LifeCycle.OutgoingPermanentDevice.value, LifeCycle.Unknown.value),
+    "tila" -> Seq(SignLifeCycle.Planned.value, SignLifeCycle.UnderConstruction.value, SignLifeCycle.Realized.value, SignLifeCycle.TemporarilyInUse.value,
+              SignLifeCycle.TemporarilyOutOfService.value, SignLifeCycle.OutgoingPermanentDevice.value, SignLifeCycle.Unknown.value),
 
     "vauriotyyppi" -> Seq(TypeOfDamage.Rust.value, TypeOfDamage.Battered.value, TypeOfDamage.Paint.value, TypeOfDamage.OtherDamage.value,
                       TypeOfDamage.Unknown.value),
@@ -306,15 +306,22 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     /* start additional panels type validations */
     val additionalPanelsNumbers = (minAdditionalPanels to maxAdditionalPanels)
-    val (additionalPanelsValidator: Seq[Boolean], additionalPanelsErrorMsg: List[String]) = optTrafficSignType match {
+    val (additionalPanelsValidator: Boolean, additionalPanelsErrorMsg: List[String]) = optTrafficSignType match {
       case Some(sType) if sType.trim.nonEmpty =>
-          additionalPanelsNumbers.map { index =>
+          val result = additionalPanelsNumbers.map { index =>
               getPropertyValueOption(parsedRow, "additionalPanelType" + index).asInstanceOf[Option[String]] match {
                 case Some(panelType) if panelType.trim.nonEmpty && TrafficSignType.applyNewLawCode(panelType).group.value != AdditionalPanels.value =>
-                  (false, List("Invalid additional panel type on lisakilpi " + index) )
+                  (false, List("Invalid additional panel type on lisakilpi " + index))
                 case _ => (true, Nil)
               }
           }
+
+        if (result.count(_._1 == false) < 1)
+          (true, Nil)
+        else
+          (false, result.flatMap(_._2))
+
+
       case _ => (true, Nil)
     }
     /* end additional panels type validations */
@@ -342,7 +349,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     val allErrors = datesErrorMsg ++ directionValidatorErrorMsg ++ additionalPanelsErrorMsg ++ lanesValidatorErrorMsg
 
-    if(isValidDate && directionValidator && additionalPanelsValidator.count(_ == false) < 1 && lanesValidator) super.verifyData(parsedRow, user)
+    if(isValidDate && directionValidator && additionalPanelsValidator && lanesValidator) super.verifyData(parsedRow, user)
     else (allErrors, Seq())
 
   }
