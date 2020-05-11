@@ -389,14 +389,17 @@
           '</div>';
     };
 
+    function getValuesFromEnumeratedProperty(publicId) {
+      _.map(
+          _.filter(me.enumeratedPropertyValues, { 'publicId': publicId }),
+          function(val) { return val.values; }
+          );
+    }
+
     var singleChoiceSubType = function (collection, mainType, property) {
       var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function (enumerated) {
-        return enumerated.publicId == 'trafficSigns_type';
-      }), function (val) {
-        return val.values;
-      });
+      var signTypes = getValuesFromEnumeratedProperty ('trafficSigns_type');
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
         return $('<option>',
@@ -417,7 +420,7 @@
 
     var singleChoiceTrafficSignTypeHandler = function (property, collection) {
       var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; });
+      var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var groups =  collection.getGroup(signTypes);
       var groupKeys = Object.keys(groups);
       var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
@@ -440,8 +443,8 @@
     };
 
     var singleChoiceHandler = function (property) {
-      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-      var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
+      var propertyValue = _.isEmpty(property.values) ? '' : _.head(property.values).propertyValue;
+      var propertyValues = _.head( getValuesFromEnumeratedProperty(property.publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
         return $('<option>',
@@ -538,7 +541,7 @@
 
     var singleChoiceForPanelTypes = function (property, collection) {
       var propertyValue = _.isUndefined(_.last(property))  ? '' : _.last(property);
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+      var signTypes = _.map( getValuesFromEnumeratedProperty('trafficSigns_type') );
       var panels = _.find(collection.getAdditionalPanels(signTypes));
       var propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
 
@@ -570,7 +573,7 @@
     var singleChoiceForPanels = function (property) {
       var publicId = _.head(property);
       var propertyValue = (!_.isEmpty(_.last(property))) ? '' : _.last(property);
-      var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': publicId }), function(val) {return val.values; }));
+      var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head( getValuesFromEnumeratedProperty(publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
         return $('<option>',

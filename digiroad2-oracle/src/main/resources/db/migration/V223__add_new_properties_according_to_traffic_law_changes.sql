@@ -261,7 +261,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 22, 'Pyöräilykaista', ' ', 'db_migration_v223', (select id from property where public_ID = 'lane_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v223', (select id from property where public_ID = 'lane_type'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v223', (select id from property where public_ID = 'lane_type'));
 
 --Add property type_of_damage
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)

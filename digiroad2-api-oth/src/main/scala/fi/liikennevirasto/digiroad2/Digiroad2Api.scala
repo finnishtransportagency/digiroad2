@@ -1862,7 +1862,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
         service match {
           case trafficSignService: TrafficSignService => {
-            validateUserRightsForOldTrafficCodes(user, trafficSignService.isOldCodeBeingUsed(updatedAsset.asInstanceOf[IncomingTrafficSign]), link.municipalityCode)
+           // validateUserRightsForOldTrafficCodes(user, trafficSignService.isOldCodeBeingUsed(updatedAsset.asInstanceOf[IncomingTrafficSign]), link.municipalityCode)
             if (!trafficSignService.verifyDatesOnTemporarySigns(updatedAsset.asInstanceOf[IncomingTrafficSign])) halt(BadRequest("Incorrect parameters on date values"))
           }
           case _ =>
@@ -1880,7 +1880,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
        validateUserAccess(user, Some(service.typeId))(link.municipalityCode, link.administrativeClass)
         service match {
           case trafficSignService: TrafficSignService => {
-            validateUserRightsForOldTrafficCodes(user, trafficSignService.isOldCodeBeingUsed(asset.asInstanceOf[IncomingTrafficSign]), link.municipalityCode)
+           // validateUserRightsForOldTrafficCodes(user, trafficSignService.isOldCodeBeingUsed(asset.asInstanceOf[IncomingTrafficSign]), link.municipalityCode)
             if (!trafficSignService.verifyDatesOnTemporarySigns(asset.asInstanceOf[IncomingTrafficSign])) halt(BadRequest("Incorrect parameters on date values"))
           }
           case _ =>
