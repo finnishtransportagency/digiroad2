@@ -17,6 +17,9 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
 import slick.jdbc.StaticQuery._
 import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
+import Q._
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import java.util.Locale
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection

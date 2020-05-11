@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficLight
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-
+import com.github.tototoshi.slick.MySQLJodaSupport._
 import scala.util.Try
 
 case class TrafficLightRow(id: Long, linkId: Long,
