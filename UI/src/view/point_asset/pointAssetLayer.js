@@ -174,11 +174,11 @@
             var sideCodeProp = selectedAsset.getPropertyByGroupedIdAndPublicId(selectedAsset.getSelectedGroupedId(), 'sidecode');
             var sideCodeValue = _.head(sideCodeProp.values).propertyValue;
 
-            rotation = validitydirections.calculateRotation(parseFloat(_.replace(bearingValue, ',', '.')), parseInt(sideCodeValue));
+            rotation = validitydirections.calculateRotation(parseFloat(bearingValue), parseInt(sideCodeValue));
           } else {
             var firstBearingValue = _.head(_.head(bearingProps).values).propertyValue;
             var firstSideCodeValue = _.head(_.find(asset.propertyData, {'publicId': 'sidecode'}).values).propertyValue;
-            rotation = validitydirections.calculateRotation(parseFloat(_.replace(firstBearingValue, ',', '.')), parseInt(firstSideCodeValue));
+            rotation = validitydirections.calculateRotation(parseFloat(firstBearingValue), parseInt(firstSideCodeValue));
           }
         }
       } else if (!asset.floating && asset.geometry && asset.geometry.length > 0){
