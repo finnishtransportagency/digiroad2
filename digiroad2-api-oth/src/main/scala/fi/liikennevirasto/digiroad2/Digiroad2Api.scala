@@ -147,8 +147,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case jsonObj: JObject =>
         val publicId = (jsonObj \ "publicId").extract[String]
         val propertyValue: Seq[PointAssetValue] = (jsonObj \ "values").extractOpt[Seq[PropertyValue]].getOrElse((jsonObj \ "values").extractOpt[Seq[AdditionalPanel]].getOrElse(Seq()))
+        val groupedId: Long =  (jsonObj \ "groupedId").extractOrElse(0)
 
-        SimplePointAssetProperty(publicId, propertyValue)
+        SimplePointAssetProperty(publicId, propertyValue, groupedId)
     },
       {
         case tv : SimplePointAssetProperty => Extraction.decompose(tv)

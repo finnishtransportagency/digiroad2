@@ -132,13 +132,13 @@
             rootElement.find('button#cancel-button').prop('disabled', false);
         };
 
-        //TODO: this needs to be tested with new form and multiple lights on an update of existing
         this.addingPreBoxEventListeners = function (rootElement, selectedAsset, id) {
             rootElement.find('#delete-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
                 selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
             });
 
+            //TODO:verify
             rootElement.find('.suggested-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
                 var propertyGroupedId = eventTarget.data('grouped-id');
@@ -151,6 +151,7 @@
                 }
             });
 
+            //TODO:verify
             rootElement.find('.editable').not('.suggestion-box').on('change', function () {
                 if (id && !selectedAsset.getWasOldAsset()) {
                     me.switchSuggestedValue(true);

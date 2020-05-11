@@ -158,7 +158,7 @@
     function determineRotation(asset) {
       var rotation = 0;
       if (layerName == 'trafficLights'){
-        if(_.isNull(selectedAsset.get())){
+        if(_.isNull(selectedAsset.get()) && asset.validityDirection){
           rotation = validitydirections.calculateRotation(determineBearing(asset), asset.validityDirection);
         }else if(!isOld(asset)){
           var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});

@@ -87,11 +87,11 @@
       return _.every(numericalFields, function(field) {return _.isEmpty(field.values) || !isNaN(_.head(field.values).propertyValue);});
     };
 
-    var lanesValidation = function (fields, lanePublicId, laneTypePublicId) {
-      var laneValues = _.head(_.filter(fields, function(field) { return field.publicId === lanePublicId; })).values;
+    var lanesValidation = function (fields, laneNumberProperty, laneTypeProperty) {
+      var laneValues = laneNumberProperty.values;
       var isValidLaneValue = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue) || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
 
-      var laneTypeValue = _.head(_.filter(fields, function(field) { return field.publicId === laneTypePublicId; })).values;
+      var laneTypeValue = laneTypeProperty.values;
 
       return isValidLaneValue && (_.isEmpty(laneValues) || _.head(laneTypeValue).propertyValue == 999 ||
           (_.head(laneValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValue).propertyValue != 1) ||
@@ -1095,15 +1095,28 @@
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
-        //TODO needs to be modified to accommodate multiple traffic lights
         saveCondition: function (selectedAsset, authorizationPolicy) {
           var fields = selectedAsset.get().propertyData;
 
-          var suggestedBoxValue = !!parseInt(_.find(fields, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
-          var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          var lanesValidationForMultiple = function (fields) {
+            var lanePublicId = 'trafficLight_lane';
+            var laneTypePublicId = 'trafficLight_lane_type';
+
+            var allLaneRelatedPropertiesVerification = _.map(_.filter(fields, function(field) { return field.publicId === lanePublicId; }), function (laneNumberProperty) {
+              var laneTypeProperty = _.find(fields, function(field) { return field.publicId === laneTypePublicId && field.groupedId === laneNumberProperty.groupedId; });
+              return lanesValidation(fields, laneNumberProperty, laneTypeProperty);
+            });
+
+            return _.every(allLaneRelatedPropertiesVerification);
+          };
+
+          var suggestedAssetCondition = _.every(_.map(_.filter(fields, function(asset) { return asset.publicId === "suggest_box"; }), function (suggestedProperty) {
+            var suggestedBoxValue = !!parseInt(suggestedProperty.values[0].propertyValue);
+            return !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          }));
 
           var isValidNumericalFields = numericValidation(fields);
-          var isValidLane = lanesValidation(fields, 'trafficLight_lane', 'trafficLight_lane_type');
+          var isValidLane = lanesValidationForMultiple(fields);
 
           return suggestedAssetCondition && isValidNumericalFields && isValidLane;
         },
@@ -1203,7 +1216,10 @@
 
           var isValidNumericalFields = numericValidation(fields);
 
-          var isValidLane = lanesValidation(fields, 'lane', 'lane_type');
+          var laneNumberProperty = _.find(fields, function(field) { return field.publicId === 'lane'; });
+          var laneTypeProperty = _.find(fields, function(field) { return field.publicId === 'lane_type'; });
+
+          var isValidLane = lanesValidation(fields, laneNumberProperty, laneTypeProperty);
 
           return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },

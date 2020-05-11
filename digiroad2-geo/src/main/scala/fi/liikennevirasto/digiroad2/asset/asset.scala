@@ -3,13 +3,9 @@ package fi.liikennevirasto.digiroad2.asset
 import java.text.Normalizer
 
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Sunday
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 sealed trait LinkGeomSource{
@@ -670,7 +666,7 @@ object DateParser {
 }
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractProperty
+case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue], groupedId: Long = 0) extends AbstractProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
 
 abstract class AbstractProperty {
@@ -682,7 +678,7 @@ sealed trait PointAssetValue {
   def toJson: Any
 }
 
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty
 
 case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
   override def toJson: Any = this
