@@ -1004,15 +1004,11 @@
           var isValidLane = function (fields) {
             var isValidDatePeriod = function (fields) {
               var isValidDate = true;
-              var dateFields = Property.filterPropertiesByPropertyType(fields, 'date');
+              var startDate = Property.getPropertyByPublicId(fields, 'start_date');
+              var endDate = Property.getPropertyByPublicId(fields, 'end_date');
 
-              if (dateFields.length == 2) {
-                var startDate = Property.getPropertyByPublicId(dateFields, 'start_date');
-                var endDate = Property.getPropertyByPublicId(dateFields, 'end_date');
-
-                if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
-                  isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
-              }
+              if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+                isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
               return isValidDate;
             };
 
