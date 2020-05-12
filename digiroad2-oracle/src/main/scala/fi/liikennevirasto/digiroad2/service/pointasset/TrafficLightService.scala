@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.service.pointasset
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, Property, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficLightDao, TrafficLight}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -126,6 +126,10 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     GeometryUtils.calculatePointFromLinearReference(link.geometry, asset.mValue).map {
       point =>  IncomingTrafficLight(point.x, point.y, link.linkId, asset.asInstanceOf[IncomingTrafficLight].propertyData)
     }
+  }
+
+  def getProperty(properties: Seq[Property], property: String) : Option[PropertyValue] = {
+    properties.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
   }
 
   override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }

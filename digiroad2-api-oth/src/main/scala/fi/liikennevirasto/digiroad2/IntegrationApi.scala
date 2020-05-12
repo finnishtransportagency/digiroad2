@@ -556,6 +556,25 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   def trafficLightsToApi(trafficLights: Seq[TrafficLight]): Seq[Map[String, Any]] = {
     trafficLights.filterNot(x => x.floating | isSuggested(x)).map { trafficLight =>
       Map("id" -> trafficLight.id,
+        "trafficLights" -> trafficLight.propertyData.groupBy(_.groupedId).map { case (_, properties) =>
+        Map(
+          "trafficLightType" -> trafficLightService.getProperty(properties, "trafficLight_type").map(_.propertyDisplayValue.getOrElse("")),
+          "suunta" -> trafficLightService.getProperty(properties, "bearing").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
+          "s_sijainti" -> trafficLightService.getProperty(properties, "trafficLight_relative_position").map(_.propertyDisplayValue.getOrElse("")),
+          "rakennelma" -> trafficLightService.getProperty(properties, "trafficLight_structure").map(_.propertyDisplayValue.getOrElse("")),
+          "korkeus" -> trafficLightService.getProperty(properties, "trafficLight_height").map(_.propertyDisplayValue.getOrElse("")),
+          "a_merkki" -> trafficLightService.getProperty(properties, "trafficLight_sound_signal").map(_.propertyDisplayValue.getOrElse("")),
+          "tunnistus" -> trafficLightService.getProperty(properties, "trafficLight_vehicle_detection").map(_.propertyDisplayValue.getOrElse("")),
+          "tunnistus" -> trafficLightService.getProperty(properties, "trafficLight_vehicle_detection").map(_.propertyDisplayValue.getOrElse("")),
+          "painonappi" -> trafficLightService.getProperty(properties, "trafficLight_push_button").map(_.propertyDisplayValue.getOrElse("")),
+          "lisatieto" -> trafficLightService.getProperty(properties, "trafficLight_info").map(_.propertyDisplayValue.getOrElse("")),
+          "kaistanro" -> trafficLightService.getProperty(properties, "trafficLight_lane").map(_.propertyDisplayValue.getOrElse("")),
+          "kaista_tyyppi" -> trafficLightService.getProperty(properties, "trafficLight_lane_type").map(_.propertyDisplayValue.getOrElse("")),
+          "maastosijainti_x" -> trafficLightService.getProperty(properties, "location_coordinates_x").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
+          "maastosijainti_y" -> trafficLightService.getProperty(properties, "location_coordinates_y").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
+          "kunta_id" -> trafficLightService.getProperty(properties, "trafficLight_municipality_id").map(_.propertyDisplayValue.getOrElse("")),
+          "tila" -> trafficLightService.getProperty(properties, "trafficLight_state").map(_.propertyDisplayValue.getOrElse(""))
+        )},
         "point" -> Point(trafficLight.lon, trafficLight.lat),
         geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
         "linkId" -> trafficLight.linkId,
@@ -786,8 +805,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "coatingType" -> trafficSignService.getProperty(trafficSign, "coating_type").map(_.propertyDisplayValue.getOrElse("")),
           "signMaterial" -> trafficSignService.getProperty(trafficSign, "sign_material").map(_.propertyDisplayValue.getOrElse("")),
           "locationSpecifier" -> trafficSignService.getProperty(trafficSign, "location_specifier").map(_.propertyDisplayValue.getOrElse("")),
-          "terrainCoordinatesX" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_x").map(_.propertyDisplayValue.getOrElse("")),
-          "terrainCoordinatesY" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_y").map(_.propertyDisplayValue.getOrElse("")),
+          "terrainCoordinatesX" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_x").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
+          "terrainCoordinatesY" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_y").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
           "laneType" -> trafficSignService.getProperty(trafficSign, "lane_type").map(_.propertyDisplayValue.getOrElse("")),
           "lane" -> trafficSignService.getProperty(trafficSign, "lane").map(_.propertyDisplayValue.getOrElse("")),
           "lifeCycle" -> trafficSignService.getProperty(trafficSign, "life_cycle").map(_.propertyDisplayValue.getOrElse("")),
