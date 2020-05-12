@@ -16,6 +16,24 @@
       {symbolUrl: 'images/service_points/subwayStation.png', label: 'Metroasema'}
     ];
 
+    var massTransitStopLegend = [
+      {symbolUrl: 'images/mass-transit-stops/1.png', label: 'Raitiovaunu'},
+      {symbolUrl: 'images/mass-transit-stops/2.png', label: 'Linja-autojen paikallisliikenne'},
+      {symbolUrl: 'images/mass-transit-stops/3.png', label: 'Linja-autojen kaukoliikenne'},
+      {symbolUrl: 'images/mass-transit-stops/4.png', label: 'Linja-autojen pikavuoro'},
+      {symbolUrl: 'images/mass-transit-stops/5.png', label: 'Virtuaalipysäkki'},
+      {symbolUrl: 'images/mass-transit-stops/6.png', label: 'Terminaalipysäkki'}
+    ];
+
+    function putLabel(val){
+      return '<div class="legend-entry">' +
+        '  <div class="label">' +
+        '    <span>' + val.label + '</span> ' +
+        '    <img class="symbol-to-right" src="' + val.symbolUrl + '"/>' +
+        '  </div>' +
+        '</div>';
+    }
+
     this.panel = function () {
       return ['<div class="panel">',
         '  <header class="panel-header expanded">',
@@ -89,18 +107,13 @@
         ' </div>'
       ].join('');
 
-      var pointAssetTypePanel = '   <div class="panel-section panel-legend limit-legend point-asset service-points point-asset-legend">';
+      var massTransitStopPanel = '<div class="panel-section panel-legend limit-legend point-asset">';
+      var pointAssetTypePanel = '<div class="panel-section panel-legend limit-legend point-asset service-points point-asset-legend">';
 
-      pointAssetTypePanel = pointAssetTypePanel.concat( pointAssetLegend.map(function (val) {
-          return '<div class="legend-entry">' +
-              '    <div class="label">' +
-              '    <span>' + val.label + '</span> ' +
-              '    <img class="symbol-to-right" src="' + val.symbolUrl + '"/>' +
-              '  </div>' +
-              '</div>';
-        }).join('')).concat( '</div>');
+      massTransitStopPanel = massTransitStopPanel.concat(massTransitStopLegend.map(putLabel).join('')).concat('</div>');
+      pointAssetTypePanel = pointAssetTypePanel.concat(pointAssetLegend.map(putLabel).join('')).concat('</div>');
 
-      return roadTypePanel.concat(constructionTypePanel).concat(pointAssetTypePanel);
+      return roadTypePanel.concat(constructionTypePanel).concat(massTransitStopPanel).concat(pointAssetTypePanel);
     };
 
     this.checkboxPanel = function () {
