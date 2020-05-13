@@ -820,19 +820,11 @@
           'suggest_box',
           'liitetyt_pysakit'];
 
-        var servicePointPropertyOrdering = [
-          'palvelu',
-          'tarkenne',
-          'palvelun_nimi',
-          'palvelun_lisätieto',
-          'viranomaisdataa',
-          'suggest_box'];
-
         var propertyOrdering;
         if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected)) {
           propertyOrdering = terminalPropertyOrdering;
         } else if  (selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)){
-          propertyOrdering = servicePointPropertyOrdering;
+          propertyOrdering = selectedMassTransitStopModel.getServicePointPropertyOrdering;
         }else{
           propertyOrdering = busStopPropertyOrdering;
         }
@@ -1088,13 +1080,22 @@
 
       function createNewServiceDropDown()
       {
+        var infoProps = _.filter(selectedMassTransitStopModel.getProperties(), function(prop){
+          return _.includes(['lisatty_jarjestelmaan', 'muokattu_viimeksi'],prop.publicId);
+        });
+        var infoLabels = _.map(infoProps, function (prop){
+          prop.localizedName = window.localizedStrings[prop.publicId];
+          readOnlyHandler(prop);
+        });
+
         var enumVals = _.find(enumeratedPropertyValues, function(choice){
                            return choice.publicId === 'palvelu';
                       }).values;
 
         var result = $('<div />').addClass('form-group new-service');
 
-        result = result.append($('<label />').text('Palvelu').addClass('control-label'))
+        result = result.append(infoLabels)
+                        .append($('<label />').text('Palvelu').addClass('control-label'))
                         .append($('<select />').addClass('form-control select').change(newServiceSelectOnChange)
                         .append($('<option />').text('Lisää uusi palvelu').addClass('empty').attr('disabled', true).attr('selected', true))
                         .append(enumVals.map(function (enumVal) {
