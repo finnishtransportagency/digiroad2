@@ -413,7 +413,7 @@
       return '<div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
         '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id="trafficSigns_type">  ' +
+        '      <select class="form-control" id="trafficSigns_type">  ' +
         subTypesTrafficSigns +
         '      </select></div>';
     };
@@ -435,7 +435,7 @@
         '    <div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+        '      <select class="form-control" id=main-' + property.publicId +'>' +
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +
@@ -456,7 +456,7 @@
           '    <div class="form-group editable form-traffic-sign">' +
           '      <label class="control-label">' + property.localizedName + '</label>' +
           '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-          '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+          '      <select class="form-control" id=main-' + property.publicId +'>' +
           selectableValues +
           '      </select>' +
           '    </div>';
@@ -558,7 +558,7 @@
       return '<div class="form-group editable form-traffic-sign-panel">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
         '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id="panelType">  ' +
+        '      <select class="form-control" id="panelType">  ' +
         subTypesTrafficSigns +
         '      </select></div>';
     };
@@ -592,7 +592,7 @@
           '    <div class="form-group editable form-traffic-sign-panel">' +
           '      <label class="control-label">' + property.label + '</label>' +
           '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-          '      <select class="form-control" style="display:none" id="' + publicId +'">' +
+          '      <select class="form-control" id="' + publicId +'">' +
           selectableValues +
           '      </select>' +
           '    </div>';

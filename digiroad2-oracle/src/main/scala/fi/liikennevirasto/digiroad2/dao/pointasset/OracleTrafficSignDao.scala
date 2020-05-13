@@ -478,9 +478,9 @@ object OracleTrafficSignDao {
         if (propertyValues.isEmpty) {
           deleteNumberProperty(assetId, propertyId).execute
         } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
+          insertNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption).execute
         } else {
-          updateNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
+          updateNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }

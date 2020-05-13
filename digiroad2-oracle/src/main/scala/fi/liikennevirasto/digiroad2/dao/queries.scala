@@ -172,12 +172,22 @@ object Queries {
     """
   }
 
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) = {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
+    """
+  }
+
   def insertNumberProperty(assetId: Long, propertyId: Long, value: Double) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
       values (primary_key_seq.nextval, $propertyId, $assetId, $value)
     """
   }
+
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
 
   def updateNumberProperty(assetId: Long, propertyId: Long, value: Double) =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
