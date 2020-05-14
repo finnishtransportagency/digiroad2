@@ -3,16 +3,12 @@ package fi.liikennevirasto.digiroad2.asset
 import java.nio.charset.StandardCharsets
 import java.text.Normalizer
 import java.util.Base64
-
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Sunday
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
+import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
-
-import scala.collection.mutable.ListBuffer
 import scala.util.Try
+
 
 sealed trait LinkGeomSource{
   def value: Int
@@ -659,9 +655,60 @@ sealed trait PointAssetValue {
 
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
 
-case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int) extends PointAssetValue {
+case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
   override def toJson: Any = this
+  def verifyCorrectInputOnAdditionalPanel: Unit = {
+    if(AdditionalPanelColor.apply(additional_panel_color).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel color: ${additional_panel_color}")
+    if(AdditionalPanelSize.apply(size).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel size: ${size}")
+    if(AdditionalPanelCoatingType.apply(coating_type).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel coating type: ${coating_type}")
+  }
 }
+sealed trait AdditionalPanelSize {
+  def value: Int
+  def propertyDisplayValue : String
+}
+object AdditionalPanelSize {
+  val values = Set(SizeOption1, SizeOption2, SizeOption3, SizeOption999)
+
+  def apply(value: Int): Option[AdditionalPanelSize] = {
+    values.find(_.value == value)
+  }
+}
+case object SizeOption1 extends AdditionalPanelSize { def value = 1; def propertyDisplayValue = "Pienikokoinen merkki"}
+case object SizeOption2 extends AdditionalPanelSize { def value = 2; def propertyDisplayValue = "Normaalikokoinen merkki"}
+case object SizeOption3 extends AdditionalPanelSize { def value = 3; def propertyDisplayValue = "Suurikokoinen merkki"}
+case object SizeOption999 extends AdditionalPanelSize { def value = 999; def propertyDisplayValue = "Ei tietoa"}
+
+sealed trait AdditionalPanelCoatingType {
+  def value: Int
+  def propertyDisplayValue : String
+}
+object AdditionalPanelCoatingType {
+  val values = Set(CoatingTypeOption1, CoatingTypeOption2, CoatingTypeOption3, CoatingTypeOption999)
+
+  def apply(value: Int): Option[AdditionalPanelCoatingType] = {
+    values.find(_.value == value)
+  }
+}
+case object CoatingTypeOption1 extends AdditionalPanelCoatingType { def value = 1; def propertyDisplayValue = "R1-luokan kalvo"}
+case object CoatingTypeOption2 extends AdditionalPanelCoatingType { def value = 2; def propertyDisplayValue = "R2-luokan kalvo"}
+case object CoatingTypeOption3 extends AdditionalPanelCoatingType { def value = 3; def propertyDisplayValue = "R3-luokan kalvo"}
+case object CoatingTypeOption999 extends AdditionalPanelCoatingType { def value = 999; def propertyDisplayValue = "Ei tietoa"}
+
+sealed trait AdditionalPanelColor {
+  def value: Int
+  def propertyDisplayValue : String
+}
+object AdditionalPanelColor {
+  val values = Set(ColorOption1, ColorOption2, ColorOption999)
+
+  def apply(value: Int): Option[AdditionalPanelColor] = {
+    values.find(_.value == value)
+  }
+}
+case object ColorOption1 extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
+case object ColorOption2 extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
+case object ColorOption999 extends AdditionalPanelColor { def value = 999; def propertyDisplayValue = "Ei tietoa"}
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
   override def toJson: Any = this

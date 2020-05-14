@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2.asset.DateParser
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
+
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
   case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[VVHRoadlink])
@@ -32,6 +33,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   val codeValueFieldsMapping: Map[String, String] = Map()
   val stringValueFieldsMapping: Map[String, String] = Map()
   val intValueFieldsMapping: Map[String, String] = Map()
+  val dateFieldsMapping: Map[String, String] = Map()
 
   val specificFieldsMapping: Map[String, String] = Map()
   val nonMandatoryFieldsMapping: Map[String, String] = Map()
@@ -52,6 +54,15 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
       (Nil, List(AssetProperty(columnName = longValueFieldsMapping(parameterName), value = BigDecimal(parameterValue))))
     } else {
       (List(parameterName), Nil)
+    }
+  }
+
+  def verifyDateType(parameterName: String, parameterValue: String): ParsedRow = {
+    try {
+      DateParser.DatePropertyFormat.parseDateTime(parameterValue)
+      (Nil, List(AssetProperty(columnName = dateFieldsMapping(parameterName), value = parameterValue)))
+    } catch {
+      case _: Throwable => (List(parameterName), Nil)
     }
   }
 

@@ -233,7 +233,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
   test("create prohibitions values based on trafficSigns with additional Panels") {
     val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
-    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
+    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1, "", 999, 999, 999), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2, "", 999, 999, 999), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3, "", 999, 999, 999), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4, "", 999, 999, 999))
     val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
       ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
@@ -250,7 +250,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
   test("insert values  on trafficSigns with additional Panels") {
     val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
-    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4))
+    val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "9-10","", 1, "", 999, 999, 999), AdditionalPanel(ValidSat.OTHvalue, "(11-12)","", 2, "", 999, 999, 999), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "15-16 (17-18) 19-20","", 3, "", 999, 999, 999), AdditionalPanel(ValidMultiplePeriod.OTHvalue, "17-18","", 4, "", 999, 999, 999))
     val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday), ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday), ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday)
       ,ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday) ,ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday) ,ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
@@ -397,14 +397,14 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
 
   test("create  hazmat Transport Prohibition values based on trafficSigns"){
     val signPropA = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))),
-      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionA.OTHvalue, "", "", 1))))
+      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionA.OTHvalue, "", "", 1, "", 999, 999, 999))))
     val trafficSignA = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signPropA, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
     val hazmatValueA = Prohibitions(Seq(ProhibitionValue(HazmatProhibitionTypeA.value, Set(), Set())))
     val hazmatResultA = hazmatTransportProhibitionGenerator.createValue(Seq(trafficSignA))
     hazmatResultA should be (Some(hazmatValueA))
 
     val signPropB = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(NoVehiclesWithDangerGoods.OTHvalue.toString))),
-      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionB.OTHvalue, "", "", 1))))
+      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(HazmatProhibitionB.OTHvalue, "", "", 1, "", 999, 999, 999))))
     val trafficSignB = PersistedTrafficSign(1, 1000, 100, 0, 50, false, 0, 235, signPropB, None, None, None, None, SideCode.AgainstDigitizing.value, None, NormalLinkInterface)
     val hazmatValueB = Prohibitions(Seq(ProhibitionValue(HazmatProhibitionTypeB.value, Set(), Set())))
     val hazmatResultB = hazmatTransportProhibitionGenerator.createValue(Seq(trafficSignB))
@@ -428,7 +428,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
   test("parking generate segments additional panel DistanceFromSignToPointWhichSignApplies") {
     val parkingProhibitionGenerator = new TestTrafficSignParkingProhibitionGenerator()
     val signProperty = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(StandingAndParkingProhibited.OTHvalue.toString))),
-      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(DistanceWhichSignApplies.OTHvalue, "", "15", 1))))
+      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(DistanceWhichSignApplies.OTHvalue, "", "15", 1, "", 999, 999, 999))))
 
     val trafficSign = PersistedTrafficSign(1, 1005, 0, 0, 0, false, 0, 235, signProperty, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
@@ -456,7 +456,7 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val trafficSign = PersistedTrafficSign(1, 1005, 0, 0, 0, false, 0, 235, signProperty, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val endSignProperty = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(StandingAndParkingProhibited.OTHvalue.toString))),
-      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(RegulationEndsToTheSign.OTHvalue, "", "", 1))))
+      Property(1, "additional_panel", "", false, Seq(AdditionalPanel(RegulationEndsToTheSign.OTHvalue, "", "", 1, "", 999, 999, 999))))
     val endTrafficSign = PersistedTrafficSign(2, 1010, 0, 7, 7, false, 0, 235, endSignProperty, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 
     val allRoadLinks = Seq(roadLinkNameB1, roadLinkNameB2, roadLinkNameB3)
