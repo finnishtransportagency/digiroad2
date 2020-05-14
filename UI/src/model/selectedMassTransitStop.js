@@ -110,6 +110,10 @@
       'viranomaisdataa',
       'suggest_box'];
 
+    var getServicePointPropertyOrdering = function () {
+      return servicePointPropertyOrdering;
+    };
+
     var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);
       currentAsset = asset;
@@ -666,7 +670,7 @@
       isAnAddToolOption: isAnAddToolOption,
       isTerminalType: isTerminalType,
       isServicePointType: isServicePointType,
-      getServicePointPropertyOrdering: servicePointPropertyOrdering
+      getServicePointPropertyOrdering: getServicePointPropertyOrdering
     };
   };
 

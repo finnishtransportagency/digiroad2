@@ -824,7 +824,7 @@
         if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected)) {
           propertyOrdering = terminalPropertyOrdering;
         } else if  (selectedMassTransitStopModel.isServicePointType(busStopTypeSelected)){
-          propertyOrdering = selectedMassTransitStopModel.getServicePointPropertyOrdering;
+          propertyOrdering = selectedMassTransitStopModel.getServicePointPropertyOrdering();
         }else{
           propertyOrdering = busStopPropertyOrdering;
         }
