@@ -31,7 +31,7 @@
       );
       me.addSpinner();
       listP.then(function(assets) {
-        var unverifiedAssets = _.map(assets, _.partial(me.workListItemTable, layerName));
+        var unverifiedAssets = _.map(assets, _.partial(me.workListItemTable, layerName, false));
         $('#work-list .work-list').html(unverifiedAssets);
         me.removeSpinner();
       });
