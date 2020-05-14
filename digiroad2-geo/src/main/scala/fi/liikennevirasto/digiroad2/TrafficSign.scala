@@ -1447,7 +1447,7 @@ object UrgencyOfRepair {
   case object Urgent extends UrgencyOfRepair { def value = 2; def description = "kiireellinen" }
   case object SomehowUrgent extends UrgencyOfRepair { def value = 3; def description = "Jokseenkin kiireellinen" }
   case object NotUrgent extends UrgencyOfRepair { def value = 4; def description = "Ei kiireellinen" }
-  case object Unknown extends UrgencyOfRepair { def value = 99; def description = "Ei tiedossa" }
+  case object Unknown extends UrgencyOfRepair { def value = 999; def description = "Ei tiedossa" }
 }
 
 

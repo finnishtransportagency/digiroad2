@@ -92,8 +92,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     "vauriotyyppi" -> Seq(TypeOfDamage.Rust.value, TypeOfDamage.Battered.value, TypeOfDamage.Paint.value, TypeOfDamage.OtherDamage.value,
                       TypeOfDamage.Unknown.value),
-    "korjauksen kiireellisyys" -> Seq(UrgencyOfRepair.VeryUrgent,UrgencyOfRepair.Urgent, UrgencyOfRepair.SomehowUrgent,
-                                  UrgencyOfRepair.NotUrgent, UrgencyOfRepair.Unknown )
+    "korjauksen kiireellisyys" -> Seq(UrgencyOfRepair.VeryUrgent.value, UrgencyOfRepair.Urgent.value, UrgencyOfRepair.SomehowUrgent.value,
+                                  UrgencyOfRepair.NotUrgent.value, UrgencyOfRepair.Unknown.value )
   )
 
   private val singleChoiceMapping = Map(
