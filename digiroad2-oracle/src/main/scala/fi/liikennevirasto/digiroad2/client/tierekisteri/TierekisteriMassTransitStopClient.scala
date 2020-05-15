@@ -293,7 +293,7 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
     val stopType = StopType.apply(getMandatoryFieldValue(data, trStopType).get)
     val modifiedBy = getMandatoryFieldValue(data, trUser).get
     val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(data, trRoadNumber)).get,
-      convertToInt(getMandatoryFieldValue(data, trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(data, trDistance)).get,None)
+      convertToInt(getMandatoryFieldValue(data, trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(data, trDistance)).get)
 
     //Not mandatory fields
     val equipments = extractEquipment(data)

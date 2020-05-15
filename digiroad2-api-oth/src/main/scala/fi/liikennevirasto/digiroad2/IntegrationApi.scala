@@ -2,15 +2,14 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.DateParser._
-import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.{HeightLimit => HeightLimitInfo, WidthLimit => WidthLimitInfo, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadNodes
 import fi.liikennevirasto.digiroad2.dao.pointasset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, LinearAssetOperations, Manoeuvre}
-import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
+import fi.liikennevirasto.digiroad2.service.pointasset.{HeightLimit, _}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s.{DefaultFormats, Formats}
@@ -100,7 +99,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (massTransitStop: PersistedMassTransitStop) => Map(
+        case (massTransitStop: PersistedMassTransitStop) =>
+          val isMassServicePoint = massTransitStop.stopTypes.head == 7
+          Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
@@ -109,14 +110,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
             lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
             extractBearing(massTransitStop),
-            extractExternalId(massTransitStop),
+            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
-            extractLinkId(massTransitStop),
-            extractMvalue(massTransitStop),
+            if(isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
+            if(isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
             extractLinkSource(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue(if(isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if(isMassServicePoint) Option("nimi_suomeksi") else None),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
@@ -148,7 +149,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
             extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString)
+            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString)
           ))
       })
   }
@@ -288,6 +292,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case DamagedByThaw.typeId => damagedByThawService
       case RoadWorksAsset.typeId => roadWorkService
       case ParkingProhibition.typeId => parkingProhibitionService
+      case CyclingAndWalking.typeId => cyclingAndWalkingService
       case _ => linearAssetService
     }
   }
@@ -300,7 +305,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case Some(SpeedLimitValue(_, isSuggested)) => isSuggested
       case Some(DynamicValue(x)) =>
         x.properties.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
-          case Some(value) => value.toString.toBoolean
+          case Some(propValue) =>
+            propValue.value.toString.trim == "1"
+
           case _ => false
         }
       case _ => false
@@ -309,10 +316,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
 
   private def isSuggested(asset: PersistedPointAsset): Boolean = {
     asset.propertyData.find(_.publicId == "suggest_box").flatMap(_.values.headOption) match {
-      case Some(value) => value.asInstanceOf[PropertyValue].propertyValue.matches("1")
+      case Some(value) =>
+        value.asInstanceOf[PropertyValue].propertyValue.toString.trim == "1"
+
       case _ => false
     }
   }
+
 
   def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
     val linearAssets: Seq[PieceWiseLinearAsset] = getLinearAssetService(typeId).getByMunicipality(typeId, municipalityNumber).filterNot(asset => isUnknown(asset) || isSuggested(asset))
@@ -392,13 +402,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     sevenRestriction.map { asset =>
       val dynamicWeightLinearAssetsMap = asset.value match {
         case Some(DynamicValue(value)) =>
-          value.properties.flatMap { asset =>
-            Map("value" ->  (asset.publicId match {
-              case "height" | "length" | "weight" | "width" =>
-                asset.values.map(_.value)
-              case _ => None
-            }))
-          }
+          value.properties.filterNot(_.publicId == "suggest_box") // Remove suggest_box to be added as Value
+                          .flatMap { asset =>
+                            Map("value" ->  (asset.publicId match {
+                                case "height" | "length" | "weight" | "width" =>
+                                    asset.values.map(_.value).head
+
+                                case _ => None
+                                })
+                            )
+                          }
         case _ => Map()
       }
 
@@ -518,7 +531,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     pavedRoads.map { pavedRoad =>
       val dynamicMultiValueLinearAssetsMap =
         pavedRoad.value match {
-          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "paallysteluokka").map(_.values.map(_.value.toString.toInt)))
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "paallysteluokka").map(_.values.map(_.value.toString.toInt).headOption))
           case _ => Map()
         }
 
@@ -532,7 +545,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     roadsWidth.map { roadWidth =>
       val dynamicMultiValueLinearAssetsMap =
         roadWidth.value match {
-          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "width").map(_.values.map(_.value.toString.toInt)))
+          case Some(DynamicValue(x)) => Map("value" -> x.properties.find(_.publicId == "width").map(_.values.map(_.value.toString.toInt).headOption))
           case _ => Map()
         }
 
@@ -670,9 +683,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
-        "safetyEquipment" -> railwayCrossing.propertyData.find(_.publicId == "turvavarustus").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
-        "name" -> railwayCrossing.propertyData.find(_.publicId == "rautatien_tasoristeyksen_nimi").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
-        "railwayCrossingId" -> railwayCrossing.propertyData.find(_.publicId == "tasoristeystunnus").get.values.map(_.asInstanceOf[PropertyValue]).headOption.get.propertyValue.orElse(""),
+        "safetyEquipment" -> railwayCrossingService.getProperty(railwayCrossing, "turvavarustus").map(_.propertyValue).getOrElse(""),
+        "name" -> railwayCrossingService.getProperty(railwayCrossing, "rautatien_tasoristeyksen_nimi").map(_.propertyValue).getOrElse(""),
+        "railwayCrossingId" -> railwayCrossingService.getProperty(railwayCrossing, "tasoristeystunnus").map(_.propertyValue).getOrElse(""),
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
         "linkSource" -> railwayCrossing.linkSource.value)
@@ -686,7 +699,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
-        "obstacle_type" -> obstacle.propertyData.find(_.publicId == "esterakennelma").get.values.map(_.asInstanceOf[PropertyValue]).headOption,
+        "obstacle_type" -> obstacleService.getProperty(obstacle, "esterakennelma").map(_.propertyValue).getOrElse(""),
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
         "linkSource" -> obstacle.linkSource.value)
@@ -794,7 +807,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "linkSource" -> trafficSign.linkSource.value,
           "type" -> TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode,
           "oldTrafficCode" -> showOldTrafficCode(trafficSign),
-          "value" ->trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
+          "value" -> trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "municipalityId" -> trafficSignService.getProperty(trafficSign, "municipality_id").map(_.propertyDisplayValue.getOrElse("")),
           "mainSignText" -> trafficSignService.getProperty(trafficSign, "main_sign_text").map(_.propertyDisplayValue.getOrElse("")),
@@ -912,7 +925,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       val municipalityNumber = municipality.toInt
       val assetType = params("assetType")
       assetType match {
-        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
+        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
         case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
         case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
         case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)
@@ -954,6 +967,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "animal_warnings" => linearAssetsToApi(AnimalWarnings.typeId, municipalityNumber)
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
+        case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

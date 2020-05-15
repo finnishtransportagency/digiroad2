@@ -48,6 +48,10 @@
       data.administrativeClass = original.administrativeClass;
     };
 
+    var cancelDirectionChange = function() {
+      data.trafficDirection = original.trafficDirection;
+    };
+
     return {
       getId: getId,
       getData: getData,
@@ -58,7 +62,8 @@
       isCarPedestrianCyclingRoad: isCarPedestrianCyclingRoad,
       select: select,
       unselect: unselect,
-      cancel: cancel
+      cancel: cancel,
+      cancelDirectionChange: cancelDirectionChange
     };
   };
 
@@ -204,6 +209,10 @@
 
     this.resetHistory = function(){
       me.roadLinkGroupsHistory = [];
+    };
+
+    this.isPedestrianOrCyclingRoadLink = function (roadLink) {
+      return roadLink.linkType === 8;
     };
   };
 })(this);

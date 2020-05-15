@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
-
+import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
@@ -20,6 +20,7 @@ import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
 import Q._
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
+
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -410,13 +411,6 @@ object Queries {
     """
   }
 
-  //Table external_road_private_info created using an shape file importer, does't exist on Flyway
-  def getPrivateRoadExternalInfo(municipalityCode: Int): Seq[(Long, Long, Int, Option[String], Option[String])] = {
-    sql"""
-      select distinct LINK_ID, LINK_MMLID, KUNTAKOODI, KAYTTOOIKE, NIMI from external_road_private_info where KUNTAKOODI = $municipalityCode
-    """.as[(Long, Long, Int, Option[String], Option[String])].list
-  }
-
   //Table lorry_parking_to_datex2 created using an shape file importer, does't exist on Flyway
   def getLorryParkingToTransform(): Set[LorryParkingInDATEX2] = {
     //When getting the geometry column it need to be in the SRID 4258
@@ -446,7 +440,6 @@ object Queries {
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
-
 
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
     sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute

@@ -204,6 +204,8 @@
         'widthLimit/:id': 'widthLimit',
         'manoeuvres/:id': 'manoeuvres',
         'parkingProhibition/:id': 'parkingProhibition',
+        'cyclingAndWalking/:id': 'cyclingAndWalking',
+        'laneModellingTool/id': 'laneModellingTool',
         'roadWorksAsset/:id': 'roadWork',
         'work-list/speedLimit(/:administrativeClass)': 'speedLimitWorkList',
         'work-list/speedLimit/municipality(/:id)': 'speedLimitMunicipalitiesWorkList',
@@ -240,22 +242,28 @@
 
       massTransitStopNationalId: function (id) {
         applicationModel.selectLayer('massTransitStop');
-        backend.getMassTransitStopByNationalId(id, function (massTransitStop) {
+        var assetFound = function (massTransitStop) {
           eventbus.once('massTransitStops:available', function () {
             models.selectedMassTransitStopModel.changeByExternalId(id);
           });
           mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
-        });
+        };
+
+        backend.getMassTransitStopByNationalId(id, assetFound);
+        backend.getMassServiceStopByNationalId(id, assetFound);
       },
 
       massTransitStop: function (id) {
         applicationModel.selectLayer('massTransitStop');
-        backend.getMassTransitStopById(id, function (massTransitStop) {
+        var assetFound = function (massTransitStop) {
           eventbus.once('massTransitStops:available', function () {
             models.selectedMassTransitStopModel.changeById(id);
           });
           mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
-        });
+        };
+
+        backend.getMassTransitStopById(id, assetFound);
+        backend.getMassServiceStopById(id, assetFound);
      },
 
       linkProperty: function (linkId) {
@@ -607,6 +615,14 @@
 
       parkingProhibition: function (id) {
         linearCentering('parkingProhibition', id);
+      },
+
+      cyclingAndWalking: function (id) {
+        linearCentering('cyclingAndWalking', id);
+      },
+
+      laneModellingTool: function (id) {
+        linearCentering('laneModellingTool', id);
       },
 
       roadWork: function (id) {

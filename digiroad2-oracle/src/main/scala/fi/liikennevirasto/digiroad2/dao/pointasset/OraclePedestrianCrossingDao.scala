@@ -5,16 +5,14 @@ import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource, PedestrianCrossings, _}
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingPedestrianCrossing
-import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, _}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import slick.jdbc
+import scala.language.reflectiveCalls
 
 case class PedestrianCrossingRow(id: Long, linkId: Long,
                                  lon: Double, lat: Double,
@@ -44,7 +42,6 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 
 
 class OraclePedestrianCrossingDao() {
-  private val RECORD_NUMBER: Int = 4000
 
   private def createOrUpdatePedestrianCrossing(crossing: IncomingPedestrianCrossing, id: Long): Unit ={
     crossing.propertyData.map(propertyWithTypeAndId(PedestrianCrossings.typeId)).foreach { propertyWithTypeAndId =>
@@ -145,14 +142,14 @@ class OraclePedestrianCrossingDao() {
     queryToPedestrian(queryWithFilter)
   }
 
-  def fetchByFilterWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PedestrianCrossing] = {
-    val recordLimit = pageNumber match {
-      case Some(pgNum) =>
-        val startNum = (RECORD_NUMBER) * (pgNum - 1) + 1
-        val endNum = pgNum * RECORD_NUMBER
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PedestrianCrossing] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
-        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, value, created_by, created_date," +
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code," +
+          s" property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
           s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
@@ -162,7 +159,7 @@ class OraclePedestrianCrossingDao() {
 
   private def query() = {
     """
-      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code,p.id, p.public_id, p.property_type, p.required, ev.value,
+      select a.id as asset_id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, p.id as property_id, p.public_id, p.property_type, p.required, ev.value,
       case
         when ev.name_fi is not null then ev.name_fi
           else null
@@ -242,7 +239,11 @@ class OraclePedestrianCrossingDao() {
         propertyType = row.property.propertyType,
         required = row.property.propertyRequired,
         values = rows.flatMap { assetRow =>
-          Seq(PropertyValue(assetRow.property.propertyValue, Option(assetRow.property.propertyDisplayValue)))
+
+          val finalValue = PropertyValidator.propertyValueValidation(assetRow.property.publicId, assetRow.property.propertyValue )
+
+          Seq(PropertyValue(finalValue, Option(assetRow.property.propertyDisplayValue)))
+
         }.toSeq)
     }.toSeq
   }

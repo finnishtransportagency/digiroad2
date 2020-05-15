@@ -27,6 +27,21 @@ class RoadLinkTempDAO {
       }
   }
 
+  def getByRoadNumberRoadPartTrack(roadNumber: Int, trackCode: Int, roadPart: Set[Long]): Seq[RoadAddressTEMP] = {
+    val linkTypeInfo = MassQuery.withIds(roadPart) { idTableName =>
+      sql"""SELECT link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code
+            FROM temp_road_address_info t
+             JOIN #$idTableName i on i.id = t.road_part
+            WHERE road_number = $roadNumber
+            AND track_code = $trackCode
+            """.as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int])].list
+        }
+      linkTypeInfo.map { case (linkId, municipalityCode, roadNumber, roadPart, trackCode, startAddressM, endAddressM, startMValue, endMValue, sideCode) =>
+        RoadAddressTEMP(linkId, roadNumber, roadPart, Track.apply(trackCode), startAddressM, endAddressM, startMValue, endMValue, sideCode = sideCode.map(SideCode.apply), municipalityCode = municipalityCode)
+    }
+  }
+
+
   def getIncomplete(): Seq[RoadAddressTEMP] = {
     sql"""select link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code
           from temp_road_address_info where track_code = ${Track.Unknown.value}""".as[(Long, Option[Int], Long, Long, Int, Long, Long, Long, Long, Option[Int])].list

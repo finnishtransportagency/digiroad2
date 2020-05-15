@@ -1,10 +1,9 @@
 import io.gatling.sbt.GatlingPlugin
-import sbt._
-import sbt.Keys._
 import org.scalatra.sbt._
+import sbt.Keys._
+import sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.MergeStrategy
-import org.scalatra.sbt.PluginKeys._
 
 object Digiroad2Build extends Build {
   val Organization = "fi.liikennevirasto"

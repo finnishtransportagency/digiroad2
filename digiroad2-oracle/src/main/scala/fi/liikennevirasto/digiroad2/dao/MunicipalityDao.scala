@@ -23,6 +23,15 @@ class MunicipalityDao {
     }
   }
 
+  implicit val getMunicipalityInfo = new GetResult[MunicipalityInfo] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextInt()
+      val ely = r.nextInt()
+      val name = r.nextString()
+
+      MunicipalityInfo(id, ely, name)
+    }
+  }
 
   def getMunicipalities: Seq[Int] = {
     sql"""
@@ -41,6 +50,14 @@ class MunicipalityDao {
       select name_fi from municipality where id = $id""".as[String].first
   }
 
+  def getMunicipalityIdByName(municipalityName: String): List[MunicipalityInfo] = {
+    sql"""
+      select id, ely_nro, name_fi
+      from municipality
+      where LOWER(name_fi) = LOWER($municipalityName)"""
+      .as[MunicipalityInfo].list
+  }
+
   def getMunicipalityById(id: Int): Seq[Int] = {
     sql"""select id from municipality where id = $id """.as[Int].list
   }
@@ -52,10 +69,7 @@ class MunicipalityDao {
           from municipality m,
                table(sdo_util.getvertices(m.geometry)) t
             where trunc( t.x ) = ${coordinates.x} and trunc( t.y ) = ${coordinates.y}
-      """.as[(Int, Int, String)].list
-      .map { case (id, ely, name) =>
-        MunicipalityInfo(id, ely, name)
-      }
+      """.as[MunicipalityInfo].list
   }
 
   def getMunicipalitiesNameAndIdByCode(codes: Set[Int]): List[MunicipalityInfo] = {
@@ -64,9 +78,7 @@ class MunicipalityDao {
     sql"""
       select id, ely_nro, name_fi from municipality
       #$filter
-    """.as[(Int, Int, String)].list
-      .map{ case(id, ely, name) =>
-        MunicipalityInfo(id, ely, name)}
+    """.as[MunicipalityInfo].list
   }
 
   def getMunicipalitiesNameAndIdByEly(ely: Set[Int]): List[MunicipalityInfo] = {
@@ -75,9 +87,7 @@ class MunicipalityDao {
     sql"""
       select id, ely_nro, name_fi from municipality
       #$filter
-    """.as[(Int, Int, String)].list
-      .map{ case(id, ely, name) =>
-        MunicipalityInfo(id, ely, name)}
+    """.as[MunicipalityInfo].list
   }
 
   def getCenterViewMunicipality(municipalityId: Int): Option[MapViewZoom] =  {

@@ -31,8 +31,9 @@ $(function() {
   }).trigger('change');
 
   rootElement.find('#deleteCheckbox').on('change', function () {
-    $(".municipalities").toggle($(this).val());
-    $('.btn.btn-primary.btn-lg').prop('disabled', $(this).val());
+    $(".municipalities").toggle();
+    var emptySearch = _.isEmpty($('.municipalities').find("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
+    $('.btn.btn-primary.btn-lg').prop('disabled', $(this).prop('checked') && emptySearch);
   });
 
   rootElement.find('.form-group .municipalities .row').on('dblclick', function () {

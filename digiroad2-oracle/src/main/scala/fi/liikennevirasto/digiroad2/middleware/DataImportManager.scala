@@ -33,6 +33,7 @@ class DataImportManager(vvhClient: VVHClient, roadLinkService: RoadLinkService, 
   lazy val pedestrianCrossingCsvImporter: PedestrianCrossingCsvImporter = new PedestrianCrossingCsvImporter(roadLinkService, eventBus)
   lazy val railwayCrossingCsvImporter: RailwayCrossingCsvImporter = new RailwayCrossingCsvImporter(roadLinkService, eventBus)
   lazy val servicePointCsvImporter: ServicePointCsvImporter = new ServicePointCsvImporter(roadLinkService, eventBus)
+  lazy val lanesCsvImporter: LanesCsvImporter = new LanesCsvImporter(roadLinkService, eventBus)
 
   def importer(importedInfo: CsvDataImporterInfo) {
     importedInfo.assetTypeName match {
@@ -54,6 +55,8 @@ class DataImportManager(vvhClient: VVHClient, roadLinkService: RoadLinkService, 
         pedestrianCrossingCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
       case ServicePoints.layerName =>
         servicePointCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
+      case Lanes.layerName =>
+        lanesCsvImporter.importAssets(importedInfo.inputStream, importedInfo.fileName, importedInfo.user, importedInfo.logId)
       case _ =>
     }
   }

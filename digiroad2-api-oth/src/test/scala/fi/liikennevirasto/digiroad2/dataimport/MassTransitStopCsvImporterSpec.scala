@@ -178,7 +178,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       override val geometryTransform: GeometryTransform = mockGeometryTransform
     }
 
-    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0, None) , RoadSide.Right))
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0) , RoadSide.Right))
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
     stops.foreach { case (id, administrativeClass) =>
       when(mockMassTransitStopService.getByNationalId(ArgumentMatchers.eq(id), anyObject(), anyObject(), anyBoolean())).thenAnswer(new Answer[Option[Object]] {
@@ -341,7 +341,7 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
     "vyohyketieto" -> ("InfoZone", "InfoZone ready")
   )
 
-  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0, None) , RoadSide.Right))
+  when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn((RoadAddress(None, 0, 0, Track.Unknown, 0) , RoadSide.Right))
 
   when(mockService.getByNationalId(ArgumentMatchers.eq(1), anyObject(), anyObject(), anyBoolean())).thenAnswer(new Answer[Option[Object]] {
     override def answer(invocation: InvocationOnMock): Option[Object] = {
@@ -349,7 +349,6 @@ class MassTransitStopCsvImporterSpec extends AuthenticatedApiSpec with BeforeAnd
       val stop = PersistedMassTransitStop(1, 1, 1, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, 0, Modification(None, None), Modification(None, None), Nil, NormalLinkInterface)
       Some(transformation(stop)._1)
     }
-
   })
 
   test("update asset's properties in a generic manner", Tag("db")) {

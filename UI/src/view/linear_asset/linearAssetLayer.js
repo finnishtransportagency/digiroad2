@@ -20,15 +20,15 @@ root.LinearAssetLayer  = function(params) {
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
-  me.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
+  this.minZoomForContent = isExperimental && minZoomForContent ? minZoomForContent : zoomlevels.minZoomForAssets;
   var isComplementaryChecked = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
-  var singleElementEvents = function() {
+  this.singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
   };
 
-  var multiElementEvent = function(eventName) {
+  this.multiElementEvent = function(eventName) {
     return multiElementEventCategory + ':' + eventName;
   };
 
@@ -39,14 +39,14 @@ root.LinearAssetLayer  = function(params) {
 
     var moveTo = function(x, y) {
       scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-      selectToolControl.removeFeatures(function(feature) {
+      me.selectToolControl.removeFeatures(function(feature) {
             return feature.getProperties().type === 'cutter';
       });
-      selectToolControl.addNewFeature(scissorFeatures, true);
+      me.selectToolControl.addNewFeature(scissorFeatures, true);
     };
 
     var remove = function () {
-      selectToolControl.removeFeatures(function(feature) {
+      me.selectToolControl.removeFeatures(function(feature) {
           return feature && feature.getProperties().type === 'cutter';
       });
       scissorFeatures = [];
@@ -55,7 +55,7 @@ root.LinearAssetLayer  = function(params) {
     var self = this;
 
     var clickHandler = function(evt) {
-      if (application.getSelectedTool() === 'Cut' && selectableZoomLevel()) {
+      if (application.getSelectedTool() === 'Cut' && me.selectableZoomLevel()) {
         if (collection.isDirty()) {
           me.displayConfirmMessage();
         } else {
@@ -155,9 +155,9 @@ root.LinearAssetLayer  = function(params) {
 
   this.uiState = { zoomLevel: 9 };
 
-  var vectorSource = new ol.source.Vector();
-  var vectorLayer = new ol.layer.Vector({
-    source : vectorSource,
+  this.vectorSource = new ol.source.Vector();
+  this.vectorLayer = new ol.layer.Vector({
+    source : me.vectorSource,
     style : function(feature) {
       return me.getLayerStyle(feature);
     }
@@ -167,27 +167,27 @@ root.LinearAssetLayer  = function(params) {
       return style.browsingStyleProvider.getStyle(feature, {zoomLevel: me.uiState.zoomLevel});
   };
 
-  vectorLayer.set('name', layerName);
-  vectorLayer.setOpacity(1);
-  vectorLayer.setVisible(false);
-  map.addLayer(vectorLayer);
+  this.vectorLayer.set('name', layerName);
+  this.vectorLayer.setOpacity(1);
+  this.vectorLayer.setVisible(false);
+  map.addLayer(me.vectorLayer);
 
-  var indicatorVector = new ol.source.Vector({});
-  var indicatorLayer = new ol.layer.Vector({
-     source : indicatorVector
+  this.indicatorVector = new ol.source.Vector({});
+  this.indicatorLayer = new ol.layer.Vector({
+     source : me.indicatorVector
   });
-  map.addLayer(indicatorLayer);
-  indicatorLayer.setVisible(false);
-  var readOnlyLayer = new GroupedLinearAssetLayer(params, map);
+  map.addLayer(me.indicatorLayer);
+  me.indicatorLayer.setVisible(false);
+  this.readOnlyLayer = new GroupedLinearAssetLayer(params, map);
 
-  var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
+  var linearAssetCutter = new LinearAssetCutter(me.eventListener, me.vectorLayer, collection);
 
-  var selectableZoomLevel = function() {
+  this.selectableZoomLevel = function() {
     return me.uiState.zoomLevel >= zoomlevels.minZoomForAssets;
   };
 
-  var onSelect = function(evt) {
-   if(selectableZoomLevel()) {
+  this.onSelect = function(evt) {
+   if(me.selectableZoomLevel()) {
      if(evt.selected.length !== 0) {
        var feature = evt.selected[0];
        var properties = feature.getProperties();
@@ -195,15 +195,15 @@ root.LinearAssetLayer  = function(params) {
      }else{
        if (selectedLinearAsset.exists()) {
          selectedLinearAsset.close();
-         readOnlyLayer.showLayer();
-         highLightReadOnlyLayer();
+         me.readOnlyLayer.showLayer();
+         me.highLightReadOnlyLayer();
        }
      }
    }
   };
 
   var onMultipleSelect = function(evt) {
-   if(selectableZoomLevel()){
+   if(me.selectableZoomLevel()){
      if(evt.selected.length !== 0) {
        selectedLinearAsset.addSelection(_.map(evt.selected, function(feature){ return feature.getProperties();}));
      }
@@ -222,25 +222,25 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.highlightMultipleLinearAssetFeatures = function() {
-    readOnlyLayer.hideLayer();
+    me.readOnlyLayer.hideLayer();
     unHighLightReadOnlyLayer();
   };
 
-  var selectToolControl = new SelectToolControl(application, vectorLayer, map, isMultipleLinkSelectionAllowed, {
+  this.selectToolControl = new SelectToolControl(application, me.vectorLayer, map, isMultipleLinkSelectionAllowed, {
     style: function(feature){ return feature.setStyle(me.getLayerStyle(feature)); },
     onInteractionEnd: onInteractionEnd,
-    onSelect: onSelect,
+    onSelect: me.onSelect,
     onMultipleSelect: onMultipleSelect,
     onClose: onCloseForm,
-    enableSelect: selectableZoomLevel
+    enableSelect: me.selectableZoomLevel
   });
 
   this.getSelectToolControl = function() {
-    return selectToolControl;
+    return me.selectToolControl;
   };
 
   this.getVectorSource = function() {
-    return vectorSource;
+    return me.vectorSource;
   };
 
   var showDialog = function (linearAssets) {
@@ -255,17 +255,17 @@ root.LinearAssetLayer  = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), offsetBySideCode), me.uiState.zoomLevel));
-      selectToolControl.addSelectionFeatures(features);
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedLinearAsset.get(), me.offsetBySideCode), me.uiState.zoomLevel));
+      me.selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
         count: selectedLinearAsset.count(),
-        onCancel: cancelSelection,
+        onCancel: me.cancelSelection,
         onSave: function (value) {
           selectedLinearAsset.saveMultiple(value);
-          selectToolControl.clear();
+          me.selectToolControl.clear();
           selectedLinearAsset.closeMultiple();
-        selectToolControl.deactivateDraw();},
+        me.selectToolControl.deactivateDraw();},
         validator: selectedLinearAsset.validator,
         formElements: params.formElements,
        selectedLinearAsset: selectedLinearAsset,
@@ -277,7 +277,7 @@ root.LinearAssetLayer  = function(params) {
     if (selectedLinearAsset.isDirty()) {
         me.displayConfirmMessage();
     } else {
-        if (linearAssets.length > 0 && selectableZoomLevel()) {
+        if (linearAssets.length > 0 && me.selectableZoomLevel()) {
             selectedLinearAsset.close();
             showDialog(linearAssets);
             onCloseForm();
@@ -285,37 +285,37 @@ root.LinearAssetLayer  = function(params) {
     }
   }
 
-  function cancelSelection() {
+  this.cancelSelection = function() {
     if(isComplementaryChecked)
       showWithComplementary();
     else
       hideComplementary();
-    selectToolControl.clear();
+    me.selectToolControl.clear();
     selectedLinearAsset.closeMultiple();
-  }
+  };
 
-  var adjustStylesByZoomLevel = function(zoom) {
+  this.adjustStylesByZoomLevel = function(zoom) {
     me.uiState.zoomLevel = zoom;
   };
 
   var changeTool = function(tool) {
     switch(tool) {
       case 'Cut':
-        selectToolControl.deactivate();
+        me.selectToolControl.deactivate();
         linearAssetCutter.activate();
         break;
       case 'Select':
         linearAssetCutter.deactivate();
-        selectToolControl.deactivateDraw();
-        selectToolControl.activate();
+        me.selectToolControl.deactivateDraw();
+        me.selectToolControl.activate();
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
-        selectToolControl.activeRectangle();
+        me.selectToolControl.activeRectangle();
         break;
       case 'Polygon':
         linearAssetCutter.deactivate();
-        selectToolControl.activePolygon();
+        me.selectToolControl.activePolygon();
         break;
       default:
     }
@@ -325,23 +325,23 @@ root.LinearAssetLayer  = function(params) {
     eventbus.trigger('closeForm');
   }
 
-  var bindEvents = function(eventListener) {
+  this.bindEvents = function(eventListener) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
-    eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
-    eventListener.listenTo(eventbus, singleElementEvents('selected'), linearAssetSelected);
-    eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
+    eventListener.listenTo(eventbus, me.singleElementEvents('unselect'), linearAssetUnSelected);
+    eventListener.listenTo(eventbus, me.singleElementEvents('selected'), me.linearAssetSelected);
+    eventListener.listenTo(eventbus, me.multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
-    eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
-    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
-    eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
-    eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
-    eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
-    eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-    eventListener.listenTo(eventbus, multiElementEvent('valueChanged'), linearAssetChanged);
+    eventListener.listenTo(eventbus, me.singleElementEvents('saved'), me.handleLinearAssetSaved);
+    eventListener.listenTo(eventbus, me.multiElementEvent('massUpdateSucceeded'), me.handleLinearAssetSaved);
+    eventListener.listenTo(eventbus, me.singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
+    eventListener.listenTo(eventbus, me.singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
+    eventListener.listenTo(eventbus, me.multiElementEvent('cancelled'), linearAssetCancelled);
+    eventListener.listenTo(eventbus, me.singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
+    eventListener.listenTo(eventbus, me.multiElementEvent('massUpdateFailed'), me.cancelSelection);
+    eventListener.listenTo(eventbus, me.multiElementEvent('valueChanged'), linearAssetChanged);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-    eventListener.listenTo(eventbus, 'layer:linearAsset', refreshReadOnlyLayer);
+    eventListener.listenTo(eventbus, 'layer:linearAsset', me.refreshReadOnlyLayer);
   };
 
   var startListeningExtraEvents = function(){
@@ -349,53 +349,53 @@ root.LinearAssetLayer  = function(params) {
     extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:hide', hideComplementary);
   };
 
-  var stopListeningExtraEvents = function(){
+  this.stopListeningExtraEvents = function(){
     extraEventListener.stopListening(eventbus);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
-    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
+    var feature = _.find(me.vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
     if (feature) {
-        selectToolControl.addSelectionFeatures([feature]);
+        me.selectToolControl.addSelectionFeatures([feature]);
     }
   };
 
   var linearAssetUnSelected = function () {
-    selectToolControl.clear();
+    me.selectToolControl.clear();
     if (application.getSelectedTool() !== 'Cut')
       changeTool(application.getSelectedTool());
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
-  var linearAssetSelected = function(){
+  this.linearAssetSelected = function(){
       me.decorateSelection();
   };
 
-  var handleLinearAssetSaved = function() {
+  this.handleLinearAssetSaved = function() {
     me.refreshView();
     applicationModel.setSelectedTool('Select');
   };
 
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset, polygonSelection) {
     //Disable interaction so the user can not click on another feature after made changes
-    selectToolControl.deactivate();
+    me.selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     me.decorateSelection(polygonSelection);
   };
 
-  var refreshReadOnlyLayer = function () {
+  this.refreshReadOnlyLayer = function () {
     if(massLimitation)
-      readOnlyLayer.refreshView();
+      me.readOnlyLayer.refreshView();
   };
 
   this.layerStarted = function(eventListener) {
-    bindEvents(eventListener);
+    me.bindEvents(eventListener);
   };
 
   this.refreshView = function() {
-    vectorLayer.setVisible(true);
-    adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
+    me.vectorLayer.setVisible(true);
+    me.adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     if (isComplementaryChecked) {
       collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
         eventbus.trigger('layer:linearAsset');
@@ -411,21 +411,21 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.activateSelection = function() {
-    selectToolControl.activate();
+    me.selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-    selectToolControl.deactivate();
+    me.selectToolControl.deactivate();
   };
   this.removeLayerFeatures = function() {
-    vectorLayer.getSource().clear();
-    indicatorLayer.getSource().clear();
-    readOnlyLayer.removeLayerFeatures();
+    me.vectorLayer.getSource().clear();
+    me.indicatorLayer.getSource().clear();
+    me.readOnlyLayer.removeLayerFeatures();
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-    selectToolControl.clear();
+    me.selectToolControl.clear();
     if(application.getSelectedTool() !== 'Cut'){
-      selectToolControl.activate();
+      me.selectToolControl.activate();
     }
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
@@ -491,40 +491,40 @@ root.LinearAssetLayer  = function(params) {
       return indicatorsForSeparation();
     };
     indicators();
-    selectToolControl.addNewFeature(features);
+    me.selectToolControl.addNewFeature(features);
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
-    vectorSource.clear();
-    indicatorLayer.getSource().clear();
+    me.vectorSource.clear();
+    me.indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
       me.decorateSelection();
-      me.drawLinearAssets(linearAssets, vectorSource);
+      me.drawLinearAssets(linearAssets, me.vectorSource);
   };
 
   this.drawLinearAssets = function(linearAssets) {
     var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLinearAsset.get(), function(selectedAsset){
       return selectedAsset.linkId === asset.linkId && selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
     });
-    vectorSource.addFeatures(style.renderFeatures(allButSelected));
-    readOnlyLayer.showLayer();
-    highLightReadOnlyLayer();
+    me.vectorSource.addFeatures(style.renderFeatures(allButSelected));
+    me.readOnlyLayer.showLayer();
+    me.highLightReadOnlyLayer();
     if(assetLabel) {
       var splitChangedAssets = _.partition(allButSelected, function(a){ return (a.sideCode !== 1 && _.has(a, 'value'));});
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), offsetBySideCode), me.uiState.zoomLevel));
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), offsetBySideCode), me.uiState.zoomLevel));
+      me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), me.offsetBySideCode), me.uiState.zoomLevel));
+      me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), me.offsetBySideCode), me.uiState.zoomLevel));
     }
   };
 
-  var offsetBySideCode = function (linearAsset) {
+  this.offsetBySideCode = function (linearAsset) {
     return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
   };
 
-  var removeFeature = function(feature) {
-    return vectorSource.removeFeature(feature);
+  this.removeFeature = function(feature) {
+    return me.vectorSource.removeFeature(feature);
   };
 
-  var geometryAndValuesEqual = function(feature, comparison) {
+  this.geometryAndValuesEqual = function(feature, comparison) {
     var toCompare = ["linkId", "sideCode", "startMeasure", "endMeasure"];
     _.each(toCompare, function(value){
       return feature[value] === comparison[value];
@@ -539,33 +539,33 @@ root.LinearAssetLayer  = function(params) {
 
       if(assetLabel){
         if(polygonSelection){
-          var selectedLabels = _.filter(vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
-            return layerFeature.values_.geometry instanceof ol.geom.Point && (geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_)); }) ;
+          var selectedLabels = _.filter(me.vectorSource.getFeatures(), function(layerFeature){ return _.some(selectedFeatures, function(selectedFeature){
+            return layerFeature.values_.geometry instanceof ol.geom.Point && (me.geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_)); }) ;
           });
-          _.each(selectedLabels, removeFeature);
+          _.each(selectedLabels, me.removeFeature);
 
           selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
         } else {
-          var currentFeatures = _.filter(vectorSource.getFeatures(), function(layerFeature){
+          var currentFeatures = _.filter(me.vectorSource.getFeatures(), function(layerFeature){
             return _.some(selectedFeatures, function(selectedFeature) {
-              return geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
+              return me.geometryAndValuesEqual(selectedFeature.values_, layerFeature.values_);
             });
           });
 
-          _.each(currentFeatures, removeFeature);
+          _.each(currentFeatures, me.removeFeature);
 
           if(selectedLinearAsset.isSplitOrSeparated() || _.some(linearAssets, function(asset){return !_.isEqual(asset.sideCode, 1);})){
-            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), me.uiState.zoomLevel));
+            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), me.offsetBySideCode), me.uiState.zoomLevel));
           }else
             selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(linearAssets, me.uiState.zoomLevel));
         }
       }
 
-      vectorSource.addFeatures(selectedFeatures);
-      selectToolControl.addSelectionFeatures(selectedFeatures);
+      me.vectorSource.addFeatures(selectedFeatures);
+      me.selectToolControl.addSelectionFeatures(selectedFeatures);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
+        me.drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), me.offsetBySideCode));
       }
     }
   };
@@ -576,8 +576,8 @@ root.LinearAssetLayer  = function(params) {
 
   this.showLayer = function(map) {
     startListeningExtraEvents();
-    vectorLayer.setVisible(true);
-    indicatorLayer.setVisible(true);
+    me.vectorLayer.setVisible(true);
+    me.indicatorLayer.setVisible(true);
     roadAddressInfoPopup.start();
     me.show(map);
   };
@@ -586,26 +586,26 @@ root.LinearAssetLayer  = function(params) {
     if(trafficSignReadOnlyLayer)
       trafficSignReadOnlyLayer.showTrafficSignsComplementary();
     isComplementaryChecked = true;
-    readOnlyLayer.showWithComplementary();
+    me.readOnlyLayer.showWithComplementary();
     me.refreshView();
   };
 
   var hideComplementary = function() {
     if(trafficSignReadOnlyLayer)
       trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
-    selectToolControl.clear();
+    me.selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
-    readOnlyLayer.hideComplementary();
+    me.readOnlyLayer.hideComplementary();
     roadAddressInfoPopup.stop();
     me.refreshView();
   };
 
-  var hideReadOnlyLayer = function(){
+  this.hideReadOnlyLayer = function(){
     if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.hide();
       trafficSignReadOnlyLayer.removeLayerFeatures();
-  }
+    }
   };
 
   var unHighLightReadOnlyLayer = function(){
@@ -614,7 +614,7 @@ root.LinearAssetLayer  = function(params) {
     }
   };
 
-  var highLightReadOnlyLayer = function(){
+  this.highLightReadOnlyLayer = function(){
     if(trafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.highLightLayer();
     }
@@ -622,12 +622,12 @@ root.LinearAssetLayer  = function(params) {
 
   this.hideLayer = function() {
     reset();
-    hideReadOnlyLayer();
-    vectorLayer.setVisible(false);
-    indicatorLayer.setVisible(false);
-    readOnlyLayer.hideLayer();
+    me.hideReadOnlyLayer();
+    me.vectorLayer.setVisible(false);
+    me.indicatorLayer.setVisible(false);
+    me.readOnlyLayer.hideLayer();
     selectedLinearAsset.close();
-    stopListeningExtraEvents();
+    me.stopListeningExtraEvents();
     me.stop();
     me.hide();
   };
@@ -638,7 +638,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   return {
-    vectorLayer: vectorLayer,
+    vectorLayer: me.vectorLayer,
     show: me.showLayer,
     hide: me.hideLayer,
     minZoomForContent: me.minZoomForContent

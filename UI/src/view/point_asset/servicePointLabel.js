@@ -31,7 +31,8 @@
         {signValue: [11], typeExtension: 5, image: 'images/service_points/railwayStation2.png'},
         {signValue: [11], typeExtension: 6, image: 'images/service_points/railwayStation.png'},
         {signValue: [11], typeExtension: 7, image: 'images/service_points/subwayStation.png'},
-        {signValue: [18], image: 'images/service_points/e18rekkaparkki.png', validation: validateText, height: 25}
+        {signValue: [18], image: 'images/service_points/e18rekkaparkki.png', validation: validateText, height: 25},
+        {signValue: [19], image: 'images/service_points/culvert.png', height: 25}
       ];
     };
 

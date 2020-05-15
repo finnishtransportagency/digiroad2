@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -141,10 +141,10 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssets(queryFilter)
-  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] =  { throw new UnsupportedOperationException("Not Supported Method") }
-  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, pageNumber: Option[Int]): Seq[PersistedMassTransitStop] = throw new UnsupportedOperationException("Not Supported Method")
+  override def fetchPointAssetsWithExpired(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def fetchPointAssetsWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssetsWithExpiredLimited(queryFilter, token)
 
-  override def getChanged(sinceDate: DateTime, untilDate: DateTime, pageNumber: Option[Int] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
+  override def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }
 
   override def fetchLightGeometry(queryFilter: String => String): Seq[LightGeometry] = massTransitStopDao.fetchLightGeometry(queryFilter)
 
@@ -240,7 +240,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val (persistedAsset, publishInfo, strategy) =
-      if(newTransaction) {
+      if (newTransaction) {
         withDynTransaction {
           createWithUpdateFloating(asset, username, roadLink)
         }
@@ -293,9 +293,11 @@ trait MassTransitStopService extends PointAssetOperations {
     val point = Point(asset.lon, asset.lat)
     val strategy = getStrategy(asset.properties.toSet, roadLink)
     val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
+
     val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
     withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
     (persistedAsset, publishInfo, strategy)
+
   }
 
   def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): MassTransitStopWithProperties = {
@@ -469,6 +471,7 @@ trait MassTransitStopService extends PointAssetOperations {
           val childFilters = massTransitStopDao.fetchByRadius(point, 200)
             .filter(a =>  a.terminalId.isEmpty)
             .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+            .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.ServicePoint))
           val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
             val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
             PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
@@ -624,24 +627,24 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.insertValluXmlIds(id)
   }
 
-  def getPublishedOnXml(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedPointAsset] = {
+  def getPublishedOnXml(sinceDate: DateTime, untilDate: DateTime, token: Option[String]): Seq[ChangedPointAsset] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
-    val filter = s"join vallu_xml_ids vxi on vxi.asset_id = a.id " +
-      s"where a.asset_type_id = $typeId and floating = 0 and (" +
+    val filter = s"WHERE a.asset_type_id = $typeId AND floating = 0 and (" +
       s"(a.valid_to > $querySinceDate and a.valid_to <= $queryUntilDate) or " +
       s"(a.modified_date > $querySinceDate and a.modified_date <= $queryUntilDate) or " +
-      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "
+      s"(a.created_date > $querySinceDate and a.created_date <= $queryUntilDate)) "+
+      s"AND a.id in ( SELECT asset_id FROM vallu_xml_ids ) "
 
     val assets = withDynSession {
-      fetchPointAssets(withFilter(filter))
+      fetchPointAssetsWithExpiredLimited(withFilter(filter), token)
     }
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(assets.map(_.linkId).toSet)
+    val roadLinks = roadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(assets.map(_.linkId).toSet)
 
     assets.map { asset =>
-      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available")))    }
+      ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException(s"Road link no longer available: ${asset.linkId}")))    }
   }
 
   def getProperty(propertyData: Seq[AbstractProperty], property: String) : Seq[String] = {

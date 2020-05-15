@@ -23,6 +23,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   protected val trPUOLI = "PUOLI"
   protected val trLIIKVAST = "LIIKVAST"
   protected val againstTraffic = "1"
+  protected val alongTheRoad = "2"
   protected val trNOPRA506 = "NOPRA506"
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
@@ -32,7 +33,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val signSidePlacement = getFieldValue(data, trLIIKVAST)
+    val signSidePlacement = getFieldValue(data, trLIIKVAST).orElse(Some("0"))
 
     val roadSide: RoadSide = signSidePlacement match {
       case Some(sideInfo) if sideInfo == againstTraffic  =>
@@ -48,16 +49,17 @@ class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable:
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
+    val signSidePlacement = getFieldValue(data, trLIIKVAST)
 
     //Check if the traffic sign is in SpeedLimits group
-    if (TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits) {
+    if (TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits || !signSidePlacement.contains(alongTheRoad)) {
       val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
       val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
       val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
       val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse(getFieldValue(data, trNOPRA506).getOrElse("")).trim
-      val signSidePlacement = getFieldValue(data, trLIIKVAST)
+      val signSidePlacement = getFieldValue(data, trLIIKVAST).orElse(Some("0"))
 
       signSidePlacement match {
         case Some(sideInfo) if sideInfo == againstTraffic && Seq(SpeedLimitSign, SpeedLimitZone, UrbanArea).contains(TrafficSignType.applyTRValue(assetNumber)) =>
@@ -78,14 +80,15 @@ class TierekisteriTrafficSignGroupClient(trEndPoint: String, trEnable: Boolean, 
 
   override def mapFields(data: Map[String, Any]): Option[TierekisteriTrafficSignData] = {
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
+    val signSidePlacement = getFieldValue(data, trLIIKVAST)
 
-    if (filterGroupCondition(assetNumber)) {
+    if (filterGroupCondition(assetNumber) || !signSidePlacement.contains(alongTheRoad)) {
       val assetValue = getAssetValue(data, assetNumber)
       val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
       val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-      val signSidePlacement = getFieldValue(data, trLIIKVAST)
+      val signSidePlacement = getFieldValue(data, trLIIKVAST).orElse(Some("0"))
 
       val roadSide: RoadSide = signSidePlacement match {
         case Some(sideInfo) if sideInfo == againstTraffic =>

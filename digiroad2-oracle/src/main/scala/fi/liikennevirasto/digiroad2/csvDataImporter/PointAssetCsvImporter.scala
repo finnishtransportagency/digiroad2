@@ -1,14 +1,12 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, DateParser}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
-import org.joda.time.format.DateTimeFormat
 
 import scala.util.Try
 
@@ -27,7 +25,6 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   case class CsvPointAsset(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
-  val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
   val coordinateMappings = Map(
@@ -65,7 +62,7 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   def verifyDateType(parameterName: String, parameterValue: String): ParsedRow = {
     try {
-      dateFormatter.parseDateTime(parameterValue)
+      DateParser.DatePropertyFormat.parseDateTime(parameterValue)
       (Nil, List(AssetProperty(columnName = dateFieldsMapping(parameterName), value = parameterValue)))
     } catch {
       case _: Throwable => (List(parameterName), Nil)
