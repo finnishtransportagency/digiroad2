@@ -403,29 +403,18 @@
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns;
 
-      if (isPedestrianOrCyclingRoadLink(asset)) {
-        subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
-          if (me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue)) {
-            return $('<option>',
-                {
-                  value: group.propertyValue,
-                  selected: propertyValue == group.propertyValue,
-                  text: group.propertyDisplayValue
-                }
-            )[0].outerHTML;
+      subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
+        if (isPedestrianOrCyclingRoadLink(asset) && !me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue))
+          return '';
+
+        return $('<option>',
+          {
+            value: group.propertyValue,
+            selected: propertyValue == group.propertyValue,
+            text: group.propertyDisplayValue
           }
-        }).join('');
-      } else {
-        subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
-          return $('<option>',
-            {
-              value: group.propertyValue,
-              selected: propertyValue == group.propertyValue,
-              text: group.propertyDisplayValue
-            }
-          )[0].outerHTML;
-        }).join('');
-      }
+        )[0].outerHTML;
+      }).join('');
 
       return '<div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
@@ -463,9 +452,9 @@
 
         /* Only after get the correct index of the group (mainTypeDefaultValue) I can reset the values for the */
         /* correct one to be used in the 'main singleChoice field' */
-        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(x) { if ( x.propertyValue == '70') return x; });  });
+        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});  });
         groups =  collection.getGroup(signTypes);
-        groupKeys = Object.keys(groups);
+        groupKeys = _.keys(groups);
 
         /* Case asset is new...we will ignore the property value from parameter to load the subSingleChoice */
         if (asset.id === 0) {
