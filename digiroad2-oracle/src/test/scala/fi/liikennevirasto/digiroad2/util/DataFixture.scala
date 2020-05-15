@@ -2123,58 +2123,6 @@ object DataFixture {
     }
   }
 
-  def createRoadWorksCreatedLastYear(): Unit = {
-    println("\nStart process to remove all road works assets created during the last year")
-    println(DateTime.now())
-
-    val actualYear = DateTime.now().getYear
-    val username = "batch_to_expire_roadworks_on_previous_year"
-
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
-
-    municipalities.foreach { municipality =>
-      println("\nWorking on... municipality -> " + municipality)
-      println("Fetching roadlinks")
-      val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)
-
-      OracleDatabase.withDynTransaction {
-        println("Fetching assets")
-        val existingAssets =
-          roadWorkService.enrichPersistedLinearAssetProperties(dynamicLinearAssetDao.fetchDynamicLinearAssetsByLinkIds(RoadWorksAsset.typeId, roadLinks.map(_.linkId))).filterNot(_.expired)
-
-        val existingAssetsOnLastYear = existingAssets.filter { asset =>
-          asset.value.map(_.asInstanceOf[DynamicValue]) match {
-            case Some(value) =>
-              val roadWorkProps = value.value.properties
-              roadWorkProps.find(_.publicId == "arvioitu_kesto") match {
-                case Some(dateProperty) =>
-                  dateProperty.values.map(x => DatePeriodValue.fromMap(x.value.asInstanceOf[Map[String, String]])).exists { property =>
-                    val endDateYear = DateParser.stringToDate(property.endDate, DateParser.DatePropertyFormat).getYear
-                    endDateYear < actualYear
-                  }
-                case _ => false
-              }
-            case _ => false
-          }
-        }
-
-        println(s"Number of existing assets: ${existingAssetsOnLastYear.length}")
-        println(s"Start expiring valid roadWorks assets")
-
-
-        existingAssetsOnLastYear.foreach { asset =>
-          roadWorkService.expireAsset(RoadWorksAsset.typeId, asset.id, username, true, false)
-          println(s"Asset id ${asset.id} expired. ")
-        }
-      }
-      println("Complete at time: " + DateTime.now())
-    }
-  }
-
   def resolvingFrozenLinks(): Unit = {
     case class AddressCreateInfo(toCreate : Seq[RoadAddressTEMP] , possibleToCreate: Seq[RoadAddressTEMP])
 
