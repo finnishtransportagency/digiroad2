@@ -10,7 +10,8 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomingPointAsset
+//TODO: verify if this change is needed
+case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Option[Int] = None, bearing: Option[Int] = None) extends IncomingPointAsset
 case class IncomingTrafficLightAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
 class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {

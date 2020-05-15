@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingObstacle
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
@@ -105,6 +106,8 @@ trait PointAssetOperations {
 
   final val TwoMeters = 2
   final val BearingLimit = 25
+  final val defaultMultiChoiceValue = 0
+  final val defaultSingleChoiceValue = 999
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -355,6 +358,9 @@ trait PointAssetOperations {
     }
   }
 
+  def getDefaultMultiChoiceValue: Int = defaultMultiChoiceValue
+  def getDefaultSingleChoiceValue: Int = defaultSingleChoiceValue
+
   def expire(id: Long, username: String): Long = {
     withDynSession {
       expireWithoutTransaction(id, username)
@@ -464,6 +470,55 @@ trait PointAssetOperations {
 
   def getProperty(asset: PersistedPointAsset, property: String) : Option[PropertyValue] = {
     asset.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  }
+
+  def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {
+    bearing match {
+      case Some(assetBearing) =>
+        val validityDirection = getAssetValidityDirection(assetBearing)
+        val readjustedBearing = if(validityDirection == SideCode.AgainstDigitizing.value) {
+          if(assetBearing > 90 && assetBearing < 180)
+            assetBearing + 180
+          else
+            Math.abs(assetBearing - 180)
+        } else assetBearing
+
+        (Some(readjustedBearing), Some(validityDirection))
+      case _ =>
+        (None, None)
+    }
+  }
+
+  def getAssetValidityDirection(bearing: Int): Int = {
+    bearing > 270 || bearing <= 90 match {
+      case true => TowardsDigitizing.value
+      case false => AgainstDigitizing.value
+    }
+  }
+
+  def getValidityDirection(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
+    if (twoSided)
+      BothDirections.value
+    else
+      SideCode.apply(optBearing match {
+        case Some(bearing) => getAssetValidityDirection(bearing)
+        case _ => getValidityDirectionByGeometry(point, roadLink.geometry)
+      }).value
+  }
+
+  def getValidityDirectionByGeometry(assetLocation: Point, geometry: Seq[Point]): Int = {
+
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
+    val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
+    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
+
+    val lonDifference = assetLocation.x - roadLinkPoint.get.x
+    val latDifference = assetLocation.y - roadLinkPoint.get.y
+
+    (latDifference <= 0 && linkBearing <= 90) || (latDifference >= 0 && linkBearing > 270) match {
+      case true => TowardsDigitizing.value
+      case false => AgainstDigitizing.value
+    }
   }
 }
 

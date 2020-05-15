@@ -14,8 +14,6 @@ import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, Inc
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 
-import scala.util.Try
-
 class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -49,8 +47,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val oppositeSideSignPublicId = "opposite_side_sign"
   private val suggestBoxPublicId = "suggest_box"
   private val additionalPanelPublicId = "additional_panel"
-
-  case class CsvTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
@@ -154,15 +150,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
   }
 
-  private def singleChoiceToProperty(parameterName: String, assetSingleChoice: String): ParsedRow = {
-    tryToInt(assetSingleChoice) match {
-      case Some(value) if singleChoiceAcceptableValues(parameterName).contains(value) =>
-        (Nil, List(AssetProperty(columnName = singleChoiceMapping(parameterName), value = value)))
-      case _ =>
-        (List(s"Invalid value for $parameterName"), Nil)
-    }
-  }
-
   private def multiChoiceToProperty(parameterName: String, assetMultiChoice: String): ParsedRow = {
     tryToInt(assetMultiChoice) match {
       case Some(value) if multiChoiceAcceptableValues.contains(value) =>
@@ -170,10 +157,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       case _ =>
         (List(s"Invalid value for $parameterName"), Nil)
     }
-  }
-
-  def tryToInt(propertyValue: String ) : Option[Int] = {
-    Try(propertyValue.toInt).toOption
   }
 
   override def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
@@ -217,7 +200,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           val (malformedParameters, properties) = verifyDateType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (singleChoiceMapping.contains(key)) {
-          val (malformedParameters, properties) = singleChoiceToProperty(key, value)
+          val (malformedParameters, properties) = singleChoiceToProperty(key, value, singleChoiceAcceptableValues, singleChoiceMapping)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (multiChoiceMapping.contains(key)) {
           val (malformedParameters, properties) = multiChoiceToProperty(key, value)
@@ -343,13 +326,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                               "oldTrafficCode", "oppositeSideSign"
     )
 
-    val propertiesValues = (listPublicIds, listFieldNames).zipped.map{(publicId, fieldName) =>
-      val propertyInfo = getPropertyValueOption(trafficSignAttributes, fieldName)
-      if(propertyInfo.get != null && propertyInfo.nonEmpty)
-        Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString))))
-      else
-        None
-    }
+    val propertiesValues = extractPropertyValues(listPublicIds, listFieldNames, trafficSignAttributes)
     //not possible to insert suggested signs through csv
     val suggestBox = Set(Some(SimplePointAssetProperty(suggestBoxPublicId, Seq(PropertyValue("0")))))
 
@@ -386,23 +363,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     Set(Some(SimplePointAssetProperty(additionalPanelPublicId, res)))
   }
 
-  def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {
-    bearing match {
-      case Some(assetBearing) =>
-        val validityDirection = trafficSignService.getAssetValidityDirection(assetBearing)
-        val readjustedBearing = if(validityDirection == SideCode.AgainstDigitizing.value) {
-          if(assetBearing > 90 && assetBearing < 180)
-            assetBearing + 180
-          else
-            Math.abs(assetBearing - 180)
-        } else assetBearing
-
-        (Some(readjustedBearing), Some(validityDirection))
-      case _ =>
-        (None, None)
-    }
-  }
-
   override def createAsset(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData ): ImportResultData = {
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
@@ -414,7 +374,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _ => false
       }
       val point = getCoordinatesFromProperties(props)
-      val (assetBearing, assetValidityDirection) = recalculateBearing(optBearing)
+      val (assetBearing, assetValidityDirection) = trafficSignService.recalculateBearing(optBearing)
 
       var possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
 
@@ -440,7 +400,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
 
-      (props, CsvTrafficSign(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
+      (props, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
     var notImportedDataExceptions: List[NotImportedData] = List()

@@ -3,11 +3,14 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 import org.joda.time.format.DateTimeFormat
+
+import scala.util.Try
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
   case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[RoadLink])
@@ -21,6 +24,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
 
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
   type ImportResultData = ImportResultPointAsset
+
+  case class CsvPointAsset(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
 
   val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
   final val MinimumDistanceFromRoadLink: Double = 3.0
@@ -83,6 +88,19 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
+  def singleChoiceToProperty(parameterName: String, assetSingleChoice: String, singleChoiceAcceptableValues: Map[String, Seq[Int]], singleChoiceMapping: Map[String, String]): ParsedRow = {
+    tryToInt(assetSingleChoice) match {
+      case Some(value) if singleChoiceAcceptableValues(parameterName).contains(value) =>
+        (Nil, List(AssetProperty(columnName = singleChoiceMapping(parameterName), value = value)))
+      case _ =>
+        (List(s"Invalid value for $parameterName"), Nil)
+    }
+  }
+
+  def tryToInt(propertyValue: String ) : Option[Int] = {
+    Try(propertyValue.toInt).toOption
+  }
+
   def getPropertyValue(pointAssetAttributes: ParsedProperties, propertyName: String): Any = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get
   }
@@ -90,6 +108,15 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   def getPropertyValueOption(pointAssetAttributes: ParsedProperties, propertyName: String): Option[Any] = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value)
   }
+
+  def extractPropertyValues(listPublicIds: Seq[String], listFieldNames: Seq[String], attributes: ParsedProperties): Seq[Option[SimplePointAssetProperty]] =
+    (listPublicIds, listFieldNames).zipped.map{(publicId, fieldName) =>
+      val propertyInfo = getPropertyValueOption(attributes, fieldName)
+      if(propertyInfo.get != null && propertyInfo.nonEmpty)
+        Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString))))
+      else
+        None
+    }
 
   def getCoordinatesFromProperties(csvProperties: ParsedProperties): Point = {
     val lon = getPropertyValue(csvProperties, "lon").asInstanceOf[BigDecimal].toLong
