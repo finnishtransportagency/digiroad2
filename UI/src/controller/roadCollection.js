@@ -210,5 +210,9 @@
     this.resetHistory = function(){
       me.roadLinkGroupsHistory = [];
     };
+
+    this.isPedestrianOrCyclingRoadLink = function (roadLink) {
+      return roadLink.linkType === 8;
+    };
   };
 })(this);

@@ -8,7 +8,8 @@
             mapOverlay = params.mapOverlay,
             roadCollection = params.roadCollection,
             selectedAsset = params.selectedAsset,
-            layerName = params.layerName;
+            layerName = params.layerName,
+            collection = params.collection;
 
          this.handleMapClick = function (coordinates) {
             if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
@@ -39,7 +40,7 @@
             var roads = roadCollection.getRoadsForCarPedestrianCycling();
             if (layerName == 'trafficSigns') {
                 var signType = _.head(_.find(feature.features.getArray()[0].getProperties().propertyData, function(prop) {return prop.publicId === "trafficSigns_type";}).values).propertyValue;
-                if(!_.includes(['70','71','72'], signType))
+                if(!collection.isAllowedSignInPedestrianCyclingLinks(signType))
                     roads = roadCollection.getRoadsForPointAssets();
             }
             return me.excludeRoadByAdminClass(roads);

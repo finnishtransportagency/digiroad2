@@ -1,5 +1,4 @@
 (function(root) {
-
   root.TrafficSignsCollection = function (backend, specs, verificationCollection) {
     PointAssetsCollection.call(this);
     var me = this;
@@ -38,6 +37,12 @@
 
     var isTrafficSignTypeLinearGenerator = function(current) {
       return _.includes(trafficSignsTypeLinearGenerators, parseInt(getValue(current)));
+    };
+
+    var signTypesAllowedInPedestrianCyclingLinks= ['70','71','72'];
+
+    this.isAllowedSignInPedestrianCyclingLinks = function (signType) {
+      return _.includes(signTypesAllowedInPedestrianCyclingLinks, signType);
     };
 
     var getValue = function(current) {

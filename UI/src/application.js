@@ -337,7 +337,8 @@
           applicationModel: applicationModel,
           backend: backend,
           saveCondition: pointAsset.saveCondition || function() {return true;},
-          feedbackCollection : new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset)
+          feedbackCollection : new FeedbackModel(backend, assetConfiguration, pointAsset.selectedPointAsset),
+          collection: pointAsset.collection
       };
 
       if(pointAsset.form) {

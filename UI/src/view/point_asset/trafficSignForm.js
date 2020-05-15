@@ -14,6 +14,7 @@
       defaultAdditionalPanelValue = _.find(parameters.pointAsset.newAsset.propertyData, function(obj){return obj.publicId === 'additional_panel';}).defaultValue;
       me.bindEvents(parameters);
       me.selectedAsset = parameters.pointAsset.selectedPointAsset;
+      me.collection = parameters.collection;
     };
 
     var getProperties = function(properties, publicId) {
@@ -404,7 +405,7 @@
 
       if (isPedestrianOrCyclingRoadLink(asset)) {
         subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
-          if ( ['70','71','72'].indexOf( group.propertyValue) >= 0 ) {
+          if (me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue)) {
             return $('<option>',
                 {
                   value: group.propertyValue,
@@ -436,17 +437,12 @@
 
 
     function isPedestrianOrCyclingRoadLink(asset) {
-      if (asset === undefined){
-        return false;
-      }
+      if(asset){
+        var roadLink = me.roadCollection.getRoadLinkByLinkId(asset.linkId);
 
-      var roadLink = me.roadCollection.getRoadLinkByLinkId(asset.linkId);
-      var roadLinkData;
-
-      if (roadLink){
-        roadLinkData = roadLink.getData();
-        if (roadLinkData !== undefined && roadLinkData.linkType === 8) {
-          return true;
+        if (roadLink){
+          var roadLinkData = roadLink.getData();
+          return !_.isUndefined(roadLinkData) && me.roadCollection.isPedestrianOrCyclingRoadLink(roadLinkData);
         }
       }
       return false;
