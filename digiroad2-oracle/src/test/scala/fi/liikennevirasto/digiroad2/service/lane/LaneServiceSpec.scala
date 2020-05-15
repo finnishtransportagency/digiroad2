@@ -1,9 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
@@ -25,8 +24,6 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockLaneDao = MockitoSugar.mock[LaneDao]
-
-  val viiteClient = MockitoSugar.mock[SearchViiteClient]
 
   val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
   val roadLinkWithLinkSource = RoadLink(
@@ -331,12 +328,11 @@ class LaneServiceSpec extends LaneTestSupporter {
                   11, 745L, 0, 15.0, None, None, None, None, expired = false, 0L, None,
                   Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))) )
 
-      val roadAddress = RoadAddress(1L,6, 202, Track.Combined, 1, 150, None, None, roadLinkTowards2.linkId, 0, 150,
-                          SideCode.BothDirections, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), false, None, None, None)
 
-      when( viiteClient.fetchAllByLinkIds(any[Seq[Long]])).thenReturn(Seq(roadAddress))
+      val roadAddress = RoadAddressTEMP(roadLinkTowards2.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+                        Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
 
-      val (persistedLanes, changeSet) = ServiceWithDao.checkSideCodes(Seq(roadLinkTowards2), ChangeSet(), Seq(lane11) )
+      val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards2, Seq(lane11), ChangeSet(), Seq(roadAddress) )
 
       persistedLanes should have size 2
       persistedLanes.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
@@ -357,13 +353,10 @@ class LaneServiceSpec extends LaneTestSupporter {
                   21, 745L, 0, 15.0, None, None, None, None, expired = false, 0L, None,
                   Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21)))) )
 
+    val roadAddress = RoadAddressTEMP(roadLinkTowards2.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+                        Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
 
-    val roadAddress = RoadAddress(1L,6, 202, Track.Combined, 1, 150, None, None, roadLinkTowards2.linkId, 0, 150,
-                        SideCode.BothDirections, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), false, None, None, None)
-
-    when( viiteClient.fetchAllByLinkIds(any[Seq[Long]])).thenReturn(Seq(roadAddress))
-
-    val (persistedLanes, changeSet) = ServiceWithDao.checkSideCodes(Seq(roadLinkTowards2), ChangeSet(), Seq(lane11) )
+    val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards2, Seq(lane11), ChangeSet(), Seq(roadAddress) )
 
     persistedLanes should have size 2
     persistedLanes.map(_.sideCode) should be (Seq(SideCode.AgainstDigitizing.value, SideCode.TowardsDigitizing.value))
@@ -387,13 +380,10 @@ class LaneServiceSpec extends LaneTestSupporter {
                   21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
                   Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21)))) )
 
+    val roadAddress = RoadAddressTEMP(roadLinkTowards1.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+                        Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
 
-    val roadAddress = RoadAddress(1L,6, 202, Track.RightSide, 1, 150, None, None, roadLinkTowards1.linkId, 0, 150,
-                        SideCode.TowardsDigitizing, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), false, None, None, None)
-
-    when( viiteClient.fetchAllByLinkIds(any[Seq[Long]])).thenReturn(Seq(roadAddress))
-
-    val (persistedLanes, changeSet) = ServiceWithDao.checkSideCodes(Seq(roadLinkTowards1), ChangeSet(), Seq(lane11, lane21) )
+    val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards1,Seq(lane11, lane21), ChangeSet(), Seq(roadAddress) )
 
 
     persistedLanes should have size 1

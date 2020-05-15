@@ -186,7 +186,7 @@ trait LaneOperations {
   }
 
 
-  private def adjustLanesSideCodes(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet, roadAddresses: Seq[RoadAddressTEMP]): (Seq[PersistedLane], ChangeSet) = {
+  def adjustLanesSideCodes(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet, roadAddresses: Seq[RoadAddressTEMP]): (Seq[PersistedLane], ChangeSet) = {
 
     // auxiliary function to create PersistedLane object
     def createPersistedLane(laneCode: Int, sideCode: Int, municipalityCode: Long, baseProperties: Seq[LaneProperty]): PersistedLane = {
