@@ -1010,15 +1010,11 @@
           var isValidLane = function (fields) {
             var isValidDatePeriod = function (fields) {
               var isValidDate = true;
-              var dateFields = Property.filterPropertiesByPropertyType(fields, 'date');
+              var startDate = Property.getPropertyByPublicId(fields, 'start_date');
+              var endDate = Property.getPropertyByPublicId(fields, 'end_date');
 
-              if (dateFields.length == 2) {
-                var startDate = Property.getPropertyByPublicId(dateFields, 'start_date');
-                var endDate = Property.getPropertyByPublicId(dateFields, 'end_date');
-
-                if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
-                  isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
-              }
+              if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+                isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
               return isValidDate;
             };
 
@@ -1290,7 +1286,7 @@
           {'name': "Merkin materiaali", 'propertyType': 'single_choice', 'publicId': "sign_material", values: [{ propertyValue: 999 }]},
           {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
           {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] },
-          {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "lane_type", values: [{ propertyValue: 999 }] },
+          {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "lane_type", values: [{ propertyValue: 99 }] },
           {'name': "Vauriotyyppi", 'propertyType': 'single_choice', 'publicId': "type_of_damage", values: [{ propertyValue: 999 }] },
           {'name': "Korjauksen kiireellisyys", 'propertyType': 'single_choice', 'publicId': "urgency_of_repair", values: [{ propertyValue: 999 }] },
           {'name': "Arvioitu käyttöikä", 'propertyType': 'number', 'publicId': "lifespan_left", values: [] },

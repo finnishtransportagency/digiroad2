@@ -178,7 +178,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testTextValueService = new TextValueLinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testNumberOfLanesService = new NumberOfLanesService(mockRoadLinkService, new DummyEventBus)
   val testMassTransitLaneService = new MassTransitLaneService(mockRoadLinkService, new DummyEventBus)
-  
+
   addServlet(new Digiroad2Api(mockRoadLinkService, mockRoadAddressService, testSpeedLimitProvider, testObstacleService, testRailwayCrossingService, testDirectionalTrafficSignService, testServicePointService, mockVVHClient, testMassTransitStopService, testLinearAssetService, testLinearMassLimitationService, testMaintenanceRoadServiceService,
     testPavedRoadService, testRoadWidthService, linearTotalWeightLimitService = testLinearTotalWeightLimitService, numberOfLanesService = testNumberOfLanesService, massTransitLaneService = testMassTransitLaneService), "/*")
   addServlet(classOf[SessionApi], "/auth/*")
@@ -219,7 +219,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(14)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(16)
     }
   }
 
@@ -283,7 +283,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(49)
+      ps.size should equal(54)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")

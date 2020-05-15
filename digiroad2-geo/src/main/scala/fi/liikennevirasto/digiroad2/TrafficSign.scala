@@ -1444,3 +1444,180 @@ case object Moped extends AdditionalPanelsType {
   override val TRvalue = 842
   override val NewLawCode = "H12.9"
 }
+
+
+sealed trait UrgencyOfRepair {
+  def value: Int
+  def description: String
+}
+object UrgencyOfRepair {
+  val values = Set(Unknown, VeryUrgent, Urgent, SomehowUrgent, NotUrgent )
+
+  def apply(intValue: Int):UrgencyOfRepair = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object VeryUrgent extends UrgencyOfRepair { def value = 1; def description = "Erittäin kiireellinen"  }
+  case object Urgent extends UrgencyOfRepair { def value = 2; def description = "kiireellinen" }
+  case object SomehowUrgent extends UrgencyOfRepair { def value = 3; def description = "Jokseenkin kiireellinen" }
+  case object NotUrgent extends UrgencyOfRepair { def value = 4; def description = "Ei kiireellinen" }
+  case object Unknown extends UrgencyOfRepair { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait SignLifeCycle {
+  def value: Int
+  def description: String
+}
+object SignLifeCycle{
+  val values = Set(Unknown, Planned, UnderConstruction, Realized, TemporarilyInUse, TemporarilyOutOfService, OutgoingPermanentDevice )
+
+  def apply(intValue: Int):SignLifeCycle = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Planned extends SignLifeCycle { def value = 1; def description = "Suunnitteilla"  }
+  case object UnderConstruction extends SignLifeCycle { def value = 2; def description = "Rakenteilla" }
+  case object Realized extends SignLifeCycle { def value = 3; def description = "Toteutuma" }
+  case object TemporarilyInUse extends SignLifeCycle { def value = 4; def description = "käytössä tilapäisesti" }
+  case object TemporarilyOutOfService extends SignLifeCycle { def value = 5; def description = "Pois käytöstä tilapaisesti" }
+  case object OutgoingPermanentDevice extends SignLifeCycle { def value = 99; def description = "Poistuva pysyvä laite" }
+  case object Unknown extends SignLifeCycle { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait Structure {
+  def value: Int
+  def description: String
+}
+object Structure {
+  val values = Set(Unknown, Pole, Wall, Bridge, Portal, BarBarrier, Other )
+
+  def apply(intValue: Int):Structure = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Pole extends Structure { def value = 1; def description = "Tolppa"  }
+  case object Wall extends Structure { def value = 2; def description = "Seinä" }
+  case object Bridge extends Structure { def value = 3; def description = "Silta" }
+  case object Portal extends Structure { def value = 4; def description = "Portaali" }
+  case object BarBarrier extends Structure { def value = 5; def description = "Puomi tai muu esterakennelma" }
+  case object Other extends Structure { def value = 6; def description = "muu" }
+  case object Unknown extends Structure { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait Condition {
+  def value: Int
+  def description: String
+}
+object Condition {
+  val values = Set(Unknown, VeryPoor, Poor, Fair, Good, VeryGood )
+
+  def apply(intValue: Int):Condition = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object VeryPoor extends Condition { def value = 1; def description = "Erittäin huono"  }
+  case object Poor extends Condition { def value = 2; def description = "Huono" }
+  case object Fair extends Condition { def value = 3; def description = "Tyydyttävä" }
+  case object Good extends Condition { def value = 4; def description = "Hyvä" }
+  case object VeryGood extends Condition { def value = 5; def description = "Erittäin hyvä" }
+  case object Unknown extends Condition { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait Size {
+  def value: Int
+  def description: String
+}
+object Size {
+  val values = Set(Unknown, CompactSign, RegularSign, LargeSign )
+
+  def apply(intValue: Int):Size = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object CompactSign extends Size { def value = 1; def description = "Pienikokoinen merkki"  }
+  case object RegularSign extends Size { def value = 2; def description = "Normaalikokoinen merkki" }
+  case object LargeSign extends Size { def value = 3; def description = "Suurikokoinen merkki" }
+  case object Unknown extends Size { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait CoatingType {
+  def value: Int
+  def description: String
+}
+object CoatingType {
+  val values = Set(Unknown, R1ClassSheeting, R2ClassSheeting, R3ClassSheeting )
+
+  def apply(intValue: Int):CoatingType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object R1ClassSheeting extends CoatingType { def value = 1; def description = "R1-luokan kalvo"  }
+  case object R2ClassSheeting extends CoatingType { def value = 2; def description = "R2-luokan kalvo" }
+  case object R3ClassSheeting extends CoatingType { def value = 3; def description = "R3-luokan kalvo" }
+  case object Unknown extends CoatingType { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait SignMaterial {
+  def value: Int
+  def description: String
+}
+object SignMaterial {
+  val values = Set(Unknown, Plywood, Aluminum, Other )
+
+  def apply(intValue: Int):SignMaterial = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Plywood extends SignMaterial { def value = 1; def description = "Vaneri"  }
+  case object Aluminum extends SignMaterial { def value = 2; def description = "Alumiini" }
+  case object Other extends SignMaterial { def value = 3; def description = "Muu" }
+  case object Unknown extends SignMaterial { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait LocationSpecifier {
+  def value: Int
+  def description: String
+}
+object LocationSpecifier {
+  val values = Set(Unknown, RightSideOfRoad, LeftSideOfRoad, AboveLane, TrafficIslandOrTrafficDivider, LengthwiseRelativeToTrafficFlow, OnRoadOrStreetNetwork)
+
+  def apply(intValue: Int):LocationSpecifier = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object RightSideOfRoad extends LocationSpecifier { def value = 1; def description = "Väylän oikea puoli"  }
+  case object LeftSideOfRoad extends LocationSpecifier { def value = 2; def description = "Väylän vasen puoli" }
+  case object AboveLane extends LocationSpecifier { def value = 3; def description = "Kaistan yläpuolella" }
+  case object TrafficIslandOrTrafficDivider extends LocationSpecifier { def value = 4; def description = "Keskisaareke tai liikenteenjakaja" }
+  case object LengthwiseRelativeToTrafficFlow extends LocationSpecifier { def value = 5; def description = "Pitkittäin ajosuuntaan nähden" }
+
+  /*English description: On road or street network, for example parking area or courtyard*/
+  case object OnRoadOrStreetNetwork extends LocationSpecifier { def value = 6; def description = "Tie- ja katuverkon puolella, esimerkiksi parkkialueella tai piha-alueella" }
+  case object Unknown extends LocationSpecifier { def value = 999; def description = "Ei tiedossa" }
+}
+
+
+sealed trait TypeOfDamage {
+  def value: Int
+  def description: String
+}
+object TypeOfDamage {
+  val values = Set(Unknown, Rust, Battered, Paint, OtherDamage)
+
+  def apply(intValue: Int):TypeOfDamage = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Rust extends TypeOfDamage { def value = 1; def description = "Ruostunut"  }
+  case object Battered extends TypeOfDamage { def value = 2; def description = "Kolhiintunut" }
+  case object Paint extends TypeOfDamage { def value = 3; def description = "Maalaus" }
+  case object OtherDamage extends TypeOfDamage { def value = 4; def description = "Muu vauiro" }
+  case object Unknown extends TypeOfDamage { def value = 999; def description = "Ei tiedossa" }
+}

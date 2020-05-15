@@ -1,20 +1,20 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.service.pointasset.{AdditionalPanelInfo, IncomingTrafficSign, TrafficSignService}
+import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
-
 import scala.util.Try
+
 
 class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends PointAssetCsvImporter {
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -54,6 +54,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
 
+  val minAdditionalPanels = 1
+  val maxAdditionalPanels = 3
+
   private val longValueFieldMappings = coordinateMappings
 
   //mandatory for the sign 142 (RoadWorks)
@@ -63,16 +66,34 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
 
   private val singleChoiceAcceptableValues = Map(
-    "rakenne" -> Seq(1, 2, 3, 4, 5, 6, 999),
-    "kunto" -> Seq(1, 2, 3, 4, 5, 999),
-    "koko" -> Seq(1, 2, 3, 999),
-    "kalvon tyyppi" -> Seq(1, 2, 3, 999),
-    "merkin materiaali" -> Seq(1, 2, 3, 999),
-    "sijaintitarkenne" -> Seq(1, 2, 3, 4, 5, 6, 999),
-    "kaistan tyyppi" -> Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 20, 21, 22, 999),
-    "tila" -> Seq(1, 2, 3, 4, 5, 99, 999),
-    "vauriotyyppi" -> Seq(1, 2, 3, 4, 999),
-    "korjauksen kiireellisyys" -> Seq(1, 2, 3, 4, 999)
+    "rakenne" -> Seq(Structure.Pole.value, Structure.Wall.value, Structure.Bridge.value, Structure.Portal.value,
+                 Structure.BarBarrier.value, Structure.Other.value, Structure.Unknown.value),
+    "kunto" -> Seq(Condition.VeryPoor.value, Condition.Poor.value, Condition.Fair.value, Condition.Good.value,
+                Condition.VeryGood.value, Condition.Unknown.value),
+
+    "koko" -> Seq(Size.CompactSign.value, Size.RegularSign.value, Size.LargeSign.value, Size.Unknown.value),
+    "kalvon tyyppi" -> Seq(CoatingType.R1ClassSheeting.value, CoatingType.R2ClassSheeting.value, CoatingType.R3ClassSheeting.value,
+                        CoatingType.Unknown.value),
+
+    "merkin materiaali" -> Seq(SignMaterial.Plywood.value, SignMaterial.Aluminum.value, SignMaterial.Other.value, SignMaterial.Unknown.value),
+
+    "sijaintitarkenne" -> Seq(LocationSpecifier.RightSideOfRoad.value, LocationSpecifier.LeftSideOfRoad.value, LocationSpecifier.AboveLane.value,
+                          LocationSpecifier.TrafficIslandOrTrafficDivider.value, LocationSpecifier.LengthwiseRelativeToTrafficFlow.value,
+                          LocationSpecifier.OnRoadOrStreetNetwork.value, LocationSpecifier.Unknown.value),
+
+    "kaistan tyyppi" -> Seq(LaneType.Main.value, LaneType.Passing.value, LaneType.TurnRight.value, LaneType.TurnLeft.value,
+                        LaneType.Through.value, LaneType.Acceleration.value, LaneType.Deceleration.value,
+                        LaneType.OperationalAuxiliary.value, LaneType.MassTransitTaxi.value, LaneType.Truckway.value,
+                        LaneType.Reversible.value, LaneType.Combined.value, LaneType.Walking.value, LaneType.Cycling.value,
+                        LaneType.Unknown.value),
+
+    "tila" -> Seq(SignLifeCycle.Planned.value, SignLifeCycle.UnderConstruction.value, SignLifeCycle.Realized.value, SignLifeCycle.TemporarilyInUse.value,
+              SignLifeCycle.TemporarilyOutOfService.value, SignLifeCycle.OutgoingPermanentDevice.value, SignLifeCycle.Unknown.value),
+
+    "vauriotyyppi" -> Seq(TypeOfDamage.Rust.value, TypeOfDamage.Battered.value, TypeOfDamage.Paint.value, TypeOfDamage.OtherDamage.value,
+                      TypeOfDamage.Unknown.value),
+    "korjauksen kiireellisyys" -> Seq(UrgencyOfRepair.VeryUrgent.value, UrgencyOfRepair.Urgent.value, UrgencyOfRepair.SomehowUrgent.value,
+                                  UrgencyOfRepair.NotUrgent.value, UrgencyOfRepair.Unknown.value )
   )
 
   private val singleChoiceMapping = Map(
@@ -245,85 +266,92 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     }
 
-    var errorMessages: (List[String], Seq[CsvAssetRowAndRoadLink]) = (List(), Seq())
+
     val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
 
     /* start date validations */
     val temporaryDevices = Seq(4,5)
-    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].get
+    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].getOrElse(-999)
     val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
-    val isValidDate = optTrafficSignType match {
+
+    val (isValidDate, datesErrorMsg) = optTrafficSignType match {
       case Some(signType) if (!isBlank(optLifeCycle.toString) && temporaryDevices.contains(optLifeCycle)) || TrafficSignType.applyNewLawCode(signType) == RoadWorks =>
         (optStartDate, optEndDate) match {
           case (Some(startDate), Some(endDate)) =>
             try {
-              val startDateFormat = dateFormatter.parseDateTime(startDate)
-              val endDateFormat = dateFormatter.parseDateTime(endDate)
-              endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
-            } catch {
-              case _: Throwable => false
-            }
-          case (_, _) => false
-        }
-      case _ => true
-    }
+              val startDateFormat = DateParser.DatePropertyFormat.parseDateTime(startDate)
+              val endDateFormat = DateParser.DatePropertyFormat.parseDateTime(endDate)
 
-    if (!isValidDate) {
-      errorMessages = (errorMessages._1 ++ List("Invalid dates"), Seq())
+              val isDatesOk = endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+
+              (isDatesOk, Nil)
+            } catch {
+              case _: Throwable => (false, List("Invalid dates formats"))
+            }
+          case (_, _) => (false, List("Invalid dates"))
+        }
+      case _ => (true, Nil)
     }
     /* end date validations */
 
     /* start direction validations */
     val optTrafficDirection = getPropertyValueOption(parsedRow, "bearing").asInstanceOf[Option[String]]
-    val directionValidator = optTrafficDirection match {
-      case Some(direction) if direction.trim.nonEmpty => true
-      case Some(_) if hasRoadName => true
-      case None if hasRoadName => true
-      case _ =>
-        errorMessages = (errorMessages._1 ++ List("Invalid traffic sign direction"), Seq())
-        false
-    }
+    val (directionValidator, directionValidatorErrorMsg) = optTrafficDirection match {
+            case Some(direction) if direction.trim.nonEmpty => (true, Nil)
+            case _ if hasRoadName => (true, Nil)
+            case _ => (false, List("Invalid traffic sign direction"))
+          }
     /* end direction validations */
 
     /* start additional panels type validations */
-    val minAdditionalPanels = 1
-    val maxAdditionalPanels = 3
-    val additionalPanelsValidator = optTrafficSignType match {
+    val additionalPanelsNumbers = (minAdditionalPanels to maxAdditionalPanels)
+    val (additionalPanelsValidator: Boolean, additionalPanelsErrorMsg: List[String]) = optTrafficSignType match {
       case Some(sType) if sType.trim.nonEmpty =>
-        val panelVerification = (minAdditionalPanels to maxAdditionalPanels).map { index =>
-          getPropertyValueOption(parsedRow, "additionalPanelType" + index).asInstanceOf[Option[String]] match {
-            case Some(panelType) if panelType.trim.nonEmpty && TrafficSignType.applyNewLawCode(panelType).group.value != AdditionalPanels.value =>
-              errorMessages = (errorMessages._1 ++ List("Invalid additional panel type on lisakilpi " + index), Seq())
-              false
-            case _ => true
+          val result = additionalPanelsNumbers.map { index =>
+              getPropertyValueOption(parsedRow, "additionalPanelType" + index).asInstanceOf[Option[String]] match {
+                case Some(panelType) if panelType.trim.nonEmpty && TrafficSignType.applyNewLawCode(panelType).group.value != AdditionalPanels.value =>
+                  (false, List("Invalid additional panel type on lisakilpi " + index))
+                case _ => (true, Nil)
+              }
           }
-        }
-        panelVerification.count(_ == false) < 1
-      case _ => true
+
+        if (result.count(_._1 == false) < 1)
+          (true, Nil)
+        else
+          (false, result.flatMap(_._2))
+
+
+      case _ => (true, Nil)
     }
     /* end additional panels type validations */
 
     /* start lane type validations */
     val optLaneType = getPropertyValueOption(parsedRow, "laneType").asInstanceOf[Option[Int]]
     val optLane = getPropertyValueOption(parsedRow, "lane").asInstanceOf[Option[String]]
-    val lanesValidator = (optLaneType, optLane) match {
+
+    val (lanesValidator, lanesValidatorErrorMsg) = (optLaneType, optLane) match {
       case (_, Some(lane)) if lane.trim.nonEmpty && !lane.matches("^([1-3][1-9])$") =>
-        errorMessages = (errorMessages._1 ++ List("Invalid lane"), Seq())
-        false
-      case (Some(laneType), Some(lane)) if laneType != 999 && lane.trim.nonEmpty =>
-        if (laneType == 1 && lane.trim.charAt(1) == '1') true
-        else if (laneType != 1 && lane.trim.charAt(1) != '1')  true
-        else {
-          errorMessages = (errorMessages._1 ++ List("Invalid lane and lane type match"), Seq())
-          false
-        }
-      case (_,_) => true
+        (false, List("Invalid lane"))
+      case (Some(laneType), Some(laneNumber)) if laneType != LaneType.Unknown.value && laneNumber.trim.nonEmpty =>
+              val isMainTypeAndWrongLaneNumber = laneType == LaneType.Main.value && !LaneNumber.isMainLane(laneNumber.toInt)
+              val isNotMainTypeAndIsMainLaneNumber = laneType != LaneType.Main.value && LaneNumber.isMainLane(laneNumber.toInt)
+
+              if ( isMainTypeAndWrongLaneNumber || isNotMainTypeAndIsMainLaneNumber) {
+                (false, List("Invalid lane and lane type match") )
+              } else {
+                (true, Nil)
+              }
+
+      case (_,_) => (true, Nil)
     }
     /* end lane type validations */
 
+    val allErrors = datesErrorMsg ++ directionValidatorErrorMsg ++ additionalPanelsErrorMsg ++ lanesValidatorErrorMsg
+
     if(isValidDate && directionValidator && additionalPanelsValidator && lanesValidator) super.verifyData(parsedRow, user)
-    else errorMessages
+    else (allErrors, Seq())
+
   }
 
 
@@ -337,11 +365,12 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                             heightPublicId, coatingTypePublicId, signMaterialPublicId, locationSpecifierPublicId, terrainCoordinatesXPublicId, terrainCoordinatesYPublicId,
                             laneTypePublicId, lanePublicId, lifeCyclePublicId, typeOfDamagePublicId, urgencyOfRepairPublicId, lifespanLeftPublicId, oldTrafficCodePublicId,
                             oppositeSideSignPublicId
-    )
+                            )
+
     val listFieldNames = Seq("additionalInfo", "startDate", "endDate", "municipalityId", "mainSignText", "structure", "condition", "size", "height", "coatingType", "signMaterial",
                               "locationSpecifier", "lon", "lat", "laneType", "lane", "lifeCycle", "typeOfDamage", "urgencyOfRepair", "lifespanLeft",
                               "oldTrafficCode", "oppositeSideSign"
-    )
+                            )
 
     val propertiesValues = (listPublicIds, listFieldNames).zipped.map{(publicId, fieldName) =>
       val propertyInfo = getPropertyValueOption(trafficSignAttributes, fieldName)
@@ -365,8 +394,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     }
     var res: Seq[AdditionalPanel] = Seq()
-    val minAdditionalPanels = 1
-    val maxAdditionalPanels = 3
+
     (minAdditionalPanels to maxAdditionalPanels).foreach(index => {
       getPropertyValueOption(trafficSignAttributes, "additionalPanelType" + index) match {
         case Some(pType) if pType.toString.trim.nonEmpty => {
@@ -377,9 +405,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
               getPropertyValueOption(trafficSignAttributes, "additionalPanelValue"+ index).get.toString,
               index,
               getPropertyValueOption(trafficSignAttributes, "additionalPanelText" + index).get.toString,
-              getSingleChoiceValue("additionalPanelSize" + index).toInt,
-              getSingleChoiceValue("additionalPanelCoatingType" + index).toInt,
-              getSingleChoiceValue("additionalPanelColor" + index).toInt
+              getSingleChoiceValue("additionalPanelSize" + index),
+              getSingleChoiceValue("additionalPanelCoatingType" + index),
+              getSingleChoiceValue("additionalPanelColor" + index)
             ))}
         case _ =>
       }})

@@ -387,7 +387,7 @@ class MassTransitStopDao {
     }
   }
 
-  private[this] def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
+  protected def createOrUpdateMultipleChoiceProperty(propertyValues: Seq[PropertyValue], assetId: Long, propertyId: Long) {
     val newValues = propertyValues.map(_.propertyValue.toLong)
     val currentIdsAndValues = Q.query[(Long, Long), (Long, Long)](multipleChoicePropertyValuesByAssetIdAndPropertyId).apply(assetId, propertyId).list
     val currentValues = currentIdsAndValues.map(_._2)

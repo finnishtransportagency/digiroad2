@@ -93,7 +93,7 @@ trait LightGeometry {
   val lat: Double
 }
 
-trait PointAssetOperations {
+trait  PointAssetOperations{
   type IncomingAsset <: IncomingPointAsset
   type PersistedAsset <: PersistedPointAsset
 

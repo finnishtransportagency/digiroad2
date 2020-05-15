@@ -388,14 +388,17 @@
           '</div>';
     };
 
+    function getValuesFromEnumeratedProperty(publicId) {
+      return _.map(
+        _.filter(me.enumeratedPropertyValues, { 'publicId': publicId }),
+        function(val) { return val.values; }
+      );
+    }
+
     var singleChoiceSubType = function (collection, mainType, property, asset) {
       var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function (enumerated) {
-        return enumerated.publicId == 'trafficSigns_type';
-      }), function (val) {
-        return val.values;
-      });
+      var signTypes = getValuesFromEnumeratedProperty ('trafficSigns_type');
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns;
 
@@ -426,7 +429,7 @@
       return '<div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
         '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id="trafficSigns_type">  ' +
+        '      <select class="form-control" id="trafficSigns_type">  ' +
         subTypesTrafficSigns +
         '      </select></div>';
     };
@@ -451,7 +454,7 @@
 
     var singleChoiceTrafficSignTypeHandler = function (property, collection, asset) {
       var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; });
+      var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var auxProperty = property;
       var groups =  collection.getGroup(signTypes);
       var groupKeys = Object.keys(groups);
@@ -486,7 +489,7 @@
         '    <div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+        '      <select class="form-control" id=main-' + property.publicId +'>' +
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +
@@ -494,8 +497,8 @@
     };
 
     var singleChoiceHandler = function (property) {
-      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
-      var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
+      var propertyValue = _.isEmpty(property.values) ? '' : _.head(property.values).propertyValue;
+      var propertyValues = _.head( getValuesFromEnumeratedProperty(property.publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
         return $('<option>',
@@ -507,7 +510,7 @@
           '    <div class="form-group editable form-traffic-sign">' +
           '      <label class="control-label">' + property.localizedName + '</label>' +
           '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-          '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+          '      <select class="form-control" id=main-' + property.publicId +'>' +
           selectableValues +
           '      </select>' +
           '    </div>';
@@ -592,7 +595,7 @@
 
     var singleChoiceForPanelTypes = function (property, collection, asset) {
       var propertyValue = _.isUndefined(_.last(property))  ? '' : _.last(property);
-      var signTypes = _.map(_.filter(me.enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
+      var signTypes = _.map( getValuesFromEnumeratedProperty('trafficSigns_type') );
       var panels = _.find(collection.getAdditionalPanels(signTypes));
       var propertyDisplayValue;
 
@@ -617,7 +620,7 @@
       return '<div class="form-group editable form-traffic-sign-panel">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
         '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id="panelType">  ' +
+        '      <select class="form-control" id="panelType">  ' +
         subTypesTrafficSigns +
         '      </select></div>';
     };
@@ -632,7 +635,7 @@
     var singleChoiceForPanels = function (property) {
       var publicId = _.head(property);
       var propertyValue = (!_.isEmpty(_.last(property))) ? '' : _.last(property);
-      var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': publicId }), function(val) {return val.values; }));
+      var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head( getValuesFromEnumeratedProperty(publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
         return $('<option>',
@@ -651,7 +654,7 @@
           '    <div class="form-group editable form-traffic-sign-panel">' +
           '      <label class="control-label">' + property.label + '</label>' +
           '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-          '      <select class="form-control" style="display:none" id="' + publicId +'">' +
+          '      <select class="form-control" id="' + publicId +'">' +
           selectableValues +
           '      </select>' +
           '    </div>';

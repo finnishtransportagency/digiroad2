@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import java.sql.Connection
-
 import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
@@ -11,20 +10,18 @@ import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
-
 import scala.math.BigDecimal.RoundingMode
 import java.text.{DecimalFormat, NumberFormat}
-
 import Q._
 import org.joda.time.{DateTime, LocalDate}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import java.util.Locale
-
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
+
 
 object Queries {
   def bonecpToInternalConnection(cpConn: Connection) = cpConn.asInstanceOf[ConnectionHandle].getInternalConnection
@@ -175,14 +172,14 @@ object Queries {
     """
   }
 
-  def insertNumberProperty(assetId: Long, propertyId: Long, value: Double) = {
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
       values (primary_key_seq.nextval, $propertyId, $assetId, $value)
     """
   }
 
-  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) = {
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Double) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
       values (primary_key_seq.nextval, $propertyId, $assetId, $value)
@@ -410,7 +407,6 @@ object Queries {
   implicit object GetByteArray extends GetResult[Array[Byte]] {
     def apply(rs: PositionedResult) = rs.nextBytes()
   }
-
 
   def mergeMunicipalities(municipalityToDelete: Int, municipalityToMerge: Int): Unit = {
     sqlu"""UPDATE ASSET SET MUNICIPALITY_CODE = $municipalityToMerge, MODIFIED_DATE = SYSDATE, MODIFIED_BY = 'batch_process_municipality_merge' WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute

@@ -99,7 +99,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
-        case (massTransitStop: PersistedMassTransitStop) => Map(
+        case (massTransitStop: PersistedMassTransitStop) =>
+          val isMassServicePoint = massTransitStop.stopTypes.head == 7
+          Map(
           "type" -> "Feature",
           "id" -> massTransitStop.id,
           "geometry" -> Map("type" -> "Point", "coordinates" -> List(massTransitStop.lon, massTransitStop.lat)),
@@ -108,14 +110,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
             lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
             extractBearing(massTransitStop),
-            extractExternalId(massTransitStop),
+            if(isMassServicePoint) extractPropertyValue("palvelu", massTransitStop.propertyData, propertyValuesToString, Option("valtakunnallinen_id")) else extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
-            extractLinkId(massTransitStop),
-            extractMvalue(massTransitStop),
+            if(isMassServicePoint) "link_id" -> None else extractLinkId(massTransitStop),
+            if(isMassServicePoint) "m_value" -> None else extractMvalue(massTransitStop),
             extractLinkSource(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("pysakin_palvelutaso", massTransitStop.propertyData, firstPropertyValueToInt),
-            extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue(if(isMassServicePoint) "palvelun_nimi" else "nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString, if(isMassServicePoint) Option("nimi_suomeksi") else None),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("osoite_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
@@ -147,7 +149,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
             extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("liitetty_terminaaliin_ulkoinen_tunnus", massTransitStop.propertyData, propertyValuesToString, Some("liitetty_terminaaliin")),
             extractPropertyValue("alternative_link_id", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString)
+            extractPropertyValue("vyohyketieto", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("tarkenne", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("palvelun_lisätieto", massTransitStop.propertyData, propertyValuesToString),
+            extractPropertyValue("viranomaisdataa", massTransitStop.propertyData, propertyValuesToString)
           ))
       })
   }
@@ -783,7 +788,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "linkSource" -> trafficSign.linkSource.value,
           "type" -> TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).NewLawCode,
           "oldTrafficCode" -> showOldTrafficCode(trafficSign),
-          "value" ->trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
+          "value" -> trafficSignService.getProperty(trafficSign, "trafficSigns_value").map(_.propertyDisplayValue.getOrElse("")),
           "additionalInformation" -> trafficSignService.getProperty(trafficSign, "trafficSigns_info").map(_.propertyDisplayValue.getOrElse("")),
           "municipalityId" -> trafficSignService.getProperty(trafficSign, "municipality_id").map(_.propertyDisplayValue.getOrElse("")),
           "mainSignText" -> trafficSignService.getProperty(trafficSign, "main_sign_text").map(_.propertyDisplayValue.getOrElse("")),
@@ -901,7 +906,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       val municipalityNumber = municipality.toInt
       val assetType = params("assetType")
       assetType match {
-        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber))
+        case "mass_transit_stops" => toGeoJSON(getMassTransitStopsByMunicipality(municipalityNumber) ++ servicePointStopService.transformToPersistedMassTransitStop(servicePointStopService.getByMunicipality(municipalityNumber)))
         case "speed_limits" => speedLimitsToApi(speedLimitService.get(municipalityNumber))
         case "total_weight_limits" => sevenRestrictionToApi(TotalWeightLimit.typeId, municipalityNumber)
         case "trailer_truck_weight_limits" => sevenRestrictionToApi(TrailerTruckWeightLimit.typeId, municipalityNumber)

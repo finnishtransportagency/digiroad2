@@ -3,16 +3,12 @@ package fi.liikennevirasto.digiroad2.asset
 import java.nio.charset.StandardCharsets
 import java.text.Normalizer
 import java.util.Base64
-
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.Sunday
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriod, ValidityPeriodDayOfWeek}
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
+import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
-
-import scala.collection.mutable.ListBuffer
 import scala.util.Try
+
 
 sealed trait LinkGeomSource{
   def value: Int
@@ -700,7 +696,7 @@ sealed trait AdditionalPanelSize {
   def propertyDisplayValue : String
 }
 object AdditionalPanelSize {
-  val values = Set(SizeOption1, SizeOption2, SizeOption2, SizeOption999)
+  val values = Set(SizeOption1, SizeOption2, SizeOption3, SizeOption999)
 
   def apply(value: Int): Option[AdditionalPanelSize] = {
     values.find(_.value == value)

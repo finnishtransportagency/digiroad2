@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
@@ -42,14 +42,15 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
   val additionalPublicId = "additional_panel"
-  val additionalPanelSize = "size"
-  val additionalPanelCoatingType = "coating_type"
-  val additionalPanelColor = "additional_panel_color"
+  val additionalPanelSizePublicId = "size"
+  val additionalPanelTextPublicId = "text"
+  val additionalPanelCoatingTypePublicId = "coating_type"
+  val additionalPanelColorPublicId = "additional_panel_color"
   val suggestedPublicId = "suggest_box"
-  val oldTrafficCode = "old_traffic_code"
-  val lifeCycle = "life_cycle"
-  val trafficSignStartDate = "trafficSign_start_date"
-  val trafficSignEndDate = "trafficSign_end_date"
+  val oldTrafficCodePublicId = "old_traffic_code"
+  val lifeCyclePublicId = "life_cycle"
+  val trafficSignStartDatePublicId = "trafficSign_start_date"
+  val trafficSignEndDatePublicId = "trafficSign_end_date"
   private val counterPublicId = "counter"
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
@@ -398,17 +399,19 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def verifyDatesOnTemporarySigns(asset: IncomingTrafficSign): Boolean = {
     val temporaryTrafficSigns = Seq(4, 5)
-    val trafficSignLifeCycle = getProperty(asset, lifeCycle).get.propertyValue
+    val trafficSignLifeCycle = getProperty(asset, lifeCyclePublicId).get.propertyValue
 
-    val trafficSignStartDateValue = getProperty(asset, trafficSignStartDate).getOrElse(PropertyValue("")).propertyValue
-    val trafficSignEndDateValue = getProperty(asset, trafficSignEndDate).getOrElse(PropertyValue("")).propertyValue
+    val trafficSignStartDateValue = getProperty(asset, trafficSignStartDatePublicId).getOrElse(PropertyValue("")).propertyValue
+    val trafficSignEndDateValue = getProperty(asset, trafficSignEndDatePublicId).getOrElse(PropertyValue("")).propertyValue
 
     if (temporaryTrafficSigns.contains(trafficSignLifeCycle.toInt) && (trafficSignStartDateValue.isEmpty || trafficSignEndDateValue.isEmpty))
       return false
 
     if (!trafficSignStartDateValue.isEmpty && !trafficSignEndDateValue.isEmpty){
-      val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-      return !formatter.parseDateTime(trafficSignStartDateValue).isAfter(formatter.parseDateTime(trafficSignEndDateValue))
+      val startDateAsDate = DateParser.DatePropertyFormat.parseDateTime(trafficSignStartDateValue)
+      val endDateAsDate = DateParser.DatePropertyFormat.parseDateTime(trafficSignEndDateValue)
+
+      return !startDateAsDate.isAfter(endDateAsDate)
     }
 
     true
@@ -416,7 +419,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
   def isOldCodeBeingUsed(asset: IncomingTrafficSign): Boolean = {
     val checkedValue = "1"
-    val oldCode = getProperty(asset, oldTrafficCode)
+    val oldCode = getProperty(asset, oldTrafficCodePublicId)
     oldCode.get.propertyValue == checkedValue
   }
 
@@ -433,15 +436,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
     val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt).toSet
     val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
+
       AdditionalPanel(
         getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt,
         getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
         getProperty(panel.propertyData, valuePublicId).getOrElse(PropertyValue("")).propertyValue,
         index,
-        getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
-        getSingleChoiceValue(panel, additionalPanelSize),
-        getSingleChoiceValue(panel, additionalPanelCoatingType),
-        getSingleChoiceValue(panel, additionalPanelColor)
+        getProperty(panel.propertyData, additionalPanelTextPublicId).getOrElse(PropertyValue("")).propertyValue,
+        getSingleChoiceValue(panel, additionalPanelSizePublicId),
+        getSingleChoiceValue(panel, additionalPanelCoatingTypePublicId),
+        getSingleChoiceValue(panel, additionalPanelColorPublicId)
       )
     }.toSeq
 

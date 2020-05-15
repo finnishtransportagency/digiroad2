@@ -13,7 +13,6 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingTrafficSign
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-import org.joda.time.format.DateTimeFormat
 import scala.util.Try
 
 case class PersistedTrafficSign(id: Long, linkId: Long,
@@ -49,7 +48,6 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           expired: Boolean = false)
 
 object OracleTrafficSignDao {
-  val dateFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   private def query() =
     """
@@ -469,13 +467,13 @@ object OracleTrafficSignDao {
         }
       case Date =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
-        val isBlank =  propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toString.isEmpty
+        val isBlank =  propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty
         if (!datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
           deleteDateProperty(assetId, propertyId).execute
         } else if (datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
-          insertDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toString)).execute
+          insertDateProperty(assetId, propertyId, DateParser.DatePropertyFormat.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue)).execute
         } else if (!datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank){
-          updateDateProperty(assetId, propertyId, dateFormatter.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toString)).execute
+          updateDateProperty(assetId, propertyId, DateParser.DatePropertyFormat.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue)).execute
         }
       case Number =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
