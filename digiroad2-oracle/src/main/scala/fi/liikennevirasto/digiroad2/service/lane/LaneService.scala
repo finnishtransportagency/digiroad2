@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import java.security.InvalidParameterException
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools}
+import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -160,6 +160,32 @@ trait LaneOperations {
     lanes
   }
 
+
+  /*
+   * Based on track we need to know what laneCode is correct or not
+   * This will return the correct MainLane Code and the range of lanes Code (start and end) to remove
+   */
+  private def getLaneDirectionOkAndToRemove (filteredRoadAddresses: Seq[RoadAddressTEMP]): (Int, (Int, Int)) = {
+
+    if (filteredRoadAddresses.nonEmpty) {
+      filteredRoadAddresses.head.track match {
+        /* If Track is Right Side it means the AET and LET are increasing */
+        case Track.RightSide => (MainLane.towardsDirection, (MainLane.againstDirection, FourthRightAdditional.againstDirection))
+
+        /* If Track is Right Side it means the AET and LET are decreasing */
+        case Track.LeftSide => (MainLane.againstDirection, (MainLane.towardsDirection,FourthRightAdditional.towardsDirection) )
+
+        /* If the Track is not Left or Right Side ... Its not to be handle! For now ..   */
+        case _ => (MainLane.towardsDirection, (MainLane.motorwayMaintenance, MainLane.motorwayMaintenance) )
+      }
+    }
+    else {
+      (MainLane.towardsDirection, (MainLane.againstDirection, FourthRightAdditional.againstDirection))
+    }
+
+  }
+
+
   private def adjustLanesSideCodes(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet, roadAddresses: Seq[RoadAddressTEMP]): (Seq[PersistedLane], ChangeSet) = {
 
     // auxiliary function to create PersistedLane object
@@ -178,11 +204,12 @@ trait LaneOperations {
     val filteredRoadAddresses = roadAddresses.find(_.linkId == roadLink.linkId)
 
     val (mainLane11SideCode, mainLane21SideCode) = if (filteredRoadAddresses.nonEmpty)
-      (fixSideCode(filteredRoadAddresses.head, MainLane.towardsDirection.toString),
-        fixSideCode(filteredRoadAddresses.head, MainLane.againstDirection.toString))
-    else
-      (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+                                                    (fixSideCode(filteredRoadAddresses.head, MainLane.towardsDirection.toString),
+                                                      fixSideCode(filteredRoadAddresses.head, MainLane.againstDirection.toString))
+                                                  else
+                                                    (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
+    val (mainLaneDirectionOK, mainLaneDirectionRemove) = getLaneDirectionOkAndToRemove ( filteredRoadAddresses.toSeq)
 
     val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
     val baseLane = lanesToProcess.minBy(_.laneCode)
@@ -196,12 +223,12 @@ trait LaneOperations {
           lanesToProcess.find(lane => lane.laneCode == MainLane.againstDirection && lane.sideCode == mainLane21SideCode.value).getOrElse(false))
 
         val toAdd = mainLanes match {
-          case (false, lane: PersistedLane) => Seq(createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps))
+          case (false, _: PersistedLane) => Seq(createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps))
 
-          case (lane: PersistedLane, false) => Seq(createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps))
+          case (_: PersistedLane, false) => Seq(createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps))
 
           case (false, false) => Seq(createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps),
-            createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps))
+                                    createPersistedLane(MainLane.againstDirection, mainLane21SideCode.value, baseLane.municipalityCode, baseProps))
           case _ => Seq()
         }
 
@@ -213,34 +240,36 @@ trait LaneOperations {
 
         (lanes ++ toAdd, changeSet.copy(generatedPersistedLanes = changeSet.generatedPersistedLanes ++ toAdd, expiredLaneIds = changeSet.expiredLaneIds ++ toRemove))
 
+
       case TrafficDirection.TowardsDigitizing =>
 
-        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == MainLane.towardsDirection && lane.sideCode == SideCode.BothDirections.value))
-          Seq(createPersistedLane(MainLane.towardsDirection, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
-        else
-          Seq()
+        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK && lane.sideCode == SideCode.BothDirections.value))
+                      Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
+                    else
+                      Seq()
 
-        val toRemove = lanesToProcess.filter(lane => (lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection) ||
-          lane.sideCode != SideCode.BothDirections.value)
-          .map(_.id)
-          .filterNot(_ == 0L)
+        val toRemove = lanesToProcess.filter(lane => (lane.laneCode >= mainLaneDirectionRemove._1 && lane.laneCode <= mainLaneDirectionRemove._2) ||
+                                              lane.sideCode != SideCode.BothDirections.value)
+                                      .map(_.id)
+                                      .filterNot(_ == 0L)
 
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
         (lanesToAdd, changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ toRemove, generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd))
 
+
       case TrafficDirection.AgainstDigitizing =>
 
-        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == MainLane.againstDirection && lane.sideCode == SideCode.BothDirections.value))
-          Seq(createPersistedLane(MainLane.againstDirection, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
-        else
-          Seq()
+        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK && lane.sideCode == SideCode.BothDirections.value))
+                      Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
+                    else
+                      Seq()
 
-        val toRemove = lanesToProcess.filter(lane => (lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection) ||
-          lane.sideCode != SideCode.BothDirections.value)
-          .map(_.id)
-          .filterNot(_ == 0L)
+        val toRemove = lanesToProcess.filter(lane => (lane.laneCode >= mainLaneDirectionRemove._1 && lane.laneCode <= mainLaneDirectionRemove._2) ||
+                                              lane.sideCode != SideCode.BothDirections.value)
+                                      .map(_.id)
+                                      .filterNot(_ == 0L)
 
         val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
 
