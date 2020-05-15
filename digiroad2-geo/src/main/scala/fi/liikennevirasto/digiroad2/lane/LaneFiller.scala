@@ -23,8 +23,6 @@ object  LaneFiller {
 
 
   case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
-
-  case class BasicRoadAddress(linkId: Long, track: Int, sideCode: SideCode )
 }
 
 class LaneFiller {
@@ -171,28 +169,6 @@ class LaneFiller {
       endMeasure = adjustedEndMeasure.getOrElse(lane.endMeasure))
     (adjustedAsset, mValueAdjustments)
   }
-
-  // Similar as function in LaneUtils. It's duplicate because we can't call LaneUtils here
-  def fixSideCode( roadAddress: BasicRoadAddress , laneCode: String ): SideCode = {
-    roadAddress.track match {
-      case 1 | 2 => SideCode.BothDirections // This means the road may have both ways with something between them (like highways or similar)
-      // The representation of the lane will be in the middle 'of the road'
-
-      case _ => roadAddress.sideCode match { // In this case the road have both ways 'connected' so we need to take attention of the SideCode and laneCode
-                                             // This will have influence in representation of the lane
-                              case SideCode.AgainstDigitizing => if (laneCode.startsWith("1")) SideCode.AgainstDigitizing
-                                                                  else SideCode.TowardsDigitizing
-
-                              case SideCode.TowardsDigitizing => if (laneCode.startsWith("1")) SideCode.TowardsDigitizing
-                                                                  else SideCode.AgainstDigitizing
-
-                              case _ => SideCode.BothDirections
-                            }
-      }
-
-  }
-
-
 
   def projectLinearAsset(lane: PersistedLane, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLane, ChangeSet)= {
     val newLinkId = to.linkId

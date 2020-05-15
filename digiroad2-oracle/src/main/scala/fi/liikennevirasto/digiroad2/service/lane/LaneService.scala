@@ -78,6 +78,21 @@ trait LaneOperations {
     })
   }
 
+  // Validate if lane.SideCode is ok with roadAddress.SideCode.
+  // adjustLanesSideCodes function will validate that
+  def checkSideCodes (roadLinks: Seq[RoadLink], changedSet: ChangeSet, allLanes: Seq[PersistedLane] ): (Seq[PersistedLane], ChangeSet) = {
+
+    val roadAddresses = LaneUtils.viiteClient.fetchAllByLinkIds(roadLinks.map(_.linkId))
+                                              .map( elem => RoadAddressTEMP (elem.linkId, elem.roadNumber, elem.roadPartNumber, elem.track,
+                                                elem.startAddrMValue, elem.endAddrMValue, elem.startMValue, elem.endMValue,elem.geom, Some(elem.sideCode), Some(0) )
+                                              )
+
+    roadLinks.foldLeft(Seq.empty[PersistedLane], changedSet) {
+      case ((_,changedSet), roadLink) =>
+        adjustLanesSideCodes(roadLink, allLanes, changedSet, roadAddresses)
+    }
+  }
+
   protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
@@ -101,18 +116,11 @@ trait LaneOperations {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newLanes.length, System.currentTimeMillis - timing))
     }
 
-    val roadAddresses = LaneUtils.viiteClient.fetchAllByLinkIds(roadLinks.map(_.linkId))
-                                            .map( elem => RoadAddressTEMP (elem.linkId, elem.roadNumber, elem.roadPartNumber, elem.track,
-                                              elem.startAddrMValue, elem.endAddrMValue, elem.startMValue, elem.endMValue,elem.geom, Some(elem.sideCode), Some(0) )
-                                            )
 
     val allLanes = assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks
     val roadLinksToAdjust = roadLinks.filter( road =>  allLanes.exists(_.linkId == road.linkId))
 
-    val (lanesAfterSideCodeAdjust, changeSetInterm) = roadLinksToAdjust.foldLeft(Seq.empty[PersistedLane], changedSet) {
-      case ((_,changedSet), roadLink) =>
-        adjustLanesSideCodes(roadLink, allLanes, changedSet, roadAddresses)
-    }
+    val (lanesAfterSideCodeAdjust, changeSetInterm) = checkSideCodes(roadLinksToAdjust, changedSet, allLanes )
 
     val groupedAssets = lanesAfterSideCodeAdjust.groupBy(_.linkId)
     val (filledTopology, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changeSetInterm) )
