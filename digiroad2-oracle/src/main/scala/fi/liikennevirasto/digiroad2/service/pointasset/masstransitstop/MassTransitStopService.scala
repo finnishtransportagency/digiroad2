@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.dao.Queries._
-import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries}
+import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, MunicipalityDao, Queries, ServicePoint}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.model.LRMPosition
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -240,7 +240,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink, newTransaction: Boolean): Long = {
     val (persistedAsset, publishInfo, strategy) =
-      if(newTransaction) {
+      if (newTransaction) {
         withDynTransaction {
           createWithUpdateFloating(asset, username, roadLink)
         }
@@ -293,9 +293,11 @@ trait MassTransitStopService extends PointAssetOperations {
     val point = Point(asset.lon, asset.lat)
     val strategy = getStrategy(asset.properties.toSet, roadLink)
     val newAsset = asset.copy(properties = excludeProperties(asset.properties).toSeq)
+
     val (persistedAsset, publishInfo) = strategy.create(newAsset, username, point, roadLink)
     withFloatingUpdate(persistedStopToMassTransitStopWithProperties(_ => Some(roadLink)))(persistedAsset)
     (persistedAsset, publishInfo, strategy)
+
   }
 
   def updateExistingById(assetId: Long, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, newTransaction: Boolean = true): MassTransitStopWithProperties = {
@@ -469,6 +471,7 @@ trait MassTransitStopService extends PointAssetOperations {
           val childFilters = massTransitStopDao.fetchByRadius(point, 200)
             .filter(a =>  a.terminalId.isEmpty)
             .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+            .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.ServicePoint))
           val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
             val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
             PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)

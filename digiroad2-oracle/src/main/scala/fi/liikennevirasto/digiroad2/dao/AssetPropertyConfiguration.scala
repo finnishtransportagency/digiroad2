@@ -48,6 +48,15 @@ object AssetPropertyConfiguration {
     )
   }
 
+  def assetRowToCommonProperties(row: ServicePointRow): Seq[Property] = {
+    List(
+      createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
+      createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),
+      createProperty(ValidFromId, row.validFrom.map(_.toString)),
+      createProperty(ValidToId, row.validTo.map(_.toString))
+    )
+  }
+
   private def createProperty(id: String, value: Option[String]): Property = {
     commonAssetProperties(id).propertyDescriptor.copy(values = Seq(PropertyValue(value.getOrElse(""), value)))
   }

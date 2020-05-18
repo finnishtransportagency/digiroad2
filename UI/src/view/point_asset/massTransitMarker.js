@@ -10,6 +10,14 @@
     var EMPTY_IMAGE_TYPE = '99';
     var styleScale = 1;
 
+    var SERVICE_POINT_IMAGES = [
+        {value: 5, imgUrl: 'images/service_points/railwayStation2.png'},
+        {value: 6, imgUrl: 'images/service_points/railwayStation.png'},
+        {value: 7, imgUrl: 'images/service_points/subwayStation.png'},
+        {value: 8, imgUrl: 'images/service_points/airport.png' },
+        {value: 9, imgUrl: 'images/service_points/ferry.png' }
+    ];
+
     var roundRect = function(canvasContext, x, y, width, height, radius) {
       canvasContext.beginPath();
       canvasContext.moveTo(x + radius, y);
@@ -146,19 +154,67 @@
       return cacheImage(cachedImageKey, image, canvas.width, canvas.height );
     };
 
+    function extractServicePointsAuxiliarsValues() {
+      var resultValues = {palvelu: undefined, tarkenne: undefined};
+      var auxiliarData = data.payload ? data.payload.properties : data.propertyData;
+
+      if (!_.isUndefined(auxiliarData)) {
+        resultValues.palvelu = _.find(auxiliarData, function(prop) {return prop.publicId == "palvelu";});
+        resultValues.tarkenne = _.find(auxiliarData, function(prop) {return prop.publicId == "tarkenne";});
+      }
+
+      if (!_.isUndefined(resultValues.palvelu)) {
+        if (resultValues.palvelu.values.length > 0) {
+          resultValues.palvelu = resultValues.palvelu.values[0].propertyValue;
+        } else {
+          resultValues.palvelu = undefined;
+        }
+      }
+
+      if (!_.isUndefined(resultValues.tarkenne)) {
+        if (resultValues.tarkenne.values.length > 0) {
+          resultValues.tarkenne = resultValues.tarkenne.values[0].propertyValue;
+        } else {
+          resultValues.tarkenne = undefined;
+        }
+      }
+
+      return resultValues;
+    }
+
     var createStopTypeStyles = function(stopTypes, margin){
       var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       stopTypes.sort();
       var i = 0;
-      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function(stopType) {
+      var srcImg;
+      var anchor;
+
+      return _.map(_.isEmpty(stopTypes) ? [EMPTY_IMAGE_TYPE] : stopTypes, function (stopType) {
         i++;
+        if (selectedMassTransitStopModel.isServicePointType(stopType)) {
+          var auxServicePointInfo = extractServicePointsAuxiliarsValues();
+          anchor = [0, (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset + 13];
+
+          if (auxServicePointInfo.palvelu !== "11") {
+            srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.palvelu) return spi;});
+            srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE] : srcImg.imgUrl;
+          }
+          else if (!_.isUndefined(auxServicePointInfo.tarkenne)) {
+            srcImg = SERVICE_POINT_IMAGES.find( function(spi) { if (spi.value == auxServicePointInfo.tarkenne ) return spi;});
+            srcImg = srcImg === undefined ? [EMPTY_IMAGE_TYPE] : srcImg.imgUrl;
+          }
+        } else {
+          anchor = [-(IMAGE_PADDING + 1 + imgMargin), (i * IMAGE_HEIGHT) + IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset];
+          srcImg = 'images/mass-transit-stops/' + stopType + '.png';
+        }
+
         return new ol.style.Style({
           image: new ol.style.Icon(({
-            anchor: [-(IMAGE_PADDING+1+imgMargin), (i * IMAGE_HEIGHT)+ IMAGE_PADDING + STICK_HEIGHT + imgMargin + groupOffset],
+            anchor: anchor,
             anchorXUnits: 'pixels',
             anchorYUnits: 'pixels',
-            src: 'images/mass-transit-stops/' + stopType + '.png',
+            src: srcImg,
             scale: styleScale
           }))
         });
@@ -232,7 +288,8 @@
     var createDirectionArrowStyle = function() {
       var basePath = 'src/resources/digiroad2/bundle/assetlayer/images/';
       var directionArrowSrc, rotation;
-      if (data.stopTypes[0] == 6) {
+      var stopType = _.head(data.stopTypes);
+      if (selectedMassTransitStopModel.isTerminalType(stopType) || selectedMassTransitStopModel.isServicePointType(stopType)) {
         directionArrowSrc = basePath + (data.floating ? 'no-direction-warning.svg' : 'no-direction.svg');
         rotation = 0;
       } else {
@@ -312,16 +369,24 @@
         }
       }
 
-      if(data.stopTypes[0] == 6)
+      if (selectedMassTransitStopModel.isTerminalType(data.stopTypes[0]) || selectedMassTransitStopModel.isServicePointType(data.stopTypes[0]))
         direction = '';
 
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
-      styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
-      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
-      styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
-      styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
+
+      /* Due the impact of the order of the concats*/
+      if (!_.isEmpty(data.stopTypes) && selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
+        styles = styles.concat(createStopTypeStyles(data.stopTypes));
+      }
+      else {
+        styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
+        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
+        styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
+        styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
+      }
+
       styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;
     };
@@ -331,7 +396,11 @@
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
-      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
+
+      /* if it is a servicePoint don't add the background */
+      if (!_.isEmpty(data.stopTypes) && !selectedMassTransitStopModel.isServicePointType(data.stopTypes[0])) {
+        styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
+      }
       styles = styles.concat(createStopTypeStyles(data.stopTypes));
       styles = selectedMassTransitStopModel.isSuggested(data) ? styles.concat(createQuestionIconStyle(data, 5)) : styles;
       return styles;

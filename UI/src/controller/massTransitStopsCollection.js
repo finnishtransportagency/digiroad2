@@ -8,6 +8,7 @@
       future: false,
       past: false
     };
+    var showServicePoints = true;
 
     var filterComplementaries = function(assets){
       if(isComplementaryActive)
@@ -27,15 +28,21 @@
       }));
     };
 
-    var refreshAssets = function(mapMoveEvent) {
-      backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
-        backendAssets = filterComplementaries(backendAssets);
+    var refreshAssets = function(mapMoveEvent, useOldRefresh) {
+      var treatAssets = function (backendAssets) {
+        if (useOldRefresh){ backendAssets = filterComplementaries(backendAssets); }
+
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
           eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
         }
-      });
+      };
+
+      if(showServicePoints){ backend.getAssetsWithCallbackServiceStops(mapMoveEvent.bbox, treatAssets); }
+
+      if (useOldRefresh){ backend.getAssetsWithCallback(mapMoveEvent.bbox, treatAssets); }
+
       verificationCollection.fetch(mapMoveEvent.bbox, mapMoveEvent.center, massTransitStopTypeId, true);
     };
 
@@ -90,7 +97,7 @@
       fetchAssets: function(boundingBox) {
         backend.getAssets(boundingBox, function(assets){
           return filterComplementaries(assets);
-        });
+        }, showServicePoints);
       },
       refreshAssets: refreshAssets,
       fetchLightAssets: fetchLightAssets,
@@ -116,6 +123,17 @@
       },
       getValidityPeriods: function() {
         return validityPeriods;
+      },
+      getShowHideServicePoints: function() {
+        return showServicePoints;
+      },
+      showHideServicePoints: function(checked) {
+        if (checked) {
+          eventbus.trigger('servicePointCheckbox:changed', showServicePoints);
+        }
+
+        showServicePoints = checked;
+        eventbus.trigger('validityPeriod:changed', selectedValidityPeriods(validityPeriods));
       },
       selectedValidityPeriodsContain: function(validityPeriod) {
         return validityPeriods[validityPeriod];
