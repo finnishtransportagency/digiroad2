@@ -98,6 +98,10 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     Try(propertyValue.toInt).toOption
   }
 
+  def tryToDouble(propertyValue: String ) : Option[Double] = {
+    Try(propertyValue.toDouble).toOption
+  }
+
   def getPropertyValue(pointAssetAttributes: ParsedProperties, propertyName: String): Any = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get
   }
