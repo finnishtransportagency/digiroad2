@@ -5,8 +5,7 @@ import java.text.Normalizer
 import java.util.Base64
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormatter
-import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import scala.util.Try
 
 

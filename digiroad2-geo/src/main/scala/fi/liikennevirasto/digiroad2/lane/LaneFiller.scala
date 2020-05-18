@@ -2,11 +2,11 @@ package fi.liikennevirasto.digiroad2.lane
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
-import fi.liikennevirasto.digiroad2.lane.LaneNumber.{FourthRightAdditional, MainLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
+
 
 object  LaneFiller {
   case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
@@ -30,16 +30,15 @@ class LaneFiller {
   val MaxAllowedError = 0.01
   val MinAllowedLength = 2.0
 
-  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[Long, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLane], ChangeSet) = {
-    val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet) => (Seq[PersistedLane], ChangeSet)] = Seq(
+  def fillTopology(topology: Seq[RoadLink], groupedLanes: Map[Long, Seq[PersistedLane]], changedSet: Option[ChangeSet] = None ): (Seq[PieceWiseLane], ChangeSet) = {
+    val fillOperations: Seq[(RoadLink, Seq[PersistedLane], ChangeSet ) => (Seq[PersistedLane], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       capSegmentsThatOverflowGeometry,
       expireOverlappingSegments,
       combine,
       fuse,
       dropShortSegments,
-      adjustAssets,
-      adjustLanesSideCodes
+      adjustAssets
     )
 
     val changeSet = changedSet match {
@@ -52,7 +51,7 @@ class LaneFiller {
       val assetsOnRoadLink = groupedLanes.getOrElse(roadLink.linkId, Nil)
 
       val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        operation(roadLink, currentSegments, currentAdjustments)
+        operation(roadLink, currentSegments, currentAdjustments )
       }
       (existingAssets ++ toLPieceWiseLane(adjustedAssets, roadLink), assetAdjustments)
     }
@@ -169,84 +168,6 @@ class LaneFiller {
       startMeasure = adjustedStartMeasure.getOrElse(lane.startMeasure),
       endMeasure = adjustedEndMeasure.getOrElse(lane.endMeasure))
     (adjustedAsset, mValueAdjustments)
-  }
-
-
-  private def adjustLanesSideCodes(roadLink: RoadLink, lanes: Seq[PersistedLane], changeSet: ChangeSet): (Seq[PersistedLane], ChangeSet) = {
-
-    // auxiliary function to create PersistedLane object
-    def createPersistedLane(laneCode: Int, sideCode: Int, municipalityCode: Long, baseProperties: Seq[LaneProperty] ): PersistedLane = {
-      val lanePropertiesValues = baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
-
-      PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode,
-        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
-        lanePropertiesValues)
-    }
-
-
-    if(lanes.isEmpty )
-      return (lanes, changeSet)
-
-    val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
-    val baseLane = lanesToProcess.minBy(_.laneCode)
-    val baseProps = baseLane.attributes.filterNot(_.publicId == "lane_code")
-
-    roadLink.trafficDirection match {
-
-      case TrafficDirection.BothDirections =>
-
-        val mainLanes = ( lanesToProcess.exists(_.laneCode == MainLane.towardsDirection),  lanesToProcess.exists(_.laneCode == MainLane.againstDirection) )
-
-        val toAdd = mainLanes match {
-          case (false, true) => Seq( createPersistedLane(MainLane.towardsDirection, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ) )
-
-          case (true, false) => Seq( createPersistedLane(MainLane.againstDirection, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps ) )
-          case (false, false) => Seq(
-                                createPersistedLane(MainLane.towardsDirection, SideCode.TowardsDigitizing.value, baseLane.municipalityCode, baseProps ),
-                                createPersistedLane(MainLane.againstDirection, SideCode.AgainstDigitizing.value, baseLane.municipalityCode, baseProps )
-                              )
-          case _ => Seq()
-        }
-
-        (lanes ++ toAdd, changeSet.copy( generatedPersistedLanes = changeSet.generatedPersistedLanes ++ toAdd ))
-
-      case TrafficDirection.TowardsDigitizing =>
-
-        val toAdd = if ( !lanesToProcess.exists(lane => lane.laneCode == MainLane.towardsDirection && lane.sideCode == SideCode.BothDirections.value))
-                    Seq( createPersistedLane(MainLane.towardsDirection, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps) )
-                  else
-                    Seq()
-
-
-        val toRemove = lanesToProcess.filter(lane => (lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection) ||
-                                                      lane.sideCode != SideCode.BothDirections.value)
-                                      .map(_.id)
-                                      .filterNot(_ == 0L)
-
-
-        val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
-
-        (lanesToAdd, changeSet.copy( expiredLaneIds = changeSet.expiredLaneIds ++ toRemove, generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd ))
-
-      case TrafficDirection.AgainstDigitizing =>
-
-        val toAdd = if ( !lanesToProcess.exists(lane => lane.laneCode == MainLane.againstDirection && lane.sideCode == SideCode.BothDirections.value))
-                      Seq( createPersistedLane(MainLane.againstDirection, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps ) )
-                    else
-                      Seq()
-
-        val toRemove = lanesToProcess.filter( lane => (lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection) ||
-                                              lane.sideCode != SideCode.BothDirections.value)
-                                      .map(_.id)
-                                      .filterNot(_ == 0L)
-
-        val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
-
-        (lanesToAdd, changeSet.copy( expiredLaneIds = changeSet.expiredLaneIds ++ toRemove, generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd ))
-
-      case _ => (lanes, changeSet)
-    }
-
   }
 
   def projectLinearAsset(lane: PersistedLane, to: RoadLink, projection: Projection, changedSet: ChangeSet) : (PersistedLane, ChangeSet)= {
@@ -443,7 +364,7 @@ class LaneFiller {
 
         // Replace origin and target with this new item in the list and recursively call itself again
         fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
-          changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(a => a.laneId > 0 && a.laneId != modified.id) ++ mValueAdjustment))
+          changeSet.copy(expiredLaneIds = changeSet.expiredLaneIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(a => a.laneId > 0 && a.laneId != modified.id) ++ mValueAdjustment) )
 
       } else {
         val fused = fuse(roadLink, sortedList.tail, changeSet)
