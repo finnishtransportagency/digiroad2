@@ -81,7 +81,7 @@ trait LaneOperations {
   protected def getLanesByRoadLinks(roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLane] = {
     val mappedChanges = LaneUtils.getMappedChanges(changes)
     val removedLinkIds = LaneUtils.deletedRoadLinkIds(mappedChanges, roadLinks.map(_.linkId).toSet)
-    val existingAssets = fetchExistingLanesByRoadLinks(roadLinks, removedLinkIds)
+    val existingAssets = fetchExistingLanesByLinkIds(roadLinks.map(_.linkId).distinct, removedLinkIds)
 
     val timing = System.currentTimeMillis
     val (assetsOnChangedLinks, lanesWithoutChangedLinks) = existingAssets.partition(a => LaneUtils.newChangeInfoDetected(a, mappedChanges))
@@ -262,9 +262,7 @@ trait LaneOperations {
     }.filterNot(_.expired)
   }
 
-  def fetchExistingLanesByRoadLinks(roadLinks: Seq[RoadLink], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
-    val linkIds = roadLinks.map(_.linkId)
-
+  def fetchExistingLanesByLinkIds(linkIds: Seq[Long], removedLinkIds: Seq[Long] = Seq()): Seq[PersistedLane] = {
     withDynTransaction {
       dao.fetchLanesByLinkIds(linkIds ++ removedLinkIds)
     }.filterNot(_.expired)
@@ -290,6 +288,15 @@ trait LaneOperations {
     }
   }
 
+  /**
+    * Filter lanes based on their lane code direction
+    * @param lanes  lanes to be filtered
+    * @param direction  direction to filter (first char of the lane code)
+    * @return filtered lanes by lane code direction
+    */
+  def filterLanesByDirection(lanes: Seq[PersistedLane], direction: Char): Seq[PersistedLane] = {
+    lanes.filter(_.laneCode.toString.charAt(0) == direction)
+  }
 
   def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit ={
     if (newLanes.nonEmpty) {
