@@ -46,7 +46,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 3, 'Keskisaareke tai liikenteenjakaja', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_relative_position'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_relative_position'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_relative_position'));
 
 --Add property traffic light structure -> Opastimen rakennelma
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
@@ -77,7 +77,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 7, 'Muu', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_structure'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_structure'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_structure'));
 
 --Add property traffic light maximum height for passing under -> Alituskorkeus
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
@@ -100,7 +100,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 2, 'Kyllä', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_sound_signal'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_sound_signal'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_sound_signal'));
 
 --Add property traffic light detection of vehicle) -> Ajoneuvon tunnistus
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
@@ -122,7 +122,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 4, 'Muu', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_vehicle_detection'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_vehicle_detection'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_vehicle_detection'));
 
 --Add property traffic light push button -> Painonappi
 INSERT INTO LOCALIZED_STRING (ID,VALUE_FI, CREATED_BY, CREATED_DATE)
@@ -138,7 +138,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 2, 'Kyllä', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_push_button'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_push_button'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_push_button'));
 
 --Add property traffic light additional information -> Lisätieto
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
@@ -195,7 +195,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 22, 'Pyöräilykaista', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_lane_type'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_lane_type'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_lane_type'));
 
 --Add property traffic light location coordinates -> Maastosijainti
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
@@ -254,7 +254,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 6, 'Poistuva pysyvä laite', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_state'));
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 999, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_state'));
+VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v226', (select id from property where public_ID = 'trafficLight_state'));
 
 --grouped Id modifications
 CREATE SEQUENCE grouped_id_seq
@@ -288,3 +288,33 @@ ADD CONSTRAINT SINGLE_CHOICE_PK PRIMARY KEY (ASSET_ID, ENUMERATED_VALUE_ID, GROU
 DROP INDEX AID_PID_TEXT_PROPERTY_SX;
 
 CREATE UNIQUE INDEX AID_PID_TEXT_PROPERTY_SX ON TEXT_PROPERTY_VALUE ("ASSET_ID", "PROPERTY_ID", "GROUPED_ID");
+
+--modifications to state
+UPDATE ENUMERATED_VALUE
+SET NAME_FI = 'Käytössä pysyvästi'
+WHERE NAME_FI = 'Toteutuma' AND PROPERTY_ID = (SELECT ID FROM PROPERTY p WHERE p.ASSET_TYPE_ID = 300 AND p.PUBLIC_ID = 'life_cycle')
+
+UPDATE ENUMERATED_VALUE
+SET VALUE = 6
+WHERE VALUE = 99 AND PROPERTY_ID = (SELECT ID FROM PROPERTY p WHERE p.ASSET_TYPE_ID = 300 AND p.PUBLIC_ID = 'life_cycle')
+
+--TrafficSigns modifications
+UPDATE ENUMERATED_VALUE
+SET VALUE = 99
+WHERE VALUE = 999 AND PROPERTY_ID IN (SELECT ID FROM PROPERTY p WHERE p.ASSET_TYPE_ID = 300 AND p.PROPERTY_TYPE = 'single_choice');
+
+--modifications in structure
+UPDATE ENUMERATED_VALUE
+SET NAME_FI = 'Pylväs'
+WHERE NAME_FI = 'Tolppa' AND PROPERTY_ID = (SELECT ID FROM PROPERTY p WHERE p.ASSET_TYPE_ID = 300 AND p.PUBLIC_ID = 'structure')
+
+UPDATE ENUMERATED_VALUE
+SET VALUE = 7
+WHERE VALUE = 6 AND PROPERTY_ID = (SELECT ID FROM PROPERTY p WHERE p.ASSET_TYPE_ID = 300 AND p.PUBLIC_ID = 'structure')
+
+UPDATE ENUMERATED_VALUE
+SET VALUE = 6
+WHERE VALUE = 5 AND PROPERTY_ID = (SELECT ID FROM PROPERTY p WHERE p.ASSET_TYPE_ID = 300 AND p.PUBLIC_ID = 'structure')
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 5, 'Puoliportaali', ' ', 'db_migration_v226', (select id from property where public_ID = 'structure'));

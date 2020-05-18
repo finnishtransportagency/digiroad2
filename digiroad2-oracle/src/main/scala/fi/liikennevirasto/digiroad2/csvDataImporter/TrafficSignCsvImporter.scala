@@ -1,7 +1,9 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
+
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -62,34 +64,16 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
 
   private val singleChoiceAcceptableValues = Map(
-    "rakenne" -> Seq(Structure.Pole.value, Structure.Wall.value, Structure.Bridge.value, Structure.Portal.value,
-                 Structure.BarBarrier.value, Structure.Other.value, Structure.Unknown.value),
-    "kunto" -> Seq(Condition.VeryPoor.value, Condition.Poor.value, Condition.Fair.value, Condition.Good.value,
-                Condition.VeryGood.value, Condition.Unknown.value),
-
-    "koko" -> Seq(Size.CompactSign.value, Size.RegularSign.value, Size.LargeSign.value, Size.Unknown.value),
-    "kalvon tyyppi" -> Seq(CoatingType.R1ClassSheeting.value, CoatingType.R2ClassSheeting.value, CoatingType.R3ClassSheeting.value,
-                        CoatingType.Unknown.value),
-
-    "merkin materiaali" -> Seq(SignMaterial.Plywood.value, SignMaterial.Aluminum.value, SignMaterial.Other.value, SignMaterial.Unknown.value),
-
-    "sijaintitarkenne" -> Seq(LocationSpecifier.RightSideOfRoad.value, LocationSpecifier.LeftSideOfRoad.value, LocationSpecifier.AboveLane.value,
-                          LocationSpecifier.TrafficIslandOrTrafficDivider.value, LocationSpecifier.LengthwiseRelativeToTrafficFlow.value,
-                          LocationSpecifier.OnRoadOrStreetNetwork.value, LocationSpecifier.Unknown.value),
-
-    "kaistan tyyppi" -> Seq(LaneType.Main.value, LaneType.Passing.value, LaneType.TurnRight.value, LaneType.TurnLeft.value,
-                        LaneType.Through.value, LaneType.Acceleration.value, LaneType.Deceleration.value,
-                        LaneType.OperationalAuxiliary.value, LaneType.MassTransitTaxi.value, LaneType.Truckway.value,
-                        LaneType.Reversible.value, LaneType.Combined.value, LaneType.Walking.value, LaneType.Cycling.value,
-                        LaneType.Unknown.value),
-
-    "tila" -> Seq(SignLifeCycle.Planned.value, SignLifeCycle.UnderConstruction.value, SignLifeCycle.Realized.value, SignLifeCycle.TemporarilyInUse.value,
-              SignLifeCycle.TemporarilyOutOfService.value, SignLifeCycle.OutgoingPermanentDevice.value, SignLifeCycle.Unknown.value),
-
-    "vauriotyyppi" -> Seq(TypeOfDamage.Rust.value, TypeOfDamage.Battered.value, TypeOfDamage.Paint.value, TypeOfDamage.OtherDamage.value,
-                      TypeOfDamage.Unknown.value),
-    "korjauksen kiireellisyys" -> Seq(UrgencyOfRepair.VeryUrgent.value, UrgencyOfRepair.Urgent.value, UrgencyOfRepair.SomehowUrgent.value,
-                                  UrgencyOfRepair.NotUrgent.value, UrgencyOfRepair.Unknown.value )
+    "rakenne" -> (PointAssetStructure.values.map(_.value), PointAssetStructure.getDefault),
+    "kunto" -> (Condition.values.map(_.value), Condition.getDefault),
+    "koko" -> (Size.values.map(_.value), Size.getDefault),
+    "kalvon tyyppi" -> (CoatingType.values.map(_.value), CoatingType.getDefault),
+    "merkin materiaali" -> (SignMaterial.values.map(_.value), SignMaterial.getDefault),
+    "sijaintitarkenne" -> (LocationSpecifier.values.map(_.value), LocationSpecifier.getDefault),
+    "kaistan tyyppi" -> (LaneType.values.map(_.value), LaneType.getDefault),
+    "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault),
+    "vauriotyyppi" -> (TypeOfDamage.values.map(_.value), TypeOfDamage.getDefault),
+    "korjauksen kiireellisyys" -> (UrgencyOfRepair.values.map(_.value), UrgencyOfRepair.getDefault)
   )
 
   private val singleChoiceMapping = Map(
@@ -199,7 +183,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         } else if (multiChoiceMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = multiChoiceMapping(key), value = trafficSignService.getDefaultMultiChoiceValue) :: result._2)
         } else if (singleChoiceMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = trafficSignService.getDefaultSingleChoiceValue) :: result._2)
+          val defaultValue = singleChoiceAcceptableValues(key) match { case (_, default) => default }
+          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = defaultValue) :: result._2)
         } else if (additionalPanelMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = additionalPanelMapping(key), value = value) :: result._2)
         } else if (dateFieldsMapping.contains(key)) {
@@ -221,7 +206,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           val (malformedParameters, properties) = verifyDateType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (singleChoiceMapping.contains(key)) {
-          val (malformedParameters, properties) = singleChoiceToProperty(key, value, singleChoiceAcceptableValues, singleChoiceMapping)
+          val acceptableValues = singleChoiceAcceptableValues(key) match { case (values, _) => values}
+          val (malformedParameters, properties) = singleChoiceToProperty(key, value, acceptableValues, singleChoiceMapping)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (multiChoiceMapping.contains(key)) {
           val (malformedParameters, properties) = multiChoiceToProperty(key, value)
@@ -254,7 +240,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     /* start date validations */
     val temporaryDevices = Seq(4,5)
-    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].getOrElse(-999)
+    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].getOrElse(PointAssetState.Unknown.value)
     val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
 

@@ -85,9 +85,9 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
-  def singleChoiceToProperty(parameterName: String, assetSingleChoice: String, singleChoiceAcceptableValues: Map[String, Seq[Int]], singleChoiceMapping: Map[String, String]): ParsedRow = {
+  def singleChoiceToProperty(parameterName: String, assetSingleChoice: String, singleChoiceAcceptableValues: Set[Int], singleChoiceMapping: Map[String, String]): ParsedRow = {
     tryToInt(assetSingleChoice) match {
-      case Some(value) if singleChoiceAcceptableValues(parameterName).contains(value) =>
+      case Some(value) if singleChoiceAcceptableValues.contains(value) =>
         (Nil, List(AssetProperty(columnName = singleChoiceMapping(parameterName), value = value)))
       case _ =>
         (List(s"Invalid value for $parameterName"), Nil)

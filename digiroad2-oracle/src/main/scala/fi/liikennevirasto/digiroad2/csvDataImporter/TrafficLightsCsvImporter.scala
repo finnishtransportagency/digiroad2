@@ -1,10 +1,10 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, State}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, PropertyValue, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.LaneType
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, GeometryUtils, Point, TrafficLightPushButton, TrafficLightRelativePosition, TrafficLightSoundSignal, TrafficLightState, TrafficLightStructure, TrafficLightType, TrafficLightVehicleDetection}
+import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, GeometryUtils, Point, TrafficLightPushButton, TrafficLightRelativePosition, TrafficLightSoundSignal, TrafficLightType, TrafficLightVehicleDetection}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficLight, TrafficLightService}
 import fi.liikennevirasto.digiroad2.user.User
@@ -40,9 +40,8 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   private val typeMapping = Map("liikennevalo tyyppi" -> "trafficLightType")
 
   private val typeMappingAcceptableValues = Map(
-    "liikennevalo tyyppi" -> Seq(TrafficLightType.Basic.value, TrafficLightType.ArrowRight.value, TrafficLightType.ArrowLeft.value, TrafficLightType.Triangle.value,
-    TrafficLightType.PublicTransport.value, TrafficLightType.BasicBicycle.value, TrafficLightType.ArrowBicycle.value, TrafficLightType.Pedestrians.value,
-    TrafficLightType.LaneSpecific.value))
+    "liikennevalo tyyppi" -> TrafficLightType
+  )
 
   private val singleChoiceMapping = Map(
     "rakennelma" -> "trafficLightStructure",
@@ -66,28 +65,13 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   )
 
   private val singleChoiceAcceptableValues = Map(
-    "rakennelma" -> Seq(TrafficLightStructure.Pole.value, TrafficLightStructure.Wall.value, TrafficLightStructure.Bridge.value,
-      TrafficLightStructure.Portal.value, TrafficLightStructure.HalfPortal.value, TrafficLightStructure.Barrier.value,
-      TrafficLightStructure.Other.value, TrafficLightStructure.Unknown.value),
-
-    "aanimerkki" -> Seq(TrafficLightSoundSignal.No.value, TrafficLightSoundSignal.Yes.value, TrafficLightSoundSignal.Unknown.value),
-
-    "tunnistus" -> Seq(TrafficLightVehicleDetection.Coil.value, TrafficLightVehicleDetection.InfraRed.value, TrafficLightVehicleDetection.Radar.value,
-      TrafficLightVehicleDetection.Other.value, TrafficLightVehicleDetection.Unknown.value),
-
-    "painonappi" -> Seq(TrafficLightPushButton.No.value, TrafficLightPushButton.Yes.value, TrafficLightPushButton.Unknown.value),
-
-    "sijainti" -> Seq(TrafficLightRelativePosition.RightSideOfRoad.value, TrafficLightRelativePosition.AboveLane.value,
-      TrafficLightRelativePosition.TrafficIslandOrTrafficDivider.value, TrafficLightRelativePosition.Unknown.value),
-
-    "kaistan tyyppi" -> Seq(LaneType.Main.value, LaneType.Passing.value, LaneType.TurnRight.value, LaneType.TurnLeft.value,
-      LaneType.Through.value, LaneType.Acceleration.value, LaneType.Deceleration.value, LaneType.OperationalAuxiliary.value,
-      LaneType.MassTransitTaxi.value, LaneType.Truckway.value, LaneType.Reversible.value, LaneType.Combined.value,
-      LaneType.Walking.value, LaneType.Cycling.value, LaneType.Unknown.value),
-
-    "tila" -> Seq(TrafficLightState.Planned.value, TrafficLightState.UnderConstruction.value, TrafficLightState.PermanentlyInUse.value,
-      TrafficLightState.TemporarilyInUse.value, TrafficLightState.TemporarilyOutOfService.value, TrafficLightState.OutgoingPermanentDevice.value,
-      TrafficLightState.Unknown.value)
+    "rakennelma" -> (PointAssetStructure.values.map(_.value), PointAssetStructure.getDefault),
+    "aanimerkki" -> (TrafficLightSoundSignal.values.map(_.value), TrafficLightSoundSignal.getDefault),
+    "tunnistus" -> (TrafficLightVehicleDetection.values.map(_.value), TrafficLightVehicleDetection.getDefault),
+    "painonappi" -> (TrafficLightPushButton.values.map(_.value), TrafficLightPushButton.getDefault),
+    "sijainti" -> (TrafficLightRelativePosition.values.map(_.value), TrafficLightRelativePosition.getDefault),
+    "kaistan tyyppi" -> (LaneType.values.map(_.value), LaneType.getDefault),
+    "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault)
   )
 
   lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
@@ -116,9 +100,10 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
         if (mandatoryFields.contains(key)) {
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
         } else if (typeMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = typeMapping(key), value = TrafficLightType.Basic) :: result._2)
+          result.copy(_2 = AssetProperty(columnName = typeMapping(key), value = typeMappingAcceptableValues(key).getDefault) :: result._2)
         } else if (singleChoiceMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = trafficLightsService.getDefaultSingleChoiceValue) :: result._2)
+          val defaultValue = singleChoiceAcceptableValues(key) match { case (_, default) => default }
+          result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = defaultValue) :: result._2)
         } else if (intValueFieldsMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = intValueFieldsMapping(key), value = value) :: result._2)
         } else if (nonMandatoryMappings.contains(key)) {
@@ -133,7 +118,8 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
           val (malformedParameters, properties) = verifyTrafficLightType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (singleChoiceMapping.contains(key)) {
-          val (malformedParameters, properties) = singleChoiceToProperty(key, value, singleChoiceAcceptableValues, singleChoiceMapping)
+          val acceptableValues = singleChoiceAcceptableValues(key) match { case (values, _) => values}
+          val (malformedParameters, properties) = singleChoiceToProperty(key, value, acceptableValues, singleChoiceMapping)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (intValueFieldsMapping.contains(key)) {
           val (malformedParameters, properties) = verifyIntType(key, value.toString)
@@ -206,7 +192,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
   def verifyTrafficLightType(parameterName: String, assetTypeChoice: String): ParsedRow = {
     tryToDouble(assetTypeChoice) match {
-      case Some(value) if typeMappingAcceptableValues(parameterName).contains(value) =>
+      case Some(value) if typeMappingAcceptableValues(parameterName).values.map(_.value).contains(value) =>
         (Nil, List(AssetProperty(columnName = typeMapping(parameterName), value = value)))
       case _ =>
         (List(s"Invalid value for $parameterName"), Nil)

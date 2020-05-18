@@ -144,8 +144,10 @@ object LaneType {
                   Reversible, Combined, Walking, Cycling, Unknown)
 
   def apply(value: Int): LaneType = {
-    values.find(_.value == value).getOrElse(Unknown)
+    values.find(_.value == value).getOrElse(getDefault)
   }
+
+  def getDefault: LaneType = Unknown
 
   case object Main extends LaneType { def value = 1; def typeDescription = "Main lane"; def finnishDescription = "Pääkaista"; }
   case object Passing extends LaneType { def value = 2; def typeDescription = "Passing lane"; def finnishDescription = "Ohituskaista"; }
