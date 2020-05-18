@@ -155,16 +155,12 @@ class ServicePointBusStopDao extends MassTransitStopDao {
   }
 
   private def propertyWithTypeAndId(property: SimplePointAssetProperty): (String, Option[Long], SimplePointAssetProperty) = {
-    if (AssetPropertyConfiguration.commonAssetProperties.get(property.publicId).isDefined) {
-      (AssetPropertyConfiguration.commonAssetProperties(property.publicId).propertyType, None, property)
-    } else {
-      val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
-      (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
-    }
+    val propertyId = Q.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+    (Q.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 
   override def updateAssetProperties(assetId: Long, properties: Seq[SimplePointAssetProperty]) {
-    properties.map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
+    properties.filterNot(prop => AssetPropertyConfiguration.commonAssetProperties.contains(prop.publicId)).map(propertyWithTypeAndId).foreach { propertyWithTypeAndId =>
       updateProperties(assetId, propertyWithTypeAndId._3.publicId, propertyWithTypeAndId._2.get, propertyWithTypeAndId._1, propertyWithTypeAndId._3.values)
     }
   }

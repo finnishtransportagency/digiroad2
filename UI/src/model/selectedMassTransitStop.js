@@ -100,13 +100,19 @@
         });
     };
 
-    var propertyForMassServiceStops = [
+    var servicePointPropertyOrdering = [
+      'lisatty_jarjestelmaan',
+      'muokattu_viimeksi',
       'palvelu',
       'tarkenne',
       'palvelun_nimi',
       'palvelun_lisätieto',
       'viranomaisdataa',
       'suggest_box'];
+
+    var getServicePointPropertyOrdering = function () {
+      return servicePointPropertyOrdering;
+    };
 
     var place = function(asset, other) {
       eventbus.trigger('asset:placed', asset);
@@ -124,7 +130,7 @@
         });
 
         if(!_.isEmpty(currentAsset.stopTypes) && currentAsset.stopTypes[0] == '7')
-          properties =  _.filter(properties, function(prop) { return _.includes(propertyForMassServiceStops, prop.publicId);});
+          properties =  _.filter(properties, function(prop) { return _.includes(servicePointPropertyOrdering, prop.publicId);});
 
         currentAsset.propertyMetadata = properties;
         currentAsset.payload = _.merge({}, _.pick(currentAsset, usedKeysFromFetchedAsset), transformPropertyData(properties));
@@ -663,7 +669,8 @@
       isSuggested: isSuggested,
       isAnAddToolOption: isAnAddToolOption,
       isTerminalType: isTerminalType,
-      isServicePointType: isServicePointType
+      isServicePointType: isServicePointType,
+      getServicePointPropertyOrdering: getServicePointPropertyOrdering
     };
   };
 
