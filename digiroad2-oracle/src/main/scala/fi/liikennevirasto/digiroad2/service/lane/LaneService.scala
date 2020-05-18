@@ -199,7 +199,6 @@ trait LaneOperations {
         lanePropertiesValues)
     }
 
-
     if (lanes.isEmpty)
       return (lanes, changeSet)
 
