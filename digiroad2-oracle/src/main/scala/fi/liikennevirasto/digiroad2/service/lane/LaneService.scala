@@ -165,22 +165,24 @@ trait LaneOperations {
    * Based on track we need to know what laneCode is correct or not
    * This will return the correct MainLane Code and the range of lanes Code (start and end) to remove
    */
-  private def getLaneDirectionOkAndToRemove (filteredRoadAddresses: Seq[RoadAddressTEMP]): (Int, (Int, Int)) = {
+  private def getLaneDirectionOkAndToRemove (filteredRoadAddresses: Option[RoadAddressTEMP]): (Int, (Int, Int)) = {
 
-    if (filteredRoadAddresses.nonEmpty) {
-      filteredRoadAddresses.head.track match {
-        /* If Track is Right Side it means the AET and LET are increasing */
-        case Track.RightSide => (MainLane.towardsDirection, (MainLane.againstDirection, FourthRightAdditional.againstDirection))
+    filteredRoadAddresses match {
+      case Some(roadAddress) => roadAddress.track match {
+                    /* If Track is Right Side it means the AET and LET are increasing */
+                    case Track.RightSide =>
+                      (MainLane.towardsDirection, (MainLane.againstDirection, FourthRightAdditional.againstDirection))
 
-        /* If Track is Right Side it means the AET and LET are decreasing */
-        case Track.LeftSide => (MainLane.againstDirection, (MainLane.towardsDirection,FourthRightAdditional.towardsDirection) )
+                    /* If Track is Right Side it means the AET and LET are decreasing */
+                    case Track.LeftSide =>
+                      (MainLane.againstDirection, (MainLane.towardsDirection,FourthRightAdditional.towardsDirection) )
 
-        /* If the Track is not Left or Right Side ... Its not to be handle! For now ..   */
-        case _ => (MainLane.towardsDirection, (MainLane.motorwayMaintenance, MainLane.motorwayMaintenance) )
+                    /* If the Track is not Left or Right Side ... Its not to be handle! For now ..   */
+                    case _ =>
+                      (MainLane.towardsDirection, (MainLane.motorwayMaintenance, MainLane.motorwayMaintenance) )
       }
-    }
-    else {
-      (MainLane.towardsDirection, (MainLane.againstDirection, FourthRightAdditional.againstDirection))
+      case _ =>
+        (MainLane.towardsDirection, (MainLane.againstDirection, FourthRightAdditional.againstDirection))
     }
 
   }
@@ -203,13 +205,17 @@ trait LaneOperations {
 
     val filteredRoadAddresses = roadAddresses.find(_.linkId == roadLink.linkId)
 
-    val (mainLane11SideCode, mainLane21SideCode) = if (filteredRoadAddresses.nonEmpty)
-                                                    (fixSideCode(filteredRoadAddresses.head, MainLane.towardsDirection.toString),
-                                                      fixSideCode(filteredRoadAddresses.head, MainLane.againstDirection.toString))
-                                                  else
-                                                    (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+    val (mainLane11SideCode, mainLane21SideCode) = filteredRoadAddresses match {
+                                                      case Some(roadAddress) =>
+                                                        (fixSideCode(roadAddress, MainLane.towardsDirection.toString),
+                                                          fixSideCode(roadAddress, MainLane.againstDirection.toString))
 
-    val (mainLaneDirectionOK, mainLaneDirectionRemove) = getLaneDirectionOkAndToRemove ( filteredRoadAddresses.toSeq)
+                                                      case _ =>
+                                                        (SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+                                                      }
+
+
+    val (mainLaneDirectionOK, mainLaneDirectionRemove) = getLaneDirectionOkAndToRemove ( filteredRoadAddresses )
 
     val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
     val baseLane = lanesToProcess.minBy(_.laneCode)
