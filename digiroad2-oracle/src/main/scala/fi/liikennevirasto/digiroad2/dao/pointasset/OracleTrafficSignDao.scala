@@ -434,7 +434,7 @@ object OracleTrafficSignDao {
     propertyType match {
       case Text =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
+        if (propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
         } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
           insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
@@ -475,12 +475,12 @@ object OracleTrafficSignDao {
         }
       case Number =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
-        if (propertyValues.isEmpty) {
+        if (propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty) {
           deleteNumberProperty(assetId, propertyId).execute
         } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
-          insertNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption).execute
+          insertNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
         } else {
-          updateNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption).execute
+          updateNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
         }
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
     }
