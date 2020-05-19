@@ -133,6 +133,18 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     }
   }
 
+  override def mappingContent(result: ImportResultData): String = {
+    val excludedResult = result.excludedRows.map { rows => s"<li> ${rows.affectedRows} -> ${rows.csvRow} </li>" }
+    val incompleteResult = result.incompleteRows.map { rows => s"<li> ${rows.missingParameters.mkString(";")} -> ${rows.csvRow} </li>" }
+    val malformedResult = result.malformedRows.map { rows => s"<li> ${rows.malformedParameters.mkString(";")}  -> ${rows.csvRow} </li>" }
+    val notImportedData = result.notImportedData.map { rows => "<li>" + rows.reason -> rows.csvRow + "</li>" }
+
+    s"<ul> excludedLinks: ${excludedResult.mkString.replaceAll("[(|)]{1}", "")} </ul>" +
+    s"<ul> incompleteRows: ${incompleteResult.mkString.replaceAll("[(|)]{1}", "")} </ul>" +
+    s"<ul> malformedRows: ${malformedResult.mkString.replaceAll("[(|)]{1}", "")} </ul>" +
+    s"<ul> notImportedData: ${notImportedData.mkString.replaceAll("[(|)]{1}", "")}</ul>"
+  }
+
   def createAsset(laneAssetProperties: Seq[ParsedProperties], user: User, result: ImportResultData): ImportResultData = {
     laneAssetProperties.groupBy(lane => getPropertyValue(lane, "road number")).foreach { lane =>
       lane._2.foreach { props =>

@@ -53,6 +53,11 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
+    var dateValueExtract = function (date) {
+      var dateValue = _.head(date).values;
+      return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : undefined;
+    };
+
     var saveConditionWithSuggested = function(selectedAsset, authorizationPolicy) {
       var selected = selectedAsset.get();
       return !(selected.isSuggested && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
@@ -1004,15 +1009,11 @@
           var isValidLane = function (fields) {
             var isValidDatePeriod = function (fields) {
               var isValidDate = true;
-              var dateFields = Property.filterPropertiesByPropertyType(fields, 'date');
+              var startDate = Property.getPropertyByPublicId(fields, 'start_date');
+              var endDate = Property.getPropertyByPublicId(fields, 'end_date');
 
-              if (dateFields.length == 2) {
-                var startDate = Property.getPropertyByPublicId(dateFields, 'start_date');
-                var endDate = Property.getPropertyByPublicId(dateFields, 'end_date');
-
-                if (!_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
-                  isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
-              }
+              if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+                isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
               return isValidDate;
             };
 
@@ -1269,9 +1270,30 @@
         newAsset: { validityDirection: 2, propertyData: [
           {'name': 'Liikenteenvastainen', 'propertyType': 'single_choice', 'publicId': "opposite_side_sign", values: [] },
           {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ {propertyValue: 1} ] },
+          {'name': 'Päämerkin teksti', 'propertyType': 'text', 'publicId': 'main_sign_text', values: []},
           {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
           {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []},
-          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue: {panelType:53, panelInfo : "", panelValue : "", formPosition : ""}},
+          {'name': "Sijaintitarkenne", 'propertyType': 'single_choice', 'publicId': "location_specifier", values: [{ propertyValue: 999 }]},
+          {'name': "Rakenne", 'propertyType': 'single_choice', 'publicId': "structure", values: [{ propertyValue: 999 }]},
+          {'name': "Kunto", 'propertyType': 'single_choice', 'publicId': "condition", values: [{ propertyValue: 999 }]},
+          {'name': "Koko", 'propertyType': 'single_choice', 'publicId': "size", values: [{ propertyValue: 999 }]},
+          {'name': "Korkeus", 'propertyType': 'number', 'publicId': "height", values: []},
+          {'name': "Kalvon tyyppi", 'propertyType': 'single_choice', 'publicId': "coating_type", values: [{ propertyValue: 999 }]},
+          {'name': "Kaista", 'propertyType': 'number', 'publicId': "lane", values: []},
+          {'name': "Tila", 'propertyType': 'single_choice', 'publicId': "life_cycle", values: [ {propertyValue: 3} ]},
+          {'name': "Merkin materiaali", 'propertyType': 'single_choice', 'publicId': "sign_material", values: [{ propertyValue: 999 }]},
+          {'name': "Alkupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_start_date", values: [] },
+          {'name': "Loppupäivämäärä", 'propertyType': 'date', 'publicId': "trafficSign_end_date", values: [] },
+          {'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "lane_type", values: [{ propertyValue: 99 }] },
+          {'name': "Vauriotyyppi", 'propertyType': 'single_choice', 'publicId': "type_of_damage", values: [{ propertyValue: 999 }] },
+          {'name': "Korjauksen kiireellisyys", 'propertyType': 'single_choice', 'publicId': "urgency_of_repair", values: [{ propertyValue: 999 }] },
+          {'name': "Arvioitu käyttöikä", 'propertyType': 'number', 'publicId': "lifespan_left", values: [] },
+          {'name': "Kunnan ID", 'propertyType': 'text', 'publicId': "municipality_id", values: [] },
+          {'name': "Maastokoordinaatti X", 'propertyType': 'number', 'publicId': "terrain_coordinates_x", values: [] },
+          {'name': "Maastokoordinaatti Y", 'propertyType': 'number', 'publicId': "terrain_coordinates_y", values: [] },
+          {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue:
+                {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 999, coating_type: 999, additional_panel_color: 999 }},
+          {'name': "Lisää vanhan lain mukainen koodi", 'propertyType': 'checkbox', 'publicId': "old_traffic_code", values: [ {propertyValue: 0} ]},
           {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
@@ -1293,6 +1315,9 @@
             { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
+          var lifecycleValidations = [
+            { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
+          ];
 
           var opposite_side_sign =  _.find( selectedAsset.get().propertyData, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
           if (_.isUndefined(opposite_side_sign) || _.isUndefined(opposite_side_sign.values[0]) || opposite_side_sign.values[0].propertyValue === "") {
@@ -1302,7 +1327,44 @@
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
           var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
           var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-          return (functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true) && suggestedAssetCondition;
+          var isValidFunc = functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
+
+          /* Begin: Special validate for roadwork sign */
+          var fields = selectedAsset.get().propertyData;
+          var dateValueStartField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_start_date'; });
+          var dateValueEndField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_end_date'; });
+          var trafficSignTypeField = _.filter(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
+
+          var trafficSignTypeExtracted = _.head(_.head(trafficSignTypeField).values).propertyValue;
+          var startDateExtracted = dateValueExtract(dateValueStartField);
+          var endDateExtracted = dateValueExtract(dateValueEndField);
+
+          var roadworksTrafficCode = "85";
+          var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
+
+          if (trafficSignTypeExtracted === roadworksTrafficCode)
+            return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;
+          /* End: Special validate for roadwork sign */
+
+          var lifecycleField = _.head(_.filter(fields, function(field) { return field.publicId === 'life_cycle'; }));
+          var lifecycleValidator = _.find(lifecycleValidations, function (validator) { return _.includes(validator.values, parseInt(_.head(lifecycleField.values).propertyValue)); });
+          var validLifecycleDates = _.isUndefined(lifecycleValidator) ? true : lifecycleValidator.validate(startDateExtracted, endDateExtracted);
+
+          var numericalFields = _.filter(fields, function(field) {return field.propertyType === 'number';});
+          var isValidNumericalFields = _.every(numericalFields, function(field) {return _.isEmpty(field.values) || !isNaN(_.head(field.values).propertyValue);});
+
+          /* Begin: Lane Validation */
+          var laneValues = _.head(_.filter(fields, function(field) { return field.publicId === 'lane'; })).values;
+          var isValidLaneValue = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue) || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
+
+          var laneTypeValue = _.head(_.filter(fields, function(field) { return field.publicId === 'lane_type'; })).values;
+
+          var isValidLane = isValidLaneValue && (_.isEmpty(laneValues) || _.head(laneTypeValue).propertyValue == 999 ||
+            (_.head(laneValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValue).propertyValue != 1) ||
+            (_.head(laneValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValue).propertyValue == 1));
+          /* End: Lane Validation */
+
+          return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer,
         showRoadLinkInfo: true

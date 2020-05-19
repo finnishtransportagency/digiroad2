@@ -112,18 +112,29 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox, filter) {
+    this.getAssets = function (boundingBox, filter, checkbox) {
       if(!filter)
         filter = function(assets){return assets;};
 
-      self.getAssetsWithCallback(boundingBox, function (assets) {
+      var assetsFetched = function (assets) {
         eventbus.trigger('assets:fetched',filter(assets));
-      });
+      };
+
+      if(checkbox){
+        self.getAssetsWithCallbackServiceStops(boundingBox, assetsFetched);
+      }
+      self.getAssetsWithCallback(boundingBox, assetsFetched);
     };
 
     this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/massTransitStops?bbox=' + boundingBox
+      };
+    });
+
+    this.getAssetsWithCallbackServiceStops = createCallbackRequestor(function(boundingBox) {
+      return {
+        url: 'api/massServiceStops?bbox=' + boundingBox
       };
     });
 
@@ -395,8 +406,24 @@
       });
     };
 
+    this.deleteAllMassServiceStopData = function(assetId,success, failure){
+      $.ajax({
+        contentType: "application/json",
+        type: "DELETE",
+        url: "api/massServiceStops/removal",
+        data: JSON.stringify({assetId: assetId}),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    };
+
     this.getMassTransitStopByNationalId = function(nationalId, callback) {
       $.get('api/massTransitStops/' + nationalId, callback);
+    };
+
+    this.getMassServiceStopByNationalId = function(nationalId, callback) {
+      $.get('api/massServiceStops/' + nationalId, callback);
     };
 
     this.getLanesByLinkIdAndSidecode = function(linkId, sidecode, callback) {
@@ -405,6 +432,10 @@
 
     this.getMassTransitStopById = function(id, callback) {
       $.get('api/massTransitStop/' + id, callback);
+    };
+
+    this.getMassServiceStopById = function(id, callback) {
+      $.get('api/massServiceStops/' + id, callback);
     };
 
     this.getPrivateRoadAssociationNames = function() {
@@ -589,6 +620,21 @@
       });
     };
 
+    this.createServiceStopAsset = function (data, errorCallback) {
+      eventbus.trigger('asset:creating');
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/massServiceStops",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: function (asset) {
+          eventbus.trigger('asset:created', asset);
+        },
+        error: errorCallback
+      });
+    };
+
     this.updateAsset = function (id, data, successCallback, errorCallback) {
       eventbus.trigger('asset:saving');
       $.ajax({
@@ -602,6 +648,18 @@
       });
     };
 
+    this.updateServiceStopAsset = function (id, data, successCallback, errorCallback) {
+      eventbus.trigger('asset:saving');
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/massServiceStops/" + id,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: successCallback,
+        error: errorCallback
+      });
+    };
 
     this.getMassTransitStopStreetViewUrl = function test(lati,longi,heading) {
       function getJson(){
@@ -652,18 +710,20 @@
 
     this.getGeocode = function(address) {
       var addressNormalized = address.normalize("NFC");
-      var parsedAddress = addressNormalized.split(/^(\s*\w.*)(\s)(\s*\d+\s*),(\s*\w.*)/)
+      var parsedAddress = addressNormalized.split(/^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/)
         .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
         .map(function(elem) { return elem.trim(); });
 
       return this.getMunicipalityIdByName(parsedAddress[2]).then(
         function(municipalityInfo) {
+          if (_.isEmpty(municipalityInfo))
+            return municipalityInfo;
           var params = {
             katunimi :   parsedAddress[0],
             katunumero : parsedAddress[1],
             kuntakoodi : _.head(municipalityInfo).id
           };
-          return $.get("vkm-api/geocode", params ).then(function(x) { return x; });
+          return $.get("vkm-api/geocode", params).then(function(x) { return x; });
         });
     };
 

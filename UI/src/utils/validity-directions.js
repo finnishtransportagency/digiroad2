@@ -18,6 +18,14 @@
       } else {
         return bearingInPolarCoordinatesRadius;
       }
+    },
+    filterLanesByDirection: function (lanes, validityDirection) {
+      switch (validityDirection) {
+        case validitydirections.sameDirection: return _.filter(lanes, function (lane) { return lane.toString().charAt(0) == 1; });
+        case validitydirections.oppositeDirection: return _.filter(lanes, function (lane) {  return lane.toString().charAt(0) == 2;  });
+        case validitydirections.bothDirections:
+        case validitydirections.unknown: return lanes;
+      }
     }
   };
 })();

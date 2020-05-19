@@ -10,8 +10,9 @@ import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, Persis
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import org.joda.time.DateTime
+
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 case class AdditionalPanelInfo(mValue: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, position: Option[Point] = None, id: Option[Long] = None)
@@ -41,12 +42,22 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
   val additionalPublicId = "additional_panel"
+  val additionalPanelSizePublicId = "size"
+  val additionalPanelTextPublicId = "text"
+  val additionalPanelCoatingTypePublicId = "coating_type"
+  val additionalPanelColorPublicId = "additional_panel_color"
   val suggestedPublicId = "suggest_box"
+  val oldTrafficCodePublicId = "old_traffic_code"
+  val lifeCyclePublicId = "life_cycle"
+  val trafficSignStartDatePublicId = "trafficSign_start_date"
+  val trafficSignEndDatePublicId = "trafficSign_end_date"
   private val counterPublicId = "counter"
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
+  private val defaultMultiChoiceValue = 0
+  private val defaultSingleChoiceValue = 999
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
@@ -386,15 +397,57 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     }).value
   }
 
+  def verifyDatesOnTemporarySigns(asset: IncomingTrafficSign): Boolean = {
+    val temporaryTrafficSigns = Seq(4, 5)
+    val trafficSignLifeCycle = getProperty(asset, lifeCyclePublicId).get.propertyValue
+
+    val trafficSignStartDateValue = getProperty(asset, trafficSignStartDatePublicId).getOrElse(PropertyValue("")).propertyValue
+    val trafficSignEndDateValue = getProperty(asset, trafficSignEndDatePublicId).getOrElse(PropertyValue("")).propertyValue
+
+    if (temporaryTrafficSigns.contains(trafficSignLifeCycle.toInt) && (trafficSignStartDateValue.isEmpty || trafficSignEndDateValue.isEmpty))
+      return false
+
+    if (!trafficSignStartDateValue.isEmpty && !trafficSignEndDateValue.isEmpty){
+      val startDateAsDate = DateParser.DatePropertyFormat.parseDateTime(trafficSignStartDateValue)
+      val endDateAsDate = DateParser.DatePropertyFormat.parseDateTime(trafficSignEndDateValue)
+
+      return !startDateAsDate.isAfter(endDateAsDate)
+    }
+
+    true
+  }
+
+  def isOldCodeBeingUsed(asset: IncomingTrafficSign): Boolean = {
+    val checkedValue = "1"
+    val oldCode = getProperty(asset, oldTrafficCodePublicId)
+    oldCode.get.propertyValue == checkedValue
+  }
+
+  def getDefaultMultiChoiceValue: Int = defaultMultiChoiceValue
+  def getDefaultSingleChoiceValue: Int = defaultSingleChoiceValue
+
   def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimplePointAssetProperty] = {
+
+    def getSingleChoiceValue(additionalPanelInfo: AdditionalPanelInfo, target: String): Int = {
+      val targetValue = getProperty(additionalPanelInfo.propertyData, target).get.propertyValue
+      if (targetValue.nonEmpty) targetValue.toInt
+      else getDefaultSingleChoiceValue
+    }
+
     val orderedAdditionalPanels = additionalProperties.toSeq.sortBy(_.propertyData.find(_.publicId == typePublicId).get.values.head.asInstanceOf[PropertyValue].propertyValue.toInt).toSet
     val additionalPanelsProperty = orderedAdditionalPanels.zipWithIndex.map{ case (panel, index) =>
-      AdditionalPanel(getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt,
+
+      AdditionalPanel(
+        getProperty(panel.propertyData, typePublicId).get.propertyValue.toInt,
         getProperty(panel.propertyData, infoPublicId).getOrElse(PropertyValue("")).propertyValue,
         getProperty(panel.propertyData, valuePublicId).getOrElse(PropertyValue("")).propertyValue,
-        index)
+        index,
+        getProperty(panel.propertyData, additionalPanelTextPublicId).getOrElse(PropertyValue("")).propertyValue,
+        getSingleChoiceValue(panel, additionalPanelSizePublicId),
+        getSingleChoiceValue(panel, additionalPanelCoatingTypePublicId),
+        getSingleChoiceValue(panel, additionalPanelColorPublicId)
+      )
     }.toSeq
-
 
     if(additionalPanelsProperty.nonEmpty)
       Set(SimplePointAssetProperty(additionalPublicId, additionalPanelsProperty))

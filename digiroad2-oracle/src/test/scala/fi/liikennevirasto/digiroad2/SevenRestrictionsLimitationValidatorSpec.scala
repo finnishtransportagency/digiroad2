@@ -272,7 +272,7 @@ class SevenRestrictionsLimitationValidatorSpec  extends FunSuite with Matchers {
         Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(MaxTonsOnBogieExceeding.OTHvalue.toString))),
         Property(1, "trafficSigns_value", "", false, Seq(PropertyValue("15000"))),
         Property(2, "trafficSigns_info", "", false, Seq(PropertyValue("200"))),
-      Property(2, "additional_panel", "", false, Seq(AdditionalPanel(AdditionalPanelWithText.OTHvalue, "3 - akseliselle telille 16 t", "", 1))))
+      Property(2, "additional_panel", "", false, Seq(AdditionalPanel(AdditionalPanelWithText.OTHvalue, "3 - akseliselle telille 16 t", "", 1, "", 999, 999, 999))))
 
       val trafficSign = PersistedTrafficSign(1, 1002l, 2, 0, 2, false, 0, 235, propTrafficSign, None, None, None, None, SideCode.TowardsDigitizing.value, None, NormalLinkInterface)
 

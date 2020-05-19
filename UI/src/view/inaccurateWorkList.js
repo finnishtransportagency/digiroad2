@@ -15,7 +15,7 @@
       });
     };
 
-    this.workListItemTable = function(layerName, workListItems, municipalityName) {
+    this.workListItemTable = function(layerName, showDeleteCheckboxes, workListItems, municipalityName) {
 
       var municipalityHeader = function(municipalityName) {
         return $('<h2/>').html(municipalityName);

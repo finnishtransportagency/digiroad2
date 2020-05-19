@@ -2,12 +2,13 @@ package fi.liikennevirasto.digiroad2.service.lane
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
-import fi.liikennevirasto.digiroad2.dao.MunicipalityDao
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
-import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane}
+import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -315,4 +316,82 @@ class LaneServiceSpec extends LaneTestSupporter {
       updatedSubLane12.endMeasure should be (500.0)
     }
   }
+
+
+  test("RoadLink BothDirection and with only one Lane (TowardsDigitizing). The 2nd should be created.") {
+    runWithRollback {
+
+      val roadLinkTowards2 = RoadLink(2L, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, Municipality,
+                              1, TrafficDirection.BothDirections, Motorway, None, None)
+
+      val lane11 = PersistedLane(2L, roadLinkTowards2.linkId, SideCode.TowardsDigitizing.value,
+                  11, 745L, 0, 15.0, None, None, None, None, expired = false, 0L, None,
+                  Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))) )
+
+
+      val roadAddress = RoadAddressTEMP(roadLinkTowards2.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+                        Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
+
+      val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards2, Seq(lane11), ChangeSet(), Seq(roadAddress) )
+
+      persistedLanes should have size 2
+      persistedLanes.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
+      persistedLanes.map(_.id) should be(Seq(2L, 0L))
+      persistedLanes.map(_.linkId) should be(Seq(roadLinkTowards2.linkId, roadLinkTowards2.linkId))
+
+      changeSet.expiredLaneIds should be(Set())
+
+    }
+  }
+
+  test("RoadLink BothDirection and with only one Lane (AgainstDigitizing). The 2nd should be created.") {
+
+    val roadLinkTowards2 = RoadLink(2L, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, Municipality,
+                            1, TrafficDirection.BothDirections, Motorway, None, None)
+
+    val lane11 = PersistedLane(2L, roadLinkTowards2.linkId, SideCode.AgainstDigitizing.value,
+                  21, 745L, 0, 15.0, None, None, None, None, expired = false, 0L, None,
+                  Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21)))) )
+
+    val roadAddress = RoadAddressTEMP(roadLinkTowards2.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+                        Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
+
+    val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards2, Seq(lane11), ChangeSet(), Seq(roadAddress) )
+
+    persistedLanes should have size 2
+    persistedLanes.map(_.sideCode) should be (Seq(SideCode.AgainstDigitizing.value, SideCode.TowardsDigitizing.value))
+    persistedLanes.map(_.id) should be (Seq(2L, 0L))
+    persistedLanes.map(_.linkId) should be (Seq(roadLinkTowards2.linkId, roadLinkTowards2.linkId))
+
+    changeSet.expiredLaneIds should be(Set())
+
+  }
+
+  test("RoadLink TowardsDigitizing and with two main Lanes(TowardsDigitizing and AgainstDigitizing). " +
+    "The main lane TowardsDigitizing should be standing.") {
+    val roadLinkTowards1 = RoadLink(1L, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+                            1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
+
+    val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
+                  21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+                  Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))) )
+
+    val lane21 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
+                  21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+                  Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21)))) )
+
+    val roadAddress = RoadAddressTEMP(roadLinkTowards1.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+                        Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
+
+    val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards1,Seq(lane11, lane21), ChangeSet(), Seq(roadAddress) )
+
+
+    persistedLanes should have size 1
+    persistedLanes.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
+    persistedLanes.map(_.laneCode) should be (List(11))
+    persistedLanes.map(_.linkId) should be (Seq(roadLinkTowards1.linkId))
+
+    changeSet.expiredLaneIds should be (Set(1L,2L))
+  }
+
 }
