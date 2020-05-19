@@ -2120,290 +2120,144 @@ object DataFixture {
   }
 
   def resolvingFrozenLinks(): Unit = {
-    case class AddressCreateInfo(toCreate : Seq[RoadAddressTEMP] , possibleToCreate: Seq[RoadAddressTEMP])
-
-    def getSideCode(mappedAddress: RoadAddressTEMP , frozenLink: RoadAddressTEMP, roadLinks : Seq[RoadLinkLike]): Option[SideCode] = {
-      mappedAddress.sideCode match {
-        case Some (sideCode) =>
-          val mappedRoadLink = roadLinks.find (_.linkId == mappedAddress.linkId).get
-          val frozenRoadLink = roadLinks.find (_.linkId == frozenLink.linkId).get
-
-          val (firstR, lastR) = GeometryUtils.geometryEndpoints (mappedRoadLink.geometry)
-          val (firstF, lastF) = GeometryUtils.geometryEndpoints (frozenRoadLink.geometry)
-
-          Some (if (GeometryUtils.areAdjacent (firstR, firstF) || GeometryUtils.areAdjacent (lastR, lastF) )
-            sideCode
-          else
-            SideCode.switch(sideCode))
-        case _ => None
-      }
-    }
-
-    def recalculateTrackAndSideCode(mappedAddresses: Seq[RoadAddressTEMP], frozenAddresses: Seq[RoadAddressTEMP], totalFrozen: Int, roadLinks: Seq[RoadLinkLike], result: Seq[AddressCreateInfo]) : Seq[AddressCreateInfo] = {
-      val middleResult = calculateTrackAndSideCode(mappedAddresses, frozenAddresses.distinct, roadLinks, result)
-      val allRoadAddresses = mappedAddresses ++ middleResult.flatMap(_.toCreate)
-      val missingFrozen = middleResult.flatMap(_.possibleToCreate).distinct
-
-      if (totalFrozen == missingFrozen.size ||  middleResult.flatMap(_.possibleToCreate).isEmpty)
-        concatenateResult(result, middleResult)
-      else {
-        recalculateTrackAndSideCode(allRoadAddresses, missingFrozen, missingFrozen.size, roadLinks, concatenateResult(result, middleResult))
-      }
-    }
-
-    def concatenateResult(result: Seq[AddressCreateInfo], newResult: Seq[AddressCreateInfo]) : Seq[AddressCreateInfo] = {
-      Seq(AddressCreateInfo(result.flatMap(_.toCreate) ++ newResult.flatMap(_.toCreate) , result.flatMap(_.possibleToCreate) ++ newResult.flatMap(_.possibleToCreate)))
-    }
-
-    def calculateTrackAndSideCode(mappedAddresses: Seq[RoadAddressTEMP], frozenAddresses: Seq[RoadAddressTEMP], roadLinks: Seq[RoadLinkLike], result: Seq[AddressCreateInfo]) : Seq[AddressCreateInfo] = {
-      if (mappedAddresses.isEmpty) {
-        concatenateResult(result,  Seq(AddressCreateInfo(Seq(), frozenAddresses)))
-      } else {
-        val mappedAddress = mappedAddresses.head
-        val (baseFirst, baseLast) =  GeometryUtils.geometryEndpoints(roadLinks.find(_.linkId == mappedAddress.linkId).get.geometry)
-
-        val adjacentFirst = mappedAddresses.filter { address =>
-          val roadLink = roadLinks.find(_.linkId == address.linkId).get
-          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-          GeometryUtils.areAdjacent (baseFirst, last) || GeometryUtils.areAdjacent (baseFirst, first)
-        }
-
-        val frozenAdjacentFirst = frozenAddresses.filter { frozen =>
-          val roadLink = roadLinks.find(_.linkId == frozen.linkId).get
-          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-          GeometryUtils.areAdjacent (baseFirst, last) || GeometryUtils.areAdjacent (baseFirst, first)
-        }
-
-        val frozenAddrFirst: Seq[RoadAddressTEMP] = (adjacentFirst.size, frozenAdjacentFirst.size) match {
-          case (2, 1) =>
-            val track = if (adjacentFirst.exists(_.track == Track.RightSide) && adjacentFirst.exists(_.track == Track.LeftSide))
-              Track.Combined
-            else if (adjacentFirst.exists(_.track == Track.Combined) && adjacentFirst.exists(_.track == Track.LeftSide))
-              Track.RightSide
-            else
-              Track.LeftSide
-
-            Seq(frozenAdjacentFirst.head.copy(track = track, sideCode = getSideCode(adjacentFirst.head, frozenAdjacentFirst.head, roadLinks)))
-          case (1, 1) =>
-            Seq(frozenAdjacentFirst.head.copy(track = adjacentFirst.head.track, sideCode = getSideCode(adjacentFirst.head, frozenAdjacentFirst.head, roadLinks)))
-          case _ =>
-            frozenAdjacentFirst.map(_.copy(track = Track.Unknown))
-        }
-
-        val adjacentLast = mappedAddresses.filter { address =>
-          val roadLink = roadLinks.find(_.linkId == address.linkId).get
-          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-          GeometryUtils.areAdjacent (baseLast, first) || GeometryUtils.areAdjacent (baseLast, last)
-        }
-
-        val frozenAdjacentLast = frozenAddresses.filter { frozen =>
-          val roadLink = roadLinks.find(_.linkId == frozen.linkId).get
-          val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
-          GeometryUtils.areAdjacent (baseLast, first) || GeometryUtils.areAdjacent (baseLast, last)
-        }
-
-        val frozenAddrLast: Seq[RoadAddressTEMP] = (adjacentLast.size, frozenAdjacentLast.size) match {
-          case (2, 1) =>
-            val track = if (adjacentLast.exists(_.track == Track.RightSide) && adjacentLast.exists(_.track == Track.LeftSide))
-              Track.Combined
-            else if (adjacentLast.exists(_.track == Track.Combined) && adjacentLast.exists(_.track == Track.LeftSide))
-              Track.RightSide
-            else
-              Track.LeftSide
-
-            Seq(frozenAdjacentLast.head.copy(track = track, sideCode = getSideCode(adjacentLast.head, frozenAdjacentLast.head, roadLinks)))
-          case (1, 1) =>
-            Seq(frozenAdjacentLast.head.copy(track = adjacentLast.head.track, sideCode = getSideCode(adjacentLast.head, frozenAdjacentLast.head, roadLinks)))
-          case _ =>
-            frozenAdjacentLast.map(_.copy(track = Track.Unknown))
-        }
-
-        val (newAddresses, possibleToCreate) = (frozenAddrFirst ++ frozenAddrLast).partition(_.track != Track.Unknown)
-        val oldAddress = mappedAddresses.diff(Seq(mappedAddress)) ++ newAddresses
-        val missingFrozen = frozenAddresses.filterNot(x => newAddresses.map(_.linkId).contains(x.linkId))
-
-        calculateTrackAndSideCode(oldAddress, missingFrozen, roadLinks, concatenateResult(result, Seq(AddressCreateInfo(newAddresses, possibleToCreate))))
-      }
-    }
-
-    def recalculateAddress(frozen: RoadLinkLike, roadAddress: Seq[RoadAddressTEMP]):  Seq[RoadAddressTEMP] = {
-      println(s"Recalculate Address on linkId ${frozen.linkId}")
-      val zippedFrozen = frozen.geometry.zip(frozen.geometry.tail)
-
-      zippedFrozen.zipWithIndex.foldLeft(Seq.empty[RoadAddressTEMP]) {case (result, ((p1, p2), index)) =>
-
-      val (addressF, addressL) = {
-          val addressOriginalF = geometryTransform.vkmGeometryTransform.coordToAddress(p1, includePedestrian = Some(true))
-          val addressOriginalL = geometryTransform.vkmGeometryTransform.coordToAddress(p2, includePedestrian = Some(true))
-
-          if (addressOriginalF.roadPart != addressOriginalL.roadPart) {
-            val geomAux = GeometryUtils.truncateGeometry2D(frozen.geometry, 0.02, GeometryUtils.geometryLength(frozen.geometry)-0.02)
-            val (p1New, p2New) = GeometryUtils.geometryEndpoints(geomAux)
-
-            val addrF = geometryTransform.vkmGeometryTransform.coordToAddress(p1New, includePedestrian = Some(true))
-            val addrL = geometryTransform.vkmGeometryTransform.coordToAddress(p2New, includePedestrian = Some(true))
-
-            (addrF, addrL )
-
-          } else {
-            (addressOriginalF, addressOriginalL)
-          }
-      }
-
-        val address = if(!(addressF.road == addressL.road && addressF.roadPart == addressL.roadPart)) {
-          val adj = roadLinkService.getAdjacent(frozen.linkId, newTransaction = false)
-          val filtered = roadAddress.filter(x => adj.map(_.linkId).contains(x.linkId))
-
-          if (index == 0 && filtered.count { x =>
-            val (first, last) = GeometryUtils.geometryEndpoints(x.geom)
-            (GeometryUtils.areAdjacent(p1, first) || GeometryUtils.areAdjacent(p1, last)) && addressL.road == x.road && addressL.roadPart == x.roadPart} == 1)
-
-            Seq(addressF.copy(road = addressL.road, roadPart = addressL.roadPart), addressL)
-
-          else if ((index + 1) == zippedFrozen.size && filtered.count { x =>
-            val (first, last) = GeometryUtils.geometryEndpoints(x.geom)
-            (GeometryUtils.areAdjacent(p2, first) || GeometryUtils.areAdjacent(p2, last)) && addressF.road == x.road && addressF.roadPart == x.roadPart} == 1)
-
-            Seq(addressF, addressL.copy(road = addressF.road, roadPart = addressF.roadPart))
-          else
-            Seq(addressF,addressL)
-        } else
-          Seq(addressF,addressL)
-
-        if(result.isEmpty) {
-          val orderedAddress = address.sortBy(_.addrM)
-          Seq(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM,
-            0, GeometryUtils.geometryLength(Seq(p1, p2)), Seq(p1, p2) , municipalityCode = Some(frozen.municipalityCode)))
-        } else {
-          val addressHead = address.head
-
-          if (result.exists(x => x.road == addressHead.road && x.roadPart == addressHead.roadPart)) {
-            val partOfEndValue = GeometryUtils.geometryLength(Seq(p1, p2))
-            val resultToChange = result.filter(x => x.road == addressHead.road && x.roadPart == addressHead.roadPart).head
-            result.filterNot(x => x.road == addressHead.road && x.roadPart == addressHead.roadPart) :+
-              resultToChange.copy(endAddressM = address.last.addrM, endMValue = partOfEndValue + resultToChange.endMValue, geom = Seq(p1, p2) ++ resultToChange.geom)
-          } else {
-            val startValue = result.maxBy(_.endMValue).endMValue
-            result :+ RoadAddressTEMP(frozen.linkId, addressHead.road, addressHead.roadPart, Track.Unknown, addressHead.addrM, address.last.addrM, startValue, startValue + GeometryUtils.geometryLength(Seq(p1, p2)), Seq(p1, p2), municipalityCode = Some(frozen.municipalityCode))
-          }
-        }
-      }
-    }
-
-    def cleaning(incompleteVKMInfo: Seq[RoadAddressTEMP]): Unit = {
-      println(s"Try to solve ${incompleteVKMInfo.size}")
-
-      val adjRoadLinks = incompleteVKMInfo.flatMap(x => roadLinkService.getAdjacent(x.linkId, newTransaction = false))
-
-      val roadLinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(incompleteVKMInfo.map(_.linkId).toSet , newTransaction = false) ++ adjRoadLinks
-
-      val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
-      val vkmRoadAddress = roadLinkTempDao.getByLinkIds(adjRoadLinks.map(_.linkId).toSet).filterNot(_.track == Track.Unknown)
-
-      val mappedAddresses = allRoadAddress.map { address =>
-        RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
-      } ++ vkmRoadAddress
-
-      val result = recalculateTrackAndSideCode(mappedAddresses, incompleteVKMInfo, incompleteVKMInfo.size, roadLinks.filter(_.administrativeClass == State), Seq())
-      val linkTypesCombined = Seq(CycleOrPedestrianPath, PedestrianZone, CableFerry)
-
-      val toCreate = result.flatMap(_.possibleToCreate).map { roadAddr =>
-        val roadLink = roadLinks.find(_.linkId == roadAddr.linkId).get
-
-        val track = if( linkTypesCombined.contains( roadLink.linkType) ) Track.Combined else Track.Unknown
-        val sideCode = mappedAddresses.find(_.linkId == roadAddr.linkId).flatMap{ mappedAddress =>
-          getSideCode(mappedAddress, roadAddr, roadLinks)
-        }
-        roadAddr.copy(track = track, sideCode = sideCode)
-      }
-
-      toCreate.distinct.foreach { frozen =>
-        roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
-        //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
-      }
-    }
-
     println("\nRefreshing information on municipality verification")
     println(DateTime.now())
+    val allowedTrack = Set(Track.LeftSide.value, Track.RightSide.value, Track.Combined.value)
 
-    //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
-
-    val possibleToCreate = OracleDatabase.withDynTransaction {
-      val toCreate = municipalities.flatMap { municipality =>
-        roadLinkTempDao.deleteInfoByMunicipality(municipality)
+    //    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities  }
+    val municipalities: Seq[Int] = Seq(216)
+    OracleDatabase.withDynTransaction {
+      val toCreate = municipalities.map { municipality =>
+        // roadLinkTempDao.deleteInfoByMunicipality(municipality)
 
         println(s"Working on municipality : $municipality")
-        println(DateTime.now())
+        val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
 
-       val roadLinksByMunicipality = vvhClient.roadLinkData.fetchByMunicipality(municipality)
+        val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
+        val (knowRoadLinks, frozenRoadLinks) = roadLinks.partition(road => allRoadAddress.map(_.linkId).contains(road.linkId))
 
-        val othAdministrativeInfo = AdministrativeClassDao.getExistingValueByLinkIds(roadLinksByMunicipality.map(_.linkId)) // returns linkId and administrativeClass
-                                                          .filter(_._2 == State) //AdministrativeClass == State
-                                                          .groupBy(_._1) //Get only the linkIds
+        //filter relevant links
+        val missingRoadLinks: Seq[RoadLink] = frozenRoadLinks
+        val groupedMissingRoadLinks: Map[String, Seq[RoadLink]] = missingRoadLinks.groupBy(_.roadNameIdentifier.getOrElse(" "))
+        val groupedRoadLinks: Map[String, Seq[RoadLink]] = knowRoadLinks.groupBy(_.roadNameIdentifier.getOrElse(" "))
 
-        //vvh linkIds are state and  NOT exists in OTH ++ linkIds as state in OTH
-        val vvhRoadLinksAsStateNotInOth = roadLinksByMunicipality.filter( road => road.administrativeClass == State && othAdministrativeInfo.get(road.linkId).isEmpty )
-        val vvhRoadLinksExistsInOthAsState = roadLinksByMunicipality.filter( road => othAdministrativeInfo.get(road.linkId).nonEmpty)
+        groupedMissingRoadLinks.keys.map { roadName =>
 
-        //roadLinks to process
-        val roadLinks = (vvhRoadLinksAsStateNotInOth ++ vvhRoadLinksExistsInOthAsState).toSet
+          if(!groupedRoadLinks.contains(roadName))
+            println("if this, should be improve")
 
-        val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId).toSeq)
-        val allRoadAddressesGroupBy = allRoadAddress.groupBy(_.linkId)
+            groupedRoadLinks.get(roadName).map { relevantRoadLinks =>
 
-        val frozenRoadLinks = roadLinks.filterNot(road => allRoadAddressesGroupBy.get(road.linkId).nonEmpty)
-
-        val mappedAddresses = allRoadAddress.map { address =>
-          RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))
-        }
-
-        val frozenAddresses = frozenRoadLinks.flatMap { frozen =>
-          val (first, last) = GeometryUtils.geometryEndpoints(frozen.geometry)
-
-          try {
-            val address = geometryTransform.vkmGeometryTransform.coordsToAddresses(Seq(first, last), includePedestrian = Some(true))
-            if (address.isEmpty || (address.nonEmpty && address.size != 2)) {
-              println("problems in addresses")
-              Seq()
-            } else {
-              val grouped = address.groupBy(addr => (addr.road, addr.roadPart))
-              if(grouped.keys.size > 1) {
-
-                val recalculateAddresses = recalculateAddress(frozen, mappedAddresses)
-
-                if(recalculateAddresses.size == 1)
-                  Some(recalculateAddresses.head)
-                else {
-                  recalculateAddresses.foreach { recalc =>
-                    println(s" more than one road -> linkId: ${recalc.linkId} road ${recalc.road} roadPart ${recalc.roadPart} track ${recalc.track}  etays ${recalc.startAddressM} let ${recalc.endAddressM} start ${recalc.startMValue}  end let ${recalc.endMValue} ")
-                  }}
-                None
-              } else {
-                val orderedAddress = address.sortBy(_.addrM)
-                Some(RoadAddressTEMP(frozen.linkId, orderedAddress.head.road, orderedAddress.head.roadPart, Track.Unknown, orderedAddress.head.addrM, orderedAddress.last.addrM, 0, GeometryUtils.geometryLength(frozen.geometry), frozen.geometry,  municipalityCode = Some(frozen.municipalityCode)))
-              }
+            val mappedMissingRoad = groupedMissingRoadLinks(roadName).map { missingRoad =>
+              val (firstM, lastM) = GeometryUtils.geometryEndpoints(missingRoad.geometry)
+              (firstM, lastM, missingRoad)
             }
-          } catch {
-            case ex: Exception =>
-              println(s"Exception in VKM for linkId ${frozen.linkId}")
-              None
+
+            val adjRoadLinks: Seq[(Point, Point, RoadAddressTEMP)] = relevantRoadLinks.flatMap { road =>
+              val (first, last) = GeometryUtils.geometryEndpoints(road.geometry)
+
+              val roadAddress = allRoadAddress.find(_.linkId == road.linkId)
+
+              if (roadAddress.nonEmpty && mappedMissingRoad.exists { case (firstM, lastM, _) =>
+                GeometryUtils.areAdjacent(first, firstM) || GeometryUtils.areAdjacent(first, lastM) || GeometryUtils.areAdjacent(last, firstM) || GeometryUtils.areAdjacent(last, lastM)
+              }) {
+                val address = roadAddress.head
+                Some((first, last, RoadAddressTEMP(address.linkId, address.roadNumber, address.roadPartNumber, address.track,
+                  address.startAddrMValue, address.endAddrMValue, address.startMValue, address.endMValue, address.geom, Some(address.sideCode))))
+              } else None
+            }
+
+            retry(adjRoadLinks, mappedMissingRoad)
           }
         }
-
-        calculateTrackAndSideCode(mappedAddresses, frozenAddresses.toSeq, roadLinks.toSeq, Seq())
       }
-
-      toCreate.foreach(_.toCreate.distinct.foreach { frozen =>
-        roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
-        //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
-      })
-
-      toCreate.flatMap(_.possibleToCreate)
     }
 
-    OracleDatabase.withDynTransaction {
-      cleaning(possibleToCreate)
+    def retry(roadAddress: Seq[(Point, Point, RoadAddressTEMP)], missingRoad: Seq[(Point, Point, RoadLink)]): Seq[(Point, Point, RoadAddressTEMP)] = {
+      val newRoadAddress : Seq[(Point, Point, RoadAddressTEMP)] = missingRoad.flatMap ({ case (firstM, lastM, missing) =>
+        val optAddressF = roadAddressTempParts(roadAddress, missingRoad, firstM, missing)
+        val optAddressL = roadAddressTempParts(roadAddress, missingRoad, lastM, missing)
+
+        if (optAddressF.nonEmpty && optAddressL.nonEmpty) {
+          val (roadF, roadPartF, addressF, trackF, sideCodeF, municipalityF) = optAddressF.head
+          val (roadL, roadPartL, addressL, trackL, sideCodeL, municipalityL) = optAddressL.head
+
+          if (roadF == roadL && roadPartF == roadPartL && addressF == addressL && trackF == trackL && sideCodeF == sideCodeL) {
+            Some((firstM, lastM, RoadAddressTEMP(missing.linkId, roadF, roadPartF, trackF, addressF, addressL, 0, GeometryUtils.geometryLength(missing.geometry), missing.geometry, sideCodeF, municipalityF)))
+          } else {
+            None
+          }
+        } else {
+          None
+        }
+      })
+
+      if(newRoadAddress.isEmpty) {
+        roadAddress
+      } else {
+        retry(roadAddress ++ newRoadAddress, missingRoad.filterNot{x => newRoadAddress.map(_._3.linkId).contains(x._3.linkId)})
+      }
+    }
+
+    def roadAddressTempParts(roadAddress: Seq[(Point, Point, RoadAddressTEMP)], missingRoad: Seq[(Point, Point, RoadLink)], point: Point, missing: RoadLink): Option[(Long, Long, Long, Track, Option[SideCode], Option[Int])] = {
+      val matchWithFirst = roadAddress.filter { case (firstPoint, _, _) =>
+        GeometryUtils.areAdjacent(point, firstPoint)
+      }
+
+      val matchWithLast = roadAddress.filter { case (_, lastPoint, _) =>
+        GeometryUtils.areAdjacent(point, lastPoint)
+      }
+
+      val adjMissing = missingRoad.filterNot(x => x._3.linkId == missing.linkId).filter { case (first, last, _) =>
+        GeometryUtils.areAdjacent(point, first) || GeometryUtils.areAdjacent(point, last)
+      }
+
+      //matching rule
+      val address = if (matchWithFirst.size + matchWithLast.size + adjMissing.size > 2) {
+        println("Impossible to handle") //In the same point isn't expected more than 3 adjacent points
+        None
+      } else {
+        if (adjMissing.size == 2) {
+          //only on the next process
+          None
+        } else {
+          if (matchWithFirst.size == 1 && matchWithLast.size == 1) {
+            val matchRoadAddress = matchWithFirst.head._3
+            println(s"sideCode ->  ${matchWithFirst.head._3.sideCode} or  ${matchWithFirst.head._3.sideCode}")
+            val trackResult = allowedTrack.diff(Set(matchRoadAddress.track.value, matchWithLast.head._3.track.value))
+            val track = if (trackResult.size > 1 && trackResult.head == trackResult.last) trackResult.head else trackResult.head
+            Some((matchRoadAddress.road, matchRoadAddress.roadPart, matchRoadAddress.startAddressM, Track.apply(track), matchRoadAddress.sideCode, matchRoadAddress.municipalityCode))
+          } else if (matchWithFirst.size == 2) {
+            val matchRoadAddress = matchWithFirst.head._3
+            val trackResult = allowedTrack.diff(matchWithFirst.map(_._3.track.value).toSet)
+            val track = if (trackResult.size > 1 && trackResult.head == trackResult.last) trackResult.head else trackResult.head
+            Some((matchRoadAddress.road, matchRoadAddress.roadPart, matchRoadAddress.endAddressM, Track.apply(track), matchRoadAddress.sideCode, matchRoadAddress.municipalityCode))
+          } else if (matchWithLast.size == 2) {
+            val trackResult = allowedTrack.diff(matchWithLast.map(_._3.track.value).toSet)
+            val track = if (trackResult.size > 1 && trackResult.head == trackResult.last) trackResult.head else trackResult.head
+            val matchRoadAddress = matchWithLast.head._3
+            Some((matchRoadAddress.road, matchRoadAddress.roadPart, matchRoadAddress.endAddressM, Track.apply(track), matchRoadAddress.sideCode, matchRoadAddress.municipalityCode))
+          } else if (matchWithFirst.size == 1 && matchWithLast.isEmpty) {
+            val matchRoadAddress = matchWithFirst.head._3
+            Some((matchRoadAddress.road, matchRoadAddress.roadPart, matchRoadAddress.startAddressM, Track.apply(allowedTrack.diff(Set(matchRoadAddress.track.value, matchRoadAddress.track.value)).head), matchRoadAddress.sideCode, matchRoadAddress.municipalityCode))
+          } else if (matchWithLast.size == 1 && matchWithFirst.isEmpty) {
+            val matchRoadAddress = matchWithLast.head._3
+            Some((matchRoadAddress.road, matchRoadAddress.roadPart, matchRoadAddress.endAddressM, Track.apply(allowedTrack.diff(Set(matchRoadAddress.track.value, matchRoadAddress.track.value)).head), matchRoadAddress.sideCode, matchRoadAddress.municipalityCode))
+          } else {
+            None
+          }
+        }
+      }
+
+      if (address.isEmpty) {
+        try {
+          val matchRoadAddress = geometryTransform.vkmGeometryTransform.coordToAddress(point, includePedestrian = Some(true))
+          Some((matchRoadAddress.road, matchRoadAddress.roadPart, matchRoadAddress.addrM, matchRoadAddress.track, Some(SideCode.BothDirections), matchRoadAddress.municipalityCode.map(_.toInt)))
+        } catch {
+          case _: Exception => None
+        }
+      } else
+        address
     }
 
     println("\n")
