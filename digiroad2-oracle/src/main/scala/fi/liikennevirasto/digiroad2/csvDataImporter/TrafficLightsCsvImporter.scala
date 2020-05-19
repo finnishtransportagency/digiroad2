@@ -26,9 +26,10 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
     (optLon, optLat) match {
       case (Some(lon), Some(lat)) =>
         val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), false)
-        roadLinks.isEmpty match {
-          case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-          case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+        if (roadLinks.isEmpty) {
+          (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+        } else {
+          (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
         }
       case _ =>
         (Nil, Nil)

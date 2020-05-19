@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.middleware
 
 import java.sql.SQLIntegrityConstraintViolationException
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -13,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
 import org.json4s.jackson.Json
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JInt, JString}
+
 
 object TrafficSignManager {
   val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
@@ -79,7 +79,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
         insertTrafficSignToProcess(trSign.id, ParkingProhibition)
 
       case trSign if TrafficSignManager.belongsToRoadwork(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, RoadWorksAsset)
+        insertTrafficSignToProcess(trSign.id, RoadWorksAsset, newTransaction = newTransaction )
 
       case _ => None
     }

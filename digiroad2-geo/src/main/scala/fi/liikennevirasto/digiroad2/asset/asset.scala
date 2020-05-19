@@ -415,8 +415,8 @@ object RoadWorksClass {
   def apply(value: Int): RoadWorksClass =
     values.find(_.value == value).getOrElse(Unknown)
 
-  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
-    RoadWorksClass.apply(prohibitionValue).trafficSign
+  def toTrafficSign(roadWorkValue: Int): TrafficSignType =
+    RoadWorksClass.apply(roadWorkValue).trafficSign
 
   case object RoadWorksType extends RoadWorksClass {
     def value: Int = 24
