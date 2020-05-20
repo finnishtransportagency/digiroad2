@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
+
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
-import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.{FourthRightAdditional, MainLane}
 import fi.liikennevirasto.digiroad2.lane._
@@ -36,6 +37,7 @@ trait LaneOperations {
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def dao: LaneDao
+  def historyDao: LaneHistoryDao
   def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
   def polygonTools: PolygonTools
@@ -740,4 +742,14 @@ trait LaneOperations {
     }
   }
 
+  def moveToHistory(oldId: Long, newId: Option[Long], expireHistoryLane: Boolean = false, deleteFromLanes: Boolean = false,
+                    username: String): Unit = {
+    val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)
+
+    if (expireHistoryLane)
+      historyDao.expireHistoryLane(historyLaneId, username)
+
+    if (deleteFromLanes)
+      dao.deleteEntryLane(oldId)
+  }
 }
