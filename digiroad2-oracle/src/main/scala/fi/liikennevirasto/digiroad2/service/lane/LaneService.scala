@@ -238,10 +238,15 @@ trait LaneOperations {
         }
 
         // To remove the lanes with wrong SideCode
-        val toRemove = lanesToProcess.find(lane => (lane.laneCode == MainLane.towardsDirection && lane.sideCode != mainLane11SideCode.value) ||
-                                                    (lane.laneCode == MainLane.againstDirection && lane.sideCode != mainLane21SideCode.value))
-                                      .map(_.id)
-                                      .filterNot(_ == 0L)
+        val toRemove = lanesToProcess.filter { lane =>
+                                      val isLaneCodeTowards = lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection
+                                      val isLaneCodeAgainst = lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection
+
+                                      (isLaneCodeTowards && lane.sideCode != mainLane11SideCode.value) ||
+                                          (isLaneCodeAgainst && lane.sideCode != mainLane21SideCode.value)
+                                     }
+                                    .map(_.id)
+                                    .filterNot(_ == 0L)
 
         (lanes ++ toAdd, changeSet.copy(generatedPersistedLanes = changeSet.generatedPersistedLanes ++ toAdd, expiredLaneIds = changeSet.expiredLaneIds ++ toRemove))
 
