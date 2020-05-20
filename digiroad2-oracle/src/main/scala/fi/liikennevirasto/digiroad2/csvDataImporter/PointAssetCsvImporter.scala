@@ -2,7 +2,9 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.asset.{PropertyValue, SimplePointAssetProperty, DateParser}
+import fi.liikennevirasto.digiroad2.asset.{DateParser, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.User
@@ -31,6 +33,8 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     "koordinaatti x" -> "lon",
     "koordinaatti y" -> "lat"
   )
+
+  private val suggestBoxPublicId = "suggest_box"
 
   val longValueFieldsMapping: Map[String, String] = coordinateMappings
   val codeValueFieldsMapping: Map[String, String] = Map()
@@ -110,14 +114,16 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value)
   }
 
-  def extractPropertyValues(listPublicIds: Seq[String], listFieldNames: Seq[String], attributes: ParsedProperties): Seq[Option[SimplePointAssetProperty]] =
-    (listPublicIds, listFieldNames).zipped.map{(publicId, fieldName) =>
+  def extractPropertyValues(listPublicIds: Seq[String], listFieldNames: Seq[String], attributes: ParsedProperties, withGroupedId: Boolean): Seq[Option[SimplePointAssetProperty]] = {
+    val groupedId = if (withGroupedId) Sequences.nextGroupedIdSeqValue else 0
+    (listPublicIds, listFieldNames).zipped.map { (publicId, fieldName) =>
       val propertyInfo = getPropertyValueOption(attributes, fieldName)
-      if(propertyInfo.get != null && propertyInfo.nonEmpty)
-        Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString))))
+      if (propertyInfo.get != null && propertyInfo.nonEmpty)
+        Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString)), groupedId))
       else
         None
-    }
+    } ++ Set(Some(SimplePointAssetProperty(suggestBoxPublicId, Seq(PropertyValue("0")), groupedId))) //not possible to insert suggested lights through csv
+  }
 
   def getCoordinatesFromProperties(csvProperties: ParsedProperties): Point = {
     val lon = getPropertyValue(csvProperties, "lon").asInstanceOf[BigDecimal].toLong
@@ -138,6 +144,24 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
         }
       case _ =>
         (Nil, Nil)
+    }
+  }
+
+  def csvLaneValidator(optLaneType: Option[Int], optLaneNumber: Option[String]): (Boolean, List[String]) = {
+    (optLaneType, optLaneNumber) match {
+      case (_, Some(lane)) if lane.trim.nonEmpty && !lane.matches("^([1-3][1-9])$") =>
+        (false, List("Invalid lane"))
+      case (Some(laneType), Some(laneNumber)) if laneType != LaneType.Unknown.value && laneNumber.trim.nonEmpty =>
+        val isMainTypeAndWrongLaneNumber = laneType == LaneType.Main.value && !LaneNumber.isMainLane(laneNumber.toInt)
+        val isNotMainTypeAndIsMainLaneNumber = laneType != LaneType.Main.value && LaneNumber.isMainLane(laneNumber.toInt)
+
+        if ( isMainTypeAndWrongLaneNumber || isNotMainTypeAndIsMainLaneNumber) {
+          (false, List("Invalid lane and lane type match") )
+        } else {
+          (true, Nil)
+        }
+
+      case (_,_) => (true, Nil)
     }
   }
 

@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 
-//TODO: verify if this change is needed
 case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Option[Int] = None, bearing: Option[Int] = None) extends IncomingPointAsset
 case class IncomingTrafficLightAsset(linkId: Long, mValue: Long, propertyData: Set[SimplePointAssetProperty]) extends IncomePointAsset
 
@@ -49,22 +48,8 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   def createFromCoordinates(incomingTrafficLight: IncomingTrafficLight, roadLink: RoadLink, username: String, isFloating: Boolean): Long = {
     if(isFloating)
       createFloatingWithoutTransaction(incomingTrafficLight.copy(linkId = 0), username, roadLink)
-    else {
-      checkDuplicates(incomingTrafficLight) match {
-        case Some(existingAsset) =>
-          updateWithoutTransaction(existingAsset.id, incomingTrafficLight, roadLink, username, Some(existingAsset.mValue), Some(existingAsset.vvhTimeStamp))
-        case _ =>
-          create(incomingTrafficLight, username, roadLink, false)
-      }
-    }
-  }
-
-  def checkDuplicates(incomingTrafficLight: IncomingTrafficLight): Option[TrafficLight] = {
-    val position = Point(incomingTrafficLight.lon, incomingTrafficLight.lat)
-    val signsInRadius = OracleTrafficLightDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters))
-      .filter(sign => GeometryUtils.geometryLength(Seq(position, Point(sign.lon, sign.lat))) <= TwoMeters)
-
-    if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
+    else
+      create(incomingTrafficLight, username, roadLink, false)
   }
 
   def getLatestModifiedAsset(signs: Seq[TrafficLight]): TrafficLight = {
@@ -131,6 +116,12 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   def getProperty(properties: Seq[Property], property: String) : Option[PropertyValue] = {
     properties.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  }
+
+  def fetchSuitableForMergeByRadius(centralPoint: Point, radius: Int): Seq[TrafficLight] = {
+    val maxTrafficLights = 6
+    val existingTrafficLights = OracleTrafficLightDao.fetchByRadius(centralPoint, radius)
+    existingTrafficLights.filter { trafficLight => trafficLight.propertyData.count(_.publicId == "trafficLight_type") < maxTrafficLights && !trafficLight.propertyData.exists(_.groupedId == 0 )}
   }
 
   override def getChanged(sinceDate: DateTime, untilDate: DateTime, token: Option[String] = None): Seq[ChangedPointAsset] = { throw new UnsupportedOperationException("Not Supported Method") }

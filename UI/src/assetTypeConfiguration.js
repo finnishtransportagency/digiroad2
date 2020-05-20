@@ -1358,7 +1358,7 @@
           {'name': "Maastokoordinaatti X", 'propertyType': 'number', 'publicId': "terrain_coordinates_x", values: [] },
           {'name': "Maastokoordinaatti Y", 'propertyType': 'number', 'publicId': "terrain_coordinates_y", values: [] },
           {'name': "Lisäkilpi", 'propertyType': 'additional_panel_type', 'publicId': "additional_panel", values: [], defaultValue:
-                {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 999, coating_type: 999, additional_panel_color: 999 }},
+                {panelType:53, panelInfo : "", panelValue : "", formPosition : "", text:"", size: 99, coating_type: 99, additional_panel_color: 99 }},
           {'name': "Lisää vanhan lain mukainen koodi", 'propertyType': 'checkbox', 'publicId': "old_traffic_code", values: [ {propertyValue: 0} ]},
           {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},

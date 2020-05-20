@@ -291,7 +291,7 @@
             var amount = containers.length;
 
             containers.find('.button-remove-traffic-light').prop("disabled", amount === 1);
-            containers.find('.button-add-traffic-light').prop("disabled", amount === 6);
+            containers.find('.button-add-traffic-light').prop("disabled", amount >= 6);
         };
     };
 })(this);

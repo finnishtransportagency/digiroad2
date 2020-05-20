@@ -107,7 +107,7 @@ trait  PointAssetOperations{
   final val TwoMeters = 2
   final val BearingLimit = 25
   final val defaultMultiChoiceValue = 0
-  final val defaultSingleChoiceValue = 999
+  final val defaultSingleChoiceValue = 99
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))

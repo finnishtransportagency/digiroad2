@@ -47,7 +47,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val lifespanLeftPublicId = "lifespan_left"
   private val oldTrafficCodePublicId = "old_traffic_code"
   private val oppositeSideSignPublicId = "opposite_side_sign"
-  private val suggestBoxPublicId = "suggest_box"
   private val additionalPanelPublicId = "additional_panel"
 
   lazy val trafficSignService: TrafficSignService = new TrafficSignService(roadLinkService, eventBusImpl)
@@ -297,23 +296,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     /* start lane type validations */
     val optLaneType = getPropertyValueOption(parsedRow, "laneType").asInstanceOf[Option[Int]]
-    val optLane = getPropertyValueOption(parsedRow, "lane").asInstanceOf[Option[String]]
+    val optLaneNumber = getPropertyValueOption(parsedRow, "lane").asInstanceOf[Option[String]]
 
-    val (lanesValidator, lanesValidatorErrorMsg) = (optLaneType, optLane) match {
-      case (_, Some(lane)) if lane.trim.nonEmpty && !lane.matches("^([1-3][1-9])$") =>
-        (false, List("Invalid lane"))
-      case (Some(laneType), Some(laneNumber)) if laneType != LaneType.Unknown.value && laneNumber.trim.nonEmpty =>
-              val isMainTypeAndWrongLaneNumber = laneType == LaneType.Main.value && !LaneNumber.isMainLane(laneNumber.toInt)
-              val isNotMainTypeAndIsMainLaneNumber = laneType != LaneType.Main.value && LaneNumber.isMainLane(laneNumber.toInt)
-
-              if ( isMainTypeAndWrongLaneNumber || isNotMainTypeAndIsMainLaneNumber) {
-                (false, List("Invalid lane and lane type match") )
-              } else {
-                (true, Nil)
-              }
-
-      case (_,_) => (true, Nil)
-    }
+    val (lanesValidator, lanesValidatorErrorMsg) = csvLaneValidator(optLaneType, optLaneNumber)
     /* end lane type validations */
 
     val allErrors = datesErrorMsg ++ directionValidatorErrorMsg ++ additionalPanelsErrorMsg ++ lanesValidatorErrorMsg
@@ -341,11 +326,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                               "oldTrafficCode", "oppositeSideSign"
                             )
 
-    val propertiesValues = extractPropertyValues(listPublicIds, listFieldNames, trafficSignAttributes)
-    //not possible to insert suggested signs through csv
-    val suggestBox = Set(Some(SimplePointAssetProperty(suggestBoxPublicId, Seq(PropertyValue("0")))))
+    val propertiesValues = extractPropertyValues(listPublicIds, listFieldNames, trafficSignAttributes, withGroupedId = false)
 
-    (Set(Some(typeProperty), valueProperty) ++ propertiesValues ++ suggestBox ++ generateBasePanelProperties(trafficSignAttributes)).flatten
+    (Set(Some(typeProperty), valueProperty) ++ propertiesValues ++ generateBasePanelProperties(trafficSignAttributes)).flatten
   }
 
   private def generateBasePanelProperties(trafficSignAttributes: ParsedProperties): Set[Option[SimplePointAssetProperty]] = {

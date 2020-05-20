@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, PropertyValue, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.lane.LaneType
+import fi.liikennevirasto.digiroad2.dao.pointasset.TrafficLight
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, GeometryUtils, Point, TrafficLightPushButton, TrafficLightRelativePosition, TrafficLightSoundSignal, TrafficLightType, TrafficLightVehicleDetection}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -33,7 +34,6 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   private val statePublicId = "trafficLight_state"
   private val bearingPublicId = "bearing"
   private val sidecodePublicId = "sidecode"
-  private val suggestBoxPublicId = "suggest_box"
 
   private val longValueFieldMappings = coordinateMappings
 
@@ -65,31 +65,41 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
   )
 
   private val singleChoiceAcceptableValues = Map(
-    "rakennelma" -> (PointAssetStructure.values.map(_.value), PointAssetStructure.getDefault),
-    "aanimerkki" -> (TrafficLightSoundSignal.values.map(_.value), TrafficLightSoundSignal.getDefault),
-    "tunnistus" -> (TrafficLightVehicleDetection.values.map(_.value), TrafficLightVehicleDetection.getDefault),
-    "painonappi" -> (TrafficLightPushButton.values.map(_.value), TrafficLightPushButton.getDefault),
-    "sijainti" -> (TrafficLightRelativePosition.values.map(_.value), TrafficLightRelativePosition.getDefault),
-    "kaistan tyyppi" -> (LaneType.values.map(_.value), LaneType.getDefault),
-    "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault)
+    "rakennelma" -> (PointAssetStructure.values.map(_.value), PointAssetStructure.getDefault.value),
+    "aanimerkki" -> (TrafficLightSoundSignal.values.map(_.value), TrafficLightSoundSignal.getDefault.value),
+    "tunnistus" -> (TrafficLightVehicleDetection.values.map(_.value), TrafficLightVehicleDetection.getDefault.value),
+    "painonappi" -> (TrafficLightPushButton.values.map(_.value), TrafficLightPushButton.getDefault.value),
+    "sijainti" -> (TrafficLightRelativePosition.values.map(_.value), TrafficLightRelativePosition.getDefault.value),
+    "kaistan tyyppi" -> (LaneType.values.map(_.value), LaneType.getDefault.value),
+    "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault.value)
   )
 
   lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
 
   override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
-    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
-    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+    /* start lane type validations */
+    val optLaneType = getPropertyValueOption(parsedRow, "trafficLightLaneType").asInstanceOf[Option[Int]]
+    val optLaneNumber = getPropertyValueOption(parsedRow, "trafficLightLaneNumber").asInstanceOf[Option[String]]
 
-    (optLon, optLat) match {
-      case (Some(lon), Some(lat)) =>
-        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), false)
-        roadLinks.isEmpty match {
-          case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-          case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
-        }
-      case _ =>
-        (Nil, Nil)
+    val (lanesValidator, lanesValidatorErrorMsg) = csvLaneValidator(optLaneType, optLaneNumber)
+    /* end lane type validations */
+
+    if (lanesValidator) {
+      val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+      val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+
+      (optLon, optLat) match {
+        case (Some(lon), Some(lat)) =>
+          val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+          roadLinks.isEmpty match {
+            case true => (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+            case false => (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+          }
+        case _ =>
+          (Nil, Nil)
+      }
     }
+    else (lanesValidatorErrorMsg, Seq())
   }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
@@ -100,7 +110,7 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
         if (mandatoryFields.contains(key)) {
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
         } else if (typeMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = typeMapping(key), value = typeMappingAcceptableValues(key).getDefault) :: result._2)
+          result.copy(_2 = AssetProperty(columnName = typeMapping(key), value = typeMappingAcceptableValues(key).getDefault.value) :: result._2)
         } else if (singleChoiceMapping.contains(key)) {
           val defaultValue = singleChoiceAcceptableValues(key) match { case (_, default) => default }
           result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = defaultValue) :: result._2)
@@ -167,7 +177,11 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
       else
         trafficLight.bearing
       try {
-        trafficLightsService.createFromCoordinates(IncomingTrafficLight(trafficLight.lon, trafficLight.lat, trafficLight.roadLink.linkId, trafficLight.propertyData, Some(trafficLight.validityDirection), bearing), trafficLight.roadLink, user.username, trafficLight.isFloating)
+        val trafficLightsSuitableForMerge = trafficLightsService.fetchSuitableForMergeByRadius(centralPoint = Point(trafficLight.lon, trafficLight.lat), radius = 5)
+        if (trafficLightsSuitableForMerge.isEmpty)
+          trafficLightsService.createFromCoordinates(IncomingTrafficLight(trafficLight.lon, trafficLight.lat, trafficLight.roadLink.linkId, trafficLight.propertyData, Some(trafficLight.validityDirection), bearing), trafficLight.roadLink, user.username, trafficLight.isFloating)
+        else
+          mergeAndUpdateTrafficLight(trafficLightsSuitableForMerge.head, toBeMerged = trafficLight, user)
       } catch {
         case ex: NoSuchElementException => NotImportedData(reason = ex.getMessage, csvRow = rowToString(csvRow.flatMap{x => Map(x.columnName -> x.value)}.toMap))
       }
@@ -183,11 +197,12 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
     val listFieldNames = Seq("trafficLightType", "trafficLightInfo", "trafficLightMunicipalityId", "trafficLightStructure", "trafficLightHeight", "trafficLightSoundSignal", "trafficLightVehicleDetection",
                              "trafficLightPushButton", "trafficLightPosition", "lon", "lat", "trafficLightLaneType", "trafficLightLaneNumber", "trafficLightState", "trafficLightBearing", "trafficLightSidecode")
 
-    val propertiesValues = extractPropertyValues(listPublicIds, listFieldNames, trafficLightAttributes)
-    //not possible to insert suggested lights through csv
-    val suggestBox = Set(Some(SimplePointAssetProperty(suggestBoxPublicId, Seq(PropertyValue("0")))))
+    extractPropertyValues(listPublicIds, listFieldNames, trafficLightAttributes, withGroupedId = true).toSet.flatten
+  }
 
-    (propertiesValues.toSet ++ suggestBox).flatten
+  def mergeAndUpdateTrafficLight(baseTrafficLight: TrafficLight, toBeMerged: CsvPointAsset, user: User): Long = {
+    val propertyData = baseTrafficLight.propertyData.map(property => SimplePointAssetProperty(property.publicId, property.values, property.groupedId)).toSet ++ toBeMerged.propertyData
+    trafficLightsService.updateWithoutTransaction(baseTrafficLight.id, IncomingTrafficLight(baseTrafficLight.lon, baseTrafficLight.lat, baseTrafficLight.linkId, propertyData), toBeMerged.roadLink, user.username, Some(baseTrafficLight.mValue), None)
   }
 
   def verifyTrafficLightType(parameterName: String, assetTypeChoice: String): ParsedRow = {

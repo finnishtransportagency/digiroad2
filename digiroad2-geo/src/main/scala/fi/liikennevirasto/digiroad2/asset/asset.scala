@@ -741,7 +741,7 @@ sealed trait AdditionalPanelSize {
   def propertyDisplayValue : String
 }
 object AdditionalPanelSize {
-  val values = Set(SizeOption1, SizeOption2, SizeOption3, SizeOption999)
+  val values = Set(SizeOption1, SizeOption2, SizeOption3, SizeOption99)
 
   def apply(value: Int): Option[AdditionalPanelSize] = {
     values.find(_.value == value)
@@ -750,14 +750,14 @@ object AdditionalPanelSize {
 case object SizeOption1 extends AdditionalPanelSize { def value = 1; def propertyDisplayValue = "Pienikokoinen merkki"}
 case object SizeOption2 extends AdditionalPanelSize { def value = 2; def propertyDisplayValue = "Normaalikokoinen merkki"}
 case object SizeOption3 extends AdditionalPanelSize { def value = 3; def propertyDisplayValue = "Suurikokoinen merkki"}
-case object SizeOption999 extends AdditionalPanelSize { def value = 999; def propertyDisplayValue = "Ei tietoa"}
+case object SizeOption99 extends AdditionalPanelSize { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 sealed trait AdditionalPanelCoatingType {
   def value: Int
   def propertyDisplayValue : String
 }
 object AdditionalPanelCoatingType {
-  val values = Set(CoatingTypeOption1, CoatingTypeOption2, CoatingTypeOption3, CoatingTypeOption999)
+  val values = Set(CoatingTypeOption1, CoatingTypeOption2, CoatingTypeOption3, CoatingTypeOption99)
 
   def apply(value: Int): Option[AdditionalPanelCoatingType] = {
     values.find(_.value == value)
@@ -766,14 +766,14 @@ object AdditionalPanelCoatingType {
 case object CoatingTypeOption1 extends AdditionalPanelCoatingType { def value = 1; def propertyDisplayValue = "R1-luokan kalvo"}
 case object CoatingTypeOption2 extends AdditionalPanelCoatingType { def value = 2; def propertyDisplayValue = "R2-luokan kalvo"}
 case object CoatingTypeOption3 extends AdditionalPanelCoatingType { def value = 3; def propertyDisplayValue = "R3-luokan kalvo"}
-case object CoatingTypeOption999 extends AdditionalPanelCoatingType { def value = 999; def propertyDisplayValue = "Ei tietoa"}
+case object CoatingTypeOption99 extends AdditionalPanelCoatingType { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 sealed trait AdditionalPanelColor {
   def value: Int
   def propertyDisplayValue : String
 }
 object AdditionalPanelColor {
-  val values = Set(ColorOption1, ColorOption2, ColorOption999)
+  val values = Set(ColorOption1, ColorOption2, ColorOption99)
 
   def apply(value: Int): Option[AdditionalPanelColor] = {
     values.find(_.value == value)
@@ -781,7 +781,7 @@ object AdditionalPanelColor {
 }
 case object ColorOption1 extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
 case object ColorOption2 extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
-case object ColorOption999 extends AdditionalPanelColor { def value = 999; def propertyDisplayValue = "Ei tietoa"}
+case object ColorOption99 extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
   override def toJson: Any = this
