@@ -24,6 +24,7 @@ class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEv
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def historyDao: LaneHistoryDao = new LaneHistoryDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()

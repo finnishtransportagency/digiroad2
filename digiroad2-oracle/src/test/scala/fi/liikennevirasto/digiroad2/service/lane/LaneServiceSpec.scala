@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.lane
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
-import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -24,6 +24,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockLaneDao = MockitoSugar.mock[LaneDao]
+  val mockLaneHistoryDao = MockitoSugar.mock[LaneHistoryDao]
 
   val laneDao = new LaneDao(mockVVHClient, mockRoadLinkService)
   val roadLinkWithLinkSource = RoadLink(
@@ -74,6 +75,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def dao: LaneDao = mockLaneDao
+    override def historyDao: LaneHistoryDao =mockLaneHistoryDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
