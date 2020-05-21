@@ -422,6 +422,12 @@ trait LaneOperations {
     }.filterNot(_.expired)
   }
 
+  def fetchAllLanesByLinkIds(linkIds: Seq[Long]): Seq[PersistedLane] = {
+    withDynTransaction {
+      dao.fetchAllLanesByLinkIds(linkIds)
+    }
+  }
+
   def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
     val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(linkId).head
 
@@ -770,10 +776,10 @@ trait LaneOperations {
 
   def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long]): ActionsPerLanes = {
     //Get Current Lanes for sended linkIds
-    val existingLanes: Seq[PersistedLane] = fetchExistingLanesByLinkIds(linkIds.toSeq)
+    val allExistingLanes: Seq[PersistedLane] = fetchAllLanesByLinkIds(linkIds.toSeq)
 
     //Get Lanes to be deleted
-    val resultWithDeleteActions = existingLanes.foldLeft(ActionsPerLanes()) {
+    val resultWithDeleteActions = allExistingLanes.foldLeft(ActionsPerLanes()) {
       (result, existingLane) =>
 
         val isLaneToDelete =
@@ -794,7 +800,7 @@ trait LaneOperations {
         val laneCode = getPropertyValue(lane, "lane_code")
 
         // If new Income Lane already exist at data base will be marked to be updated
-        if (existingLanes.exists(_.laneCode == laneCode)) {
+        if (allExistingLanes.exists(_.laneCode == laneCode)) {
           result.copy(lanesToUpdate = Set(lane) ++ result.lanesToUpdate)
         } else {
           // If new Income Lane doesnt exist at data base will be marked to be created

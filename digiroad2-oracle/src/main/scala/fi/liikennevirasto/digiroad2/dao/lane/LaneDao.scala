@@ -1,13 +1,15 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
+import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, PersistedLane, _}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
 import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -36,8 +38,8 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     }
   }
 
-  implicit val getLaneAsset = new GetResult[LaneRow] {
-    def apply(r: PositionedResult) = {
+  implicit val getLaneAsset: GetResult[LaneRow] = new GetResult[LaneRow] {
+    def apply(r: PositionedResult) : LaneRow = {
       val id = r.nextLong()
       val linkId = r.nextLong()
       val sideCode = r.nextInt()
@@ -94,26 +96,56 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
        JOIN lane_attribute la ON la.lane_id = l.id """
   }
 
+  def getLanesChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None): Seq[PersistedLane] = {
+    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
+    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
+
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (l.modified_by is null OR l.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
+
+
+    val query = s"""
+                SELECT id, link_id, side_code, start_measure, end_measure, created_by, created_date, modified_by,
+                modified_date, expired, adjusted_timestamp, "pos_modified_date", name, value, municipality_code,
+                lane_code, expired_by, expired_date
+                FROM (SELECT l.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, l.created_by,
+                l.created_date, l.modified_by, l.modified_date, CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
+                pos.adjusted_timestamp, pos.modified_date "pos_modified_date", la.name, la.value, l.municipality_code, l.lane_code,
+                l.expired_by, l.expired_date,
+                DENSE_RANK() over (ORDER BY l.id) line_number
+                FROM lane l
+                JOIN lane_link ll ON l.id = ll.lane_id
+                JOIN lane_position pos ON ll.lane_position_id = pos.id
+                JOIN lane_attribute la ON la.lane_id = l.id
+                WHERE ((l.valid_to > $querySinceDate and l.valid_to <= $queryUntilDate) or
+                (l.modified_date > $querySinceDate and l.modified_date <= $queryUntilDate) or
+                (l.created_date > $querySinceDate and l.created_date <= $queryUntilDate) or
+                (l.expired_date > $querySinceDate and l.expired_date <= $queryUntilDate))
+                #$withAutoAdjustFilter
+                )$recordLimit"""
+
+    val lanesRow = StaticQuery.queryNA[LaneRow](query)(getLaneAsset).iterator.toSeq
+    convertLaneRowToPersistedLane(lanesRow)
+  }
+
   /**
     * Iterates a set of link ids  and returns lanes. Used by LaneService.getByRoadLinks.
     */
-  def fetchLanesByLinkIds( linkIds: Seq[Long], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
-    val filterExpired = " (l.valid_to > sysdate OR l.valid_to IS NULL ) "
-    val laneCodeClause = " l.lane_code IN (11, 21, 31)"
+  def fetchLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, mainLanes: Boolean = false): Seq[PersistedLane] = {
+    val lanesCodeToFilter =
+      if (mainLanes)
+        Seq(MainLane.towardsDirection, MainLane.againstDirection, MainLane.motorwayMaintenance)
+      else
+        Seq()
 
-    val whereClause = (includeExpired, mainLanes ) match {
-      case (false, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
-      case (_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
-      case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
-      case _ => " ORDER BY l.lane_code ASC"
-    }
-
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
-        val filter = s""" JOIN $idTableName i ON i.id = pos.link_id
-                        $whereClause """
-
-      getLanesFilterQuery( withFilter(filter))
-    }
+    fetchAllLanesByLinkIds(linkIds, includeExpired, lanesCodeToFilter)
   }
 
   def   getLanesFilterQuery( queryFilter: String => String ): Seq[PersistedLane] = {
@@ -123,11 +155,15 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
   def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int], includeExpired: Boolean = false): Seq[PersistedLane] = {
-    val filterExpired = s" (l.valid_to > sysdate or l.valid_to IS NULL ) "
-    val laneCodeClause = s" l.lane_code in (${laneCode.mkString(",")})"
+    fetchAllLanesByLinkIds(linkIds, includeExpired, laneCode)
+  }
 
-    val whereClause = (includeExpired, laneCode.nonEmpty ) match {
-      case (false, true) =>  s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
+  def fetchAllLanesByLinkIds(linkIds: Seq[Long], includeExpired: Boolean = false, laneCodeFilter: Seq[Int] = Seq()): Seq[PersistedLane] = {
+    val filterExpired = s" (l.valid_to > sysdate OR l.valid_to IS NULL ) "
+    val laneCodeClause = s" l.lane_code in (${laneCodeFilter.mkString(",")})"
+
+    val whereClause = (includeExpired, laneCodeFilter.nonEmpty) match {
+      case (false, true) => s" WHERE $filterExpired AND $laneCodeClause ORDER BY l.lane_code ASC"
       case (_, true) => s" WHERE $laneCodeClause ORDER BY l.lane_code ASC"
       case (false, _) => s" WHERE $filterExpired ORDER BY l.lane_code ASC"
       case _ => " ORDER BY l.lane_code ASC"
@@ -135,9 +171,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     MassQuery.withIds(linkIds.toSet) { idTableName =>
       val filter = s" JOIN $idTableName i ON i.id = pos.link_id $whereClause"
-      getLanesFilterQuery( withFilter(filter))
-    }
 
+      getLanesFilterQuery(withFilter(filter))
+    }
   }
 
 
