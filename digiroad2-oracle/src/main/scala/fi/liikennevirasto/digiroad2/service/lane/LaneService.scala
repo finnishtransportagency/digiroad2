@@ -52,6 +52,10 @@ trait LaneOperations {
   val logger = LoggerFactory.getLogger(getClass)
   lazy val VvhGenerated = "vvh_generated"
 
+  case class ActionsPerLanes(lanesToDelete: Set[Long] = Set(),
+                             lanesToUpdate: Set[NewIncomeLane] = Set(),
+                             lanesToInsert: Set[NewIncomeLane] = Set())
+
   def getByZoomLevel( linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLane]] = {
     withDynTransaction {
       val assets = dao.fetchLanes( linkGeomSource)
@@ -753,4 +757,52 @@ trait LaneOperations {
     if (deleteFromLanes)
       dao.deleteEntryLane(oldId)
   }
+
+  def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
+                            sideCode: Int, username: String): Unit = {
+
+    val actionsLanes = separateNewIncomeLanesInActions(newIncomeLanes, linkIds)
+
+    deleteMultipleLanes(actionsLanes.lanesToDelete)
+    create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username)
+    update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username)
+  }
+
+  def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long]): ActionsPerLanes = {
+    //Get Current Lanes for sended linkIds
+    val existingLanes: Seq[PersistedLane] = fetchExistingLanesByLinkIds(linkIds.toSeq)
+
+    //Get Lanes to be deleted
+    val resultWithDeleteActions = existingLanes.foldLeft(ActionsPerLanes()) {
+      (result, existingLane) =>
+
+        val isLaneToDelete =
+          newIncomeLanes.exists { incomeLane =>
+            val incomeLaneCode = getPropertyValue(incomeLane, "lane_code")
+            incomeLaneCode == existingLane.laneCode
+          }
+
+        if (isLaneToDelete)
+          result.copy(lanesToDelete = Set(existingLane.id) ++ result.lanesToDelete)
+        else
+          result
+    }
+
+    //Get Lanes to be created and updated
+    val resultWithAllActions = newIncomeLanes.foldLeft(resultWithDeleteActions) {
+      (result, lane) =>
+        val laneCode = getPropertyValue(lane, "lane_code")
+
+        // If new Income Lane already exist at data base will be marked to be updated
+        if (existingLanes.exists(_.laneCode == laneCode)) {
+          result.copy(lanesToUpdate = Set(lane) ++ result.lanesToUpdate)
+        } else {
+          // If new Income Lane doesnt exist at data base will be marked to be created
+          result.copy(lanesToInsert = Set(lane) ++ result.lanesToInsert)
+        }
+    }
+
+    resultWithAllActions
+  }
+
 }

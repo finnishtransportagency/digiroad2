@@ -48,32 +48,6 @@ object LaneUtils {
       throw new RuntimeException(s"cannot find property $name")
   }
 
-  def separateNewIncomeLanes( newIncomeLanes: Set[NewIncomeLane]) : (Set[Long],Set[Long],Set[NewIncomeLane],Set[NewIncomeLane]) = {
-
-    val lanesWithoutFlags = newIncomeLanes.filterNot( lane => lane.isDeleted  || lane.isExpired ) // Remove records with those flags as true
-
-    val toDelete = newIncomeLanes.filter( _.isDeleted == true ).map( _.id )
-    val toHistory = newIncomeLanes.filter( _.isExpired == true ).map( _.id )
-    val (toInsert, toUpdate) = lanesWithoutFlags.partition(_.id == 0)
-
-    (toDelete, toHistory, toUpdate, toInsert)
-  }
-
-
-  def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
-                             sideCode: Int, username: String) = {
-
-    val (toDelete, toHistory, toUpdate, toInsert) = separateNewIncomeLanes(newIncomeLanes)
-    laneService.deleteMultipleLanes(toDelete)
-    laneService.multipleLanesToHistory(toHistory, username)
-    laneService.create(toInsert.toSeq, linkIds, sideCode, username)
-    laneService.update(toUpdate.toSeq, linkIds, sideCode, username)
-
-  }
-
-
-
-
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
