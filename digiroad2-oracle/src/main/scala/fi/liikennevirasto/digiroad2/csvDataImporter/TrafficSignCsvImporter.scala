@@ -63,16 +63,16 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
 
   private val singleChoiceAcceptableValues = Map(
-    "rakenne" -> (PointAssetStructure.values.map(_.value), PointAssetStructure.getDefault),
-    "kunto" -> (Condition.values.map(_.value), Condition.getDefault),
-    "koko" -> (Size.values.map(_.value), Size.getDefault),
-    "kalvon tyyppi" -> (CoatingType.values.map(_.value), CoatingType.getDefault),
-    "merkin materiaali" -> (SignMaterial.values.map(_.value), SignMaterial.getDefault),
-    "sijaintitarkenne" -> (LocationSpecifier.values.map(_.value), LocationSpecifier.getDefault),
-    "kaistan tyyppi" -> (LaneType.values.map(_.value), LaneType.getDefault),
-    "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault),
-    "vauriotyyppi" -> (TypeOfDamage.values.map(_.value), TypeOfDamage.getDefault),
-    "korjauksen kiireellisyys" -> (UrgencyOfRepair.values.map(_.value), UrgencyOfRepair.getDefault)
+    "rakenne" -> (PointAssetStructure.values.map(_.value), PointAssetStructure.getDefault.value),
+    "kunto" -> (Condition.values.map(_.value), Condition.getDefault.value),
+    "koko" -> (Size.values.map(_.value), Size.getDefault.value),
+    "kalvon tyyppi" -> (CoatingType.values.map(_.value), CoatingType.getDefault.value),
+    "merkin materiaali" -> (SignMaterial.values.map(_.value), SignMaterial.getDefault.value),
+    "sijaintitarkenne" -> (LocationSpecifier.values.map(_.value), LocationSpecifier.getDefault.value),
+    "kaistan tyyppi" -> (LaneType.values.map(_.value), LaneType.getDefault.value),
+    "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault.value),
+    "vauriotyyppi" -> (TypeOfDamage.values.map(_.value), TypeOfDamage.getDefault.value),
+    "korjauksen kiireellisyys" -> (UrgencyOfRepair.values.map(_.value), UrgencyOfRepair.getDefault.value)
   )
 
   private val singleChoiceMapping = Map(
