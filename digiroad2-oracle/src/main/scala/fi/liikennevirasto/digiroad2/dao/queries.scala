@@ -133,28 +133,28 @@ object Queries {
 
   def deleteMultipleChoiceValue(valueId: Long) = sqlu"delete from multiple_choice_value WHERE id = $valueId"
 
-  def insertMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = None) =
+  def insertMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date, grouped_id)
       values (primary_key_seq.nextval, $propertyId, $assetId,
         (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE, $groupedId)
     """
 
-  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = None) =
+  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
     sqlu"""
      update multiple_choice_value set enumerated_value_id =
        (select id from enumerated_value where value = $propertyValue and property_id = $propertyId)
        where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId
    """
 
-  def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = None) = {
+  def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date, grouped_id)
       values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, SYSDATE, $groupedId)
     """
   }
 
-  def updateTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = None) =
+  def updateTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) =
     sqlu"update text_property_value set value_fi = $valueFi where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId"
 
   def deleteTextProperty(assetId: Long, propertyId: Long) =
@@ -186,14 +186,14 @@ object Queries {
     """
   }
 
-  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = None) = {
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = Some(0)) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value, grouped_id)
       values (primary_key_seq.nextval, $propertyId, $assetId, $value, $groupedId)
     """
   }
 
-  def updateNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = None) =
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = Some(0)) =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId"
 
   def updateNumberProperty(assetId: Long, propertyId: Long, value: Double) =
