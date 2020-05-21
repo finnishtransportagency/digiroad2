@@ -77,7 +77,10 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     runWithRollback {
       val now = DateTime.now()
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, Set()), "jakke", roadLink)
+      val simplePointPropertyData = Set(
+        SimplePointAssetProperty("trafficLight_type", List(PropertyValue("1")), 1)
+      )
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, simplePointPropertyData), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -86,23 +89,23 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       asset.vvhTimeStamp should not be(0)
 
-      val propertyId = asset.propertyData.head.id
-      val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+      val suggestProperty = asset.propertyData.find(_.publicId == "suggest_box").head
+      val trafficLightTypeProperty = asset.propertyData.find(_.publicId == "trafficLight_type").head
 
-      asset should be(TrafficLight(
-        id = id,
-        linkId = 388553075,
-        lon = 2,
-        lat = 0,
-        mValue = 2,
-        floating = false,
-        vvhTimeStamp = asset.vvhTimeStamp,
-        municipalityCode = 235,
-        propertyData = Seq(pointAssetProperty),
-        createdBy = Some("jakke"),
-        createdAt = asset.createdAt,
-        linkSource = NormalLinkInterface
-      ))
+      val pointAssetProperties = Seq(
+        Property(suggestProperty.id, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)), groupedId = suggestProperty.groupedId.toInt),
+        Property(trafficLightTypeProperty.id, "trafficLight_type", "single_choice", true, Seq(PropertyValue("1", Some("Valo-opastin"), false)), groupedId = trafficLightTypeProperty.groupedId.toInt)
+      )
+
+      asset.id should be(id)
+      asset.linkId should be(388553075)
+      asset.lon should be(2)
+      asset.lat should be(0)
+      asset.mValue should be(2)
+      asset.municipalityCode should be(235)
+      asset.propertyData.find(_.publicId == "suggest_box") should be (Some(pointAssetProperties.head))
+      asset.propertyData.find(_.publicId == "trafficLight_type") should be (Some(pointAssetProperties.last))
+      asset.createdBy should be(Some("jakke"))
     }
   }
 

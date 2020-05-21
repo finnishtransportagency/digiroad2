@@ -74,7 +74,11 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
     "tila" -> (PointAssetState.values.map(_.value), PointAssetState.getDefault.value)
   )
 
+  val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ singleChoiceMapping ++ intValueFieldsMapping ++ typeMapping
+
   lazy val trafficLightsService: TrafficLightService = new TrafficLightService(roadLinkService)
+
+  override def mandatoryFields: Set[String] = longValueFieldMappings.keySet ++ typeMapping.keySet
 
   override def verifyData(parsedRow: ParsedProperties, user: User): ParsedCsv = {
     /* start lane type validations */
@@ -109,8 +113,6 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
       if (isBlank(value.toString)) {
         if (mandatoryFields.contains(key)) {
           result.copy(_1 = List(key) ::: result._1, _2 = result._2)
-        } else if (typeMapping.contains(key)) {
-          result.copy(_2 = AssetProperty(columnName = typeMapping(key), value = typeMappingAcceptableValues(key).getDefault.value) :: result._2)
         } else if (singleChoiceMapping.contains(key)) {
           val defaultValue = singleChoiceAcceptableValues(key) match { case (_, default) => default }
           result.copy(_2 = AssetProperty(columnName = singleChoiceMapping(key), value = defaultValue) :: result._2)
