@@ -110,16 +110,16 @@
       }
     };
 
-    var suggestedBoxHandler = function(asset, authorizationPolicy) {
+    var suggestedBoxHandler = function(property, authorizationPolicy) {
       var suggestedBoxValue = getSuggestedBoxValue();
       var suggestedBoxDisabledState = getSuggestedBoxDisabledState();
 
       if(suggestedBoxDisabledState) {
         var disabledValue = 'disabled';
-        return renderSuggestBoxElement(asset, disabledValue);
+        return renderSuggestBoxElement(property, disabledValue);
       } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(me.selectedAsset, suggestedBoxValue)) {
         var checkedValue = suggestedBoxValue ? 'checked' : '';
-        return renderSuggestBoxElement(asset, checkedValue);
+        return renderSuggestBoxElement(property, checkedValue);
       } else {
         // empty div placed for correct positioning on the form for the validity direction button
         return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box"></div>';
@@ -385,11 +385,11 @@
       '    </div>';
     };
 
-    var renderSuggestBoxElement = function(state) {
+    var renderSuggestBoxElement = function(property, state) {
       return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
-          '<label class="control-label">' + asset.localizedName + '</label>' +
+          '<label class="control-label">' + property.localizedName + '</label>' +
           '<p class="form-control-static">Kylla</p>' +
-          '<input type="checkbox" class="form-control suggested-checkbox" name="' + asset.publicId + '" id="' + asset.publicId + '"' + state + '>' +
+          '<input type="checkbox" class="form-control suggested-checkbox" name="' + property.publicId + '" id="' + property.publicId + '"' + state + '>' +
           '</div>';
     };
 
