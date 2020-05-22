@@ -1,12 +1,16 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.awt.PageAttributes.MediaType
 import java.net.URLEncoder
+import java.security.{KeyManagementException, NoSuchAlgorithmException, SecureRandom}
+import java.security.cert.X509Certificate
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, SSLSession, TrustManager, X509TrustManager}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s._
@@ -168,11 +172,15 @@ class VKMGeometryTransform {
 
   private def request(url: String): Either[List[Map[String, Any]], VKMError] = {
     val request = new HttpGet(url)
+    println(s"vkm URL -> $url")
+     val sslContext = SSLContext.getInstance("SSL")
+  //  sslContext.init(null, Array(TrustAll), new java.security.SecureRandom())
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400)
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
+//      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
       val aux = response.getEntity.getContent
       val content:List[Map[String, Any]] = parse(StreamInput(aux)).values.asInstanceOf[List[Map[String, Any]]]
       Left(content)
@@ -192,6 +200,19 @@ class VKMGeometryTransform {
       Option(NonPedestrianRoadNumbers)
   }
 
+  object TrustAll extends X509TrustManager {
+    val getAcceptedIssuers = null
+
+    def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String) = {}
+
+    def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String) = {}
+  }
+
+  // Verifies all host names by simply returning true.
+  object VerifiesAllHostNames extends HostnameVerifier {
+    def verify(s: String, sslSession: SSLSession) = true
+  }
+
   // xyhaku
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
@@ -206,7 +227,7 @@ class VKMGeometryTransform {
             VkmSearchRadius -> searchDistance //Default in new VKM is 100
       )
 
-    request(vkmBaseUrl + "xyhaku?" + urlParams(params)) match {
+    request(vkmBaseUrl + "xyhaku?sade=500&" + urlParams(params)) match {
       case Left(address) => mapFields(address.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
@@ -215,7 +236,7 @@ class VKMGeometryTransform {
   // xyhaku
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
                         distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
-                        includePedestrian: Option[Boolean] = Option(false)) = {
+                        includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
 
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
 
