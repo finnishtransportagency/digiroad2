@@ -1,11 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
-import java.awt.PageAttributes.MediaType
 import java.net.URLEncoder
-import java.security.{KeyManagementException, NoSuchAlgorithmException, SecureRandom}
 import java.security.cert.X509Certificate
 import java.util.Properties
-
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
@@ -172,15 +169,11 @@ class VKMGeometryTransform {
 
   private def request(url: String): Either[List[Map[String, Any]], VKMError] = {
     val request = new HttpGet(url)
-    println(s"vkm URL -> $url")
-     val sslContext = SSLContext.getInstance("SSL")
-  //  sslContext.init(null, Array(TrustAll), new java.security.SecureRandom())
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
       if (response.getStatusLine.getStatusCode >= 400)
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
-//      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
       val aux = response.getEntity.getContent
       val content:List[Map[String, Any]] = parse(StreamInput(aux)).values.asInstanceOf[List[Map[String, Any]]]
       Left(content)
