@@ -236,7 +236,7 @@ class VKMGeometryTransform {
   // xyhaku
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
                         distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
-                        includePedestrian: Option[Boolean] = Option(false)) = {
+                        includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
 
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
 
