@@ -353,12 +353,20 @@ trait ResolvingFrozenRoadLinks {
       Queries.getMunicipalities
     }
 
-    OracleDatabase.withDynTransaction {
-      val result = municipalities.map { municipality =>
+    val result = OracleDatabase.withDynTransaction {
+      municipalities.map { municipality =>
         roadLinkTempDao.deleteInfoByMunicipality(municipality)
-        processing(municipality)
-      }
+        val (toCreate, missing) = processing(municipality)
 
+        toCreate.map(_.roadAddress).foreach { frozen =>
+          roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
+          //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
+        }
+        (toCreate, missing)
+      }
+    }
+
+    OracleDatabase.withDynTransaction {
       val cleanningResult = cleaningProcess(result.flatMap(_._2), result.flatMap(_._1))
 
       (cleanningResult.map(_.roadAddress) ++ result.flatMap(_._1).map(_.roadAddress)).foreach { frozen =>
