@@ -3,7 +3,6 @@
     PointAssetForm.call(this);
     var me = this;
     var defaultAdditionalPanelValue = null;
-    var asset = null;
     var additionalPanelWithTextCode = '61';
 
     this.initialize = function(parameters) {
@@ -46,12 +45,12 @@
 
       }), function(prev, curr) { return prev + curr; }, '');
 
-      var additionalPanels = getProperties(asset.propertyData, "additional_panel");
+      var additionalPanels = getProperties(allTrafficSignProperties, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
       function getSidePlacement() {
-        return _.head(getProperties(asset.propertyData, "opposite_side_sign").values);
+        return _.head(getProperties(allTrafficSignProperties, "opposite_side_sign").values);
       }
 
       var panelCheckbox =
@@ -72,8 +71,7 @@
     };
 
     this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
-
-      asset = selectedAsset.get();
+      var asset = selectedAsset.get();
       var wrapper = $('<div class="wrapper">');
       var formRootElement = $('<div class="form form-horizontal form-dark form-pointasset">');
 
@@ -430,6 +428,7 @@
 
 
     function isPedestrianOrCyclingRoadLink() {
+      var asset = me.selectedAsset.get();
       if(asset){
         var roadLink = me.roadCollection.getRoadLinkByLinkId(asset.linkId);
 
@@ -461,7 +460,7 @@
         groupKeys = _.keys(groups);
 
         /* Case asset is new...we will ignore the property value from parameter to load the subSingleChoice */
-        if (asset.id === 0) {
+        if (me.selectedAsset.getId() === 0) {
           auxProperty  = undefined;
         }
       }
