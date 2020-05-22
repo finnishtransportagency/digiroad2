@@ -11,6 +11,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import org.mockito.ArgumentMatchers.any
 
 class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -71,7 +72,7 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(415468.0049999999,6989158.624000002), Point(415512.9400000004,6989434.033)), Some(648), Some(8), includePedestrian = Some(true)))
       .thenReturn( Seq(    RoadAddress(Some("216"), 648, 8, Track.Combined, 6416), RoadAddress(Some("216"), 648, 8, Track.Combined, 6695)))
 
-    val toCreate = ResolvingFrozenRoadLinksTest.processing(216)
+    val toCreate = ResolvingFrozenRoadLinksTest.processing(216)._1.map(_.roadAddress)
 
     toCreate.size should be (2)
     val createdInSininentie = toCreate.find(_.linkId == 1490369)
@@ -129,7 +130,7 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937), Point(376639.195,6992733.214,160.125)), Some(16), Some(29), includePedestrian = Some(true)))
       .thenReturn( Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4808)))
 
-    val toCreate = ResolvingFrozenRoadLinksTest.processing(312)
+    val toCreate = ResolvingFrozenRoadLinksTest.processing(312)._1.map(_.roadAddress)
 
     val newRoadAddress = toCreate.map { address =>
       ViiteRoadAddress(address.linkId,address.road, address.roadPart, address.track, address.startAddressM, address.endAddressM, None, None, address.linkId, address.startMValue, address.endMValue,address.sideCode.get,List(),false,None,None, None)
@@ -138,6 +139,36 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
   }
 
   test("cleaning missing addresses") {
-    ResolvingFrozenRoadLinksTest.c
+
+    val road1 = RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+      State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
+      Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
+    val road2 = RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+      State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
+      Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
+    val road3 = RoadLink(11478956,List(Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875)),14.790,
+      State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
+      Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
+    val road4 = RoadLink(11478942,List(Point(376569.312,6992714.125,160.19400000000314), Point(376519.312,6992724.148,161.00800000000163)),50.999,
+      State,99, TrafficDirection.AgainstDigitizing,UnknownLinkType, None, None,
+      Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
+    val road5 = RoadLink(6376556,List(Point(376412.388,6992717.601,161.53100000000268), Point(376502.352,6992724.075,161.04799999999523), Point(376519.312,6992724.148,161.00800000000163)),107.2053,
+      State,99, TrafficDirection.BothDirections,UnknownLinkType, None, None,
+      Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16"))
+
+    val roadLinks = Seq(road1, road2, road3, road4, road5)
+
+    val address = Seq(
+      ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,6376556,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
+      ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,11478942,0.0,51.0,AgainstDigitizing,List(),false,None,None,None)
+      // ViiteRoadAddress(11478953)
+    )
+
+    when(mockRoadLinkService.getAdjacent(11478956, false)).thenReturn(Seq(road1, road4, road5))
+    when(mockRoadLinkService.getAdjacent(11478947, false)).thenReturn(Seq(road2, road3))
+
+    when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]] /*Seq(11478953, 11478956, 6376556, 11478942, 11478947)*/)).thenReturn(address)
+
+    ResolvingFrozenRoadLinksTest.cleaningProcess(Seq(road1, road3), Seq())
   }
 }

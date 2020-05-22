@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{CableFerry, CycleOrPedestrianPath, PedestrianZone, SideCode, State}
+import fi.liikennevirasto.digiroad2.asset.{ SideCode, State}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadLinkTempDAO}
@@ -12,12 +12,10 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
 
 import scala.util.Try
 
 case class RoadAddressTEMPwithPoint(firstP: Point, lastP: Point, roadAddress: RoadAddressTEMP)
-case class AddressCreateInfo(toCreate : Seq[RoadAddressTEMPwithPoint], possibleToCreate: Seq[RoadAddressTEMPwithPoint])
 
 trait ResolvingFrozenRoadLinks {
   lazy val dr2properties: Properties = {
@@ -63,24 +61,7 @@ trait ResolvingFrozenRoadLinks {
       None
   }
 
-  //  def recalculateTrackAndSideCode(mappedAddresses: Seq[RoadAddressTEMPwithPoint], frozenAddresses: Seq[RoadAddressTEMPwithPoint], totalFrozen: Int, result: Seq[AddressCreateInfo]): Seq[AddressCreateInfo] = {
-  //    val middleResult = recalculateTrackAndSideCode(mappedAddresses, frozenAddresses.distinct, result)
-  //    val allRoadAddresses = mappedAddresses ++ middleResult.flatMap(_.toCreate)
-  //    val missingFrozen = middleResult.flatMap(_.possibleToCreate).distinct
-  //
-  //    if (totalFrozen == missingFrozen.size || middleResult.flatMap(_.possibleToCreate).isEmpty)
-  //      concatenateResult(result, middleResult)
-  //    else {
-  //      recalculateTrackAndSideCode(allRoadAddresses, missingFrozen, missingFrozen.size, concatenateResult(result, middleResult))
-  //    }
-  //  }
-
-  def concatenateResult(result: Seq[AddressCreateInfo], newResult: Seq[AddressCreateInfo]): Seq[AddressCreateInfo] = {
-    Seq(AddressCreateInfo(result.flatMap(_.toCreate) ++ newResult.flatMap(_.toCreate), result.flatMap(_.possibleToCreate) ++ newResult.flatMap(_.possibleToCreate)))
-  }
-
   def getTrackAndSideCodeFirst(frozenAddress: RoadAddressTEMPwithPoint, mappedAddresses: Seq[RoadAddressTEMPwithPoint], frozenAddresses: Seq[RoadAddressTEMPwithPoint]) : Seq[RoadAddressTEMPwithPoint] = {
-
     val adjacentOrder = mappedAddresses.filter { address =>
       GeometryUtils.areAdjacent(frozenAddress.firstP, address.lastP)
     }
@@ -209,7 +190,7 @@ trait ResolvingFrozenRoadLinks {
       ((first, last, roadLink)) -> roadLinkService.getAdjacent(roadLink.linkId, false)
     }.toMap
 
-    val allRoadAddress = roadAddressService.getAllByLinkIds(adjRoadLinks.flatMap(_._2.map(_.linkId)).toSeq)
+    val allRoadAddress = roadAddressService.getAllByLinkIds(adjRoadLinks.flatMap(_._2.map(_.linkId)).toSeq.distinct)
 
     val mappedAddresses = allRoadAddress.flatMap { address =>
       adjRoadLinks.flatMap(_._2).find(_.linkId == address.linkId).map { roadLink =>
@@ -374,7 +355,7 @@ trait ResolvingFrozenRoadLinks {
 
     OracleDatabase.withDynTransaction {
       val result = municipalities.map { municipality =>
-        //roadLinkTempDao.deleteInfoByMunicipality(municipality)
+        roadLinkTempDao.deleteInfoByMunicipality(municipality)
         processing(municipality)
       }
 
