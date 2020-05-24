@@ -1,24 +1,25 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.{Point, asset}
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import fi.liikennevirasto.digiroad2.util.Track.{Combined, RightSide}
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{verify, when}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.digiroad2.dao.{RoadAddress => ViiteRoadAddress}
+import fi.liikennevirasto.digiroad2.dao.{RoadAddressTEMP, RoadLinkTempDAO, RoadAddress => ViiteRoadAddress}
 import org.mockito.ArgumentMatchers.any
+import org.mockito.{ArgumentCaptor, Mockito}
 
-class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
+class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVKMGeometryTransform = MockitoSugar.mock[VKMGeometryTransform]
-
+  val mockRoadLinkTempDao = MockitoSugar.mock[RoadLinkTempDAO]
 
   object ResolvingFrozenRoadLinksTest extends ResolvingFrozenRoadLinks {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -26,6 +27,7 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
     override lazy val roadAddressService: RoadAddressService = mockRoadAddressService
     override lazy val geometryVKMTransform: VKMGeometryTransform = mockVKMGeometryTransform
     // override lazy val geometryVKMTransform: VKMGeometryTransform = mockGeometryVKMTransform
+    override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
   }
 
 
@@ -72,6 +74,8 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(415468.0049999999,6989158.624000002), Point(415512.9400000004,6989434.033)), Some(648), Some(8), includePedestrian = Some(true)))
       .thenReturn( Seq(    RoadAddress(Some("216"), 648, 8, Track.Combined, 6416), RoadAddress(Some("216"), 648, 8, Track.Combined, 6695)))
 
+    when(mockRoadLinkTempDao.getByMunicipality(216)).thenReturn(Seq())
+
     val toCreate = ResolvingFrozenRoadLinksTest.processing(216)._1.map(_.roadAddress)
 
     toCreate.size should be (2)
@@ -112,30 +116,40 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
         Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16")))
 
     val viiteRoadAddress = Seq(
-      ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,6376556,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,11478942,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
-      ViiteRoadAddress(81202,16,29,RightSide,4758,4815,None,None,2439671,0.0,56.905,AgainstDigitizing,List(),false,None,None,None))
+      ViiteRoadAddress(48229,16,29,Combined,4583,4690,None,None,
+        6376556,0.0,107.205,TowardsDigitizing,List(),false,None,None,None),
+      ViiteRoadAddress(81202,16,29,RightSide,4690,4741,None,None,
+        11478942,0.0,51.0,AgainstDigitizing,List(),false,None,None,None),
+      ViiteRoadAddress(81202,16,29,RightSide,4758,4815,None,None,
+        2439671,0.0,56.905,AgainstDigitizing,List(),false,None,None,None))
 
     when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
     when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(viiteRoadAddress)
 
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376585.751,6992711.448,159.9759999999951),Point(376569.312,6992714.125,160.19400000000314)), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenThrow(new NullPointerException);
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376570.341,6992722.195,160.24099999999453),Point(376534.023,6992725.668,160.875)), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn( Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704)))
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937),Point(376570.341,6992722.195,160.24099999999453)), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn( Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4757), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740)))
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376519.312,6992724.148,161.00800000000163),Point(376534.023,6992725.668,160.875)), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn( Seq(RoadAddress(Some("312"), 16, 29, Track.Combined, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704)))
-    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937), Point(376639.195,6992733.214,160.125)), Some(16), Some(29), includePedestrian = Some(true)))
-      .thenReturn( Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4808)))
+    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376585.751,6992711.448,159.9759999999951),Point(376569.312,6992714.125,160.19400000000314)),
+      Some(16), Some(29), includePedestrian = Some(true))).thenThrow(new NullPointerException);
+    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376570.341,6992722.195,160.24099999999453),Point(376534.023,6992725.668,160.875)),
+      Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
+      Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704)))
+    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937),Point(376570.341,6992722.195,160.24099999999453)),
+      Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
+      Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4757), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4740)))
+    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376519.312,6992724.148,161.00800000000163),Point(376534.023,6992725.668,160.875)),
+      Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
+      Seq(RoadAddress(Some("312"), 16, 29, Track.Combined, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4704)))
+    when(mockVKMGeometryTransform.coordsToAddresses(Seq(Point(376586.275,6992719.353,159.9869999999937), Point(376639.195,6992733.214,160.125)),
+      Some(16), Some(29), includePedestrian = Some(true))).thenReturn(
+      Seq(RoadAddress(Some("312"), 16, 29, Track.RightSide, 4690), RoadAddress(Some("312"), 16, 29, Track.RightSide, 4808)))
+
+    when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(Seq())
 
     val toCreate = ResolvingFrozenRoadLinksTest.processing(312)._1.map(_.roadAddress)
 
-    val newRoadAddress = toCreate.map { address =>
-      ViiteRoadAddress(address.linkId,address.road, address.roadPart, address.track, address.startAddressM, address.endAddressM, None, None, address.linkId, address.startMValue, address.endMValue,address.sideCode.get,List(),false,None,None, None)
-    }
-
+    toCreate.size should be (4)
+    toCreate.exists(x => x.linkId == 11478947 && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == 2439673 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == 11478953 && x.sideCode.contains(SideCode.AgainstDigitizing) && x.track == Track.LeftSide) should be (true)
+    toCreate.exists(x => x.linkId == 11478956 && x.sideCode.contains(SideCode.TowardsDigitizing) && x.track == Track.LeftSide) should be (true)
   }
 
   test("cleaning missing addresses") {
@@ -170,5 +184,33 @@ class ResolvingFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]] /*Seq(11478953, 11478956, 6376556, 11478942, 11478947)*/)).thenReturn(address)
 
     ResolvingFrozenRoadLinksTest.cleaningProcess(Seq(road1, road3), Seq())
+  }
+
+  test("start processing test") {
+
+    val roadLinks = Seq(
+      RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
+        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
+          "CREATED_DATE" -> BigInt(1446398762000L), "LAST_EDITED_DATE" -> BigInt(1584662329000L))),
+      RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
+        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
+          "CREATED_DATE" -> BigInt(1446398700000L))))
+
+    when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
+    when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(Seq())
+
+    val roadLinksTemp = Seq(RoadAddressTEMP(11478947,7421,1,Combined,1312,1332,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")),
+      RoadAddressTEMP(11478953,7421,1,Combined,1332,1500,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")))
+
+   when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(roadLinksTemp)
+
+    ResolvingFrozenRoadLinksTest.processing(312)
+
+    val captor = ArgumentCaptor.forClass(classOf[Set[Long]])
+    verify(mockRoadLinkTempDao, Mockito.atLeastOnce).deleteInfoByLinkIds(captor.capture)
+    captor.getAllValues.size() should be (1)
+    captor.getValue.asInstanceOf[Set[Long]].head should be (11478947)
   }
 }

@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, DummySerializer, GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{ SideCode, State}
+import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode, State}
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{Queries, RoadAddressTEMP, RoadLinkTempDAO}
@@ -11,7 +11,8 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.{RoadAddressService, RoadLinkService}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.{DateTime, Instant}
 
 import scala.util.Try
 
@@ -253,10 +254,24 @@ trait ResolvingFrozenRoadLinks {
   def processing(municipality: Int) : (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
     println(s"Working on municipality : $municipality")
 
+    val tempRoadAddress = roadLinkTempDao.getByMunicipality(municipality)
+
     val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality, false).filter(_.administrativeClass == State)
 
     val allRoadAddress = roadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))
-    val frozenRoadLinks = roadLinks.filterNot(road => allRoadAddress.map(_.linkId).contains(road.linkId))
+    val missingRoadLinks = roadLinks.filterNot(road => allRoadAddress.map(_.linkId).contains(road.linkId))
+
+    val frozenRoadLinks = missingRoadLinks.filter { road =>
+      val matchedAddress = tempRoadAddress.find(_.linkId == road.linkId)
+      val vvhtimestamp = road.attributes.getOrElse("LAST_EDITED_DATE", road.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+
+      val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSSSS")
+
+      matchedAddress.isEmpty || (vvhtimestamp > DateTime.parse(matchedAddress.get.createdDate.head, formatter).getMillis)
+    }
+
+    val addressToDelete = tempRoadAddress.map(_.linkId).diff(missingRoadLinks.map(_.linkId)) ++ frozenRoadLinks.map(_.linkId)
+    roadLinkTempDao.deleteInfoByLinkIds(addressToDelete.toSet)
 
     val groupedFrozenRoadLinks = frozenRoadLinks.groupBy(_.roadNameIdentifier.getOrElse(""))
     val groupedRoadLinks = roadLinks.groupBy(_.roadNameIdentifier.getOrElse(""))
@@ -355,7 +370,8 @@ trait ResolvingFrozenRoadLinks {
 
     val result = OracleDatabase.withDynTransaction {
       municipalities.map { municipality =>
-        roadLinkTempDao.deleteInfoByMunicipality(municipality)
+
+
         val (toCreate, missing) = processing(municipality)
 
         toCreate.map(_.roadAddress).foreach { frozen =>
