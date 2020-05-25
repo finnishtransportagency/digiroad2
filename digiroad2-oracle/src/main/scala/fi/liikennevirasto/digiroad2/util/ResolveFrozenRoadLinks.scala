@@ -356,14 +356,9 @@ trait ResolvingFrozenRoadLinks {
         OracleDatabase.withDynTransaction {
           val (toCreate, missing) = processing(municipality)
 
-          toCreate.map(_.roadAddress).foreach { frozen =>
-            roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
-            //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
-          }
-
           val cleanningResult = cleanningProcess(missing, toCreate, Seq())
 
-          cleanningResult.foreach { frozen =>
+          (cleanningResult ++ toCreate.map(_.roadAddress)).foreach { frozen =>
             roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
             //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
           }
