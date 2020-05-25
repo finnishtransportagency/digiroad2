@@ -352,25 +352,23 @@ trait ResolvingFrozenRoadLinks {
       Queries.getMunicipalities
     }
 
-    OracleDatabase.withDynTransaction {
-      val result = municipalities.map { municipality =>
+      municipalities.foreach { municipality =>
+        OracleDatabase.withDynTransaction {
+          val (toCreate, missing) = processing(municipality)
 
-        val (toCreate, missing) = processing(municipality)
+          toCreate.map(_.roadAddress).foreach { frozen =>
+            roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
+            //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
+          }
 
-        toCreate.map(_.roadAddress).foreach { frozen =>
-          roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
-          //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
+          val cleanningResult = cleanningProcess(missing, toCreate, Seq())
+
+          cleanningResult.foreach { frozen =>
+            roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
+            //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
+          }
         }
-        (toCreate, missing)
       }
-
-      val cleanningResult = cleanningProcess(result.flatMap(_._2), result.flatMap(_._1), Seq())
-
-      (cleanningResult ++ result.flatMap(_._1).map(_.roadAddress)).foreach { frozen =>
-        roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
-        //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
-      }
-    }
 
     println("\n")
     println("Complete at time: ")
