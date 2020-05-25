@@ -30,6 +30,33 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     override lazy val roadLinkTempDao: RoadLinkTempDAO = mockRoadLinkTempDao
   }
 
+  test("start processing test") {
+
+    val roadLinks = Seq(
+      RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
+        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
+        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
+          "CREATED_DATE" -> BigInt(1446398762000L), "LAST_EDITED_DATE" -> BigInt(1584662329000L))),
+      RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
+        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
+        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
+          "CREATED_DATE" -> BigInt(1446398700000L))))
+
+    when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
+    when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(Seq())
+
+    val roadLinksTemp = Seq(RoadAddressTEMP(11478947,7421,1,Combined,1312,1332,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")),
+      RoadAddressTEMP(11478953,7421,1,Combined,1332,1500,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")))
+
+    when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(roadLinksTemp)
+
+    ResolvingFrozenRoadLinksTest.processing(312)
+
+    val captor = ArgumentCaptor.forClass(classOf[Set[Long]])
+    verify(mockRoadLinkTempDao, Mockito.atLeastOnce).deleteInfoByLinkIds(captor.capture)
+    captor.getAllValues.size() should be (1)
+    captor.getValue.asInstanceOf[Set[Long]].head should be (11478947)
+  }
 
   test("missing information in middle of the road"){
     val roadLinks = Seq(
@@ -225,33 +252,5 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     result.size should be (1)
     result.exists(x => x.track == LeftSide && x.sideCode.contains(SideCode.TowardsDigitizing))
 
-  }
-
-  test("start processing test") {
-
-    val roadLinks = Seq(
-      RoadLink(11478947,List(Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875)),36.577,
-        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
-          "CREATED_DATE" -> BigInt(1446398762000L), "LAST_EDITED_DATE" -> BigInt(1584662329000L))),
-      RoadLink(11478953,List(Point(376586.275,6992719.353,159.9869999999937), Point(376570.341,6992722.195,160.24099999999453)),16.1855,
-        State,99, TrafficDirection.TowardsDigitizing,UnknownLinkType, None, None,
-        Map("ROADNAME_FI" -> "Vaasantie", "ROADPARTNUMBER" -> "29", "MUNICIPALITYCODE" -> BigInt(312), "ROADNUMBER" -> "16",
-          "CREATED_DATE" -> BigInt(1446398700000L))))
-
-    when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(312, false)).thenReturn(roadLinks)
-    when(mockRoadAddressService.getAllByLinkIds(roadLinks.map(_.linkId))).thenReturn(Seq())
-
-    val roadLinksTemp = Seq(RoadAddressTEMP(11478947,7421,1,Combined,1312,1332,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")),
-      RoadAddressTEMP(11478953,7421,1,Combined,1332,1500,0.0,20.0,List(),Some(TowardsDigitizing),Some(5),Some("2019-11-30 21:55:45.0")))
-
-   when(mockRoadLinkTempDao.getByMunicipality(312)).thenReturn(roadLinksTemp)
-
-    ResolvingFrozenRoadLinksTest.processing(312)
-
-    val captor = ArgumentCaptor.forClass(classOf[Set[Long]])
-    verify(mockRoadLinkTempDao, Mockito.atLeastOnce).deleteInfoByLinkIds(captor.capture)
-    captor.getAllValues.size() should be (1)
-    captor.getValue.asInstanceOf[Set[Long]].head should be (11478947)
   }
 }
