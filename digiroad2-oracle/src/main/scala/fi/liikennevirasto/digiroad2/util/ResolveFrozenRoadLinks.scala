@@ -198,7 +198,7 @@ trait ResolvingFrozenRoadLinks {
         val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
         RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(address.linkId, address.roadNumber,
           address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue,
-          address.startMValue, address.endMValue, address.geom, Some(address.sideCode)))
+          address.startMValue, address.endMValue, address.geom, Some(address.sideCode), Some(roadLink.municipalityCode)))
       }
     } ++ vkmRoadAddress
 
