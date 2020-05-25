@@ -183,7 +183,7 @@ trait ResolvingFrozenRoadLinks {
     }
   }
 
-  def cleaningProcess(missingRoadLinks: Seq[RoadLink], vkmRoadAddress: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
+  def cleanner(missingRoadLinks: Seq[RoadLink], vkmRoadAddress: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
     println(s"Try to solve ${missingRoadLinks.size}")
 
     val adjRoadLinks = missingRoadLinks.map { roadLink =>
@@ -203,13 +203,12 @@ trait ResolvingFrozenRoadLinks {
     } ++ vkmRoadAddress
 
     adjRoadLinks.map { adjRoadLink =>
-      cleaning(mappedAddresses, adjRoadLink, adjRoadLinks.keys.toSeq.filterNot(_._3.linkId == adjRoadLink._1._3.linkId))
+      cleaning(mappedAddresses, adjRoadLink)
     }
   }.flatten.toSeq
 
-  def cleaning(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLink: (((Point, Point, RoadLink), Seq[RoadLink])), missingRoadLinks: Seq[(Point, Point, RoadLink)]) = {
+  def cleaning(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLink: (((Point, Point, RoadLink), Seq[RoadLink]))) = {
     val ((first, last, missing), roadLinks) = adjRoadLink
-
 
       val adjacentFirst = mappedAddresses.filter { address =>
         Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) && (
@@ -221,37 +220,20 @@ trait ResolvingFrozenRoadLinks {
           GeometryUtils.areAdjacent(last, address.lastP) || GeometryUtils.areAdjacent(last, address.firstP))
       }
 
-      val existsMissing = missingRoadLinks.exists{ case (firstP, lastP, _)  =>
-        GeometryUtils.areAdjacent(first, firstP) || GeometryUtils.areAdjacent(first, lastP) ||
-          GeometryUtils.areAdjacent(last, firstP) || GeometryUtils.areAdjacent(last, lastP)
-      }
-
-      val frozenAddress = if(!existsMissing) {
+      val frozenAddress =
         if(adjacentFirst.nonEmpty && adjacentLast.nonEmpty &&
           adjacentFirst.head.roadAddress.road == adjacentLast.head.roadAddress.road &&
           adjacentFirst.head.roadAddress.roadPart == adjacentLast.head.roadAddress.roadPart) {
 
           val address = adjacentFirst.head.roadAddress
-          Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(missing.linkId, address.road,
-            address.roadPart, address.track, address.startAddressM, address.endAddressM,
-            address.startMValue, address.endMValue, missing.geometry, None)))
-        } else
-          None
+          Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(missing.linkId, address.road, address.roadPart, address.track,
+            address.startAddressM, address.endAddressM, address.startMValue, address.endMValue, missing.geometry, None)))
       } else
         None
 
       recalculateTrackAndSideCode(mappedAddresses, frozenAddress.toSeq, Seq())
 
   }
-//
-//  def cleaning(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLink: ((Point, Point, RoadLink), Seq[RoadLink]), result: Seq[RoadAddressTEMPwithPoint]) : Seq[RoadAddressTEMPwithPoint] = {
-//    val newResult = cleanner(mappedAddresses , adjRoadLink)
-//
-//    if(newResult.nonEmpty) {
-//      cleaning(mappedAddresses ++ newResult, adjRoadLink.filterNot { case ((_, _, frozen), _) => newResult.map(_.roadAddress.linkId).contains(frozen.linkId)}, result ++ newResult)
-//    } else
-//      result
-//  }
 
   def processing(municipality: Int) : (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
     println(s"Working on municipality : $municipality")
@@ -370,9 +352,8 @@ trait ResolvingFrozenRoadLinks {
       Queries.getMunicipalities
     }
 
-    val result = OracleDatabase.withDynTransaction {
-      municipalities.map { municipality =>
-
+    OracleDatabase.withDynTransaction {
+      val result = municipalities.map { municipality =>
 
         val (toCreate, missing) = processing(municipality)
 
@@ -382,12 +363,10 @@ trait ResolvingFrozenRoadLinks {
         }
         (toCreate, missing)
       }
-    }
 
-    OracleDatabase.withDynTransaction {
-      val cleanningResult = cleaningProcess(result.flatMap(_._2), result.flatMap(_._1))
+      val cleanningResult = cleanningProcess(result.flatMap(_._2), result.flatMap(_._1), Seq())
 
-      (cleanningResult.map(_.roadAddress) ++ result.flatMap(_._1).map(_.roadAddress)).foreach { frozen =>
+      (cleanningResult ++ result.flatMap(_._1).map(_.roadAddress)).foreach { frozen =>
         roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
         //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
       }
@@ -398,6 +377,17 @@ trait ResolvingFrozenRoadLinks {
     println(DateTime.now())
     println("\n")
   }
+
+  def cleanningProcess(missingRoadLinks: Seq[RoadLink], vkmRoadAddress: Seq[RoadAddressTEMPwithPoint], result: Seq[RoadAddressTEMPwithPoint]) : Seq[RoadAddressTEMP] ={
+
+    val newResult = cleanner(missingRoadLinks, vkmRoadAddress)
+
+    if(newResult.nonEmpty)
+      cleanningProcess(missingRoadLinks.filterNot(x => newResult.map(_.roadAddress.linkId).contains(x.linkId)), vkmRoadAddress ++ newResult, result ++ newResult)
+    else
+      result.map(_.roadAddress)
+
+    }
 }
 
 object ResolvingFrozenRoadLinks extends  ResolvingFrozenRoadLinks

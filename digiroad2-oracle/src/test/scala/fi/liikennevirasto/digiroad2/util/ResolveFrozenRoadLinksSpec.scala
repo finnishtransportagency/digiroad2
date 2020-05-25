@@ -185,7 +185,7 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
 
     when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]] /*Seq(11478953, 11478956, 6376556, 11478942, 11478947)*/)).thenReturn(address)
 
-    val result = ResolvingFrozenRoadLinksTest.cleaningProcess(Seq(road1, road3), Seq())
+    val result = ResolvingFrozenRoadLinksTest.cleanningProcess(Seq(road1, road3), Seq(), Seq())
     result.size should be (0)
 
   }
@@ -221,9 +221,9 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.getAdjacent(11478956, false)).thenReturn(Seq(road1, road4, road5))
     when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]])).thenReturn(address)
 
-    val result = ResolvingFrozenRoadLinksTest.cleaningProcess(Seq(road3), Seq())
+    val result = ResolvingFrozenRoadLinksTest.cleanningProcess(Seq(road3), Seq(), Seq())
     result.size should be (1)
-    result.exists(x => x.roadAddress.track == LeftSide && x.roadAddress.sideCode.contains(SideCode.TowardsDigitizing))
+    result.exists(x => x.track == LeftSide && x.sideCode.contains(SideCode.TowardsDigitizing))
 
   }
 
