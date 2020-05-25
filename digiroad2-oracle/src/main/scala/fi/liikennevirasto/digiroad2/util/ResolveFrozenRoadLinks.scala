@@ -202,12 +202,14 @@ trait ResolvingFrozenRoadLinks {
       }
     } ++ vkmRoadAddress
 
-    cleaning(mappedAddresses, adjRoadLinks, Seq())
-  }
+    adjRoadLinks.map { adjRoadLink =>
+      cleaning(mappedAddresses, adjRoadLink, adjRoadLinks.keys.toSeq.filterNot(_._3.linkId == adjRoadLink._1._3.linkId))
+    }
+  }.flatten.toSeq
 
-  def cleanner(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLinks: Map[(Point, Point, RoadLink), Seq[RoadLink]]) = {
-    adjRoadLinks.flatMap { case ((first, last, missing), roadLinks) =>
-      val address = mappedAddresses.filter(x => roadLinks.map(_.linkId).contains(x.roadAddress.linkId))
+  def cleaning(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLink: (((Point, Point, RoadLink), Seq[RoadLink])), missingRoadLinks: Seq[(Point, Point, RoadLink)]) = {
+    val ((first, last, missing), roadLinks) = adjRoadLink
+
 
       val adjacentFirst = mappedAddresses.filter { address =>
         Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) && (
@@ -219,7 +221,7 @@ trait ResolvingFrozenRoadLinks {
           GeometryUtils.areAdjacent(last, address.lastP) || GeometryUtils.areAdjacent(last, address.firstP))
       }
 
-      val existsMissing = adjRoadLinks.keys.exists{ case ((firstP, lastP, roadLink)) =>
+      val existsMissing = missingRoadLinks.exists{ case (firstP, lastP, _)  =>
         GeometryUtils.areAdjacent(first, firstP) || GeometryUtils.areAdjacent(first, lastP) ||
           GeometryUtils.areAdjacent(last, firstP) || GeometryUtils.areAdjacent(last, lastP)
       }
@@ -239,17 +241,17 @@ trait ResolvingFrozenRoadLinks {
         None
 
       recalculateTrackAndSideCode(mappedAddresses, frozenAddress.toSeq, Seq())
-    }.toSeq
-  }
 
-  def cleaning(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLinks: Map[(Point, Point, RoadLink), Seq[RoadLink]], result: Seq[RoadAddressTEMPwithPoint]) : Seq[RoadAddressTEMPwithPoint] = {
-    val newResult = cleanner(mappedAddresses , adjRoadLinks)
-
-    if(newResult.nonEmpty) {
-      cleaning(mappedAddresses ++ newResult, adjRoadLinks.filterNot { case ((_, _, frozen), _) => newResult.map(_.roadAddress.linkId).contains(frozen.linkId)}, result ++ newResult)
-    } else
-      result
   }
+//
+//  def cleaning(mappedAddresses : Seq[RoadAddressTEMPwithPoint], adjRoadLink: ((Point, Point, RoadLink), Seq[RoadLink]), result: Seq[RoadAddressTEMPwithPoint]) : Seq[RoadAddressTEMPwithPoint] = {
+//    val newResult = cleanner(mappedAddresses , adjRoadLink)
+//
+//    if(newResult.nonEmpty) {
+//      cleaning(mappedAddresses ++ newResult, adjRoadLink.filterNot { case ((_, _, frozen), _) => newResult.map(_.roadAddress.linkId).contains(frozen.linkId)}, result ++ newResult)
+//    } else
+//      result
+//  }
 
   def processing(municipality: Int) : (Seq[RoadAddressTEMPwithPoint], Seq[RoadLink]) = {
     println(s"Working on municipality : $municipality")
