@@ -15,7 +15,7 @@
     me.setSelectedValue = function(setValue, getValue, sideCode){
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
+      if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "endRoadPartNumber" ||  currentPropertyValue.publicId == "endDistance")){
         lanesAssets.setEndAddressesValues(currentPropertyValue);
       }else{
         var laneNumber = lanesAssets.getCurrentLaneNumber();
@@ -80,35 +80,25 @@
 
   var mainLaneFormStructure = {
     fields : [
-      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6},
+      {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1},
+      {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2},
+      {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
+      {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
+      {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
+      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 8},
       {
-        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 7,
+        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 9,
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
-      },
-      {
-        label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 8,
-        values: [
-          {id: 1, label: 'Jatkuva'},
-          {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
-          {id: 3, label: 'Kääntyvä'},
-          {id: 4, label: 'Päättyvä'},
-          {id: 5, label: 'Jatkuva, osoitettu myös oikealle kääntyville'},
-          {id: 6, label: 'Jatkuva, osoitettu myös vasemmalle kääntyville'},
-        ]
-      },
-      {label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9}
+      }
     ]
   };
 
   var roadAddressFormStructure = {
     fields : [
-      {label: 'Tie', type: 'read_only_number', publicId: "initial_road_number", weight: 1},
-      {label: 'Osa', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2},
-      {label: 'Etäisyys', type: 'read_only_number', publicId: "initial_distance", weight: 3},
-      {label: 'Osa', required: 'required', type: 'number', publicId: "end_road_part_number", weight: 4},
-      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "end_distance", weight: 5}
+      {label: 'Osa', required: 'required', type: 'number', publicId: "endRoadPartNumber", weight: 6},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "endDistance", weight: 7}
     ]
   };
 
@@ -208,19 +198,16 @@
           case "lane_code":
             info = 'Kaistan lisäys:';
             break;
-          case "end_road_part_number":
+          case "endRoadPartNumber":
             info = 'Kaistan loppuu:';
             break;
-          case "initial_road_number":
+          case "roadNumber":
             info = 'Kaistan alkaa:';
             break;
         }
 
         if(info)
           infoElement = $('<div class="form-group"><label class="info-label">' + info + '</label></div>');
-
-        if(publicId == "lane_code" && isAddByRoadAddressActive)
-          return infoElement.prepend($('<hr class="form-break">'));
 
         return infoElement;
       }
@@ -241,6 +228,10 @@
           var existingProperty = _.find(asset.properties, function (property) {
             return property.publicId === field.publicId;
           });
+          if (_.isUndefined(existingProperty)) {
+            var value = _.head(asset.selectedLinks)[field.publicId];
+            existingProperty = _.isUndefined(value) ? value : {values:[{value: value}]};
+          }
           if (!_.isUndefined(existingProperty))
             fieldValues = existingProperty.values;
         }
@@ -286,8 +277,7 @@
           if(laneNumber.toString()[1] == "1"){
             currentFormStructure = mainLaneFormStructure;
           }else{
-            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 6};
-            currentFormStructure = defaultFormStructure;
+            newLaneStructure(laneNumber);
           }
           reloadForm($('#feature-attributes'));
         });
@@ -346,9 +336,7 @@
 
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
-
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: nextLaneNumber, weight: 6};
-        currentFormStructure = defaultFormStructure;
+        newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(even) && _.max(even).toString()[1] == 8));
@@ -358,9 +346,7 @@
 
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
-
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: nextLaneNumber, weight: 6};
-        currentFormStructure = defaultFormStructure;
+        newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(odd) && _.max(odd).toString()[1] == 9));
@@ -465,8 +451,7 @@
         if(currentLaneNumber.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
         }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLaneNumber, weight: 6};
-          currentFormStructure = defaultFormStructure;
+          newLaneStructure(currentLaneNumber);
         }
       };
 
@@ -565,6 +550,12 @@
       return {
         element: element
       };
+    };
+
+    var newLaneStructure = function (laneNumber) {
+      var indexOfProperty = _.findIndex(defaultFormStructure.fields, {'publicId': 'lane_code'});
+      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 8};
+      currentFormStructure = defaultFormStructure;
     };
 
     jQuery.fn.showElement = function(visible) {

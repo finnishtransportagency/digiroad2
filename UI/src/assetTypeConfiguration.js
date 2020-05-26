@@ -962,8 +962,13 @@
         style: new LaneModellingStyle(),
         form: new LaneModellingForm({
           fields : [
+            {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1},
+            {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2},
+            {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
+            {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
+            {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
             {
-              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 8
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
@@ -981,21 +986,7 @@
                 {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
                 {id: 21, label: 'Jalankulun kaista'},
                 {id: 22, label: 'Pyöräilykaista'},
-              ],  defaultValue: "2", weight: 7
-            },
-            {
-              label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 8,
-              values: [
-                {id: 1, label: 'Jatkuva'},
-                {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
-                {id: 3, label: 'Kääntyvä'},
-                {id: 4, label: 'Päättyvä'},
-                {id: 5, label: 'Jatkuva, osoitettu myös oikealle kääntyville'},
-                {id: 6, label: 'Jatkuva, osoitettu myös vasemmalle kääntyville'},
-              ]
-            },
-            {
-              label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9
+              ],  defaultValue: "2", weight: 9
             },
             {
               label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 10
@@ -1020,13 +1011,13 @@
             var isValidRoadAddress = function (fields) {
               var isValidRoadAddress = true;
               var initialRoadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'read_only_number');
-              var initialRoadPartNumber = Property.getPropertyByPublicId(initialRoadAddressesFields, 'initial_road_part_number');
-              var initialDistance = Property.getPropertyByPublicId(initialRoadAddressesFields, 'initial_distance');
+              var initialRoadPartNumber = Property.getPropertyByPublicId(initialRoadAddressesFields, 'roadPartNumber');
+              var initialDistance = Property.getPropertyByPublicId(initialRoadAddressesFields, 'startAddrMValue');
 
               if (!_.isUndefined(initialRoadPartNumber)) {
                 var roadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'number');
-                var endRoadPartNumber = Property.getPropertyByPublicId(roadAddressesFields, 'end_road_part_number');
-                var endDistance = Property.getPropertyByPublicId(roadAddressesFields, 'end_distance');
+                var endRoadPartNumber = Property.getPropertyByPublicId(roadAddressesFields, 'endRoadPartNumber');
+                var endDistance = Property.getPropertyByPublicId(roadAddressesFields, 'endDistance');
 
                 if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
                   _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0]) ||

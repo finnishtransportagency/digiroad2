@@ -9,11 +9,11 @@
     var linksSelected = null;
     var currentLane;
 
-    var initial_road_number;
-    var initial_road_part_number;
-    var initial_distance;
-    var end_road_part_number;
-    var end_distance;
+    var roadNumber;
+    var roadPartNumber;
+    var startAddrMValue;
+    var endRoadPartNumber;
+    var endDistance;
     var track;
 
     function getLaneCodeValue(lane) {
@@ -133,13 +133,13 @@
     };
 
     this.setInitialRoadFields = function(){
-      var roadNumberElement = {publicId: "initial_road_number", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadNumber}]};
-      var roadPartNumberElement = {publicId: "initial_road_part_number", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadPartNumber}]};
-      var startAddrMValueElement = {publicId: "initial_distance", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.startAddrMValue}]};
+      var roadNumberElement = {publicId: "roadNumber", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadNumber}]};
+      var roadPartNumberElement = {publicId: "roadPartNumber", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadPartNumber}]};
+      var startAddrMValueElement = {publicId: "startAddrMValue", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.startAddrMValue}]};
 
-      initial_road_number = selectedRoadlink.roadNumber;
-      initial_road_part_number = selectedRoadlink.roadPartNumber;
-      initial_distance = selectedRoadlink.startAddrMValue;
+      roadNumber = selectedRoadlink.roadNumber;
+      roadPartNumber = selectedRoadlink.roadPartNumber;
+      startAddrMValue = selectedRoadlink.startAddrMValue;
       track = selectedRoadlink.track;
 
       _.forEach(self.selection, function (lane) {
@@ -178,7 +178,7 @@
     this.isAddByRoadAddress = function() {
       var lane = _.find(self.selection, function (lane){
         return _.find(lane.properties, function (property) {
-          return property.publicId == "initial_road_number";
+          return property.publicId == "roadNumber";
         });
       });
 
@@ -210,7 +210,7 @@
       return _.map(lanes, function (lane) {
         var laneWithoutUnrelevantInfo = _.omit(lane, ['linkId', 'linkIds', 'sideCode', 'selectedLinks', 'points', 'marker']);
         laneWithoutUnrelevantInfo.properties = _.filter(laneWithoutUnrelevantInfo.properties, function (prop) {
-          return !_.includes(['initial_road_number', 'initial_road_part_number', 'initial_distance', 'end_road_part_number', 'end_distance'], prop.publicId);
+          return !_.includes(['roadNumber', 'roadPartNumber', 'startAddrMValue', 'endRoadPartNumber', 'endDistance'], prop.publicId);
         });
         return laneWithoutUnrelevantInfo;
       });
@@ -229,11 +229,11 @@
         payload = {
           sideCode: sideCode,
           laneRoadAddressInfo:{
-            roadNumber: initial_road_number,
-            initialRoadPartNumber: initial_road_part_number,
-            initialDistance: initial_distance,
-            endRoadPartNumber: parseInt(end_road_part_number),
-            endDistance: parseInt(end_distance),
+            roadNumber: roadNumber,
+            initialRoadPartNumber: roadPartNumber,
+            initialDistance: startAddrMValue,
+            endRoadPartNumber: parseInt(endRoadPartNumber),
+            endDistance: parseInt(endDistance),
             track: track
           },
           lanes: lanes
@@ -277,11 +277,11 @@
     this.setEndAddressesValues = function(currentPropertyValue) {
       var endValue = _.head(currentPropertyValue.values);
       switch(currentPropertyValue.publicId) {
-        case "end_road_part_number":
-          end_road_part_number = _.isEmpty(endValue) ? endValue : endValue.value;
+        case "endRoadPartNumber":
+          endRoadPartNumber = _.isEmpty(endValue) ? endValue : endValue.value;
           break;
-        case "end_distance":
-          end_distance = _.isEmpty(endValue) ? endValue : endValue.value;
+        case "endDistance":
+          endDistance = _.isEmpty(endValue) ? endValue : endValue.value;
           break;
       }
 
