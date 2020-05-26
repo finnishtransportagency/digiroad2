@@ -456,7 +456,9 @@
       };
 
       var lane = selectedAsset.getLane(currentLaneNumber, sidecode);
+
       expireLane.prop('disabled', lane.id === 0);
+      deleteLane.prop('disabled', lane.id !== 0);
 
       if(currentLaneNumber.toString()[1] !== "1")
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
