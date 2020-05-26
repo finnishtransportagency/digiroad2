@@ -227,7 +227,7 @@ trait ResolvingFrozenRoadLinks {
 
           val address = adjacentFirst.head.roadAddress
           Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(missing.linkId, address.road, address.roadPart, address.track,
-            address.startAddressM, address.endAddressM, address.startMValue, address.endMValue, missing.geometry, None)))
+            address.startAddressM, address.endAddressM, address.startMValue, address.endMValue, missing.geometry, None, municipalityCode = address.municipalityCode)))
       } else
         None
 
@@ -341,7 +341,6 @@ trait ResolvingFrozenRoadLinks {
         getTrackAndSideCodeLast(frozenAddress, mappedAddresses, frozenAddresses)
     }
   }
-
 
   def process() {
     println("\nRefreshing information on municipality verification")
