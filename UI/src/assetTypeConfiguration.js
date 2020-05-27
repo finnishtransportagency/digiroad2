@@ -99,11 +99,12 @@
 
     var lanesValidation = function (fields, laneNumberProperty, laneTypeProperty) {
       var laneValues = laneNumberProperty.values;
-      var isValidLaneValue = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue) || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
+      var isLaneValueEmpty = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue);
+      var isValidLaneValue = isLaneValueEmpty || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
 
       var laneTypeValue = laneTypeProperty.values;
 
-      return isValidLaneValue && (_.isEmpty(laneValues) || _.head(laneTypeValue).propertyValue == 999 ||
+      return isValidLaneValue && (isLaneValueEmpty || _.head(laneTypeValue).propertyValue == 99 ||
           (_.head(laneValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValue).propertyValue != 1) ||
           (_.head(laneValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValue).propertyValue == 1));
     };

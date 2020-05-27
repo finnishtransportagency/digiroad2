@@ -78,7 +78,14 @@
 
         map.addOverlay(overlay);
 
+        var allowedLaneInfoLayers = ["laneModellingTool", "trafficSigns"];
+
         var displayRoadAddressInfoPopup = function(event) {
+          var getLaneInfo = function () {
+            if(_.includes(allowedLaneInfoLayers, applicationModel.getSelectedLayer()))
+              return 'Kaistat: ' + _.join(_.uniq(roadData.lanes), ', ') + '<br>';
+            return '';
+          };
 
             if (event.dragging)
                 return;
@@ -101,7 +108,7 @@
                 'Ajorata: ' + (roadData.track || '') + '<br>' +
                 'AET: ' + (roadData.startAddrMValue || '') + '<br>' +
                 'LET: ' + (roadData.endAddrMValue || '') + '<br>' +
-                'Kaistat: ' + _.join(_.uniq(roadData.lanes), ', ') + '<br>'+ '</p>';
+                getLaneInfo() + '</p>';
               overlay.setPosition(map.getEventCoordinate(event.originalEvent));
             };
 

@@ -1589,6 +1589,6 @@ object TypeOfDamage {
   case object Rust extends TypeOfDamage { def value = 1; def description = "Ruostunut"  }
   case object Battered extends TypeOfDamage { def value = 2; def description = "Kolhiintunut" }
   case object Paint extends TypeOfDamage { def value = 3; def description = "Maalaus" }
-  case object OtherDamage extends TypeOfDamage { def value = 4; def description = "Muu vauiro" }
+  case object OtherDamage extends TypeOfDamage { def value = 4; def description = "Muu vaurio" }
   case object Unknown extends TypeOfDamage { def value = 99; def description = "Ei tiedossa" }
 }

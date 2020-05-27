@@ -34,6 +34,7 @@
         var coordinates = me.getCoordinates(me.getPoints(asset));
         var lineString = new ol.geom.LineString(coordinates);
         var value = me.getValue(asset);
+        /* Calculate midPoint to place the label 1x, 2x */
         return GeometryUtils.calculateMidpointOfLineString(lineString, (value[1] == '1' ? (value[0] == '1' ? 2 : 3) : 4));
       });
     };

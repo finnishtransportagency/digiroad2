@@ -695,10 +695,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    val laneInfo = laneService.fetchExistingLanesByRoadLinks(Seq(roadLink)).map(_.laneCode)
+    val laneInfo = laneService.fetchExistingLanesByLinkIds(Seq(roadLink.linkId))
 
     Map(
-      "lanes" ->  ( if (laneInfo.isEmpty ) "" else laneInfo.sorted ),
+      "lanes" -> laneInfo.map(_.laneCode).sorted,
       "linkId" -> roadLink.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
       "points" -> roadLink.geometry,
@@ -1108,7 +1108,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   def mapLanes(lanesRoot: Seq[Seq[PieceWiseLane]]): Seq[Seq[Map[String, Any]]] = {
     lanesRoot.map { lanes =>
       lanes.map { lane =>
+        val laneInfo = laneService.fetchExistingLanesByLinkIds(Seq(lane.linkId))
+        val filteredLaneInfo = laneService.filterLanesByDirection(laneInfo, laneService.getPropertyValue(lane, "lane_code").get.value.toString.charAt(0))
         Map(
+          "lanes" -> filteredLaneInfo.map(_.laneCode).sorted,
           "id" -> (if (lane.id == 0) None else Some(lane.id)),
           "linkId" -> lane.linkId,
           "sideCode" -> lane.sideCode,

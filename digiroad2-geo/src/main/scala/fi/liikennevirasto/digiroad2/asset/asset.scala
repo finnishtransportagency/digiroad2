@@ -6,7 +6,6 @@ import java.util.Base64
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
-import org.joda.time.format.DateTimeFormat
 
 import scala.util.Try
 

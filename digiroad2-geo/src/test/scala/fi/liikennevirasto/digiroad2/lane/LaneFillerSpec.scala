@@ -79,82 +79,6 @@ class LaneFillerSpec extends FunSuite with Matchers {
     changeSet.expiredLaneIds should be (Set(1L, 2L, 3L))
   }
 
-  test("RoadLink BothDirection and with only one Lane (TowardsDigitizing). The 2nd should be created.") {
-
-    val topology = Seq( roadLinkTowards2 )
-
-    val lane11 = PersistedLane(2L, roadLinkTowards2.linkId, SideCode.TowardsDigitizing.value,
-      11, 745L, 0, 15.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards2.linkId -> Seq( lane11 )
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-
-    filledTopology should have size 2
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
-    filledTopology.map(_.id) should be (Seq(2L, 0L))
-    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards2.linkId, roadLinkTowards2.linkId))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Seq(Point(0.0, 0.0), Point(15.0, 0.0))))
-
-    changeSet.expiredLaneIds should be (Set())
-  }
-
-  test("RoadLink BothDirection and with only one Lane (AgainstDigitizing). The 2nd should be created.") {
-
-    val topology = Seq( roadLinkTowards2 )
-
-    val lane11 = PersistedLane(2L, roadLinkTowards2.linkId, SideCode.AgainstDigitizing.value,
-      21, 745L, 0, 15.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards2.linkId -> Seq( lane11 )
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-
-    filledTopology should have size 2
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.AgainstDigitizing.value, SideCode.TowardsDigitizing.value))
-    filledTopology.map(_.id) should be (Seq(2L, 0L))
-    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards2.linkId, roadLinkTowards2.linkId))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Seq(Point(0.0, 0.0), Point(15.0, 0.0))))
-
-    changeSet.expiredLaneIds should be (Set())
-  }
-
-  test("RoadLink TowardsDigitizing and with two main Lanes(TowardsDigitizing and AgainstDigitizing). " +
-    "The main lane TowardsDigitizing should be standing.") {
-    val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
-      21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
-    )
-
-    val lane21 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
-      21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards1.linkId -> Seq(lane11, lane21)
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(Seq(roadLinkTowards1), linearAssets)
-
-    filledTopology should have size 1
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
-    filledTopology.map(_.laneAttributes.head.publicId) should be (Seq("lane_code"))
-    filledTopology.map(_.laneAttributes.head.values) should be (Seq(Seq(LanePropertyValue(11))))
-    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
-
-    changeSet.expiredLaneIds should be (Set(1L,2L))
-  }
-
   test("Adjust lane that goes outside of roadLink length") {
     val topology = Seq( roadLinkTowards1 )
 
@@ -192,7 +116,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     )
 
     val lane3 = PersistedLane(20L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      21, 745L, 5.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      21, 745L, 5.0, 15.0, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
     )
 
@@ -206,11 +130,11 @@ class LaneFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 3
     filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value, SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(1L, 2L, 0L))
+    filledTopology.map(_.id) should be (Seq(1L, 2L, 20L))
     filledTopology.map(_.linkId) should be (Seq(3L, 3L, 1L))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0))))
+    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
 
-    changeSet.expiredLaneIds should be (Set(20L))
+    changeSet.expiredLaneIds should be (Set())
   }
 
   test("Merge Lanes") {
@@ -246,38 +170,6 @@ class LaneFillerSpec extends FunSuite with Matchers {
     changeSet.expiredLaneIds should be (Set(22L))
   }
 
-  test("Merge Lanes and create missing one") {
-    val topology = Seq( roadLinkTowards2 )
-
-    val lane = PersistedLane(20L, roadLinkTowards2.linkId, SideCode.TowardsDigitizing.value,
-      11, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
-    )
-
-    val lane12 = PersistedLane(21L, roadLinkTowards2.linkId, SideCode.TowardsDigitizing.value,
-      12, 745L, 7.0, 10.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
-    )
-
-    val lane12b = PersistedLane(22L, roadLinkTowards2.linkId, SideCode.TowardsDigitizing.value,
-      12, 745L, 4.0, 7.0, None, None, None, None, expired = false, 0L, None,
-      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
-    )
-
-    val linearAssets = Map(
-      roadLinkTowards2.linkId -> Seq( lane, lane12, lane12b )
-    )
-
-    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
-
-    filledTopology should have size 3
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value,  SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
-    filledTopology.map(_.id) should be (Seq(20L, 21L, 0L))
-    filledTopology.map(_.linkId) should be (Seq( 2L, 2L, 2L))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(4.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(15.0, 0.0)) ))
-
-    changeSet.expiredLaneIds should be (Set(22L))
-  }
 
   test("Drop lanes with less than 2 meters") {
     val topology = Seq( roadLinkTowards1 )
@@ -299,11 +191,11 @@ class LaneFillerSpec extends FunSuite with Matchers {
 
     val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
 
-    filledTopology should have size 2
-    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value ))
-    filledTopology.map(_.id) should be (Seq(21L, 0L))
-    filledTopology.map(_.linkId) should be (Seq( 1L, 1L))
-    filledTopology.map(_.geometry) should be (Seq(Seq(Point(8.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)) ))
+    filledTopology should have size 1
+    filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value ))
+    filledTopology.map(_.id) should be (Seq(21L))
+    filledTopology.map(_.linkId) should be (Seq( 1L))
+    filledTopology.map(_.geometry) should be (Seq(Seq(Point(8.0, 0.0), Point(10.0, 0.0)) ))
 
     changeSet.expiredLaneIds should be (Set(20L))
   }
