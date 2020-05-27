@@ -67,7 +67,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   private val singleChoiceAcceptableValues = Map(
     "rakenne" -> Seq(Structure.Pole.value, Structure.Wall.value, Structure.Bridge.value, Structure.Portal.value,
-                 Structure.BarBarrier.value, Structure.Other.value, Structure.Unknown.value),
+                Structure.HalfPortal.value, Structure.Barrier.value, Structure.Other.value, Structure.Unknown.value),
     "kunto" -> Seq(Condition.VeryPoor.value, Condition.Poor.value, Condition.Fair.value, Condition.Good.value,
                 Condition.VeryGood.value, Condition.Unknown.value),
 
@@ -87,7 +87,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                         LaneType.Reversible.value, LaneType.Combined.value, LaneType.Walking.value, LaneType.Cycling.value,
                         LaneType.Unknown.value),
 
-    "tila" -> Seq(SignLifeCycle.Planned.value, SignLifeCycle.UnderConstruction.value, SignLifeCycle.Realized.value, SignLifeCycle.TemporarilyInUse.value,
+    "tila" -> Seq(SignLifeCycle.Planned.value, SignLifeCycle.UnderConstruction.value, SignLifeCycle.PermanentlyInUse.value, SignLifeCycle.TemporarilyInUse.value,
               SignLifeCycle.TemporarilyOutOfService.value, SignLifeCycle.OutgoingPermanentDevice.value, SignLifeCycle.Unknown.value),
 
     "vauriotyyppi" -> Seq(TypeOfDamage.Rust.value, TypeOfDamage.Battered.value, TypeOfDamage.Paint.value, TypeOfDamage.OtherDamage.value,
@@ -271,7 +271,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     /* start date validations */
     val temporaryDevices = Seq(4,5)
-    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].getOrElse(-999)
+    val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].getOrElse(SignLifeCycle.Unknown.value)
     val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
 
