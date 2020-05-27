@@ -433,9 +433,19 @@
       });
 
       var expireLane = $('<button class="btn btn-secondary lane-button">Päätä Kaista</button>').click(function() {
-        selectedAsset.expireLane(currentLaneNumber, sidecode);
-        prepareLanesStructure();
-        reloadForm($('#feature-attributes'));
+        var confirmationPopUpOptions = {
+          type: "confirm",
+          yesButtonLbl: 'Tallenna',
+          noButtonLbl: 'Peruuta',
+          successCallback: function() {
+            selectedAsset.expireLane(currentLaneNumber, sidecode);
+            prepareLanesStructure();
+            reloadForm($('#feature-attributes'));
+          }
+        };
+        var confirmationMessage = "Haluatko varmasti päättää kaistan?";
+
+        GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
       var prepareLanesStructure = function () {
@@ -511,9 +521,19 @@
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
-        selectedLinearAsset.save(isAddByRoadAddressActive);
-        selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
-        currentFormStructure = mainLaneFormStructure;
+        var confirmationPopUpOptions = {
+          type: "confirm",
+          yesButtonLbl: 'Tallenna',
+          noButtonLbl: 'Peruuta',
+          successCallback: function() {
+            selectedLinearAsset.save(isAddByRoadAddressActive);
+            selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
+            currentFormStructure = mainLaneFormStructure;
+          }
+        };
+        var confirmationMessage = "Ovatko tekemäsi muutokset lopullisia? Kaistatieto lähetetään Tierekisteriin.";
+
+        GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
       var updateStatus = function(element) {
