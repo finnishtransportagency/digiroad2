@@ -191,7 +191,10 @@ trait ResolvingFrozenRoadLinks {
       ((first, last, roadLink)) -> roadLinkService.getAdjacent(roadLink.linkId, false)
     }.toMap
 
-    val allRoadAddress = roadAddressService.getAllByLinkIds(adjRoadLinks.flatMap(_._2.map(_.linkId)).toSeq.distinct)
+    val linkIds = adjRoadLinks.flatMap(_._2.map(_.linkId)).toSeq.distinct
+
+    println(s"linkids -> ${linkIds.mkString(",")}")
+    val allRoadAddress = roadAddressService.getAllByLinkIds(linkIds)
 
     val mappedAddresses = allRoadAddress.flatMap { address =>
       adjRoadLinks.flatMap(_._2).find(_.linkId == address.linkId).map { roadLink =>
