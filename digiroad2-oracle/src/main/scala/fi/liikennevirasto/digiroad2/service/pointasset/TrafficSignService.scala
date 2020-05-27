@@ -57,7 +57,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
   private val defaultMultiChoiceValue = 0
-  private val defaultSingleChoiceValue = 999
+  private val defaultSingleChoiceValue = 99
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 

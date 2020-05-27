@@ -567,7 +567,7 @@
     var additionalPanelColorSettings = [
       { propertyValue: "1", propertyDisplayValue: "Sininen", checked: false },
       { propertyValue: "2", propertyDisplayValue: "Keltainen", checked: false },
-      { propertyValue: "999", propertyDisplayValue: "Ei tietoa", checked: false }
+      { propertyValue: "99", propertyDisplayValue: "Ei tietoa", checked: false }
     ];
 
     var singleChoiceForPanels = function (property) {
