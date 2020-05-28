@@ -29,6 +29,12 @@ case class PersistedLane ( id: Long, linkId: Long, sideCode: Int, laneCode: Int,
                            modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
                            vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty] )
 
+case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long, sideCode: Int, laneCode: Int, municipalityCode: Long,
+                                startMeasure: Double, endMeasure: Double,
+                                createdBy: Option[String], createdDateTime: Option[DateTime],
+                                modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty])
+
 case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, value: LanePropertyValue, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime] )
 

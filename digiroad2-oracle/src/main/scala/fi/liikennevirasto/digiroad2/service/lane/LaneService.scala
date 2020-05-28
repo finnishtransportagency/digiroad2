@@ -535,66 +535,62 @@ trait LaneOperations {
   }
 
   /**
-    * @param newIncomeLane The lanes that will be updated
+    * @param updateIncomeLane The lanes that will be updated
     * @param linkIds  If only 1 means the user are change a specific lane and it can be cut or properties update
     *                 If multiple means the chain is being updated and only properties are change ( Lane size / cut cannot be done)
     * @param sideCode To know the direction
     * @param username Username of the user is doing the changes
     * @return
     */
-  def update ( newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long] ,sideCode: Int, username: String ): Seq[Long] = {
-    if (newIncomeLane.isEmpty || linkIds.isEmpty)
-      return Seq()
+  def update(updateIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+    def isSomePropertyDifferent(oldLane: PersistedLane, newLane: NewIncomeLane): Boolean = {
+      oldLane.attributes.exists { property =>
+        val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
+        val newPropertyValue = getPropertyValue(newLane, property.publicId)
 
-    withDynTransaction {
-     if (linkIds.size == 1) {
-        val linkId = linkIds.head
-
-        newIncomeLane.map { lane =>
-
-          val laneCode = getLaneCode(lane)
-
-          val lameToUpdate = PersistedLane(lane.id, linkId, sideCode, laneCode.toInt, lane.municipalityCode,
-            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
-
-          dao.updateEntryLane(lameToUpdate, username)
-        }
-
-      } else {
-
-        // get all lane codes from lanes to update
-        val laneCodes = newIncomeLane.map( lane => getLaneCode(lane).toInt )
-
-        // fetch from db the existing lanes
-        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodes )
-                                  .groupBy(_.linkId)
-
-        // Iterate through the links
-        val result = linkIds.map { linkId =>
-          newIncomeLane.map { lane =>
-
-            val laneCode = getLaneCode(lane).toInt
-
-            val currentLanes = allExistingLanes.getOrElse(linkId, throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $laneCode for update!"))
-            val auxLane = currentLanes.filter(_.laneCode == laneCode)
-
-            // Since cut lanes will not be in multiple linkIds Update, we can only have the 1st element
-            val currentLane = if ( auxLane.nonEmpty)
-                                auxLane.head
-                              else
-                                throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $laneCode for update!")
-
-
-            val laneToUpdate = PersistedLane(currentLane.id, linkId, sideCode, laneCode, currentLane.municipalityCode,
-              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
-
-            dao.updateEntryLane(laneToUpdate, username)
-          }
-        }
-
-        result.head
+        oldPropertyValue != newPropertyValue
       }
     }
+
+    if (updateIncomeLane.isEmpty || linkIds.isEmpty)
+      return Seq()
+
+    // Get all lane codes from lanes to update
+    val modifiedLaneCodes = updateIncomeLane.map { incomeLane => getLaneCode(incomeLane).toInt }
+
+    //Fetch from db the existing lanes
+    val oldLanesByLinkId = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, modifiedLaneCodes).groupBy(_.linkId)
+
+    //By lane check if exist something to modify
+    val result = updateIncomeLane.flatMap { laneToUpdate =>
+      val laneCodeToUpdate = getPropertyValue(laneToUpdate, "lane_code").toString().toInt
+
+      oldLanesByLinkId.map { case (linkId, oldLanes) =>
+        val oldLaneToBeUpdate = oldLanes.find(_.laneCode == laneCodeToUpdate)
+
+        oldLaneToBeUpdate match {
+          case Some(oldLane) =>
+            if (oldLane.startMeasure != laneToUpdate.startMeasure || oldLane.endMeasure != laneToUpdate.endMeasure) {
+              val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
+              moveToHistory(oldLane.id, Some(newLaneID.head), true, true, username)
+              newLaneID.head
+
+            } else if (isSomePropertyDifferent(oldLane, laneToUpdate)) {
+              val persistedLaneToUpdate = PersistedLane(laneToUpdate.id, linkId, sideCode, laneCodeToUpdate, laneToUpdate.municipalityCode,
+                laneToUpdate.startMeasure, laneToUpdate.endMeasure, Some(username), None, None, None, false, 0, None, laneToUpdate.properties)
+
+              moveToHistory(laneToUpdate.id, None, false, false, username)
+              dao.updateEntryLane(persistedLaneToUpdate, username)
+
+            } else {
+              oldLane.id
+            }
+          case _ => throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $laneCodeToUpdate for update!")
+        }
+      }
+    }
+
+    result
   }
 
   def updatePersistedLanes ( lanes: Seq[PersistedLane], username: String ): Seq[Long] = {
@@ -634,8 +630,6 @@ trait LaneOperations {
 
     if (newIncomeLane.isEmpty || linkIds.isEmpty)
       return Seq()
-
-    withDynTransaction {
 
       // if it is only 1 link it can be just a new lane with same size as the link or it can be a cut
       // for that reason we need to use the measure that come inside the newIncomeLane
@@ -682,7 +676,6 @@ trait LaneOperations {
 
         result.head
       }
-    }
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
@@ -741,10 +734,8 @@ trait LaneOperations {
     }
   }
 
-  def deleteMultipleLanes(ids: Set[Long]): Unit = {
-    withDynTransaction {
-      ids.foreach(id => dao.deleteEntryLane(id))
-    }
+  def deleteMultipleLanes(ids: Set[Long], username: String): Unit = {
+    ids.foreach(id => moveToHistory(id, None, true, true, username))
   }
 
   def multipleLanesToHistory (ids: Set[Long], username: String): Unit = {
@@ -767,35 +758,30 @@ trait LaneOperations {
   def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
                             sideCode: Int, username: String): Unit = {
 
-    val actionsLanes = separateNewIncomeLanesInActions(newIncomeLanes, linkIds)
+    withDynTransaction {
+      val actionsLanes = separateNewIncomeLanesInActions(newIncomeLanes, linkIds, sideCode)
 
-    deleteMultipleLanes(actionsLanes.lanesToDelete)
-    create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username)
-    update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username)
+      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username)
+      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username)
+      deleteMultipleLanes(actionsLanes.lanesToDelete, username)
+    }
   }
 
-  def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long]): ActionsPerLanes = {
+  def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long], sideCode: Int): ActionsPerLanes = {
     //Get Current Lanes for sended linkIds
-    val allExistingLanes: Seq[PersistedLane] = fetchAllLanesByLinkIds(linkIds.toSeq)
+    val allExistingLanes: Seq[PersistedLane] = dao.fetchLanesByLinkIdAndSideCode(linkIds.head, sideCode)
 
     //Get Lanes to be deleted
-    val resultWithDeleteActions = allExistingLanes.foldLeft(ActionsPerLanes()) {
+    val resultWithDeleteActions = newIncomeLanes.foldLeft(ActionsPerLanes()) {
       (result, existingLane) =>
-
-        val isLaneToDelete =
-          newIncomeLanes.exists { incomeLane =>
-            val incomeLaneCode = getPropertyValue(incomeLane, "lane_code")
-            incomeLaneCode == existingLane.laneCode
-          }
-
-        if (isLaneToDelete)
+        if (existingLane.isExpired)
           result.copy(lanesToDelete = Set(existingLane.id) ++ result.lanesToDelete)
         else
           result
     }
 
     //Get Lanes to be created and updated
-    val resultWithAllActions = newIncomeLanes.foldLeft(resultWithDeleteActions) {
+    val resultWithAllActions = newIncomeLanes.filter(_.isExpired != true).foldLeft(resultWithDeleteActions) {
       (result, lane) =>
         val laneCode = getPropertyValue(lane, "lane_code")
 
