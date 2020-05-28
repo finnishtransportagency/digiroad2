@@ -10,7 +10,16 @@ object LanePartitioner extends GraphPartitioner {
       val groupedLanesByRoadLinkAndSideCode = lanes.groupBy(lane => (lane.linkId, lane.sideCode))
 
       val linkGroups = groupedLanesByRoadLinkAndSideCode.groupBy { case ((roadLinkId, _), lanes) =>
-        val allLanesAttributes = lanes.flatMap(_.laneAttributes).sortBy(laneProp => (laneProp.publicId, laneProp.values.head.value.toString))
+        val allLanesAttributes =
+          lanes.flatMap(_.laneAttributes).sortBy { laneProp =>
+            val lanePropValue = laneProp.values match {
+              case Stream.Empty => ""
+              case laneProps => laneProps.head.value.toString
+            }
+
+            (laneProp.publicId, lanePropValue)
+          }
+
         val roadLink = roadLinks.get(roadLinkId)
         val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
 
