@@ -13,8 +13,8 @@ object LanePartitioner extends GraphPartitioner {
         val allLanesAttributes =
           lanes.flatMap(_.laneAttributes).sortBy { laneProp =>
             val lanePropValue = laneProp.values match {
-              case Stream.Empty => ""
-              case laneProps => laneProps.head.value.toString
+              case laneProps if laneProps.nonEmpty => laneProps.head.value.toString
+              case _ => ""
             }
 
             (laneProp.publicId, lanePropValue)
