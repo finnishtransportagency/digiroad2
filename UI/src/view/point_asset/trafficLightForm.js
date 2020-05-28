@@ -157,8 +157,9 @@
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
                     _.forEach(rootElement.find('.suggested-checkbox'), function (element) {
-                        var propertyGroupedId = element.data('grouped-id');
-                        var propertyPublicId = _.head(_.split(element.attr('id'), '-'));
+                        var targetElement = $(element)
+                        var propertyGroupedId = targetElement.data('grouped-id');
+                        var propertyPublicId = _.head(_.split(targetElement.attr('id'), '-'));
                         selectedAsset.setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, 0);
                     });
                 }
@@ -292,6 +293,21 @@
 
             containers.find('.button-remove-traffic-light').prop("disabled", amount === 1);
             containers.find('.button-add-traffic-light').prop("disabled", amount >= 6);
+        };
+
+        this.suggestedBoxHandler = function(asset, authorizationPolicy) {
+            var suggestedBoxValue = _.isEmpty(asset.values) ? 0 : !!parseInt(_.head(asset.values).propertyValue);
+            var suggestedBoxDisabledState = me.getSuggestedBoxDisabledState();
+
+            if(suggestedBoxDisabledState) {
+                return me.renderSuggestBoxElement(asset, 'disabled');
+            } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(me.selectedAsset, suggestedBoxValue)) {
+                var checkedValue = suggestedBoxValue ? 'checked' : '';
+                return me.renderSuggestBoxElement(asset, checkedValue);
+            } else {
+                // empty div placed for correct positioning on the form for some elements to appear before or after the suggestion-box
+                return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box"></div>';
+            }
         };
     };
 })(this);
