@@ -138,7 +138,6 @@
                 selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
             });
 
-            //TODO:verify
             rootElement.find('.suggested-checkbox').on('change', function (event) {
                 var eventTarget = $(event.currentTarget);
                 var propertyGroupedId = eventTarget.data('grouped-id');
@@ -151,13 +150,12 @@
                 }
             });
 
-            //TODO:verify
             rootElement.find('.editable').not('.suggestion-box').on('change', function () {
                 if (id && !selectedAsset.getWasOldAsset()) {
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
                     _.forEach(rootElement.find('.suggested-checkbox'), function (element) {
-                        var targetElement = $(element)
+                        var targetElement = $(element);
                         var propertyGroupedId = targetElement.data('grouped-id');
                         var propertyPublicId = _.head(_.split(targetElement.attr('id'), '-'));
                         selectedAsset.setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, 0);

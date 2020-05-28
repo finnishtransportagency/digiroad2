@@ -176,7 +176,8 @@
 
             rotation = validitydirections.calculateRotation(parseFloat(bearingValue), parseInt(sideCodeValue));
           } else {
-            var firstBearingValue = _.head(_.head(bearingProps).values).propertyValue;
+            var isBearingNotDetermined = _.isEmpty(_.head(bearingProps).values) || _.head(_.head(bearingProps).values).propertyValue;
+            var firstBearingValue = isBearingNotDetermined ? determineBearing(asset) : _.head(_.head(bearingProps).values).propertyValue;
             var firstSideCodeValue = _.head(_.find(asset.propertyData, {'publicId': 'sidecode'}).values).propertyValue;
             rotation = validitydirections.calculateRotation(parseFloat(firstBearingValue), parseInt(firstSideCodeValue));
           }
