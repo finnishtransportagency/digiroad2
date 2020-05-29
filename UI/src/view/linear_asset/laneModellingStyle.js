@@ -61,10 +61,21 @@
       return me.lineFeatures(me.getNewFeatureProperties(linearAssets, laneNumber));
     };
 
+    var numberOfLanes = function (asset) {
+      if (!_.isUndefined(asset.lanes))
+        return asset.lanes.length - 1;
+    };
+
     var laneModellingStyleRules = [
       new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
-      new StyleRule().where(function(asset){return isMainLane(asset);}).is(true).use({ stroke : { color: '#ff0000' }}),
-      new StyleRule().where(function(asset){return isMainLane(asset);}).is(false).use({ stroke : { color: '#11bb00' }})
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { color: '#ff0000' }}),
+      new StyleRule().where(function(asset){return isMainLane(asset);}).is(false).use({ stroke : { color: '#11bb00' }}),
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(1).use({ stroke : { color: '#00ccdd' }}),
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(2).use({ stroke : { color: '#0011bb' }}),
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(3).use({ stroke : { color: '#a800a8' }}),
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(4).use({ stroke : { color: '#ff55dd' }}),
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(5).use({ stroke : { color: '#008080' }}),
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(6).use({ stroke : { color: '#000000' }})
     ];
 
     var featureTypeRules = [
