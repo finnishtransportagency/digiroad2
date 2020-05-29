@@ -610,6 +610,7 @@ trait LaneOperations {
     logger.info("**********                   **********")
 
     val laneId = dao.createLane( newLane, username )
+    logger.info("New Lane created with ID: " + laneId)
 
     newLane.attributes match {
       case props: Seq[LaneProperty] =>
