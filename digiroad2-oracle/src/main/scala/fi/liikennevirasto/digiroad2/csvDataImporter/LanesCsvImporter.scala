@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+import org.slf4j.LoggerFactory
 
 
 class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -23,6 +24,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   type ImportResultData = ImportResultLaneAsset
   type ParsedCsv = (MalformedParameters, List[ParsedProperties])
   def laneUtils = LaneUtils()
+  val logger = LoggerFactory.getLogger(getClass)
 
   private val nonMandatoryFieldsMapping: Map[String, String] = Map(
     "id" -> "id",
@@ -185,12 +187,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
       }
     } catch {
       case e: Exception =>
-        println("********** Errors at Lane CSV Importer **********")
-        println("Error ->" + e.toString)
-        println("")
-        println("fillInStackTrace ->" + e.printStackTrace())
-        println("")
-        println("**********                             **********")
+        logger.info("********** Errors at Lane CSV Importer **********")
+        logger.info("Error ->" + e.toString)
+        logger.info("")
+        logger.info("fillInStackTrace ->" + e.printStackTrace())
+        logger.info("")
+        logger.info("**********                             **********")
 
         update(logId, Status.Abend, Some("Lähettäessä tapahtui odottamaton virhe: " + e.toString))
     } finally {
