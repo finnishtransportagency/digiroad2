@@ -600,6 +600,14 @@ trait LaneOperations {
   }
 
   def createWithoutTransaction( newLane: PersistedLane, username: String ): Long = {
+    logger.info("********** Lane to Create **********")
+    logger.info("LinkId: " + newLane.linkId)
+    logger.info("LaneCode: " + newLane.laneCode)
+    logger.info("Attributes")
+    newLane.attributes.foreach { a =>
+      logger.info("Public_ID: " + a.publicId + "Value: " + (if (a.values.isEmpty) "" else a.values.head.value.toString))
+    }
+    logger.info("**********                   **********")
 
     val laneId = dao.createLane( newLane, username )
 

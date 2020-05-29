@@ -188,9 +188,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     } catch {
       case e: Exception =>
         logger.info("********** Errors at Lane CSV Importer **********")
-        logger.info("Error ->" + e.toString)
         logger.info("")
-        logger.info("fillInStackTrace ->" + e.printStackTrace())
+        logger.info("Error ->" + e.toString)
+        logger.info("printStackTrace ->" + e.printStackTrace().toString)
+        logger.info("printStackTrace ->" + e.printStackTrace().toString)
+        logger.info("printStackTrace ->" + e.printStackTrace().toString)
+        logger.info("Message ->" + e.getMessage)
         logger.info("")
         logger.info("**********                             **********")
 
