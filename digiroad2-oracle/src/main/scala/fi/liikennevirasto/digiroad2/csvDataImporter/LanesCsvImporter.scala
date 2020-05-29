@@ -175,7 +175,7 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def importAssets(inputStream: InputStream, fileName: String, user: User, logId: Long): Unit = {
-    try {
+//    try {
       val result = processing(inputStream, user)
       result match {
         case ImportResultLaneAsset(Nil, Nil, Nil, Nil, _) => update(logId, Status.OK)
@@ -183,12 +183,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
           val content = mappingContent(result)
           update(logId, Status.NotOK, Some(content))
       }
-    } catch {
-      case e: Exception =>
-        update(logId, Status.Abend, Some("Lähettäessä tapahtui odottamaton virhe: " + e.toString))
-    } finally {
+//    } catch {
+//      case e: Exception =>
+//        update(logId, Status.Abend, Some("Lähettäessä tapahtui odottamaton virhe: " + e.toString))
+//    } finally {
       inputStream.close()
-    }
+//    }
   }
 
   def processing(inputStream: InputStream, user: User): ImportResultData = {
