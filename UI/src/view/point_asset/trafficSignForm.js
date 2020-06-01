@@ -57,10 +57,16 @@
         '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
         '    </div>';
 
-      var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
+      var oppositeSideSignProperty = getSidePlacement();
+      if (_.isUndefined(oppositeSideSignProperty.propertyDisplayValue)) {
+        var oppositeSideSignPropertyValues = getProperties(me.enumeratedPropertyValues, 'opposite_side_sign').values;
+        oppositeSideSignProperty.propertyDisplayValue = _.find(oppositeSideSignPropertyValues, {'propertyValue': oppositeSideSignProperty.propertyValue} ).propertyDisplayValue;
+      }
+
+      var wrongSideInfo = asset.id !== 0 && !_.isEmpty(oppositeSideSignProperty.propertyValue) ?
         '    <div id="wrongSideInfo" class="form-group form-directional-traffic-sign">' +
         '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
-        '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
+        '        <p class="form-control-static">' + oppositeSideSignProperty.propertyDisplayValue + '</p>' +
         '    </div>' : '';
 
       return components + wrongSideInfo + panelCheckbox + renderedPanels;
@@ -75,9 +81,6 @@
 
       if (selectedAsset.isNew()) {
         formRootElement = formRootElement.append(me.renderValueElement(asset, collection, authorizationPolicy));
-
-        return  wrapper.append(formRootElement );
-
       } else {
         var deleteCheckbox = $(''+
             '    <div class="form-group form-group delete">' +
@@ -100,9 +103,8 @@
                                           .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
                                           .append(me.renderValueElement(asset, collection, authorizationPolicy))
                                           .append(deleteCheckbox);
-
-        return wrapper.append(formRootElement );
       }
+      return  wrapper.append(formRootElement);
     };
 
     var suggestedBoxHandler = function(asset, authorizationPolicy) {
@@ -444,6 +446,8 @@
 
     var singleChoiceHandler = function (property) {
       var propertyValue = _.isEmpty(property.values) ? '' : _.head(property.values).propertyValue;
+      if (_.isEmpty(propertyValue))
+        propertyValue = _.head(getProperties(me.pointAsset.newAsset.propertyData,  property.publicId).values).propertyValue;
       var propertyValues = _.head( getValuesFromEnumeratedProperty(property.publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
