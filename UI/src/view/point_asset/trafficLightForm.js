@@ -87,6 +87,43 @@
             }
         };
 
+       this.haveSameDirection = function(asset) {
+            var isOld = function(asset){
+               var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
+               return _.head(typeProp.values).propertyValue === "";
+            };
+
+            if (!isOld(asset)) {
+                var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+                if (asset.selectedId == asset.id)
+                    return true;
+
+                var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
+                var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
+
+                var sidecodeProps = _.filter(asset.propertyData, {'publicId': 'sidecode'});
+                var sidecodeValue = _.head(_.head(sidecodeProps).values).propertyValue;
+                var sameSideCode = _.every(sidecodeProps, function(prop){return _.head(prop.values).propertyValue == sidecodeValue;});
+                return sameBearing && sameSideCode;
+            }
+            return false;
+        };
+
+        this.renderPreview = function(roadCollection, selectedAsset) {
+            var asset = selectedAsset.get();
+            var lanes;
+            var haveSameDirection = this.haveSameDirection(asset);
+
+            if (!asset.floating && haveSameDirection ){
+                lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
+                var sidecodeProps = _.find(asset.propertyData, {'publicId': 'sidecode'});
+                var sidecodeValue = _.head(sidecodeProps.values).propertyValue;
+                lanes = laneUtils.filterByValidityDirection(sidecodeValue, lanes);
+            }
+
+            return _.isEmpty(lanes) ? '' : laneUtils.createPreviewHeaderElement(_.uniq(lanes));
+        };
+
         this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
             var asset = selectedAsset.get();
             var wrapper = $('<div class="wrapper">');
