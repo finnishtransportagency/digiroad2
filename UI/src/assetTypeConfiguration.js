@@ -1261,7 +1261,7 @@
         layerName: 'trafficLights',
         title: 'Liikennevalot',
         allowComplementaryLinks: true,
-        newAsset: {propertyData: [
+        newAsset: {validityDirection: 2, propertyData: [
             {'groupedId': 1, 'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
             {'groupedId': 1, 'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
             {'groupedId': 1, 'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 99} ]},
