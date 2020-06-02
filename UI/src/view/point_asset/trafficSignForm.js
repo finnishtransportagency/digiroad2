@@ -58,7 +58,7 @@
         '    </div>';
 
       var oppositeSideSignProperty = getSidePlacement();
-      if (_.isUndefined(oppositeSideSignProperty.propertyDisplayValue)) {
+      if (asset.id !== 0 && _.isUndefined(oppositeSideSignProperty.propertyDisplayValue)) {
         var oppositeSideSignPropertyValues = getProperties(me.enumeratedPropertyValues, 'opposite_side_sign').values;
         oppositeSideSignProperty.propertyDisplayValue = _.find(oppositeSideSignPropertyValues, {'propertyValue': oppositeSideSignProperty.propertyValue} ).propertyDisplayValue;
       }
