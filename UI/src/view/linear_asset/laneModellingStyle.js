@@ -75,7 +75,7 @@
       new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(3).use({ stroke : { color: '#a800a8' }}),
       new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(4).use({ stroke : { color: '#ff55dd' }}),
       new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(5).use({ stroke : { color: '#008080' }}),
-      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset);}).is(6).use({ stroke : { color: '#000000' }})
+      new StyleRule().where(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfLanes(asset) >= 6;}).is(true).use({ stroke : { color: '#000000' }})
     ];
 
     var featureTypeRules = [
