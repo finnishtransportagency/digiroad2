@@ -45,11 +45,15 @@
             return wrapper.append(formRootElement);
         };
 
+        var isOld = function(asset){
+            return _.head(me.getProperties(asset.propertyData, 'trafficLight_type').values).propertyValue === "";
+        };
+
         this.renderForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
             var id = selectedAsset.getId();
             var asset = selectedAsset.get();
 
-            var isOldTrafficLight = _.head(me.getProperties(asset.propertyData, 'trafficLight_type').values).propertyValue === "";
+            var isOldTrafficLight = isOld(asset);
 
             if(!isOldTrafficLight && !selectedAsset.getSelectedGroupedId()) {
                 var firstGroupedId = _.head(_.orderBy(asset.propertyData,'groupedId')).groupedId;
@@ -87,24 +91,12 @@
             }
         };
 
-       this.haveSameDirection = function(asset) {
-            var isOld = function(asset){
-               var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
-               return _.head(typeProp.values).propertyValue === "";
-            };
-
+       this.haveSameSideCode = function(asset) {
             if (!isOld(asset)) {
-                var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
-                if (asset.selectedId == asset.id)
-                    return true;
-
-                var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
-                var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
-
                 var sidecodeProps = _.filter(asset.propertyData, {'publicId': 'sidecode'});
                 var sidecodeValue = _.head(_.head(sidecodeProps).values).propertyValue;
-                var sameSideCode = _.every(sidecodeProps, function(prop){return _.head(prop.values).propertyValue == sidecodeValue;});
-                return sameBearing && sameSideCode;
+
+                return _.every(sidecodeProps, function(prop){return _.head(prop.values).propertyValue == sidecodeValue;});
             }
             return false;
         };
@@ -112,9 +104,8 @@
         this.renderPreview = function(roadCollection, selectedAsset) {
             var asset = selectedAsset.get();
             var lanes;
-            var haveSameDirection = this.haveSameDirection(asset);
 
-            if (!asset.floating && haveSameDirection ){
+            if (!asset.floating && this.haveSameSideCode(asset)){
                 lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
                 var sidecodeProps = _.find(asset.propertyData, {'publicId': 'sidecode'});
                 var sidecodeValue = _.head(sidecodeProps.values).propertyValue;
