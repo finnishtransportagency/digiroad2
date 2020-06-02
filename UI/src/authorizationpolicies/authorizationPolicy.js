@@ -81,9 +81,9 @@
 
     this.isStateExclusions = function (selectedAsset) {
       var statesExcluded = [35,43,60,62,65,76,170,295,318,417,438,478,736,766,771,941];
-      var isOperatorAndHaveRights = me.isOperator() && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
+      var haveRights =  me.isOperator() || me.hasRightsInMunicipality(selectedAsset.municipalityCode);
 
-      return _.includes(statesExcluded, selectedAsset.municipalityCode) && isOperatorAndHaveRights;
+      return _.includes(statesExcluded, selectedAsset.municipalityCode) && haveRights;
     };
 
   };
