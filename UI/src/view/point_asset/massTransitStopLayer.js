@@ -579,10 +579,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if(!authorizationPolicy.formEditModeAccess() && !applicationModel.isReadOnly())
         dragControl.activate();
 
-    selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
-    terminalSource.clear();
-    terminalSource.addFeatures(features);
-    selectControl.addSelectionFeatures([selectedAsset.massTransitStop.getMarker().feature], false, false);
+    if( !_.isEmpty(selectedAsset) ) {
+      selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
+      terminalSource.clear();
+      terminalSource.addFeatures(features);
+      selectControl.addSelectionFeatures([selectedAsset.massTransitStop.getMarker().feature], false, false);
+    }
   };
 
   var ownedByELY = function () {
@@ -843,6 +845,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
     });
+
+    if (_.includes(extent, NaN) && _.includes(center, undefined)){
+      center = map.getSize();
+      extent = [].concat([map.getSize()[0]-5,map.getSize()[1]-5])
+          .concat([map.getSize()[0]+5,map.getSize()[1]+5]);
+    }
+
     if(clusterView){
       massTransitStopsCollection.fetchLightAssets({ bbox: extent, layerName: layerName}).then(function(assets){
         renderClusters(assets);
