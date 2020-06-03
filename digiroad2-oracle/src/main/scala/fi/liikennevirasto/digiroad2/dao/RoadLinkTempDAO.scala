@@ -63,7 +63,6 @@ class RoadLinkTempDAO {
   }
 
   def deleteInfoByLinkIds(linkIds: Set[Long]): Unit = {
-    if (linkIds.nonEmpty) linkIds.mkString(",") else ""
     sqlu"""delete from temp_road_address_info
            where link_id in (#${linkIds.mkString(",")})""".execute
   }

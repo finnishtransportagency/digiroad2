@@ -235,7 +235,8 @@ trait ResolvingFrozenRoadLinks {
     }
 
     val addressToDelete = tempRoadAddress.map(_.linkId).diff(missingRoadLinks.map(_.linkId)) ++ frozenRoadLinks.map(_.linkId)
-    roadLinkTempDao.deleteInfoByLinkIds(addressToDelete.toSet)
+    if (addressToDelete.nonEmpty)
+      roadLinkTempDao.deleteInfoByLinkIds(addressToDelete.toSet)
 
     val groupedFrozenRoadLinks = frozenRoadLinks.groupBy(_.roadNameIdentifier.getOrElse(""))
     val groupedRoadLinks = roadLinks.groupBy(_.roadNameIdentifier.getOrElse(""))
