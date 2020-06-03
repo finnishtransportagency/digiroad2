@@ -194,6 +194,10 @@ object DataFixture {
     new TrafficSignProhibitionGenerator(roadLinkService)
   }
 
+  lazy val trafficSignRoadWorkGenerator: TrafficSignRoadWorkGenerator = {
+    new TrafficSignRoadWorkGenerator(roadLinkService)
+  }
+
   lazy val trafficSignHazmatTransportProhibitionGenerator: TrafficSignHazmatTransportProhibitionGenerator = {
     new TrafficSignHazmatTransportProhibitionGenerator(roadLinkService)
   }
@@ -2397,6 +2401,8 @@ object DataFixture {
         trafficSignHazmatTransportProhibitionGenerator.createLinearAssetUsingTrafficSigns()
       case Some("create_parking_prohibition_using_traffic_signs") =>
         trafficSignParkingProhibitionGenerator.createLinearAssetUsingTrafficSigns()
+      case Some("create_roadWorks_using_traffic_signs") =>
+        trafficSignRoadWorkGenerator.createRoadWorkAssetUsingTrafficSign()
       case Some("load_municipalities_verification_info") =>
         loadMunicipalitiesVerificationInfo()
       case Some("resolving_Frozen_Links") =>
@@ -2433,8 +2439,10 @@ object DataFixture {
         " update_information_source_on_paved_road_assets | import_municipality_codes | update_municipalities | remove_existing_trafficSigns_duplicates |" +
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
+        " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info")
+        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
+        " create_roadWorks_using_traffic_signs")
     }
   }
 }

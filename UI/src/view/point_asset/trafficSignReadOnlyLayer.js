@@ -32,7 +32,8 @@
       hazardousMaterialTransportProhibition: false,
       manoeuvre: false,
       trafficSigns: false, //remove after batch to merge additional panels (1707) is completed. part of experimental feature
-      cyclingAndWalking: false
+      cyclingAndWalking: false,
+      roadWorksAsset: false
     };
 
     var setLayerToShow = function(layerName, isShowing){

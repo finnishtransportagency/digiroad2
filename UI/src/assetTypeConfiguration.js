@@ -53,8 +53,8 @@
       trWeightGroup: [assetType.trWeightLimits, assetType.trTrailerTruckWeightLimits, assetType.trAxleWeightLimits, assetType.trBogieWeightLimits]
     };
 
-    var dateValueExtract = function (date) {
-      var dateValue = _.head(date).values;
+    var dateValueExtract = function (fields, publicId) {
+      var dateValue = _.find(fields, function(field) { return field.publicId === publicId; }).values;
       return !_.isEmpty(dateValue) ? new Date(_.head(dateValue).propertyValue.replace(/(\d+).(\d+).(\d{4})/, "$2/$1/$3")) : undefined;
     };
 
@@ -830,7 +830,7 @@
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
         isVerifiable: false,
         style: new RoadWorkStyle(),
-	      label: new LinearAssetWithSuggestLayer(),
+        label: new LinearAssetWithSuggestLayer(),
         form: new DynamicAssetForm ( {
           fields : [
             {label: 'Työn tunnus', publicId: 'tyon_tunnus', type: 'text', weight: 1},
@@ -846,7 +846,8 @@
             return date.hasValue() ? isEndDateAfterStartdate(date) : true;
           });
         },
-        hasMunicipalityValidation: false
+        hasMunicipalityValidation: false,
+        readOnlyLayer: TrafficSignReadOnlyLayer
       },
       {
         typeId: assetType.parkingProhibition,
@@ -1260,7 +1261,8 @@
         saveCondition: saveConditionWithSuggested,
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
         label: new SuggestionLabel(),
-        showRoadLinkInfo: true
+        showRoadLinkInfo: true,
+        layer : TrafficSignLayer
       },
       {
         typeId: assetType.trafficSigns,
@@ -1305,6 +1307,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
+        layer : TrafficSignLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
@@ -1331,13 +1334,11 @@
 
           /* Begin: Special validate for roadwork sign */
           var fields = selectedAsset.get().propertyData;
-          var dateValueStartField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_start_date'; });
-          var dateValueEndField = _.filter(fields, function(field) { return field.publicId === 'trafficSign_end_date'; });
-          var trafficSignTypeField = _.filter(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
+          var trafficSignTypeField = _.find(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
 
-          var trafficSignTypeExtracted = _.head(_.head(trafficSignTypeField).values).propertyValue;
-          var startDateExtracted = dateValueExtract(dateValueStartField);
-          var endDateExtracted = dateValueExtract(dateValueEndField);
+          var trafficSignTypeExtracted = _.head(trafficSignTypeField.values).propertyValue;
+          var startDateExtracted = dateValueExtract(fields, 'trafficSign_start_date');
+          var endDateExtracted = dateValueExtract(fields, 'trafficSign_end_date');
 
           var roadworksTrafficCode = "85";
           var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
@@ -1346,7 +1347,7 @@
             return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;
           /* End: Special validate for roadwork sign */
 
-          var lifecycleField = _.head(_.filter(fields, function(field) { return field.publicId === 'life_cycle'; }));
+          var lifecycleField = _.find(fields, function(field) { return field.publicId === 'life_cycle'; });
           var lifecycleValidator = _.find(lifecycleValidations, function (validator) { return _.includes(validator.values, parseInt(_.head(lifecycleField.values).propertyValue)); });
           var validLifecycleDates = _.isUndefined(lifecycleValidator) ? true : lifecycleValidator.validate(startDateExtracted, endDateExtracted);
 
