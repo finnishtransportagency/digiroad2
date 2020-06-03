@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
@@ -207,12 +207,12 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
       ViiteRoadAddress(81200, 16, 29, LeftSide, 4740,4757,None,None,
         11478953,0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
 
-    when(mockRoadLinkService.getAdjacent(11478956, false)).thenReturn(Seq(road1, road4, road5))
-    when(mockRoadLinkService.getAdjacent(11478947, false)).thenReturn(Seq(road2, road3))
-
     when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]] /*Seq(11478953, 11478956, 6376556, 11478942, 11478947)*/)).thenReturn(address)
 
-    val result = ResolvingFrozenRoadLinksTest.cleanningProcess(Seq(road1, road3), Seq(), Seq())
+    val missingRoadLinks = Map((Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875), road3) -> Seq(road1, road4, road5),
+    (Point(376570.341,6992722.195,160.24099999999453), Point(376534.023,6992725.668,160.875), road1) -> Seq(road2, road3))
+
+    val result = ResolvingFrozenRoadLinksTest.cleanning(missingRoadLinks, Seq(), Seq())
     result.size should be (0)
 
   }
@@ -245,10 +245,19 @@ class ResolveFrozenRoadLinksSpec extends FunSuite with Matchers {
       ViiteRoadAddress(81200, 16, 29, LeftSide, 4740,4757,None,None,
         11478947,0.0,16.18,AgainstDigitizing,List(),false,None,None,None))
 
-    when(mockRoadLinkService.getAdjacent(11478956, false)).thenReturn(Seq(road1, road4, road5))
-    when(mockRoadAddressService.getAllByLinkIds(any[Seq[Long]])).thenReturn(address)
 
-    val result = ResolvingFrozenRoadLinksTest.cleanningProcess(Seq(road3), Seq(), Seq())
+    val mappedAddresses = address.flatMap { address =>
+      Seq(road1, road4, road5).find(_.linkId == address.linkId).map { roadLink =>
+        val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
+        RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(address.linkId, address.roadNumber,
+          address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue,
+          address.startMValue, address.endMValue, address.geom, Some(address.sideCode), Some(roadLink.municipalityCode)))
+      }
+    }
+
+    val result = ResolvingFrozenRoadLinksTest.cleanning(
+      Map((Point(376519.312,6992724.148,161.00800000000163), Point(376534.023,6992725.668,160.875), road3) -> Seq(road1, road4, road5)), mappedAddresses, Seq())
+
     result.size should be (1)
     result.exists(x => x.track == LeftSide && x.sideCode.contains(SideCode.TowardsDigitizing))
 
