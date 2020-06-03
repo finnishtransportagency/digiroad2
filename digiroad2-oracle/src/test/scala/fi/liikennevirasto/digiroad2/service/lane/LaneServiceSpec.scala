@@ -264,71 +264,70 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-//  test("Split lane asset. Split lane in two but only keep one part") {
-//    runWithRollback {
-//      val mainLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-//      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
-//      val subLane12Splited = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-//      val subLane12ToDelete = subLane12.copy(isExpired = true)
-//
-//      val mainLane11Id = ServiceWithDao.create(Seq(mainLane11), Set(100L), 1, usernameTest).head
-//      val newSubLane12Id = ServiceWithDao.create(Seq(subLane12), Set(100L), 1, usernameTest).head
-//
-//      //Validate if initial lanes are correctly created
-//      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), false)
-//      currentLanes.size should be(2)
-//
-//      val lane11 = currentLanes.filter(_.id == mainLane11Id).head
-//      lane11.id should be(mainLane11Id)
-//      lane11.attributes.foreach { laneProp =>
-//        lanePropertiesValues11.contains(laneProp) should be(true)
-//      }
-//
-//      val lane12 = currentLanes.filter(_.id == newSubLane12Id).head
-//      lane12.id should be(newSubLane12Id)
-//      lane12.startMeasure should be(0)
-//      lane12.endMeasure should be(500)
-//      lane12.attributes.foreach { laneProp =>
-//        lanePropertiesValues12.contains(laneProp) should be(true)
-//      }
-//
-//
-//      //Simulation of sending a main lane, and one sublane splited and stored only one part
-//      ServiceWithDao.processNewIncomeLanes(Set(mainLane11, subLane12Splited, subLane12ToDelete), Set(100L), 1, usernameTest)
-//
-//      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
-//      lanesAfterSplit.size should be(2)
-//
-//      val lane11AfterSplit = lanesAfterSplit.filter(_.id == mainLane11Id).head
-//      lane11AfterSplit.id should be(mainLane11Id)
-//      lane11AfterSplit.attributes.foreach { laneProp =>
-//        lanePropertiesValues11.contains(laneProp) should be(true)
-//      }
-//
-//      val lane12AfterSplit = lanesAfterSplit.filter(_.laneCode == 12).head
-//      lane12AfterSplit.id should not be newSubLane12Id
-//      lane12.startMeasure should be(0)
-//      lane12.endMeasure should be(250)
-//      lane12AfterSplit.attributes.foreach { laneProp =>
-//        lanePropertiesValues12.contains(laneProp) should be(true)
-//      }
-//
-//
-//      //Verify the presence of the old splitted lane on histories tables
-//      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
-//      historyLanes.size should be(1)
-//
-//      val historyLane12 = historyLanes.filter(_.oldId == newSubLane12Id).head
-//      historyLane12.oldId should be(newSubLane12Id)
-//      historyLane12.startMeasure should be(0)
-//      historyLane12.endMeasure should be(500)
-//      historyLane12.expired should be(true)
-//      historyLane12.attributes.foreach { laneProp =>
-//        lanePropertiesValues12.contains(laneProp) should be(true)
-//
-//      }
-//    }
-//  }
+  test("Split lane asset. Split lane in two but only keep one part") {
+    runWithRollback {
+      val mainLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane12Splited = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+
+      val mainLane11Id = ServiceWithDao.create(Seq(mainLane11), Set(100L), 1, usernameTest).head
+      val newSubLane12Id = ServiceWithDao.create(Seq(subLane12), Set(100L), 1, usernameTest).head
+
+      //Validate if initial lanes are correctly created
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), false)
+      currentLanes.size should be(2)
+
+      val lane11 = currentLanes.filter(_.id == mainLane11Id).head
+      lane11.id should be(mainLane11Id)
+      lane11.attributes.foreach { laneProp =>
+        lanePropertiesValues11.contains(laneProp) should be(true)
+      }
+
+      val lane12 = currentLanes.filter(_.id == newSubLane12Id).head
+      lane12.id should be(newSubLane12Id)
+      lane12.startMeasure should be(0)
+      lane12.endMeasure should be(500)
+      lane12.attributes.foreach { laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+
+
+      //Simulation of sending a main lane, and one sublane splited and stored only one part
+      ServiceWithDao.processNewIncomeLanes(Set(mainLane11, subLane12Splited), Set(100L), 1, usernameTest)
+
+      val lanesAfterSplit = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
+      lanesAfterSplit.size should be(2)
+
+      val lane11AfterSplit = lanesAfterSplit.filter(_.id == mainLane11Id).head
+      lane11AfterSplit.id should be(mainLane11Id)
+      lane11AfterSplit.attributes.foreach { laneProp =>
+        lanePropertiesValues11.contains(laneProp) should be(true)
+      }
+
+      val lane12AfterSplit = lanesAfterSplit.filter(_.laneCode == 12).head
+      lane12AfterSplit.id should not be newSubLane12Id
+      lane12AfterSplit.startMeasure should be(0)
+      lane12AfterSplit.endMeasure should be(250)
+      lane12AfterSplit.attributes.foreach { laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+
+
+      //Verify the presence of the old splitted lane on histories tables
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
+      historyLanes.size should be(1)
+
+      val historyLane12 = historyLanes.filter(_.oldId == newSubLane12Id).head
+      historyLane12.oldId should be(newSubLane12Id)
+      historyLane12.startMeasure should be(0)
+      historyLane12.endMeasure should be(500)
+      historyLane12.expired should be(true)
+      historyLane12.attributes.foreach { laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+
+      }
+    }
+  }
 
 //    test("Split lane asset. Expire lane and create two new lanes") {
 //      runWithRollback {
