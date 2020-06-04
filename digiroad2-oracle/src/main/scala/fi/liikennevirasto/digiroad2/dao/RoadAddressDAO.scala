@@ -39,7 +39,9 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 }
 
 //TODO - Remove after new service NLS is used
-case class RoadAddressTEMP(linkId: Long, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, geom: Seq[Point] = Seq(), sideCode: Option[SideCode] = None, municipalityCode: Option[Int] = None) {
+case class RoadAddressTEMP(linkId: Long, road: Long, roadPart: Long, track: Track, startAddressM: Long, endAddressM: Long,
+                           startMValue: Double, endMValue: Double, geom: Seq[Point] = Seq(), sideCode: Option[SideCode] = None,
+                           municipalityCode: Option[Int] = None, createdDate: Option[String] = None) {
 
   private val addressLength: Long = endAddressM - startAddressM
   private val lrmLength: Double = Math.abs(endAddressM - startAddressM)

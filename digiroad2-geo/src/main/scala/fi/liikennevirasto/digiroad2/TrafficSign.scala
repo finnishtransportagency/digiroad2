@@ -5,7 +5,7 @@ sealed trait TrafficSignTypeGroup{
 }
 object TrafficSignTypeGroup{
   val values = Set(Unknown, SpeedLimits, RegulatorySigns, MaximumRestrictions, GeneralWarningSigns, ProhibitionsAndRestrictions, AdditionalPanels, MandatorySigns,
-    PriorityAndGiveWaySigns, InformationSigns)
+    PriorityAndGiveWaySigns, InformationSigns, CycleAndWalkwaySigns)
 
   def apply(intValue: Int):TrafficSignTypeGroup= {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -21,6 +21,7 @@ object TrafficSignTypeGroup{
   case object PriorityAndGiveWaySigns extends TrafficSignTypeGroup{ def value = 8 }
   case object InformationSigns extends TrafficSignTypeGroup{ def value = 9 }
   case object ServiceSigns extends TrafficSignTypeGroup{ def value = 10 }
+  case object CycleAndWalkwaySigns extends TrafficSignTypeGroup{ def value = 11 }
   case object Unknown extends TrafficSignTypeGroup{ def value = 99 }
 }
 
@@ -29,6 +30,9 @@ sealed trait TrafficSignType {
   val values = Seq()
 
   def group: TrafficSignTypeGroup
+
+  //This is only used to put CycleAndWalkwaySigns group at the moment
+  def additionalGroup: Option[TrafficSignTypeGroup] = None
 
   val OTHvalue: Int
 
@@ -84,6 +88,10 @@ object TrafficSignType {
 
   def apply(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
     values.filter(_.group == TrafficSignTypeGroup).map(_.OTHvalue)
+  }
+
+  def applyAdditionalGroup(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[String] = {
+    values.filter(_.additionalGroup.contains(TrafficSignTypeGroup)).map(_.NewLawCode)
   }
 
   case object Unknown extends TrafficSignType {
@@ -797,6 +805,7 @@ case object CompulsoryFootPath extends MandatorySignsType {
   override val OTHvalue = 70
   override val TRvalue = 421
   override val NewLawCode = "D4"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -807,6 +816,7 @@ case object CompulsoryCycleTrack extends MandatorySignsType {
   override val OTHvalue = 71
   override val TRvalue = 422
   override val NewLawCode = "D5"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -817,6 +827,7 @@ case object CombinedCycleTrackAndFootPath extends MandatorySignsType {
   override val OTHvalue = 72
   override val TRvalue = 423
   override val NewLawCode = "D6"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -826,6 +837,7 @@ case object ParallelCycleTrackAndFootPath extends MandatorySignsType {
   override val OTHvalue = 72
   override val TRvalue = 424
   override val NewLawCode = "D7.1"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -836,6 +848,7 @@ case object ParallelCycleTrackAndFootPath2 extends MandatorySignsType {
   override val OTHvalue = 72
   override val TRvalue = 425
   override val NewLawCode = "D7.2"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 
   override val supportedAdditionalPanel: Seq[AdditionalPanelsType] = Seq(SignAppliesBothDirections, SignAppliesBothDirectionsVertical,
     SignAppliesArrowDirections, RegulationBeginsFromSign, RegulationEndsToTheSign)
@@ -1399,6 +1412,7 @@ case object AdditionalPanelWithText  extends AdditionalPanelsType {
   override val OTHvalue = 61
   override val TRvalue = 871
   override val NewLawCode = "H24"
+  override def additionalGroup: Option[TrafficSignTypeGroup] = Some(TrafficSignTypeGroup.CycleAndWalkwaySigns)
 }
 
 case object DrivingInServicePurposesAllowed  extends AdditionalPanelsType {
@@ -1447,7 +1461,7 @@ object UrgencyOfRepair {
   case object Urgent extends UrgencyOfRepair { def value = 2; def description = "kiireellinen" }
   case object SomehowUrgent extends UrgencyOfRepair { def value = 3; def description = "Jokseenkin kiireellinen" }
   case object NotUrgent extends UrgencyOfRepair { def value = 4; def description = "Ei kiireellinen" }
-  case object Unknown extends UrgencyOfRepair { def value = 999; def description = "Ei tiedossa" }
+  case object Unknown extends UrgencyOfRepair { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1456,7 +1470,7 @@ sealed trait SignLifeCycle {
   def description: String
 }
 object SignLifeCycle{
-  val values = Set(Unknown, Planned, UnderConstruction, Realized, TemporarilyInUse, TemporarilyOutOfService, OutgoingPermanentDevice )
+  val values = Set(Unknown, Planned, UnderConstruction, PermanentlyInUse, TemporarilyInUse, TemporarilyOutOfService, OutgoingPermanentDevice )
 
   def apply(intValue: Int):SignLifeCycle = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -1464,11 +1478,11 @@ object SignLifeCycle{
 
   case object Planned extends SignLifeCycle { def value = 1; def description = "Suunnitteilla"  }
   case object UnderConstruction extends SignLifeCycle { def value = 2; def description = "Rakenteilla" }
-  case object Realized extends SignLifeCycle { def value = 3; def description = "Toteutuma" }
-  case object TemporarilyInUse extends SignLifeCycle { def value = 4; def description = "käytössä tilapäisesti" }
-  case object TemporarilyOutOfService extends SignLifeCycle { def value = 5; def description = "Pois käytöstä tilapaisesti" }
-  case object OutgoingPermanentDevice extends SignLifeCycle { def value = 99; def description = "Poistuva pysyvä laite" }
-  case object Unknown extends SignLifeCycle { def value = 999; def description = "Ei tiedossa" }
+  case object PermanentlyInUse extends SignLifeCycle { def value = 3; def description = "Käytössä pysyvästi" }
+  case object TemporarilyInUse extends SignLifeCycle { def value = 4; def description = "Käytössä tilapäisesti" }
+  case object TemporarilyOutOfService extends SignLifeCycle { def value = 5; def description = "Pois käytössä tilapäisesti" }
+  case object OutgoingPermanentDevice extends SignLifeCycle { def value = 6; def description = "Poistuva pysyvä laite" }
+  case object Unknown extends SignLifeCycle { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1477,19 +1491,20 @@ sealed trait Structure {
   def description: String
 }
 object Structure {
-  val values = Set(Unknown, Pole, Wall, Bridge, Portal, BarBarrier, Other )
+  val values = Set(Unknown, Pole, Wall, Bridge, Portal, HalfPortal, Barrier, Other )
 
   def apply(intValue: Int):Structure = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object Pole extends Structure { def value = 1; def description = "Tolppa"  }
+  case object Pole extends Structure { def value = 1; def description = "Pylväs"  }
   case object Wall extends Structure { def value = 2; def description = "Seinä" }
   case object Bridge extends Structure { def value = 3; def description = "Silta" }
   case object Portal extends Structure { def value = 4; def description = "Portaali" }
-  case object BarBarrier extends Structure { def value = 5; def description = "Puomi tai muu esterakennelma" }
-  case object Other extends Structure { def value = 6; def description = "muu" }
-  case object Unknown extends Structure { def value = 999; def description = "Ei tiedossa" }
+  case object HalfPortal extends Structure { def value = 5; def description = "Puoliportaali" }
+  case object Barrier extends Structure { def value = 6; def description = "Puomi tai muu esterakennelma" }
+  case object Other extends Structure { def value = 7; def description = "Muu" }
+  case object Unknown extends Structure { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1509,7 +1524,7 @@ object Condition {
   case object Fair extends Condition { def value = 3; def description = "Tyydyttävä" }
   case object Good extends Condition { def value = 4; def description = "Hyvä" }
   case object VeryGood extends Condition { def value = 5; def description = "Erittäin hyvä" }
-  case object Unknown extends Condition { def value = 999; def description = "Ei tiedossa" }
+  case object Unknown extends Condition { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1527,7 +1542,7 @@ object Size {
   case object CompactSign extends Size { def value = 1; def description = "Pienikokoinen merkki"  }
   case object RegularSign extends Size { def value = 2; def description = "Normaalikokoinen merkki" }
   case object LargeSign extends Size { def value = 3; def description = "Suurikokoinen merkki" }
-  case object Unknown extends Size { def value = 999; def description = "Ei tiedossa" }
+  case object Unknown extends Size { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1545,7 +1560,7 @@ object CoatingType {
   case object R1ClassSheeting extends CoatingType { def value = 1; def description = "R1-luokan kalvo"  }
   case object R2ClassSheeting extends CoatingType { def value = 2; def description = "R2-luokan kalvo" }
   case object R3ClassSheeting extends CoatingType { def value = 3; def description = "R3-luokan kalvo" }
-  case object Unknown extends CoatingType { def value = 999; def description = "Ei tiedossa" }
+  case object Unknown extends CoatingType { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1563,7 +1578,7 @@ object SignMaterial {
   case object Plywood extends SignMaterial { def value = 1; def description = "Vaneri"  }
   case object Aluminum extends SignMaterial { def value = 2; def description = "Alumiini" }
   case object Other extends SignMaterial { def value = 3; def description = "Muu" }
-  case object Unknown extends SignMaterial { def value = 999; def description = "Ei tiedossa" }
+  case object Unknown extends SignMaterial { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1586,7 +1601,7 @@ object LocationSpecifier {
 
   /*English description: On road or street network, for example parking area or courtyard*/
   case object OnRoadOrStreetNetwork extends LocationSpecifier { def value = 6; def description = "Tie- ja katuverkon puolella, esimerkiksi parkkialueella tai piha-alueella" }
-  case object Unknown extends LocationSpecifier { def value = 999; def description = "Ei tiedossa" }
+  case object Unknown extends LocationSpecifier { def value = 99; def description = "Ei tiedossa" }
 }
 
 
@@ -1604,6 +1619,6 @@ object TypeOfDamage {
   case object Rust extends TypeOfDamage { def value = 1; def description = "Ruostunut"  }
   case object Battered extends TypeOfDamage { def value = 2; def description = "Kolhiintunut" }
   case object Paint extends TypeOfDamage { def value = 3; def description = "Maalaus" }
-  case object OtherDamage extends TypeOfDamage { def value = 4; def description = "Muu vauiro" }
-  case object Unknown extends TypeOfDamage { def value = 999; def description = "Ei tiedossa" }
+  case object OtherDamage extends TypeOfDamage { def value = 4; def description = "Muu vaurio" }
+  case object Unknown extends TypeOfDamage { def value = 99; def description = "Ei tiedossa" }
 }

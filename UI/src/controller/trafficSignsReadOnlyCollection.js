@@ -38,7 +38,8 @@
       manoeuvre: {values: [10, 11, 12]},
       pedestrianCrossings: { values: [7] },
       trafficSigns: {values: [45,46,139,140,141,142,143,144,47,48,49,50,145,51,138,146,147,52,53,54,55,56,57,58,59,60,61,62,148,149,150,151]}, //remove after batch to merge additional panels (1707) is completed. part of experimental feature
-      cyclingAndWalking: {values: [70,71,72,109,110,111,112]}
+      cyclingAndWalking: {values: [70,71,72,109,110,111,112]},
+      roadWork: { values: [85] } //layername
     };
 
     this.getGroup = function(signTypes){

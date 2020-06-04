@@ -102,7 +102,8 @@ object OracleTrafficSignDao {
         val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
         s"select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, " +
         s"property_type, required, value, display_value, created_by, created_date, modified_by, modified_date, link_source, " +
-        s"bearing, side_code, additional_sign_type, additional_sign_value, additional_sign_info, form_position, expired" +
+        s"bearing, side_code, additional_sign_type, additional_sign_value, additional_sign_info, form_position, " +
+        s"additional_sign_text, additional_sign_size, additional_sign_coating_type, additional_sign_panel_color, expired" +
         s" from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
 
       case _ => queryFilter(query())
@@ -143,6 +144,7 @@ object OracleTrafficSignDao {
                case
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
+                when dpv.date_time is not null then to_char(dpv.date_time, 'DD.MM.YYYY')
                 else null
                end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
                lp.side_code, ap.additional_sign_type, ap.additional_sign_value, ap.additional_sign_info, ap.form_position,
@@ -154,6 +156,7 @@ object OracleTrafficSignDao {
         join #$idTableName i on i.id = lp.link_id
         left join single_choice_value scv on scv.asset_id = a.id and scv.property_id = p.id and p.property_type = 'single_choice'
         left join text_property_value tpv on tpv.asset_id = a.id and tpv.property_id = p.id and p.property_type = 'text'
+        left join date_property_value dpv on dpv.asset_id = a.id and dpv.property_id = p.id and p.property_type = 'date'
         left join enumerated_value ev on scv.enumerated_value_id = ev.id
         left join additional_panel ap ON ap.asset_id = a.id AND p.PROPERTY_TYPE = 'additional_panel_type'
         where a.asset_type_id = 300
@@ -458,7 +461,7 @@ object OracleTrafficSignDao {
         }
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
-        if(multipleChoiceValueDoesNotExist(assetId, propertyId)) {
+        if (multipleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
           updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
