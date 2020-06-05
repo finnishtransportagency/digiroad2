@@ -19,8 +19,8 @@ import scala.language.implicitConversions
 
 case class LaneRow(id: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
                    startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
-                   modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
-                   vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
+                   modifiedBy: Option[String], modifiedDate: Option[DateTime], expiredBy: Option[String], expiredDate: Option[DateTime],
+                   expired: Boolean, vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
 
 case class LanePropertyRow(publicId: String, propertyValue: Option[Any])
 
@@ -57,9 +57,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
       val value = LanePropertyRow(atrrName, atrrValue)
       val municipalityCode =  r.nextLong()
       val laneCode =  r.nextInt()
+      val expiredBy = r.nextStringOption()
+      val expiredDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
       LaneRow(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
-            expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate )
+        expiredBy, expiredDate, expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate)
     }
   }
 
@@ -89,7 +91,8 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     l.created_by, l.created_date, l.modified_by, l.modified_date,
     CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
-    la.name, la.value, l.municipality_code, l.lane_code
+    la.name, la.value, l.municipality_code, l.lane_code,
+    l.expired_by, l.expired_date
     FROM lane l
        JOIN lane_link ll ON l.id = ll.lane_id
        JOIN lane_position pos ON ll.lane_position_id = pos.id
@@ -211,7 +214,8 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
         id -> PersistedLane (id = row.id, linkId = row.linkId, sideCode = row.sideCode, laneCode = row.laneCode,
           municipalityCode = row.municipalityCode, startMeasure = row.startMeasure, endMeasure = row.endMeasure,
           createdBy = row.createdBy, createdDateTime = row.createdDate,
-          modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate,  expired = row.expired,
+          modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate,
+          expiredBy = row.expiredBy, expiredDateTime = row.expiredDate, expired = row.expired,
           vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
 
     }.values.toSeq

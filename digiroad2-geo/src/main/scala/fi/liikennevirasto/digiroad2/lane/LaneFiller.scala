@@ -184,8 +184,8 @@ class LaneFiller {
     }
 
     (PersistedLane(laneId, newLinkId, newSideCode,lane.laneCode, lane.municipalityCode, newStart, newEnd, lane.createdBy,
-      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, expired = false, projection.vvhTimeStamp,
-      lane.geomModifiedDate, lane.attributes), changeSet)
+      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, lane.expiredBy, lane.expiredDateTime,
+      expired = false, projection.vvhTimeStamp, lane.geomModifiedDate, lane.attributes), changeSet)
 
   }
 

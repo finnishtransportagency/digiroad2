@@ -1,10 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.digiroad2.asset.DateParser._
+import fi.liikennevirasto.digiroad2.asset.DateParser.{DatePropertyFormat, _}
 import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
+import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
 import fi.liikennevirasto.digiroad2.dao.pointasset.PersistedTrafficSign
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, PieceWiseLinearAsset, Prohibitions, SpeedLimitValue, Value}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, PersistedLane}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, Prohibitions, SpeedLimitValue, Value}
 import fi.liikennevirasto.digiroad2.service.ChangedVVHRoadlink
 import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedLinearAsset, ChangedSpeedLimit}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.PersistedMassTransitStop
@@ -33,6 +35,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         queryParam[String]("since").description("Initial date of the interval between two dates to obtain modifications for a particular asset."),
         queryParam[String]("until").description("The end date of the interval between two dates to obtain modifications for an asset."),
         queryParam[String]("withAdjust").description("With the field withAdjust, we allow or not the presence of records modified by vvh_generated and not modified yet on the response. The value is False by default").optional,
+        queryParam[String]("withGeometry").description("With the field withGeometry, we allow or not to print the geometry values for lane_information. The value is False by default").optional,
         pathParam[String]("assetType").description("Asset type name to get the changes")
       )
       tags "Change API"
@@ -66,6 +69,11 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case _ => false
     }
 
+    val withGeometry = params.get("withGeometry") match {
+      case Some(value) => true
+      case _ => false
+    }
+
     params("assetType") match {
       case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until, withAdjust, token))
       case "total_weight_limits"         => sevenRestrictionToGeoJson(since, dynamicLinearAssetService.getChanged(TotalWeightLimit.typeId , since, until, withAdjust, token))
@@ -81,6 +89,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       case "obstacles"                   => pointAssetsToGeoJson(since, obstacleService.getChanged(since, until, token), pointAssetGenericProperties)
       case "warning_signs_group"         => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(trafficSignService.getTrafficSignTypeByGroup(TrafficSignTypeGroup.GeneralWarningSigns), since, until, token), pointAssetWarningSignsGroupProperties)
       case "stop_sign"                   => pointAssetsToGeoJson(since, trafficSignService.getChangedByType(Set(Stop.OTHvalue), since, until, token), pointAssetStopSignProperties)
+      case "lane_information"            => laneToGeoJson(laneService.getChanged(since, until, withAdjust, token), withGeometry)
     }
   }
 
@@ -513,4 +522,86 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           )
         }
     )
+
+  def laneToGeoJson(lanes: Seq[PersistedLane], withGeometry: Boolean = false): Map[String, Any] = {
+    def getGeometryMap(roadLink: Seq[VVHRoadlink]) = {
+
+      if (withGeometry) {
+        Map("type" -> "LineString",
+          "coordinates" -> roadLink.map(_.geometry.map(p => Seq(p.x, p.y, p.z)))
+        )
+
+      } else {
+        //With None value geometry will be 'removed' form Json and not sent as empty
+        None
+      }
+    }
+
+    def getChangeType(lane: PersistedLane): String = {
+      if (lane.expired || (lane.expiredDateTime.nonEmpty && lane.expiredDateTime.head.isBefore(DateTime.now())))
+        "Remove"
+      else if (lane.modifiedDateTime.nonEmpty)
+        "Modify"
+      else
+        "Add"
+    }
+
+    def getStartDate(lane: PersistedLane) = {
+      if (LaneNumber.isMainLane(lane.laneCode))
+        lane.createdDateTime.map(DatePropertyFormat.print(_))
+      else
+        laneService.getPropertyValue(lane, "start_date")
+    }
+
+    def getEndDate(lane: PersistedLane) = {
+      if (lane.expired || lane.expiredDateTime.nonEmpty)
+        lane.modifiedDateTime.map(DatePropertyFormat.print(_))
+      else
+        laneService.getPropertyValue(lane, "end_date")
+    }
+
+    val lanesLinkIds = lanes.map(_.linkId)
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(lanesLinkIds.toSet)
+      .groupBy(_.linkId)
+
+    val roadAddresses = viiteClient.fetchAllByLinkIds(lanesLinkIds)
+      .groupBy(_.linkId)
+
+    Map("type" -> "FeatureCollection",
+      "features" -> lanes.map { lane =>
+
+        val currentRoadLink = roadLinks(lane.linkId)
+        val currentRoadAddress = roadAddresses(lane.linkId).head
+
+        Map("type" -> "Feature",
+          "id" -> lane.id,
+
+          "geometry" -> getGeometryMap(currentRoadLink),
+
+          "properties" -> Map(
+            "changeType" -> getChangeType(lane),
+            "link" -> Map(
+              "linkId" -> lane.linkId,
+              "startMeasure" -> lane.startMeasure,
+              "endMeasure" -> lane.endMeasure,
+              "roadNumber" -> currentRoadAddress.roadNumber,
+              "roadPart" -> currentRoadAddress.roadPartNumber,
+              "roadTrack" -> currentRoadAddress.track.value,
+              "roadStartAddr" -> currentRoadAddress.startAddrMValue,
+              "roadEndAddr" -> currentRoadAddress.endAddrMValue
+            ),
+            "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
+            "modifiedAt" -> lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+            "createdBy" -> lane.createdBy,
+            "laneNumber" -> lane.laneCode,
+            "laneType" -> laneService.getPropertyValue(lane, "lane_type"),
+            "startDate" -> getStartDate(lane),
+            "endDate" -> getEndDate(lane)
+          )
+        )
+      }
+    )
+
+  }
+
 }

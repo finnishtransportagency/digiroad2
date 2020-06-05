@@ -27,7 +27,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards1 )
 
     val lane = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      11, 745L, 10.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 10.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
@@ -50,17 +50,17 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards1 )
 
     val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      11, 745L, 10.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 10.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
     val lane12 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      12, 745L, 10.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      12, 745L, 10.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
     )
 
     val lane13 = PersistedLane(3L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      13, 745L, 13.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      13, 745L, 13.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(13))))
     )
 
@@ -83,7 +83,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards1 )
 
     val lane = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      11, 745L, 0.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 0.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
@@ -106,17 +106,17 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards3, roadLinkTowards1 )
 
     val lane = PersistedLane(1L, roadLinkTowards3.linkId, SideCode.TowardsDigitizing.value,
-      11, 745L, 0.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 0.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
     val lane2 = PersistedLane(2L, roadLinkTowards3.linkId, SideCode.AgainstDigitizing.value,
-      21, 745L, 5.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      21, 745L, 5.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
     )
 
     val lane3 = PersistedLane(20L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      21, 745L, 5.0, 15.0, None, None, None, None, expired = false, 0L, None,
+      21, 745L, 5.0, 15.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
     )
 
@@ -141,17 +141,17 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards1 )
 
     val lane = PersistedLane(20L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      11, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
     val lane12 = PersistedLane(21L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      12, 745L, 7.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      12, 745L, 7.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
     )
 
     val lane12b = PersistedLane(22L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      12, 745L, 4.0, 7.0, None, None, None, None, expired = false, 0L, None,
+      12, 745L, 4.0, 7.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
     )
 
@@ -175,12 +175,12 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards1 )
 
     val lane = PersistedLane(20L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      11, 745L, 1.0, 2.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 1.0, 2.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
     val lane12 = PersistedLane(21L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      12, 745L, 8.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      12, 745L, 8.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
     )
 
@@ -204,12 +204,12 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq( roadLinkTowards4 )
 
     val lane = PersistedLane(20L, roadLinkTowards4.linkId, SideCode.BothDirections.value,
-      21, 745L, 0.0, 1.9, None, None, None, None, expired = false, 0L, None,
+      21, 745L, 0.0, 1.9, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
     )
 
     val lane12 = PersistedLane(21L, roadLinkTowards4.linkId, SideCode.BothDirections.value,
-      22, 745L, 0.0, 1.0, None, None, None, None, expired = false, 0L, None,
+      22, 745L, 0.0, 1.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(22))))
     )
 
@@ -232,22 +232,22 @@ class LaneFillerSpec extends FunSuite with Matchers {
     val topology = Seq(roadLinkTowards1)
 
     val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      11, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      1, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
     val lane12 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      12, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      12, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
     )
 
     val lane12Duplicated = PersistedLane(3L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      12, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      12, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))))
     )
 
     val lane13 = PersistedLane(4L, roadLinkTowards1.linkId, SideCode.BothDirections.value,
-      13, 745L, 5.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      13, 745L, 5.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(13))))
     )
 

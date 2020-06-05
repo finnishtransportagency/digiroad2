@@ -203,7 +203,7 @@ trait LaneOperations {
       val lanePropertiesValues = baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
 
       PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode,
-        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
+        0, roadLink.length, None, None, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
         lanePropertiesValues)
     }
 
@@ -466,6 +466,12 @@ trait LaneOperations {
     lanes.filter(_.laneCode.toString.charAt(0) == direction)
   }
 
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[PersistedLane] = {
+    withDynSession {
+      dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust, token)
+    }
+  }
+
   def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit ={
     if (newLanes.nonEmpty) {
       logger.info("Saving modified lanes")
@@ -517,6 +523,16 @@ trait LaneOperations {
       }
     else
       dao.fetchLanesByIds( ids )
+  }
+
+  def getPropertyValue(lane: PersistedLane, publicId: String) = {
+    val laneProperty = lane.attributes.find(_.publicId == publicId)
+      .getOrElse(LaneProperty("Error", Seq()))
+
+    if (laneProperty.values.nonEmpty)
+      laneProperty.values.head.value
+    else
+      None
   }
 
   def getPropertyValue(newLane: NewIncomeLane, publicId: String) = {
@@ -585,7 +601,7 @@ trait LaneOperations {
 
             } else if (isSomePropertyDifferent(oldLane, laneToUpdate)) {
               val persistedLaneToUpdate = PersistedLane(laneToUpdate.id, linkId, sideCode, laneCodeToUpdate, laneToUpdate.municipalityCode,
-                laneToUpdate.startMeasure, laneToUpdate.endMeasure, Some(username), None, None, None, false, 0, None, laneToUpdate.properties)
+                laneToUpdate.startMeasure, laneToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
 
               moveToHistory(laneToUpdate.id, None, false, false, username)
               dao.updateEntryLane(persistedLaneToUpdate, username)
@@ -650,7 +666,7 @@ trait LaneOperations {
                                           .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
-                                      newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
+                                      newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
                                       expired = false, vvhTimeStamp, None, newLane.properties)
 
           createWithoutTransaction(laneToInsert, username)
@@ -675,7 +691,7 @@ trait LaneOperations {
                             throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
             val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
-                                  roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None,
+                                  roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None, None, None,
                                   expired = false, vvhTimeStamp, None, newLane.properties)
 
             createWithoutTransaction(laneToInsert, username)
@@ -730,7 +746,7 @@ trait LaneOperations {
 
     val newLane = PersistedLane (0, oldAsset.linkId, adjustment.sideCode.value, oldAsset.laneCode, roadLink.municipalityCode,
       oldAsset.startMeasure, oldAsset.endMeasure, Some(VvhGenerated), Some( DateTime.now() ),
-      None,None, expired = false, vvhClient.roadLinkData.createVVHTimeStamp(), oldAsset.geomModifiedDate, oldAsset.attributes)
+      None, None, None, None, expired = false, vvhClient.roadLinkData.createVVHTimeStamp(), oldAsset.geomModifiedDate, oldAsset.attributes)
 
     dao.updateExpiration(oldAsset.id, VvhGenerated)
    createWithoutTransaction( newLane, VvhGenerated )
@@ -869,7 +885,7 @@ trait LaneOperations {
 
           if (isSomePropertyDifferent(oldLane, newDataToUpdate)) {
             val persistedLaneToUpdate = PersistedLane(newDataToUpdate.id, linkIds.head, sideCode, oldLane.laneCode, newDataToUpdate.municipalityCode,
-              newDataToUpdate.startMeasure, newDataToUpdate.endMeasure, Some(username), None, None, None, false, 0, None, newDataToUpdate.properties)
+              newDataToUpdate.startMeasure, newDataToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, newDataToUpdate.properties)
 
             moveToHistory(oldLane.id, None, false, false, username)
             dao.updateEntryLane(persistedLaneToUpdate, username)
