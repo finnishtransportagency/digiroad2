@@ -2301,15 +2301,22 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val sideCode = params("sideCode").toInt
 
     laneService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode).map { lane =>
+
+      val adminClassAsProperty = LaneProperty("administrativeClass", Seq( LanePropertyValue(lane.administrativeClass)))
+
       Map(
         "id" -> lane.id,
         "linkId" -> lane.linkId,
         "sideCode" -> lane.sideCode,
         "startMeasure" -> lane.startMeasure,
         "endMeasure" -> lane.endMeasure,
+        "createdBy" -> lane.createdBy,
+        "createdAt" -> lane.createdDateTime,
+        "modifiedBy" -> lane.modifiedBy,
+        "modifiedAt" -> lane.modifiedDateTime,
         "points" -> lane.geometry,
         "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
-        "properties" -> lane.laneAttributes
+        "properties" -> (lane.laneAttributes ++ Seq(adminClassAsProperty) )
       )
     }
   }

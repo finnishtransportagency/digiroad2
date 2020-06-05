@@ -15,7 +15,7 @@
     me.setSelectedValue = function(setValue, getValue, sideCode){
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "endRoadPartNumber" ||  currentPropertyValue.publicId == "endDistance")){
+      if(isAddByRoadAddressActive && (currentPropertyValue.publicId === "endRoadPartNumber" ||  currentPropertyValue.publicId === "endDistance")){
         lanesAssets.setEndAddressesValues(currentPropertyValue);
       }else{
         var laneNumber = lanesAssets.getCurrentLaneNumber();
@@ -85,6 +85,7 @@
       {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
       {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
       {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
+      {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
       {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 8},
       {
         label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 9,
@@ -429,7 +430,7 @@
         });
       });
 
-      var body = createBodyElement();
+      var body = createBodyElement(selectedAsset.getCurrentLane());
 
       if(selectedAsset.isSplit()) {
         //Render form A
@@ -532,12 +533,27 @@
       return body;
     }
 
-    function createBodyElement() {
+    function createBodyElement(selectedAsset) {
+      /* Otherwise it is not possible to access this information as in other selectedAsset objects */
+      var info = {
+        modifiedBy :  selectedAsset.modifiedBy || '',
+        modifiedDate : selectedAsset.modifiedAt ? ' ' + selectedAsset.modifiedAt : '',
+        createdBy : selectedAsset.createdBy || '',
+        createdDate : selectedAsset.createdAt ? ' ' + selectedAsset.createdAt: ''
+      };
+
       return $('<div class="wrapper read-only">' +
-        '   <div class="form form-horizontal form-dark asset-factory">' +
-        self.userInformationLog() +
-        '   </div>' +
-        '</div>');
+          '   <div class="form form-horizontal form-dark asset-factory">' +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
+          '     </div>' +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + self.informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
+          '     </div>' +
+          self.userInformationLog() +
+          '   </div>' +
+          '</div>');
+
     }
 
     self.isSaveable = function(){
