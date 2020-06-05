@@ -538,9 +538,6 @@ trait LaneOperations {
     */
   def update(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String, newTransaction: Boolean = true): Seq[Long] = {
     def updateProcess(): Seq[Long] = {
-      if (newIncomeLane.isEmpty || linkIds.isEmpty)
-        return Seq()
-
       if (linkIds.size == 1) {
         val linkId = linkIds.head
 
@@ -572,6 +569,9 @@ trait LaneOperations {
         }
       }
     }
+
+    if (newIncomeLane.isEmpty || linkIds.isEmpty)
+      return Seq()
 
     if(newTransaction)
       withDynTransaction {
@@ -616,9 +616,6 @@ trait LaneOperations {
     */
   def create(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long] ,sideCode: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(), newTransaction: Boolean = true): Seq[Long] = {
     def createProcess(): Seq[Long] = {
-      if (newIncomeLane.isEmpty || linkIds.isEmpty)
-        return Seq()
-
       // if it is only 1 link it can be just a new lane with same size as the link or it can be a cut
       // for that reason we need to use the measure that come inside the newIncomeLane
       if (linkIds.size == 1) {
@@ -665,6 +662,9 @@ trait LaneOperations {
         result.head
       }
     }
+
+    if (newIncomeLane.isEmpty || linkIds.isEmpty)
+      return Seq()
 
     if(newTransaction)
       withDynTransaction {
