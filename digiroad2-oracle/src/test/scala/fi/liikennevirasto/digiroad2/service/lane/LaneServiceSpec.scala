@@ -127,11 +127,12 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Should not be able to delete main lanes") {
     runWithRollback {
-      val newLane = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
-      newLane.length should be(1)
+      val newLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLaneId = ServiceWithDao.create(Seq(newLane), Set(100L), 1, usernameTest)
+      newLaneId.length should be(1)
 
       val thrown = intercept[IllegalArgumentException] {
-        ServiceWithDao.deleteMultipleLanes(newLane.toSet, usernameTest)
+        ServiceWithDao.deleteMultipleLanes(Set(11), Set(100L), usernameTest)
       }
 
       thrown.getMessage should be("Cannot Delete a main lane!")
