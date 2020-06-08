@@ -65,9 +65,7 @@ trait LaneOperations {
     */
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLane]] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getLanesByRoadLinks(roadLinks, change).map(asset =>
-     asset.copy(attributes = asset.attributes ++  Map("trafficDirection" -> roadLinks.find(_.linkId == asset.linkId).get.trafficDirection))
-    )
+    val linearAssets = getLanesByRoadLinks(roadLinks, change)
 
     val partitionedLanes = LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
 
