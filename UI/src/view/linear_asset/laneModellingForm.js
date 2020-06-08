@@ -277,9 +277,7 @@
 
     var createPreviewHeaderElement = function(laneNumbers) {
       var createNumber = function (number) {
-        var previewButton = $('<td class="preview-lane">' + number + '</td>').click(function() {
-          $(".preview .lane").removeClass("not-highlight-lane highlight-lane").addClass("not-highlight-lane");
-          $(this).removeClass("not-highlight-lane").addClass("highlight-lane");
+        var previewButton = $('<td class="preview-lane selectable">' + number + '</td>').click(function() {
           var laneNumber = parseInt(number);
           lanesAssets.setCurrentLane(laneNumber);
 

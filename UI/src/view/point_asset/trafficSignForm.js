@@ -3,7 +3,6 @@
     PointAssetForm.call(this);
     var me = this;
     var defaultAdditionalPanelValue = null;
-    var asset = null;
     var additionalPanelWithTextCode = '61';
 
     this.initialize = function(parameters) {
@@ -46,12 +45,12 @@
 
       }), function(prev, curr) { return prev + curr; }, '');
 
-      var additionalPanels = getProperties(asset.propertyData, "additional_panel");
+      var additionalPanels = getProperties(allTrafficSignProperties, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
       function getSidePlacement() {
-        return _.head(getProperties(asset.propertyData, "opposite_side_sign").values);
+        return _.head(getProperties(allTrafficSignProperties, "opposite_side_sign").values);
       }
 
       var panelCheckbox =
@@ -78,8 +77,7 @@
     };
 
     this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
-
-      asset = selectedAsset.get();
+      var asset = selectedAsset.get();
       var wrapper = $('<div class="wrapper">');
       var formRootElement = $('<div class="form form-horizontal form-dark form-pointasset">');
 
@@ -186,6 +184,7 @@
       });
 
       rootElement.find('.pointasset button.save').on('click', function() {
+        setWithSelectedValues(); //used for old type traffic signs with missing properties
         selectedAsset.save();
       });
 
@@ -235,8 +234,8 @@
       bindPanelEvents();
 
       function bindSingleChoiceElement (publicId) {
-        rootElement.find('.form-traffic-sign select#main-' + publicId).on('change', function () {
-          selectedAsset.setPropertyByPublicId(publicId, $('.form-traffic-sign select#main-' + publicId).val());
+        rootElement.find('.form-traffic-sign select#' + publicId).on('change', function () {
+          selectedAsset.setPropertyByPublicId(publicId, $('.form-traffic-sign select#' + publicId).val());
         });
       }
 
@@ -432,6 +431,7 @@
 
 
     function isPedestrianOrCyclingRoadLink() {
+      var asset = me.selectedAsset.get();
       if(asset){
         var roadLink = me.roadCollection.getRoadLinkByLinkId(asset.linkId);
 
@@ -463,7 +463,7 @@
         groupKeys = _.keys(groups);
 
         /* Case asset is new...we will ignore the property value from parameter to load the subSingleChoice */
-        if (asset.id === 0) {
+        if (me.selectedAsset.getId() === 0) {
           auxProperty  = undefined;
         }
       }
@@ -503,7 +503,7 @@
           '    <div class="form-group editable form-traffic-sign">' +
           '      <label class="control-label">' + property.localizedName + '</label>' +
           '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-          '      <select class="form-control" id=main-' + property.publicId +'>' +
+          '      <select class="form-control" id=' + property.publicId +'>' +
           selectableValues +
           '      </select>' +
           '    </div>';
@@ -627,7 +627,11 @@
 
     var singleChoiceForPanels = function (property) {
       var publicId = _.head(property);
-      var propertyValue = (!_.isEmpty(_.last(property))) ? '' : _.last(property);
+      var propertyValue;
+      if (_.last(property) === 0)
+        propertyValue = getProperties(me.pointAsset.newAsset.propertyData,  'additional_panel').defaultValue[publicId];
+      else
+        propertyValue = _.last(property);
       var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head( getValuesFromEnumeratedProperty(publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {
@@ -676,6 +680,19 @@
         '    <div class="form-group editable form-traffic-sign-panel">' +
         '        <label class="traffic-panel-label">Lisäkilpi ' + index + '</label>' +
         '    </div>';
+    };
+
+    var setWithSelectedValues = function() {
+      var asset = me.selectedAsset.get();
+      var propertiesToSet = _.filter(asset.propertyData, function (property) { return property.propertyType === "single_choice" || property.propertyType === "checkbox"; });
+      _.forEach(propertiesToSet, function (property) {
+        if (_.head(property.values).propertyValue === "") {
+          if(property.propertyType === "single_choice")
+            me.selectedAsset.setPropertyByPublicId(property.publicId, $('#' + property.publicId).val());
+          else
+            me.selectedAsset.setPropertyByPublicId(property.publicId, +$('#' + property.publicId).prop('checked'));
+        }
+      });
     };
 
     me.renderPreview = function(roadCollection, selectedAsset) {

@@ -157,7 +157,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     convertLaneRowToPersistedLane(lanes)
   }
 
-  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int], includeExpired: Boolean = false): Seq[PersistedLane] = {
+  def fetchLanesByLinkIdsAndLaneCode(linkIds: Seq[Long], laneCode: Seq[Int] = Seq(), includeExpired: Boolean = false): Seq[PersistedLane] = {
     fetchAllLanesByLinkIds(linkIds, includeExpired, laneCode)
   }
 
