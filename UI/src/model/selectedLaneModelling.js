@@ -4,7 +4,6 @@
     var lanesFetched = [];
     var selectedRoadlink = null;
     var assetsToBeExpired = [];
-    var assetsToBeRemoved = [];
     var self = this;
     var linksSelected = null;
     var currentLane;
@@ -119,11 +118,10 @@
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
         self.selection = lanesWithSplitMarkers;
-        lanesFetched = lanesWithSplitMarkers;
+        lanesFetched = _.cloneDeep(lanesWithSplitMarkers);
         linksSelected = linearAssets;
         collection.setSelection(self);
         assetsToBeExpired=[];
-        assetsToBeRemoved=[];
         eventbus.trigger(self.singleElementEvent('selected'), self);
       });
     };
@@ -242,7 +240,7 @@
         payload = {
           linkIds: linkIds,
           sideCode: sideCode,
-          lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired)).concat(omitUnrelevantProperties(assetsToBeRemoved))
+          lanes: lanes.concat(omitUnrelevantProperties(assetsToBeExpired))
         };
       }
 
@@ -334,11 +332,7 @@
 
     this.removeLane = function(laneNumber, marker) {
       var laneIndex = getLaneIndex(laneNumber, marker);
-      var removeLane = self.selection.splice(laneIndex,1)[0];
-      removeLane.isDeleted = true;
-
-      if(removeLane.id !== 0)
-        assetsToBeRemoved.push(removeLane);
+      self.selection.splice(laneIndex,1);
 
       reorganizeLanes(laneNumber);
       self.dirty = true;
