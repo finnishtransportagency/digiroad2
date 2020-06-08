@@ -65,6 +65,7 @@
         }
 
         if (asset.sideCode === 1) {
+          reverse = reverse || (asset.trafficDirection === "AgainstDigitizing" && !asset.marker);
           baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? -1.5 : 1.5) : (reverse ? 1.5 : -1.5);
         }else{
           baseOffset = _.head(laneCode.values).value % 2 === 0 ? (reverse ? 2 : -2) : (reverse ? 5 : -5);
