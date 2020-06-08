@@ -2301,9 +2301,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val sideCode = params("sideCode").toInt
 
     laneService.fetchExistingLanesByLinksIdAndSideCode(linkId, sideCode).map { lane =>
-
-      val adminClassAsProperty = LaneProperty("administrativeClass", Seq( LanePropertyValue(lane.administrativeClass)))
-
       Map(
         "id" -> lane.id,
         "linkId" -> lane.linkId,
@@ -2316,7 +2313,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "modifiedAt" -> lane.modifiedDateTime,
         "points" -> lane.geometry,
         "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
-        "properties" -> (lane.laneAttributes ++ Seq(adminClassAsProperty) )
+        "properties" -> (lane.laneAttributes)
       )
     }
   }

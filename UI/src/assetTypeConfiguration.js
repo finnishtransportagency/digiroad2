@@ -967,8 +967,9 @@
             {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
             {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
             {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
+            {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
             {
-              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 8
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 9
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
@@ -986,13 +987,13 @@
                 {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
                 {id: 21, label: 'Jalankulun kaista'},
                 {id: 22, label: 'Pyöräilykaista'},
-              ],  defaultValue: "2", weight: 9
+              ],  defaultValue: "2", weight: 10
             },
             {
-              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 10
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 11
             },
             {
-              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 11
+              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 12
             }
           ]
         }),
