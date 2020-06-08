@@ -245,19 +245,6 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     props ++ laneCodeAttribute
   }
 
-  /**
-    * Updates validity of lane in db.
-    */
-  def updateLaneExpiration(id: Long, username: String): Unit = {
-
-    sqlu"""UPDATE LANE
-          SET valid_to = sysdate,  expired_date = sysdate, expired_by = $username
-          WHERE id = $id
-    """.execute
-
-  }
-
-
   def updateLane( id: Long, lane: PieceWiseLane, username: String): Unit = {
     val laneCode =lane.laneAttributes.find( _.publicId == "lane_code" ).head.values
 

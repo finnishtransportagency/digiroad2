@@ -91,6 +91,18 @@
       });
     };
 
+    //Outer lanes that are expired are to be considered, the other are updates so we need to take those out
+    //Here a outer lane is a lane with lane code that existed in the original but not in the modified configuration
+    function omitIrrelevantExpiredLanes() {
+      var lanesToBeRemovedFromExpire = _.filter(assetsToBeExpired, function (lane) {
+        return !_.isUndefined(self.getLane(getLaneCodeValue(lane)));
+      });
+
+      _.forEach(lanesToBeRemovedFromExpire, function (lane) {
+        _.remove(assetsToBeExpired, {'id': lane.id});
+      });
+    }
+
     self.splitLinearAsset = function(laneNumber, split) {
       collection.splitLinearAsset(self.getLane(laneNumber), split, function(splitLinearAssets) {
         if (self.getLane(laneNumber).id === 0) {
@@ -216,6 +228,7 @@
 
     self.save = function(isAddByRoadAddressActive) {
       eventbus.trigger(self.singleElementEvent('saving'));
+      omitIrrelevantExpiredLanes();
 
       var linkIds = _.head(self.selection).linkIds;
       var sideCode = _.head(self.selection).sideCode;
@@ -340,9 +353,12 @@
 
     this.expireLane = function(laneNumber, marker) {
       var laneIndex = getLaneIndex(laneNumber, marker);
-      var expireLane = self.selection.splice(laneIndex,1)[0];
-      expireLane.isExpired = true;
-      assetsToBeExpired.push(expireLane);
+      var expiredLane = self.selection.splice(laneIndex,1)[0];
+
+      //expiredLane could be modified by the user so we need to fetch the original
+      var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
+      originalExpiredLane.isExpired = true;
+      assetsToBeExpired.push(originalExpiredLane);
 
       reorganizeLanes(laneNumber);
       self.dirty = true;
