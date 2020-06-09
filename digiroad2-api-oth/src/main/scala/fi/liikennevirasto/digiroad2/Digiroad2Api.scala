@@ -2313,7 +2313,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "modifiedAt" -> lane.modifiedDateTime,
         "points" -> lane.geometry,
         "municipalityCode" -> extractLongValue(lane.attributes, "municipality"),
-        "properties" -> (lane.laneAttributes)
+        "properties" -> lane.laneAttributes
       )
     }
   }
