@@ -452,7 +452,7 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       lanesAfterSplit.count(_.laneCode == 12) should be(2)
 
-      val lane12A = lanesAfterSplit.filter(l => l.startMeasure == 0).head
+      val lane12A = lanesAfterSplit.filter(l => l.startMeasure == 0 && l.laneCode == 12).head
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
@@ -721,8 +721,8 @@ class LaneServiceSpec extends LaneTestSupporter {
       newSubLane12.attributes.foreach { laneProp =>
         updatedSubLane14.properties.contains(laneProp) should be(true)
       }
-      updatedSubLane14.startMeasure should be(0.0)
-      updatedSubLane14.endMeasure should be(500.0)
+      newSubLane12.startMeasure should be(0.0)
+      newSubLane12.endMeasure should be(500.0)
 
 
       //Confirm the expired lane 12 and old info of lane 14 (Now 12) in history table
@@ -941,117 +941,175 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  //TODO
-  ignore("Expire a inner sub lane in various links") {
-    //    runWithRollback {
-    //      //NewIncomeLanes to create
-    //      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
-    //      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
-    //
-    //      //Create initial lanes
-    //      val newMainLaneid = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
-    //      val newSubLaneId = ServiceWithDao.create(subLane12ToAdd, Set(100L), 1, usernameTest).head
-    //
-    //
-    //      //Validate if initial lanes are correctly created
-    //      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), false)
-    //      currentLanes.size should be(2)
-    //
-    //      val lane11 = currentLanes.filter(_.id == newMainLaneid).head
-    //      lane11.id should be(newMainLaneid)
-    //      lane11.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues11.contains(laneProp) should be(true)
-    //      }
-    //
-    //      val lane12 = currentLanes.filter(_.id == newSubLaneId).head
-    //      lane12.id should be(newSubLaneId)
-    //      lane12.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues12.contains(laneProp) should be(true)
-    //      }
-    //
-    //
-    //      //Delete sublane 12 and verify the movement to history tables
-    //      val subLane12ToExpire = Seq(NewIncomeLane(newSubLaneId, 0, 500, 745, true, false, lanePropertiesValues12))
-    //
-    //      //Verify if the lane to delete was totally deleted from lane table
-    //      val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneid))
-    //      ServiceWithDao.processNewIncomeLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(100L), 1, usernameTest)
-    //      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), false)
-    //      currentLanesAfterDelete.size should be(1)
-    //
-    //      val lane11AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneid).head
-    //      lane11AfterDelete.id should be(newMainLaneid)
-    //      lane11AfterDelete.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues11.contains(laneProp) should be(true)
-    //      }
-    //
-    //      //Verify the presence of the deleted lane on histories tables
-    //      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
-    //      historyLanes.size should be(1)
-    //
-    //      val lane12AfterDelete = historyLanes.filter(_.oldId == newSubLaneId).head
-    //      lane12AfterDelete.oldId should be(newSubLaneId)
-    //      lane12AfterDelete.expired should be(true)
-    //      lane12AfterDelete.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues12.contains(laneProp) should be(true)
-    //      }
-    //    }
+  test("Expire a outer sub lane in various links") {
+    runWithRollback {
+      //NewIncomeLanes to create
+      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
+      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+
+      //Create initial lanes
+      val newMainLaneIdLink100 = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
+      val newSubLaneIdLink100 = ServiceWithDao.create(subLane12ToAdd, Set(100L), 1, usernameTest).head
+
+      val newMainLaneIdLink101 = ServiceWithDao.create(mainLane11ToAdd, Set(101L), 1, usernameTest).head
+      val newSubLaneIdLink101 = ServiceWithDao.create(subLane12ToAdd, Set(101L), 1, usernameTest).head
+
+      //Validate if initial lanes are correctly created
+      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(11, 12), false)
+      currentLanes.size should be(4)
+
+      val lane11Link100 = currentLanes.filter(_.id == newMainLaneIdLink100).head
+      lane11Link100.attributes.foreach{ laneProp =>
+        lanePropertiesValues11.contains(laneProp) should be(true)
+      }
+
+      val lane12Link100 = currentLanes.filter(_.id == newSubLaneIdLink100).head
+      lane12Link100.attributes.foreach{ laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+
+      val lane11Link101 = currentLanes.filter(_.id == newMainLaneIdLink101).head
+      lane11Link101.attributes.foreach{ laneProp =>
+        lanePropertiesValues11.contains(laneProp) should be(true)
+      }
+
+      val lane12Link101 = currentLanes.filter(_.id == newSubLaneIdLink101).head
+      lane12Link101.attributes.foreach{ laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+
+      //Delete sublane 12 and verify the movement to history tables
+      val subLane12ToExpire = Seq(NewIncomeLane(newSubLaneIdLink100, 0, 500, 745, true, false, lanePropertiesValues12))
+
+      //Verify if the lane to delete was totally deleted from lane table
+      val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneIdLink100))
+      ServiceWithDao.processNewIncomeLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(100L, 101L), 1, usernameTest)
+      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(11, 12), false)
+      currentLanesAfterDelete.size should be(2)
+
+      val lane11Link100AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneIdLink100).head
+      lane11Link100AfterDelete.attributes.foreach{ laneProp =>
+        lanePropertiesValues11.contains(laneProp) should be(true)
+      }
+
+      val lane11Link101AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneIdLink101).head
+      lane11Link101AfterDelete.attributes.foreach{ laneProp =>
+        lanePropertiesValues11.contains(laneProp) should be(true)
+      }
+
+      //Verify the presence of the deleted lane on histories tables
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(11, 12), true)
+      historyLanes.size should be(2)
+
+      val lane12Link100AfterDelete = historyLanes.filter(_.oldId == newSubLaneIdLink100).head
+      lane12Link100AfterDelete.linkId should be(100L)
+      lane12Link100AfterDelete.newId should be(0)
+      lane12Link100AfterDelete.expired should be(true)
+      lane12Link100AfterDelete.attributes.foreach{ laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+
+      val lane12Link101AfterDelete = historyLanes.filter(_.oldId == newSubLaneIdLink101).head
+      lane12Link101AfterDelete.linkId should be(101L)
+      lane12Link101AfterDelete.newId should be(0)
+      lane12Link101AfterDelete.expired should be(true)
+      lane12Link101AfterDelete.attributes.foreach{ laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+    }
   }
 
-  //TODO
-  ignore("Expire a outer sub lane in various links") {
-    //    runWithRollback {
-    //      //NewIncomeLanes to create
-    //      val mainLane11ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11))
-    //      val subLane12ToAdd = Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
-    //
-    //      //Create initial lanes
-    //      val newMainLaneid = ServiceWithDao.create(mainLane11ToAdd, Set(100L), 1, usernameTest).head
-    //      val newSubLaneId = ServiceWithDao.create(subLane12ToAdd, Set(100L), 1, usernameTest).head
-    //
-    //
-    //      //Validate if initial lanes are correctly created
-    //      val currentLanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), false)
-    //      currentLanes.size should be(2)
-    //
-    //      val lane11 = currentLanes.filter(_.id == newMainLaneid).head
-    //      lane11.id should be(newMainLaneid)
-    //      lane11.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues11.contains(laneProp) should be(true)
-    //      }
-    //
-    //      val lane12 = currentLanes.filter(_.id == newSubLaneId).head
-    //      lane12.id should be(newSubLaneId)
-    //      lane12.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues12.contains(laneProp) should be(true)
-    //      }
-    //
-    //
-    //      //Delete sublane 12 and verify the movement to history tables
-    //      val subLane12ToExpire = Seq(NewIncomeLane(newSubLaneId, 0, 500, 745, true, false, lanePropertiesValues12))
-    //
-    //      //Verify if the lane to delete was totally deleted from lane table
-    //      val currentMainLane11 = Seq(mainLane11ToAdd.head.copy(id = newMainLaneid))
-    //      ServiceWithDao.processNewIncomeLanes((currentMainLane11 ++ subLane12ToExpire).toSet, Set(100L), 1, usernameTest)
-    //      val currentLanesAfterDelete = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), false)
-    //      currentLanesAfterDelete.size should be(1)
-    //
-    //      val lane11AfterDelete = currentLanesAfterDelete.filter(_.id == newMainLaneid).head
-    //      lane11AfterDelete.id should be(newMainLaneid)
-    //      lane11AfterDelete.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues11.contains(laneProp) should be(true)
-    //      }
-    //
-    //      //Verify the presence of the deleted lane on histories tables
-    //      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)
-    //      historyLanes.size should be(1)
-    //
-    //      val lane12AfterDelete = historyLanes.filter(_.oldId == newSubLaneId).head
-    //      lane12AfterDelete.oldId should be(newSubLaneId)
-    //      lane12AfterDelete.expired should be(true)
-    //      lane12AfterDelete.attributes.foreach{ laneProp =>
-    //        lanePropertiesValues12.contains(laneProp) should be(true)
-    //      }
-    //    }
+  test("Expire a inner sub lane in various links") {
+    runWithRollback {
+      val lanePropertiesValues14To12 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("updated sub lane 14 to 12")))
+      )
+
+      val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val subLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val subLane14 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
+
+      val mainLaneIdLink100 = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
+      val newSubLane12IdLink100 = ServiceWithDao.create(Seq(subLane12), Set(100L), 1, usernameTest).head
+      val newSubLane14IdLink100 = ServiceWithDao.create(Seq(subLane14), Set(100L), 1, usernameTest).head
+
+      val mainLaneIdLink101 = ServiceWithDao.create(Seq(mainLane), Set(101L), 1, usernameTest).head
+      val newSubLane12IdLink101 = ServiceWithDao.create(Seq(subLane12), Set(101L), 1, usernameTest).head
+      val newSubLane14IdLink101 = ServiceWithDao.create(Seq(subLane14), Set(101L), 1, usernameTest).head
+
+
+      // Delete the lane 12 and update 14 to new 12
+      val updatedSubLane14 = NewIncomeLane(newSubLane14IdLink100, 0, 500, 745, false, false, lanePropertiesValues14To12)
+      val currentMainLane = mainLane.copy(id = mainLaneIdLink100)
+      ServiceWithDao.processNewIncomeLanes(Set(currentMainLane, updatedSubLane14), Set(100L, 101L), 1, usernameTest)
+
+
+      //Validate the delete of old lane 12 and the movement of lane 14 to 12
+      val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(11, 12, 14), true)
+      lanes.length should be(4)
+      lanes.find(lane => lane.id == newSubLane12IdLink100 || lane.id == newSubLane12IdLink101) should be(None)
+      lanes.find(_.laneCode == 14) should be(None)
+
+      val newSubLane12Link100 = lanes.find(_.id == newSubLane14IdLink100).head
+      newSubLane12Link100.attributes.foreach { laneProp =>
+        updatedSubLane14.properties.contains(laneProp) should be(true)
+      }
+      newSubLane12Link100.startMeasure should be(0.0)
+      newSubLane12Link100.endMeasure should be(500.0)
+
+      val newSubLane12Link101 = lanes.find(_.id == newSubLane14IdLink101).head
+      newSubLane12Link101.attributes.foreach { laneProp =>
+        updatedSubLane14.properties.contains(laneProp) should be(true)
+      }
+      newSubLane12Link101.startMeasure should be(0.0)
+      newSubLane12Link101.endMeasure should be(500.0)
+
+
+      //Confirm the expired lane 12 and old info of lane 14 (Now 12) in history table
+      val historyLanes = laneHistoryDao.fetchHistoryLanesByLinkIdsAndLaneCode(Seq(100L, 101L), Seq(11, 12, 14), true)
+      historyLanes.length should be(4)
+
+      val deletedSubLane12Link100 = historyLanes.find(_.oldId == newSubLane12IdLink100).head
+      deletedSubLane12Link100.linkId should be(100L)
+      deletedSubLane12Link100.newId should be(newSubLane14IdLink100)
+      deletedSubLane12Link100.attributes.foreach { laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+      deletedSubLane12Link100.startMeasure should be(0.0)
+      deletedSubLane12Link100.endMeasure should be(500.0)
+      deletedSubLane12Link100.expired should be(true)
+
+      val deletedSubLane14Link100 = historyLanes.find(_.oldId == newSubLane14IdLink100).head
+      deletedSubLane14Link100.linkId should be(100L)
+      deletedSubLane14Link100.newId should be(0)
+      deletedSubLane14Link100.attributes.foreach { laneProp =>
+        lanePropertiesValues14.contains(laneProp) should be(true)
+      }
+      deletedSubLane14Link100.expired should be(false)
+      deletedSubLane14Link100.startMeasure should be(0.0)
+      deletedSubLane14Link100.endMeasure should be(500.0)
+
+      val deletedSubLane12Link101 = historyLanes.find(_.oldId == newSubLane12IdLink101).head
+      deletedSubLane12Link101.linkId should be(101L)
+      deletedSubLane12Link101.newId should be(newSubLane14IdLink101)
+      deletedSubLane12Link101.attributes.foreach { laneProp =>
+        lanePropertiesValues12.contains(laneProp) should be(true)
+      }
+      deletedSubLane12Link101.startMeasure should be(0.0)
+      deletedSubLane12Link101.endMeasure should be(500.0)
+      deletedSubLane12Link101.expired should be(true)
+
+      val deletedSubLane14Link101 = historyLanes.find(_.oldId == newSubLane14IdLink101).head
+      deletedSubLane14Link101.linkId should be(101L)
+      deletedSubLane14Link101.newId should be(0)
+      deletedSubLane14Link101.attributes.foreach { laneProp =>
+        lanePropertiesValues14.contains(laneProp) should be(true)
+      }
+      deletedSubLane14Link101.expired should be(false)
+      deletedSubLane14Link101.startMeasure should be(0.0)
+      deletedSubLane14Link101.endMeasure should be(500.0)
+    }
   }
 }
