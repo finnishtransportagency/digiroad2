@@ -328,17 +328,17 @@ trait ResolvingFrozenRoadLinks {
     println(DateTime.now())
 
     //Get All Municipalities
-    val municipalities: Seq[Int] = OracleDatabase.withDynSession {
+    val municipalities: Seq[Int] = Seq(576)/*OracleDatabase.withDynSession {
       Queries.getMunicipalities
-    }
+    }*/
 
       municipalities.foreach { municipality =>
         OracleDatabase.withDynTransaction {
           val (toCreate, missing) = processing(municipality)
 
-          val cleanningResult = cleaning(missing, toCreate)
+//          val cleanningResult = cleaning(missing, toCreate)
 
-          (cleanningResult ++ toCreate.map(_.roadAddress)).foreach { frozen =>
+          (/*cleanningResult ++ */toCreate.map(_.roadAddress)).foreach { frozen =>
             roadLinkTempDao.insertInfo(frozen, "batch_process_temp_road_address")
             //        println(s"linkId: ${frozen.linkId} road ${frozen.roadPart} roadPart ${frozen.roadPart} track ${frozen.track}  etays ${frozen.startAddressM} let ${frozen.endAddressM} ")
           }
