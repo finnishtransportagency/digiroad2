@@ -41,6 +41,7 @@
             return _.map(linearAsset.selectedLinks, function(roadLink) {
               var roadLinkWithAsset = linearAsset;
               roadLinkWithAsset.points = roadLink.points;
+              roadLinkWithAsset.trafficDirection = roadLink.trafficDirection;
               roadLinkWithAsset.sideCode = roadLink.sideCode;
               return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset}, type);
             });

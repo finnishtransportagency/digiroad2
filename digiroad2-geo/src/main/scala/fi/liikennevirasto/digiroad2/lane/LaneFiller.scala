@@ -65,7 +65,7 @@ class LaneFiller {
       PieceWiseLane(dbLane.id,dbLane.linkId, dbLane.sideCode, dbLane.expired, points,
         dbLane.startMeasure, dbLane.endMeasure, Set(endPoints._1, endPoints._2), dbLane.modifiedBy, dbLane.modifiedDateTime,
         dbLane.createdBy, dbLane.createdDateTime, dbLane.vvhTimeStamp, dbLane.geomModifiedDate, roadLink.administrativeClass,
-        laneAttributes = dbLane.attributes, attributes = Map("municipality" -> dbLane.municipalityCode))
+        laneAttributes = dbLane.attributes, attributes = Map("municipality" -> dbLane.municipalityCode, "trafficDirection" -> roadLink.trafficDirection))
     }
   }
 

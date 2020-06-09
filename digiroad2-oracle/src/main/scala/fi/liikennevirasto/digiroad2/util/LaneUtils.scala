@@ -48,31 +48,34 @@ object LaneUtils {
       throw new RuntimeException(s"cannot find property $name")
   }
 
-  def separateNewIncomeLanes( newIncomeLanes: Set[NewIncomeLane]) : (Set[Long],Set[Long],Set[NewIncomeLane],Set[NewIncomeLane]) = {
+  /**
+    * Separate lanes into lanes to create, update, delete and expire
+    * @param newIncomeLanes lanes to be separated
+    * @return tuple with lanes separated (to delete, to expire, to update, to create)
+    */
+  def separateNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane]) : (Set[NewIncomeLane], Set[NewIncomeLane], Set[NewIncomeLane], Set[NewIncomeLane]) = {
+    val lanesWithoutFlags = newIncomeLanes.filterNot(lane => lane.isDeleted || lane.isExpired) //Remove records with those flags as true
 
-    val lanesWithoutFlags = newIncomeLanes.filterNot( lane => lane.isDeleted  || lane.isExpired ) // Remove records with those flags as true
-
-    val toDelete = newIncomeLanes.filter( _.isDeleted == true ).map( _.id )
-    val toHistory = newIncomeLanes.filter( _.isExpired == true ).map( _.id )
+    val toDelete = newIncomeLanes.filter(_.isDeleted == true)
+    val toHistory = newIncomeLanes.filter(_.isExpired == true)
     val (toInsert, toUpdate) = lanesWithoutFlags.partition(_.id == 0)
 
     (toDelete, toHistory, toUpdate, toInsert)
   }
 
-
   def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
-                             sideCode: Int, username: String) = {
-
+                            sideCode: Int, username: String) = {
     val (toDelete, toHistory, toUpdate, toInsert) = separateNewIncomeLanes(newIncomeLanes)
-    laneService.deleteMultipleLanes(toDelete)
-    laneService.multipleLanesToHistory(toHistory, username)
-    laneService.create(toInsert.toSeq, linkIds, sideCode, username)
-    laneService.update(toUpdate.toSeq, linkIds, sideCode, username)
+    val laneCodesToBeDeleted = toDelete.map(laneService.getLaneCode(_).toInt)
+    val laneCodesToBeExpired = toHistory.map(laneService.getLaneCode(_).toInt)
 
+    withDynTransaction {
+      laneService.deleteMultipleLanes(linkIds, laneCodesToBeDeleted, newTransaction = false)
+      laneService.multipleLanesToHistory(linkIds, laneCodesToBeExpired, username, newTransaction = false)
+      laneService.create(toInsert.toSeq, linkIds, sideCode, username, newTransaction = false)
+      laneService.update(toUpdate.toSeq, linkIds, sideCode, username, newTransaction = false)
+    }
   }
-
-
-
 
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {

@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.middleware
 
 import java.sql.SQLIntegrityConstraintViolationException
-
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
@@ -13,6 +12,7 @@ import fi.liikennevirasto.digiroad2.service.pointasset.TrafficSignInfo
 import org.joda.time.DateTime
 import org.json4s.jackson.Json
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JInt, JString}
+
 
 object TrafficSignManager {
   val manoeuvreRelatedSigns : Seq[TrafficSignType] =  Seq(NoLeftTurn, NoRightTurn, NoUTurn)
@@ -34,6 +34,11 @@ object TrafficSignManager {
   val parkingRelatedSigns : Seq[TrafficSignType] = Seq(StandingAndParkingProhibited, ParkingProhibited)
   def belongsToParking(intValue: Int) : Boolean = {
     parkingRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
+  }
+
+  val roadWorkRelatedSigns : Seq[TrafficSignType] = Seq(RoadWorks)
+  def belongsToRoadwork(intValue: Int) : Boolean = {
+    roadWorkRelatedSigns.contains(TrafficSignType.applyOTHValue(intValue))
   }
 }
 
@@ -73,6 +78,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
       case trSign if TrafficSignManager.belongsToParking(trSign.signType) =>
         insertTrafficSignToProcess(trSign.id, ParkingProhibition)
 
+      case trSign if TrafficSignManager.belongsToRoadwork(trSign.signType) =>
+        insertTrafficSignToProcess(trSign.id, RoadWorksAsset, newTransaction = newTransaction )
+
       case _ => None
     }
   }
@@ -94,6 +102,9 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
 
         case signType if TrafficSignManager.belongsToParking(signType) =>
           insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign), newTransaction)
+
+        case signType if TrafficSignManager.belongsToRoadwork(signType) =>
+          insertTrafficSignToProcess(trSign.id, RoadWorksAsset, Some(trSign))
 
         case _ => None
       }
