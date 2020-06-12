@@ -128,7 +128,7 @@
         selectedAsset.setPropertyByPublicId(propertyPublicId, eventTarget.val());
       });
 
-      rootElement.find('.form-point-asset select#trafficSigns_type').on('change', function (event) {
+      rootElement.find('.form-point-asset select#main-trafficSigns_type').on('change', function (event) {
         $('.form-point-asset select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
         selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-point-asset select#trafficSigns_type').val());
       });
@@ -310,7 +310,7 @@
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id=' + property.publicId +'>' +
+        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +
