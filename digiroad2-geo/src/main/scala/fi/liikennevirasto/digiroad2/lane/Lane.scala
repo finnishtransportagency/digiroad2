@@ -147,6 +147,8 @@ object LaneType {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
+  def getDefault: LaneType = Unknown
+
   case object Main extends LaneType { def value = 1; def typeDescription = "Main lane"; def finnishDescription = "Pääkaista"; }
   case object Passing extends LaneType { def value = 2; def typeDescription = "Passing lane"; def finnishDescription = "Ohituskaista"; }
   case object TurnRight extends LaneType { def value = 3; def typeDescription = "Turn lane to right"; def finnishDescription = "Kääntymiskaista oikealle"; }
