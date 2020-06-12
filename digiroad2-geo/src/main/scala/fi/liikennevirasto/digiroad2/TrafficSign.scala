@@ -1443,6 +1443,8 @@ object UrgencyOfRepair {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def getDefault: UrgencyOfRepair = Unknown
+
   case object VeryUrgent extends UrgencyOfRepair { def value = 1; def description = "Erittäin kiireellinen"  }
   case object Urgent extends UrgencyOfRepair { def value = 2; def description = "kiireellinen" }
   case object SomehowUrgent extends UrgencyOfRepair { def value = 3; def description = "Jokseenkin kiireellinen" }
@@ -1461,6 +1463,8 @@ object SignLifeCycle{
   def apply(intValue: Int):SignLifeCycle = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
+
+  def getDefault: SignLifeCycle = PermanentlyInUse
 
   case object Planned extends SignLifeCycle { def value = 1; def description = "Suunnitteilla"  }
   case object UnderConstruction extends SignLifeCycle { def value = 2; def description = "Rakenteilla" }
@@ -1482,6 +1486,8 @@ object Structure {
   def apply(intValue: Int):Structure = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
+
+  def getDefault: Structure = Unknown
 
   case object Pole extends Structure { def value = 1; def description = "Pylväs"  }
   case object Wall extends Structure { def value = 2; def description = "Seinä" }
@@ -1505,6 +1511,8 @@ object Condition {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def getDefault: Condition = Unknown
+
   case object VeryPoor extends Condition { def value = 1; def description = "Erittäin huono"  }
   case object Poor extends Condition { def value = 2; def description = "Huono" }
   case object Fair extends Condition { def value = 3; def description = "Tyydyttävä" }
@@ -1525,6 +1533,8 @@ object Size {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def getDefault: Size = Unknown
+
   case object CompactSign extends Size { def value = 1; def description = "Pienikokoinen merkki"  }
   case object RegularSign extends Size { def value = 2; def description = "Normaalikokoinen merkki" }
   case object LargeSign extends Size { def value = 3; def description = "Suurikokoinen merkki" }
@@ -1542,6 +1552,8 @@ object CoatingType {
   def apply(intValue: Int):CoatingType = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
+
+  def getDefault: CoatingType = Unknown
 
   case object R1ClassSheeting extends CoatingType { def value = 1; def description = "R1-luokan kalvo"  }
   case object R2ClassSheeting extends CoatingType { def value = 2; def description = "R2-luokan kalvo" }
@@ -1561,6 +1573,8 @@ object SignMaterial {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def getDefault: SignMaterial = Unknown
+
   case object Plywood extends SignMaterial { def value = 1; def description = "Vaneri"  }
   case object Aluminum extends SignMaterial { def value = 2; def description = "Alumiini" }
   case object Other extends SignMaterial { def value = 3; def description = "Muu" }
@@ -1578,6 +1592,8 @@ object LocationSpecifier {
   def apply(intValue: Int):LocationSpecifier = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
+
+  def getDefault: LocationSpecifier = Unknown
 
   case object RightSideOfRoad extends LocationSpecifier { def value = 1; def description = "Väylän oikea puoli"  }
   case object LeftSideOfRoad extends LocationSpecifier { def value = 2; def description = "Väylän vasen puoli" }
@@ -1601,6 +1617,8 @@ object TypeOfDamage {
   def apply(intValue: Int):TypeOfDamage = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
+
+  def getDefault: TypeOfDamage = Unknown
 
   case object Rust extends TypeOfDamage { def value = 1; def description = "Ruostunut"  }
   case object Battered extends TypeOfDamage { def value = 2; def description = "Kolhiintunut" }
