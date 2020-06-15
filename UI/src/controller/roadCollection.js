@@ -163,7 +163,7 @@
     this.getRoadsForCarPedestrianCycling = function() {
       return _.chain(me.roadLinks())
           .filter(function(roadLink) {
-            return roadLink.isCarPedestrianCyclingRoad() && (roadLink.getData().administrativeClass !== "Unknown");
+            return roadLink.isCarPedestrianCyclingRoad();
           })
           .map(function(roadLink) {
             return roadLink.getData();
