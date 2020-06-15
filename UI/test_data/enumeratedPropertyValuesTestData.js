@@ -212,11 +212,11 @@
             },
             {
               propertyValue: "2",
-              propertyDisplayValue: "Linja-autojen paikallisliikenne"
+              propertyDisplayValue: "Linja-autopysäkki"
             },
             {
               propertyValue: "3",
-              propertyDisplayValue: "Linja-autojen kaukoliikenne"
+              propertyDisplayValue: "Kaukoliikenne (vanha tll)"
             },
             {
               propertyValue: "99",
@@ -224,7 +224,7 @@
             },
             {
               propertyValue: "4",
-              propertyDisplayValue: "Linja-autojen pikavuoro"
+              propertyDisplayValue: "Pikavuoro (vanha tll)"
             }
           ]
         },
