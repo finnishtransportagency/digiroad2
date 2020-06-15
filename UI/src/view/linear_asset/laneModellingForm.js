@@ -501,8 +501,9 @@
           }else{
             currentLaneNumber = currentLaneNumber-2;
           }
-          selectedAsset.setCurrentLane(currentLaneNumber);
         }
+
+        selectedAsset.setCurrentLane(currentLaneNumber);
 
         if(currentLaneNumber.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
