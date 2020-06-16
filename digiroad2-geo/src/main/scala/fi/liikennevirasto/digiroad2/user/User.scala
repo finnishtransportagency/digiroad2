@@ -47,7 +47,7 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
-  private def isAnElyException( municipalityCode: Int): Boolean = {
+  def isAnElyException( municipalityCode: Int): Boolean = {
 
     /* Users in Ahvenanmaa need to edit state information */
     if ( ElyExceptionsForState.municipalitiesForAhvenanmaaEly.contains(municipalityCode) )
