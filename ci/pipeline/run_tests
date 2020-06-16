@@ -49,6 +49,11 @@ pipeline {
                             "-DproxySet=true"
                         ].join(" ")
 
+                        STAGE_FRONTEND_RUN_TESTS = [
+                            "npm install",
+                            "grunt test"
+                        ].join(" && ")
+
                         STAGE_SETUP_ORACLE = [
                             "mkdir tmp",
                             "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output tmp/${ojdbc}.jar",
@@ -63,7 +68,7 @@ pipeline {
                             "echo 'bonecp.password='$DB >> digiroad2-oracle/conf/ci-vahti/bonecp.properties"
                         ].join(" && ")
 
-                        STAGE_RUN_TESTS = [
+                        STAGE_BACKEND_RUN_TESTS = [
                             "java",
                             "$java_opts",
                             "-Ddigiroad2.env=ci-vahti",
@@ -92,6 +97,11 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
+                        "digiroad2-frontend",
+                        "${build_args} -f ci/docker/Dockerfile.node ci"
+                    )
+
+                    docker.build(
                         "digiroad2-backend-sbt",
                         "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
@@ -114,7 +124,28 @@ pipeline {
 
         }
 
-        stage("Run Tests") {
+	    stage("Run Frontend Tests") {
+            agent {
+                docker {
+                    image "digiroad2-frontend"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_FRONTEND_RUN_TESTS
+                echo "Running frontend build... (skipped for now)"
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+
+        stage("Run Backend Tests") {
             agent {
                 docker {
                     image "digiroad2-backend-sbt"
@@ -123,7 +154,7 @@ pipeline {
             }
             steps {
                 sh STAGE_SETUP_ORACLE
-                sh STAGE_RUN_TESTS
+                sh STAGE_BACKEND_RUN_TESTS
             }
         }
     }
