@@ -1,4 +1,7 @@
 module.exports = function(grunt) {
+  var serveStatic = require('serve-static');
+  var serveIndex = require('serve-index');
+  var path = require('path');
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     properties: {
@@ -70,13 +73,14 @@ module.exports = function(grunt) {
           port: 9001,
           base: ['dist', '.', 'UI'],
           middleware: function(connect, opts) {
+            var _staticPath = path.resolve(opts.base[2]);
             var config = [
               // Serve static files.
-              connect.static(opts.base[0]),
-              connect.static(opts.base[1]),
-              connect.static(opts.base[2]),
+              serveStatic(opts.base[0]),
+              serveStatic(opts.base[1]),
+              serveStatic(opts.base[2]),
               // Make empty directories browsable.
-              connect.directory(opts.base[2])
+              serveIndex(_staticPath)
             ];
             var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
             config.unshift(proxy);
