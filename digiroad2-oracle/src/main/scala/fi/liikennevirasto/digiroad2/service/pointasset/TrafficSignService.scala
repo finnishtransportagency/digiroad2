@@ -204,12 +204,12 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
 
         case "additional_panel_type" if prop.values.nonEmpty =>
           val additionalPanelValues = prop.values.head.asInstanceOf[AdditionalPanel]
-          val PValues = additionalPanelValues.copy(
+          val pValues = additionalPanelValues.copy(
             size = if (additionalPanelValues.size != 0) additionalPanelValues.size else AdditionalPanelSize.getDefault.value,
             coating_type = if (additionalPanelValues.coating_type != 0) additionalPanelValues.coating_type else AdditionalPanelCoatingType.getDefault.value,
             additional_panel_color = if (additionalPanelValues.additional_panel_color != 0) additionalPanelValues.additional_panel_color else AdditionalPanelColor.getDefault.value
           )
-          SimplePointAssetProperty(prop.publicId, Seq(PValues))
+          SimplePointAssetProperty(prop.publicId, Seq(pValues))
 
         case _ => SimplePointAssetProperty(prop.publicId, prop.values)
       }).toSet
