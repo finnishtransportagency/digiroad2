@@ -1553,7 +1553,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def validateUserAccess(user: User, typeId: Option[Int] = None)(municipality: Int, administrativeClass: AdministrativeClass) : Unit = {
     typeId match {
-      case Some(assetType) => validateAdministrativeClass(assetType)(administrativeClass)
+      case Some(assetType) => validateAdministrativeClass(assetType, user, municipality)(administrativeClass)
       case _ =>
     }
     if (!user.isAuthorizedToWrite(municipality, administrativeClass)) {
@@ -1634,8 +1634,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRightsForLanes(linkIds.toSet, user)
   }
 
-  private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
-    if (administrativeClass == State && StateRoadRestrictedAssets.contains(typeId))
+  private def validateAdministrativeClass(typeId: Int, user: User, municipality: Int)(administrativeClass: AdministrativeClass): Unit  = {
+    if ( !user.isAnElyException(municipality) && administrativeClass == State && StateRoadRestrictedAssets.contains(typeId))
       halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 

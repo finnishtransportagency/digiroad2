@@ -32,7 +32,11 @@
 
     this.assetSpecificAccess = function(){
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      return (me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+
+      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode);
+      var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);
+
+      return me.isStateExclusions(selectedMassTransitStopModel) || ( isMunicipalityAndHaveRights || isElyyAndHaveRights || me.isOperator() );
     };
 
 
