@@ -591,7 +591,7 @@ class OracleSpeedLimitDao(val vvhClient: VVHClient, val roadLinkService: RoadLin
   /**
     * Update administrative_class and municipality_code of links in the unknown speed limits list. Used by removeUnnecessaryUnknownSpeedLimits batch.
     */
-  def updateUnknownSpeedLimitAdminClass(linkId: Long, administrativeClass: AdministrativeClass, municipalityCode: Int): Unit = {
+  def updateUnknownSpeedLimitAdminClassAndMunicipality(linkId: Long, administrativeClass: AdministrativeClass, municipalityCode: Int): Unit = {
     sqlu"""update unknown_speed_limit
           set administrative_class = ${administrativeClass.value}, municipality_code = $municipalityCode
           where link_id = $linkId""".execute
