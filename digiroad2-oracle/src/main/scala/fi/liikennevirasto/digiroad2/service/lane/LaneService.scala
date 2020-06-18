@@ -292,7 +292,7 @@ trait LaneOperations {
         val mainLanes = ( getMainLaneForBothDirection(lanesToProcess, MainLane.towardsDirection, mainLane11SideCode.value).getOrElse(false),
                           getMainLaneForBothDirection(lanesToProcess, MainLane.againstDirection, mainLane21SideCode.value).getOrElse(false) )
 
-        val (toAdd, toAdjustSideCode) = mainLanes match {
+        val (toAdd, needAdjustSideCode) = mainLanes match {
          // case not exist main lane 11
           case (false, _: PersistedLane) =>
             val missingLane = Seq(createPersistedLane(MainLane.towardsDirection, mainLane11SideCode.value, baseLane.municipalityCode, baseProps))
@@ -341,7 +341,7 @@ trait LaneOperations {
 
         val newChangeSet = changeSet.copy(generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd,
                                     expiredLaneIds = changeSet.expiredLaneIds ++ toRemove,
-                                    adjustedSideCodes = changeSet.adjustedSideCodes ++ toAdjustSideCode )
+                                    adjustedSideCodes = changeSet.adjustedSideCodes ++ needAdjustSideCode )
 
         (lanesToAdd, newChangeSet)
 
