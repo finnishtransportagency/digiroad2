@@ -1688,7 +1688,7 @@ object DataFixture {
           roadLinks.find(_.linkId == unknownLinkId) match {
             case Some(r) if r.administrativeClass != AdministrativeClass.apply(unknownAdminClass) | r.municipalityCode != municipality =>
               println("Updated link " + unknownLinkId + " admin class to " + r.administrativeClass.value + " and municipality code to " + r.municipalityCode)
-              speedLimitDao.updateUnknownSpeedLimitAdminClass(unknownLinkId, r.administrativeClass, r.municipalityCode)
+              speedLimitDao.updateUnknownSpeedLimitAdminClassAndMunicipality(unknownLinkId, r.administrativeClass, r.municipalityCode)
             case _ => None
           }
         }
