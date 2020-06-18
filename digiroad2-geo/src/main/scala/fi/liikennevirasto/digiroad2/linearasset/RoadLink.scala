@@ -80,7 +80,7 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
     val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
     val constructionTypeAllowed: Seq[ConstructionType] = Seq(UnderConstruction, Planned)
 
-    !((roadLinkTypeAllowed.contains(linkType) || constructionTypeAllowed.contains(constructionType)) && administrativeClass == State)
+    !(constructionTypeAllowed.contains(constructionType) || (roadLinkTypeAllowed.contains(linkType) && administrativeClass == State))
   }
 
   def roadNameIdentifier: Option[String] = {
