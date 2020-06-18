@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
+
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, _}
@@ -13,6 +14,7 @@ import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.util.LaneUtils.roadLinkTempDAO
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
@@ -82,14 +84,21 @@ trait LaneOperations {
   // adjustLanesSideCodes function will validate that
   def checkSideCodes (roadLinks: Seq[RoadLink], changedSet: ChangeSet, allLanes: Seq[PersistedLane] ): (Seq[PersistedLane], ChangeSet) = {
 
-    val roadAddresses = LaneUtils.viiteClient.fetchAllByLinkIds(roadLinks.map(_.linkId))
+    val linkIds = roadLinks.map(_.linkId)
+    val roadAddresses = LaneUtils.viiteClient.fetchAllByLinkIds(linkIds)
                                               .map( elem => RoadAddressTEMP (elem.linkId, elem.roadNumber, elem.roadPartNumber, elem.track,
                                                 elem.startAddrMValue, elem.endAddrMValue, elem.startMValue, elem.endMValue,elem.geom, Some(elem.sideCode), Some(0) )
                                               )
+    val roadAddressesGrouped = roadAddresses.groupBy(_.linkId)
+
+    val vkmRoadAddress = withDynSession {
+                                roadLinkTempDAO.getByLinkIds(linkIds.toSet)
+                          }
+    val allRoadAddresses = vkmRoadAddress.filterNot(addr => roadAddressesGrouped(addr.linkId).nonEmpty) ++ roadAddresses
 
     roadLinks.foldLeft(Seq.empty[PersistedLane], changedSet) {
       case ((_,changedSet), roadLink) =>
-        adjustLanesSideCodes(roadLink, allLanes, changedSet, roadAddresses)
+        adjustLanesSideCodes(roadLink, allLanes, changedSet, allRoadAddresses)
     }
   }
 
@@ -228,20 +237,6 @@ trait LaneOperations {
       }
     }
 
-    /* Try to decode the correct Lane Number based on SideCode and TrafficDirection when TrafficDirection is just one-way */
-  /*  def decodeLaneNumberBySideCodeAndTraffic(sideCode: SideCode, trafficDirection: TrafficDirection): Int = {
-      sideCode match {
-        case SideCode.TowardsDigitizing => if (trafficDirection == TrafficDirection.TowardsDigitizing) 11
-                                            else 21
-
-        case SideCode.AgainstDigitizing => if (trafficDirection == TrafficDirection.AgainstDigitizing) 11
-                                            else 21
-
-        case _ => 11
-      }
-
-    }*/
-
     def getLaneCodesForSideCodeAdjust(lanes: Seq[PersistedLane], laneCodeStart: Int, laneCodeEnd: Int, sideCode: SideCode ): Seq[SideCodeAdjustment] = {
       lanes.filter { lane =>
                     val isLaneCodeAllowed = lane.laneCode >= laneCodeStart && lane.laneCode <= laneCodeEnd
@@ -275,11 +270,6 @@ trait LaneOperations {
 
     val filteredRoadAddresses = roadAddresses.find(_.linkId == roadLink.linkId)
 
-    val filteredRoadAddressesSideCode = filteredRoadAddresses match {
-      case Some(roadAddress) => roadAddress.sideCode.get
-      case _ => SideCode.TowardsDigitizing
-    }
-
     val (mainLane11SideCode, mainLane21SideCode) = filteredRoadAddresses match {
                                                       case Some(roadAddress) =>
                                                         (fixSideCode(roadAddress, MainLane.towardsDirection.toString),
@@ -291,8 +281,6 @@ trait LaneOperations {
 
 
     val (mainLaneDirectionOK, mainLaneDirectionRemove) = getLaneDirectionOkAndToRemove( filteredRoadAddresses,roadLink.trafficDirection )
-
-   // val mainLaneSingleDirection = decodeLaneNumberBySideCodeAndTraffic(filteredRoadAddressesSideCode, roadLink.trafficDirection)
 
     val lanesToProcess = lanes.filter(_.linkId == roadLink.linkId)
     val baseLane = lanesToProcess.minBy(_.laneCode)
@@ -330,7 +318,11 @@ trait LaneOperations {
 
 
           // case both main lanes exists
-          case _ => (Seq(), Seq())
+          case _ =>
+            val needAdjustSideCodeLane11 = getLaneCodesForSideCodeAdjust(lanesToProcess, MainLane.towardsDirection, FourthRightAdditional.towardsDirection, mainLane11SideCode)
+            val needAdjustSideCodeLane21 = getLaneCodesForSideCodeAdjust(lanesToProcess, MainLane.againstDirection, FourthRightAdditional.againstDirection, mainLane21SideCode)
+
+            (Seq(), needAdjustSideCodeLane11 ++ needAdjustSideCodeLane21)
         }
 
         // To remove the lanes with wrong SideCode
@@ -358,7 +350,7 @@ trait LaneOperations {
 
 
 
-        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))// && lane.sideCode == SideCode.BothDirections.value))
+        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))
                       Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
                     else
                       Seq()
@@ -382,7 +374,7 @@ trait LaneOperations {
 
       case TrafficDirection.AgainstDigitizing =>
 
-        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK)) // && lane.sideCode == SideCode.BothDirections.value))
+        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))
                       Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
                     else
                       Seq()
