@@ -84,7 +84,12 @@
 
     this.isStateExclusions = function (selectedAsset) {
       var statesExcluded = [35,43,60,62,65,76,170,295,318,417,438,478,736,766,771,941];
-      var municipalityCode = _.isUndefined(selectedAsset.municipalityCode) ? selectedAsset.getMunicipalityCode() : selectedAsset.municipalityCode;
+      var municipalityCode;
+
+      if ( !_.isUndefined(selectedAsset.municipalityCode) )
+        municipalityCode = selectedAsset.municipalityCode;
+      else if (typeof selectedAsset.getMunicipalityCode == 'function' )
+        municipalityCode = selectedAsset.getMunicipalityCode();
 
       var haveRights =  me.isOperator() || me.hasRightsInMunicipality(municipalityCode);
 
