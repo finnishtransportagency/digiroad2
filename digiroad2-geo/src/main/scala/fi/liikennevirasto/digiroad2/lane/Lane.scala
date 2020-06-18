@@ -127,7 +127,11 @@ object LaneNumber {
     def againstDirection = 29
   }
 
-  case object Unknown extends LaneNumber { def towardsDirection = 99;  def againstDirection = 99; }
+  case object Unknown extends LaneNumber {
+    def towardsDirection = 99;
+    def againstDirection = 99;
+  }
+
 }
 
 
