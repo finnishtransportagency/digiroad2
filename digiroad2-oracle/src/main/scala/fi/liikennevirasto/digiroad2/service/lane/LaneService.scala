@@ -254,8 +254,6 @@ trait LaneOperations {
 
       if (laneNumber == laneNum.againstDirection)
         (laneNum.againstDirection, FourthRightAdditional.againstDirection)
-      else if (laneNumber == laneNum.towardsDirection)
-        (laneNum.towardsDirection, FourthRightAdditional.towardsDirection)
       else
         (laneNum.towardsDirection, FourthRightAdditional.towardsDirection)
     }
