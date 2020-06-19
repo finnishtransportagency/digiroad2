@@ -328,12 +328,12 @@ trait LaneOperations {
         val toRemove = lanesToProcess.filterNot(_.id == 0L)
                                     .filter { lane =>
                                       val isLaneCodeTowards = lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection
-                                      val isSideCodeTowardsOk = lane.sideCode != mainLane11SideCode.value && lane.sideCode != SideCode.BothDirections.value
+                                      val isSideCodeTowardsWrong = lane.sideCode != mainLane11SideCode.value && lane.sideCode != SideCode.BothDirections.value
 
                                       val isLaneCodeAgainst = lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection
-                                      val isSideCodeAgainstOk = lane.sideCode != mainLane21SideCode.value && lane.sideCode != SideCode.BothDirections.value
+                                      val isSideCodeAgainstWrong = lane.sideCode != mainLane21SideCode.value && lane.sideCode != SideCode.BothDirections.value
 
-                                      (isLaneCodeTowards && isSideCodeTowardsOk ) || (isLaneCodeAgainst && isSideCodeAgainstOk)
+                                      (isLaneCodeTowards && isSideCodeTowardsWrong ) || (isLaneCodeAgainst && isSideCodeAgainstWrong)
                                      }
                                     .map(_.id)
 
@@ -345,33 +345,8 @@ trait LaneOperations {
 
         (lanesToAdd, newChangeSet)
 
-      case TrafficDirection.TowardsDigitizing =>
 
-
-
-        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))
-                      Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
-                    else
-                      Seq()
-
-        val (laneCodeStart, laneCodeEnd) = getLaneNumbersRange(mainLaneDirectionOK)
-        val needAdjustSideCode = getLaneCodesForSideCodeAdjust(lanesToProcess, laneCodeStart, laneCodeEnd, SideCode.BothDirections)
-
-        val toRemove = lanesToProcess.filterNot(_.id == 0L)
-                                    .filter(lane => (lane.laneCode >= mainLaneDirectionRemove._1 && lane.laneCode <= mainLaneDirectionRemove._2) ||
-                                              lane.sideCode != SideCode.BothDirections.value)
-                                    .map(_.id)
-
-
-        val lanesToAdd = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id))
-        val newChangeSet = changeSet.copy(generatedPersistedLanes = changeSet.generatedPersistedLanes ++ lanesToAdd,
-                                    expiredLaneIds = changeSet.expiredLaneIds ++ toRemove,
-                                    adjustedSideCodes = changeSet.adjustedSideCodes ++ needAdjustSideCode )
-
-        (lanesToAdd, newChangeSet)
-
-
-      case TrafficDirection.AgainstDigitizing =>
+      case TrafficDirection.TowardsDigitizing | TrafficDirection.AgainstDigitizing  =>
 
         val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))
                       Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
@@ -393,6 +368,7 @@ trait LaneOperations {
                                     adjustedSideCodes = changeSet.adjustedSideCodes ++ needAdjustSideCode )
 
         (lanesToAdd, newChangeSet)
+
 
       case _ => (lanes, changeSet)
     }
