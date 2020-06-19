@@ -323,15 +323,17 @@ trait LaneOperations {
         }
 
         // To remove the lanes with wrong SideCode
-        val toRemove = lanesToProcess.filterNot(_.id == 0L)
-                                    .filter { lane =>
-                                      val isLaneCodeTowards = lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection
-                                      val isSideCodeTowardsWrong = lane.sideCode != mainLane11SideCode.value && lane.sideCode != SideCode.BothDirections.value
+        val toRemove = lanesToProcess.filter { lane =>
+                                        val isValidLaneId = lane.id != 0L
+                                        val isLaneCodeTowards = lane.laneCode >= MainLane.towardsDirection && lane.laneCode <= FourthRightAdditional.towardsDirection
+                                        val isSideCodeTowardsWrong = lane.sideCode != mainLane11SideCode.value && lane.sideCode != SideCode.BothDirections.value
 
-                                      val isLaneCodeAgainst = lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection
-                                      val isSideCodeAgainstWrong = lane.sideCode != mainLane21SideCode.value && lane.sideCode != SideCode.BothDirections.value
+                                        val isLaneCodeAgainst = lane.laneCode >= MainLane.againstDirection && lane.laneCode <= FourthRightAdditional.againstDirection
+                                        val isSideCodeAgainstWrong = lane.sideCode != mainLane21SideCode.value && lane.sideCode != SideCode.BothDirections.value
 
-                                      (isLaneCodeTowards && isSideCodeTowardsWrong ) || (isLaneCodeAgainst && isSideCodeAgainstWrong)
+                                        val isLaneToRemove = (isLaneCodeTowards && isSideCodeTowardsWrong ) || (isLaneCodeAgainst && isSideCodeAgainstWrong)
+
+                                        isValidLaneId && isLaneToRemove
                                      }
                                     .map(_.id)
 
@@ -354,9 +356,13 @@ trait LaneOperations {
         val (laneCodeStart, laneCodeEnd) = getLaneNumbersRange(mainLaneDirectionOK)
         val needAdjustSideCode = getLaneCodesForSideCodeAdjust(lanesToProcess, laneCodeStart, laneCodeEnd, SideCode.BothDirections)
 
-        val toRemove = lanesToProcess.filterNot(_.id == 0L)
-                                    .filter(lane => (lane.laneCode >= mainLaneDirectionRemove._1 && lane.laneCode <= mainLaneDirectionRemove._2) ||
-                                              lane.sideCode != SideCode.BothDirections.value)
+        val toRemove = lanesToProcess.filter { lane =>
+                                      val isValidLaneId = lane.id != 0L
+                                      val isLaneCodeToRemove = lane.laneCode >= mainLaneDirectionRemove._1 && lane.laneCode <= mainLaneDirectionRemove._2
+                                      val isSideCodeWrong = lane.sideCode != SideCode.BothDirections.value
+
+                                      isValidLaneId && ( isLaneCodeToRemove ||  isSideCodeWrong )
+                                    }
                                     .map(_.id)
 
 
