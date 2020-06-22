@@ -189,24 +189,46 @@ trait ResolvingFrozenRoadLinks {
     adjRoadLinks.map { adjRoadLink =>
       val ((first, last, missing), roadLinks) = adjRoadLink
 
-      val adjacentFirst = mappedAddresses.filter { address =>
-        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) && (
-          GeometryUtils.areAdjacent(first, address.lastP) || GeometryUtils.areAdjacent(first, address.firstP))
+      val adjacentFirstLast = mappedAddresses.filter { address =>
+        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(first, address.lastP) )
       }
 
-      val adjacentLast = mappedAddresses.filter { address =>
-        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) && (
-          GeometryUtils.areAdjacent(last, address.lastP) || GeometryUtils.areAdjacent(last, address.firstP))
+      val adjacentFirstFirst = mappedAddresses.filter { address =>
+        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(first, address.firstP) )
+      }
+
+      val adjacentLastLast = mappedAddresses.filter { address =>
+        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(last, address.lastP))
+      }
+
+      val adjacentLastFirst = mappedAddresses.filter { address =>
+        Try(missing.roadNumber.map(_.toInt).head).toOption.contains(address.roadAddress.road) &&
+          Try(missing.roadPartNumber.map(_.toInt).head).toOption.contains(address.roadAddress.roadPart) && (
+          GeometryUtils.areAdjacent(last, address.firstP))
       }
 
       val frozenAddress =
-        if (adjacentFirst.nonEmpty && adjacentLast.nonEmpty &&
-          adjacentFirst.head.roadAddress.road == adjacentLast.head.roadAddress.road &&
-          adjacentFirst.head.roadAddress.roadPart == adjacentLast.head.roadAddress.roadPart) {
+        if ((adjacentFirstLast ++ adjacentFirstFirst).nonEmpty && (adjacentLastLast++adjacentLastFirst).nonEmpty) {
 
-          val address = adjacentFirst.head.roadAddress
-          Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(missing.linkId, address.road, address.roadPart, address.track,
-            address.startAddressM, address.endAddressM, address.startMValue, address.endMValue, missing.geometry, None, municipalityCode = address.municipalityCode)))
+          val startAddressM = (adjacentFirstLast.nonEmpty, adjacentFirstFirst.nonEmpty) match {
+            case (true, false) => adjacentFirstLast.head.roadAddress.endAddressM
+            case _ => adjacentFirstFirst.head.roadAddress.startAddressM
+          }
+
+          val endAddressM = (adjacentLastFirst.nonEmpty, adjacentLastLast.nonEmpty) match {
+            case (true, false) => adjacentLastFirst.head.roadAddress.startAddressM
+            case _ => adjacentLastLast.head.roadAddress.endAddressM
+          }
+
+          val address = (adjacentFirstLast ++ adjacentFirstFirst).head.roadAddress
+          Some(RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(missing.linkId, address.road, address.roadPart, Track.Unknown,
+            startAddressM, endAddressM, 0, GeometryUtils.geometryLength(missing.geometry), missing.geometry, None, municipalityCode = address.municipalityCode)))
         } else
           None
 
@@ -294,7 +316,7 @@ trait ResolvingFrozenRoadLinks {
     }.toSeq
 
 
-    (newAddress, frozenRoadLinks)
+    (newAddress, frozenRoadLinks.filterNot( frozen => newAddress.map(_.roadAddress.linkId).contains(frozen.linkId)) )
   }
 
   def recalculateTrackAndSideCode(mappedAddresses: Seq[RoadAddressTEMPwithPoint], frozenAddresses: Seq[RoadAddressTEMPwithPoint], result: Seq[RoadAddressTEMPwithPoint]): Seq[RoadAddressTEMPwithPoint] = {
@@ -365,7 +387,7 @@ trait ResolvingFrozenRoadLinks {
         val (first, last) = GeometryUtils.geometryEndpoints(roadLink.geometry)
         RoadAddressTEMPwithPoint(first, last, RoadAddressTEMP(address.linkId, address.roadNumber,
           address.roadPartNumber, address.track, address.startAddrMValue, address.endAddrMValue,
-          address.startMValue, address.endMValue, address.geom, Some(address.sideCode), Some(roadLink.municipalityCode)))
+          address.startMValue, address.endMValue, roadLink.geometry, Some(address.sideCode), Some(roadLink.municipalityCode)))
       }
     }
 

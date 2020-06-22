@@ -6,7 +6,11 @@
 
     this.formEditModeAccess = function(selectedAsset) {
       var municipalityCode = selectedAsset.getMunicipalityCode();
-      return (me.isMunicipalityMaintainer() && !me.isState(selectedAsset.get()) && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+
+      var isMunicipalityMaintainerAndHaveRights = me.isMunicipalityMaintainer() && !me.isState(selectedAsset.get()) && me.hasRightsInMunicipality(municipalityCode);
+      var isElyMaintainerAndHasRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);
+
+      return  me.isStateExclusions(selectedAsset) || isMunicipalityMaintainerAndHaveRights || isElyMaintainerAndHasRights || me.isOperator();
     };
 
 

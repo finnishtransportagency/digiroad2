@@ -134,7 +134,11 @@ object LaneNumber {
     def againstDirection = 29
   }
 
-  case object Unknown extends LaneNumber { def towardsDirection = 99;  def againstDirection = 99; }
+  case object Unknown extends LaneNumber {
+    def towardsDirection = 99
+    def againstDirection = 99
+  }
+
 }
 
 
@@ -153,6 +157,8 @@ object LaneType {
   def apply(value: Int): LaneType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
+
+  def getDefault: LaneType = Unknown
 
   case object Main extends LaneType { def value = 1; def typeDescription = "Main lane"; def finnishDescription = "Pääkaista"; }
   case object Passing extends LaneType { def value = 2; def typeDescription = "Passing lane"; def finnishDescription = "Ohituskaista"; }
