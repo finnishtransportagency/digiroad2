@@ -554,7 +554,7 @@
       return $('<div class="wrapper read-only">' +
           '   <div class="form form-horizontal form-dark asset-factory">' +
           '     <div class="form-group">' +
-          '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
+          '       <p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
           '     </div>' +
           '     <div class="form-group">' +
           '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + self.informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
@@ -638,7 +638,7 @@
 
     var newLaneStructure = function (laneNumber) {
       var indexOfProperty = _.findIndex(defaultFormStructure.fields, {'publicId': 'lane_code'});
-      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 8};
+      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 9};
       currentFormStructure = defaultFormStructure;
     };
 

@@ -1192,7 +1192,7 @@
               '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
               '     </div>' +
               '     <div class="form-group">' +
-              '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
+              '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + self.informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
               '     </div>' +
               verifiedFields() +
               '     <div class="form-group">' +
