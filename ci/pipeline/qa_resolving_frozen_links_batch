@@ -2,24 +2,9 @@ import java.net.URI
 
 pipeline {
     agent any
-    parameters {
-        choice(name: 'TASK', choices: [
-                                        'manoeuvre',
-                                        'hazmatTransportProhibition',
-                                        'heighLimit',
-                                        'totalWeightLimit',
-                                        'trailerTruckWeight',
-                                        'axleWeightLimit',
-                                        'bogieWeightLimit',
-                                        'widthLimit',
-                                        'lengthLimit',
-                                        'pedestrianCrossing',
-                                        'speedLimit'
-                                        ])
-    }
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: "50"))
+        buildDiscarder(logRotator(numToKeepStr: "25"))
         disableConcurrentBuilds()
     }
 
@@ -30,11 +15,11 @@ pipeline {
 
                     script {
                         STAGE_RUN_TASK = [
-                            "ssh web@production1 \'cd /home/web/digiroad2/current && echo YES |",
+                            "ssh web@testing1 \'cd /home/web/digiroad2/current && echo YES |",
                              "/home/web/digiroad2/current/./sbt",
-                             "-Ddigiroad2.env=production",
-                             "\"project digiroad2-oracle\"",
-                             "\"test:run-main fi.liikennevirasto.digiroad2.util.AssetValidatorProcess ${TASK}\"\'"
+                             "-Ddigiroad2.env=testing",
+                             "\"project digiroad2\"",
+                             "\"test:run-main fi.liikennevirasto.digiroad2.util.DataFixture resolving_Frozen_Links\"\'"
                         ].join(" ")
                     }
             }
