@@ -222,7 +222,7 @@ class LaneFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 2
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(20L, 21L))
+    filledTopology.map(_.id).sorted should be (Seq(20L, 21L))
     filledTopology.map(_.linkId) should be (Seq( 4L, 4L))
 
     changeSet.expiredLaneIds should be (Set())
@@ -259,10 +259,43 @@ class LaneFillerSpec extends FunSuite with Matchers {
 
     filledTopology should have size 3
     filledTopology.map(_.sideCode) should be (Seq(SideCode.BothDirections.value, SideCode.BothDirections.value, SideCode.BothDirections.value))
-    filledTopology.map(_.id) should be (Seq(2L, 1L, 4L))
+    filledTopology.map(_.id).sorted should be (Seq(1L, 2L, 4L))
     filledTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId, roadLinkTowards1.linkId))
     filledTopology.map(_.geometry) should be (Seq(Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Seq(Point(5.0, 0.0), Point(10.0, 0.0))))
 
     changeSet.expiredLaneIds should be (Set(3L))
+  }
+
+  test("Nothing should happen to lanes already correct and to be created(id=0)") {
+    val topology = Seq(roadLinkTowards1)
+
+    //id = 0 means that already had the side code adjustment before entering fillTopology
+    val lane11 = PersistedLane(0L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
+      11, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
+    )
+
+    val lane21 = PersistedLane(0L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
+      21, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
+    )
+
+    val linearAssets = Map(roadLinkTowards1.linkId -> Seq(lane11, lane21))
+
+    val (filledTopology, changeSet) = laneFiller.fillTopology(topology, linearAssets)
+
+    filledTopology should have size 2
+    filledTopology.map(_.sideCode) should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
+    filledTopology.map(_.id) should be (Seq(0L, 0L))
+    filledTopology.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId))
+    filledTopology.flatMap(_.laneAttributes).flatMap(_.values).sortBy(_.value.asInstanceOf[Int]) should be (List(LanePropertyValue(11), LanePropertyValue(21)))
+
+    //change set should be empty since nothing changed
+    changeSet.adjustedMValues should be (Seq())
+    changeSet.adjustedVVHChanges should be (Seq())
+    changeSet.adjustedSideCodes should be (Seq())
+    changeSet.expiredLaneIds should be (Set())
+    changeSet.valueAdjustments should be (Seq())
+    changeSet.generatedPersistedLanes should be (Seq())
   }
 }
