@@ -302,13 +302,8 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
 
-  def deleteEntryLane( laneId: Long ): Unit = {
-
-    val laneCode = sql"""SELECT lane_code FROM LANE WHERE id = $laneId""".as[Int].first
+  def deleteEntryLane(laneId: Long): Unit = {
     val lanePositionId = sql"""SELECT lane_position_id FROM LANE_LINK WHERE lane_id = $laneId""".as[Int].first
-
-    if (LaneNumber.isMainLane(laneCode))
-      throw new IllegalArgumentException("Cannot Delete a main lane!")
 
     sqlu"""DELETE FROM LANE_ATTRIBUTE WHERE lane_id = $laneId""".execute
     sqlu"""DELETE FROM LANE_LINK WHERE lane_id = $laneId""".execute
@@ -385,6 +380,15 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     sqlu"""UPDATE LANE_POSITION
            SET  START_MEASURE = $startMeasure, END_MEASURE = $endMeasure,  modified_date = SYSDATE, adjusted_timestamp = $vvhTimestamp
+          WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
+     """.execute
+
+    updateLaneModifiedFields(id, username)
+  }
+
+  def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = vvhClient.roadLinkData.createVVHTimeStamp()): Unit = {
+    sqlu"""UPDATE LANE_POSITION
+           SET  SIDE_CODE = $newSideCode,  modified_date = SYSDATE, adjusted_timestamp = $vvhTimestamp
           WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
      """.execute
 

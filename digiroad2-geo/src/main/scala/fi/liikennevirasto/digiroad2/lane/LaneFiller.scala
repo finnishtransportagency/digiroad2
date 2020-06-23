@@ -12,13 +12,11 @@ object  LaneFiller {
   case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
   case class VVHChangesAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long)
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
-  case class ValueAdjustment(lane: PersistedLane)
 
   case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
                         adjustedVVHChanges: Seq[VVHChangesAdjustment] = Seq.empty[VVHChangesAdjustment],
                         adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                         expiredLaneIds: Set[Long] = Set.empty[Long],
-                        valueAdjustments: Seq[ValueAdjustment] = Seq.empty[ValueAdjustment],
                         generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane])
 
 
