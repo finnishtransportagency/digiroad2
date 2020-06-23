@@ -51,6 +51,7 @@ class TierekisteriPointConversionImporterSpec extends FunSuite with Matchers  {
       super.createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, existingRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink])
 
     override val allowedVerticalLevel : Seq[Int] = { Seq(1, 2, 3, 4)}
+    override val numericValuePublicId: String = "weight"
   }
 
 
