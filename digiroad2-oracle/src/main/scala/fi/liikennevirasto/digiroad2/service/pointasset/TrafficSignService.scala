@@ -61,14 +61,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   private val AdditionalPanelDistance = 2
 
   private val getSingleChoiceDefaultValueByPublicId = Map(
-    "structure" -> Structure.getDefault.value,
+    "structure" -> PointAssetStructure.getDefault.value,
     "condition" -> Condition.getDefault.value,
     "size" -> Size.getDefault.value,
     "coating_type" -> CoatingType.getDefault.value,
     "sign_material" -> SignMaterial.getDefault.value,
     "location_specifier" -> LocationSpecifier.getDefault.value,
     "lane_type" -> LaneType.getDefault.value,
-    "life_cycle" -> SignLifeCycle.getDefault.value,
+    "life_cycle" -> PointAssetState.getDefault.value,
     "type_of_damage" -> TypeOfDamage.getDefault.value,
     "urgency_of_repair" -> UrgencyOfRepair.getDefault.value
   )

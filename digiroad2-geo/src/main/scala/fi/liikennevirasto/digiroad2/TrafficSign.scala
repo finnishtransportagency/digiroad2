@@ -1459,8 +1459,6 @@ object UrgencyOfRepair {
 
   def getDefault: UrgencyOfRepair = Unknown
 
-  def getDefault: UrgencyOfRepair = Unknown
-
   case object VeryUrgent extends UrgencyOfRepair { def value = 1; def description = "Erittäin kiireellinen"  }
   case object Urgent extends UrgencyOfRepair { def value = 2; def description = "kiireellinen" }
   case object SomehowUrgent extends UrgencyOfRepair { def value = 3; def description = "Jokseenkin kiireellinen" }
@@ -1478,8 +1476,6 @@ object Condition {
   def apply(intValue: Int):Condition = {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
-
-  def getDefault: Condition = Unknown
 
   def getDefault: Condition = Unknown
 
@@ -1505,8 +1501,6 @@ object Size {
 
   def getDefault: Size = Unknown
 
-  def getDefault: Size = Unknown
-
   case object CompactSign extends Size { def value = 1; def description = "Pienikokoinen merkki"  }
   case object RegularSign extends Size { def value = 2; def description = "Normaalikokoinen merkki" }
   case object LargeSign extends Size { def value = 3; def description = "Suurikokoinen merkki" }
@@ -1524,8 +1518,6 @@ object CoatingType {
   def apply(intValue: Int):CoatingType = {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
-
-  def getDefault: CoatingType = Unknown
 
   def getDefault: CoatingType = Unknown
 
@@ -1549,8 +1541,6 @@ object SignMaterial {
 
   def getDefault: SignMaterial = Unknown
 
-  def getDefault: SignMaterial = Unknown
-
   case object Plywood extends SignMaterial { def value = 1; def description = "Vaneri"  }
   case object Aluminum extends SignMaterial { def value = 2; def description = "Alumiini" }
   case object Other extends SignMaterial { def value = 3; def description = "Muu" }
@@ -1568,8 +1558,6 @@ object LocationSpecifier {
   def apply(intValue: Int):LocationSpecifier = {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
-
-  def getDefault: LocationSpecifier = Unknown
 
   def getDefault: LocationSpecifier = Unknown
 
@@ -1595,8 +1583,6 @@ object TypeOfDamage {
   def apply(intValue: Int):TypeOfDamage = {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
-
-  def getDefault: TypeOfDamage = Unknown
 
   def getDefault: TypeOfDamage = Unknown
 
