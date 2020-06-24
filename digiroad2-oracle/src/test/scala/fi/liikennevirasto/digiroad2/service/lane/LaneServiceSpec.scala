@@ -1094,4 +1094,119 @@ class LaneServiceSpec extends LaneTestSupporter {
       deletedSubLane14Link101.endMeasure should be(500.0)
     }
   }
+
+  test("Adjust lanes: Create missing main lane 21 and adjust side codes of lanes 11 and 12"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
+
+      val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
+      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 1, usernameTest).head
+
+      val mockRoadLink = RoadLink(100L, Seq(), 500, State, 2, TrafficDirection.BothDirections,
+        EnclosedTrafficArea, None, None)
+      val mockRoadAddressTEMP = RoadAddressTEMP(mockRoadLink.linkId, 0, 0, Track.Combined,
+        1000, 1500, 0, 500, Seq(), Some(SideCode.TowardsDigitizing), Some(0))
+
+      val lanes = ServiceWithDao.fetchExistingLanesByLinkIds(Seq(mockRoadLink.linkId))
+
+      val (updatedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(mockRoadLink, lanes, ChangeSet(), Seq(mockRoadAddressTEMP))
+
+      updatedLanes.length should be(3)
+      val lanesSideCodes = updatedLanes.map(lane => SideCode(lane.sideCode))
+      lanesSideCodes.sortBy(_.value) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing, SideCode.AgainstDigitizing))
+      updatedLanes.map(_.laneCode).sorted should be(Seq(11, 12, 21))
+      updatedLanes.count(_.id == 0) should be(1)
+      val newLane = updatedLanes.find(_.id == 0).head
+      newLane.laneCode should be(21)
+      SideCode(newLane.sideCode) should be(SideCode.AgainstDigitizing)
+
+      changeSet.adjustedSideCodes.length should be(2)
+      changeSet.adjustedSideCodes.map(_.laneId).sorted should be(Seq(lane11Id, lane12Id).sorted)
+      changeSet.adjustedSideCodes.map(_.sideCode) should be(Seq(SideCode.TowardsDigitizing, SideCode.TowardsDigitizing))
+      changeSet.expiredLaneIds.size should be(0)
+    }
+  }
+
+  test("Adjust lanes: Create missing main lane 21 and delete lanes 11 and 12"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
+
+      val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
+      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 1, usernameTest).head
+
+      val mockRoadLink = RoadLink(100L, Seq(), 500, State, 2, TrafficDirection.AgainstDigitizing,
+        EnclosedTrafficArea, None, None)
+      val mockRoadAddressTEMP = RoadAddressTEMP(mockRoadLink.linkId, 0, 0, Track.Combined,
+        1000, 1500, 0, 500, Seq(), Some(SideCode.TowardsDigitizing), Some(0))
+
+      val lanes = ServiceWithDao.fetchExistingLanesByLinkIds(Seq(mockRoadLink.linkId))
+
+      val (updatedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(mockRoadLink, lanes, ChangeSet(), Seq(mockRoadAddressTEMP))
+
+      updatedLanes.length should be(1)
+      val updatedLane = updatedLanes.head
+      SideCode(updatedLane.sideCode) should be(SideCode.BothDirections)
+      updatedLane.id should be(0)
+      updatedLane.laneCode should be(21)
+
+      changeSet.adjustedSideCodes.length should be(0)
+      changeSet.expiredLaneIds.size should be(2)
+      changeSet.expiredLaneIds.toSeq.sorted should be(Seq(lane11Id, lane12Id).sorted)
+    }
+  }
+
+  test("Adjust lanes: Adjust sideCode of lane 11"){
+    runWithRollback {
+      val lane11Id = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 2, usernameTest).head
+
+      val mockRoadLink = RoadLink(100L, Seq(), 500, State, 2, TrafficDirection.TowardsDigitizing,
+        EnclosedTrafficArea, None, None)
+      val mockRoadAddressTEMP = RoadAddressTEMP(mockRoadLink.linkId, 0, 0, Track.Combined,
+        1000, 1500, 0, 500, Seq(), Some(SideCode.TowardsDigitizing), Some(0))
+
+      val lanes = ServiceWithDao.fetchExistingLanesByLinkIds(Seq(mockRoadLink.linkId))
+
+      val (updatedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(mockRoadLink, lanes, ChangeSet(), Seq(mockRoadAddressTEMP))
+
+      updatedLanes.length should be(1)
+      val updatedLane = updatedLanes.head
+      SideCode(updatedLane.sideCode) should be(SideCode.BothDirections)
+      updatedLane.id should be(lane11Id)
+      updatedLane.laneCode should be(11)
+
+      changeSet.adjustedSideCodes.length should be(1)
+      changeSet.expiredLaneIds.size should be(0)
+    }
+  }
+
+  test("Adjust lanes: Delete lane 21"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLane21 = newLane11.copy(properties = lanePropertiesValues21)
+
+      val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
+      val lane21Id = ServiceWithDao.create(Seq(newLane21), Set(100L), 1, usernameTest).head
+
+      val mockRoadLink = RoadLink(100L, Seq(), 500, State, 2, TrafficDirection.TowardsDigitizing,
+        EnclosedTrafficArea, None, None)
+      val mockRoadAddressTEMP = RoadAddressTEMP(mockRoadLink.linkId, 0, 0, Track.Combined,
+        1000, 1500, 0, 500, Seq(), Some(SideCode.TowardsDigitizing), Some(0))
+
+      val lanes = ServiceWithDao.fetchExistingLanesByLinkIds(Seq(mockRoadLink.linkId))
+
+      val (updatedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(mockRoadLink, lanes, ChangeSet(), Seq(mockRoadAddressTEMP))
+
+      updatedLanes.length should be(1)
+      val updatedLane = updatedLanes.head
+      SideCode(updatedLane.sideCode) should be(SideCode.BothDirections)
+      updatedLane.id should be(lane11Id)
+      updatedLane.laneCode should be(11)
+
+      changeSet.adjustedSideCodes.length should be(0)
+      changeSet.expiredLaneIds.size should be(1)
+      changeSet.expiredLaneIds should be(Set(lane21Id))
+    }
+  }
 }

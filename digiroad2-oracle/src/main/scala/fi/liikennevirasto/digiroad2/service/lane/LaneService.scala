@@ -789,11 +789,6 @@ trait LaneOperations {
         dao.updateMValues(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), VvhGenerated, adjustment.vvhTimestamp)
       }
 
-      val ids = changeSet.expiredLaneIds.toSeq
-      if (ids.nonEmpty)
-        logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach(moveToHistory(_, None, true, true, VvhGenerated))
-
       if (changeSet.adjustedSideCodes.nonEmpty)
         logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
 
@@ -801,6 +796,11 @@ trait LaneOperations {
         moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
         dao.updateSideCode(adjustment.laneId, adjustment.sideCode.value, VvhGenerated)
       }
+
+      val ids = changeSet.expiredLaneIds.toSeq
+      if (ids.nonEmpty)
+        logger.info("Expiring ids " + ids.mkString(", "))
+      ids.foreach(moveToHistory(_, None, true, true, VvhGenerated))
     }
   }
 
