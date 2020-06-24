@@ -459,8 +459,8 @@ object RoadWorksClass {
   def apply(value: Int): RoadWorksClass =
     values.find(_.value == value).getOrElse(Unknown)
 
-  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
-    RoadWorksClass.apply(prohibitionValue).trafficSign
+  def toTrafficSign(roadWorkValue: Int): TrafficSignType =
+    RoadWorksClass.apply(roadWorkValue).trafficSign
 
   case object RoadWorksType extends RoadWorksClass {
     def value: Int = 24
@@ -745,6 +745,8 @@ object AdditionalPanelSize {
   def apply(value: Int): Option[AdditionalPanelSize] = {
     values.find(_.value == value)
   }
+
+  def getDefault: AdditionalPanelSize = SizeOption99
 }
 case object SizeOption1 extends AdditionalPanelSize { def value = 1; def propertyDisplayValue = "Pienikokoinen merkki"}
 case object SizeOption2 extends AdditionalPanelSize { def value = 2; def propertyDisplayValue = "Normaalikokoinen merkki"}
@@ -761,6 +763,8 @@ object AdditionalPanelCoatingType {
   def apply(value: Int): Option[AdditionalPanelCoatingType] = {
     values.find(_.value == value)
   }
+
+  def getDefault: AdditionalPanelCoatingType = CoatingTypeOption99
 }
 case object CoatingTypeOption1 extends AdditionalPanelCoatingType { def value = 1; def propertyDisplayValue = "R1-luokan kalvo"}
 case object CoatingTypeOption2 extends AdditionalPanelCoatingType { def value = 2; def propertyDisplayValue = "R2-luokan kalvo"}
@@ -777,6 +781,8 @@ object AdditionalPanelColor {
   def apply(value: Int): Option[AdditionalPanelColor] = {
     values.find(_.value == value)
   }
+
+  def getDefault: AdditionalPanelColor = ColorOption99
 }
 case object ColorOption1 extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
 case object ColorOption2 extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}

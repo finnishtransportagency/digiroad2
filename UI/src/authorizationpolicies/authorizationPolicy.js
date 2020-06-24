@@ -48,7 +48,10 @@
     };
 
     this.filterRoadLinks = function(roadLink){
-      return (me.isMunicipalityMaintainer() && roadLink.administrativeClass !== 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode)) || (me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode)) || me.isOperator();
+      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && roadLink.administrativeClass !== 'State' && me.hasRightsInMunicipality(roadLink.municipalityCode);
+      var isElyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(roadLink.municipalityCode);
+
+      return me.isStateExclusions(roadLink) || isMunicipalityAndHaveRights || isElyAndHaveRights || me.isOperator();
     };
 
     this.editModeAccess = function() {
@@ -81,9 +84,16 @@
 
     this.isStateExclusions = function (selectedAsset) {
       var statesExcluded = [35,43,60,62,65,76,170,295,318,417,438,478,736,766,771,941];
-      var isOperatorAndHaveRights = me.isOperator() && me.hasRightsInMunicipality(selectedAsset.municipalityCode);
+      var municipalityCode;
 
-      return _.includes(statesExcluded, selectedAsset.municipalityCode) && isOperatorAndHaveRights;
+      if ( !_.isUndefined(selectedAsset.municipalityCode) )
+        municipalityCode = selectedAsset.municipalityCode;
+      else if (typeof selectedAsset.getMunicipalityCode == 'function' )
+        municipalityCode = selectedAsset.getMunicipalityCode();
+
+      var haveRights =  me.isOperator() || me.hasRightsInMunicipality(municipalityCode);
+
+      return _.includes(statesExcluded, municipalityCode) && haveRights;
     };
 
   };

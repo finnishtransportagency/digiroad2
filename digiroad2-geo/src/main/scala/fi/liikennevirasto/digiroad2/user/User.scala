@@ -1,11 +1,8 @@
 package fi.liikennevirasto.digiroad2.user
 
-import fi.liikennevirasto.digiroad2.Point
-import java.sql.Date
-import java.time.LocalDate
-
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
+
 
 case class Configuration(
                         zoom: Option[Int] = None,
@@ -19,6 +16,12 @@ case class Configuration(
                         lastNotificationDate: Option[String] = None,
                         lastLoginDate: Option[String] = None
                         )
+
+object ElyExceptionsForState {
+  val municipalitiesForAhvenanmaaEly = Set(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
+
+}
+
 
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
@@ -44,8 +47,22 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
-  private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
-    (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isELYMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
+  def isAnElyException( municipalityCode: Int): Boolean = {
+
+    /* Users in Ahvenanmaa need to edit state information */
+    if ( ElyExceptionsForState.municipalitiesForAhvenanmaaEly.contains(municipalityCode) )
+      isAuthorizedFor(municipalityCode)
+    else
+      false
+  }
+
+  private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = {
+    val isElyException = isAnElyException(municipalityCode)
+    val isMunicipalityMaintainerAndIsAuthorized = isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)
+    val isElyMaintainerAndIsAuthorized = isELYMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)
+
+    isElyException || isMunicipalityMaintainerAndIsAuthorized  || isElyMaintainerAndIsAuthorized  || isOperator()
+  }
 
   private def isAuthorizedForArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean =
     isOperator() || (isServiceRoadMaintainer() && configuration.authorizedAreas.contains(areaCode))

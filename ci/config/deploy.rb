@@ -24,7 +24,7 @@ namespace :deploy do
     on roles(:all) do |host|
       execute "tmux kill-session -t 'waiting for your commands' || true"
       execute "mkdir -p #{release_path}/tmp"
-      execute "cd #{release_path} && npm install && export TMPDIR=#{release_path}/tmp && yarn install && grunt deploy --target=#{fetch(:grunt_target)}"
+      execute "cd #{release_path} && npm install && export TMPDIR=#{release_path}/tmp && yarn install --ignore-engines && grunt deploy --target=#{fetch(:grunt_target)}"
       execute "cd #{deploy_path} && mkdir #{release_path}/digiroad2-oracle/lib && cp oracle/* #{release_path}/digiroad2-oracle/lib/."
       execute "mkdir -p #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}"
       execute "cd #{deploy_path} && cp bonecp.properties #{release_path}/digiroad2-oracle/conf/#{fetch(:stage)}/."

@@ -123,15 +123,15 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Should not be able to delete main lanes") {
     runWithRollback {
-      val newLane = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)), Set(100L), 1, usernameTest)
-      newLane.length should be(1)
+      val newLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newLaneId = ServiceWithDao.create(Seq(newLane), Set(100L), 1, usernameTest)
+      newLaneId.length should be(1)
 
       val thrown = intercept[IllegalArgumentException] {
-        ServiceWithDao.deleteMultipleLanes(newLane.toSet)
+        ServiceWithDao.deleteMultipleLanes(Set(100L), Set(ServiceWithDao.getLaneCode(newLane).toInt))
       }
 
       thrown.getMessage should be("Cannot Delete a main lane!")
-
     }
   }
 
@@ -220,8 +220,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Expire a sub lane") {
     runWithRollback {
-      val newSubLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
-      ServiceWithDao.multipleLanesToHistory(Set(newSubLaneId), usernameTest)
+      val newSubLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val newSubLaneId = ServiceWithDao.create(Seq(newSubLane), Set(100L), 1, usernameTest).head
+      ServiceWithDao.multipleLanesToHistory(Set(100L), Set(ServiceWithDao.getLaneCode(newSubLane).toInt), usernameTest)
 
       val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(12), true)
 
@@ -237,8 +238,9 @@ class LaneServiceSpec extends LaneTestSupporter {
 
   test("Delete a sub lane") {
     runWithRollback {
-      val newSubLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
-      ServiceWithDao.deleteMultipleLanes(Set(newSubLaneId))
+      val newSubLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val newSubLaneId = ServiceWithDao.create(Seq(newSubLane), Set(100L), 1, usernameTest).head
+      ServiceWithDao.deleteMultipleLanes(Set(100L), Set(ServiceWithDao.getLaneCode(newSubLane).toInt))
 
       val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(12), true)
       lanes.find(_.id == newSubLaneId) should be(None)
@@ -256,12 +258,13 @@ class LaneServiceSpec extends LaneTestSupporter {
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
       val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
+      val newSubLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val newSubLaneId = ServiceWithDao.create(Seq(newSubLane), Set(100L), 1, usernameTest).head
 
       val subLaneSplit1 = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
       val subLaneSplit2 = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesSubLaneSplit2)
       ServiceWithDao.update(Seq(mainLane.copy(id = mainLaneId)), Set(100L), 1, usernameTest)
-      ServiceWithDao.multipleLanesToHistory(Set(newSubLaneId), usernameTest)
+      ServiceWithDao.multipleLanesToHistory(Set(100L), Set(ServiceWithDao.getLaneCode(newSubLane).toInt), usernameTest)
 
       val subLaneSplit1Id = ServiceWithDao.create(Seq(subLaneSplit1), Set(100L), 1, usernameTest).head
       val subLaneSplit2Id = ServiceWithDao.create(Seq(subLaneSplit2), Set(100L), 1, usernameTest).head
@@ -295,13 +298,14 @@ class LaneServiceSpec extends LaneTestSupporter {
       )
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+      val newSubLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
       val subLane14 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues14)
 
       val mainLaneId = ServiceWithDao.create(Seq(mainLane), Set(100L), 1, usernameTest).head
-      val newSubLane12Id = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)), Set(100L), 1, usernameTest).head
+      val newSubLane12Id = ServiceWithDao.create(Seq(newSubLane12), Set(100L), 1, usernameTest).head
       val newSubLane14Id = ServiceWithDao.create(Seq(subLane14), Set(100L), 1, usernameTest).head
 
-      ServiceWithDao.deleteMultipleLanes(Set(newSubLane12Id))
+      ServiceWithDao.deleteMultipleLanes(Set(100L), Set(ServiceWithDao.getLaneCode(newSubLane12).toInt))
       ServiceWithDao.update(Seq(mainLane.copy(id = mainLaneId), subLane14.copy(id = newSubLane14Id, properties = lanePropertiesValues14To12)), Set(100L), 1, usernameTest)
 
       val lanes = laneDao.fetchLanesByLinkIdsAndLaneCode(Seq(100L), Seq(11, 12), true)

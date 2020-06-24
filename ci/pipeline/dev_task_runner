@@ -58,7 +58,8 @@ pipeline {
         								'merge_municipalities',
         								'fill_new_roadLinks_info',
         								'import_cycling_walking_info',
-        								'resolving_Frozen_Links'
+        								'resolving_Frozen_Links',
+        								'create_roadWorks_using_traffic_signs'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
@@ -77,7 +78,7 @@ pipeline {
     }
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: "25"))
+        buildDiscarder(logRotator(numToKeepStr: "50"))
         disableConcurrentBuilds()
     }
 

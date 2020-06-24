@@ -37,7 +37,7 @@ class RoadLinkTempDAO {
 
   def getByRoadNumberRoadPartTrack(roadNumber: Int, trackCode: Int, roadPart: Set[Long]): Seq[RoadAddressTEMP] = {
     val linkTypeInfo = MassQuery.withIds(roadPart) { idTableName =>
-      sql"""SELECT link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code
+      sql"""SELECT link_Id, municipality_code, road_number, road_part, track_code, start_address_m, end_address_m, start_m_value, end_m_value, side_code, created_date
             FROM temp_road_address_info t
              JOIN #$idTableName i on i.id = t.road_part
             WHERE road_number = $roadNumber
@@ -63,7 +63,6 @@ class RoadLinkTempDAO {
   }
 
   def deleteInfoByLinkIds(linkIds: Set[Long]): Unit = {
-    if (linkIds.nonEmpty) linkIds.mkString(",") else ""
     sqlu"""delete from temp_road_address_info
            where link_id in (#${linkIds.mkString(",")})""".execute
   }

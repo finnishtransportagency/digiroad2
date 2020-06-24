@@ -1659,7 +1659,7 @@ object DataFixture {
   }
 
   def removeUnnecessaryUnknownSpeedLimits(): Unit = {
-    println("\nStart delete unknown speedLimits")
+    println("\nStart delete/update unknown speedLimits")
     println(DateTime.now())
 
     //Get All Municipalities
@@ -1683,12 +1683,12 @@ object DataFixture {
           speedLimitDao.deleteUnknownSpeedLimits(filterRoadLinks)
         }
 
-        // Validate and update AdminClass at unknown SpeedLimit table
+        // Validate and update AdminClass/MunicipalityCode at unknown SpeedLimit table
         unknownSpeedLimitByMunicipality.foreach { case (unknownLinkId, unknownAdminClass) =>
           roadLinks.find(_.linkId == unknownLinkId) match {
-            case Some(r) if r.administrativeClass != AdministrativeClass.apply(unknownAdminClass) =>
-              println("In LinkId " + unknownLinkId + " Admin class updated to: " + r.administrativeClass.value)
-              speedLimitDao.updateUnknownSpeedLimitAdminClass(unknownLinkId, r.administrativeClass)
+            case Some(r) if r.administrativeClass != AdministrativeClass.apply(unknownAdminClass) | r.municipalityCode != municipality =>
+              println("Updated link " + unknownLinkId + " admin class to " + r.administrativeClass.value + " and municipality code to " + r.municipalityCode)
+              speedLimitDao.updateUnknownSpeedLimitAdminClassAndMunicipality(unknownLinkId, r.administrativeClass, r.municipalityCode)
             case _ => None
           }
         }

@@ -789,8 +789,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   def trafficSignsToApi(trafficSigns: Seq[PersistedTrafficSign]): Seq[Map[String, Any]] = {
 
     def showOldTrafficCode(trafficSign: PersistedTrafficSign): String = {
-      val newTrafficCodeStartDate = DateTime.parse("1.6.2020", DateTimeFormat.forPattern("dd.MM.yyyy"))
-      if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(newTrafficCodeStartDate)){
+      if (trafficSignService.getProperty(trafficSign, "old_traffic_code").get.propertyValue == "1" ||  trafficSign.createdAt.get.isBefore(trafficSignService.newTrafficCodeStartDate)){
         TrafficSignType.applyOTHValue(trafficSignService.getProperty(trafficSign, "trafficSigns_type").get.propertyValue.toInt).TRvalue.toString
       }
       else ""

@@ -7,11 +7,13 @@ import fi.liikennevirasto.digiroad2.asset.SideCode._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{OracleTrafficSignDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.lane.LaneType
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
@@ -51,11 +53,25 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val lifeCyclePublicId = "life_cycle"
   val trafficSignStartDatePublicId = "trafficSign_start_date"
   val trafficSignEndDatePublicId = "trafficSign_end_date"
+  val newTrafficCodeStartDate = DateTime.parse("1.6.2020", DateTimeFormat.forPattern("dd.MM.yyyy"))
   private val counterPublicId = "counter"
   private val counterDisplayValue = "Merkkien määrä"
   private val batchProcessName = "batch_process_trafficSigns"
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
+
+  private val getSingleChoiceDefaultValueByPublicId = Map(
+    "structure" -> Structure.getDefault.value,
+    "condition" -> Condition.getDefault.value,
+    "size" -> Size.getDefault.value,
+    "coating_type" -> CoatingType.getDefault.value,
+    "sign_material" -> SignMaterial.getDefault.value,
+    "location_specifier" -> LocationSpecifier.getDefault.value,
+    "lane_type" -> LaneType.getDefault.value,
+    "life_cycle" -> SignLifeCycle.getDefault.value,
+    "type_of_damage" -> TypeOfDamage.getDefault.value,
+    "urgency_of_repair" -> UrgencyOfRepair.getDefault.value
+  )
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
@@ -173,8 +189,30 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment, roadLink: RoadLink): Long = {
-    val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId,
-      persistedAsset.propertyData.map(prop => SimplePointAssetProperty(prop.publicId, prop.values)).toSet,
+    val propertyData = persistedAsset.propertyData.map(prop =>
+      prop.propertyType match {
+        case "single_choice" if prop.values.head.asInstanceOf[PropertyValue].propertyValue.isEmpty =>
+          SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getSingleChoiceDefaultValueByPublicId(prop.publicId).toString)))
+
+        case "checkbox" if prop.values.head.asInstanceOf[PropertyValue].propertyValue.isEmpty =>
+          if (prop.publicId == "old_traffic_code" && persistedAsset.createdAt.get.isBefore(newTrafficCodeStartDate))
+            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue("1")))
+          else
+            SimplePointAssetProperty(prop.publicId, Seq(PropertyValue(getDefaultMultiChoiceValue.toString)))
+
+        case "additional_panel_type" if prop.values.nonEmpty =>
+          val additionalPanelValues = prop.values.head.asInstanceOf[AdditionalPanel]
+          val pValues = additionalPanelValues.copy(
+            size = if (additionalPanelValues.size != 0) additionalPanelValues.size else AdditionalPanelSize.getDefault.value,
+            coating_type = if (additionalPanelValues.coating_type != 0) additionalPanelValues.coating_type else AdditionalPanelCoatingType.getDefault.value,
+            additional_panel_color = if (additionalPanelValues.additional_panel_color != 0) additionalPanelValues.additional_panel_color else AdditionalPanelColor.getDefault.value
+          )
+          SimplePointAssetProperty(prop.publicId, Seq(pValues))
+
+        case _ => SimplePointAssetProperty(prop.publicId, prop.values)
+      }).toSet
+
+    val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId, propertyData,
       persistedAsset.validityDirection, persistedAsset.bearing)
 
     updateWithoutTransaction(adjustment.assetId, updated, roadLink,

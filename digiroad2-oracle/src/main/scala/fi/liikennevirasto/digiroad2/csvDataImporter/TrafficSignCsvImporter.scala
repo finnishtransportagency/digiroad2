@@ -303,11 +303,29 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     val allErrors = datesErrorMsg ++ directionValidatorErrorMsg ++ additionalPanelsErrorMsg ++ lanesValidatorErrorMsg
 
-    if(isValidDate && directionValidator && additionalPanelsValidator && lanesValidator) super.verifyData(parsedRow, user)
+    if(isValidDate && directionValidator && additionalPanelsValidator && lanesValidator) {
+      val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+      val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+
+        (optLon, optLat) match {
+          case (Some(lon), Some(lat)) =>
+            val roadLinks = optTrafficSignType match {
+              case Some(signType) if TrafficSignType.applyAdditionalGroup(TrafficSignTypeGroup.CycleAndWalkwaySigns).contains(signType) =>
+                roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+              case _ => roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong))
+            }
+
+            if (roadLinks.isEmpty) {
+              (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+            } else {
+              (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+            }
+          case _ =>
+            (Nil, Nil)
+        }
+      }
     else (allErrors, Seq())
-
   }
-
 
   private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimplePointAssetProperty] = {
     val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>

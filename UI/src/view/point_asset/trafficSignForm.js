@@ -3,6 +3,7 @@
     PointAssetForm.call(this);
     var me = this;
     var defaultAdditionalPanelValue = null;
+    var additionalPanelWithTextCode = '61';
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -64,12 +65,12 @@
 
       }), function(prev, curr) { return prev + curr; }, '');
 
-      var additionalPanels = me.getProperties(asset.propertyData, "additional_panel");
+      var additionalPanels = me.getProperties(allTrafficSignProperties, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
-      var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection, asset) : '';
+      var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
       function getSidePlacement() {
-        return _.head(me.getProperties(asset.propertyData, "opposite_side_sign").values);
+        return _.head(me.getProperties(allTrafficSignProperties, "opposite_side_sign").values);
       }
 
       var panelCheckbox =
@@ -80,10 +81,16 @@
         '        <label class="traffic-panel-checkbox-label">Linkitä lisäkilpiä</label>' +
         '    </div>';
 
-      var wrongSideInfo = asset.id !== 0 && !_.isEmpty(getSidePlacement().propertyValue) ?
+      var oppositeSideSignProperty = getSidePlacement();
+      if (asset.id !== 0 && _.isUndefined(oppositeSideSignProperty.propertyDisplayValue)) {
+        var oppositeSideSignPropertyValues = getProperties(me.enumeratedPropertyValues, 'opposite_side_sign').values;
+        oppositeSideSignProperty.propertyDisplayValue = _.find(oppositeSideSignPropertyValues, {'propertyValue': oppositeSideSignProperty.propertyValue} ).propertyDisplayValue;
+      }
+
+      var wrongSideInfo = asset.id !== 0 && !_.isEmpty(oppositeSideSignProperty.propertyValue) ?
         '    <div id="wrongSideInfo" class="form-group read-only">' +
         '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
-        '        <p class="form-control-static">' + getSidePlacement().propertyDisplayValue + '</p>' +
+        '        <p class="form-control-static">' + oppositeSideSignProperty.propertyDisplayValue + '</p>' +
         '    </div>' : '';
 
       return components + wrongSideInfo + panelCheckbox + renderedPanels;
@@ -132,7 +139,7 @@
           selectedAsset.setAdditionalPanels();
         }
         else {
-          $('.additional-panel-checkbox').after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection, selectedAsset.get()));
+          $('.additional-panel-checkbox').after(renderAdditionalPanels({values:[defaultAdditionalPanelValue]}, collection ));
           setAllPanels();
         }
         bindPanelEvents();
@@ -224,36 +231,25 @@
       );
     }
 
-    var singleChoiceSubType = function (collection, mainType, property, asset) {
+    var singleChoiceSubType = function (collection, mainType, property) {
       var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
       var signTypes = getValuesFromEnumeratedProperty ('trafficSigns_type');
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns;
 
-      if (isPedestrianOrCyclingRoadLink(asset)) {
-        subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
-          if (me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue)) {
-            return $('<option>',
-                {
-                  value: group.propertyValue,
-                  selected: propertyValue == group.propertyValue,
-                  text: group.propertyDisplayValue
-                }
-            )[0].outerHTML;
+      subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
+        if (isPedestrianOrCyclingRoadLink() && !me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue))
+          return '';
+
+        return $('<option>',
+          {
+            value: group.propertyValue,
+            selected: propertyValue == group.propertyValue,
+            text: group.propertyDisplayValue
           }
-        }).join('');
-      } else {
-        subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
-          return $('<option>',
-            {
-              value: group.propertyValue,
-              selected: propertyValue == group.propertyValue,
-              text: group.propertyDisplayValue
-            }
-          )[0].outerHTML;
-        }).join('');
-      }
+        )[0].outerHTML;
+      }).join('');
 
       return '<div class="form-group editable form-point-asset">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
@@ -263,7 +259,9 @@
         '      </select></div>';
     };
 
-    function isPedestrianOrCyclingRoadLink(asset) {
+
+    function isPedestrianOrCyclingRoadLink() {
+      var asset = me.selectedAsset.get();
       if(asset){
         var roadLink = me.roadCollection.getRoadLinkByLinkId(asset.linkId);
 
@@ -275,7 +273,7 @@
       return false;
     }
 
-    var singleChoiceTrafficSignTypeHandler = function (property, collection, asset) {
+    var singleChoiceTrafficSignTypeHandler = function (property, collection) {
       var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var auxProperty = property;
@@ -283,19 +281,19 @@
       var groupKeys = Object.keys(groups);
       var mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == propertyValue;});}), true);
 
-      if (isPedestrianOrCyclingRoadLink(asset)) {
+      if (isPedestrianOrCyclingRoadLink()) {
         var mandatorySignsDefaultValue = "70";
         /* get the correct index for group to be used in subSingleChoice */
         mainTypeDefaultValue = _.indexOf(_.map(groups, function (group) {return _.some(group, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});}), true);
 
         /* Only after get the correct index of the group (mainTypeDefaultValue) I can reset the values for the */
         /* correct one to be used in the 'main singleChoice field' */
-        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(x) { if ( x.propertyValue == '70') return x; });  });
+        signTypes = _.map(signTypes,function(sign) { return _.filter(sign, function(val) {return val.propertyValue == mandatorySignsDefaultValue;});  });
         groups =  collection.getGroup(signTypes);
-        groupKeys = Object.keys(groups);
+        groupKeys = _.keys(groups);
 
         /* Case asset is new...we will ignore the property value from parameter to load the subSingleChoice */
-        if (asset.id === 0) {
+        if (me.selectedAsset.getId() === 0) {
           auxProperty  = undefined;
         }
       }
@@ -316,7 +314,7 @@
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +
-        singleChoiceSubType( collection, mainTypeDefaultValue, auxProperty, asset );
+        singleChoiceSubType( collection, mainTypeDefaultValue, auxProperty );
     };
 
     var sortPanelKeys = function(properties) {
@@ -328,7 +326,7 @@
         'text',
         'size',
         'coating_type',
-        'additional_panel_color',
+        'additional_panel_color'
       ];
 
       var sorted = {};
@@ -339,7 +337,7 @@
       return sorted;
     };
 
-    var renderAdditionalPanels = function (property, collection, asset) {
+    var renderAdditionalPanels = function (property, collection) {
       var sortedByProperties = _.map(property.values, function(prop) {
         return sortPanelKeys(prop);
       });
@@ -385,14 +383,14 @@
       return '<button class="btn edit-only editable btn-secondary add-panel" id="'+id+'" >Uusi lisäkilpi</button>';
     };
 
-    var singleChoiceForPanelTypes = function (property, collection, asset) {
+    var singleChoiceForPanelTypes = function (property, collection) {
       var propertyValue = _.isUndefined(_.last(property))  ? '' : _.last(property);
       var signTypes = _.map( getValuesFromEnumeratedProperty('trafficSigns_type') );
       var panels = _.find(collection.getAdditionalPanels(signTypes));
       var propertyDisplayValue;
 
-      if (isPedestrianOrCyclingRoadLink(asset)) {
-        panels = _.filter(panels, function(p) { if (p.propertyValue == '61') return p;} );
+      if (isPedestrianOrCyclingRoadLink()) {
+        panels = _.filter(panels, function(p) { if (p.propertyValue == additionalPanelWithTextCode ) return p;} );
         propertyDisplayValue = _.isUndefined(panels) && panels.length === 0 ? "" : panels[0].propertyDisplayValue;
       }
       else {
@@ -426,7 +424,11 @@
 
     var singleChoiceForPanels = function (property) {
       var publicId = _.head(property);
-      var propertyValue = (!_.isEmpty(_.last(property))) ? '' : _.last(property);
+      var propertyValue;
+      if (_.last(property) === 0)
+        propertyValue = getProperties(me.pointAsset.newAsset.propertyData,  'additional_panel').defaultValue[publicId];
+      else
+        propertyValue = _.last(property);
       var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head( getValuesFromEnumeratedProperty(publicId) );
       var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
       var selectableValues = _.map(propertyValues, function (label) {

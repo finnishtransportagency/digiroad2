@@ -119,7 +119,7 @@
         });
         var lanesWithSplitMarkers = giveSplitMarkers(asset);
         self.selection = lanesWithSplitMarkers;
-        lanesFetched = lanesWithSplitMarkers;
+        lanesFetched = _.cloneDeep(lanesWithSplitMarkers);
         linksSelected = linearAssets;
         collection.setSelection(self);
         assetsToBeExpired=[];
@@ -334,11 +334,14 @@
 
     this.removeLane = function(laneNumber, marker) {
       var laneIndex = getLaneIndex(laneNumber, marker);
-      var removeLane = self.selection.splice(laneIndex,1)[0];
-      removeLane.isDeleted = true;
+      var removedLane = self.selection.splice(laneIndex, 1)[0];
 
-      if(removeLane.id !== 0)
-        assetsToBeRemoved.push(removeLane);
+      if (removedLane.id !== 0) {
+        //removedLane could be modified by the user so we need to fetch the original
+        var originalRemovedLane = _.find(lanesFetched, {'id': removedLane.id});
+        originalRemovedLane.isDeleted = true;
+        assetsToBeRemoved.push(originalRemovedLane);
+      }
 
       reorganizeLanes(laneNumber);
       self.dirty = true;
@@ -346,9 +349,12 @@
 
     this.expireLane = function(laneNumber, marker) {
       var laneIndex = getLaneIndex(laneNumber, marker);
-      var expireLane = self.selection.splice(laneIndex,1)[0];
-      expireLane.isExpired = true;
-      assetsToBeExpired.push(expireLane);
+      var expiredLane = self.selection.splice(laneIndex,1)[0];
+
+      //expiredLane could be modified by the user so we need to fetch the original
+      var originalExpiredLane = _.find(lanesFetched, {'id': expiredLane.id});
+      originalExpiredLane.isExpired = true;
+      assetsToBeExpired.push(originalExpiredLane);
 
       reorganizeLanes(laneNumber);
       self.dirty = true;

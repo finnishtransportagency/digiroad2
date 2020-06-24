@@ -9,8 +9,32 @@ object LanePartitioner extends GraphPartitioner {
     def groupLanes(lanes: Seq[T]): Seq[Seq[T]] = {
       val groupedLanesByRoadLinkAndSideCode = lanes.groupBy(lane => (lane.linkId, lane.sideCode))
 
-      val linkGroups = groupedLanesByRoadLinkAndSideCode.groupBy { case ((roadLinkId, _), lanes) =>
-        val allLanesAttributes = lanes.flatMap(_.laneAttributes).sortBy(laneProp => (laneProp.publicId, laneProp.values.head.value.toString))
+      val (cutLaneConfiguration, uncutLaneConfiguration) = groupedLanesByRoadLinkAndSideCode.partition { case ((roadLinkId, _), lanes) =>
+        roadLinks.get(roadLinkId) match {
+          case Some(roadLink) =>
+            lanes.exists{lane =>
+              val pieceWiseLane = lane.asInstanceOf[PieceWiseLane]
+
+              //end measures(have max 3 decimal digits) and roadlink length have different number of decimal digits
+              val roadLinkLength = Math.round(roadLink.length * 1000).toDouble / 1000
+
+              pieceWiseLane.startMeasure != 0.0d || pieceWiseLane.endMeasure != roadLinkLength
+            }
+          case _ => false
+        }
+      }
+
+      val linkGroups = uncutLaneConfiguration.groupBy { case ((roadLinkId, _), lanes) =>
+        val allLanesAttributes =
+          lanes.flatMap(_.laneAttributes).sortBy { laneProp =>
+            val lanePropValue = laneProp.values match {
+              case laneProps if laneProps.nonEmpty => laneProps.head.value.toString
+              case _ => ""
+            }
+
+            (laneProp.publicId, lanePropValue)
+          }
+
         val roadLink = roadLinks.get(roadLinkId)
         val roadIdentifier = roadLink.flatMap(_.roadIdentifier)
 
@@ -25,7 +49,7 @@ object LanePartitioner extends GraphPartitioner {
       val clusters = for (linkGroup <- clustersAux.asInstanceOf[Seq[Seq[T]]];
                           cluster <- clusterLinks(linkGroup)) yield cluster
 
-      clusters.map(linksFromCluster) ++ linksToPass.values.flatMap(_.values).toSeq
+      clusters.map(linksFromCluster) ++ linksToPass.values.flatMap(_.values).toSeq ++ cutLaneConfiguration.values.toSeq
     }
 
     val (lanesOnOneDirectionRoad, lanesOnTwoDirectionRoad) = lanes.partition(_.sideCode == SideCode.BothDirections.value)

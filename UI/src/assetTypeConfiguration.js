@@ -1364,6 +1364,7 @@
           {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
         ]},
         label: new TrafficSignLabel(Math.pow(3, 2)),
+        roadCollection: TrafficSignsRoadCollection,
         collection: TrafficSignsCollection,
         allowGrouping: true,
         groupingDistance: Math.pow(3, 2), //geometry-calculations calculates the squared distance between two points, so give the grouping distance in meters x^2
