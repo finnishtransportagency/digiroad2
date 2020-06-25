@@ -529,9 +529,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Saves number property value to db. Used by LinearAssetService.createWithoutTransaction.
     */
-  def insertValue(assetId: Long, valuePropertyId: String, value: Int): Unit = {
+  def insertValue(assetId: Long, valuePropertyId: String, value: Int, typeId: Option[Int] = None): Unit = {
     val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
-    val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    val propertyId =
+      typeId match {
+        case Some(assetTypeID) =>
+          Q.query[(String, Int), Long](Queries.propertyIdByPublicIdAndTypeId).apply(valuePropertyId, assetTypeID).first
+        case _ =>
+          Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+      }
+
     sqlu"""
        insert into number_property_value(id, asset_id, property_id, value)
        values ($numberPropertyValueId, $assetId, $propertyId, $value)

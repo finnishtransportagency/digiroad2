@@ -115,7 +115,7 @@ trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionIm
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-      linearAssetService.dao.insertValue(assetId, numericValuePublicId, value)
+      linearAssetService.dao.insertValue(assetId, numericValuePublicId, value, Some(typeId))
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
@@ -200,7 +200,7 @@ class HeightLimitImporter extends TierekisteriPointConversionImporter {
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-    linearAssetService.dao.insertValue(assetId, numericValuePublicId, trAssetData.height )
+    linearAssetService.dao.insertValue(assetId, numericValuePublicId, trAssetData.height, Some(typeId))
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
 }
