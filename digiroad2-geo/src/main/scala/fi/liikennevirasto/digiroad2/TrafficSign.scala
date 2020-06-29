@@ -4,7 +4,7 @@ sealed trait TrafficSignTypeGroup{
   def value: Int
 }
 object TrafficSignTypeGroup{
-  val values = Set(Unknown, SpeedLimits, RegulatorySigns, GeneralWarningSigns, ProhibitionsAndRestrictions, AdditionalPanels, MandatorySigns,
+  val values = Set(Unknown, SpeedLimits, RegulatorySigns, MaximumRestrictions, GeneralWarningSigns, ProhibitionsAndRestrictions, AdditionalPanels, MandatorySigns,
     PriorityAndGiveWaySigns, InformationSigns, CycleAndWalkwaySigns, OtherSigns)
 
   def apply(intValue: Int):TrafficSignTypeGroup= {
@@ -13,6 +13,7 @@ object TrafficSignTypeGroup{
 
   case object SpeedLimits extends TrafficSignTypeGroup{ def value = 1  }
   case object RegulatorySigns extends TrafficSignTypeGroup{ def value = 2 }
+  case object MaximumRestrictions extends TrafficSignTypeGroup{ def value = 3 }
   case object GeneralWarningSigns extends TrafficSignTypeGroup{ def value = 4 }
   case object ProhibitionsAndRestrictions extends TrafficSignTypeGroup{ def value = 5 }
   case object AdditionalPanels extends TrafficSignTypeGroup{ def value = 6 }
