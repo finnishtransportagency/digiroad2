@@ -22,7 +22,7 @@ object TrafficSignTypeGroup{
   case object InformationSigns extends TrafficSignTypeGroup{ def value = 9 }
   case object ServiceSigns extends TrafficSignTypeGroup{ def value = 10 }
   case object CycleAndWalkwaySigns extends TrafficSignTypeGroup{ def value = 11 }
-  case object OtherSigns extends TrafficSignTypeGroup{ def value = 11 }
+  case object OtherSigns extends TrafficSignTypeGroup{ def value = 12 }
   case object Unknown extends TrafficSignTypeGroup{ def value = 99 }
 }
 
