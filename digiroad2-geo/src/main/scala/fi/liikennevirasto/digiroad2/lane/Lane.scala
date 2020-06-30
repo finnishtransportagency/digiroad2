@@ -169,27 +169,3 @@ object LaneType {
   case object Cycling extends LaneType { def value = 22; def typeDescription = "Cycling lane"; def finnishDescription = "Pyöräilykaista"; }
   case object Unknown extends LaneType { def value = 99;  def typeDescription = "Unknown"; def finnishDescription = "Tuntematon"; }
 }
-
-/**
-  * Values for lane continuity
-  */
-sealed trait LaneContinuity {
-  def value: Int
-  def typeDescription: String
-  def finnishDescription: String
-}
-object LaneContinuity {
-  val values = Set(Continuous, ContinuesOtherNumber, Turns, Ends, ContinuousTurningRight, ContinuousTurningLeft, Unknown)
-
-  def apply(value: Int): LaneContinuity = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  case object Continuous extends LaneContinuity { def value = 1; def typeDescription = "Continuous lane"; def finnishDescription = "Jatkuva "; }
-  case object ContinuesOtherNumber extends LaneContinuity { def value = 2; def typeDescription = "Lane continues with other lane number"; def finnishDescription = "Jatkuu toisella kaistanumerolla"; }
-  case object Turns extends LaneContinuity { def value = 3; def typeDescription = "Lane turns"; def finnishDescription = "Kääntyvä"; }
-  case object Ends extends LaneContinuity { def value = 4; def typeDescription = "Lane ends"; def finnishDescription = "Päättyvä"; }
-  case object ContinuousTurningRight extends LaneContinuity { def value = 5; def typeDescription = "Continuous and turning right possible"; def finnishDescription = "Jatkuva, osoitettu myös oikealle kääntyville"; }
-  case object ContinuousTurningLeft extends LaneContinuity { def value = 6; def typeDescription = "Continuous and turning left possible"; def finnishDescription = "Jatkuva, osoitettu myös vasemmalle kääntyville"; }
-  case object Unknown extends LaneContinuity { def value = 99;  def typeDescription = "Unknown"; def finnishDescription = "Tuntematon"; }
-}

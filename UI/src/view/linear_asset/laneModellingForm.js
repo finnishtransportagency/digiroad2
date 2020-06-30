@@ -15,7 +15,7 @@
     me.setSelectedValue = function(setValue, getValue, sideCode){
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      if(isAddByRoadAddressActive && (currentPropertyValue.publicId == "end_road_part_number" ||  currentPropertyValue.publicId == "end_distance")){
+      if(isAddByRoadAddressActive && (currentPropertyValue.publicId === "endRoadPartNumber" ||  currentPropertyValue.publicId === "endDistance")){
         lanesAssets.setEndAddressesValues(currentPropertyValue);
       }else{
         var laneNumber = lanesAssets.getCurrentLaneNumber();
@@ -80,37 +80,35 @@
 
   var mainLaneFormStructure = {
     fields : [
-      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 6},
+      {label: 'Tien numero', type: 'read_only_number', publicId: "roadNumber", weight: 1},
+      {label: 'Tieosanumero', type: 'read_only_number', publicId: "roadPartNumber", weight: 2},
+      {label: 'Ajorata', type: 'read_only_number', publicId: "track", weight: 3},
+      {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
+      {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
+      {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
+      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 9},
       {
-        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 7,
+        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 10,
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
-      },
-      {
-        label: 'Kaista jatkuvuus', required: 'required', type: 'single_choice', publicId: "lane_continuity", defaultValue: "1", weight: 8,
-        values: [
-          {id: 1, label: 'Jatkuva'},
-          {id: 2, label: 'Jatkuu toisella kaistanumerolla'},
-          {id: 3, label: 'Kääntyvä'},
-          {id: 4, label: 'Päättyvä'},
-          {id: 5, label: 'Jatkuva, osoitettu myös oikealle kääntyville'},
-          {id: 6, label: 'Jatkuva, osoitettu myös vasemmalle kääntyville'},
-        ]
-      },
-      {label: 'Kaista ominaisuustieto', type: 'text', publicId: "lane_information", weight: 9}
+      }
     ]
   };
 
   var roadAddressFormStructure = {
     fields : [
-      {label: 'Tie', type: 'read_only_number', publicId: "initial_road_number", weight: 1},
-      {label: 'Osa', type: 'read_only_number', publicId: "initial_road_part_number", weight: 2},
-      {label: 'Etäisyys', type: 'read_only_number', publicId: "initial_distance", weight: 3},
-      {label: 'Osa', required: 'required', type: 'number', publicId: "end_road_part_number", weight: 4},
-      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "end_distance", weight: 5}
+      {label: 'Osa', required: 'required', type: 'number', publicId: "endRoadPartNumber", weight: 7},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "endDistance", weight: 8}
     ]
   };
+
+    var administrativeClassValues = {
+      1: 'Valtion omistama',
+      2: 'Kunnan omistama',
+      3: 'Yksityisen omistama',
+      99: 'Tuntematon'
+    };
 
     function reloadForm(rootElement){
       dateutil.removeDatePickersFromDom();
@@ -208,19 +206,16 @@
           case "lane_code":
             info = 'Kaistan lisäys:';
             break;
-          case "end_road_part_number":
+          case "endRoadPartNumber":
             info = 'Kaistan loppuu:';
             break;
-          case "initial_road_number":
+          case "roadNumber":
             info = 'Kaistan alkaa:';
             break;
         }
 
         if(info)
           infoElement = $('<div class="form-group"><label class="info-label">' + info + '</label></div>');
-
-        if(publicId == "lane_code" && isAddByRoadAddressActive)
-          return infoElement.prepend($('<hr class="form-break">'));
 
         return infoElement;
       }
@@ -241,7 +236,51 @@
           var existingProperty = _.find(asset.properties, function (property) {
             return property.publicId === field.publicId;
           });
-          if (!_.isUndefined(existingProperty))
+          if (_.isUndefined(existingProperty)) {
+            var pickUniqueValues = function(selectedData, property) {
+              return _.chain(selectedData)
+                .map(property)
+                .uniq()
+                .value();
+            };
+
+            var chainValuesByPublicIdAndRoadPartNumber = function (selectedData, roadPartNumber, publicId) {
+              return _.chain(selectedData)
+                .filter(function (data) {
+                  return data.roadPartNumber == roadPartNumber;
+                })
+                .map(publicId)
+                .value();
+            };
+
+            var value;
+            var roadPartNumber;
+            var selectedLinks = asset.selectedLinks;
+            var publicId = field.publicId;
+
+            switch(publicId) {
+              case "roadNumber":
+              case "roadPartNumber":
+                value = pickUniqueValues(selectedLinks, publicId).join(', ');
+                break;
+              case "startAddrMValue":
+                  roadPartNumber = Math.min.apply(null, _.compact(pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  value = Math.min.apply(null, chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                break;
+              case "endAddrMValue":
+                  roadPartNumber = Math.max.apply(null, _.compact(pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  value = Math.max.apply(null, chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                break;
+              case "administrativeClass":
+                value = administrativeClassValues[_.head(selectedLinks)[publicId]];
+                break;
+              default:
+                value = _.head(selectedLinks)[publicId];
+            }
+
+            existingProperty = _.isUndefined(value) ? value : {values:[{value: value}]};
+          }
+          if (!_.isUndefined(existingProperty) && !_.isNull(existingProperty))
             fieldValues = existingProperty.values;
         }
         var dynamicField = _.find(self.dynamicFormFields, function (availableFieldType) {
@@ -284,8 +323,7 @@
           if(laneNumber.toString()[1] == "1"){
             currentFormStructure = mainLaneFormStructure;
           }else{
-            defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 6};
-            currentFormStructure = defaultFormStructure;
+            newLaneStructure(laneNumber);
           }
           reloadForm($('#feature-attributes'));
         });
@@ -344,9 +382,7 @@
 
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
-
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: nextLaneNumber, weight: 6};
-        currentFormStructure = defaultFormStructure;
+        newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(even) && _.max(even).toString()[1] == 8));
@@ -356,9 +392,7 @@
 
         selectedAsset.setNewLane(nextLaneNumber);
         selectedAsset.setCurrentLane(nextLaneNumber);
-
-        defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: nextLaneNumber, weight: 6};
-        currentFormStructure = defaultFormStructure;
+        newLaneStructure(nextLaneNumber);
 
         reloadForm($('#feature-attributes'));
       }).prop("disabled", !_.isEmpty(odd) && _.max(odd).toString()[1] == 9));
@@ -404,7 +438,7 @@
         });
       });
 
-      var body = createBodyElement();
+      var body = createBodyElement(selectedAsset.getCurrentLane());
 
       if(selectedAsset.isSplit()) {
         //Render form A
@@ -445,9 +479,19 @@
       });
 
       var expireLane = $('<button class="btn btn-secondary lane-button">Päätä Kaista</button>').click(function() {
-        selectedAsset.expireLane(currentLaneNumber, sidecode);
-        prepareLanesStructure();
-        reloadForm($('#feature-attributes'));
+        var confirmationPopUpOptions = {
+          type: "confirm",
+          yesButtonLbl: 'Tallenna',
+          noButtonLbl: 'Peruuta',
+          successCallback: function() {
+            selectedAsset.expireLane(currentLaneNumber, sidecode);
+            prepareLanesStructure();
+            reloadForm($('#feature-attributes'));
+          }
+        };
+        var confirmationMessage = "Haluatko varmasti päättää kaistan?";
+
+        GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
       var prepareLanesStructure = function () {
@@ -457,19 +501,21 @@
           }else{
             currentLaneNumber = currentLaneNumber-2;
           }
-          selectedAsset.setCurrentLane(currentLaneNumber);
         }
+
+        selectedAsset.setCurrentLane(currentLaneNumber);
 
         if(currentLaneNumber.toString()[1] == "1"){
           currentFormStructure = mainLaneFormStructure;
         }else{
-          defaultFormStructure.fields[0] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: currentLaneNumber, weight: 6};
-          currentFormStructure = defaultFormStructure;
+          newLaneStructure(currentLaneNumber);
         }
       };
 
       var lane = selectedAsset.getLane(currentLaneNumber, sidecode);
+
       expireLane.prop('disabled', lane.id === 0);
+      deleteLane.prop('disabled', lane.id !== 0);
 
       if(currentLaneNumber.toString()[1] !== "1")
         body.find('.form').append($('<div class="lane-buttons">').append(expireLane).append(deleteLane));
@@ -496,12 +542,27 @@
       return body;
     }
 
-    function createBodyElement() {
+    function createBodyElement(selectedAsset) {
+      /* Otherwise it is not possible to access this information as in other selectedAsset objects */
+      var info = {
+        modifiedBy :  selectedAsset.modifiedBy || '',
+        modifiedDate : selectedAsset.modifiedAt ? ' ' + selectedAsset.modifiedAt : '',
+        createdBy : selectedAsset.createdBy || '',
+        createdDate : selectedAsset.createdAt ? ' ' + selectedAsset.createdAt: ''
+      };
+
       return $('<div class="wrapper read-only">' +
-        '   <div class="form form-horizontal form-dark asset-factory">' +
-        self.userInformationLog() +
-        '   </div>' +
-        '</div>');
+          '   <div class="form form-horizontal form-dark asset-factory">' +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Lisätty järjestelmään: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
+          '     </div>' +
+          '     <div class="form-group">' +
+          '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + self.informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
+          '     </div>' +
+          self.userInformationLog() +
+          '   </div>' +
+          '</div>');
+
     }
 
     self.isSaveable = function(){
@@ -522,9 +583,19 @@
       var laneNumber = selectedLinearAsset.getCurrentLaneNumber();
 
       var element = $('<button />').addClass('save btn btn-primary').prop('disabled', !selectedLinearAsset.isDirty()).text('Tallenna').on('click', function() {
-        selectedLinearAsset.save(isAddByRoadAddressActive);
-        selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
-        currentFormStructure = mainLaneFormStructure;
+        var confirmationPopUpOptions = {
+          type: "confirm",
+          yesButtonLbl: 'Tallenna',
+          noButtonLbl: 'Peruuta',
+          successCallback: function() {
+            selectedLinearAsset.save(isAddByRoadAddressActive);
+            selectedLinearAsset.setCurrentLane(parseInt(laneNumber.toString()[0] + '1'));
+            currentFormStructure = mainLaneFormStructure;
+          }
+        };
+        var confirmationMessage = "Ovatko tekemäsi muutokset lopullisia? Kaistatieto lähetetään Tierekisteriin.";
+
+        GenericConfirmPopup(confirmationMessage, confirmationPopUpOptions);
       });
 
       var updateStatus = function(element) {
@@ -563,6 +634,12 @@
       return {
         element: element
       };
+    };
+
+    var newLaneStructure = function (laneNumber) {
+      var indexOfProperty = _.findIndex(defaultFormStructure.fields, {'publicId': 'lane_code'});
+      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 9};
+      currentFormStructure = defaultFormStructure;
     };
 
     jQuery.fn.showElement = function(visible) {

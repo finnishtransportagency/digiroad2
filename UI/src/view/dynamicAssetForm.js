@@ -1165,7 +1165,7 @@
                 return '';
         };
 
-        var informationLog = function (date, username) {
+        this.informationLog = function (date, username) {
             return date ? (date + ' / ' + username) : '-';
         };
 
@@ -1182,17 +1182,17 @@
             var verifiedFields = function() {
                 return (self._assetTypeConfiguration.isVerifiable && info.verifiedBy && info.verifiedDateTime) ?
                   '<div class="form-group">' +
-                  '   <p class="form-control-static asset-log-info">Tarkistettu: ' + informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
+                  '   <p class="form-control-static asset-log-info">Tarkistettu: ' + self.informationLog(info.verifiedDateTime, info.verifiedBy) + '</p>' +
                   '</div>' : '';
             };
 
             return $('<div class="wrapper read-only">' +
               '   <div class="form form-horizontal form-dark asset-factory">' +
               '     <div class="form-group">' +
-              '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + informationLog(info.createdDate, info.createdBy)+ '</p>' +
+              '       <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + self.informationLog(info.createdDate, info.createdBy)+ '</p>' +
               '     </div>' +
               '     <div class="form-group">' +
-              '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
+              '       <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + self.informationLog(info.modifiedDate, info.modifiedBy) + '</p>' +
               '     </div>' +
               verifiedFields() +
               '     <div class="form-group">' +
