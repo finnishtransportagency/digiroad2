@@ -1277,7 +1277,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  test("Lane Change: Show 2 Add, 1 lane code change and 1 expire"){
+  test("Lane Change: Show 2 Add, 1 lane code change"){
     runWithRollback {
       val newLane12 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues12)
       val newLane14 = newLane12.copy(properties = lanePropertiesValues14)

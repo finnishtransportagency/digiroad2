@@ -558,8 +558,9 @@ trait LaneOperations {
           Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Shortened, roadLink))
 
         case Some(history) =>
+          //fetch the lane with same id to this upToDate that was sent to history where it has the old lane code
           val uptoDateLastModification = historyLanes.filter(historyLane =>
-            history.newId == historyLane.oldId && historyLane.newId == 0 && historyLane.historyCreatedDate.isAfter(history.historyCreatedDate))
+            history.newId == historyLane.oldId && historyLane.newId == 0 && (historyLane.historyCreatedDate.isAfter(history.historyCreatedDate) || historyLane.historyCreatedDate.isEqual(history.historyCreatedDate)))
             .minBy(_.historyCreatedDate.getMillis)
           if (upToDate.laneCode != uptoDateLastModification.laneCode)
             Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification)), LaneChangeType.LaneCodeTransfer, roadLink))
@@ -591,7 +592,7 @@ trait LaneOperations {
 
       lanes.flatMap { case lane =>
         val laneAsPersistedLane = historyLaneToPersistedLane(lane)
-        val relevantLanes = lanes.filter(l => l.id != lane.id && l.historyCreatedDate.isBefore(lane.historyCreatedDate))
+        val relevantLanes = lanes.filter(l => l.id != lane.id && (l.historyCreatedDate.isBefore(lane.historyCreatedDate) || l.historyCreatedDate.isEqual(lane.historyCreatedDate)))
 
         if (relevantLanes.isEmpty) {
           val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
@@ -1032,8 +1033,9 @@ trait LaneOperations {
         }
 
         newLanesIDs.foreach { newLane =>
-          moveToHistory(oldLanesByCode.head.id, Some(newLane), true, true, username)
+          moveToHistory(oldLanesByCode.head.id, Some(newLane), true, false, username)
         }
+        dao.deleteEntryLane(oldLanesByCode.head.id)
 
         newLanesIDs
 
