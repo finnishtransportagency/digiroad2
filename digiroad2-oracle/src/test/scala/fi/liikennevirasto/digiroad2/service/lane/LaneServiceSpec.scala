@@ -5,11 +5,12 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneChangeType, LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -1207,6 +1208,170 @@ class LaneServiceSpec extends LaneTestSupporter {
       changeSet.adjustedSideCodes.length should be(0)
       changeSet.expiredLaneIds.size should be(1)
       changeSet.expiredLaneIds should be(Set(lane21Id))
+    }
+  }
+
+  test("Lane Change: Show 2 Add"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane21 = newLane11.copy(properties = lanePropertiesValues21)
+      val dateAtThisMoment = DateTime.now()
+
+      ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane21), Set(100L), 2, usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
+    }
+  }
+
+  test("Lane Change: Show 1 Add and 1 attribute changed"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val dateAtThisMoment = DateTime.now()
+
+      val newLanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("changed attribute")))
+      )
+
+      val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest).head
+      ServiceWithDao.update(Seq(newLane11.copy(id = lane11Id, properties = newLanePropertiesValues11)), Set(100L), 1, usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.AttributesChanged))
+      lanesChanged.map(_.lane.id) should be(Seq(lane11Id, lane11Id))
+    }
+  }
+
+  test("Lane Change: Show 2 Add and 1 expire"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
+      val dateAtThisMoment = DateTime.now()
+
+      ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest)
+      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
+
+      ServiceWithDao.deleteMultipleLanes(Set(12), Set(100L), usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.Expired))
+      lanesChanged.filter(_.changeType == LaneChangeType.Expired).map(_.lane.id) should be(Seq(lane12Id))
+    }
+  }
+
+  test("Lane Change: Show 2 Add, 1 lane code change and 1 expire"){
+    runWithRollback {
+      val newLane12 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues12)
+      val newLane14 = newLane12.copy(properties = lanePropertiesValues14)
+      val dateAtThisMoment = DateTime.now()
+
+      ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest)
+      val lane14Id = ServiceWithDao.create(Seq(newLane14), Set(100L), 2, usernameTest).head
+
+      val newLanePropertiesValuesOld14 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("sub lane 14")))
+      )
+
+      ServiceWithDao.update(Seq(newLane14.copy(id = lane14Id, properties = newLanePropertiesValuesOld14)), Set(100L), 1, usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.LaneCodeTransfer))
+      val laneCodeChanged = lanesChanged.filter(_.changeType == LaneChangeType.LaneCodeTransfer).head
+      laneCodeChanged.lane.id should be(lane14Id)
+      laneCodeChanged.lane.laneCode should be(12)
+      laneCodeChanged.oldLane.get.laneCode should be(14)
+    }
+  }
+
+  test("Lane Change: Show 2 Add and 1 shortened lane"){
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
+      val dateAtThisMoment = DateTime.now()
+
+      ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest)
+      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
+
+      val subLane12Split = NewIncomeLane(0, 0, 50, 745, false, false, lanePropertiesValues12)
+      ServiceWithDao.update(Seq(subLane12Split), Set(100L), 2, usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.Shortened))
+      val shortenedLane = lanesChanged.filter(_.changeType == LaneChangeType.Shortened).head
+      shortenedLane.lane.endMeasure should be(50)
+      shortenedLane.oldLane.get.endMeasure should be(100)
+      shortenedLane.oldLane.get.id should be(lane12Id)
+    }
+  }
+
+  test("Lane Change: Combination of changes"){
+    //      11 12 14(three adds) -> 11[m] 12[m] 14 (two modifications[m]) -> 11 (two deleted)
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
+      val newLane14 = newLane11.copy(properties = lanePropertiesValues14)
+      val dateAtThisMoment = DateTime.now()
+
+      val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
+      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 1, usernameTest).head
+      ServiceWithDao.create(Seq(newLane14), Set(100L), 1, usernameTest)
+
+      val newLanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("changed attribute")))
+      )
+
+      val newLanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
+        LaneProperty("lane_information", Seq(LanePropertyValue("another attribute")))
+      )
+
+      ServiceWithDao.update(Seq(newLane11.copy(id = lane11Id, properties = newLanePropertiesValues11)), Set(100L), 1, usernameTest)
+      ServiceWithDao.update(Seq(newLane12.copy(id = lane12Id, properties = newLanePropertiesValues12)), Set(100L), 1, usernameTest)
+
+      ServiceWithDao.deleteMultipleLanes(Set(12, 14), Set(100L), usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be (Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.Add,
+                                                                    LaneChangeType.Expired, LaneChangeType.Expired,
+                                                                    LaneChangeType.AttributesChanged, LaneChangeType.AttributesChanged))
     }
   }
 }

@@ -20,6 +20,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
 
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LaneOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
@@ -522,10 +523,115 @@ trait LaneOperations {
     lanes.filter(_.laneCode.toString.charAt(0) == direction)
   }
 
-  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[PersistedLane] = {
-    withDynSession {
-      dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust, token)
+  /**
+    * Get lanes that were touched between two dates
+    * @param sinceDate  start date
+    * @param untilDate  end date
+    * @param withAutoAdjust with automatic modified lanes
+    * @param token  interval of records
+    * @return lanes modified between the dates
+    */
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[LaneChange] = {
+    //TODO: consider token
+    val (upToDateLanes, historyLanes) = withDynTransaction {
+      (dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust, token),
+        historyDao.getHistoryLanesChangedSince(sinceDate, untilDate, withAutoAdjust, token))
     }
+
+    val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+
+    val viiteInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks)
+    val vkmInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
+    val roadLinksWithRoadAddressInfo = viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
+
+
+    val upToDateLaneChanges = upToDateLanes.flatMap{ upToDate =>
+      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == upToDate.linkId)
+      val relevantHistory = historyLanes.find(history => history.newId == upToDate.id)
+
+      relevantHistory match {
+        case Some(history) if upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure =>
+          Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Lengthened, roadLink))
+
+        case Some(history) if upToDate.endMeasure - upToDate.startMeasure < history.endMeasure - history.startMeasure =>
+          Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Shortened, roadLink))
+
+        case Some(history) =>
+          val uptoDateLastModification = historyLanes.filter(historyLane =>
+            history.newId == historyLane.oldId && historyLane.newId == 0 && historyLane.historyCreatedDate.isAfter(history.historyCreatedDate))
+            .minBy(_.historyCreatedDate.getMillis)
+          if (upToDate.laneCode != uptoDateLastModification.laneCode)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification)), LaneChangeType.LaneCodeTransfer, roadLink))
+          else
+            None
+
+        case None if upToDate.modifiedDateTime.isEmpty =>
+          Some(LaneChange(upToDate, None, LaneChangeType.Add, roadLink))
+
+        case _ =>
+          historyLanes.filter(_.oldId == upToDate.id).flatMap { history =>
+            val historyLane = historyLaneToPersistedLane(history)
+
+            if (isSomePropertyDifferent(historyLane, upToDate))
+              Some(LaneChange(upToDate, Some(historyLane), LaneChangeType.AttributesChanged, roadLink))
+            else
+              None
+          }
+      }
+    }
+
+    val expiredLanes = historyLanes.filter(lane => lane.expired && lane.newId == 0).map{ history =>
+      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == history.linkId)
+      LaneChange(historyLaneToPersistedLane(history), None, LaneChangeType.Expired, roadLink)
+    }
+
+    val historyLaneChanges = historyLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
+      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == lanes.head.linkId)
+
+      lanes.flatMap { case lane =>
+        val laneAsPersistedLane = historyLaneToPersistedLane(lane)
+        val relevantLanes = lanes.filter(l => l.id != lane.id && l.historyCreatedDate.isBefore(lane.historyCreatedDate))
+
+        if (relevantLanes.isEmpty) {
+          val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
+
+          newIdRelation match {
+            case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
+              Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Lengthened, roadLink))
+
+            case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure < relation.endMeasure - relation.startMeasure =>
+              Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Shortened, roadLink))
+
+            case _ =>
+              val wasCreateInTimePeriod = lane.modifiedDateTime.isEmpty &&
+                lane.createdDateTime.get.isAfter(sinceDate)
+
+              if (wasCreateInTimePeriod)
+                Some(LaneChange(laneAsPersistedLane, None, LaneChangeType.Add, roadLink))
+              else
+                None
+          }
+        } else {
+          val relevantLane = historyLaneToPersistedLane(relevantLanes.maxBy(_.historyCreatedDate.getMillis))
+
+          if (isSomePropertyDifferent(relevantLane, laneAsPersistedLane))
+            Some(LaneChange(laneAsPersistedLane, Some(relevantLane), LaneChangeType.AttributesChanged, roadLink))
+          else
+            None
+        }
+      }
+    }
+
+    (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
+  }
+
+  def historyLaneToPersistedLane(historyLane: PersistedHistoryLane): PersistedLane = {
+    PersistedLane(historyLane.oldId, historyLane.linkId, historyLane.sideCode, historyLane.laneCode,
+                  historyLane.municipalityCode, historyLane.startMeasure, historyLane.endMeasure, historyLane.createdBy,
+                  historyLane.createdDateTime, historyLane.modifiedBy, historyLane.modifiedDateTime,
+                  Some(historyLane.historyCreatedBy), Some(historyLane.historyCreatedDate),
+                  historyLane.expired, historyLane.vvhTimeStamp, historyLane.geomModifiedDate, historyLane.attributes)
   }
 
   def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit = {
@@ -615,13 +721,24 @@ trait LaneOperations {
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
 
-  def isSomePropertyDifferent(oldLane: PersistedLane, newLane: NewIncomeLane): Boolean = {
-    oldLane.attributes.exists { property =>
-      val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
-      val newPropertyValue = getPropertyValue(newLane, property.publicId)
+  def isSomePropertyDifferent(oldLane: PersistedLane, newLane: PersistedLane): Boolean = {
+    oldLane.attributes.length != newLane.attributes.length ||
+      oldLane.attributes.exists { property =>
+        val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
+        val newPropertyValue = getPropertyValue(newLane, property.publicId)
 
-      oldPropertyValue != newPropertyValue
-    }
+        oldPropertyValue != newPropertyValue
+      }
+  }
+
+  def isSomePropertyDifferent(oldLane: PersistedLane, newLane: NewIncomeLane): Boolean = {
+    oldLane.attributes.length != newLane.properties.length ||
+      oldLane.attributes.exists { property =>
+        val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
+        val newPropertyValue = getPropertyValue(newLane, property.publicId)
+
+        oldPropertyValue != newPropertyValue
+      }
   }
 
   /**
@@ -915,9 +1032,8 @@ trait LaneOperations {
         }
 
         newLanesIDs.foreach { newLane =>
-          moveToHistory(oldLanesByCode.head.id, Some(newLane), true, false, username)
+          moveToHistory(oldLanesByCode.head.id, Some(newLane), true, true, username)
         }
-        dao.deleteEntryLane(oldLanesByCode.head.id)
 
         newLanesIDs
 

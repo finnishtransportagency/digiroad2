@@ -127,11 +127,9 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
                 JOIN lane_link ll ON l.id = ll.lane_id
                 JOIN lane_position pos ON ll.lane_position_id = pos.id
                 JOIN lane_attribute la ON la.lane_id = l.id
-                WHERE ((l.valid_to > $querySinceDate and l.valid_to <= $queryUntilDate) or
-                (l.modified_date > $querySinceDate and l.modified_date <= $queryUntilDate) or
-                (l.created_date > $querySinceDate and l.created_date <= $queryUntilDate) or
-                (l.expired_date > $querySinceDate and l.expired_date <= $queryUntilDate))
-                #$withAutoAdjustFilter
+                WHERE ((l.modified_date > $querySinceDate and l.modified_date <= $queryUntilDate) or
+                (l.created_date > $querySinceDate and l.created_date <= $queryUntilDate))
+                $withAutoAdjustFilter
                 )$recordLimit"""
 
     val lanesRow = StaticQuery.queryNA[LaneRow](query)(getLaneAsset).iterator.toSeq
@@ -394,11 +392,4 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     updateLaneModifiedFields(id, username)
   }
-
-  def updateExpiration(id: Long, username: String): Unit = {
-      sqlu"""UPDATE LANE
-            SET valid_to = SYSDATE, modified_by = $username
-            WHERE id = $id""".execute
-  }
-
 }

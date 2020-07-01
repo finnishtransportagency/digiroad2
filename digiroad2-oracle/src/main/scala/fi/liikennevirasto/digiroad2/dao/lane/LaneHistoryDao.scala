@@ -4,8 +4,10 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.DateParser.DateTimeSimplifiedFormat
+import fi.liikennevirasto.digiroad2.asset.Decode
 import fi.liikennevirasto.digiroad2.dao.Sequences
-import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PersistedHistoryLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, PersistedHistoryLane}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import org.joda.time.DateTime
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
@@ -16,7 +18,8 @@ import scala.language.implicitConversions
 case class LaneHistoryRow(id: Long, newId: Long, oldId: Long, linkId: Long, sideCode: Int, value: LanePropertyRow,
                           startMeasure: Double, endMeasure: Double, createdBy: Option[String], createdDate: Option[DateTime],
                           modifiedBy: Option[String], modifiedDate: Option[DateTime], expired: Boolean,
-                          vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime])
+                          vvhTimeStamp: Long, municipalityCode: Long, laneCode: Int, geomModifiedDate: Option[DateTime],
+                          historyCreatedDate: DateTime, historyCreatedBy: String)
 
 class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
@@ -41,9 +44,11 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
       val value = LanePropertyRow(atrrName, atrrValue)
       val municipalityCode = r.nextLong()
       val laneCode = r.nextInt()
+      val historyCreatedDate = new DateTime(r.nextTimestamp())
+      val historyCreatedBy = r.nextString()
 
       LaneHistoryRow(id, newId, oldId, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate,
-        expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate)
+        expired, vvhTimeStamp, municipalityCode, laneCode, geomModifiedDate, historyCreatedDate, historyCreatedBy)
     }
   }
 
@@ -56,7 +61,8 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
     l.created_by, l.created_date, l.modified_by, l.modified_date,
     CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
     pos.adjusted_timestamp, pos.modified_date,
-    la.name, la.value, l.municipality_code, l.lane_code
+    la.name, la.value, l.municipality_code, l.lane_code,
+    l.history_created_date, l.history_created_by
     FROM LANE_HISTORY l
        JOIN LANE_HISTORY_LINK ll ON l.id = ll.lane_id
        JOIN LANE_HISTORY_POSITION pos ON ll.lane_position_id = pos.id
@@ -99,9 +105,7 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
   def expireHistoryLane(historyLaneId: Long, username: String): Unit = {
     sqlu"""
            UPDATE LANE_HISTORY
-           SET HISTORY_CREATED_DATE = sysdate,
-               HISTORY_CREATED_BY = $username,
-               EXPIRED_DATE = sysdate,
+           SET EXPIRED_DATE = sysdate,
                EXPIRED_BY = $username,
                VALID_TO = sysdate
            WHERE id = $historyLaneId
@@ -117,7 +121,8 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
         municipalityCode = row.municipalityCode, startMeasure = row.startMeasure, endMeasure = row.endMeasure,
         createdBy = row.createdBy, createdDateTime = row.createdDate,
         modifiedBy = row.modifiedBy, modifiedDateTime = row.modifiedDate, expired = row.expired,
-        vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues)
+        vvhTimeStamp = row.vvhTimeStamp, geomModifiedDate = row.geomModifiedDate, attributes = attributeValues,
+        row.historyCreatedDate, row.historyCreatedBy)
 
     }.values.toSeq
   }
@@ -170,4 +175,25 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
     convertLaneRowToPersistedLane(historyLanes)
   }
 
+  def getHistoryLanesChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None): Seq[PersistedHistoryLane] = {
+    val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
+    val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
+
+    val withAutoAdjustFilter = if (withAdjust) "" else "and (l.modified_by is null OR l.modified_by != 'vvh_generated')"
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        s"WHERE line_number between $startNum and $endNum"
+
+      case _ => ""
+    }
+
+//TODO: for token -> DENSE_RANK() over (ORDER BY l.id) line_number
+    val filter = s"""WHERE ((l.HISTORY_CREATED_DATE > $querySinceDate and l.HISTORY_CREATED_DATE <= $queryUntilDate)
+                      $withAutoAdjustFilter
+                      )$recordLimit"""
+
+    getHistoryLanesFilterQuery(withFilter(filter))
+  }
 }

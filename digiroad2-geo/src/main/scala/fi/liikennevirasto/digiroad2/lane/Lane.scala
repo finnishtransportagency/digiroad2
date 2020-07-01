@@ -34,7 +34,8 @@ case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long
                                 startMeasure: Double, endMeasure: Double,
                                 createdBy: Option[String], createdDateTime: Option[DateTime],
                                 modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
-                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty])
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty],
+                                historyCreatedDate: DateTime, historyCreatedBy: String)
 
 case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, value: LanePropertyValue, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime] )
@@ -199,4 +200,26 @@ object LaneContinuity {
   case object ContinuousTurningRight extends LaneContinuity { def value = 5; def typeDescription = "Continuous and turning right possible"; def finnishDescription = "Jatkuva, osoitettu myös oikealle kääntyville"; }
   case object ContinuousTurningLeft extends LaneContinuity { def value = 6; def typeDescription = "Continuous and turning left possible"; def finnishDescription = "Jatkuva, osoitettu myös vasemmalle kääntyville"; }
   case object Unknown extends LaneContinuity { def value = 99;  def typeDescription = "Unknown"; def finnishDescription = "Tuntematon"; }
+}
+
+/**
+  * Values for changeType of lanes
+  */
+sealed trait LaneChangeType {
+  def value: Int
+}
+object LaneChangeType {
+  val values = Set(Add, Lengthened, Shortened, Expired, Unknown)
+
+  def apply(value: Int): LaneChangeType = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object Add extends LaneChangeType { def value = 1;}
+  case object Lengthened extends LaneChangeType {def value = 2;}
+  case object Shortened extends LaneChangeType {def value = 3;}
+  case object Expired extends LaneChangeType {def value = 4;}
+  case object LaneCodeTransfer extends LaneChangeType {def value = 5;}
+  case object AttributesChanged extends LaneChangeType {def value = 6;}
+  case object Unknown extends LaneChangeType {def value = 99;}
 }
