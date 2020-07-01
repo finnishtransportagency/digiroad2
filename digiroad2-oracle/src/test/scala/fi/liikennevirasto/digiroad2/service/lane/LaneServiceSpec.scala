@@ -1333,45 +1333,4 @@ class LaneServiceSpec extends LaneTestSupporter {
       shortenedLane.oldLane.get.id should be(lane12Id)
     }
   }
-
-  test("Lane Change: Combination of changes"){
-    //      11 12 14(three adds) -> 11[m] 12[m] 14 (two modifications[m]) -> 11 (two deleted)
-    runWithRollback {
-      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
-      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
-      val newLane14 = newLane11.copy(properties = lanePropertiesValues14)
-      val dateAtThisMoment = DateTime.now()
-
-      val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 1, usernameTest).head
-      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 1, usernameTest).head
-      ServiceWithDao.create(Seq(newLane14), Set(100L), 1, usernameTest)
-
-      val newLanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("changed attribute")))
-      )
-
-      val newLanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("another attribute")))
-      )
-
-      ServiceWithDao.update(Seq(newLane11.copy(id = lane11Id, properties = newLanePropertiesValues11)), Set(100L), 1, usernameTest)
-      ServiceWithDao.update(Seq(newLane12.copy(id = lane12Id, properties = newLanePropertiesValues12)), Set(100L), 1, usernameTest)
-
-      ServiceWithDao.deleteMultipleLanes(Set(12, 14), Set(100L), usernameTest)
-
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
-        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
-      )
-
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
-
-      lanesChanged.map(_.changeType).sortBy(_.value) should be (Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.Add,
-                                                                    LaneChangeType.Expired, LaneChangeType.Expired,
-                                                                    LaneChangeType.AttributesChanged, LaneChangeType.AttributesChanged))
-    }
-  }
 }
