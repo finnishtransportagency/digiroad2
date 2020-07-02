@@ -37,11 +37,19 @@
       return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
     };
 
+    var isCarPedestrianCyclingRoad = function() {
+      return !_.isUndefined(data.linkType) && !_.includes([ 9, 21, 99], data.linkType);
+    };
+
     var cancel = function() {
       data.trafficDirection = original.trafficDirection;
       data.functionalClass = original.functionalClass;
       data.linkType = original.linkType;
       data.administrativeClass = original.administrativeClass;
+    };
+
+    var cancelDirectionChange = function() {
+      data.trafficDirection = original.trafficDirection;
     };
 
     return {
@@ -51,9 +59,11 @@
       setLinkProperty: setLinkProperty,
       isSelected: isSelected,
       isCarTrafficRoad: isCarTrafficRoad,
+      isCarPedestrianCyclingRoad: isCarPedestrianCyclingRoad,
       select: select,
       unselect: unselect,
-      cancel: cancel
+      cancel: cancel,
+      cancelDirectionChange: cancelDirectionChange
     };
   };
 
@@ -150,6 +160,18 @@
         .value();
     };
 
+    this.getRoadsForCarPedestrianCycling = function() {
+      return _.chain(me.roadLinks())
+          .filter(function(roadLink) {
+            return roadLink.isCarPedestrianCyclingRoad();
+          })
+          .map(function(roadLink) {
+            return roadLink.getData();
+          })
+          .value();
+    };
+
+
     this.getRoadLinkByLinkId = function (linkId) {
       return _.find(_.flatten(me.roadLinkGroups), function(road) { return road.getId() === linkId; });
     };
@@ -187,6 +209,10 @@
 
     this.resetHistory = function(){
       me.roadLinkGroupsHistory = [];
+    };
+
+    this.isPedestrianOrCyclingRoadLink = function (roadLink) {
+      return roadLink.linkType === 8;
     };
   };
 })(this);

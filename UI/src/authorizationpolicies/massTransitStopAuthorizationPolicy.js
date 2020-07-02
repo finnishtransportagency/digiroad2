@@ -9,7 +9,7 @@
     };
 
     /**
-     * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/busStopMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
+     * tietojen ylläpitäjä = bus stop maintainer. Return false if user is not operator/elyMaintainer, meaning that maintainer cannot be changed to ELY-keskus in form unless authorized.
     * */
     this.reduceChoices = function(stopProperty) {
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
@@ -32,7 +32,11 @@
 
     this.assetSpecificAccess = function(){
       var municipalityCode = selectedMassTransitStopModel.getMunicipalityCode();
-      return (me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode)) ||(me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode)) || me.isOperator();
+
+      var isMunicipalityAndHaveRights = me.isMunicipalityMaintainer() && !selectedMassTransitStopModel.isAdminClassState() && me.hasRightsInMunicipality(municipalityCode);
+      var isElyyAndHaveRights = me.isElyMaintainer() && me.hasRightsInMunicipality(municipalityCode);
+
+      return me.isStateExclusions(selectedMassTransitStopModel) || ( isMunicipalityAndHaveRights || isElyyAndHaveRights || me.isOperator() );
     };
 
 
@@ -60,6 +64,11 @@
       eventbus.trigger('application:controlledTR', (condition && liviCondition));
       /**boolean inverted because it is used for 'isReadOnly' in mass transit stop form*/
       return !hasAccess;
+    };
+
+    this.handleMassTransitStopSuggestion = function(selectedAsset, suggestedProperty) {
+      var suggestedBoxValue = !_.isEmpty(suggestedProperty.values) ? !!parseInt(suggestedProperty.values[0].propertyValue) : false;
+      return (!_.isNumber(selectedAsset.getId()) && me.isOperator()) || (suggestedBoxValue && (me.isOperator() || me.isMunicipalityMaintainer()));
     };
   };
 })(this);

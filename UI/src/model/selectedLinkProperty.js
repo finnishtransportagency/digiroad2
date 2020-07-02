@@ -34,7 +34,7 @@
       };
 
       var extractMinAddressValue = function(selectedData, property) {
-        var roadPartNumber = Math.min.apply(null, pickUniqueValues(selectedData, 'roadPartNumber'));
+        var roadPartNumber = Math.min.apply(null, _.compact(pickUniqueValues(selectedData, 'roadPartNumber')));
         return Math.min.apply(null, _.chain(selectedData)
           .filter(function (data) {
             return data.roadPartNumber == roadPartNumber;
@@ -44,7 +44,7 @@
       };
 
       var extractMaxAddressValue = function(selectedData, property) {
-        var roadPartNumber = Math.max.apply(null, pickUniqueValues(selectedData, 'roadPartNumber'));
+        var roadPartNumber = Math.max.apply(null, _.compact(pickUniqueValues(selectedData, 'roadPartNumber')));
         return Math.max.apply(null, _.chain(selectedData)
           .filter(function (data) {
             return data.roadPartNumber == roadPartNumber;
@@ -56,8 +56,7 @@
       var properties = _.cloneDeep(_.head(selectedData));
       var isMultiSelect = selectedData.length > 1;
       if (isMultiSelect) {
-        var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
-          'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
+        var ambiguousFields = ['municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy'];
         properties = _.omit(properties, ambiguousFields);
         var latestModified = dateutil.extractLatestModifications(selectedData);
         var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
@@ -138,6 +137,12 @@
       eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
     };
 
+    var cancelDirectionChange = function() {
+      _.each(current, function(selected) { selected.cancelDirectionChange(); });
+      var originalData = _.head(current).getData();
+      eventbus.trigger('linkProperties:cancelledDirectionChange', _.cloneDeep(originalData));
+    };
+
     var setLinkProperty = function(key, value) {
       dirty = true;
       _.each(current, function(selected) { selected.setLinkProperty(key, value); });
@@ -167,6 +172,7 @@
       isDirty: isDirty,
       save: save,
       cancel: cancel,
+      cancelDirectionChange: cancelDirectionChange,
       isSelected: isSelected,
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,

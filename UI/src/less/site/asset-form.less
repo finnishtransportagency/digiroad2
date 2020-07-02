@@ -227,6 +227,27 @@
         margin-left: 18px;
       }
     }
+
+    .suggestion-element {
+      label {
+        margin: 0px;
+        width: 14%;
+      }
+      input[type="checkbox"] {
+        width: auto;
+      }
+      p {
+        margin-top: 0;
+      }
+    }
+  }
+
+  .form-masstransitstop{
+
+    .large-input {
+      height: 200px;
+    }
+
   }
 
   .form-pointasset {
@@ -238,6 +259,10 @@
 
     input[type="checkbox"] {
       margin: 6px 6px 0 0;
+    }
+
+    .suggested-checkbox {
+      width: auto;
     }
 
     .large-input {
@@ -405,9 +430,7 @@
   }
 
   .user-log-info {
-    border: darkorange;
-    border-style: solid;
-    border-width: 1px;
+    border: 1px solid darkorange;
     width: 320px;
     padding: 12px;
   }
@@ -418,5 +441,17 @@
 
   .service-point > div {
     display: inline-block;
+  }
+
+  .suggestionCheckBox {
+    background: none;
+    border: none;
+    height: 10px;
+    width: 10px;
+    margin-top: 13px;
+
+    > p {
+      padding: 0;
+    }
   }
 }

@@ -31,7 +31,8 @@
         {signValue: [11], typeExtension: 5, image: 'images/service_points/railwayStation2.png'},
         {signValue: [11], typeExtension: 6, image: 'images/service_points/railwayStation.png'},
         {signValue: [11], typeExtension: 7, image: 'images/service_points/subwayStation.png'},
-        {signValue: [18], image: 'images/service_points/e18rekkaparkki.png', validation: validateText, height: 25}
+        {signValue: [18], image: 'images/service_points/e18rekkaparkki.png', validation: validateText, height: 25},
+        {signValue: [19], image: 'images/service_points/culvert.png', height: 25}
       ];
     };
 
@@ -46,6 +47,18 @@
     };
 
     var validateText = function () { return true;};
+
+    var getProperty = function (asset, publicId) {
+      return _.head(_.find(asset.propertyData, function (prop) {
+        return prop.publicId === publicId;
+      }).values);
+    };
+
+    this.renderFeaturesByPointAssets = function (pointAssets, zoomLevel) {
+      return me.renderGroupedFeatures(pointAssets, zoomLevel, function (asset) {
+        return me.getCoordinate(asset);
+      });
+    };
 
     this.renderGroupedFeatures = function(assets, zoomLevel, getPoint){
       if(!this.isVisibleZoom(zoomLevel))
@@ -62,6 +75,13 @@
               imgPosition.y += me.getLabelProperty(value).getHeight();
               return me.getStyle(value, imgPosition );
             })));
+
+            var suggestionInfo = getProperty(asset,"suggest_box");
+            if(!_.isUndefined(suggestionInfo) && !!parseInt(suggestionInfo.propertyValue)){
+              imgPosition.y += 40;
+              styles = me.suggestionStyle(suggestionInfo, styles, imgPosition.y);
+            }
+
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(styles);
             feature.setProperties(_.omit(asset, 'geometry'));

@@ -13,8 +13,8 @@
         }))
       });
     };
-
-    this.getStyle = function(value){
+    
+    this.defaultStyle = function(value){
       return [backgroundStyle(value), new ol.style.Style({
         text : new ol.style.Text({
           text : validateText(value),
@@ -31,9 +31,9 @@
     };
 
     var obtainValue = function(value){
-      var property = _.find(value, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
+      var property = _.find(value.properties, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
       if(property)
-        return property.value;
+        return _.head(property.values).value;
       return 0;
     };
 
@@ -47,6 +47,37 @@
 
     this.isVisibleZoom = function(zoomLevel){
       return zoomLevel >= 10;
+    };
+
+    this.getSuggestionStyle = function (yPosition) {
+      return new ol.style.Style({
+        image: new ol.style.Icon(({
+          src: 'images/icons/questionMarkerIcon.png',
+          anchor : [0.5, yPosition]
+        }))
+      });
+    };
+
+    this.renderFeatures = function (assets, zoomLevel, getPoint) {
+      if (!me.isVisibleZoom(zoomLevel))
+        return [];
+
+      return [].concat.apply([], _.chain(assets).map(function (asset) {
+        var values = me.getValue(asset);
+        return _.map(values, function () {
+          var style = me.defaultStyle(values);
+
+          if(me.isSuggested(asset)) {
+            style = style.concat(me.getSuggestionStyle( 1.5));
+          }
+          var feature = me.createFeature(getPoint(asset));
+          feature.setProperties(_.omit(asset, 'geometry'));
+          feature.setStyle(style);
+          return feature;
+        });
+      }).filter(function (feature) {
+        return !_.isUndefined(feature);
+      }).value());
     };
   };
 })(this);

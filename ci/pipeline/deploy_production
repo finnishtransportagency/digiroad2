@@ -1,3 +1,4 @@
+import java.net.URI
 def get_environment() {
     return "production"
 }
@@ -25,7 +26,15 @@ pipeline {
                 }
             }
             steps {
-                script {
+                withCredentials([string(credentialsId: 'ORACLE_LIBS', variable: 'ORACLE_LIBS')]) {
+                    script {
+
+                       def ojdbc = 'ojdbc6'
+                       def ojdbc_version = '11.2.0.3.0'
+                       def version = '11.2.0'
+                       def sdoapl = 'sdoapl'
+                       def sdoutl = 'sdoutl'
+                       def sbt_proxy = new URI(http_proxy)
 
                        def java_opts = [
                             "-Dhttp.proxyHost=${sbt_proxy.getHost()}",
@@ -34,9 +43,18 @@ pipeline {
                             "-DproxySet=true"
                         ].join(" ")
 
+	                    STAGE_SETUP_ORACLE = [
+                            "mkdir digiroad2-oracle/conf/",
+                            "mkdir digiroad2-oracle/conf/lib/",
+                            "curl ${ORACLE_LIBS}/${ojdbc}/${ojdbc_version}/${ojdbc}-${ojdbc_version}.jar --output digiroad2-oracle/conf/lib/${ojdbc}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoapl}/${version}/${sdoapl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoapl}.jar",
+                            "curl ${ORACLE_LIBS}/${sdoutl}/${version}/${sdoutl}-${version}.jar --output digiroad2-oracle/conf/lib/${sdoutl}.jar",
+                        ].join(" && ")
+
                         STAGE_FRONTEND_BUILD_CMD = [
                             "npm install",
                             "grunt deploy --target=${get_environment()?.trim()}",
+                            "rm -rf ~/package/UI/node_modules",
                             "cp -r ${WORKSPACE}/dist ~/package/UI/",
                             "cp -r ${WORKSPACE}/node_modules ~/package/UI/",
                             "cd ~/package/UI"
@@ -55,7 +73,7 @@ pipeline {
                         STAGE_PUBLISH_CMD = [
                             "mvn deploy:deploy-file",
                             "-DgroupId=fi.liikennevirasto.digiroad2",
-                            "-DartifactId=oth-${get_environment()?.trim()}",
+                            "-DartifactId=digiroad2-${get_environment()?.trim()}",
                             "-Dversion=1.0.0-${BUILD_ID}",
                             "-DgeneratePom=true",
                             "-Dpackaging=war",
@@ -75,6 +93,7 @@ pipeline {
                             "cd ~/",
                             "bundle exec cap production2 deploy"
                         ].join(" && ")
+                    }
                 }
             }
         }
@@ -98,19 +117,19 @@ pipeline {
                         "--build-arg JENKINS_UID=${jenkins_uid}"
                     ].join(" ")
                     docker.build(
-                        "oth-frontend",
+                        "digiroad2-frontend",
                         "${build_args} -f ci/docker/Dockerfile.node ci"
                     )
                     docker.build(
-                        "oth-backend-sbt",
+                        "digiroad2-backend-sbt",
                         "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                     docker.build(
-                        "oth-maven-publish",
+                        "digiroad2-maven-publish",
                         "${build_args} -f ci/docker/Dockerfile.maven ci"
                     )
                     docker.build(
-                        "oth-cap",
+                        "digiroad2-cap",
                         "${build_args} -f ci/docker/Dockerfile.ruby ci"
                      )
                 }
@@ -127,9 +146,9 @@ pipeline {
         stage("Build: Frontend") {
             agent {
                 docker {
-                    image "oth-frontend"
+                    image "digiroad2-frontend"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -154,9 +173,9 @@ pipeline {
 		stage("Build: Backend") {
             agent {
                 docker {
-                    image "oth-backend-sbt"
+                    image "digiroad2-backend-sbt"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -166,7 +185,7 @@ pipeline {
                 }
             }
             steps {
-                echo "Build and run backend tests"
+                echo "Build backend"
                 sh STAGE_SETUP_ORACLE
                 sh STAGE_BACKEND_BUILD_CMD
             }
@@ -182,9 +201,9 @@ pipeline {
         stage("Package & Publish") {
             agent {
                 docker {
-                    image "oth-maven-publish"
+                    image "digiroad2-maven-publish"
                     reuseNode true
-                    args "-v oth-package-${get_environment()?.trim()}:/home/jenkins/package"
+                    args "-v digiroad2-package-${get_environment()?.trim()}:/home/jenkins/package"
                 }
             }
             when {
@@ -211,7 +230,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "oth-cap"
+                    image "digiroad2-cap"
                     reuseNode true
                 }
             }
@@ -244,7 +263,7 @@ pipeline {
 
             agent {
                 docker {
-                    image "oth-cap"
+                    image "digiroad2-cap"
                     reuseNode true
                 }
             }

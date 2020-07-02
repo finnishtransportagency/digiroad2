@@ -50,7 +50,7 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
       dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
   }
 
-  override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  override def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long], newTransaction: Boolean = true): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds, LinearAssetTypes.getValuePropertyId(typeId))
     }
@@ -131,9 +131,9 @@ class TextValueLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBus
     }
   }
 
-  override def validateAssetValue(values: Option[Value]): Unit = {
+  override def validateCondition(asset: NewLinearAsset): Unit = {
     val euroAndExitPattern = "^[0-9|Ee][0-9|a-zA-Z]{0,2}$"
-    values.get match {
+    asset.value match {
       case TextualValue(textValue) => textValue.split(",").forall(_.trim.matches(euroAndExitPattern)) match {
           case false => throw new AssetValueException(textValue)
           case _ => None

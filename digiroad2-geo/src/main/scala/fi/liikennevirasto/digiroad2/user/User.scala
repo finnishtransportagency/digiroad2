@@ -1,16 +1,14 @@
 package fi.liikennevirasto.digiroad2.user
 
-import fi.liikennevirasto.digiroad2.Point
-import java.sql.Date
-import java.time.LocalDate
-
 import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.asset._
+
 
 case class Configuration(
                         zoom: Option[Int] = None,
                         east: Option[Long] = None,
                         north: Option[Long] = None,
+                        assetType: Option[Int] = None,
                         municipalityNumber: Option[Int]  = None,
                         authorizedMunicipalities: Set[Int] = Set(),
                         authorizedAreas: Set[Int] = Set(),
@@ -19,6 +17,12 @@ case class Configuration(
                         lastLoginDate: Option[String] = None
                         )
 
+object ElyExceptionsForState {
+  val municipalitiesForAhvenanmaaEly = Set(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
+
+}
+
+
 case class User(id: Long, username: String, configuration: Configuration, name: Option[String] = None) {
   def hasWriteAccess() = !isViewer()
 
@@ -26,24 +30,11 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
 
   def isServiceRoadMaintainer(): Boolean = configuration.roles(Role.ServiceRoadMaintainer)
 
-  def isViiteUser(): Boolean = configuration.roles(Role.ViiteUser)
+  def isOperator(): Boolean = configuration.roles(Role.Operator)
 
-  def hasViiteWriteAccess(): Boolean = configuration.roles(Role.ViiteUser)
+  def isELYMaintainer(): Boolean = configuration.roles(Role.ElyMaintainer)
 
-  def isOperator(): Boolean = {
-    configuration.roles(Role.Operator)
-  }
-
-  //Todo change to ELY Maintainer
-  def isBusStopMaintainer(): Boolean = {
-    configuration.roles(Role.BusStopMaintainer)
-  }
-
-  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty || (configuration.roles(Role.Premium) && configuration.roles.size == 1)
-
-  def hasEarlyAccess(): Boolean = {
-    configuration.roles(Role.Premium) || configuration.roles(Role.Operator) || configuration.roles(Role.BusStopMaintainer)
-  }
+  def isMunicipalityMaintainer(): Boolean = configuration.roles.isEmpty && configuration.authorizedMunicipalities.nonEmpty
 
   def isAuthorizedToRead(municipalityCode: Int): Boolean = true
 
@@ -56,23 +47,30 @@ case class User(id: Long, username: String, configuration: Configuration, name: 
   private def isAuthorizedFor(municipalityCode: Int): Boolean =
     isOperator() || configuration.authorizedMunicipalities.contains(municipalityCode)
 
-  private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean =
-    (isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)) || (isBusStopMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)) || isOperator()
+  def isAnElyException( municipalityCode: Int): Boolean = {
+
+    /* Users in Ahvenanmaa need to edit state information */
+    if ( ElyExceptionsForState.municipalitiesForAhvenanmaaEly.contains(municipalityCode) )
+      isAuthorizedFor(municipalityCode)
+    else
+      false
+  }
+
+  private def isAuthorizedFor(municipalityCode: Int, administrativeClass: AdministrativeClass): Boolean = {
+    val isElyException = isAnElyException(municipalityCode)
+    val isMunicipalityMaintainerAndIsAuthorized = isMunicipalityMaintainer() && administrativeClass != State && configuration.authorizedMunicipalities.contains(municipalityCode)
+    val isElyMaintainerAndIsAuthorized = isELYMaintainer() && configuration.authorizedMunicipalities.contains(municipalityCode)
+
+    isElyException || isMunicipalityMaintainerAndIsAuthorized  || isElyMaintainerAndIsAuthorized  || isOperator()
+  }
 
   private def isAuthorizedForArea(areaCode: Int, administrativeClass: AdministrativeClass): Boolean =
     isOperator() || (isServiceRoadMaintainer() && configuration.authorizedAreas.contains(areaCode))
 }
 
 object Role {
-  // TODO note this role should be change in newuser.html too
   val Operator = "operator"
-  // TODO Could be deleted
-  val Administrator = "administrator"
-  // TODO Rename to municipality Maintainer
-  val Premium = "premium"
   val Viewer = "viewer"
-  val ViiteUser = "viite"
-  //TODO change to ELY Maintainer and replace DBase
-  val BusStopMaintainer = "busStopMaintainer"
+  val ElyMaintainer = "elyMaintainer"
   val ServiceRoadMaintainer = "serviceRoadMaintainer"
 }

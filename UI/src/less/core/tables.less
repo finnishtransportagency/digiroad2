@@ -32,6 +32,10 @@ th {
       }
     }
   }
+
+  .unknownSpeedLimitCheckboxWidth{
+    width: 10px;
+  }
 }
 
 #formTable {
@@ -54,6 +58,20 @@ th {
         }
       }
     }
+  }
+}
+
+.municipality-header {
+  width: 100%;
+  display: inline-block;
+  h2 {
+    display: inline-block;
+    width: 33%;
+  }
+  img {
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: -5px;
   }
 }
 
@@ -85,60 +103,6 @@ th {
         }
       }
     }
-  }
-}
-
-.job-status {
-  padding-top: 20px;
-  border-top: 4px solid @gray-light-2;
-  font-size: 14px;
-  max-height: 100%;
-  min-height: 0;
-
-  table ,tr td{
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    word-wrap: break-word;
-    .file{
-      width: 50%;
-    }
-    .date {
-      width: 27%;
-    }
-    .status {
-      width: 9%;
-      text-align: center;
-    }
-    .detail {
-      width: 14%;
-    }
-  }
-
-  tbody {
-    display:block;
-    overflow-y:auto;
-    flex-direction: column;
-    overflow-x: hidden;
-    min-height: 0;
-  }
-  thead, tbody tr {
-    display:table;
-    width:100%;
-    table-layout:fixed;
-  }
-
-  td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 1%;
-  }
-
-  th:last-child {
-    border-right: none;
-  }
-
-  tr:nth-child(even) {
-    background-color: #dddddd;
   }
 }
 

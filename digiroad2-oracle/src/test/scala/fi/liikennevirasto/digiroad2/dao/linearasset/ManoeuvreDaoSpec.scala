@@ -34,7 +34,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   test("test setManoeuvreExceptions") {
     runWithRollback {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
-      val mano = NewManoeuvre(Set(), Seq(), None, Seq(1, 2, 3), None)
+      val mano = NewManoeuvre(Set(), Seq(), None, Seq(1, 2, 3), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
@@ -52,7 +52,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
       val validityPeriod = Set(ValidityPeriod(12, 13, ValidityPeriodDayOfWeek("Sunday"), 30, 15), ValidityPeriod(8, 12, ValidityPeriodDayOfWeek("Saturday"), 0, 10))
       val exceptions = List(4,5)
-      val mano = NewManoeuvre(validityPeriod, exceptions, None, Seq(4, 7), None)
+      val mano = NewManoeuvre(validityPeriod, exceptions, None, Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
@@ -70,7 +70,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   test("test getByRoadLinks") {
     runWithRollback {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
-      val mano = NewManoeuvre(Set(), Seq(), None, Seq(4, 7), None)
+      val mano = NewManoeuvre(Set(), Seq(), None, Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val retrieved = dao.getByRoadLinks(Seq(4, 7))
@@ -89,7 +89,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   test("test addManoeuvreValidityPeriods") {
     runWithRollback {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
-      val mano = NewManoeuvre(Set(), Seq(), None, Seq(1, 2, 3), None)
+      val mano = NewManoeuvre(Set(), Seq(), None, Seq(1, 2, 3), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
@@ -109,7 +109,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   test("test addManoeuvreExceptions") {
     runWithRollback {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
-      val mano = NewManoeuvre(Set(), Seq(1, 2), None, Seq(4, 7), None)
+      val mano = NewManoeuvre(Set(), Seq(1, 2), None, Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
@@ -125,7 +125,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
   test("test deleteManoeuvre") {
     runWithRollback {
       val dao = new ManoeuvreDao(MockitoSugar.mock[VVHClient])
-      val mano = NewManoeuvre(Set(), Seq(1, 2), Option("added"), Seq(4, 7), None)
+      val mano = NewManoeuvre(Set(), Seq(1, 2), Option("added"), Seq(4, 7), None, false)
       val id = dao.createManoeuvre("user", mano)
       id > 0 should be (true)
       val persisted = dao.find(id).get
@@ -140,7 +140,7 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
     val elements = Seq(ManoeuvreElement(1, 123, 124, ElementTypes.FirstElement),
       ManoeuvreElement(1, 124, 125, ElementTypes.IntermediateElement),
       ManoeuvreElement(1, 125, 0, ElementTypes.LastElement))
-    val mano = NewManoeuvre(Set(), Seq(), None, elements.map(_.sourceLinkId), None)
+    val mano = NewManoeuvre(Set(), Seq(), None, elements.map(_.sourceLinkId), None, false)
     runWithRollback {
       val id = dao.createManoeuvre("user", mano)
       (id > 0) should be (true)

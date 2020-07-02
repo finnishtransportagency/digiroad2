@@ -3,17 +3,20 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, Manoeuvre, ManoeuvreElement}
+import fi.liikennevirasto.digiroad2.service.linearasset.{ChangedSpeedLimit, ElementTypes, LinearLengthLimitService, Manoeuvre, ManoeuvreElement}
 import fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop.{MassTransitStopService, PersistedMassTransitStop}
 import org.json4s.{DefaultFormats, Formats}
-import org.mockito.Mockito._
+import org.mockito.Mockito.{when, _}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
+import org.mockito.ArgumentMatchers.any
 import org.slf4j.LoggerFactory
+
+import scala.collection.immutable.Stream.Empty
 
 
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
@@ -21,6 +24,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
     PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, 0, Modification(None, None), Modification(None, None), Seq(), NormalLinkInterface)
   }
+  val mockLinearLengthLimitService = MockitoSugar.mock[LinearLengthLimitService]
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
   private val integrationApi = new IntegrationApi(mockMassTransitStopService, new OthSwagger)
@@ -94,7 +98,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("encode speed limit") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, None, None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, None, None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -110,7 +114,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is real user and modifier is automatically generated") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("dr1conversion"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("dr1conversion"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -126,7 +130,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is real user and modifier is automatically generated (contains fixed part of auto-generated value)") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("split_speedlimit_1234"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("split_speedlimit_1234"), None, Some("K123456"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -142,7 +146,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is automatically generated") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -158,7 +162,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns true if creator is automatically generated (contains fixed part of auto-generated value)") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, Some("split_speedlimit_1234"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, None, None, Some("split_speedlimit_1234"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -174,7 +178,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   }
 
   test("generatedValue returns false if creator is automatically generated and modifier is real user") {
-    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("K123456"), None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("K123456"), None, Some("dr1conversion"), None, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
       "sideCode" -> 1,
       "points" -> Nil,
@@ -191,7 +195,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
   test("changeType validation returns 'add' if asset is create before the actual date") {
     val changedSpeedLimits = ChangedSpeedLimit(
-      speedLimit = SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("modifiedByUser"), None, Some("createdByUser"), Some(DateTime.parse("2017-05-07T12:00Z")), 0, None, linkSource = NormalLinkInterface),
+      speedLimit = SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Nil, 0, 1, Some("modifiedByUser"), None, Some("createdByUser"), Some(DateTime.parse("2017-05-07T12:00Z")), 0, None, linkSource = NormalLinkInterface),
       link = RoadLink(12345, Seq(), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None))
 
     integrationApi.speedLimitsChangesToApi(DateTime.parse("2017-05-06T12:00Z"), Seq(changedSpeedLimits)) should be(Seq(Map(
@@ -257,7 +261,7 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
             ManoeuvreElement(1, 3, 4, ElementTypes.IntermediateElement),
             ManoeuvreElement(1, 4, 5, ElementTypes.IntermediateElement),
             ManoeuvreElement(1, 5, 0, ElementTypes.LastElement)),
-        Set.empty,Nil, None, None, "", DateTime.now, "")
+        Set.empty,Nil, None, None, "", DateTime.now, "", false)
 
       val result = integrationApi.manouvresToApi(Seq(manoeuvre))
 
@@ -274,4 +278,17 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     returntxt should be ("LINESTRING ZM (0.0 0.0 0.0 0.0, 1.0 0.0 0.5 1.0, 4.0 4.0 1.5 6.0)")
 
   }
+
+  test("Validate if sevenRestriction JSON generator return all required keys"){
+
+    val requiredKeys = Set("linkId","linkSource","startMeasure","side_code","muokattu_viimeksi","points","generatedValue","geometryWKT","endMeasure","value","id")
+    val jsonResult = integrationApi.sevenRestrictionToApi(30, 766)
+
+    val jsonToValidate = jsonResult.head.filterNot{ case (key, value) => value == None ||  value.toString.trim.isEmpty }
+
+    jsonToValidate.keySet.size should be (requiredKeys.size)
+    jsonToValidate.keySet.equals(requiredKeys) should be (true)
+
+  }
+
 }

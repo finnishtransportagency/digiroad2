@@ -7,7 +7,8 @@ window.MunicipalitySituationPopup = function (models) {
             if (!_.isEmpty(results)) {
               var verifyInfos = results._1;
               var modifyInfos = results._2;
-              renderDialog(verifyInfos, modifyInfos);
+              var totalSuggestedAssets = results._3;
+              renderDialog(verifyInfos, modifyInfos, totalSuggestedAssets);
             }
         });
 
@@ -106,8 +107,8 @@ window.MunicipalitySituationPopup = function (models) {
         return '<div id="dashBoardAssetsModificationsInfo">' + tableForGroupingLatestModificationValues(modificationsInfo) + '</div>';
     };
 
-    var renderDialog = function(verificationsInfo, modificationsInfo) {
-        $('#work-list').append(me.createMunicipalitySituationPopUp(verificationsInfo, modificationsInfo)).show();
+    var renderDialog = function(verificationsInfo, modificationsInfo, totalSuggestedAssets) {
+        $('#municipality-situation').append(me.createMunicipalitySituationPopUp(verificationsInfo, modificationsInfo, totalSuggestedAssets)).show();
 
         $('.confirm-modal#municipalitySituation .cancel').on('click', function() {
             options.cancelCallback();
@@ -121,7 +122,7 @@ window.MunicipalitySituationPopup = function (models) {
         });
     };
 
-    this.createMunicipalitySituationPopUp = function (verificationsInfo, modificationsInfo) {
+    this.createMunicipalitySituationPopUp = function (verificationsInfo, modificationsInfo, totalSuggestedAssets) {
         return '' +
             '<div class="modal-overlay confirm-modal" id="municipalitySituation">' +
                 '<div class="modal-dialog municipalitySituation">' +
@@ -131,7 +132,7 @@ window.MunicipalitySituationPopup = function (models) {
                         '<label class="control-label" id="title">Tarkistetut tietolajit</label>' +
                          me.createCriticalAssetsVerificationInfoForm(verificationsInfo) +
                     '<div class="actions">' +
-                        '<button class = "btn btn-primary save" onclick="window.location.href=\'#work-list/municipality\'">' + options.saveButton + '</button>' +
+                        '<button class = "btn btn-primary save" onclick="window.location.href=\'#work-list/municipality\'"><span>' + options.saveButton + '</span><span class="badge">' + totalSuggestedAssets + '</span></button>' +
                         '<button class = "btn btn-secondary cancel">' + options.cancelButton + '</button>' +
                     '</div>' +
                 '</div>' +

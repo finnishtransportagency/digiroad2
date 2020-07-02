@@ -13,12 +13,13 @@ pipeline {
                                         'bogieWeightLimit',
                                         'widthLimit',
                                         'lengthLimit',
-                                        'pedestrianCrossing'
+                                        'pedestrianCrossing',
+                                        'speedLimit'
                                         ])
     }
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: "25"))
+        buildDiscarder(logRotator(numToKeepStr: "50"))
         disableConcurrentBuilds()
     }
 
@@ -32,8 +33,8 @@ pipeline {
                             "ssh web@production1 \'cd /home/web/digiroad2/current && echo YES |",
                              "/home/web/digiroad2/current/./sbt",
                              "-Ddigiroad2.env=production",
-                             "\'project digiroad2-oracle\'",
-                             "\'test:run-main fi.liikennevirasto.digiroad2.util.AssetValidatorProcess ${TASK}\'"
+                             "\"project digiroad2-oracle\"",
+                             "\"test:run-main fi.liikennevirasto.digiroad2.util.AssetValidatorProcess ${TASK}\"\'"
                         ].join(" ")
                     }
             }

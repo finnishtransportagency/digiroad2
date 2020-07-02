@@ -114,6 +114,14 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val speedLimitTrafficSignClient: SpeedLimitTrafficSignClient = {
+    def filterCondition(assetNumber : Int): Boolean = TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.AdditionalPanels || TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits
+
+    new SpeedLimitTrafficSignClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())(filterCondition)
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -242,7 +250,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       Equipment.RaisedBusStop -> Existence.Yes,
       Equipment.Lighting -> Existence.Unknown)
 
-    val tkMassTransitStop = TierekisteriMassTransitStop(208914,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150,None),TRRoadSide.Right,StopType.Combined, false,
+    val tkMassTransitStop = TierekisteriMassTransitStop(208914,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150),TRRoadSide.Right,StopType.Combined, false,
       equipments,Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
     tierekisteriMassTransitStopClient.createMassTransitStop(tkMassTransitStop)
@@ -264,7 +272,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
         Equipment.RaisedBusStop -> Existence.Yes,
         Equipment.Lighting -> Existence.Unknown)
 
-      val tkMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914eeeeeeeeeeeee", RoadAddress(None, 25823, 104, Track.Combined, 150, None), TRRoadSide.Right, StopType.Combined, false,
+      val tkMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914eeeeeeeeeeeee", RoadAddress(None, 25823, 104, Track.Combined, 150), TRRoadSide.Right, StopType.Combined, false,
         equipments, Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9,1))
 
       tierekisteriMassTransitStopClient.createMassTransitStop(tkMassTransitStop)
@@ -289,7 +297,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
         Equipment.RaisedBusStop -> Existence.Yes,
         Equipment.Lighting -> Existence.Unknown)
 
-      val tkMassTransitStop = TierekisteriMassTransitStop(208913,"OTHJ208916",RoadAddress(None,25823,104,Track.Combined,150,None),TRRoadSide.Right,StopType.Combined, false,
+      val tkMassTransitStop = TierekisteriMassTransitStop(208913,"OTHJ208916",RoadAddress(None,25823,104,Track.Combined,150),TRRoadSide.Right,StopType.Combined, false,
         equipments,Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 1))
 
       tierekisteriMassTransitStopClient.createMassTransitStop(tkMassTransitStop)
@@ -315,7 +323,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assume(testConnection)
 
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914",
-      RoadAddress(None, 1, 1, Track.Combined, 150, None), TRRoadSide.Right, StopType("paikallis"),
+      RoadAddress(None, 1, 1, Track.Combined, 150), TRRoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
@@ -339,7 +347,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assume(testConnection)
 
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914",
-      RoadAddress(None, 1, 1, Track.Combined, 150, None), TRRoadSide.Right, StopType("paikallis"),
+      RoadAddress(None, 1, 1, Track.Combined, 150), TRRoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
@@ -363,7 +371,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assume(testConnection)
 
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ20891499999999",
-      RoadAddress(None, 1, 1, Track.Combined, 150, None), TRRoadSide.Right, StopType("paikallis"),
+      RoadAddress(None, 1, 1, Track.Combined, 150), TRRoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
@@ -390,7 +398,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assume(testConnection)
 
     val objTierekisteriMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ20891499Err",
-      RoadAddress(None, 1, 1, Track.Combined, 150, None), TRRoadSide.Right, StopType("paikallis"),
+      RoadAddress(None, 1, 1, Track.Combined, 150), TRRoadSide.Right, StopType("paikallis"),
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
@@ -732,6 +740,18 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
     assetsTypeSpeedLimit.get.roadSide should be (RoadSide.Right)
     assetsTypeEndSpeedLimitZone.get.roadSide should be (RoadSide.Right)
+  }
+
+  test("get NOPRA506 field value on speed limit signs with value") {
+    val assetsTypeSpeedLimit = speedLimitTrafficSignClient.mapFields(trSpeedLimitDataTest(SpeedLimitSign, fldNOPRA506 = "80", fldLMTEKSTI = "20"))
+    assetsTypeSpeedLimit.size should be (1)
+    assetsTypeSpeedLimit.map(_.assetValue).head should be ("80")
+  }
+
+  test("get LMTEKSTI field value on speed limit signs without value") {
+    val assetsTypeSpeedLimit = speedLimitTrafficSignClient.mapFields(trSpeedLimitDataTest(UrbanArea, fldNOPRA506 = "80", fldLMTEKSTI= "100"))
+    assetsTypeSpeedLimit.size should be (1)
+    assetsTypeSpeedLimit.map(_.assetValue).head should be ("100")
   }
 
   def trSpeedLimitDataTest(speedLimitType: TrafficSignType, fldLIIKVAST: String = null, fldNOPRA506: String = null, fldLMTEKSTI: String = null ) = {

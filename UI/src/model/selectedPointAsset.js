@@ -8,8 +8,10 @@
       open: open,
       getId: getId,
       get: get,
+      getByProperty: getByProperty,
       place: place,
       set: set,
+      setProperties: setProperties,
       save: save,
       isDirty: isDirty,
       isNew: isNew,
@@ -39,6 +41,14 @@
         if (_.isArray(a)) { return b; }
       });
       eventbus.trigger(assetName + ':changed');
+    }
+
+    function setProperties(property) {
+      dirty = true;
+      _.mergeWith(current.properties, property, function(a, b){
+        if(_.isArray(a)) { return b; }
+      });
+      eventbus.trigger(assetName + ":changed");
     }
 
     function open(asset) {
@@ -71,6 +81,14 @@
       return current;
     }
 
+    function getByProperty(key) {
+      if (exists()) {
+        return _.find(current.propertyData, function(asset) {
+          return asset.publicId === key;
+        }).values[0].propertyValue;
+      }
+    }
+
     function exists() {
       return !_.isNull(current);
     }
@@ -87,12 +105,13 @@
       eventbus.trigger(assetName + ':saving');
       current = _.omit(current, 'geometry');
       if (current.toBeDeleted) {
-        eventbus.trigger(endPointName + ':deleted', current);
+        eventbus.trigger(endPointName + ':deleted', current, 'deleted');
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
       } else if (isNew()) {
+        eventbus.trigger(endPointName + ':created', current, 'created');
         backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
-        eventbus.trigger(endPointName + ':updated', current);
+        eventbus.trigger(endPointName + ':updated', current, 'updated');
         backend.updatePointAsset(current, endPointName).done(done).fail(fail);
       }
 

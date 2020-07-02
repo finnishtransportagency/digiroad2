@@ -277,6 +277,59 @@ input[type="checkbox"] {
   }
 }
 
+//Lane Modelling Form
+.info-label {
+  text-align: left;
+}
+
+.form-break {
+  width: 90%;
+}
+
+.preview-div {
+  margin-top: 2%;
+}
+
+.number-header{
+  font-size: 10px;
+}
+
+.preview {
+  color: white;
+  margin:auto;
+  border-collapse: separate;
+  border-spacing: 3px;
+  text-align:center;
+  font-family: sans-serif;
+  font-size: 12px;
+}
+
+.preview-lane {
+  height: 70px;
+  background-color:dimgrey;
+}
+
+.highlight-lane {
+  border: 3px solid yellow;
+}
+
+.not-highlight-lane {
+  border: 1px solid white;
+}
+
+.list-lane-buttons {
+  list-style: none;
+}
+
+.lane-button {
+  display: inline;
+}
+
+.lane-buttons {
+  margin-left: 43%;
+  margin-bottom: 10%;
+}
+
 // Horizontal forms
 //
 // Horizontal forms allow you to create forms with labels on the left and inputs on the right.
@@ -647,6 +700,20 @@ input[type="checkbox"] {
 
 }
 
+.pdfBackgroundColor {
+  background-color: @gray-lighter;
+}
+
+.pdfSize{
+  height: 1700px;
+  width: 700px;
+}
+
+.pdfHide{
+  height: 0px;
+  width: 0px;
+}
+
 // Inverted colors
 //
 // Inverts the form component colors to work on darker backgrounds
@@ -712,6 +779,7 @@ input[type="checkbox"] {
     float: right;
   }
 
+  .old_traffic_code-checkbox-label,
   .traffic-panel-checkbox-label{
     text-transform: none;
     font-size: @font-size-large;
@@ -720,5 +788,25 @@ input[type="checkbox"] {
     margin-top: 8px;
   }
 
+  .private-road-last-modification {
+    color: #646461;
+  }
+
+  .suggested-box {
+    margin-top: 12px;
+  }
+
+  .form-control.kg-unit-addon{
+    all: unset;
+    float: left;
+    height: 15px;
+    margin-top: 6px;
+    margin-left: -30px;
+    background-color: #7f7f7c;
+    padding: 5px 7.5px;
+    border: 1px solid #a4a4a2;
+    white-space: nowrap;
+    display: table-cell;
+  }
 
 }

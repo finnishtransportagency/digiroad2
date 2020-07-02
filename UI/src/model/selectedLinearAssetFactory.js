@@ -13,9 +13,23 @@
       roadDamagedByThaw: function() { return true; },
       massTransitLanes: function() { return true; },
       carryingCapacity: function() { return true; },
+      roadWork: function() { return true; },
       pavedRoad: function() { return true; },
       careClass: function() {return true; },
       bogieWeightLimit: function() { return true; },
+      totalWeightLimit: function() { return true; },
+      roadWidth: function() { return true; },
+      trailerTruckWeightLimit: function() { return true; },
+      axleWeightLimit: function() { return true; },
+      heightLimit: function() { return true; },
+      lengthLimit: function() { return true; },
+      widthLimit: function() { return true; },
+      litRoad: function() { return true; },
+      trafficVolume: function() { return true; },
+      winterSpeedLimits: function() { return true; },
+      numberOfLanes: function() { return true; },
+      parkingProhibition: function() { return true; },
+      cyclingAndWalking: function() { return true; },
       default: function(val) {
         if(_.isUndefined(val)) { return true; }
         else if(val > 0) { return true; }

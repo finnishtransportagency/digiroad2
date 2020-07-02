@@ -69,13 +69,6 @@
             element: infoContainer
         }));
 
-        var hasRoadAddressInfo = function(roadData){
-            if(_.isUndefined(roadData.roadNumber))
-                return false;
-
-            return roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99;
-        };
-
         var getPointAssetData = function(roadData){
           var data = _.clone(collection.getRoadLinkByLinkId(_.find([roadData.data, roadData], function(rd){return !_.isUndefined(rd);}).linkId));
           if(!_.isUndefined(data)){
@@ -83,13 +76,16 @@
           }
         };
 
-        var isStateRoad = function(roadData){
-          return (roadData.administrativeClass==1 || roadData.administrativeClass=='State');
-        };
-
         map.addOverlay(overlay);
 
+        var allowedLaneInfoLayers = ["laneModellingTool", "trafficSigns"];
+
         var displayRoadAddressInfoPopup = function(event) {
+          var getLaneInfo = function () {
+            if(_.includes(allowedLaneInfoLayers, applicationModel.getSelectedLayer()))
+              return 'Kaistat: ' + _.join(_.uniq(roadData.lanes), ', ') + '<br>';
+            return '';
+          };
 
             if (event.dragging)
                 return;
@@ -107,36 +103,23 @@
 
             var generateInfoContent = function(roadData){
               infoContent.innerHTML = '<p>' +
-                'Tienumero: ' + roadData.roadNumber + '<br>' +
-                'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
-                'Ajorata: ' + roadData.track + '<br>' +
-                'AET: ' + roadData.startAddrMValue + '<br>' +
-                'LET: ' + roadData.endAddrMValue + '<br>' +'</p>';
+                'Tienumero: ' + (roadData.roadNumber || '') + '<br>' +
+                'Tieosanumero: ' + (roadData.roadPartNumber || '') + '<br>' +
+                'Ajorata: ' + (roadData.track || '') + '<br>' +
+                'AET: ' + (roadData.startAddrMValue || '') + '<br>' +
+                'LET: ' + (roadData.endAddrMValue || '') + '<br>' +
+                getLaneInfo() + '</p>';
               overlay.setPosition(map.getEventCoordinate(event.originalEvent));
             };
 
-            var generateUnknownInfoContent = function(){
-              infoContent.innerHTML = '<p>' +
-                'Tuntematon tien segmentti' +'</p>'; //road with no address
-              overlay.setPosition(map.getEventCoordinate(event.originalEvent));
-            };
+          if(feature.getGeometry().getType() === "Point"){
+            var pointAssetData = getPointAssetData(roadData);
+            if(!_.isUndefined(pointAssetData))
+              generateInfoContent(pointAssetData);
 
-            if(feature.getGeometry().getType() === "Point" || _.isUndefined(roadData.administrativeClass)){
-              var pointAssetData = getPointAssetData(roadData);
-              if(!_.isUndefined(pointAssetData)){
-                if(hasRoadAddressInfo(pointAssetData) && isStateRoad(pointAssetData)){
-                  generateInfoContent(pointAssetData);
-                }else if(isStateRoad(pointAssetData)){
-                  generateUnknownInfoContent();
-                }
-              }
-            }else{
-              if(hasRoadAddressInfo(roadData) && isStateRoad(roadData)){
-                generateInfoContent(roadData);
-              }else if(isStateRoad(roadData)){
-                generateUnknownInfoContent();
-              }
-            }
+          }else{
+            generateInfoContent(roadData);
+          }
         };
 
         return {

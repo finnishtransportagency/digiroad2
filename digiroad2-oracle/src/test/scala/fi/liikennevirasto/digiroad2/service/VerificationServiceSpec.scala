@@ -40,27 +40,27 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       val assetId = Sequences.nextPrimaryKeySeqValue
       val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,190,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_Old', (sysdate - interval '5' day ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,190,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_Old', (sysdate - interval '5' day ))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId, 1100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values ($assetId, $lrmPositionId)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),190,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_new', (sysdate - interval '3' day ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),190,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_new', (sysdate - interval '3' day ))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId +1, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 1), $lrmPositionId + 1)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 2),100,'dr2_test_data', (sysdate - interval '1' month ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 2),100,'dr2_test_data', (add_months(sysdate, -1)))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 2, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 2), $lrmPositionId + 2)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),100,'dr2_test_data', (sysdate - interval '1' month ), 'testuser', (sysdate - interval '1' day ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),100,'dr2_test_data', (add_months(sysdate, -1)), 'testuser', (sysdate - interval '1' day ))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 3, 5100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 3), $lrmPositionId + 3)""".execute
 
-      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 4),210,'dr2_test_data', (sysdate - interval '1' month ))""".execute
+      sqlu"""insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY, CREATED_DATE) values (($assetId + 4),210,'dr2_test_data', (add_months(sysdate, -1)))""".execute
       sqlu"""insert into LRM_POSITION (ID,LINK_ID,START_MEASURE,END_MEASURE,SIDE_CODE) values ($lrmPositionId + 4, 3100, 0, 100, 1)""".execute
       sqlu"""insert into ASSET_LINK (ASSET_ID, POSITION_ID) values (($assetId + 4), $lrmPositionId + 4)""".execute
 
-      val lastModification = ServiceWithDao.getLastModificationLinearAssets(90)
+      val lastModification = ServiceWithDao.getLastModificationLinearAssets(tinyRoadLinkMunicipality90.map(_.linkId))
 
       lastModification should have size 3
       lastModification.find(_.assetTypeCode == 190).get.modifiedBy should be(Some("testuser_new"))
@@ -72,11 +72,11 @@ class VerificationServiceSpec extends FunSuite with Matchers {
   test("get last point asset modification") {
     runWithRollback {
       val assetId = Sequences.nextPrimaryKeySeqValue
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,220, 235,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_Old', (sysdate - interval '5' day ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),220, 235,'dr2_test_data', (sysdate - interval '1' month ), 'testuser_new', (sysdate - interval '3' day ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 2),230, 235,'dr2_test_data', (sysdate - interval '1' month ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),230, 235,'dr2_test_data', (sysdate - interval '1' month ), 'testuser', (sysdate - interval '1' day ))""".execute
-      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 4),240, 235, 'dr2_test_data', (sysdate - interval '1' month ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values ($assetId ,220, 235,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_Old', (sysdate - interval '5' day ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 1),220, 235,'dr2_test_data', (add_months(sysdate, -1)), 'testuser_new', (sysdate - interval '3' day ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 2),230, 235,'dr2_test_data', (add_months(sysdate, -1)))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE) values (($assetId + 3),230, 235,'dr2_test_data', (add_months(sysdate, -1)), 'testuser', (sysdate - interval '1' day ))""".execute
+      sqlu"""insert into ASSET (ID, ASSET_TYPE_ID, MUNICIPALITY_CODE, CREATED_BY, CREATED_DATE) values (($assetId + 4),240, 235, 'dr2_test_data', (add_months(sysdate, -1)))""".execute
 
       val lastModification = ServiceWithDao.getLastModificationPointAssets(235)
 
@@ -85,33 +85,10 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       lastModification.find(_.assetTypeCode == 230).get.modifiedBy should be(Some("testuser"))
     }
   }
-//Commented to be resolved parallel to deploy to staging
-//  test("get verification asset types info"){
-//    runWithRollback {
-//      val tinyRoadLinkMunicipality90 = Seq(TinyRoadLink(1100), TinyRoadLink(3100), TinyRoadLink(5100))
-//      when(mockRoadLinkService.getTinyRoadLinkFromVVH(90)).thenReturn(tinyRoadLinkMunicipality90)
-//
-//      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id, 90, 30, (sysdate - interval '1' year), 'testuser')""".execute
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id+1, 90, 40, add_months(sysdate, -23), 'testuser')""".execute
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id+2, 90, 50, (sysdate - interval '2' year), 'testuser')""".execute
-//      sqlu"""insert into municipality_verification (id, municipality_id, asset_type_id, verified_date, verified_by) values ($id+3, 90, 60, sysdate, 'testuser')""".execute
-//
-//      val verificationInfo = ServiceWithDao.getAssetTypesByMunicipalityF(90)
-//      verificationInfo should have size 25
-//      verificationInfo.filter(_.municipalityCode == 90) should have size 25
-//      verificationInfo.filter(_.verifiedBy.isDefined) should have size 4
-//      verificationInfo.find(_.assetTypeCode == 30).map(_.verified).head should be (true)
-//      verificationInfo.find(_.assetTypeCode == 40).map(_.verified).head should be (true)
-//      verificationInfo.find(_.assetTypeCode == 50).map(_.verified).head should be (false)
-//      verificationInfo.find(_.assetTypeCode == 60).map(_.verified).head should be (true)
-//      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy) should have size 4
-//      verificationInfo.filter(info => Set(30,40,50,60).contains(info.assetTypeCode)).map(_.verifiedBy).head should equal (Some("testuser"))
-//    }
-//  }
 
   test("set verify an unverified asset type") {
     runWithRollback {
+      ServiceWithDao.insertAssetTypeVerification(20, 120, None, None, None, 0, None, "")
       val oldVerification = ServiceWithDao.getAssetVerification(20, 120)
       ServiceWithDao.verifyAssetType(20, Set(120), "testuser")
       val newVerification = ServiceWithDao.getAssetVerification(20, 120)
@@ -157,7 +134,12 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       val tinyRoadLinkMunicipality235 = Seq( TinyRoadLink(1000),  TinyRoadLink(3000), TinyRoadLink(5000))
       when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
 
-      val latestModificationInfoMunicipality = ServiceWithDao.getAssetLatestModifications(Set(235))
+      val municipalities = Set(235)
+      val tinyRoadLink = municipalities.flatMap { municipality =>
+        mockRoadLinkService.getTinyRoadLinkFromVVH(municipality)
+      }
+
+      val latestModificationInfoMunicipality = ServiceWithDao.dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
       latestModificationInfoMunicipality should have size 3
       latestModificationInfoMunicipality.head.assetTypeCode should be(70)
       latestModificationInfoMunicipality.last.assetTypeCode should be(100)
@@ -172,10 +154,63 @@ class VerificationServiceSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getTinyRoadLinkFromVVH(235)).thenReturn(tinyRoadLinkMunicipality235)
       when(mockRoadLinkService.getTinyRoadLinkFromVVH(100)).thenReturn(tinyRoadLinkMunicipality100)
 
-      val latestModificationInfo = ServiceWithDao.getAssetLatestModifications(Set(100, 235))
+      val municipalities = Set(100, 235)
+      val tinyRoadLink = municipalities.flatMap { municipality =>
+        mockRoadLinkService.getTinyRoadLinkFromVVH(municipality)
+      }
+
+      val latestModificationInfo = ServiceWithDao.dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
       latestModificationInfo should have size 4
       latestModificationInfo.head.assetTypeCode should be (90)
       latestModificationInfo.last.assetTypeCode should be (30)
+    }
+  }
+
+  test("get assets latest modifications with one municipality") {
+    runWithRollback {
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (235, 70, 'testUser1', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (235, 100, 'testUser2', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (749, 80, 'testUser1', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (749, 200, 'testUser3', sysdate)""".execute
+
+      val latestModificationInfo = ServiceWithDao.getAssetsLatestModifications(Set(235))
+      latestModificationInfo should have size 2
+
+      latestModificationInfo.map(_.assetTypeCode).min should be (70)
+      latestModificationInfo.map(_.assetTypeCode).max should be (100)
+
+      latestModificationInfo.filter(_.assetTypeCode == 70).head.modifiedBy should be (Some("testUser1"))
+      latestModificationInfo.filter(_.assetTypeCode == 100).head.modifiedBy should be (Some("testUser2"))
+    }
+  }
+
+  test("get assets latest modifications for Ely user with two municipalities") {
+    runWithRollback {
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (235, 70, 'testUser1', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (235, 100, 'testUser2', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (749, 80, 'testUser1', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (749, 200, 'testUser3', sysdate)""".execute
+      sqlu"""insert into dashboard_info (municipality_id, asset_type_id, modified_by, last_modified_date)
+      values (766, 200, 'testUser4', sysdate)""".execute
+
+      val latestModificationInfo = ServiceWithDao.getAssetsLatestModifications(Set(235, 749))
+      latestModificationInfo should have size 4
+
+      latestModificationInfo.map(_.assetTypeCode).min should be (70)
+      latestModificationInfo.map(_.assetTypeCode).max should be (200)
+
+      latestModificationInfo.filter(_.assetTypeCode == 70).head.modifiedBy should be (Some("testUser1"))
+      latestModificationInfo.filter(_.assetTypeCode == 100).head.modifiedBy should be (Some("testUser2"))
+      latestModificationInfo.filter(_.assetTypeCode == 80).head.modifiedBy should be (Some("testUser1"))
+      latestModificationInfo.filter(_.assetTypeCode == 200).head.modifiedBy should be (Some("testUser3"))
     }
   }
 }

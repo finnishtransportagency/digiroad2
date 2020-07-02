@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
-import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
+import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimplePointAssetProperty, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{EventBusMassTransitStop, FloatingReason}
 import org.joda.time.DateTime
@@ -10,7 +10,7 @@ sealed trait BusStopType {
   def value: Int
 }
 object BusStopType {
-  val values = Set(Virtual, Commuter, LongDistance, Terminal, Unknown)
+  val values = Set(Virtual, Commuter, LongDistance, Terminal, ServicePoint, Unknown)
 
   def apply(intValue: Int): BusStopType = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -22,6 +22,7 @@ object BusStopType {
   case object Local extends BusStopType { def value = 4 }
   case object Virtual extends BusStopType { def value = 5 }
   case object Terminal extends BusStopType { def value = 6 }
+  case object ServicePoint extends BusStopType { def value = 7 }
   case object Unknown extends BusStopType { def value = 99 }
 }
 
@@ -34,6 +35,7 @@ object MassTransitStopOperations {
   val CommuterBusStopPropertyValue: String = "2"
   val LongDistanceBusStopPropertyValue: String = "3"
   val VirtualBusStopPropertyValue: String = "5"
+  val ServicePointBusStopPropertyValue: String = "7"
   val MassTransitStopTypePublicId = "pysakin_tyyppi"
   val MassTransitStopAdminClassPublicId = "linkin_hallinnollinen_luokka"
 
@@ -80,7 +82,7 @@ object MassTransitStopOperations {
   }
 
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
-    val simpleProperty = persistedAsset.propertyData.map{x => SimpleProperty(x.publicId , x.values)}
+    val simpleProperty = persistedAsset.propertyData.map{x => SimplePointAssetProperty(x.publicId , x.values)}
 
     if(persistedAsset.propertyData.exists(_.publicId == "vaikutussuunta") &&
       isValidBusStopDirections(simpleProperty, roadLinkOption))
@@ -97,8 +99,8 @@ object MassTransitStopOperations {
       None
   }
 
-  def isVirtualBusStop(properties: Set[SimpleProperty]): Boolean = {
-    properties.find(pro => pro.publicId == MassTransitStopTypePublicId).exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+  def isVirtualBusStop(properties: Set[SimplePointAssetProperty]): Boolean = {
+    properties.find(pro => pro.publicId == MassTransitStopTypePublicId).exists(_.values.exists(_.asInstanceOf[PropertyValue].propertyValue == VirtualBusStopPropertyValue))
   }
 
   def getAdministrationClass(properties: Seq[AbstractProperty]): Option[AdministrativeClass] = {
@@ -107,9 +109,9 @@ object MassTransitStopOperations {
 
     propertyValueOption match {
       case None => None
-      case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
-      case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
-        Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+      case Some(propertyValue) if propertyValue.asInstanceOf[PropertyValue].propertyValue.isEmpty => None
+      case Some(propertyValue) if propertyValue.asInstanceOf[PropertyValue].propertyValue.nonEmpty =>
+        Some(AdministrativeClass.apply(propertyValue.asInstanceOf[PropertyValue].propertyValue.toInt))
     }
   }
 
@@ -119,36 +121,36 @@ object MassTransitStopOperations {
     * @param stopProperties Properties of the mass transit stop
     * @return true, if any stop types included with a virtual stop type
     */
-  def mixedStoptypes(stopProperties: Set[SimpleProperty]): Boolean =
+  def mixedStoptypes(stopProperties: Set[SimplePointAssetProperty]): Boolean =
   {
     val propertiesSelected = stopProperties.filter(p => MassTransitStopTypePublicId.equalsIgnoreCase(p.publicId))
-      .flatMap(_.values).map(_.propertyValue)
+      .flatMap(_.values).map(_.asInstanceOf[PropertyValue].propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
 
-  def getVerifiedProperties(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): Set[SimpleProperty] = {
+  def getVerifiedProperties(properties: Set[SimplePointAssetProperty], assetProperties: Seq[AbstractProperty]): Set[SimplePointAssetProperty] = {
     val administrationFromProperties = properties.find(_.publicId == AdministratorInfoPublicId)
 
-    administrationFromProperties.flatMap(_.values.headOption.map(_.propertyValue)) match {
+    administrationFromProperties.flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)) match {
       case Some(value) => properties
       case None =>
         properties.filterNot(p => p.publicId == AdministratorInfoPublicId) ++ assetProperties.find(_.publicId == AdministratorInfoPublicId).
-          map( p => SimpleProperty(AdministratorInfoPublicId, p.values))
+          map( p => SimplePointAssetProperty(AdministratorInfoPublicId, p.values))
     }
   }
 
-  def isValidBusStopDirections(properties: Seq[SimpleProperty], roadLink: Option[RoadLinkLike]) = {
+  def isValidBusStopDirections(properties: Seq[SimplePointAssetProperty], roadLink: Option[RoadLinkLike]) = {
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
-    properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.propertyValue)) match {
+    properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.asInstanceOf[PropertyValue].propertyValue)) match {
       case Some(busDir) =>
         !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
       case None => false
     }
   }
 
-  def getTerminalMassTransitStopChildren(properties: Seq[SimpleProperty]) : Seq[Long] = {
-    properties.find(_.publicId == terminalChildrenPublicId).map(_.values).getOrElse(Seq()).map(_.propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
+  def getTerminalMassTransitStopChildren(properties: Seq[SimplePointAssetProperty]) : Seq[Long] = {
+    properties.find(_.publicId == terminalChildrenPublicId).map(_.values).getOrElse(Seq()).map(_.asInstanceOf[PropertyValue].propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
       result ++ Seq(child.toLong)
     }
   }
@@ -160,7 +162,7 @@ object MassTransitStopOperations {
   def extractStopTypes(properties: Seq[AbstractProperty]): Seq[BusStopType] ={
     properties.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
       case Some(property) =>
-        property.values.map(p => BusStopType.apply(p.propertyValue.toInt))
+        property.values.map(p => BusStopType.apply(p.asInstanceOf[PropertyValue].propertyValue.toInt))
       case _ =>
         Seq()
     }
@@ -172,23 +174,23 @@ object MassTransitStopOperations {
       .filter { property => property.publicId.equals("nimi_suomeksi") }
       .filterNot { property => property.values.isEmpty }
       .map(_.values.head)
-      .map(_.propertyValue)
+      .map(_.asInstanceOf[PropertyValue].propertyValue)
       .headOption
       .getOrElse("")
   }
 
-  def setPropertiesDefaultValues(properties: Seq[SimpleProperty], roadLink: RoadLinkLike): Seq[SimpleProperty] = {
+  def setPropertiesDefaultValues(properties: Seq[SimplePointAssetProperty], roadLink: RoadLinkLike): Seq[SimplePointAssetProperty] = {
     val arrayProperties = Seq(MassTransitStopOperations.InventoryDateId, MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
     val defaultproperties =  arrayProperties.flatMap{
       key =>
         if(!properties.exists(_.publicId == key))
-          Some(SimpleProperty(publicId = key,  values = Seq.empty[PropertyValue]))
+          Some(SimplePointAssetProperty(publicId = key,  values = Seq.empty[PropertyValue]))
         else
           None
     } ++ properties
 
     defaultproperties.map { parameter =>
-      if (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")) {
+      if (parameter.values.isEmpty || parameter.values.exists(_.asInstanceOf[PropertyValue].propertyValue == "")) {
         parameter.publicId match {
           case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
           case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))

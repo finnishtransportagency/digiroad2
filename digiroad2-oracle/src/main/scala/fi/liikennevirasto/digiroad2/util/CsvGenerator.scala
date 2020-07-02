@@ -37,7 +37,7 @@ class CsvGenerator(vvhServiceHost: String) {
     val (okManoeuvres, manoeuvresWithCycleOrPedestrianLink) = manoeuvresWithIntactLinks.partition { case (id, rows) => rows.forall { row => roadLinksByLinkId(row._4).isCarTrafficRoad }}
     val (_, detachedManoeuvres) = okManoeuvres.partition { case (id, rows) =>
       val source = rows.find(_._5 == Source).get
-      val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4)
+      val adjacents: Seq[RoadLink] = roadLinkService.getAdjacent(source._4, true)
       rows.find(_._5 == Destination).exists { destination =>
         adjacents.exists(_.linkId == destination._4)
       }
@@ -122,7 +122,7 @@ class CsvGenerator(vvhServiceHost: String) {
 
     val prohibitionLines = droppedProhibitions.map { droppedProhibition =>
       droppedProhibition.value.get match {
-        case Prohibitions(prohibitionValues) =>
+        case Prohibitions(prohibitionValues, false) =>
           prohibitionValues.map { prohibitionValue =>
             val value = generateValueString(prohibitionValue)
             (droppedProhibition.linkId, droppedProhibition.startMeasure, droppedProhibition.endMeasure, value, assetTypeId, false)

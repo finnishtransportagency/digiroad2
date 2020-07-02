@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
-import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.asset.DateParser._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{EnumeratedPropertyValue, Property, PropertyValue}
@@ -43,6 +43,15 @@ object AssetPropertyConfiguration {
       createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
       createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),
       commonAssetProperties(ValidityDirectionId).propertyDescriptor.copy(values = Seq(validityDirectionValues.find(_.propertyValue.toInt == row.validityDirection).getOrElse(PropertyValue("", None)))),
+      createProperty(ValidFromId, row.validFrom.map(_.toString)),
+      createProperty(ValidToId, row.validTo.map(_.toString))
+    )
+  }
+
+  def assetRowToCommonProperties(row: ServicePointRow): Seq[Property] = {
+    List(
+      createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
+      createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),
       createProperty(ValidFromId, row.validFrom.map(_.toString)),
       createProperty(ValidToId, row.validTo.map(_.toString))
     )

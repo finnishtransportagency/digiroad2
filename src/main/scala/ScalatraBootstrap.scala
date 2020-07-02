@@ -1,6 +1,6 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.dataimport.{ImportDataApi}
+import fi.liikennevirasto.digiroad2.dataimport.ImportDataApi
 import fi.liikennevirasto.digiroad2.user.UserConfigurationApi
 import org.scalatra._
 import javax.servlet.ServletContext
@@ -35,20 +35,11 @@ ScalatraBootstrap extends LifeCycle {
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService, swagger), "/api/integration/*")
     context.mount(new ChangeApi(swagger), "/api/changes/*")
-    context.mount(new MunicipalityApi(Digiroad2Context.onOffLinearAssetService,
+    context.mount(new MunicipalityApi(Digiroad2Context.vvhClient,
       Digiroad2Context.roadLinkService,
-      Digiroad2Context.linearAssetService,
       Digiroad2Context.speedLimitService,
       Digiroad2Context.pavedRoadService,
-      Digiroad2Context.roadWidthService,
-      Digiroad2Context.manoeuvreService,
-      Digiroad2Context.assetService,
       Digiroad2Context.obstacleService,
-      Digiroad2Context.pedestrianCrossingService,
-      Digiroad2Context.railwayCrossingService,
-      Digiroad2Context.trafficLightService,
-      Digiroad2Context.massTransitLaneService,
-      Digiroad2Context.numberOfLanesService,
       swagger
     ), "/api/municipality/*")
     context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService, swagger), "/api/livi/*")

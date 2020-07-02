@@ -166,23 +166,24 @@
     throw new Error("Geometry not supported");
   };
 
-  root.calculateMidpointOfLineString = function (lineString) {
+  root.calculateMidpointOfLineString = function (lineString, lineFraction) {
     var length = lineString.getLength();
     var vertices = lineString.getCoordinates();
     var firstVertex = _.head(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
+      var divideBy = (lineFraction || 2);
       var distance = distanceOfPoints(vertex, acc.previousVertex);
       var accumulatedDistance = acc.distanceTraversed + distance;
-      if (accumulatedDistance < length / 2) {
+      if (accumulatedDistance < length / divideBy ) {
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
       } else {
         vertex = {x: vertex[0], y: vertex[1]};
         acc.previousVertex = {x: acc.previousVertex[0], y:acc.previousVertex[1] };
         return {
           midpoint: {
-            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / 2 - acc.distanceTraversed)),
-            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / 2 - acc.distanceTraversed)),
+            x: acc.previousVertex.x + (((vertex.x - acc.previousVertex.x) / distance) * (length / divideBy - acc.distanceTraversed)),
+            y: acc.previousVertex.y + (((vertex.y - acc.previousVertex.y) / distance) * (length / divideBy - acc.distanceTraversed)),
             angleFromNorth: calculateAngleFromNorth(subtractVector(vertex, acc.previousVertex))
           }
         };

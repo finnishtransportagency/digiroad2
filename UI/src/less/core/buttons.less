@@ -202,6 +202,18 @@
 	float: right;
 	margin-right: 10px;
 }
+.btn-suggested-list {
+	.btn-tertiary;
+	padding: 1px 21px;
+}
+.btn-private-road-list {
+	float: right;
+	margin: 11px;
+}
+.btn-print {
+  float: right;
+  margin: 11px 5px;
+}
 .header-link-btn {
 	.btn-municipality;
 	border:none;
@@ -236,6 +248,39 @@
 	&:active,
 	&.active {
 		box-shadow: inset 0 1px 0 rgba(red(darkgoldenrod), green(darkgoldenrod), blue(darkgoldenrod), .325);
+	}
+}
+
+.btn-quinary {
+	color: black;
+	border-color: navajowhite;
+	background-color: blanchedalmond;
+	box-shadow: inset 0 1px 0 rgba(red(cornsilk), green(cornsilk), blue(cornsilk), .325), @btn-drop-shadow;
+
+	&:hover,
+	&:focus {
+		color: black;
+		background-color: bisque;
+		box-shadow: inset 0 1px 0 rgba(red(cornsilk), green(cornsilk), blue(cornsilk), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(navajowhite), green(navajowhite), blue(navajowhite), .325);
+	}
+}
+
+.btn-refresh {
+	margin-bottom: 5px;
+}
+
+.btn-download {
+	float: right;
+	margin: 10px;
+
+	img {
+		margin: 0 0px -2px 0px;
+		padding: 0 0 0 7px;
 	}
 }
 

@@ -10,6 +10,7 @@
     this.polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
     this.terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
     this.checkIcon = '<img src="images/check-icon.png" title="Kuntakäyttäjän todentama"/>';
+    this.pointAssetToolIcon = '<img src="images/add-point-asset-tool.svg"/>';
 
     this.Tool = function (toolName, icon) {
       var className = toolName.toLowerCase();
@@ -120,7 +121,9 @@
 
     this.addVerificationIcon = function(){
       $(me.expanded).find('.panel-header').css('display', 'flex');
-      $(me.expanded).find('.panel-header').append(me.verificationIcon());
+      var panel = $(me.expanded).find('.panel-header');
+      if(!panel.find('#right-panel').length)
+        panel.append(me.verificationIcon());
     };
 
     this.bindExternalEventHandlers = function() {

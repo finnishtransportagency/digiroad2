@@ -23,17 +23,21 @@ object Digiroad2Build extends Build {
       name := Digiroad2GeoName,
       version := Version,
       scalaVersion := ScalaVersion,
+      resolvers += Classpaths.typesafeReleases,
       scalacOptions ++= Seq("-unchecked", "-feature"),
-      resolvers := Seq(
-        Classpaths.typesafeReleases,
-        "osgeo" at "http://download.osgeo.org/webdav/geotools/",
-        "opengeo" at "http://repo.boundlessgeo.com/main/"),
       libraryDependencies ++= Seq(
         "org.joda" % "joda-convert" % "2.0.1",
         "joda-time" % "joda-time" % "2.9.9",
         "com.typesafe.akka" %% "akka-actor" % "2.5.12",
-        "javax.media" % "jai_core" % "1.1.3" from "http://download.osgeo.org/webdav/geotools/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
-        "org.geotools" % "gt-graph" % "19.0",
+        "javax.media" % "jai_core" % "1.1.3" from "https://repo.osgeo.org/repository/release/javax/media/jai_core/1.1.3/jai_core-1.1.3.jar",
+        "org.geotools" % "gt-graph" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-graph/19.0/gt-graph-19.0.jar",
+        "org.geotools" % "gt-main" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-main/19.0/gt-main-19.0.jar",
+        "org.geotools" % "gt-api" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-api/19.0/gt-api-19.0.jar",
+        "org.geotools" % "gt-referencing" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-referencing/19.0/gt-referencing-19.0.jar",
+        "org.geotools" % "gt-metadata" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-metadata/19.0/gt-metadata-19.0.jar",
+        "org.geotools" % "gt-opengis" % "19.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/org/geotools/gt-opengis/19.0/gt-opengis-19.0.jar",
+        "jgridshift" % "jgridshift" % "1.0" from "https://repo.osgeo.org/repository/release/jgridshift/jgridshift/1.0/jgridshift-1.0.jar",
+        "com.vividsolutions" % "jts-core" % "1.14.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/vividsolutions/jts-core/1.14.0/jts-core-1.14.0.jar",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "test"
       )
     )
@@ -70,9 +74,9 @@ object Digiroad2Build extends Build {
         "com.newrelic.agent.java" % "newrelic-api" % "3.1.1",
         "org.mockito" % "mockito-core" % "2.18.3" % "test",
         "com.googlecode.flyway" % "flyway-core" % "2.3.1" % "test",
-        "com.oracle" % "ojdbc6" % "11.2.0.3.0",
-        "com.oracle" % "sdoapi" % "11.2.0",
-        "com.oracle" % "sdoutl" % "11.2.0",
+        "com.oracle" % "ojdbc6" % "11.2.0.3.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/ojdbc6/11.2.0.3.0/ojdbc6-11.2.0.3.0.jar",
+        "com.oracle" % "sdoapi" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoapi/11.2.0/sdoapi-11.2.0.jar",
+        "com.oracle" % "sdoutl" % "11.2.0" from "http://livibuild04.vally.local/nexus/repository/maven-public/com/oracle/sdoutl/11.2.0/sdoutl-11.2.0.jar",
         "javax.mail" % "javax.mail-api" % "1.6.1",
         "com.sun.mail" % "javax.mail" % "1.6.1"
       ),

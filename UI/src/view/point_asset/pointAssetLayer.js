@@ -16,25 +16,26 @@
       assetGrouping = params.assetGrouping,
       authorizationPolicy = params.authorizationPolicy,
       trafficSignReadOnlyLayer = params.readOnlyLayer;
+    var pointAssetLayerStyles = PointAssetLayerStyles(params.roadLayer);
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
     var extraEventListener = _.extend({running: false}, eventbus);
     var vectorSource = new ol.source.Vector();
-    var vectorLayer = new ol.layer.Vector({
+    me.vectorLayer = new ol.layer.Vector({
        source : vectorSource,
        style : function(feature){
            return style.browsingStyleProvider.getStyle(feature);
        },
       renderBuffer: 300
     });
-    vectorLayer.set('name', layerName);
-    vectorLayer.setOpacity(1);
-    vectorLayer.setVisible(true);
-    map.addLayer(vectorLayer);
+    me.vectorLayer.set('name', layerName);
+    me.vectorLayer.setOpacity(1);
+    me.vectorLayer.setVisible(true);
+    map.addLayer(me.vectorLayer);
 
-    var selectControl = new SelectToolControl(application, vectorLayer, map, false,{
+    var selectControl = new SelectToolControl(application, me.vectorLayer, map, false,{
         style : function (feature) {
             return style.browsingStyleProvider.getStyle(feature);
         },
@@ -92,7 +93,7 @@
 
         function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
-            var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), feature.coordinate[0], feature.coordinate[1]);
+            var nearestLine = geometrycalculator.findNearestLine(me.excludeRoads(roadCollection, feature), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
               var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
@@ -122,7 +123,7 @@
         };
     }
 
-    function createFeature(asset) {
+    this.createFeature = function(asset) {
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
       var administrativeClass = obtainAdministrativeClass(asset);
@@ -130,7 +131,7 @@
       var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing, administrativeClass: administrativeClass}, feature.getProperties());
       feature.setProperties(obj);
       return feature;
-    }
+    };
 
     function determineRotation(asset) {
       var rotation = 0;
@@ -156,8 +157,10 @@
 
     this.refreshView = function() {
       eventbus.once('roadLinks:fetched', function () {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), zoomlevels.getViewZoom(map));
-         selectControl.activate();
+        var roadLinks = roadCollection.getAll();
+        roadLayer.drawRoadLinks(roadLinks, zoomlevels.getViewZoom(map));
+        me.drawOneWaySigns(roadLayer.layer, roadLinks);
+        selectControl.activate();
       });
       if(collection.complementaryIsActive()) {
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
@@ -176,11 +179,11 @@
           withDeactivatedSelectControl(function() {
             me.removeLayerFeatures();
           });
-          var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
+          var features = (!allowGrouping) ? _.map(assets, me.createFeature) : getGroupedFeatures(assets);
           selectControl.clear();
-          vectorLayer.getSource().addFeatures(features);
+          me.vectorLayer.getSource().addFeatures(features);
           if(assetLabel)
-            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
+            me.vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, zoomlevels.getViewZoom(map)));
           applySelection();
         }
 
@@ -207,7 +210,7 @@
           asset.lat = _.head(assetGroup).lat;
         });
       });
-      return _.map(_.flatten(modifiedAssets), createFeature);
+      return _.map(_.flatten(modifiedAssets), me.createFeature);
     };
 
     function obtainAdministrativeClass(asset){
@@ -215,12 +218,12 @@
     }
 
     this.removeLayerFeatures = function() {
-      vectorLayer.getSource().clear();
+      me.vectorLayer.getSource().clear();
     };
 
     function applySelection() {
       if (selectedAsset.exists()) {
-        var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
+        var feature = _.filter(me.vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
         if (feature) {
           selectControl.addSelectionFeatures(feature);
         }
@@ -239,7 +242,8 @@
     }
 
     this.layerStarted = function(eventListener) {
-      bindEvents(eventListener);
+      this.bindEvents(eventListener);
+      showRoadLinkInformation();
     };
 
     function toggleMode(readOnly) {
@@ -250,8 +254,8 @@
       }
     }
 
-    function bindEvents(eventListener) {
-      eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
+    this.bindEvents = function(eventListener) {
+      eventListener.listenTo(eventbus, 'map:clicked', this.handleMapClick);
       eventListener.listenTo(eventbus, layerName + ':saved ' + layerName + ':cancelled', handleSavedOrCancelled);
       eventListener.listenTo(eventbus, layerName + ':creationCancelled', handleCreationCancelled);
       eventListener.listenTo(eventbus, layerName + ':selected', handleSelected);
@@ -259,7 +263,8 @@
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
       eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
-    }
+    };
+
     eventbus.on( layerName + ':changeSigns', function(trafficSignData){
       setTrafficSigns(trafficSignData[0], trafficSignData[1]);
     });
@@ -273,14 +278,14 @@
       me.refreshView();
     };
 
-    var startListeningExtraEvents = function(){
+    function startListeningExtraEvents(){
       extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:show', showWithComplementary);
       extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:hide', hideComplementary);
-    };
+    }
 
-    var stopListeningExtraEvents = function(){
+    function stopListeningExtraEvents(){
       extraEventListener.stopListening(eventbus);
-    };
+    }
 
     function handleCreationCancelled() {
       mapOverlay.hide();
@@ -307,8 +312,8 @@
     function handleChanged() {
       var asset = selectedAsset.get();
       var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset), administrativeClass: obtainAdministrativeClass(asset)});
-      _.find(vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
-      var featureRedraw = _.find(vectorLayer.getSource().getFeatures(), function(feature) {
+      _.find(me.vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
+      var featureRedraw = _.find(me.vectorLayer.getSource().getFeatures(), function(feature) {
           return feature.getProperties().id === newAsset.id;
       });
       featureRedraw.setProperties({'geometry': new ol.geom.Point([newAsset.lon, newAsset.lat])});
@@ -316,32 +321,32 @@
 
     }
 
-    function handleMapClick(coordinates) {
-      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
-        createNewAsset(coordinates);
-      } else if (selectedAsset.isDirty()) {
-        me.displayConfirmMessage();
-      }
-    }
-
-    function createNewAsset(coordinates) {
+    this.createNewAsset =  function(coordinates) {
       var selectedLon = coordinates.x;
       var selectedLat = coordinates.y;
-      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), selectedLon, selectedLat);
+      var nearestLine = geometrycalculator.findNearestLine(me.excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets()), selectedLon, selectedLat);
       if(nearestLine.end && nearestLine.start){
         var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
         var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         var administrativeClass = obtainAdministrativeClass(nearestLine);
 
-        var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
+        var asset = me.createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
 
-        vectorLayer.getSource().addFeature(createFeature(asset));
+        me.vectorLayer.getSource().addFeature(me.createFeature(asset));
         selectedAsset.place(asset);
         mapOverlay.show();
       }
-    }
+    };
 
-    function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {
+    this.handleMapClick = function (coordinates) {
+      if (application.getSelectedTool() === 'Add' && zoomlevels.isInAssetZoomLevel(zoomlevels.getViewZoom(map))) {
+        me.createNewAsset(coordinates);
+      } else if (selectedAsset.isDirty()) {
+        me.displayConfirmMessage();
+      }
+    };
+
+    this.createAssetWithPosition = function(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {
       var isServicePoint = newAsset.services;
 
       return _.merge({}, newAsset, isServicePoint ? {
@@ -358,7 +363,7 @@
         bearing: bearing,
         administrativeClass: administrativeClass
       });
-    }
+    };
 
     function showWithComplementary() {
       if(trafficSignReadOnlyLayer)
@@ -367,12 +372,12 @@
       me.refreshView();
     }
 
-    function show(map) {
+    this.showLayer = function(map) {
       startListeningExtraEvents();
-      vectorLayer.setVisible(true);
+      me.vectorLayer.setVisible(true);
       roadAddressInfoPopup.start();
       me.show(map);
-    }
+    };
 
     function hideComplementary() {
       if(trafficSignReadOnlyLayer)
@@ -382,15 +387,15 @@
       me.refreshView();
     }
 
-    function hide() {
+    this.hideLayer = function() {
       selectedAsset.close();
-      vectorLayer.setVisible(false);
+      me.vectorLayer.setVisible(false);
       hideReadOnlyLayer();
       roadAddressInfoPopup.stop();
       stopListeningExtraEvents();
       me.stop();
       me.hide();
-    }
+    };
 
     var hideReadOnlyLayer = function(){
       if(trafficSignReadOnlyLayer){
@@ -405,20 +410,32 @@
       }
     };
 
-    function excludeRoadByAdminClass(roadCollection) {
-      return _.filter(roadCollection, function (roads) {
-        return authorizationPolicy.filterRoadLinks(roads);
+    this.excludeRoads = function(roadCollection) {
+      return me.excludeRoadByAdminClass(roadCollection.getRoadsForPointAssets());
+    };
+
+    this.excludeRoadByAdminClass = function(roads) {
+      return _.filter(roads, function (road) {
+        return authorizationPolicy.filterRoadLinks(road);
       });
-    }
+    };
 
     var refreshSelectedView = function(){
       if(applicationModel.getSelectedLayer() == layerName)
         me.refreshView();
     };
 
+    function showRoadLinkInformation() {
+      if(params.showRoadLinkInfo) {
+        roadLayer.setLayerSpecificStyleProvider(params.layerName, function() {
+          return pointAssetLayerStyles;
+        });
+      }
+    }
+
     return {
-      show: show,
-      hide: hide,
+      show: me.showLayer,
+      hide: me.hideLayer,
       minZoomForContent: me.minZoomForContent
     };
   };

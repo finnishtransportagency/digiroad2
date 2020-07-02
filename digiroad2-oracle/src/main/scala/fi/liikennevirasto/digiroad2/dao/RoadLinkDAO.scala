@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.dao
 
 import fi.liikennevirasto.digiroad2.asset
+import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.client.vvh.VVHRoadlink
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.TrafficDirectionDao.{column, table}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.service.LinkProperties
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -19,6 +19,15 @@ sealed trait RoadLinkDAO{
 
   def getExistingValue(linkId: Long): Option[Int]= {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
+  }
+
+  def getLinkIdByValue(value: Int, since: Option[String]): Seq[Long] = {
+    val sinceDateQuery = since match {
+      case Some(date) => " AND modified_date >= to_date('" + date + "', 'YYYYMMDD')"
+      case _ =>""
+    }
+
+    sql"""select link_id from #$table where #$column = $value #$sinceDateQuery""".as[Long].list
   }
 
 
@@ -75,11 +84,19 @@ sealed trait RoadLinkDAO{
   }
 
 
-  def expireValues(linkId: Long, username: Option[String]) = {
+  def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
+    val withTimeStamp = changeTimeStamp match {
+      case Some(ts) => ", adjusted_timestamp = " + ts + ""
+      case _ => ""
+    }
+
     sqlu"""update #$table
                  set valid_to = SYSDATE - 1,
                      modified_by = $username
-                 where link_id = $linkId""".execute
+                     #$withTimeStamp
+                 where link_id = $linkId
+                    and (valid_to is null or valid_to > sysdate)
+        """.execute
   }
 
   def deleteValues(linkId: Long) = {
@@ -123,6 +140,11 @@ object RoadLinkDAO{
     dao.getVVHValue(vvhRoadLink)
   }
 
+  def getLinkIdByValue(propertyName: String, value: Int, since: Option[String]): Seq[Long] = {
+    val dao = getDao(propertyName)
+    dao.getLinkIdByValue(value, since)
+  }
+
 
   def insert(propertyName: String, linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], mmlId: Option[Long]) = {
     val dao = getDao(propertyName)
@@ -163,7 +185,7 @@ object RoadLinkDAO{
       dao.updateValues(linkProperty, vvhRoadLink, username, value, mmlId)
   }
 
-  def update(propertyName: String, linkProperty: LinkProperties, username: Option[String], existingValue: Int) = {
+  def update(propertyName: String, linkProperty: LinkProperties, username: Option[String], existingValue: Int, mmlId: Option[Long] = None) = {
     val dao = getDao(propertyName)
     val value = dao.getValue(linkProperty)
 
@@ -249,7 +271,6 @@ object RoadLinkDAO{
           (linkId, asset.LinkType.apply(linkType))
       }
     }
-
   }
 
   case object AdministrativeClassDao extends RoadLinkDAO {
@@ -277,6 +298,13 @@ object RoadLinkDAO{
                    where not exists (select * from #$table where link_id = ${linkProperty.linkId})""".execute
     }
 
+    override def expireValues(linkId: Long, username: Option[String], changeTimeStamp: Option[Long] = None) = {
+      sqlu"""update #$table
+                 set valid_to = SYSDATE - 1,
+                     modified_by = $username
+                 where link_id = $linkId""".execute
+    }
+
     override def updateValues(linkProperty: LinkProperties, vvhRoadLink: VVHRoadlink, username: Option[String], value: Int, mml_id: Option[Long] = None): Unit = {
       expireValues(linkProperty.linkId, username)
       val vvhValue = getVVHValue(vvhRoadLink)
@@ -295,6 +323,21 @@ object RoadLinkDAO{
     override def deleteValues(linkId: Long) = {
       throw new UnsupportedOperationException("Administrative Class keeps history, ins't suppost to be deleted any row from db")
     }
+
+    def getExistingValueByLinkIds(linkIds: Seq[Long]) = {
+      val linkTypeInfo = MassQuery.withIds(linkIds.toSet) { idTableName =>
+        sql"""
+        select t.link_id, #$column
+           from #$table t
+           join  #$idTableName i on i.id = t.link_id
+         """.as[(Long, Int)].list
+      }
+      linkTypeInfo.map {
+        case (linkId, administrativeClassValue) =>
+          (linkId, asset.AdministrativeClass(administrativeClassValue))
+      }
+    }
+
   }
 
   case object LinkAttributesDao extends RoadLinkDAO {
@@ -302,8 +345,19 @@ object RoadLinkDAO{
     def table: String = LinkAttributes
     def column: String = LinkAttributes
 
-    def getExistingValues(linkId: Long) = {
-      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate) """.as[(String, String)].list.toMap
+    def getExistingValues(linkId: Long, changeTimeStamp: Option[Long] = None ) = {
+      val withTimeStamp = changeTimeStamp match {
+        case Some(ts) => "and adjusted_timestamp < " + ts + ""
+        case _ => ""
+      }
+
+      sql"""select name, value from #$table where link_id = $linkId and (valid_to IS NULL OR valid_to > sysdate #$withTimeStamp) """.as[(String, String)].list.toMap
+    }
+
+    def insertAttributeValueByChanges(linkId: Long, username: String, attributeName: String, value: String, changeTimeStamp: Long): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, adjusted_timestamp)
+             select primary_key_seq.nextval, $linkId, $attributeName, $value, $username, $changeTimeStamp
+              from dual""".execute
     }
 
     def getAllExistingDistinctValues(attributeName: String) : List[String] = {
@@ -312,12 +366,12 @@ object RoadLinkDAO{
 
     def getValuesByRoadAssociationName(roadAssociationName: String, attributeName: String): List[(String, Long)] = {
       sql"""select value, link_id from #$table where name = $attributeName
-           and (valid_to is null or valid_to > sysdate) and value = $roadAssociationName""".as[(String, Long)].list
+           and (valid_to is null or valid_to > sysdate) and trim(replace(upper(value), '\s{2,}', ' ')) = $roadAssociationName""".as[(String, Long)].list
     }
 
-    def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String): Unit = {
-      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by )
-             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username
+    def insertAttributeValue(linkProperty: LinkProperties, username: String, attributeName: String, value: String, mmlId: Option[Long]): Unit = {
+      sqlu"""insert into road_link_attributes (id, link_id, name, value, created_by, mml_id )
+             select primary_key_seq.nextval, ${linkProperty.linkId}, $attributeName, $value, $username, $mmlId
               from dual""".execute
     }
 
@@ -351,15 +405,6 @@ object RoadLinkDAO{
 
     def getVVHValue(vvhRoadLink: VVHRoadlink) = {
       throw new UnsupportedOperationException("Method getVVHValue is not supported for Link Attributes class")
-    }
-
-    override def expireValues(linkId: Long, username: Option[String]) = {
-      sqlu"""update #$table
-                 set valid_to = SYSDATE - 1,
-                     modified_by = $username
-                 where link_id = $linkId
-                    and (valid_to is null or valid_to > sysdate)
-        """.execute
     }
   }
 }

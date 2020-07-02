@@ -60,7 +60,7 @@
 
     this.workListItemTable = function(workListItems, layerName, municipalityId) {
       var municipalityHeader = function(municipalityName, totalCount) {
-        var countString = totalCount && layerName !== 'speedLimit' ? ' (yhteensä ' + totalCount + ' kpl)' : '';
+        var countString = totalCount && layerName !== 'speedLimitUnknown' ? ' (yhteensä ' + totalCount + ' kpl)' : '';
         return $('<h2/>').html(municipalityName + countString);
       };
       var tableHeaderRow = function(headerName) {
@@ -113,7 +113,7 @@
       delete unknownSpeedLimits.id;
       delete unknownSpeedLimits.name;
 
-      var unknownLimits = _.map(unknownSpeedLimits, _.partial(me.workListItemTable, _,  'speedLimit', municipalityId));
+      var unknownLimits = _.map(unknownSpeedLimits, _.partial(me.workListItemTable, _,  'speedLimitUnknown', municipalityId));
       $('#work-list .work-list').html(unknownLimits);
     };
 

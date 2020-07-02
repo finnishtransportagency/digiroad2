@@ -11,7 +11,7 @@ window.SpeedLimitLayer = function(params) {
   var isActive = false;
   var isActiveTrafficSigns = false;
   var extraEventListener = _.extend({running: false}, eventbus);
-  var authorizationPolicy = new SpeedLimitAuthorizationPolicy();
+  var authorizationPolicy = new LinearAssetAuthorizationPolicy();
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -507,13 +507,13 @@ window.SpeedLimitLayer = function(params) {
 
     var speedLimits = _.flatten(speedLimitChains);
     drawSpeedLimits(speedLimits, vectorLayer);
-     eventbus.trigger('speedLimits:redrawed', speedLimitChains);
+    eventbus.trigger('speedLimits:redrawed', speedLimitChains);
   };
 
   var drawSpeedLimits = function(speedLimits, layerToUse) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
+    var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return !_.isUndefined(speedLimit.value) ? speedLimit.value.value >= 70 : false; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
@@ -532,7 +532,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var isUnknown = function(speedLimit) {
-    return !_.isNumber(speedLimit.value);
+    return _.isUndefined(speedLimit.value) || !_.isNumber(speedLimit.value.value);
   };
 
   var limitSigns = function(speedLimits) {

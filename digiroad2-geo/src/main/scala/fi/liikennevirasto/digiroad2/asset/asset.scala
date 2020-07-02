@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.asset
 
-
+import java.nio.charset.StandardCharsets
+import java.text.Normalizer
+import java.util.Base64
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-
-import scala.collection.mutable.ListBuffer
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import scala.util.Try
+
 
 sealed trait LinkGeomSource{
   def value: Int
@@ -221,29 +222,56 @@ object PavementClass {
 sealed trait ServicePointsClass {
   def value: Int
   def isAuthorityData: Boolean
+  val labelName: String
+  val subTypeName: Map[String, Int] = Map.empty
 }
 object ServicePointsClass {
   val values = Set(Customs, BorderCrossing, RestArea, Airport, FerryTerminal, RailwayStation, ParkingArea, TerminalForLoadingCars,
-                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Unknown)
+                  ParkingAreaBusesAndTrucks, ParkingGarage, BusStation, TaxiStation, ElectricCarChargingStation, Culvert, Unknown)
 
   def apply(value: Int): Boolean = {
     values.find(_.value == value).getOrElse(Unknown).isAuthorityData
   }
 
-  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true;}
-  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true;}
-  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true;}
-  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true;}
-  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true;}
-  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true;}
-  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true;}
-  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true;}
-  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true;}
-  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true;}
-  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true;}
-  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false;}
-  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false;}
-  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true;}
+  def apply(value: String): Int = {
+    values.find { servicePoint =>
+      stringNormalizerToCsvDataImport(servicePoint.labelName) == value
+    }.getOrElse(Unknown).value
+  }
+
+  def stringNormalizerToCsvDataImport(value: String): String = {
+    Normalizer.normalize(value, Normalizer.Form.NFD)
+      .replaceAll("[^\\p{ASCII}]", "")
+      .replaceAll("-|\\s", "").toLowerCase
+  }
+
+  def getTypeExtensionValue(typeExtension: String, serviceType: Int): Option[Int] = {
+    val serviceTypeClass = values.find(_.value == serviceType)
+
+    val normalizedValue = stringNormalizerToCsvDataImport(typeExtension)
+
+    val normalizedSubTypes = serviceTypeClass.get.subTypeName.map { subType =>
+      (stringNormalizerToCsvDataImport(subType._1), subType._2)
+    }
+
+    normalizedSubTypes.get(normalizedValue)
+  }
+
+  case object Customs extends ServicePointsClass { def value = 4;  def isAuthorityData = true; val labelName = "Tulli";}
+  case object BorderCrossing extends ServicePointsClass { def value = 5; def isAuthorityData = true; val labelName = "Rajanylityspaikka";}
+  case object RestArea extends ServicePointsClass { def value = 6;  def isAuthorityData = true; val labelName = "Lepoalue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object Airport extends ServicePointsClass { def value = 8;  def isAuthorityData = true; val labelName = "Lentokenttä";}
+  case object FerryTerminal extends ServicePointsClass { def value = 9;  def isAuthorityData = true; val labelName = "Laivaterminaali";}
+  case object RailwayStation extends ServicePointsClass { def value = 11;  def isAuthorityData = true; val labelName = "Rautatieasema"; override val subTypeName = Map("Merkittävä rautatieasema" -> 5,"Vähäisempi rautatieasema" -> 6, "Maanalainen/metroasema" -> 7)}
+  case object ParkingArea extends ServicePointsClass { def value = 12;  def isAuthorityData = true; val labelName = "Pysäköintialue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object TerminalForLoadingCars extends ServicePointsClass { def value = 13;   def isAuthorityData = true; val labelName = "Autojen lastausterminaali";}
+  case object ParkingAreaBusesAndTrucks extends ServicePointsClass { def value = 14;   def isAuthorityData = true; val labelName = "Linja- ja kuorma-autojen pysäköintialue"; override val subTypeName = Map("Kattava varustelu" -> 1, "Perusvarustelu" -> 2, "Yksityinen palvelualue" -> 3, "Ei tietoa" -> 4)}
+  case object ParkingGarage extends ServicePointsClass { def value = 15;   def isAuthorityData = true; val labelName = "Pysäköintitalo";}
+  case object BusStation extends ServicePointsClass { def value = 16;  def isAuthorityData = true; val labelName = "Linja-autoasema";}
+  case object TaxiStation extends ServicePointsClass { def value = 10;  def isAuthorityData = false; val labelName = "Taksiasema";}
+  case object ElectricCarChargingStation extends ServicePointsClass { def value = 17;  def isAuthorityData = false; val labelName = "Sähköautojen latauspiste";}
+  case object Culvert extends ServicePointsClass { def value = 19; def isAuthorityData = false; val labelName = "Tierumpu";}
+  case object Unknown extends ServicePointsClass { def value = 99;  def isAuthorityData = true; val labelName = "Unknown";}
 }
 
 
@@ -267,6 +295,139 @@ object AnimalWarningsType {
   case object Unknown extends AnimalWarningsType { def value = 99;  def typeDescription = "Unknown";}
 }
 
+sealed trait TimePeriodClass {
+  def value: Int
+
+  val trafficSign: TrafficSignType
+}
+
+object TimePeriodClass {
+  val values = Set(ValidMultiplePeriodTime, ValidSatTime, ValidMonFriTime)
+
+  def apply(value: Int): TimePeriodClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[TimePeriodClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+
+  case object ValidMultiplePeriodTime extends TimePeriodClass {
+    def value: Int = 1
+
+    override val trafficSign: TrafficSignType = ValidMultiplePeriod
+  }
+
+  case object ValidSatTime extends TimePeriodClass {
+    def value: Int = 7
+
+    override val trafficSign: TrafficSignType = ValidSat
+  }
+
+  case object ValidMonFriTime extends TimePeriodClass {
+    def value: Int = 2
+
+    override val trafficSign: TrafficSignType = ValidMonFri
+  }
+
+  case object Unknown extends TimePeriodClass {
+    def value: Int = 99
+
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+sealed trait ParkingProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object ParkingProhibitionClass {
+  val values = Set(StandingAndParkingProhibition, ParkingProhibition, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[ParkingProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): ParkingProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    ParkingProhibitionClass.apply(prohibitionValue).trafficSign
+
+  case object StandingAndParkingProhibition extends ParkingProhibitionClass {
+    def value: Int = 1
+    override val trafficSign: TrafficSignType = StandingAndParkingProhibited
+  }
+
+  case object ParkingProhibition extends ParkingProhibitionClass {
+    def value: Int = 2
+    override val trafficSign: TrafficSignType = ParkingProhibited
+  }
+
+  case object Unknown extends ParkingProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
+sealed trait HazmatTransportProhibitionClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object HazmatTransportProhibitionClass {
+  val values = Set(HazmatProhibitionTypeA, HazmatProhibitionTypeB, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[HazmatTransportProhibitionClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): HazmatTransportProhibitionClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(prohibitionValue: Int): TrafficSignType =
+    HazmatTransportProhibitionClass.apply(prohibitionValue).trafficSign
+
+  case object HazmatProhibitionTypeA extends HazmatTransportProhibitionClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = HazmatProhibitionA
+  }
+
+  case object HazmatProhibitionTypeB extends HazmatTransportProhibitionClass {
+    def value: Int = 25
+    override val trafficSign: TrafficSignType = HazmatProhibitionB
+  }
+
+  case object Unknown extends HazmatTransportProhibitionClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
+
+sealed trait RoadWorksClass {
+  def value: Int
+  val trafficSign: TrafficSignType
+}
+object RoadWorksClass {
+  val values = Set(RoadWorksType, Unknown)
+
+  def fromTrafficSign(trafficSign: TrafficSignType): Set[RoadWorksClass] = {
+    values.find(_.trafficSign == trafficSign).toSet
+  }
+  def apply(value: Int): RoadWorksClass =
+    values.find(_.value == value).getOrElse(Unknown)
+
+  def toTrafficSign(roadWorkValue: Int): TrafficSignType =
+    RoadWorksClass.apply(roadWorkValue).trafficSign
+
+  case object RoadWorksType extends RoadWorksClass {
+    def value: Int = 24
+    override val trafficSign: TrafficSignType = RoadWorks
+  }
+
+  case object Unknown extends RoadWorksClass {
+    override def value: Int = 99
+    override val trafficSign: TrafficSignType = TrafficSignType.Unknown
+  }
+}
+
 sealed trait ProhibitionClass {
   def value: Int
   def typeDescription: String
@@ -274,7 +435,7 @@ sealed trait ProhibitionClass {
   val trafficSign: Seq[TrafficSignType] = Seq()
 }
 object ProhibitionClass {
-  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bud,
+  val values = Set(Vehicle, MotorVehicle, PassageThrough, Pedestrian, Bicycle, HorseRiding, Moped, Motorcycle, SnowMobile, Bus,
                    Taxi, PassengerCar, DeliveryCar, Truck, RecreationalVehicle, MilitaryVehicle, ArticulatedVehicle, TractorFarmVehicle,
                    OversizedTransport, DrivingInServicePurpose, DrivingToALot, Unknown)
 
@@ -284,21 +445,6 @@ object ProhibitionClass {
 
   def fromTrafficSign(trafficSign: TrafficSignType): Set[ProhibitionClass] = {
     values.filter(_.trafficSign.contains(trafficSign)).toSet
-  }
-
-  def toTrafficSign(prohibitionValue: ListBuffer[Int]): Seq[TrafficSignType] = {
-    (if (prohibitionValue.intersect(Seq(Moped.value, Pedestrian.value, Bicycle.value)).size == 3) {
-      prohibitionValue --= Seq(Moped.value, Pedestrian.value, Bicycle.value)
-      Seq(NoPedestriansCyclesMopeds)
-    } else Seq()
-      )++
-      (if (prohibitionValue.intersect(Seq(Moped.value, Bicycle.value)).size == 2) {
-        prohibitionValue --= Seq(Moped.value, Bicycle.value)
-        Seq(NoCyclesOrMopeds)
-      } else Seq()
-        ) ++ prohibitionValue.flatMap { value =>
-      ProhibitionClass.apply(value).trafficSign
-    }
   }
 
   case object Vehicle extends ProhibitionClass {
@@ -322,13 +468,13 @@ object ProhibitionClass {
     def value = 12
     def typeDescription = "Pedestrian"
     def rosatteType = "Pedestrian"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoPedestrians, NoPedestriansCyclesMopeds)
   }
   case object Bicycle extends ProhibitionClass {
     def value = 11
     def typeDescription = "Bicycle"
     def rosatteType = "Bicycle"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
   }
   case object HorseRiding extends ProhibitionClass {
     def value = 26
@@ -340,7 +486,7 @@ object ProhibitionClass {
     def value = 10
     def typeDescription = "Moped"
     def rosatteType = "Moped"
-    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds)
+    override val trafficSign: Seq[TrafficSignType] = Seq(NoMopeds, NoCyclesOrMopeds, NoPedestriansCyclesMopeds)
   }
   case object Motorcycle extends ProhibitionClass {
     def value = 9
@@ -354,9 +500,9 @@ object ProhibitionClass {
     def rosatteType = ""
     override val trafficSign: Seq[TrafficSignType] = Seq(NoMotorSledges)
   }
-  case object Bud extends ProhibitionClass {
+  case object Bus extends ProhibitionClass {
     def value = 5
-    def typeDescription = "Bud"
+    def typeDescription = "Bus"
     def rosatteType = "PublicBus + PrivateBus"
     override val trafficSign: Seq[TrafficSignType] = Seq(NoBuses)
   }
@@ -426,6 +572,68 @@ object ProhibitionClass {
   }
 }
 
+sealed trait ProhibitionExceptionClass {
+  def value: Int
+  val trafficSign: Seq[TrafficSignType] = Seq()
+}
+
+object ProhibitionExceptionClass {
+  val values = Set(MopedException, ServiceVehicles, Motorbike, BusException, Sedan, VanException, LorryException, Caravan, Unknown)
+
+  def apply(value: Int): ProhibitionExceptionClass = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  def fromTrafficSign(trafficSign: Seq[TrafficSignType]): Set[Int] = {
+    values.filter(_.trafficSign.exists( exception => trafficSign.contains(exception))).map(_.value).filterNot(_ == Unknown.value)
+  }
+
+  case object MopedException extends ProhibitionExceptionClass {
+    def value = 10
+    override val trafficSign: Seq[TrafficSignType] = Seq(Moped)
+  }
+
+  case object ServiceVehicles extends ProhibitionExceptionClass {
+    def value = 21
+    override val trafficSign: Seq[TrafficSignType] = Seq(DrivingInServicePurposesAllowed)
+  }
+
+  case object Motorbike extends ProhibitionExceptionClass {
+    def value = 9
+    override val trafficSign: Seq[TrafficSignType] = Seq(MotorCycle)
+  }
+
+  case object BusException extends ProhibitionExceptionClass {
+    def value = 5
+    override val trafficSign: Seq[TrafficSignType] = Seq(Bus)
+  }
+
+  case object Sedan extends ProhibitionExceptionClass {
+    def value = 7
+    override val trafficSign: Seq[TrafficSignType] = Seq(PassengerCar)
+  }
+
+  case object VanException extends ProhibitionExceptionClass {
+    def value = 6
+    override val trafficSign: Seq[TrafficSignType] = Seq(Van)
+  }
+
+  case object LorryException extends ProhibitionExceptionClass {
+    def value = 4
+    override val trafficSign: Seq[TrafficSignType] = Seq(Lorry)
+  }
+
+  case object Caravan extends ProhibitionExceptionClass {
+    def value = 15
+    override val trafficSign: Seq[TrafficSignType] = Seq(HusvagnCaravan)
+  }
+
+  case object Unknown extends ProhibitionExceptionClass {
+    override def value: Int = 99
+    override val trafficSign: Seq[TrafficSignType] = Seq(TrafficSignType.Unknown)
+  }
+}
+
 trait NationalStop { val nationalId: Long }
 trait RoadLinkStop {
   val linkId: Option[Long]
@@ -441,51 +649,107 @@ trait FloatingAsset {
 }
 case class AssetType(id: Long, assetTypeName: String, geometryType: String)
 
-object Asset {
+object DateParser {
   val DateTimePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
   val DatePropertyFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
   val DateTimePropertyFormatMs = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss,SSS")
   val DateTimeSimplifiedFormat = DateTimeFormat.forPattern("yyyyMMddHHmm")
-}
+  val DateTimePropertyFormatMsTimeZone = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSSZZ")
+  val DateTimePropertyFormatMsTimeZoneWithT = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
 
-abstract class AbstractProperty {
-  def publicId: String
-  def values: Seq[PropertyValue]
-}
+  def dateToString(date: DateTime, dateFormatter: DateTimeFormatter): String = {
+    date.toString(dateFormatter)
+  }
 
-abstract class AssetPropertyValue {
-  def propertyValue: Any
+  def stringToDate(date: String, formatter: DateTimeFormatter): DateTime = {
+    formatter.parseDateTime(date)
+  }
+
 }
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
-case class SimpleTrafficSignProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractTrafficSignProperty
+case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends AssetPropertyValue
 
-abstract class AbstractTrafficSignProperty {
+abstract class AbstractProperty {
   def publicId: String
   def values: Seq[PointAssetValue]
 }
 
-
 sealed trait PointAssetValue {
   def toJson: Any
 }
-case class TrafficSignProperty(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractTrafficSignProperty
 
-case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int) extends PointAssetValue {
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
+
+case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
   override def toJson: Any = this
+  def verifyCorrectInputOnAdditionalPanel: Unit = {
+    if(AdditionalPanelColor.apply(additional_panel_color).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel color: ${additional_panel_color}")
+    if(AdditionalPanelSize.apply(size).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel size: ${size}")
+    if(AdditionalPanelCoatingType.apply(coating_type).isEmpty) throw new NoSuchElementException(s"Incorrect input for additional panel coating type: ${coating_type}")
+  }
 }
+sealed trait AdditionalPanelSize {
+  def value: Int
+  def propertyDisplayValue : String
+}
+object AdditionalPanelSize {
+  val values = Set(SizeOption1, SizeOption2, SizeOption3, SizeOption99)
 
-case class TextPropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
+  def apply(value: Int): Option[AdditionalPanelSize] = {
+    values.find(_.value == value)
+  }
+
+  def getDefault: AdditionalPanelSize = SizeOption99
+}
+case object SizeOption1 extends AdditionalPanelSize { def value = 1; def propertyDisplayValue = "Pienikokoinen merkki"}
+case object SizeOption2 extends AdditionalPanelSize { def value = 2; def propertyDisplayValue = "Normaalikokoinen merkki"}
+case object SizeOption3 extends AdditionalPanelSize { def value = 3; def propertyDisplayValue = "Suurikokoinen merkki"}
+case object SizeOption99 extends AdditionalPanelSize { def value = 99; def propertyDisplayValue = "Ei tietoa"}
+
+sealed trait AdditionalPanelCoatingType {
+  def value: Int
+  def propertyDisplayValue : String
+}
+object AdditionalPanelCoatingType {
+  val values = Set(CoatingTypeOption1, CoatingTypeOption2, CoatingTypeOption3, CoatingTypeOption99)
+
+  def apply(value: Int): Option[AdditionalPanelCoatingType] = {
+    values.find(_.value == value)
+  }
+
+  def getDefault: AdditionalPanelCoatingType = CoatingTypeOption99
+}
+case object CoatingTypeOption1 extends AdditionalPanelCoatingType { def value = 1; def propertyDisplayValue = "R1-luokan kalvo"}
+case object CoatingTypeOption2 extends AdditionalPanelCoatingType { def value = 2; def propertyDisplayValue = "R2-luokan kalvo"}
+case object CoatingTypeOption3 extends AdditionalPanelCoatingType { def value = 3; def propertyDisplayValue = "R3-luokan kalvo"}
+case object CoatingTypeOption99 extends AdditionalPanelCoatingType { def value = 99; def propertyDisplayValue = "Ei tietoa"}
+
+sealed trait AdditionalPanelColor {
+  def value: Int
+  def propertyDisplayValue : String
+}
+object AdditionalPanelColor {
+  val values = Set(ColorOption1, ColorOption2, ColorOption99)
+
+  def apply(value: Int): Option[AdditionalPanelColor] = {
+    values.find(_.value == value)
+  }
+
+  def getDefault: AdditionalPanelColor = ColorOption99
+}
+case object ColorOption1 extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
+case object ColorOption2 extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
+case object ColorOption99 extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
+
+case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
   override def toJson: Any = this
 }
 
 case class DynamicPropertyValue(value: Any)
 case class ValidityPeriodValue(days: Int, startHour: Int, endHour: Int, startMinute: Int, endMinute: Int, periodType: Option[Int] = None)
-case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
+case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 case class DatePeriodValue(startDate: String, endDate: String)
 object DatePeriodValue {
@@ -594,7 +858,7 @@ object AssetTypeInfo {
                     Prohibition, PedestrianCrossings, HazmatTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
                     TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, TrTrailerTruckWeightLimit, TrBogieWeightLimit, TrAxleWeightLimit,TrWeightLimit, TrHeightLimit, TrWidthLimit,
-                    CareClass, CarryingCapacity, AnimalWarnings, UnknownAssetTypeId)
+                    CareClass, CarryingCapacity, AnimalWarnings, RoadWorksAsset, CyclingAndWalking, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -631,7 +895,7 @@ case object ServicePoints extends AssetTypeInfo { val typeId = 250; def geometry
 case object EuropeanRoads extends AssetTypeInfo { val typeId = 260; def geometryType = "linear"; val label = ""; val layerName = "europeanRoads" }
 case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryType = "linear"; val label = ""; val layerName = "exitNumbers" }
 case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""; val layerName = "trafficLights"}
-case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = ""; val layerName = "maintenanceRoad" }
+case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = ""; val layerName = "maintenanceRoads" }
 case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""; val layerName = "trafficSigns"}
 case object StateSpeedLimit extends AssetTypeInfo { val typeId = 310; def geometryType = "linear"; val label = "StateSpeedLimit"; val layerName = "totalWeightLimit" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""; val layerName = ""}
@@ -645,6 +909,10 @@ case object Manoeuvres extends AssetTypeInfo { val typeId = 380; def geometryTyp
 case object CareClass extends  AssetTypeInfo {val typeId = 390; def geometryType = "linear"; val label = "CareClass"; val layerName = "careClass"}
 case object CarryingCapacity extends AssetTypeInfo { val typeId = 400; def geometryType = "linear"; val label = "CarryingCapacity" ; val layerName = "carryingCapacity"}
 case object AnimalWarnings extends AssetTypeInfo { val typeId = 410; def geometryType = "linear"; val label = "AnimalWarnings" ; val layerName = "animalWarnings"}
+case object RoadWorksAsset extends AssetTypeInfo { val typeId = 420; def geometryType = "linear"; val label = "RoadWorks" ; val layerName = "roadWorks"}
+case object ParkingProhibition extends AssetTypeInfo { val typeId = 430; def geometryType = "linear"; val label = "ParkingProhibition" ; val layerName = "parkingProhibition"}
+case object CyclingAndWalking extends AssetTypeInfo { val typeId = 440; def geometryType = "linear"; val label = "CyclingAndWalking" ; val layerName = "cyclingAndWalking"}
+case object Lanes extends AssetTypeInfo { val typeId = 450; def geometryType = "linear"; val label = "Lanes" ; val layerName = "lanes"}
 
 object AutoGeneratedValues {
   val allAutoGeneratedValues =
@@ -659,4 +927,18 @@ object AutoGeneratedValues {
       "vvh_mtkclass_default"
     )
   val annualUpdate = "annually_updated_period"
+}
+
+object Decode {
+  def getPageAndRecordNumber(src: String): (Int, Int) = {
+    val values = new String(Base64.getDecoder.decode(src), StandardCharsets.UTF_8).split(',')
+      .flatMap(_.split(':').map(_.trim) match {
+        case Array(s: String, i: String) => Map(s -> i.toInt)
+      }).toMap
+
+    val startNum = values("recordNumber") * (values("pageNumber") - 1) + 1
+    val endNum = values("pageNumber") * values("recordNumber")
+
+    (startNum, endNum)
+  }
 }

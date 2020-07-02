@@ -18,8 +18,8 @@ pipeline {
                             "ssh web@gateway \'cd /home/web/digiroad2/current && echo YES |",
                              "/home/web/digiroad2/current/./sbt",
                              "-Ddigiroad2.env=staging",
-                             "\'project digiroad2-oracle\'",
-                             "\'test:run-main fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList\'"
+                             "\"project digiroad2\"",
+                             "\"runMain fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList\"\'"
                         ].join(" ")
                     }
             }

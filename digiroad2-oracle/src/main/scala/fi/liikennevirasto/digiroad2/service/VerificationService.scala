@@ -2,17 +2,20 @@ package fi.liikennevirasto.digiroad2.service
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.VerificationDao
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, TinyRoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, Point}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime], verified: Boolean = false, geometryType: String, counter: Option[Int] = None,
-                            modifiedBy: Option[String] = None, modifiedDate: Option[DateTime] = None)
+case class VerificationInfo(municipalityCode: Int, municipalityName: String, assetTypeCode: Int, assetTypeName: String, verifiedBy: Option[String], verifiedDate: Option[DateTime],  geometryType: String, counter: Int, verified: Boolean = false,
+                            modifiedBy: Option[String] = None, modifiedDate: Option[DateTime] = None, refreshDate: Option[DateTime] = None, suggestedAssetsCount: Option[Int] = None)
 case class LatestModificationInfo(assetTypeCode: Int, modifiedBy: Option[String], modifiedDate: Option[DateTime])
+case class SuggestedAssetsStructure(municipalityName: String, municipalityCode: Int, assetTypeName: String, assetTypeId: Int, suggestedIds: Set[Int])
 
 class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkService) {
   val logger = LoggerFactory.getLogger(getClass)
@@ -27,6 +30,12 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
+  def getSuggestedAssets(municipalityCode: Int, assetTypeId: Int): SuggestedAssetsStructure = {
+    withDynSession {
+      dao.getSuggestedByTypeIdAndMunicipality(municipalityCode, assetTypeId)
+    }
+  }
+
   def getCriticalAssetVerification(municipalityCode: Int, assetTypeIds: Seq[Int]): Seq[VerificationInfo] = {
     withDynSession {
       dao.getCriticalAssetVerification(municipalityCode, assetTypeIds)
@@ -38,11 +47,25 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       if (!assetTypeIds.forall(dao.getVerifiableAssetTypes.contains))
         throw new IllegalStateException("Asset type not allowed")
 
+      val oldInfo = getVerificationInfo(municipalityCode, assetTypeIds)
       assetTypeIds.map { typeId =>
+        val oldAssetInfo = oldInfo.find(_._2 == typeId).head
         dao.expireAssetTypeVerification(municipalityCode, typeId, username)
-        dao.insertAssetTypeVerification(municipalityCode, typeId, username)
+        insertAssetTypeVerification(municipalityCode, typeId, Some(username), oldAssetInfo._3, oldAssetInfo._4, oldAssetInfo._5, oldAssetInfo._6, "")
       }
     }
+  }
+
+  def getVerificationInfo(municipalityCode: Int, assetTypeIds: Set[Int] = Set()) :  Seq[(Int, Int, Option[String], Option[DateTime], Int, Option[DateTime], String)] = {
+    dao.getVerificationInfo(municipalityCode, assetTypeIds)
+  }
+
+  def insertAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, verifiedBy: Option[String], lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAssets: Int, refreshDate: Option[DateTime], suggestedAssets: String) : Long = {
+    dao.insertAssetTypeVerification(municipalityCode, assetTypeId, verifiedBy, lastUserModification, lastDateModification, numberOfAssets, refreshDate, suggestedAssets)
+  }
+
+  def updateAssetTypeVerification(municipalityCode: Int, assetTypeId: Int, lastUserModification: Option[String], lastDateModification: Option[DateTime], numberOfAssets: Int,  refreshDate: Option[DateTime], suggestedAssets: String) : Unit = {
+    dao.updateAssetTypeVerification(municipalityCode, assetTypeId, lastUserModification, lastDateModification, numberOfAssets, refreshDate, suggestedAssets)
   }
 
   def getMunicipalityInfo(bounds: BoundingRectangle): Option[Int] = {
@@ -60,10 +83,13 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
       .getOrElse( throw new IllegalArgumentException("Asset type or municipality Code not found"))
   }
 
-  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], userName: String) : Set[Int] = {
+  def removeAssetTypeVerification(municipalityCode: Int, assetTypeIds: Set[Int], username: String) : Set[Long] = {
     withDynTransaction{
-      assetTypeIds.map { assetType =>
-        dao.expireAssetTypeVerification(municipalityCode, assetType, userName)
+      val oldInfo = getVerificationInfo(municipalityCode, assetTypeIds)
+      assetTypeIds.map { typeId =>
+        val oldAssetInfo = oldInfo.find(_._2 == typeId).head
+        dao.expireAssetTypeVerification(municipalityCode, typeId, username)
+        insertAssetTypeVerification(municipalityCode, typeId, None, oldAssetInfo._3, oldAssetInfo._4, oldAssetInfo._5, oldAssetInfo._6, "")
       }
     }
   }
@@ -81,21 +107,15 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     getCriticalAssetVerification(municipalityCode, criticalAssetTypes).toList
   }
 
-  def getAssetLatestModifications(municipalities: Set[Int]): List[LatestModificationInfo] = {
-    val tinyRoadLink = municipalities.flatMap { municipality =>
-      roadLinkService.getTinyRoadLinkFromVVH(municipality)
-    }
-
+  def getAssetsLatestModifications(municipalityCodes: Set[Int]): List[LatestModificationInfo] = {
     withDynTransaction {
-      dao.getModifiedAssetTypes(tinyRoadLink.map(_.linkId))
+      dao.getDashboardInfo(municipalityCodes)
     }
   }
 
-  def getLastModificationLinearAssets(municipality: Int): Seq[LatestModificationInfo] = {
-    val tinyRoadLink = roadLinkService.getTinyRoadLinkFromVVH(municipality)
-
+  def getLastModificationLinearAssets(linkIds: Seq[Long]): Seq[LatestModificationInfo] = {
     withDynTransaction {
-      dao.getLastModificationLinearAssets(tinyRoadLink.map(_.linkId).toSet)
+      dao.getLastModificationLinearAssets(linkIds.toSet)
     }
   }
 
@@ -105,42 +125,89 @@ class VerificationService(eventbus: DigiroadEventBus, roadLinkService: RoadLinkS
     }
   }
 
+  def getSuggestedLinearAssets(linkIds: Seq[Long]): Seq[(Long, Int)] = {
+    withDynTransaction {
+      dao.getSuggestedLinearAssets(linkIds.toSet)
+    }
+  }
+
+  def getSuggestedPointAssets(municipality: Int): Seq[(Long, Int)] = {
+    withDynSession {
+      dao.getSuggestedPointAssets(municipality)
+    }
+  }
+
   def getNumberOfPointAssets(municipality: Int): Seq[(Int, Int)] = {
     withDynSession {
       dao.getNumberOfPointAssets(municipality)
     }
   }
 
-  def getVerifiedInfoTypes(municipality: Int): Seq[VerificationInfo] = {
-    withDynSession {
-      dao.getVerifiedInfoTypes(municipality)
+  def getVerifiedAssetTypes: Seq[(Int, String)] = { withDynSession { dao.getVerifiedAssetTypes }}
+
+  def refreshVerificationInfo(municipality: Int, linkIds: Seq[Long], refreshDate: Option[DateTime]) : Unit = {
+    val assetsInfo = getAssetTypesByMunicipalityF(municipality, linkIds)
+    val assetOnMunicipalityVerification = getVerificationInfo(municipality)
+
+    val (toUpdate, toInsert) =  assetsInfo.partition{ case(_, typeId, _, _, _, _) => assetOnMunicipalityVerification.map(_._2).contains(typeId)}
+
+    toUpdate.foreach { case (municipalityCode, typeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
+      updateAssetTypeVerification(municipalityCode, typeId, modifiedBy, modifiedDate, counter, refreshDate, suggestedAssets)
+    }
+
+    toInsert.foreach {case (municipalityCode, typeId, counter, modifiedBy, modifiedDate, suggestedAssets) =>
+      insertAssetTypeVerification(municipalityCode, typeId, None, modifiedBy, modifiedDate, counter, refreshDate, suggestedAssets)
     }
   }
 
-  def getAssetTypesByMunicipalityF(municipality: Int): Seq[VerificationInfo] = {
+  def getRefreshedAssetTypesByMunicipality(municipalityCode : Int,  getRoadLink: Int => Seq[RoadLink]): Seq[VerificationInfo] = {
+    val tinyRoadLink = roadLinkService.getTinyRoadLinkFromVVH(municipalityCode)
+
+    withDynTransaction {
+      refreshVerificationInfo(municipalityCode, tinyRoadLink.map(_.linkId), Some(DateTime.now()))
+    }
+    getAssetTypesByMunicipality(municipalityCode)
+  }
+
+  def getAssetTypesByMunicipality(municipalityCode : Int): Seq[VerificationInfo] = {
+    withDynSession {
+      dao.getVerifiedInfoTypes(municipalityCode)
+    }
+  }
+
+  def getAssetTypesByMunicipalityF(municipality: Int, linkIds: Seq[Long]): Seq[(Int, Int, Int, Option[String], Option[DateTime], String)] = {
     val fut = for {
-      linearLastModification <- Future(getLastModificationLinearAssets(municipality))
+      linearLastModification <- Future(getLastModificationLinearAssets(linkIds))
       pointLastModification <- Future(getLastModificationPointAssets(municipality))
       numberOfPointAssets <- Future(getNumberOfPointAssets(municipality))
-      verifiedInfo <- Future(getVerifiedInfoTypes(municipality))
-    } yield (linearLastModification, pointLastModification, numberOfPointAssets, verifiedInfo)
+      verifiedAssetTypes <- Future(getVerifiedAssetTypes)
+      suggestedLinearAssets <- Future(getSuggestedLinearAssets(linkIds))
+      suggestedPointAssets <- Future(getSuggestedPointAssets(municipality))
+    } yield (linearLastModification, pointLastModification, numberOfPointAssets, verifiedAssetTypes, suggestedLinearAssets, suggestedPointAssets)
 
-    val (linearLastModification, pointLastModification, numberOfPointAssets, verifiedInfo) = Await.result(fut, Duration.Inf)
+    val (linearLastModification, pointLastModification, numberOfPointAssets, verifiedAssetTypes, suggestedLinearAssets, suggestedPointAssets) = Await.result(fut, Duration.Inf)
 
     val assetsLastModification = linearLastModification ++ pointLastModification
-    verifiedInfo.map{ info =>
-      val numberOfAssets : Option[Int] = if(info.geometryType == "point")
-        numberOfPointAssets.find(_._1 == info.assetTypeCode).map(_._2)
+    val suggestedAssets = (suggestedLinearAssets ++ suggestedPointAssets).groupBy(_._2)
+    verifiedAssetTypes.map{ case (typeId, geometryType) =>
+      val numberOfAssets = if(geometryType == "point")
+        numberOfPointAssets.find(_._1 == typeId).map(_._2).getOrElse(0)
       else {
-        Some(if (linearLastModification.exists(_.assetTypeCode == info.assetTypeCode)) 1 else 0)
+        if (linearLastModification.exists(_.assetTypeCode == typeId)) 1 else 0
       }
 
-      val assetModificationInfo = assetsLastModification.find(_.assetTypeCode == info.assetTypeCode)
+      val suggestedAssetsByType = if(suggestedAssets.nonEmpty && suggestedAssets.contains(typeId))
+        suggestedAssets(typeId).map(_._1).mkString(",")
+      else ""
+
+      val assetModificationInfo = assetsLastModification.find(_.assetTypeCode == typeId)
 
       if(assetModificationInfo.nonEmpty)
-        VerificationInfo(info.municipalityCode, info.municipalityName, info.assetTypeCode, info.assetTypeName, info.verifiedBy, info.verifiedDate, info.verified, info.geometryType, numberOfAssets, assetModificationInfo.get.modifiedBy, assetModificationInfo.get.modifiedDate )
+        (municipality, typeId, numberOfAssets, assetModificationInfo.flatMap(_.modifiedBy), assetModificationInfo.flatMap(_.modifiedDate), suggestedAssetsByType)
       else
-        VerificationInfo(info.municipalityCode, info.municipalityName, info.assetTypeCode, info.assetTypeName, info.verifiedBy, info.verifiedDate, info.verified, info.geometryType, numberOfAssets)
+        (municipality, typeId, numberOfAssets, None, None, suggestedAssetsByType)
     }
   }
+
+  def getNumberSuggestedAssetNumber(municipalityCode: Set[Int]) : Long = withDynTransaction { dao.getNumberSuggestedAssetNumber(municipalityCode)}
 }

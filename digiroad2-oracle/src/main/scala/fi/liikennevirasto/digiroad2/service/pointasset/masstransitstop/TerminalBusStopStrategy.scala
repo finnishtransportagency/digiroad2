@@ -16,25 +16,26 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   private val validityDirectionPublicId = "vaikutussuunta"
   private val ignoredProperties = Seq(terminalChildrenPublicId, validityDirectionPublicId)
 
-  override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
+  override def is(newProperties: Set[SimplePointAssetProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     //If the stop have the property stop type with the terminal value
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
           filterNot(property => newProperties.exists(_.publicId == property.publicId)).
-          map(property => SimpleProperty(property.publicId, property.values)) ++ newProperties).
+          map(property => SimplePointAssetProperty(property.publicId, property.values)) ++ newProperties).
           filterNot(property => AssetPropertyConfiguration.commonAssetProperties.exists(_._1 == property.publicId))
       case _ => newProperties.toSeq
     }
 
     properties.exists(p => p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId &&
-      p.values.exists(v => v.propertyValue == BusStopType.Terminal.value.toString))
+      p.values.exists(v => v.asInstanceOf[PropertyValue].propertyValue == BusStopType.Terminal.value.toString))
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike] = None): (PersistedMassTransitStop, Boolean) = {
     val childFilters =  massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
       .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(asset.id))
       .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
+      .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.ServicePoint))
     val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
       val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
       PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
@@ -81,7 +82,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     (resultAsset, TerminalPublishInfo(Some(resultAsset), children, Seq()))
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo) = {
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
@@ -115,7 +116,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
   override def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo] = {
     val oldChildren = massTransitStopDao.getAllChildren(asset.id)
-    massTransitStopDao.deleteTerminalMassTransitStopData(asset.id)
+    massTransitStopDao.deleteAllMassTransitStopData(asset.id)
 
     Some(TerminalPublishInfo(None, Seq(), oldChildren))
   }

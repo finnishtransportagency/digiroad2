@@ -40,7 +40,11 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
   def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
+  def roadPartNumber: Option[String] = attributes.get("ROADPARTNUMBER").map(_.toString)
   val vvhTimeStamp: Long = attributes.getOrElse("LAST_EDITED_DATE", attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue()
+  def accessRightId: Option[String] = attributes.get("ACCESS_RIGHT_ID").map(_.toString)
+  def privateRoadAssociation: Option[String] = attributes.get("PRIVATE_ROAD_ASSOCIATION").map(_.toString)
+  def additionalInfo: Option[String] = attributes.get("ADDITIONAL_INFO").map(_.toString)
 
   //TODO isPaved = !isNotPaved = SurfaceType.apply(surfaceType) match {case SurfaceType.Paved => true case _ => false
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
@@ -72,11 +76,11 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
     isCarRoadOrCyclePedestrianPath && !(CycleOrPedestrianPath.value == linkType.value)
   }
 
-  def isSimpleCarTrafficRoad : Boolean = {
-      val roadLinkType = Seq(CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry)
-      val constructionType : Seq[ConstructionType] = Seq(UnderConstruction, Planned)
+  def isSimpleCarTrafficRoad: Boolean = {
+    val roadLinkTypeAllowed = Seq(ServiceOrEmergencyRoad, CycleOrPedestrianPath, PedestrianZone, TractorRoad, MotorwayServiceAccess, SpecialTransportWithoutGate, SpecialTransportWithGate, CableFerry, RestArea)
+    val constructionTypeAllowed: Seq[ConstructionType] = Seq(UnderConstruction, Planned)
 
-      !((roadLinkType.contains(linkType) || constructionType.contains(constructionType)) && administrativeClass == State)
+    !(constructionTypeAllowed.contains(constructionType) || (roadLinkTypeAllowed.contains(linkType) && administrativeClass == State))
   }
 
   def roadNameIdentifier: Option[String] = {
