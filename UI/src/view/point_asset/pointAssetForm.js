@@ -290,8 +290,12 @@ root.PointAssetForm = function() {
     }
   };
 
+  this.getPropertyValue = function(property) {
+    return _.isEmpty(property.values) ? '' : _.head(property.values).propertyValue;
+  };
+
   this.textHandler = function (property) {
-    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var propertyValue = getPropertyValue(property);
     return '' +
         '    <div class="form-group editable form-point-asset">' +
         '        <label class="control-label">' + property.localizedName + '</label>' +
@@ -301,7 +305,7 @@ root.PointAssetForm = function() {
   };
 
   this.singleChoiceHandler = function (property) {
-    var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+    var propertyValue = getPropertyValue(property);
     var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
     var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
     var selectableValues = _.map(propertyValues, function (label) {
@@ -321,8 +325,8 @@ root.PointAssetForm = function() {
   };
 
   this.readOnlyHandler = function (property) {
-    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
-    var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
+    var propertyValue = getPropertyValue(property);
+    var displayValue = property.localizedName ? property.localizedName : _.isEmpty(property.values) ? '' : _.head(property.values).propertyDisplayValue;
     return '' +
         '    <div class="form-group editable form-point-asset">' +
         '        <label class="control-label">' + displayValue + '</label>' +
@@ -372,7 +376,7 @@ root.PointAssetForm = function() {
     return _.sortBy(properties, function(property) {
       return _.indexOf(propertyOrdering, property.publicId);
     }).filter(function(property){
-      return _.indexOf(propertyOrdering, property.publicId) >= 0;
+      return _.includes(propertyOrdering, property.publicId);
     });
   };
 

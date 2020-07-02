@@ -97,16 +97,13 @@
       return _.every(numericalFields, function(field) {return _.isEmpty(field.values) || !isNaN(_.head(field.values).propertyValue);});
     };
 
-    var lanesValidation = function (fields, laneNumberProperty, laneTypeProperty) {
-      var laneValues = laneNumberProperty.values;
-      var isLaneValueEmpty = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue);
-      var isValidLaneValue = isLaneValueEmpty || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
+    var lanesValidation = function (laneNumberValues, laneTypeValues) {
+      var isLaneValueEmpty = _.isEmpty(laneNumberValues) || _.isEmpty(_.head(laneNumberValues).propertyValue);
+      var isValidLaneValue = isLaneValueEmpty || /^([1-3][1-9])$/.test(_.head(laneNumberValues).propertyValue);
 
-      var laneTypeValue = laneTypeProperty.values;
-
-      return isValidLaneValue && (isLaneValueEmpty || _.head(laneTypeValue).propertyValue == 99 ||
-          (_.head(laneValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValue).propertyValue != 1) ||
-          (_.head(laneValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValue).propertyValue == 1));
+      return isValidLaneValue && (isLaneValueEmpty || _.head(laneTypeValues).propertyValue == 99 ||
+          (_.head(laneNumberValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValues).propertyValue != 1) ||
+          (_.head(laneNumberValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValues).propertyValue == 1));
     };
 
     var cyclingAndWalkingValidator = function(selectedLinearAsset, id) {
@@ -1306,7 +1303,7 @@
 
             var allLaneRelatedPropertiesVerification = _.map(_.filter(fields, function(field) { return field.publicId === lanePublicId; }), function (laneNumberProperty) {
               var laneTypeProperty = _.find(fields, function(field) { return field.publicId === laneTypePublicId && field.groupedId === laneNumberProperty.groupedId; });
-              return lanesValidation(fields, laneNumberProperty, laneTypeProperty);
+              return lanesValidation(laneNumberProperty.values, laneTypeProperty.values);
             });
 
             return _.every(allLaneRelatedPropertiesVerification);
@@ -1422,7 +1419,7 @@
           var laneNumberProperty = _.find(fields, function(field) { return field.publicId === 'lane'; });
           var laneTypeProperty = _.find(fields, function(field) { return field.publicId === 'lane_type'; });
 
-          var isValidLane = lanesValidation(fields, laneNumberProperty, laneTypeProperty);
+          var isValidLane = lanesValidation(laneNumberProperty.values, laneTypeProperty.values);
 
           return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },

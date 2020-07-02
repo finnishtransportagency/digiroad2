@@ -451,7 +451,7 @@ object Queries {
     sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
   }
 
-  def deleteAdditionalTrafficLights(assetId: Long, groupedId: Long): Unit = {
+  def deleteAdditionalGroupedAsset(assetId: Long, groupedId: Long): Unit = {
     sqlu"""delete from number_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from text_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from single_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute

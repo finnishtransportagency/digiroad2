@@ -324,7 +324,7 @@ object OracleTrafficLightDao {
     // Set(0) added in order to remove old properties when updating from old traffic light to new
     val oldPropertiesToBeDeleted: Set[Long] = Set(0)
     (expiredGroupedProperties ++ oldPropertiesToBeDeleted).foreach { groupedKey =>
-      deleteAdditionalTrafficLights(assetId, groupedKey)
+      deleteAdditionalGroupedAsset(assetId, groupedKey)
     }
   }
 }

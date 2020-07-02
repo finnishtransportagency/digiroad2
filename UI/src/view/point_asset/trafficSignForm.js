@@ -274,7 +274,7 @@
     }
 
     var singleChoiceTrafficSignTypeHandler = function (property, collection) {
-      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+      var propertyValue = getPropertyValue(property);
       var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var auxProperty = property;
       var groups =  collection.getGroup(signTypes);

@@ -70,7 +70,7 @@ object TrafficLightPushButton {
   val values = Set(No, Yes, Unknown)
 
   def apply(intValue: Int):TrafficLightPushButton = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: TrafficLightPushButton = Unknown
