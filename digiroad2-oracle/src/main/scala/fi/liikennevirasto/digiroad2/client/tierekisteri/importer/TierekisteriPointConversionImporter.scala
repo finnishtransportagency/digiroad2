@@ -26,6 +26,8 @@ trait TierekisteriPointConversionImporter extends TierekisteriAssetImporterOpera
 
   val allowedVerticalLevel: Seq[Int]
 
+  val numericValuePublicId: String
+
   def checkVerticalLevel(vvhRoadlink: VVHRoadlink): Boolean = {
     vvhRoadlink.verticalLevel match {
       case Some(vL) => allowedVerticalLevel.exists {
@@ -104,6 +106,7 @@ trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionIm
 
   override val allowedVerticalLevel: Seq[Int] = Seq(1,2,3,4)
   override type TierekisteriAssetData <: TierekisteriWeightLimitData
+  override val numericValuePublicId: String = "weight"
 
   def getValue(trAssetData: TierekisteriAssetData): Option[Int] = None
 
@@ -112,7 +115,7 @@ trait WeightConversionTierekisteriImporter extends TierekisteriPointConversionIm
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, value)
+      linearAssetService.dao.insertValue(assetId, numericValuePublicId, value, Some(typeId))
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
@@ -191,12 +194,13 @@ class HeightLimitImporter extends TierekisteriPointConversionImporter {
   override def assetName : String = HeightLimit.label
 
   override val allowedVerticalLevel : Seq[Int] = Seq(-1, -2, -3)
+  override val numericValuePublicId: String = "height"
 
   override def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
       measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
-    linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.height )
+    linearAssetService.dao.insertValue(assetId, numericValuePublicId, trAssetData.height, Some(typeId))
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
 }

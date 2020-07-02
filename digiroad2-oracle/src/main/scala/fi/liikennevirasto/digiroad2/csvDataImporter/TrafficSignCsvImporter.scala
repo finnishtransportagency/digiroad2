@@ -284,8 +284,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
               val endDateFormat = DateParser.DatePropertyFormat.parseDateTime(endDate)
 
               val isDatesOk = endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+              val errorMsg = if (isDatesOk) Nil else List("The end date value is equal/previous to the start date value.")
 
-              (isDatesOk, Nil)
+              (isDatesOk, errorMsg)
             } catch {
               case _: Throwable => (false, List("Invalid dates formats"))
             }

@@ -16,7 +16,6 @@ import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-
 class LaneTestSupporter extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
@@ -39,36 +38,26 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   val lanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-                                LaneProperty("lane_information", Seq(LanePropertyValue("13")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
                               )
 
 
   val lanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-                                LaneProperty("lane_information", Seq(LanePropertyValue("13")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
                               )
 
   val lanePropertiesValues14 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(14))),
-                                   LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-                                   LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-                                   LaneProperty("lane_information", Seq(LanePropertyValue("sub lane 14")))
+                                   LaneProperty("lane_type", Seq(LanePropertyValue("3")))
                                   )
 
 
   val lanePropertiesValues21 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(21))),
-                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-                                LaneProperty("lane_information", Seq(LanePropertyValue("10")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
                               )
 
 
   val lanePropertiesValues22 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(22))),
-                                LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-                                LaneProperty("lane_information", Seq(LanePropertyValue("10")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
                               )
 
 
@@ -168,9 +157,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
 
       val updateValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-                            LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-                            LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-                            LaneProperty("lane_information", Seq(LanePropertyValue("12")))
+                            LaneProperty("lane_type", Seq(LanePropertyValue("5")))
                           )
 
 
@@ -388,9 +375,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("4"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("splitted 2")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("5")))
       )
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -674,9 +659,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Delete sub lane in middle of lanes") {
     runWithRollback {
       val lanePropertiesValues14To12 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("updated sub lane 14 to 12")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)

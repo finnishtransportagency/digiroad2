@@ -104,7 +104,7 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
           insertTrafficSignToProcess(trSign.id, ParkingProhibition, Some(trSign), newTransaction)
 
         case signType if TrafficSignManager.belongsToRoadwork(signType) =>
-          insertTrafficSignToProcess(trSign.id, RoadWorksAsset, Some(trSign))
+          insertTrafficSignToProcess(trSign.id, RoadWorksAsset, Some(trSign), newTransaction)
 
         case _ => None
       }

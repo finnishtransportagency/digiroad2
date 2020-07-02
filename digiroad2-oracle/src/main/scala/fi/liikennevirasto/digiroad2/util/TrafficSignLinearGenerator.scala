@@ -539,7 +539,7 @@ trait TrafficSignLinearGenerator {
     //RoadLink with the same Finnish/Swedish name
     tsRoadNameInfo.map { case (roadNamePublicIds, roadNameSource) =>
       roadLinkService.getRoadLinksAndComplementaryByRoadNameFromVVH(roadNamePublicIds, Set(roadNameSource), false).filter(_.administrativeClass != State)
-    }.getOrElse(Seq())
+    }.getOrElse(Seq(signRoadLink))
   }
 
   def isToUpdateRelation(newSeg: TrafficSignToLinear)(oldSeg: TrafficSignToLinear): Boolean = {
