@@ -657,8 +657,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
 
           case LaneChangeType.Lengthened | LaneChangeType.Shortened =>
             val oldLane = laneChange.oldLane.get
+
             val ((segmentStartAddr, startM), (segmentEndAddr, endM)) = getDifferentSegmentAddressesAndMeasures(laneChange)
-            val oldLaneAddressInfo = mapLaneAddressInfo(oldLane, laneChange.roadLink.get)
+            val sameSegmentLaneAddressInfo = if(laneChange.changeType == LaneChangeType.Lengthened) mapLaneAddressInfo(oldLane, laneChange.roadLink.get) else mapLaneAddressInfo(lane, laneChange.roadLink.get)
 
             val segmentModificationMap = {
               if(laneChange.changeType == LaneChangeType.Lengthened){
@@ -687,9 +688,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "linkId" -> lane.linkId,
               "startMeasure" -> startM,
               "endMeasure" -> endM,
-              "roadNumber" -> oldLaneAddressInfo("roadNumber"),
-              "roadPart" -> oldLaneAddressInfo("roadPart"),
-              "roadTrack" -> oldLaneAddressInfo("roadTrack"),
+              "roadNumber" -> sameSegmentLaneAddressInfo("roadNumber"),
+              "roadPart" -> sameSegmentLaneAddressInfo("roadPart"),
+              "roadTrack" -> sameSegmentLaneAddressInfo("roadTrack"),
               "roadStartAddr" -> segmentStartAddr,
               "roadEndAddr" -> segmentEndAddr) ++ segmentModificationMap
 
@@ -703,13 +704,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "startDate" -> startDate,
               "endDate" -> endDate,
               "linkId" -> lane.linkId,
-              "startMeasure" -> oldLane.startMeasure,
-              "endMeasure" -> oldLane.endMeasure,
+              "startMeasure" -> {if(laneChange.changeType == LaneChangeType.Lengthened) oldLane.startMeasure else lane.startMeasure},
+              "endMeasure" -> {if(laneChange.changeType == LaneChangeType.Lengthened) oldLane.endMeasure else lane.endMeasure},
               "OldId" -> oldLane.id,
               "OldLaneNumber" -> oldLane.laneCode,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
-              "NewlaneType" -> laneType) ++ oldLaneAddressInfo,
+              "NewlaneType" -> laneType) ++ sameSegmentLaneAddressInfo,
               segmentMap)
 
           case _ => Seq()

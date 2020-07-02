@@ -585,13 +585,17 @@ trait LaneOperations {
           Some(LaneChange(upToDate, None, LaneChangeType.Add, roadLink))
 
         case _ =>
-          historyLanes.filter(_.oldId == upToDate.id).flatMap { history =>
-            val historyLane = historyLaneToPersistedLane(history)
+          val historyRelatedLanes = historyLanes.filter(_.oldId == upToDate.id)
+
+          if(historyRelatedLanes.nonEmpty){
+            val historyLane = historyLaneToPersistedLane(historyRelatedLanes.maxBy(_.historyCreatedDate.getMillis))
 
             if (isSomePropertyDifferent(historyLane, upToDate))
               Some(LaneChange(upToDate, Some(historyLane), LaneChangeType.AttributesChanged, roadLink))
             else
               None
+          }else{
+            None
           }
       }
     }
