@@ -457,9 +457,7 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val lanePropertiesSubLaneSplit2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("4"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("5"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("splitted 2")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("5")))
       )
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -552,16 +550,12 @@ class LaneServiceSpec extends LaneTestSupporter {
     runWithRollback {
       val modifiedLaneProperties1 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("4"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("6"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("Info Example 1")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("6")))
       )
 
       val modifiedLaneProperties2 = Seq(
         LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("8"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("Info Example 22")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("8")))
       )
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -845,9 +839,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a sub lane and then create another at same lane code with different properties") {
     runWithRollback {
       val newLanePropertiesValues12 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("lane info")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
       //NewIncomeLanes to create
@@ -988,9 +980,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   test("Expire a inner sub lane in various links") {
     runWithRollback {
       val lanePropertiesValues14To12 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("updated sub lane 14 to 12")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
@@ -1219,9 +1209,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val dateAtThisMoment = DateTime.now()
 
       val newLanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("1"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("changed attribute")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("4")))
       )
 
       val lane11Id = ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest).head
@@ -1270,9 +1258,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane14Id = ServiceWithDao.create(Seq(newLane14), Set(100L), 2, usernameTest).head
 
       val newLanePropertiesValuesOld14 = Seq(LaneProperty("lane_code", Seq(LanePropertyValue(12))),
-        LaneProperty("lane_continuity", Seq(LanePropertyValue("2"))),
-        LaneProperty("lane_type", Seq(LanePropertyValue("3"))),
-        LaneProperty("lane_information", Seq(LanePropertyValue("sub lane 14")))
+        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
       )
 
       ServiceWithDao.update(Seq(newLane14.copy(id = lane14Id, properties = newLanePropertiesValuesOld14)), Set(100L), 1, usernameTest)
