@@ -271,12 +271,12 @@ class LaneFillerSpec extends FunSuite with Matchers {
 
     //id = 0 means that already had the side code adjustment before entering fillTopology
     val lane11 = PersistedLane(0L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
-      11, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11))))
     )
 
     val lane21 = PersistedLane(0L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
-      21, 745L, 0.0, 10.0, None, None, None, None, expired = false, 0L, None,
+      21, 745L, 0.0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21))))
     )
 
@@ -295,7 +295,6 @@ class LaneFillerSpec extends FunSuite with Matchers {
     changeSet.adjustedVVHChanges should be (Seq())
     changeSet.adjustedSideCodes should be (Seq())
     changeSet.expiredLaneIds should be (Set())
-    changeSet.valueAdjustments should be (Seq())
     changeSet.generatedPersistedLanes should be (Seq())
   }
 }
