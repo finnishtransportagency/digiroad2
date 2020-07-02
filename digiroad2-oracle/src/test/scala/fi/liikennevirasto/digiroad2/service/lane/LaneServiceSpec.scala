@@ -1333,4 +1333,52 @@ class LaneServiceSpec extends LaneTestSupporter {
       shortenedLane.oldLane.get.id should be(lane12Id)
     }
   }
+
+  test("Lane Change: Get only the 2 Add with token"){
+    //token = pageNumber:1,recordNumber:2
+    runWithRollback {
+      val newLane11 = NewIncomeLane(0, 0, 100, 745, false, false, lanePropertiesValues11)
+      val newLane12 = newLane11.copy(properties = lanePropertiesValues12)
+      val dateAtThisMoment = DateTime.now()
+
+      ServiceWithDao.create(Seq(newLane11), Set(100L), 2, usernameTest)
+      ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest)
+
+      val subLane12Split = NewIncomeLane(0, 0, 50, 745, false, false, lanePropertiesValues12)
+      val subLane12Id = ServiceWithDao.update(Seq(subLane12Split), Set(100L), 2, usernameTest).head
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
+      lanesChanged.map(_.lane.id).contains(subLane12Id) should be(false)
+    }
+  }
+
+  test("Lane Change:Show 1 Add and 2 Divided") {
+    //2 divides because two new lanes with same old lane
+    runWithRollback {
+      val newLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
+      val lane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
+      val lane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesValues12)
+
+      val dateAtThisMoment = DateTime.now()
+      val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
+
+      ServiceWithDao.createMultiLanesOnLink(Seq(lane12SplitA,lane12SplitB), Set(100L), 2, usernameTest)
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
+        Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
+      )
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+
+      lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Divided, LaneChangeType.Divided))
+      val lanesDivides = lanesChanged.filter(_.changeType == LaneChangeType.Divided)
+      lanesDivides.map(_.oldLane.get.id) should be(Seq(lane12Id, lane12Id))
+    }
+  }
 }

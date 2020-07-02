@@ -175,24 +175,14 @@ class LaneHistoryDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkServ
     convertLaneRowToPersistedLane(historyLanes)
   }
 
-  def getHistoryLanesChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None): Seq[PersistedHistoryLane] = {
+  def getHistoryLanesChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedHistoryLane] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
     val withAutoAdjustFilter = if (withAdjust) "" else "and (l.modified_by is null OR l.modified_by != 'vvh_generated')"
-    val recordLimit = token match {
-      case Some(tk) =>
-        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
 
-        s"WHERE line_number between $startNum and $endNum"
-
-      case _ => ""
-    }
-
-//TODO: for token -> DENSE_RANK() over (ORDER BY l.id) line_number
     val filter = s"""WHERE ((l.HISTORY_CREATED_DATE > $querySinceDate and l.HISTORY_CREATED_DATE <= $queryUntilDate)
-                      $withAutoAdjustFilter
-                      )$recordLimit"""
+                      $withAutoAdjustFilter)"""
 
     getHistoryLanesFilterQuery(withFilter(filter))
   }

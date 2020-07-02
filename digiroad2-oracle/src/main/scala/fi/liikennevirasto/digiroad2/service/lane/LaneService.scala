@@ -532,10 +532,21 @@ trait LaneOperations {
     * @return lanes modified between the dates
     */
   def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[LaneChange] = {
-    //TODO: consider token
+    //Sort changes by id and their created/modified/expired times
+    //With this we get a unique ordering with the same values position so the token can be effective
+    def customSort(laneChanges: Seq[LaneChange]): Seq[LaneChange] = {
+      laneChanges.sortBy{ laneChange =>
+        val lane = laneChange.lane
+        val defaultTime = DateTime.now()
+
+        (lane.id, lane.createdDateTime.getOrElse(defaultTime).getMillis,
+          lane.modifiedDateTime.getOrElse(defaultTime).getMillis, lane.expiredDateTime.getOrElse(defaultTime).getMillis)
+      }
+    }
+
     val (upToDateLanes, historyLanes) = withDynTransaction {
-      (dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust, token),
-        historyDao.getHistoryLanesChangedSince(sinceDate, untilDate, withAutoAdjust, token))
+      (dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust),
+        historyDao.getHistoryLanesChangedSince(sinceDate, untilDate, withAutoAdjust))
     }
 
     val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
@@ -551,6 +562,9 @@ trait LaneOperations {
       val relevantHistory = historyLanes.find(history => history.newId == upToDate.id)
 
       relevantHistory match {
+        case Some(history) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2 =>
+          Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
+
         case Some(history) if upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure =>
           Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Lengthened, roadLink))
 
@@ -598,6 +612,9 @@ trait LaneOperations {
           val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
 
           newIdRelation match {
+            case Some(relation) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
+              Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink))
+
             case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
               Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Lengthened, roadLink))
 
@@ -624,7 +641,16 @@ trait LaneOperations {
       }
     }
 
-    (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
+    val relevantLanesChanged = (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
+    val sortedLanesChanged = customSort(relevantLanesChanged)
+
+    token match {
+      case Some(tk) =>
+        val (start, end) = Decode.getPageAndRecordNumber(tk)
+
+        sortedLanesChanged.slice(start - 1, end)
+      case _ => sortedLanesChanged
+    }
   }
 
   def historyLaneToPersistedLane(historyLane: PersistedHistoryLane): PersistedLane = {

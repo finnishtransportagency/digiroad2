@@ -207,6 +207,7 @@ object LaneContinuity {
   */
 sealed trait LaneChangeType {
   def value: Int
+  def description: String
 }
 object LaneChangeType {
   val values = Set(Add, Lengthened, Shortened, Expired, Unknown)
@@ -215,11 +216,12 @@ object LaneChangeType {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Add extends LaneChangeType { def value = 1;}
-  case object Lengthened extends LaneChangeType {def value = 2;}
-  case object Shortened extends LaneChangeType {def value = 3;}
-  case object Expired extends LaneChangeType {def value = 4;}
-  case object LaneCodeTransfer extends LaneChangeType {def value = 5;}
-  case object AttributesChanged extends LaneChangeType {def value = 6;}
-  case object Unknown extends LaneChangeType {def value = 99;}
+  case object Add extends LaneChangeType { def value = 1; def description = "Lane is added normally";}
+  case object Lengthened extends LaneChangeType {def value = 2; def description = "Old lane is deleted and then a new lane is created with more length";}
+  case object Shortened extends LaneChangeType {def value = 3; def description = "Old lane is deleted and then a new lane is created with less length";}
+  case object Expired extends LaneChangeType {def value = 4; def description = "Lane is expired normally";}
+  case object LaneCodeTransfer extends LaneChangeType {def value = 5; def description = "Lane with some code was changed to another code";}
+  case object AttributesChanged extends LaneChangeType {def value = 6; def description = "Lane attributes were changed";}
+  case object Divided extends LaneChangeType {def value = 7; def description = "Old lane is deleted and then two more appear in same lane code";}
+  case object Unknown extends LaneChangeType {def value = 99; def description = "Unknown change to lane";}
 }

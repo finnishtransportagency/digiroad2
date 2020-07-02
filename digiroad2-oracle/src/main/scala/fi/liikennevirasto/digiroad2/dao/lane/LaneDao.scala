@@ -99,20 +99,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
        JOIN lane_attribute la ON la.lane_id = l.id """
   }
 
-  def getLanesChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean, token: Option[String] = None): Seq[PersistedLane] = {
+  def getLanesChangedSince(sinceDate: DateTime, untilDate: DateTime, withAdjust: Boolean): Seq[PersistedLane] = {
     val querySinceDate = s"to_date('${DateTimeSimplifiedFormat.print(sinceDate)}', 'YYYYMMDDHH24MI')"
     val queryUntilDate = s"to_date('${DateTimeSimplifiedFormat.print(untilDate)}', 'YYYYMMDDHH24MI')"
 
     val withAutoAdjustFilter = if (withAdjust) "" else "and (l.modified_by is null OR l.modified_by != 'vvh_generated')"
-    val recordLimit = token match {
-      case Some(tk) =>
-        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
-
-        s"WHERE line_number between $startNum and $endNum"
-
-      case _ => ""
-    }
-
 
     val query = s"""
                 SELECT id, link_id, side_code, start_measure, end_measure, created_by, created_date, modified_by,
@@ -121,16 +112,14 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
                 FROM (SELECT l.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, l.created_by,
                 l.created_date, l.modified_by, l.modified_date, CASE WHEN l.valid_to <= sysdate THEN 1 ELSE 0 END AS expired,
                 pos.adjusted_timestamp, pos.modified_date "pos_modified_date", la.name, la.value, l.municipality_code, l.lane_code,
-                l.expired_by, l.expired_date,
-                DENSE_RANK() over (ORDER BY l.id) line_number
+                l.expired_by, l.expired_date
                 FROM lane l
                 JOIN lane_link ll ON l.id = ll.lane_id
                 JOIN lane_position pos ON ll.lane_position_id = pos.id
                 JOIN lane_attribute la ON la.lane_id = l.id
                 WHERE ((l.modified_date > $querySinceDate and l.modified_date <= $queryUntilDate) or
                 (l.created_date > $querySinceDate and l.created_date <= $queryUntilDate))
-                $withAutoAdjustFilter
-                )$recordLimit"""
+                $withAutoAdjustFilter)"""
 
     val lanesRow = StaticQuery.queryNA[LaneRow](query)(getLaneAsset).iterator.toSeq
     convertLaneRowToPersistedLane(lanesRow)

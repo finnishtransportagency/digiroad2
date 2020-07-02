@@ -630,7 +630,9 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "modifiedBy" -> lane.modifiedBy))
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
-            Seq(Map("OldId" -> lane.id,
+            val oldLane = laneChange.oldLane.get
+
+            Seq(Map("OldId" -> oldLane.id,
               "OldLaneNumber" -> laneChange.oldLane.get.laneCode,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
@@ -639,6 +641,19 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "createdBy" -> lane.createdBy,
               "modifiedAt" -> lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
               "modifiedBy" -> lane.modifiedBy))
+
+          case LaneChangeType.Divided =>
+            val oldLane = laneChange.oldLane.get
+
+            Seq(Map("OldId" -> oldLane.id,
+              "OldLaneNumber" -> oldLane.laneCode,
+              "newId" -> lane.id,
+              "NewlaneNumber" -> lane.laneCode,
+              "NewlaneType" -> laneType,
+              "createdAt" -> oldLane.createdDateTime.map(DateTimePropertyFormat.print(_)),
+              "createdBy" -> oldLane.createdBy,
+              "modifiedAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
+              "modifiedBy" -> lane.createdBy))
 
           case LaneChangeType.Lengthened | LaneChangeType.Shortened =>
             val oldLane = laneChange.oldLane.get
