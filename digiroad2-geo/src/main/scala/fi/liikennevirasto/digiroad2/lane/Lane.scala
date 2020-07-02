@@ -210,7 +210,7 @@ sealed trait LaneChangeType {
   def description: String
 }
 object LaneChangeType {
-  val values = Set(Add, Lengthened, Shortened, Expired, Unknown)
+  val values = Set(Add, Lengthened, Shortened, Expired, LaneCodeTransfer, AttributesChanged, Divided, Unknown)
 
   def apply(value: Int): LaneChangeType = {
     values.find(_.value == value).getOrElse(Unknown)
