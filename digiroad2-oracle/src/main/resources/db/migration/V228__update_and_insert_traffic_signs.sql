@@ -426,5 +426,5 @@ BEGIN
 END;
 
 -- We no longer need the temporary table
-TRUNCATE TABLE tmp_signs;
+DELETE FROM tmp_signs;
 DROP TABLE tmp_signs;
