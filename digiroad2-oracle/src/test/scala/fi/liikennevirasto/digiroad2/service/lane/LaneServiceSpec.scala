@@ -1197,7 +1197,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
     }
@@ -1219,7 +1219,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.AttributesChanged))
       lanesChanged.map(_.lane.id) should be(Seq(lane11Id, lane11Id))
@@ -1241,7 +1241,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.Expired))
       lanesChanged.filter(_.changeType == LaneChangeType.Expired).map(_.lane.id) should be(Seq(lane12Id))
@@ -1267,7 +1267,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.LaneCodeTransfer))
       val laneCodeChanged = lanesChanged.filter(_.changeType == LaneChangeType.LaneCodeTransfer).head
@@ -1293,7 +1293,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add, LaneChangeType.Shortened))
       val shortenedLane = lanesChanged.filter(_.changeType == LaneChangeType.Shortened).head
@@ -1320,7 +1320,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Add))
       lanesChanged.map(_.lane.id).contains(subLane12Id) should be(false)
@@ -1343,7 +1343,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusHours(1), dateAtThisMoment.plusHours(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Divided, LaneChangeType.Divided))
       val lanesDivides = lanesChanged.filter(_.changeType == LaneChangeType.Divided)
