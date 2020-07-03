@@ -423,8 +423,9 @@ BEGIN
 	WHERE othId NOT IN ( SELECT ev.value FROM ENUMERATED_VALUE ev  WHERE ev.PROPERTY_ID  = v_property_id  );
 
     COMMIT;
-END;
 
--- We no longer need the temporary table
-DELETE FROM tmp_signs;
-DROP TABLE tmp_signs;
+    -- We no longer need the temporary table
+    DELETE FROM tmp_signs;
+    DROP TABLE tmp_signs;
+
+END;
