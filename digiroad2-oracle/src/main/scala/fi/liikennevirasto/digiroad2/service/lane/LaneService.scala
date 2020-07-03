@@ -627,7 +627,7 @@ trait LaneOperations {
 
             case _ =>
               val wasCreateInTimePeriod = lane.modifiedDateTime.isEmpty &&
-                lane.createdDateTime.get.isAfter(sinceDate)
+                (lane.createdDateTime.get.isAfter(sinceDate) || lane.createdDateTime.get.isEqual(sinceDate))
 
               if (wasCreateInTimePeriod)
                 Some(LaneChange(laneAsPersistedLane, None, LaneChangeType.Add, roadLink))
