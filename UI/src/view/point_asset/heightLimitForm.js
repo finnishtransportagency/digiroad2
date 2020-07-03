@@ -13,7 +13,7 @@
       me.bindEvents(parameters);
     };
 
-    this.renderValueElement = function(asset, collection, authorizationPolicy) {
+    this.renderValueElement = function(asset) {
       if(asset.limit || asset.limit === 0){
         return '' +
           '  <div class="form-group editable form-heigh">' +

@@ -14,7 +14,6 @@
       me.selectedAsset = parameters.pointAsset.selectedPointAsset;
     };
 
-    //TODO: investigate DirectionalTrafficSign to be created by point asset form
     var propertyOrdering = ['suggest_box'];
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
@@ -29,7 +28,7 @@
           components;
     };
 
-    this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+    this.boxEvents = function(rootElement, selectedAsset) {
 
       rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
         var eventTarget = $(event.currentTarget);

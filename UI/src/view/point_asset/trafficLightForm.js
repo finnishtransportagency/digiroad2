@@ -22,13 +22,7 @@
             'counter'
         ];
 
-        //might be needed if the client wants to see properties of the old traffic light form
-       /* var oldAssetPropertyOrdering = [
-            'suggest_box',
-            'counter'
-        ];*/
-
-        var renderOldToNewTrafficLightForm = function (selectedAsset, authorizationPolicy) {
+        var renderOldToNewTrafficLightForm = function () {
             var wrapper = $('<div class="wrapper">');
             var formRootElement = $('<div class="form form-horizontal form-dark form-point-asset">');
             var oldToNewButton =  $('' +
@@ -39,8 +33,6 @@
 
             formRootElement = formRootElement
                 .append(oldToNewButton);
-                //might be needed if the client wants to see properties of the old traffic light form
-                //.append(me.renderComponents(selectedAsset, oldAssetPropertyOrdering, authorizationPolicy));
 
             return wrapper.append(formRootElement);
         };
@@ -60,14 +52,15 @@
                 selectedAsset.setSelectedGroupedId(firstGroupedId);
             }
 
-            var title;
+            var title = 'ID: ' + id;
             if (isOldTrafficLight) {
                 title = 'Vanhan tietomallin mukainen liikennevalo';
-            } else {
-                title = (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
+            } else if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
+                title = "Uusi " + localizedTexts.newAssetLabel;
             }
+
             var header = '<span>' + title + '</span>';
-            var form = isOldTrafficLight ? renderOldToNewTrafficLightForm(asset, authorizationPolicy) : me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
+            var form = isOldTrafficLight ? renderOldToNewTrafficLightForm() : me.renderAssetFormElements(selectedAsset, localizedTexts, collection, authorizationPolicy);
             var footer = me.renderButtons();
 
             rootElement.find("#feature-attributes-header").html(header);
@@ -113,41 +106,6 @@
             }
 
             return _.isEmpty(lanes) ? '' : laneUtils.createPreviewHeaderElement(_.uniq(lanes));
-        };
-
-        this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
-            var asset = selectedAsset.get();
-            var wrapper = $('<div class="wrapper">');
-            var formRootElement = $('<div class="form form-horizontal form-dark form-point-asset">');
-
-            if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
-                formRootElement = formRootElement
-                    .append(me.renderValueElement(selectedAsset, collection, authorizationPolicy));
-            } else {
-                var deleteCheckbox = $(''+
-                    '    <div class="form-group form-group delete">' +
-                    '      <div class="checkbox" >' +
-                    '        <input id="delete-checkbox" type="checkbox">' +
-                    '      </div>' +
-                    '      <p class="form-control-static">Poista</p>' +
-                    '    </div>' +
-                    '  </div>' );
-                var logInfoGroup = $( '' +
-                    '    <div class="form-group">' +
-                    '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + this.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
-                    '    </div>' +
-                    '    <div class="form-group">' +
-                    '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + this.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
-                    '    </div>');
-
-                formRootElement = formRootElement
-                    .append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
-                    .append(logInfoGroup)
-                    .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
-                    .append(me.renderValueElement(selectedAsset, collection, authorizationPolicy))
-                    .append(deleteCheckbox);
-            }
-            return wrapper.append(formRootElement);
         };
 
         var reloadForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -202,7 +160,7 @@
         };
 
         this.selectableAssetButton = function(selectedAsset, assetNumber, groupedId) {
-            var assetButton = $('<span groupedId="' + groupedId + '" class="selectable">' + assetNumber + '</span>');
+            var assetButton = $('<span data-grouped-id="' + groupedId + '" class="selectable">' + assetNumber + '</span>');
             if (selectedAsset.getSelectedGroupedId() == groupedId){
                 assetButton.addClass('marker-highlight');
             } else {
@@ -216,27 +174,27 @@
             return '' +
               '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
               '      <label class="control-label">Vaikutussuunta</label>' +
-              '      <button groupedId="'+id+'" class="change-validity-direction form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+              '      <button data-grouped-id="'+id+'" class="change-validity-direction form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
               '    </div>';
         };
 
-        this.renderValueElement = function(selectedAsset, collection, authorizationPolicy) {
-            var toRet = $();
-            var i = 0;
-            var allProperties = _.groupBy(selectedAsset.get().propertyData, 'groupedId');
+        this.renderValueElement = function(asset, collection, authorizationPolicy) {
+            var valueElement = $();
+            var index = 0;
+            var allProperties = _.groupBy(asset.propertyData, 'groupedId');
             _.forEach(allProperties, function (currentProperties) {
                 var currentGroupId = _.head(currentProperties).groupedId;
-                var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+ (++i) +'">');
-                toRet = toRet.add(
+                var trafficLightContainer = $('<div class="traffic-light-container" id="traffic-light-container-'+ (++index) +'">');
+                valueElement = valueElement.add(
                     trafficLightContainer
-                        .append(me.selectableAssetButton(selectedAsset, i, currentGroupId))
+                        .append(me.selectableAssetButton(me.selectedAsset, index, currentGroupId))
                         .append(me.renderComponents(currentProperties, propertyOrdering, authorizationPolicy))
-                        .append(me.attachControlButtons(i))
+                        .append(me.attachControlButtons(index))
                         .append($('<hr>'))
                 );
                 trafficLightContainer.find(".suggestion-box").before($(me.renderValidityDirection(currentGroupId)));
             });
-            return toRet;
+            return valueElement;
         };
 
         this.attachControlButtons = function (index) {
@@ -261,14 +219,14 @@
 
         this.bindExtendedFormEvents = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
             rootElement.find('.marker').on('click', function (event) {
-                var groupId = $(event.currentTarget).attr('groupedId');
+                var groupId = $(event.currentTarget).data('grouped-id');
                 selectedAsset.setSelectedGroupedId(groupId);
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
             });
 
             rootElement.find('button.change-validity-direction').on('click', function (event) {
                 var sidecodePublicId = 'sidecode';
-                var groupId = $(event.currentTarget).attr('groupedId');
+                var groupId = $(event.currentTarget).data('grouped-id');
                 var previousSidecode = _.head(selectedAsset.getPropertyByGroupedIdAndPublicId(groupId, sidecodePublicId).values).propertyValue;
                 selectedAsset.setPropertyByGroupedIdAndPublicId(groupId, sidecodePublicId, validitydirections.switchDirection(previousSidecode));
                 reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);

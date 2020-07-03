@@ -86,9 +86,9 @@ root.PointAssetForm = function() {
   this.renderValueElement = function(asset, collection, authorizationPolicy) { return me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy); };
 
   this.renderComponents = function (propertyData, propertyOrdering, authorizationPolicy) {
-    var SortedProperties = me.sortAndFilterProperties(propertyData, propertyOrdering);
+    var sortedProperties = me.sortAndFilterProperties(propertyData, propertyOrdering);
 
-    return _.reduce(_.map(SortedProperties, function (feature) {
+    return _.reduce(_.map(sortedProperties, function (feature) {
       feature.localizedName = window.localizedStrings[feature.publicId];
       var propertyType = feature.propertyType;
 
@@ -290,12 +290,12 @@ root.PointAssetForm = function() {
     }
   };
 
-  this.getPropertyValue = function(property) {
+  this.extractPropertyValue = function(property) {
     return _.isEmpty(property.values) ? '' : _.head(property.values).propertyValue;
   };
 
   this.textHandler = function (property) {
-    var propertyValue = getPropertyValue(property);
+    var propertyValue = me.extractPropertyValue(property);
     return '' +
         '    <div class="form-group editable form-point-asset">' +
         '        <label class="control-label">' + property.localizedName + '</label>' +
@@ -305,7 +305,7 @@ root.PointAssetForm = function() {
   };
 
   this.singleChoiceHandler = function (property) {
-    var propertyValue = getPropertyValue(property);
+    var propertyValue = me.extractPropertyValue(property);
     var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
     var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
     var selectableValues = _.map(propertyValues, function (label) {
@@ -318,14 +318,14 @@ root.PointAssetForm = function() {
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-        '      <select class="form-control" data-grouped-id="'+ property.groupedId +'" style="display:none" id=' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') +'>' +
+        '      <select class="form-control" data-grouped-id="'+ property.groupedId +'" id=' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') +'>' +
         selectableValues +
         '      </select>' +
         '    </div>';
   };
 
   this.readOnlyHandler = function (property) {
-    var propertyValue = getPropertyValue(property);
+    var propertyValue = me.extractPropertyValue(property);
     var displayValue = property.localizedName ? property.localizedName : _.isEmpty(property.values) ? '' : _.head(property.values).propertyDisplayValue;
     return '' +
         '    <div class="form-group editable form-point-asset">' +

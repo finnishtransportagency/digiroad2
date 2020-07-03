@@ -125,7 +125,7 @@
           components;
     };
 
-    this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+    this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy) {
 
       rootElement.find('.form-service textarea').on('input change', function (event) {
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);

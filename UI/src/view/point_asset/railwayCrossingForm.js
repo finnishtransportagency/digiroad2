@@ -26,7 +26,6 @@
       5: 'Kokopuomi'
     };
 
-    //TODO: investigate railway crossing to be created by point asset form
     var propertyOrdering = ['suggest_box'];
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {

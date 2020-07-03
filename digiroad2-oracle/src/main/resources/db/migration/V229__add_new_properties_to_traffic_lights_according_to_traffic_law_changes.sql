@@ -259,11 +259,8 @@ VALUES (primary_key_seq.nextval, 99, 'Ei tiedossa', ' ', 'db_migration_v229', (s
 --grouped Id modifications
 CREATE SEQUENCE grouped_id_seq
   minvalue 1
-  maxvalue 999999999999999999999999999
   start with 1
-  increment by 1
-  cache 100
-  nocycle;
+  cache 100;
 
 --Adding GroupedId Column
 ALTER TABLE MULTIPLE_CHOICE_VALUE

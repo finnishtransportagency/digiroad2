@@ -274,7 +274,7 @@
     }
 
     var singleChoiceTrafficSignTypeHandler = function (property, collection) {
-      var propertyValue = getPropertyValue(property);
+      var propertyValue = me.extractPropertyValue(property);
       var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var auxProperty = property;
       var groups =  collection.getGroup(signTypes);
@@ -310,7 +310,7 @@
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
-        '      <select class="form-control" style="display:none" id=main-' + property.publicId +'>' +
+        '      <select class="form-control" id=main-' + property.publicId +'>' +
         mainTypesTrafficSigns +
         '      </select>' +
         '    </div>' +

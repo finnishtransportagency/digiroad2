@@ -19,7 +19,6 @@
       2: 'Avattava puomi'
     };
 
-    //TODO: investigate obstacle to be created by point asset form
     var propertyOrdering = ['suggest_box'];
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {

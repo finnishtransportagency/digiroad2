@@ -210,11 +210,8 @@
 
     function setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, propertyValue) {
       dirty = true;
-      _.map(current.propertyData, function (prop) {
-        if (prop.groupedId == propertyGroupedId && prop.publicId == propertyPublicId) {
-          prop.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
-        }
-      });
+      var property = _.find(current.propertyData, {'groupedId': propertyGroupedId, 'publicId': propertyPublicId});
+      property.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
       eventbus.trigger(assetName + ':changed');
     }
 
