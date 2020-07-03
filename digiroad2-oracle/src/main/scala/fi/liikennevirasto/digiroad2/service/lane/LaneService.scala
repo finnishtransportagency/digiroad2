@@ -920,21 +920,31 @@ trait LaneOperations {
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
+    def persistedToIncomeWithNewMeasures(persistedLane: PersistedLane, newStartMeasure: Double, newEndMeasure: Double): NewIncomeLane = {
+      NewIncomeLane(0, newStartMeasure, newEndMeasure, persistedLane.municipalityCode, false, false, persistedLane.attributes)
+    }
+
     withDynTransaction {
       if (changeSet.adjustedMValues.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedMValues.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
+      val toAdjustMValuesLanes = getPersistedLanesByIds(changeSet.adjustedMValues.map(_.laneId).toSet)
       changeSet.adjustedMValues.foreach { adjustment =>
-        moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
-        dao.updateMValues(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), VvhGenerated)
+        val oldLane = toAdjustMValuesLanes.find(_.id == adjustment.laneId).get
+        val newIncomeLane = persistedToIncomeWithNewMeasures(oldLane, adjustment.startMeasure, adjustment.endMeasure)
+        val newLaneID = create(Seq(newIncomeLane), Set(oldLane.linkId), oldLane.sideCode, VvhGenerated)
+        moveToHistory(oldLane.id, Some(newLaneID.head), true, true, VvhGenerated)
       }
 
       if (changeSet.adjustedVVHChanges.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
+      val toAdjustVVHChangesLanes = getPersistedLanesByIds(changeSet.adjustedVVHChanges.map(_.laneId).toSet)
       changeSet.adjustedVVHChanges.foreach { adjustment =>
-        moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
-        dao.updateMValues(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), VvhGenerated, adjustment.vvhTimestamp)
+        val oldLane = toAdjustVVHChangesLanes.find(_.id == adjustment.laneId).get
+        val newIncomeLane = persistedToIncomeWithNewMeasures(oldLane, adjustment.startMeasure, adjustment.endMeasure)
+        val newLaneID = create(Seq(newIncomeLane), Set(oldLane.linkId), oldLane.sideCode, VvhGenerated)
+        moveToHistory(oldLane.id, Some(newLaneID.head), true, true, VvhGenerated)
       }
 
       if (changeSet.adjustedSideCodes.nonEmpty)

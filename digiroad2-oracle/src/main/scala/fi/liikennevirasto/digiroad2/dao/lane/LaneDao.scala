@@ -362,17 +362,6 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     """.execute
   }
 
-  def updateMValues(id: Long, linkMeasures: (Double, Double), username: String, vvhTimestamp: Long  = vvhClient.roadLinkData.createVVHTimeStamp()): Unit = {
-    val (startMeasure, endMeasure) = linkMeasures
-
-    sqlu"""UPDATE LANE_POSITION
-           SET  START_MEASURE = $startMeasure, END_MEASURE = $endMeasure,  modified_date = SYSDATE, adjusted_timestamp = $vvhTimestamp
-          WHERE ID = (SELECT LANE_POSITION_ID FROM LANE_LINK WHERE LANE_ID = $id )
-     """.execute
-
-    updateLaneModifiedFields(id, username)
-  }
-
   def updateSideCode(id: Long, newSideCode: Int, username: String, vvhTimestamp: Long  = vvhClient.roadLinkData.createVVHTimeStamp()): Unit = {
     sqlu"""UPDATE LANE_POSITION
            SET  SIDE_CODE = $newSideCode,  modified_date = SYSDATE, adjusted_timestamp = $vvhTimestamp
