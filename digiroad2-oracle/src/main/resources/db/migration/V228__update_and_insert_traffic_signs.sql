@@ -425,7 +425,7 @@ BEGIN
     COMMIT;
 
     -- We no longer need the temporary table
-    DELETE FROM tmp_signs;
-    DROP TABLE tmp_signs;
+   execute immediate 'TRUNCATE TABLE tmp_signs';
+   execute immediate 'DROP TABLE tmp_signs';
 
 END;
