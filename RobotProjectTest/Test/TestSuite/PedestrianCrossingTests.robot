@@ -1,7 +1,6 @@
 *** Settings ***
 Documentation           Suite description
 Library                 SeleniumLibrary
-Variables   ../robotFrameWorkTests/GeneralVariables.py
 Variables  ../Variable/Variables.py
 
 *** Variables ***
