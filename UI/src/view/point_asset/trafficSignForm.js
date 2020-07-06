@@ -464,6 +464,7 @@
 
         /* Case asset is new...we will ignore the property value from parameter to load the subSingleChoice */
         if (me.selectedAsset.getId() === 0) {
+          me.selectedAsset.setPropertyByPublicId("trafficSigns_type", mandatorySignsDefaultValue);
           auxProperty  = undefined;
         }
       }
