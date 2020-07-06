@@ -140,9 +140,6 @@ pipeline {
                     reuseNode true
                 }
             }
-            steps {
-                sh 'python3 -m robot.run --NoStatusRC RobotProjectTest/Test/TestSuite/Result ${WORKSPACE}/RobotProjectTest/Test/TestSuite'
-            }
         }
     }
 
