@@ -1,13 +1,11 @@
 *** Settings ***
 Documentation           Suite description
 Library                 SeleniumLibrary
+Variables   ../robotFrameWorkTests/GeneralVariables.py
+Variables  ../Variable/Variables.py
 
 *** Variables ***
-${STAGING_URL}  https://devtest.liikennevirasto.fi/digiroad/
-${QA_URL}  https://testiextranet.liikennevirasto.fi/digiroad/
 ${BROWSER}      chrome
-${USERNAME}     k215271
-${PASSWORD}     di9LNKRH996
 
 *** Test Cases ***
 Validate if exist checkbox to show related traffic signs on the left box
@@ -21,9 +19,9 @@ Validate if exist checkbox to show related traffic signs on the left box
 
 *** Keywords ***
 Open Staging webpage by Chrome
-    Open Browser        ${STAGING_URL}   ${BROWSER}
-    Input Text    username    k215271
-    Input Password    id=password    di9LNKRH996
+    Open Browser        ${ENV_URL}   ${BROWSER}
+    Input Text    username    ${USERNAME}
+    Input Password    id=password    ${PASSWORD}
     Click Button    class=submit
     Sleep    5s
 
