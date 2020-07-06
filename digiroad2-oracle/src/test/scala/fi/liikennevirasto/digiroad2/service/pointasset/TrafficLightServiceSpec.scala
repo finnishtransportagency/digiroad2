@@ -171,8 +171,11 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       asset.id should be(id)
       asset.propertyData.size should  be(34)
       firstTypeProperty should not be secondTypeProperty
-      firstTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue should be("1")
-      secondTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue should be("4.1")
+      firstTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue should not be(secondTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue)
+
+      val correctTypes = Seq("1", "4.1")
+      correctTypes should contain (firstTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue)
+      correctTypes should contain (secondTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue)
     }
   }
 
@@ -188,13 +191,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       asset.vvhTimeStamp should not be(0)
 
-      val trafficLightTypeProperties = asset.propertyData.filter(_.publicId == "trafficLight_type")
-      val assetGroupedIds = trafficLightTypeProperties.map(_.groupedId)
-      val (firstGroupId, secondGroupId) = (assetGroupedIds.head, assetGroupedIds.last)
-
-      val updatedProperties = asset.propertyData.filter(_.groupedId == firstGroupId).map(prop => SimplePointAssetProperty(prop.publicId, prop.values, prop.groupedId)).toSet
-
-     val updatedId = service.update(id = asset.id, IncomingTrafficLight(2, 0.0, 388553075, updatedProperties), roadLink, "test")
+     val updatedId = service.update(id = asset.id, IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData), roadLink, "test")
       val afterUpdate = service.getPersistedAssetsByIds(Set(updatedId)).head
 
       afterUpdate.id should be(updatedId)
