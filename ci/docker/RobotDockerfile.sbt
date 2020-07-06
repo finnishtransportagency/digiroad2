@@ -1,1 +1,1 @@
-FROM robotframework/rfdocker:3.1.2
+FROM jafil/robotframework:latest
