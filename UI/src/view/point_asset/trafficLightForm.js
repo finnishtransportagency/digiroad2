@@ -262,6 +262,7 @@
                property.groupedId = newId;
             });
             selectedAsset.addAdditionalTrafficLight(newProperties);
+            selectedAsset.setPropertyByGroupedIdAndPublicId(newId, "bearing", _.head(_.find(selectedAsset.get().propertyData, {'publicId': "bearing"}).values).propertyValue);
         };
 
         var getDatasetFromChild = function(property) {

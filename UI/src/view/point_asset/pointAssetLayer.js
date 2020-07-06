@@ -164,7 +164,7 @@
           var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
           if (asset.id == selectedAsset.getId() && selectedAsset.getSelectedGroupedId()) {
             _.forEach(bearingProps, function (prop) {
-              if (_.isEmpty(prop.values))
+              if (_.isEmpty(prop.values) || _.head(prop.values).propertyValue === "")
                 selectedAsset.setPropertyByGroupedIdAndPublicId(prop.groupedId, prop.publicId, determineBearing(asset));
             });
 
@@ -176,7 +176,7 @@
 
             rotation = validitydirections.calculateRotation(parseFloat(bearingValue), parseInt(sideCodeValue));
           } else {
-            var isBearingNotDetermined = _.isEmpty(_.head(bearingProps).values) || _.head(_.head(bearingProps).values).propertyValue;
+            var isBearingNotDetermined = _.isEmpty(_.head(bearingProps).values) || _.head(_.head(bearingProps).values).propertyValue === "" || _.head(_.head(bearingProps).values).propertyValue;
             var firstBearingValue = isBearingNotDetermined ? determineBearing(asset) : _.head(_.head(bearingProps).values).propertyValue;
             var firstSideCodeValue = _.head(_.find(asset.propertyData, {'publicId': 'sidecode'}).values).propertyValue;
             rotation = validitydirections.calculateRotation(parseFloat(firstBearingValue), parseInt(firstSideCodeValue));
@@ -202,7 +202,7 @@
         bearing = asset.bearing;
       } else if (layerName == 'trafficLights' && !isOld(asset)){
         var bearingPropValues = _.find(asset.propertyData, {'publicId': 'bearing'}).values;
-        if(_.isEmpty(bearingPropValues)){
+        if(_.isEmpty(bearingPropValues) || _.head(bearingPropValues).propertyValue === ""){
           nearestLine = geometrycalculator.findNearestLine(me.excludeRoadByAdminClass(roadCollection.getRoadsForCarPedestrianCycling()), asset.lon, asset.lat);
           bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
         }else{

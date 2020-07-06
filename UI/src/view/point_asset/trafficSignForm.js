@@ -391,7 +391,7 @@
 
       if (isPedestrianOrCyclingRoadLink()) {
         panels = _.filter(panels, function(p) { if (p.propertyValue == additionalPanelWithTextCode ) return p;} );
-        propertyDisplayValue = _.isUndefined(panels) && panels.length === 0 ? "" : panels[0].propertyDisplayValue;
+        propertyDisplayValue = _.isUndefined(panels) || _.isEmpty(panels.length) ? "" : panels[0].propertyDisplayValue;
       }
       else {
         propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
