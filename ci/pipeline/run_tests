@@ -141,7 +141,7 @@ pipeline {
                 }
             }
             steps {
-
+                sh 'robot -d RobotFrameWorkTests/Result RobotFrameWorkTests/Test'
             }
         }
     }
