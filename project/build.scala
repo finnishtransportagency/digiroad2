@@ -53,8 +53,6 @@ object Digiroad2Build extends Build {
       version := Version,
       scalaVersion := ScalaVersion,
       resolvers ++= Seq(Classpaths.typesafeReleases,
-        "maven-public" at "http://livibuild04.vally.local/nexus/repository/maven-public/",
-        "ivy-public" at "http://livibuild04.vally.local/nexus/repository/ivy-public/"),
       scalacOptions ++= Seq("-unchecked", "-feature"),
       testOptions in Test ++= (
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
