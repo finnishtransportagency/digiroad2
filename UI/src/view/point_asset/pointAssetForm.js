@@ -20,12 +20,6 @@ root.PointAssetForm = function() {
     me.selectedAsset = parameters.pointAsset.selectedPointAsset;
   };
 
-  this.getProperties = function(properties, publicId) {
-    return _.find(properties, function(feature){
-      return feature.publicId === publicId;
-    });
-  };
-
   this.bindEvents = function(parameters) {
     var rootElement = $('#feature-attributes');
     var typeId = parameters.pointAsset.typeId;
@@ -228,7 +222,7 @@ root.PointAssetForm = function() {
     var wrapper = $('<div class="wrapper">');
     var formRootElement = $('<div class="form form-horizontal form-dark form-point-asset">');
 
-    if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
+    if (selectedAsset.isNew() && !selectedAsset.getConvertedAssetValue()) {
       formRootElement = formRootElement.append(me.renderValueElement(asset, collection, authorizationPolicy));
     } else {
       var deleteCheckbox = $(''+

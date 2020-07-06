@@ -114,10 +114,6 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     }
   }
 
-  def getProperty(properties: Seq[Property], property: String) : Option[PropertyValue] = {
-    properties.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
-  }
-
   def fetchSuitableForMergeByRadius(centralPoint: Point, radius: Int): Seq[TrafficLight] = {
     val maxTrafficLights = 6
     val existingTrafficLights = OracleTrafficLightDao.fetchByRadius(centralPoint, radius)

@@ -468,8 +468,8 @@ trait  PointAssetOperations{
   def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = Map()
 
 
-  def getProperty(asset: PersistedPointAsset, property: String) : Option[PropertyValue] = {
-    asset.propertyData.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
+  def getProperty(properties: Seq[Property], property: String) : Option[PropertyValue] = {
+    properties.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
   }
 
   def recalculateBearing(bearing: Option[Int]): (Option[Int], Option[Int]) = {

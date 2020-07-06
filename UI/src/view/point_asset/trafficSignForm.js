@@ -65,12 +65,12 @@
 
       }), function(prev, curr) { return prev + curr; }, '');
 
-      var additionalPanels = me.getProperties(allTrafficSignProperties, "additional_panel");
+      var additionalPanels = Property.getPropertyByPublicId(allTrafficSignProperties, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
       function getSidePlacement() {
-        return _.head(me.getProperties(allTrafficSignProperties, "opposite_side_sign").values);
+        return _.head(Property.getPropertyByPublicId(allTrafficSignProperties, "opposite_side_sign").values);
       }
 
       var panelCheckbox =
@@ -83,7 +83,7 @@
 
       var oppositeSideSignProperty = getSidePlacement();
       if (asset.id !== 0 && _.isUndefined(oppositeSideSignProperty.propertyDisplayValue)) {
-        var oppositeSideSignPropertyValues = getProperties(me.enumeratedPropertyValues, 'opposite_side_sign').values;
+        var oppositeSideSignPropertyValues = Property.getPropertyByPublicId(me.enumeratedPropertyValues, 'opposite_side_sign').values;
         oppositeSideSignProperty.propertyDisplayValue = _.find(oppositeSideSignPropertyValues, {'propertyValue': oppositeSideSignProperty.propertyValue} ).propertyDisplayValue;
       }
 
@@ -426,7 +426,7 @@
       var publicId = _.head(property);
       var propertyValue;
       if (_.last(property) === 0)
-        propertyValue = getProperties(me.pointAsset.newAsset.propertyData,  'additional_panel').defaultValue[publicId];
+        propertyValue = Property.getPropertyByPublicId(me.pointAsset.newAsset.propertyData,  'additional_panel').defaultValue[publicId];
       else
         propertyValue = _.last(property);
       var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head( getValuesFromEnumeratedProperty(publicId) );

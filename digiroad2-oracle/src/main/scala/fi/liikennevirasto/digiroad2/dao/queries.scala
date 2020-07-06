@@ -212,7 +212,7 @@ object Queries {
     "select id from number_property_value where asset_id = ? and property_id = ? and grouped_id = ?"
 
   def existingGroupedIdForAssetQuery =
-    "select grouped_id from single_choice_value where asset_id = ? and property_id = (select id from property where public_id = 'trafficLight_type')"
+    "select grouped_id from single_choice_value where asset_id = ? and property_id = (select id from property where public_id = ?)"
 
   def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
     sqlu"""

@@ -268,43 +268,40 @@ object OracleTrafficLightDao {
   }
 
   private def existingGroupedIdForAsset(assetId: Long): Set[Long] = {
-    StaticQuery.query[Long, Long](existingGroupedIdForAssetQuery).apply(assetId).iterator.toSet
+    StaticQuery.query[(Long, String), Long](existingGroupedIdForAssetQuery).apply((assetId, "trafficLight_type")).iterator.toSet
   }
 
   def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue], groupedId: Option[Long]) {
+    val extractedPropertyValue = if (propertyValues.nonEmpty) propertyValues.head.asInstanceOf[PropertyValue].propertyValue else ""
     propertyType match {
       case CheckBox =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Multiple choice only allows values between 0 and 1.")
         if(multipleChoiceValueDoesNotExist(assetId, propertyId, groupedId)) {
-          insertMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong, groupedId).execute
+          insertMultipleChoiceValue(assetId, propertyId, extractedPropertyValue.toLong, groupedId).execute
         } else {
-          updateMultipleChoiceValue(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong, groupedId).execute
+          updateMultipleChoiceValue(assetId, propertyId, extractedPropertyValue.toLong, groupedId).execute
         }
       case Text =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
-        val propertyValue =
-          if (propertyValues.isEmpty) ""
-          else propertyValues.head.asInstanceOf[PropertyValue].propertyValue
-
         if (textPropertyValueDoesNotExist(assetId, propertyId, groupedId)) {
-          insertTextProperty(assetId, propertyId, propertyValue, groupedId).execute
+          insertTextProperty(assetId, propertyId, extractedPropertyValue, groupedId).execute
         } else {
-          updateTextProperty(assetId, propertyId, propertyValue, groupedId).execute
+          updateTextProperty(assetId, propertyId, extractedPropertyValue, groupedId).execute
         }
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
 
         if (singleChoiceValueDoesNotExist(assetId, propertyId, groupedId)) {
-          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble, groupedId).execute
+          insertSingleChoiceProperty(assetId, propertyId, extractedPropertyValue.toDouble, groupedId).execute
         } else {
-          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble, groupedId).execute
+          updateSingleChoiceProperty(assetId, propertyId, extractedPropertyValue.toDouble, groupedId).execute
         }
       case Number =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
         if (numberPropertyValueDoesNotExist(assetId, propertyId, groupedId)) {
-          insertNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption, groupedId).execute
+          insertNumberProperty(assetId, propertyId, Try(extractedPropertyValue.toDouble).toOption, groupedId).execute
         } else {
-          updateNumberProperty(assetId, propertyId, Try(propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).toOption, groupedId).execute
+          updateNumberProperty(assetId, propertyId, Try(extractedPropertyValue.toDouble).toOption, groupedId).execute
         }
 
       case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")

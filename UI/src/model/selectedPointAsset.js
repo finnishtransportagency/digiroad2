@@ -4,7 +4,7 @@
     var dirty = false;
     var originalAsset;
     var endPointName = assetName;
-    var wasOldAsset;
+    var isConvertedAsset;
     var selectedGroupedId;
     return {
       open: open,
@@ -32,8 +32,8 @@
       getCoordinates: getCoordinates,
       setAdditionalPanels: setAdditionalPanels,
       setAdditionalPanel: setAdditionalPanel,
-      getWasOldAsset: getWasOldAsset,
-      setWasOldAsset: setWasOldAsset,
+      getConvertedAssetValue: getConvertedAssetValue,
+      setConvertedAssetValue: setConvertedAssetValue,
       addAdditionalTrafficLight: addAdditionalTrafficLight,
       setSelectedGroupedId: setSelectedGroupedId,
       getSelectedGroupedId: getSelectedGroupedId
@@ -43,7 +43,7 @@
       selectedGroupedId = undefined;
       dirty = true;
       current = asset;
-      wasOldAsset = false;
+      isConvertedAsset = false;
       eventbus.trigger(assetName + ':selected');
     }
 
@@ -76,12 +76,12 @@
     }
 
     function cancel() {
-      if (isNew() && !wasOldAsset) {
+      if (isNew() && !isConvertedAsset) {
         reset();
         eventbus.trigger(assetName + ':creationCancelled');
       } else {
         dirty = false;
-        wasOldAsset = false;
+        isConvertedAsset = false;
         current = _.cloneDeep(originalAsset);
         eventbus.trigger(assetName + ':cancelled');
       }
@@ -89,7 +89,7 @@
 
     function reset() {
       dirty = false;
-      wasOldAsset = false;
+      isConvertedAsset = false;
       current = null;
       selectedGroupedId = undefined;
     }
@@ -119,7 +119,7 @@
     }
 
     function isNew() {
-      return getId() === 0 || wasOldAsset;
+      return getId() === 0 || isConvertedAsset;
     }
 
     function save() {
@@ -128,7 +128,7 @@
       if (current.toBeDeleted) {
         eventbus.trigger(endPointName + ':deleted', current, 'deleted');
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
-      } else if (isNew() && !wasOldAsset) {
+      } else if (isNew() && !isConvertedAsset) {
         eventbus.trigger(endPointName + ':created', current, 'created');
         backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
@@ -241,12 +241,12 @@
       eventbus.trigger(assetName + ':changed');
     }
 
-    function getWasOldAsset() {
-      return wasOldAsset;
+    function getConvertedAssetValue() {
+      return isConvertedAsset;
     }
 
-    function setWasOldAsset(value) {
-      wasOldAsset = value;
+    function setConvertedAssetValue(value) {
+      isConvertedAsset = value;
     }
 
     function setSelectedGroupedId(id) {

@@ -38,7 +38,7 @@
         };
 
         var isOld = function(asset){
-            return _.head(me.getProperties(asset.propertyData, 'trafficLight_type').values).propertyValue === "";
+            return _.head(Property.getPropertyByPublicId(asset.propertyData, 'trafficLight_type').values).propertyValue === "";
         };
 
         this.renderForm = function (rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -55,7 +55,7 @@
             var title = 'ID: ' + id;
             if (isOldTrafficLight) {
                 title = 'Vanhan tietomallin mukainen liikennevalo';
-            } else if (selectedAsset.isNew() && !selectedAsset.getWasOldAsset()) {
+            } else if (selectedAsset.isNew() && !selectedAsset.getConvertedAssetValue()) {
                 title = "Uusi " + localizedTexts.newAssetLabel;
             }
 
@@ -71,11 +71,11 @@
 
             if (isOldTrafficLight) {
                 rootElement.find('button#old-to-new-traffic-light').on('click', function() {
-                    var suggestBoxProperty = me.getProperties(asset.propertyData, 'suggest_box');
+                    var suggestBoxProperty = Property.getPropertyByPublicId(asset.propertyData, 'suggest_box');
                     var newAssetProperties = _.cloneDeep(me.pointAsset.newAsset);
                     _.find(newAssetProperties.propertyData, {'publicId': suggestBoxProperty.publicId}).values = suggestBoxProperty.values;
                     selectedAsset.set(newAssetProperties);
-                    selectedAsset.setWasOldAsset(true);
+                    selectedAsset.setConvertedAssetValue(true);
                     reloadForm(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
                 });
             } else {
@@ -130,14 +130,14 @@
                 var propertyPublicId = _.head(_.split(eventTarget.attr('id'), '-'));
                 selectedAsset.setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, +eventTarget.prop('checked'));
 
-                if (id && !selectedAsset.getWasOldAsset()) {
+                if (id && !selectedAsset.getConvertedAssetValue()) {
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
                 }
             });
 
             rootElement.find('.editable').not('.suggestion-box').on('change', function () {
-                if (id && !selectedAsset.getWasOldAsset()) {
+                if (id && !selectedAsset.getConvertedAssetValue()) {
                     me.switchSuggestedValue(true);
                     rootElement.find('.suggested-checkbox').prop('checked', false);
                     _.forEach(rootElement.find('.suggested-checkbox'), function (element) {

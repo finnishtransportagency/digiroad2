@@ -85,26 +85,26 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
     val optLaneType = getPropertyValueOption(parsedRow, "trafficLightLaneType").asInstanceOf[Option[Int]]
     val optLaneNumber = getPropertyValueOption(parsedRow, "trafficLightLaneNumber").asInstanceOf[Option[String]]
 
-    val (lanesValidator, lanesValidatorErrorMsg) = csvLaneValidator(optLaneType, optLaneNumber)
+    val (_, lanesValidatorErrorMsg) = csvLaneValidator(optLaneType, optLaneNumber)
     /* end lane type validations */
 
-    if (lanesValidator) {
-      val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
-      val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
+    val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
+    val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
 
-      (optLon, optLat) match {
-        case (Some(lon), Some(lat)) =>
-          val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
-          if (roadLinks.isEmpty) {
-            (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
-          } else {
-            (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
-          }
-        case _ =>
-          (Nil, Nil)
-      }
+    val (authorizationErrorMsg, parsedRowAndRoadLink) = (optLon, optLat) match {
+      case (Some(lon), Some(lat)) =>
+        val roadLinks = roadLinkService.getClosestRoadlinkForCarTrafficFromVVH(user, Point(lon.toLong, lat.toLong), forCarTraffic = false)
+        if (roadLinks.isEmpty) {
+          (List(s"No Rights for Municipality or nonexistent road links near asset position"), Seq())
+        } else {
+          (List(), Seq(CsvAssetRowAndRoadLink(parsedRow, roadLinks)))
+        }
+      case _ =>
+        (Nil, Nil)
     }
-    else (lanesValidatorErrorMsg, Seq())
+    val allErrorMsg = lanesValidatorErrorMsg ++ authorizationErrorMsg
+
+    (allErrorMsg, parsedRowAndRoadLink)
   }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
