@@ -133,49 +133,9 @@ pipeline {
 
         }
 
-	    stage("Run Frontend Tests") {
-            agent {
-                docker {
-                    image "digiroad2-frontend"
-                    reuseNode true
-                }
-            }
-            steps {
-                sh STAGE_FRONTEND_RUN_TESTS
-                echo "Running frontend build... (skipped for now)"
-            }
-            post {
-                failure {
-                    slackSend(
-                        color: "danger",
-                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
-                    )
-                }
-            }
-        }
-
-        stage("Run Backend Tests") {
-            agent {
-                docker {
-                    image "digiroad2-backend-sbt"
-                    reuseNode true
-                }
-            }
-            steps {
-                sh STAGE_SETUP_ORACLE
-                sh STAGE_BACKEND_RUN_TESTS
-            }
-        }
-
         stage("Run RobotFramework Tests") {
-            agent {
-                docker {
-                    image "digiroad2-robotframework-sbt"
-                    reuseNode true
-                }
-            }
             steps {
-                sh STAGE_BACKEND_RUN_TESTS
+                sh 'python3 -m robot.run --NoStatusRC RobotProjectTest/Test/TestSuite/Result ${WORKSPACE}/RobotProjectTest/Test/TestSuite'
             }
         }
     }
