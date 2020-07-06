@@ -134,6 +134,12 @@ pipeline {
         }
 
         stage("Run RobotFramework Tests") {
+            agent {
+                docker {
+                    image "digiroad2-robotframework-sbt"
+                    reuseNode true
+                }
+            }
             steps {
                 sh 'python3 -m robot.run --NoStatusRC RobotProjectTest/Test/TestSuite/Result ${WORKSPACE}/RobotProjectTest/Test/TestSuite'
             }
