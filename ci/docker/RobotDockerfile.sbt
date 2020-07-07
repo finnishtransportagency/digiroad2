@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir selenium==3.141.0
 RUN pip install jproperties
 
 RUN apk update ;\
+    harfbuzz@latest-stable ;\
     apk add --no-cache ${DEPS} ;\
-    pip install --no-cache-dir -r /tmp/requirements.txt ;\
     # Chrome requires docker to have cap_add: SYS_ADMIN if sandbox is on.
     # Disabling sandbox and gpu as default.
     sed -i "s/self._arguments\ =\ \[\]/self._arguments\ =\ \['--no-sandbox',\ '--disable-gpu'\]/" $(python -c "import site; print(site.getsitepackages()[0])")/selenium/webdriver/chrome/options.py ;\
