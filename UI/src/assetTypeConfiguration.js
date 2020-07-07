@@ -92,6 +92,20 @@
       return _.some(selectedLinearAsset.get(), function (asset) {return asset.id;});
     };
 
+    var numericValidation = function (fields) {
+      var numericalFields = _.filter(fields, function(field) {return field.propertyType === 'number';});
+      return _.every(numericalFields, function(field) {return _.isEmpty(field.values) || !isNaN(_.head(field.values).propertyValue);});
+    };
+
+    var lanesValidation = function (laneNumberValues, laneTypeValues) {
+      var isLaneValueEmpty = _.isEmpty(laneNumberValues) || _.isEmpty(_.head(laneNumberValues).propertyValue);
+      var isValidLaneValue = isLaneValueEmpty || /^([1-3][1-9])$/.test(_.head(laneNumberValues).propertyValue);
+
+      return isValidLaneValue && (isLaneValueEmpty || _.head(laneTypeValues).propertyValue == 99 ||
+          (_.head(laneNumberValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValues).propertyValue != 1) ||
+          (_.head(laneNumberValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValues).propertyValue == 1));
+    };
+
     var cyclingAndWalkingValidator = function(selectedLinearAsset, id) {
       if (_.isUndefined(selectedLinearAsset) || _.isUndefined(id))
         return false;
@@ -1234,27 +1248,75 @@
       {
         typeId: assetType.trafficLights,
         layerName: 'trafficLights',
-        title: 'Liikennevalo',
+        title: 'Liikennevalot',
         allowComplementaryLinks: true,
         newAsset: { propertyData: [
-            {'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]}
+            {'groupedId': 1, 'name': "Tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_type", values: [ {propertyValue: 1} ]},
+            {'groupedId': 1, 'name': "Opastimen suhteellinen sijainti", 'propertyType': 'single_choice', 'publicId': "trafficLight_relative_position", values: [ {propertyValue: 1} ]},
+            {'groupedId': 1, 'name': "Opastimen rakennelma", 'propertyType': 'single_choice', 'publicId': "trafficLight_structure", values: [ {propertyValue: 99} ]},
+            {'groupedId': 1, 'name': "Alituskorkeus", 'propertyType': 'number', 'publicId': "trafficLight_height", values: []},
+            {'groupedId': 1, 'name': "Äänimerkki", 'propertyType': 'single_choice', 'publicId': "trafficLight_sound_signal", values: [ {propertyValue: 99} ]},
+            {'groupedId': 1, 'name': "Ajoneuvon tunnistus", 'propertyType': 'single_choice', 'publicId': "trafficLight_vehicle_detection", values: [ {propertyValue: 99} ]},
+            {'groupedId': 1, 'name': "Painonappi", 'propertyType': 'single_choice', 'publicId': "trafficLight_push_button", values: [ {propertyValue: 99} ]},
+            {'groupedId': 1, 'name': "Lisätieto", 'propertyType': 'text', 'publicId': "trafficLight_info", values: []},
+            {'groupedId': 1, 'name': "Kaistan tyyppi", 'propertyType': 'single_choice', 'publicId': "trafficLight_lane_type", values: [ {propertyValue: 99} ]},
+            {'groupedId': 1, 'name': "Kaista", 'propertyType': 'number', 'publicId': "trafficLight_lane", values: []},
+            {'groupedId': 1, 'name': "Maastosijainti X", 'propertyType': 'number', 'publicId': "location_coordinates_x", values: [] },
+            {'groupedId': 1, 'name': "Maastosijainti Y", 'propertyType': 'number', 'publicId': "location_coordinates_y", values: [] },
+            {'groupedId': 1, 'name': "Kunta ID", 'propertyType': 'text', 'publicId': "trafficLight_municipality_id", values: []},
+            {'groupedId': 1, 'name': "Tila", 'propertyType': 'single_choice', 'publicId': "trafficLight_state", values: [ {propertyValue: 3} ]},
+            {'groupedId': 1, 'name': "Vihjetieto", 'propertyType': 'checkbox', 'publicId': "suggest_box", values: [ {propertyValue: 0} ]},
+            {'groupedId': 1, 'name': "Suunta", 'propertyType': 'hidden', 'publicId': "bearing", values: []},
+            {'groupedId': 1, 'name': "Sidecode", 'propertyType': 'hidden', 'publicId': "sidecode", values: [ {propertyValue: 2} ]}
         ]},
         isSuggestedAsset: true,
-        legendValues: [
-          {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
-          {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
-        ],
+        legendValues: {
+          oldValues: [
+            {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
+            {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+          ],
+          newValues: [
+            {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg', label: 'Opastinlaite'},
+            {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg', label: 'Useita erisuuntaisia opastinlaitteita'}
+          ]
+        },
         formLabels: {
           singleFloatingAssetLabel: 'liikennevalojen',
           manyFloatingAssetsLabel: 'liikennevalot',
           newAssetLabel: 'liikennevalo'
         },
         hasMunicipalityValidation: true,
-        saveCondition: saveConditionWithSuggested,
+        saveCondition: function (selectedAsset, authorizationPolicy) {
+          var fields = selectedAsset.get().propertyData;
+
+          var lanesValidationForMultiple = function (fields) {
+            var lanePublicId = 'trafficLight_lane';
+            var laneTypePublicId = 'trafficLight_lane_type';
+
+            var allLaneRelatedPropertiesVerification = _.map(_.filter(fields, function(field) { return field.publicId === lanePublicId; }), function (laneNumberProperty) {
+              var laneTypeProperty = _.find(fields, function(field) { return field.publicId === laneTypePublicId && field.groupedId === laneNumberProperty.groupedId; });
+              return lanesValidation(laneNumberProperty.values, laneTypeProperty.values);
+            });
+
+            return _.every(allLaneRelatedPropertiesVerification);
+          };
+
+          var suggestedAssetCondition = _.every(_.map(_.filter(fields, function(asset) { return asset.publicId === "suggest_box"; }), function (suggestedProperty) {
+            var suggestedBoxValue = !!parseInt(suggestedProperty.values[0].propertyValue);
+            return !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
+          }));
+
+          var isValidNumericalFields = numericValidation(fields);
+          var isValidLane = lanesValidationForMultiple(fields);
+
+          return suggestedAssetCondition && isValidNumericalFields && isValidLane;
+        },
         authorizationPolicy: new PointAssetAuthorizationPolicy(),
+        form: TrafficLightForm,
         label: new SuggestionLabel(),
         showRoadLinkInfo: true,
-        layer : TrafficSignLayer
+        layer : TrafficRegulationLayer,
+        lanePreview: true
       },
       {
         typeId: assetType.trafficSigns,
@@ -1300,7 +1362,7 @@
           manyFloatingAssetsLabel: 'liikennemerkit',
           newAssetLabel: 'liikennemerkki'
         },
-        layer : TrafficSignLayer,
+        layer : TrafficRegulationLayer,
         authorizationPolicy: new PointStateRoadAuthorizationPolicy(),
         form: TrafficSignForm,
         hasMunicipalityValidation: true,
@@ -1314,19 +1376,19 @@
           var lifecycleValidations = [
             { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
           ];
+          var fields = selectedAsset.get().propertyData;
 
-          var opposite_side_sign =  _.find( selectedAsset.get().propertyData, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
+          var opposite_side_sign =  _.find( fields, function(prop) { if (prop.publicId === "opposite_side_sign") return prop; });
           if (_.isUndefined(opposite_side_sign) || _.isUndefined(opposite_side_sign.values[0]) || opposite_side_sign.values[0].propertyValue === "") {
             selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');
           }
 
           var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
-          var suggestedBoxValue = !!parseInt(_.find(selectedAsset.get().propertyData, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
+          var suggestedBoxValue = !!parseInt(_.find(fields, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
           var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
           var isValidFunc = functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
 
           /* Begin: Special validate for roadwork sign */
-          var fields = selectedAsset.get().propertyData;
           var trafficSignTypeField = _.find(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
 
           var trafficSignTypeExtracted = _.head(trafficSignTypeField.values).propertyValue;
@@ -1344,25 +1406,18 @@
           var lifecycleValidator = _.find(lifecycleValidations, function (validator) { return _.includes(validator.values, parseInt(_.head(lifecycleField.values).propertyValue)); });
           var validLifecycleDates = _.isUndefined(lifecycleValidator) ? true : lifecycleValidator.validate(startDateExtracted, endDateExtracted);
 
-          var numericalFields = _.filter(fields, function(field) {return field.propertyType === 'number';});
-          var isValidNumericalFields = _.every(numericalFields, function(field) {return _.isEmpty(field.values) || !isNaN(_.head(field.values).propertyValue);});
+          var isValidNumericalFields = numericValidation(fields);
 
-          /* Begin: Lane Validation */
-          var laneValues = _.head(_.filter(fields, function(field) { return field.publicId === 'lane'; })).values;
-          var isLaneValueEmpty = _.isEmpty(laneValues) || _.isEmpty(_.head(laneValues).propertyValue);
-          var isValidLaneValue = isLaneValueEmpty || /^([1-3][1-9])$/.test(_.head(laneValues).propertyValue);
+          var laneNumberProperty = _.find(fields, function(field) { return field.publicId === 'lane'; });
+          var laneTypeProperty = _.find(fields, function(field) { return field.publicId === 'lane_type'; });
 
-          var laneTypeValue = _.head(_.filter(fields, function(field) { return field.publicId === 'lane_type'; })).values;
-
-          var isValidLane = isValidLaneValue && ( isLaneValueEmpty || _.head(laneTypeValue).propertyValue == 99 ||
-            (_.head(laneValues).propertyValue.charAt(1) != 1 && _.head(laneTypeValue).propertyValue != 1) ||
-            (_.head(laneValues).propertyValue.charAt(1) == 1 && _.head(laneTypeValue).propertyValue == 1));
-          /* End: Lane Validation */
+          var isValidLane = lanesValidation(laneNumberProperty.values, laneTypeProperty.values);
 
           return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer,
-        showRoadLinkInfo: true
+        showRoadLinkInfo: true,
+        lanePreview: true
       },
       {
         typeId: assetType.trHeightLimits,

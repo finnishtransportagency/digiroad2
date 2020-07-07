@@ -40,8 +40,38 @@
         new StyleRule().where('validityDirection').is(1).and('floating').is(true).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } ),
         new StyleRule().where('bearing').isUndefined().use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'} } )
       ];
-    }
-    else {
+    } else if (layerName === 'trafficLights') {
+      var isOld = function(asset){
+        var typeProp = _.find(asset.propertyData, {'publicId': 'trafficLight_type'});
+        return _.head(typeProp.values).propertyValue === "";
+      };
+
+      var haveSameDirection = function(asset) {
+        if (!isOld(asset)) {
+          var bearingProps = _.filter(asset.propertyData, {'publicId': 'bearing'});
+          if (asset.selectedId == asset.id)
+            return true;
+
+          var bearingValue = _.head(_.head(bearingProps).values).propertyValue;
+          var sameBearing = _.every(bearingProps, function(prop){return _.head(prop.values).propertyValue == bearingValue;});
+
+          var sidecodeProps = _.filter(asset.propertyData, {'publicId': 'sidecode'});
+          var sidecodeValue = _.head(_.head(sidecodeProps).values).propertyValue;
+          var sameSideCode = _.every(sidecodeProps, function(prop){return _.head(prop.values).propertyValue == sidecodeValue;});
+
+          return sameBearing && sameSideCode;
+
+        }
+      };
+
+      featureTypeRules = [
+        new StyleRule().where(isOld).is(true).and('floating').is(true).use({icon:{src:'images/point-assets/point_red.svg'}}),
+        new StyleRule().where(isOld).is(false).and(haveSameDirection).is(true).and('floating').is(true).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg'}}),
+        new StyleRule().where(isOld).is(false).and(haveSameDirection).is(true).and('floating').is(false).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg'}}),
+        new StyleRule().where(isOld).is(false).and(haveSameDirection).is(false).and('floating').is(true).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg'}}),
+        new StyleRule().where(isOld).is(false).and(haveSameDirection).is(false).and('floating').is(false).use({icon:{src:'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg'}})
+      ];
+    } else {
         featureTypeRules = [
             new StyleRule().where('floating').is(false).use({
                 icon: {

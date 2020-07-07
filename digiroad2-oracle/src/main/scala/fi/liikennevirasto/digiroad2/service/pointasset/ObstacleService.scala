@@ -72,7 +72,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     val signsInRadius = OracleObstacleDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters), withDynSession).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
-          obstacleType == getProperty(asset, typePublicId).get.propertyValue.toString
+          obstacleType == getProperty(asset.propertyData, typePublicId).get.propertyValue.toString
     )
     if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }

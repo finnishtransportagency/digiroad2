@@ -4,6 +4,8 @@
     var dirty = false;
     var originalAsset;
     var endPointName = assetName;
+    var isConvertedAsset;
+    var selectedGroupedId;
     return {
       open: open,
       getId: getId,
@@ -22,16 +24,26 @@
       getAdministrativeClass: getAdministrativeClass,
       checkSelectedSign: checkSelectedSign,
       setPropertyByPublicId: setPropertyByPublicId,
+      setPropertyByGroupedIdAndPublicId: setPropertyByGroupedIdAndPublicId,
+      getPropertyByGroupedIdAndPublicId: getPropertyByGroupedIdAndPublicId,
+      removePropertyByGroupedId: removePropertyByGroupedId,
       getMunicipalityCode: getMunicipalityCode,
       getMunicipalityCodeByLinkId: getMunicipalityCodeByLinkId,
       getCoordinates: getCoordinates,
       setAdditionalPanels: setAdditionalPanels,
-      setAdditionalPanel: setAdditionalPanel
+      setAdditionalPanel: setAdditionalPanel,
+      getConvertedAssetValue: getConvertedAssetValue,
+      setConvertedAssetValue: setConvertedAssetValue,
+      addAdditionalTrafficLight: addAdditionalTrafficLight,
+      setSelectedGroupedId: setSelectedGroupedId,
+      getSelectedGroupedId: getSelectedGroupedId
     };
 
     function place(asset) {
+      selectedGroupedId = undefined;
       dirty = true;
       current = asset;
+      isConvertedAsset = false;
       eventbus.trigger(assetName + ':selected');
     }
 
@@ -51,18 +63,25 @@
       eventbus.trigger(assetName + ":changed");
     }
 
+    function addAdditionalTrafficLight(newProperties) {
+      dirty = true;
+      current.propertyData = current.propertyData.concat(newProperties);
+    }
+
     function open(asset) {
+      selectedGroupedId = undefined;
       originalAsset = _.cloneDeep(_.omit(asset, "geometry"));
       current = asset;
       eventbus.trigger(assetName + ':selected');
     }
 
     function cancel() {
-      if (isNew()) {
+      if (isNew() && !isConvertedAsset) {
         reset();
         eventbus.trigger(assetName + ':creationCancelled');
       } else {
         dirty = false;
+        isConvertedAsset = false;
         current = _.cloneDeep(originalAsset);
         eventbus.trigger(assetName + ':cancelled');
       }
@@ -70,7 +89,9 @@
 
     function reset() {
       dirty = false;
+      isConvertedAsset = false;
       current = null;
+      selectedGroupedId = undefined;
     }
 
     function getId() {
@@ -98,7 +119,7 @@
     }
 
     function isNew() {
-      return getId() === 0;
+      return getId() === 0 || isConvertedAsset;
     }
 
     function save() {
@@ -107,7 +128,7 @@
       if (current.toBeDeleted) {
         eventbus.trigger(endPointName + ':deleted', current, 'deleted');
         backend.removePointAsset(current.id, endPointName).done(done).fail(fail);
-      } else if (isNew()) {
+      } else if (isNew() && !isConvertedAsset) {
         eventbus.trigger(endPointName + ':created', current, 'created');
         backend.createPointAsset(current, endPointName).done(done).fail(fail);
       } else {
@@ -181,6 +202,24 @@
       eventbus.trigger(assetName + ':changed');
     }
 
+    function getPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId) {
+      return _.find(current.propertyData, function (prop) {
+        return prop.groupedId == propertyGroupedId && prop.publicId == propertyPublicId;
+      });
+    }
+
+    function setPropertyByGroupedIdAndPublicId(propertyGroupedId, propertyPublicId, propertyValue) {
+      dirty = true;
+      var property = _.find(current.propertyData, {'groupedId': propertyGroupedId, 'publicId': propertyPublicId});
+      property.values[0] = {propertyValue: propertyValue, propertyDisplayValue: ''};
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function removePropertyByGroupedId(propertyGroupedId) {
+      dirty = true;
+      _.remove(current.propertyData, {'groupedId': parseInt(propertyGroupedId)});
+    }
+
     function setAdditionalPanels(panels) {
       dirty = true;
       _.map(current.propertyData, function (prop) {
@@ -200,6 +239,23 @@
         }
       });
       eventbus.trigger(assetName + ':changed');
+    }
+
+    function getConvertedAssetValue() {
+      return isConvertedAsset;
+    }
+
+    function setConvertedAssetValue(value) {
+      isConvertedAsset = value;
+    }
+
+    function setSelectedGroupedId(id) {
+      selectedGroupedId = id;
+      eventbus.trigger(assetName + ':changed');
+    }
+
+    function getSelectedGroupedId() {
+      return selectedGroupedId;
     }
   };
 })(this);

@@ -18,39 +18,59 @@
       me.collection = parameters.collection;
     };
 
-
-
-    var getProperties = function(properties, publicId) {
-      return _.find(properties, function(feature){
-        return feature.publicId === publicId;
-      });
-    };
+    var propertyOrdering = [
+      'trafficSigns_type',
+      'trafficSigns_value',
+      'trafficSigns_info',
+      'municipality_id',
+      'main_sign_text',
+      'structure',
+      'condition',
+      'size',
+      'height',
+      'coating_type',
+      'sign_material',
+      'location_specifier',
+      'terrain_coordinates_x',
+      'terrain_coordinates_y',
+      'lane',
+      'lane_type',
+      'life_cycle',
+      'trafficSign_start_date',
+      'trafficSign_end_date',
+      'type_of_damage',
+      'urgency_of_repair',
+      'lifespan_left',
+      'suggest_box',
+      'old_traffic_code',
+      'counter'
+    ];
 
     this.renderValueElement = function(asset, collection, authorizationPolicy) {
       var allTrafficSignProperties = asset.propertyData;
-      var trafficSignSortedProperties = sortAndFilterTrafficSignProperties(allTrafficSignProperties);
+      var trafficSignSortedProperties = me.sortAndFilterProperties(allTrafficSignProperties, propertyOrdering);
 
       var components = _.reduce(_.map(trafficSignSortedProperties, function (feature) {
         feature.localizedName = window.localizedStrings[feature.publicId];
         var propertyType = feature.propertyType;
 
         switch (propertyType) {
-          case "text": return textHandler(feature);
-          case "number": return textHandler(feature);
-          case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection) : singleChoiceHandler(feature);
-          case "read_only_number": return readOnlyHandler(feature);
-          case "date": return dateHandler(feature);
-          case "checkbox": return feature.publicId === 'suggest_box' ? suggestedBoxHandler (feature, authorizationPolicy) : checkboxHandler(feature);
+          case "number":
+          case "text": return me.textHandler(feature);
+          case "single_choice": return feature.publicId === 'trafficSigns_type' ? singleChoiceTrafficSignTypeHandler(feature, collection, asset) : me.singleChoiceHandler(feature);
+          case "read_only_number": return me.readOnlyHandler(feature);
+          case "date": return me.dateHandler(feature);
+          case "checkbox": return feature.publicId === 'suggest_box' ? me.suggestedBoxHandler (feature, authorizationPolicy) : me.checkboxHandler(feature);
         }
 
       }), function(prev, curr) { return prev + curr; }, '');
 
-      var additionalPanels = getProperties(allTrafficSignProperties, "additional_panel");
+      var additionalPanels = Property.getPropertyByPublicId(allTrafficSignProperties, "additional_panel");
       var checked = _.isEmpty(additionalPanels.values) ? '' : 'checked';
       var renderedPanels = checked ? renderAdditionalPanels(additionalPanels, collection) : '';
 
       function getSidePlacement() {
-        return _.head(getProperties(allTrafficSignProperties, "opposite_side_sign").values);
+        return _.head(Property.getPropertyByPublicId(allTrafficSignProperties, "opposite_side_sign").values);
       }
 
       var panelCheckbox =
@@ -63,79 +83,17 @@
 
       var oppositeSideSignProperty = getSidePlacement();
       if (asset.id !== 0 && _.isUndefined(oppositeSideSignProperty.propertyDisplayValue)) {
-        var oppositeSideSignPropertyValues = getProperties(me.enumeratedPropertyValues, 'opposite_side_sign').values;
+        var oppositeSideSignPropertyValues = Property.getPropertyByPublicId(me.enumeratedPropertyValues, 'opposite_side_sign').values;
         oppositeSideSignProperty.propertyDisplayValue = _.find(oppositeSideSignPropertyValues, {'propertyValue': oppositeSideSignProperty.propertyValue} ).propertyDisplayValue;
       }
 
       var wrongSideInfo = asset.id !== 0 && !_.isEmpty(oppositeSideSignProperty.propertyValue) ?
-        '    <div id="wrongSideInfo" class="form-group form-directional-traffic-sign">' +
+        '    <div id="wrongSideInfo" class="form-group read-only">' +
         '        <label class="control-label">' + 'Liikenteenvastainen' + '</label>' +
         '        <p class="form-control-static">' + oppositeSideSignProperty.propertyDisplayValue + '</p>' +
         '    </div>' : '';
 
       return components + wrongSideInfo + panelCheckbox + renderedPanels;
-    };
-
-    this.renderAssetFormElements = function(selectedAsset, localizedTexts, collection, authorizationPolicy) {
-      var asset = selectedAsset.get();
-      var wrapper = $('<div class="wrapper">');
-      var formRootElement = $('<div class="form form-horizontal form-dark form-pointasset">');
-
-
-      if (selectedAsset.isNew()) {
-        formRootElement = formRootElement.append(me.renderValueElement(asset, collection, authorizationPolicy));
-      } else {
-        var deleteCheckbox = $(''+
-            '    <div class="form-group form-group delete">' +
-            '      <div class="checkbox" >' +
-            '        <input id="delete-checkbox" type="checkbox">' +
-            '      </div>' +
-            '      <p class="form-control-static">Poista</p>' +
-            '    </div>' +
-            '  </div>' );
-        var logInfoGroup = $( '' +
-        '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Lis&auml;tty j&auml;rjestelm&auml;&auml;n: ' + this.informationLog(asset.createdAt, asset.createdBy) + '</p>' +
-        '    </div>' +
-        '    <div class="form-group">' +
-        '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + this.informationLog(asset.modifiedAt, asset.modifiedBy) + '</p>' +
-        '    </div>');
-
-        formRootElement = formRootElement.append($(this.renderFloatingNotification(asset.floating, localizedTexts)))
-                                          .append(logInfoGroup)
-                                          .append( $(this.userInformationLog(authorizationPolicy, selectedAsset)))
-                                          .append(me.renderValueElement(asset, collection, authorizationPolicy))
-                                          .append(deleteCheckbox);
-      }
-      return  wrapper.append(formRootElement);
-    };
-
-    var suggestedBoxHandler = function(property, authorizationPolicy) {
-      var suggestedBoxValue = getSuggestedBoxValue();
-      var suggestedBoxDisabledState = getSuggestedBoxDisabledState();
-
-      if(suggestedBoxDisabledState) {
-        var disabledValue = 'disabled';
-        return renderSuggestBoxElement(property, disabledValue);
-      } else if(me.pointAsset.isSuggestedAsset && authorizationPolicy.handleSuggestedAsset(me.selectedAsset, suggestedBoxValue)) {
-        var checkedValue = suggestedBoxValue ? 'checked' : '';
-        return renderSuggestBoxElement(property, checkedValue);
-      } else {
-        // empty div placed for correct positioning on the form for the validity direction button
-        return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box"></div>';
-      }
-    };
-
-    var getSuggestedBoxDisabledState = function() {
-      return $('.suggested-checkbox').is(':disabled');
-    };
-
-    var getSuggestedBoxValue = function() {
-      return !!parseInt(me.selectedAsset.getByProperty("suggest_box"));
-    };
-
-    this.switchSuggestedValue = function(disabledValue) {
-      $('.suggested-checkbox').attr('disabled', disabledValue);
     };
 
     this.renderForm = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
@@ -148,75 +106,31 @@
 
       rootElement.find("#feature-attributes-header").html(header);
       rootElement.find("#feature-attributes-form").html(form);
-      rootElement.find(".suggestion-box").before(me.renderValidityDirection(selectedAsset));
+      rootElement.find(".suggestion-box").before($(me.renderValidityDirection(selectedAsset.get())));
       dateutil.addTwoDependentDatePickers($('#trafficSign_start_date'),  $('#trafficSign_end_date'));
-      rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
+      if(me.pointAsset.lanePreview)
+        rootElement.find("#feature-attributes-form").prepend(me.renderPreview(roadCollection, selectedAsset));
       rootElement.find("#feature-attributes-footer").html(footer);
 
-      rootElement.find('#delete-checkbox').on('change', function (event) {
-        var eventTarget = $(event.currentTarget);
-        selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
-      });
-
-      rootElement.find('input[type=checkbox]').not('.suggested-checkbox').on('change', function (event) {
-        var eventTarget = $(event.currentTarget);
-        var propertyPublicId = eventTarget.attr('id');
-        var propertyValue = +eventTarget.prop('checked');
-        selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
-      });
-
-      rootElement.find('.suggested-checkbox').on('change', function (event) {
-        var eventTarget = $(event.currentTarget);
-        selectedAsset.setPropertyByPublicId(eventTarget.attr('id'), +eventTarget.prop('checked'));
-
-        if(id) {
-          me.switchSuggestedValue(true);
-          rootElement.find('.suggested-checkbox').prop('checked', false);
-        }
-      });
-
-      rootElement.find('.editable').not('.suggestion-box').on('change', function() {
-        if(id) {
-          me.switchSuggestedValue(true);
-          rootElement.find('.suggested-checkbox').prop('checked', false);
-          selectedAsset.setPropertyByPublicId($('.suggested-checkbox').attr('id'), 0);
-        }
-      });
-
-      rootElement.find('.pointasset button.save').on('click', function() {
-        setWithSelectedValues(); //used for old type traffic signs with missing properties
-        selectedAsset.save();
-      });
-
-      rootElement.find('.pointasset button.cancel').on('click', function() {
-        me.switchSuggestedValue(false);
-        selectedAsset.cancel();
-      });
+      me.addingPreBoxEventListeners(rootElement, selectedAsset, id);
 
       this.boxEvents(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection);
     };
 
     this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
-      rootElement.find('.form-traffic-sign').on('change', function() {
+      rootElement.find('.form-point-asset').on('change', function() {
         selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');  // force the field to be filled
       });
 
-      rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select#trafficSigns_type').on('change input, datechange', function (event) {
+      rootElement.find('.form-point-asset input[type=text],select').on('change datechange', function (event) {
         var eventTarget = $(event.currentTarget);
         var propertyPublicId = eventTarget.attr('id');
-        var propertyValue = eventTarget.val();
-        selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
+        selectedAsset.setPropertyByPublicId(propertyPublicId, eventTarget.val());
       });
 
-      rootElement.find('.form-traffic-sign select#main-trafficSigns_type').on('change', function (event) {
-        var eventTarget = $(event.currentTarget);
-        $('.form-traffic-sign select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
-        selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-traffic-sign select#trafficSigns_type').val());
-      });
-
-      var singleChoiceIds = ['location_specifier', 'structure', 'condition', 'size', 'life_cycle', 'coating_type', 'sign_material', 'lane_type', 'type_of_damage', 'urgency_of_repair'];
-      _.forEach(singleChoiceIds, function (publicId) {
-        bindSingleChoiceElement(publicId);
+      rootElement.find('.form-point-asset select#main-trafficSigns_type').on('change', function (event) {
+        $('.form-point-asset select#trafficSigns_type').html(singleChoiceSubType(collection, $(event.currentTarget).val()));
+        selectedAsset.setPropertyByPublicId('trafficSigns_type', $('.form-point-asset select#trafficSigns_type').val());
       });
 
       rootElement.find('#additional-panel-checkbox').on('change', function (event) {
@@ -233,12 +147,6 @@
 
       bindPanelEvents();
 
-      function bindSingleChoiceElement (publicId) {
-        rootElement.find('.form-traffic-sign select#' + publicId).on('change', function () {
-          selectedAsset.setPropertyByPublicId(publicId, $('.form-traffic-sign select#' + publicId).val());
-        });
-      }
-
       function toggleButtonVisibility() {
         var cont = rootElement.find('.panel-group-container');
         var panels = cont.children().size();
@@ -250,7 +158,8 @@
       rootElement.find('button#change-validity-direction').on('click', function() {
         var previousValidityDirection = selectedAsset.get().validityDirection;
         selectedAsset.set({ validityDirection: validitydirections.switchDirection(previousValidityDirection) });
-        $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
+        if(me.pointAsset.lanePreview)
+          $('.preview-div').replaceWith(me.renderPreview(roadCollection, selectedAsset));
       });
 
       function bindPanelEvents(){
@@ -315,89 +224,10 @@
       };
     };
 
-    var sortAndFilterTrafficSignProperties = function(properties) {
-      var propertyOrdering = [
-        'trafficSigns_type',
-        'trafficSigns_value',
-        'trafficSigns_info',
-        'municipality_id',
-        'main_sign_text',
-        'structure',
-        'condition',
-        'size',
-        'height',
-        'coating_type',
-        'sign_material',
-        'location_specifier',
-        'terrain_coordinates_x',
-        'terrain_coordinates_y',
-        'lane',
-        'lane_type',
-        'life_cycle',
-        'trafficSign_start_date',
-        'trafficSign_end_date',
-        'type_of_damage',
-        'urgency_of_repair',
-        'lifespan_left',
-        'suggest_box',
-        'old_traffic_code',
-        'counter'
-      ];
-
-      return _.sortBy(properties, function(property) {
-        return _.indexOf(propertyOrdering, property.publicId);
-      }).filter(function(property){
-        return _.indexOf(propertyOrdering, property.publicId) >= 0;
-      });
-    };
-
-    var dateHandler = function(property) {
-      var propertyValue = '';
-
-      if ( !_.isEmpty(property.values) && !_.isEmpty(property.values[0].propertyDisplayValue) )
-          propertyValue = property.values[0].propertyDisplayValue;
-
-      return '' +
-          '<div class="form-group editable form-traffic-sign">' +
-          '     <label class="control-label">' + property.localizedName + '</label>' +
-          '     <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-          '     <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
-          '</div>';
-    };
-
-    var textHandler = function (property) {
-      var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
-      return '' +
-        '    <div class="form-group editable form-traffic-sign">' +
-        '        <label class="control-label">' + property.localizedName + '</label>' +
-        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
-        '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
-        '    </div>';
-    };
-
-    var checkboxHandler = function(property) {
-      var checked = _.head(property.values).propertyValue == "0" ? '' : 'checked';
-      return '' +
-      '    <div id= "' + property.publicId + '-checkbox-div" class="form-group editable edit-only form-traffic-sign">' +
-      '      <div class="checkbox" >' +
-      '        <input id="' + property.publicId + '" type="checkbox"' + checked + '>' +
-      '      </div>' +
-      '        <label class="' + property.publicId + '-checkbox-label">' + property.localizedName + '</label>' +
-      '    </div>';
-    };
-
-    var renderSuggestBoxElement = function(property, state) {
-      return '<div class="form-group editable form-' + me.pointAsset.layerName + ' suggestion-box">' +
-          '<label class="control-label">' + property.localizedName + '</label>' +
-          '<p class="form-control-static">Kylla</p>' +
-          '<input type="checkbox" class="form-control suggested-checkbox" name="' + property.publicId + '" id="' + property.publicId + '"' + state + '>' +
-          '</div>';
-    };
-
     function getValuesFromEnumeratedProperty(publicId) {
       return _.map(
-        _.filter(me.enumeratedPropertyValues, { 'publicId': publicId }),
-        function(val) { return val.values; }
+          _.filter(me.enumeratedPropertyValues, { 'publicId': publicId }),
+          function(val) { return val.values; }
       );
     }
 
@@ -421,7 +251,7 @@
         )[0].outerHTML;
       }).join('');
 
-      return '<div class="form-group editable form-traffic-sign">' +
+      return '<div class="form-group editable form-point-asset">' +
         '      <label class="control-label"> ALITYYPPI</label>' +
         '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
         '      <select class="form-control" id="trafficSigns_type">  ' +
@@ -444,7 +274,7 @@
     }
 
     var singleChoiceTrafficSignTypeHandler = function (property, collection) {
-      var propertyValue = (property.values.length === 0) ? '' : _.head(property.values).propertyValue;
+      var propertyValue = me.extractPropertyValue(property);
       var signTypes = getValuesFromEnumeratedProperty(property.publicId);
       var auxProperty = property;
       var groups =  collection.getGroup(signTypes);
@@ -478,7 +308,7 @@
         )[0].outerHTML; }).join('');
 
       return '' +
-        '    <div class="form-group editable form-traffic-sign">' +
+        '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
         '      <p class="form-control-static">' + (groupKeys[mainTypeDefaultValue] || '-') + '</p>' +
         '      <select class="form-control" id=main-' + property.publicId +'>' +
@@ -488,40 +318,7 @@
         singleChoiceSubType( collection, mainTypeDefaultValue, auxProperty );
     };
 
-    var singleChoiceHandler = function (property) {
-      var propertyValue = _.isEmpty(property.values) ? '' : _.head(property.values).propertyValue;
-      if (_.isEmpty(propertyValue))
-        propertyValue = _.head(getProperties(me.pointAsset.newAsset.propertyData,  property.publicId).values).propertyValue;
-      var propertyValues = _.head( getValuesFromEnumeratedProperty(property.publicId) );
-      var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
-      var selectableValues = _.map(propertyValues, function (label) {
-        return $('<option>',
-            { selected: propertyValue == label.propertyValue,
-              value: parseInt(label.propertyValue),
-              text: label.propertyDisplayValue}
-        )[0].outerHTML; }).join('');
-      return '' +
-          '    <div class="form-group editable form-traffic-sign">' +
-          '      <label class="control-label">' + property.localizedName + '</label>' +
-          '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
-          '      <select class="form-control" id=' + property.publicId +'>' +
-          selectableValues +
-          '      </select>' +
-          '    </div>';
-    };
-
-    var readOnlyHandler = function (property) {
-      var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
-      var displayValue = (property.localizedName) ? property.localizedName : (property.values.length === 0) ? '' : property.values[0].propertyDisplayValue;
-      return '' +
-        '    <div class="form-group editable form-traffic-sign">' +
-        '        <label class="control-label">' + displayValue + '</label>' +
-        '        <p class="form-control-static">' + propertyValue + '</p>' +
-        '    </div>';
-    };
-
     var sortPanelKeys = function(properties) {
-
       var propertyOrdering = [
         'formPosition',
         'panelType',
@@ -595,7 +392,7 @@
 
       if (isPedestrianOrCyclingRoadLink()) {
         panels = _.filter(panels, function(p) { if (p.propertyValue == additionalPanelWithTextCode ) return p;} );
-        propertyDisplayValue = _.isUndefined(panels) && panels.length === 0 ? "" : panels[0].propertyDisplayValue;
+        propertyDisplayValue = _.isUndefined(panels) || _.isEmpty(panels.length) ? "" : panels[0].propertyDisplayValue;
       }
       else {
         propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
@@ -630,7 +427,7 @@
       var publicId = _.head(property);
       var propertyValue;
       if (_.last(property) === 0)
-        propertyValue = getProperties(me.pointAsset.newAsset.propertyData,  'additional_panel').defaultValue[publicId];
+        propertyValue = Property.getPropertyByPublicId(me.pointAsset.newAsset.propertyData,  'additional_panel').defaultValue[publicId];
       else
         propertyValue = _.last(property);
       var propertyValues = publicId === "additional_panel_color" ? additionalPanelColorSettings : _.head( getValuesFromEnumeratedProperty(publicId) );
@@ -681,75 +478,6 @@
         '    <div class="form-group editable form-traffic-sign-panel">' +
         '        <label class="traffic-panel-label">Lisäkilpi ' + index + '</label>' +
         '    </div>';
-    };
-
-    var setWithSelectedValues = function() {
-      var asset = me.selectedAsset.get();
-      var propertiesToSet = _.filter(asset.propertyData, function (property) { return property.propertyType === "single_choice" || property.propertyType === "checkbox"; });
-      _.forEach(propertiesToSet, function (property) {
-        if (_.head(property.values).propertyValue === "") {
-          if(property.propertyType === "single_choice")
-            me.selectedAsset.setPropertyByPublicId(property.publicId, $('#' + property.publicId).val());
-          else
-            me.selectedAsset.setPropertyByPublicId(property.publicId, +$('#' + property.publicId).prop('checked'));
-        }
-      });
-    };
-
-    me.renderPreview = function(roadCollection, selectedAsset) {
-      var asset = selectedAsset.get();
-      var lanes;
-      if (!asset.floating){
-        lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
-        lanes = validitydirections.filterLanesByDirection(lanes, asset.validityDirection);
-      }
-      return _.isEmpty(lanes) ? '' : createPreviewHeaderElement(_.uniq(lanes));
-    };
-
-    me.renderValidityDirection = function (selectedAsset) {
-      if(selectedAsset.get().validityDirection){
-        return $(
-            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
-            '      <label class="control-label">Vaikutussuunta</label>' +
-            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
-            '    </div>');
-      }
-      else return '';
-    };
-
-    var createPreviewHeaderElement = function(laneNumbers) {
-      var createNumber = function (number) {
-        return $('<td class="preview-lane">' + number + '</td>');
-      };
-
-      var numbers = _.sortBy(laneNumbers);
-
-      var odd = _.filter(numbers, function (number) {
-        return number % 2 !== 0;
-      });
-      var even = _.filter(numbers, function (number) {
-        return number % 2 === 0;
-      });
-
-      var preview = function () {
-        var previewList = $('<table class="preview">');
-
-        var numberHeaders = $('<tr style="font-size: 11px;">').append(_.map(_.reverse(even).concat(odd), function (number) {
-          return $('<th>' + (number.toString()[1] === '1' ? 'Pääkaista' : 'Lisäkaista') + '</th>');
-        }));
-
-        var oddListElements = _.map(odd, function (number) {
-          return createNumber(number);
-        });
-
-        var evenListElements = _.map(even, function (number) {
-          return createNumber(number);
-        });
-
-        return $('<div class="preview-div">').append(previewList.append(numberHeaders).append($('<tr>').append(evenListElements).append(oddListElements))).append('<hr class="form-break">');
-      };
-
-      return preview();
     };
   };
 })(this);

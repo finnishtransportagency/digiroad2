@@ -1454,7 +1454,7 @@ object UrgencyOfRepair {
   val values = Set(Unknown, VeryUrgent, Urgent, SomehowUrgent, NotUrgent )
 
   def apply(intValue: Int):UrgencyOfRepair = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: UrgencyOfRepair = Unknown
@@ -1466,54 +1466,6 @@ object UrgencyOfRepair {
   case object Unknown extends UrgencyOfRepair { def value = 99; def description = "Ei tiedossa" }
 }
 
-
-sealed trait SignLifeCycle {
-  def value: Int
-  def description: String
-}
-object SignLifeCycle{
-  val values = Set(Unknown, Planned, UnderConstruction, PermanentlyInUse, TemporarilyInUse, TemporarilyOutOfService, OutgoingPermanentDevice )
-
-  def apply(intValue: Int):SignLifeCycle = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-
-  def getDefault: SignLifeCycle = PermanentlyInUse
-
-  case object Planned extends SignLifeCycle { def value = 1; def description = "Suunnitteilla"  }
-  case object UnderConstruction extends SignLifeCycle { def value = 2; def description = "Rakenteilla" }
-  case object PermanentlyInUse extends SignLifeCycle { def value = 3; def description = "Käytössä pysyvästi" }
-  case object TemporarilyInUse extends SignLifeCycle { def value = 4; def description = "Käytössä tilapäisesti" }
-  case object TemporarilyOutOfService extends SignLifeCycle { def value = 5; def description = "Pois käytössä tilapäisesti" }
-  case object OutgoingPermanentDevice extends SignLifeCycle { def value = 6; def description = "Poistuva pysyvä laite" }
-  case object Unknown extends SignLifeCycle { def value = 99; def description = "Ei tiedossa" }
-}
-
-
-sealed trait Structure {
-  def value: Int
-  def description: String
-}
-object Structure {
-  val values = Set(Unknown, Pole, Wall, Bridge, Portal, HalfPortal, Barrier, Other )
-
-  def apply(intValue: Int):Structure = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-
-  def getDefault: Structure = Unknown
-
-  case object Pole extends Structure { def value = 1; def description = "Pylväs"  }
-  case object Wall extends Structure { def value = 2; def description = "Seinä" }
-  case object Bridge extends Structure { def value = 3; def description = "Silta" }
-  case object Portal extends Structure { def value = 4; def description = "Portaali" }
-  case object HalfPortal extends Structure { def value = 5; def description = "Puoliportaali" }
-  case object Barrier extends Structure { def value = 6; def description = "Puomi tai muu esterakennelma" }
-  case object Other extends Structure { def value = 7; def description = "Muu" }
-  case object Unknown extends Structure { def value = 99; def description = "Ei tiedossa" }
-}
-
-
 sealed trait Condition {
   def value: Int
   def description: String
@@ -1522,7 +1474,7 @@ object Condition {
   val values = Set(Unknown, VeryPoor, Poor, Fair, Good, VeryGood )
 
   def apply(intValue: Int):Condition = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: Condition = Unknown
@@ -1544,7 +1496,7 @@ object Size {
   val values = Set(Unknown, CompactSign, RegularSign, LargeSign )
 
   def apply(intValue: Int):Size = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: Size = Unknown
@@ -1564,7 +1516,7 @@ object CoatingType {
   val values = Set(Unknown, R1ClassSheeting, R2ClassSheeting, R3ClassSheeting )
 
   def apply(intValue: Int):CoatingType = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: CoatingType = Unknown
@@ -1584,7 +1536,7 @@ object SignMaterial {
   val values = Set(Unknown, Plywood, Aluminum, Other )
 
   def apply(intValue: Int):SignMaterial = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: SignMaterial = Unknown
@@ -1604,7 +1556,7 @@ object LocationSpecifier {
   val values = Set(Unknown, RightSideOfRoad, LeftSideOfRoad, AboveLane, TrafficIslandOrTrafficDivider, LengthwiseRelativeToTrafficFlow, OnRoadOrStreetNetwork)
 
   def apply(intValue: Int):LocationSpecifier = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: LocationSpecifier = Unknown
@@ -1629,7 +1581,7 @@ object TypeOfDamage {
   val values = Set(Unknown, Rust, Battered, Paint, OtherDamage)
 
   def apply(intValue: Int):TypeOfDamage = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+    values.find(_.value == intValue).getOrElse(getDefault)
   }
 
   def getDefault: TypeOfDamage = Unknown
