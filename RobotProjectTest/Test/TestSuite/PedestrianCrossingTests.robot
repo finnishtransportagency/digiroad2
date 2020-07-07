@@ -4,7 +4,7 @@ Library                 SeleniumLibrary
 Variables  ../Variable/Variables.py
 
 *** Variables ***
-${BROWSER}      chrome
+${BROWSER}      phantomjs
 
 *** Test Cases ***
 Validate if exist checkbox to show related traffic signs on the left box
