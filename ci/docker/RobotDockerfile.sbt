@@ -16,12 +16,13 @@ RUN pip install --no-cache-dir robotframework-seleniumlibrary==3.3.1
 RUN pip install --no-cache-dir selenium==3.141.0
 RUN pip install jproperties
 
-RUN apk update ;\
-    harfbuzz@latest-stable ;\
-    apk add --no-cache ${DEPS} ;\
-    # Chrome requires docker to have cap_add: SYS_ADMIN if sandbox is on.
-    # Disabling sandbox and gpu as default.
-    sed -i "s/self._arguments\ =\ \[\]/self._arguments\ =\ \['--no-sandbox',\ '--disable-gpu'\]/" $(python -c "import site; print(site.getsitepackages()[0])")/selenium/webdriver/chrome/options.py ;\
-    # List packages and python modules installed
-    apk info -vv | sort ;\
-    pip freeze
+RUN apk update && apk upgrade \
+&& echo@latest - stable http :// nl.alpinelinux.org / alpine / latest - stable / community >> / etc / apk / repositories \
+&& echo@latest - stable http :// nl.alpinelinux.org / alpine / latest - stable / main >> / etc / apk / repositories \
+&& apk add -- no - cache \
+  chromium@latest - stable \
+  harfbuzz@latest - stable \ <--- New !nss@latest - stable \
+  && rm -rf / var / lib / apt / lists /* \
+  /var/cache/apk/* \
+  /usr/share/man \
+  /tmp/*
