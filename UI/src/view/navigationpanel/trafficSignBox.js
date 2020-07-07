@@ -14,16 +14,10 @@
       }).join('').concat ([
         '<div class="panel-section">' +
         '   <div class="checkbox">' +
-        '     <label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
+        '     <label><input name="regulatorySigns" type="checkbox" /> Sääntömerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="regulatorySigns" type="checkbox" /> Ohjemerkit</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="maximumRestrictions" type="checkbox" /> Suurin sallittu - rajoitukset</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="generalWarningSigns" type="checkbox" /> Varoitukset</label> <br>' +
+        '     <label><input name="generalWarningSigns" type="checkbox" /> Varoitusmerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +

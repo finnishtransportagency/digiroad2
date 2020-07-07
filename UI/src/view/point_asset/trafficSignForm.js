@@ -407,16 +407,25 @@
       var signTypes = getValuesFromEnumeratedProperty ('trafficSigns_type');
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns;
+      var oldValues = ["143", "162", "166", "167", "168", "247", "274", "287", "288", "357", "359"];
 
-      subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
+      subTypesTrafficSigns = _.map( _.orderBy(_.map(groups)[mainType], ["propertyDisplayValue"], ["asc"] ), function (group) {
         if (isPedestrianOrCyclingRoadLink() && !me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue))
           return '';
+
+        var toHide = false;
+
+        if (_.includes(oldValues, group.propertyValue) && propertyValue == group.propertyValue)
+          toHide = false;
+        else if (_.includes(oldValues, group.propertyValue) )
+          toHide = true;
 
         return $('<option>',
           {
             value: group.propertyValue,
             selected: propertyValue == group.propertyValue,
-            text: group.propertyDisplayValue
+            text: group.propertyDisplayValue,
+            hidden: toHide
           }
         )[0].outerHTML;
       }).join('');
