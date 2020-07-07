@@ -17,8 +17,6 @@ RUN pip install --no-cache-dir selenium==3.141.0
 RUN pip install jproperties
 
 RUN apk update && apk upgrade \
-&& echo@latest - stable http :// nl.alpinelinux.org / alpine / latest - stable / community >> / etc / apk / repositories \
-&& echo@latest - stable http :// nl.alpinelinux.org / alpine / latest - stable / main >> / etc / apk / repositories \
 && apk add -- no - cache \
   chromium@latest - stable \
   harfbuzz@latest - stable \ <--- New !nss@latest - stable \
