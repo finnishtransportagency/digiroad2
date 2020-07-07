@@ -97,4 +97,5 @@ object TrafficLightRelativePosition {
   case object AboveLane extends TrafficLightRelativePosition { def value = 2; def description = "Kaistojen yläpuolella" }
   case object TrafficIslandOrTrafficDivider extends TrafficLightRelativePosition { def value = 3; def description = "Keskisaareke tai liikenteenjakaja" }
   case object Unknown extends TrafficLightRelativePosition { def value = 99; def description = "Ei tiedossa" }
+
 }
