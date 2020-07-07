@@ -141,7 +141,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'pybot -d RobotProjectTest/Test/TestSuite/Result RobotProjectTest/Test/TestSuite'
+                sh 'robot -d RobotProjectTest/Test/TestSuite/Result RobotProjectTest/Test/TestSuite'
             }
         }
     }
