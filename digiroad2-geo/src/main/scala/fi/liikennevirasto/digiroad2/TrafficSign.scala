@@ -90,7 +90,7 @@ object TrafficSignType {
     LaneSpecificNavigationBoard, TrafficLanesWithSeparator, IncreasedLaneNumber, NewLaneIncoming, NewLaneIncoming2, EndOfLane,
     EndOfLane2, CompilationSign, DirectionSignForDetour2, AdvanceLocationSign, AccessParkingAndTrainSign, AccessParkingAndBusSign,
     AccessParkingAndTramSign, AccessParkingAndSubwaySign, AccessParkingAndPublicTransportsSign, DirectionSignForPedestrians,
-    DirectionSignForCyclistsWithoutDistances, DirectionSignForCyclistsWithDistances, AdvanceDirectionSignForCyclistsWithoutDistances,
+    DirectionSignForCyclistsWithoutDistances, DirectionSignForCyclistsWithDistances, AdvanceDirectionSignForCyclistsWithDistances, AdvanceDirectionSignForCyclistsWithoutDistances,
     DistanceBoardForCyclists, PlaceNameForCyclists, NoThroughRoadCyclist, PlaceName2, PlaceName3, RiverName, RoadNumberInternationalRoad,
     RoadNumberHighway, RoadNumberRegionalRoad, RoadNumberOtherRoad, RoadNumberRingRoad, ExitNumber, DirectionToTheNumberedPrimaryRoad,
     Boat, CargoTerminal, LargeRetailUnit, ParkingCovered, Center, TruckRoute, PassengerCarRoute, BusRoute, VanRoute, MotorcycleRoute,
