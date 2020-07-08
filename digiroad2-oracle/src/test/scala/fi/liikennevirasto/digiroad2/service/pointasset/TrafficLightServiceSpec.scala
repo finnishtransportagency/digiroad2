@@ -29,6 +29,46 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
+  val trafficLightPropertyData = Set(
+    SimplePointAssetProperty("trafficLight_type", List(PropertyValue("1")), 1),
+    SimplePointAssetProperty("trafficLight_relative_position", List(PropertyValue("1")), 1),
+    SimplePointAssetProperty("trafficLight_structure", List(PropertyValue("99")), 1),
+    SimplePointAssetProperty("trafficLight_height", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("trafficLight_sound_signal", List(PropertyValue("99")), 1),
+    SimplePointAssetProperty("trafficLight_vehicle_detection", List(PropertyValue("99")), 1),
+    SimplePointAssetProperty("trafficLight_push_button", List(PropertyValue("99")), 1),
+    SimplePointAssetProperty("trafficLight_info", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("trafficLight_lane_type", List(PropertyValue("99")), 1),
+    SimplePointAssetProperty("trafficLight_lane", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("location_coordinates_x", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("location_coordinates_y", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("trafficLight_municipality_id", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("trafficLight_state", List(PropertyValue("3")), 1),
+    SimplePointAssetProperty("suggest_box", List(PropertyValue("0")), 1),
+    SimplePointAssetProperty("bearing", List(PropertyValue("")), 1),
+    SimplePointAssetProperty("sidecode", List(PropertyValue("2")), 1)
+  )
+
+  val secondPropertiesSet = Set(
+    SimplePointAssetProperty("trafficLight_type", List(PropertyValue("4.1")), 2),
+    SimplePointAssetProperty("trafficLight_relative_position", List(PropertyValue("2")), 2),
+    SimplePointAssetProperty("trafficLight_structure", List(PropertyValue("3")), 2),
+    SimplePointAssetProperty("trafficLight_height", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("trafficLight_sound_signal", List(PropertyValue("1")), 2),
+    SimplePointAssetProperty("trafficLight_vehicle_detection", List(PropertyValue("99")), 2),
+    SimplePointAssetProperty("trafficLight_push_button", List(PropertyValue("99")), 2),
+    SimplePointAssetProperty("trafficLight_info", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("trafficLight_lane_type", List(PropertyValue("99")), 2),
+    SimplePointAssetProperty("trafficLight_lane", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("location_coordinates_x", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("location_coordinates_y", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("trafficLight_municipality_id", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("trafficLight_state", List(PropertyValue("3")), 2),
+    SimplePointAssetProperty("suggest_box", List(PropertyValue("0")), 2),
+    SimplePointAssetProperty("bearing", List(PropertyValue("")), 2),
+    SimplePointAssetProperty("sidecode", List(PropertyValue("2")), 2)
+  )
+
   val service = new TrafficLightService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
 
@@ -75,9 +115,8 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
   test("Create new") {
     runWithRollback {
-      val now = DateTime.now()
       val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, Set()), "jakke", roadLink)
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -86,23 +125,78 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
 
       asset.vvhTimeStamp should not be(0)
 
-      val propertyId = asset.propertyData.head.id
-      val pointAssetProperty = Property(propertyId, "suggest_box", "checkbox", false, Seq(PropertyValue("0", None, false)))
+      val trafficLightTypeProperty = asset.propertyData.find(_.publicId == "trafficLight_type").head
+      val assetGroupedId = trafficLightTypeProperty.groupedId
+      val suggestProperty = asset.propertyData.find(_.publicId == "suggest_box").head
 
-      asset should be(TrafficLight(
-        id = id,
-        linkId = 388553075,
-        lon = 2,
-        lat = 0,
-        mValue = 2,
-        floating = false,
-        vvhTimeStamp = asset.vvhTimeStamp,
-        municipalityCode = 235,
-        propertyData = Seq(pointAssetProperty),
-        createdBy = Some("jakke"),
-        createdAt = asset.createdAt,
-        linkSource = NormalLinkInterface
-      ))
+      val pointAssetProperties = Seq(
+        Property(suggestProperty.id, "suggest_box", "checkbox", false, Seq(PropertyValue("0", Some("Tarkistettu"))), groupedId = assetGroupedId),
+        Property(trafficLightTypeProperty.id, "trafficLight_type", "single_choice", true, Seq(PropertyValue("1", Some("Valo-opastin"))), groupedId = assetGroupedId)
+      )
+
+      asset.id should be(id)
+      asset.linkId should be(388553075)
+      asset.lon should be(2)
+      asset.lat should be(0)
+      asset.mValue should be(2)
+      asset.municipalityCode should be(235)
+      asset.propertyData.find(_.publicId == "suggest_box") should be (Some(pointAssetProperties.head))
+      asset.propertyData.find(_.publicId == "trafficLight_type") should be (Some(pointAssetProperties.last))
+      asset.propertyData.find(_.publicId == "trafficLight_sound_signal").get.groupedId should be (assetGroupedId)
+      asset.propertyData.find(_.publicId == "trafficLight_structure").get.groupedId should be (assetGroupedId)
+      asset.propertyData.find(_.publicId == "trafficLight_state").get.groupedId should be (assetGroupedId)
+      asset.createdBy should be(Some("jakke"))
+    }
+  }
+
+  test("Create multiple in one asset") {
+    runWithRollback {
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData ++ secondPropertiesSet), "jakke", roadLink)
+      val assets = service.getPersistedAssetsByIds(Set(id))
+
+      assets.size should be(1)
+
+      val asset = assets.head
+
+      asset.vvhTimeStamp should not be(0)
+
+      val trafficLightTypeProperties = asset.propertyData.filter(_.publicId == "trafficLight_type")
+      val assetGroupedIds = trafficLightTypeProperties.map(_.groupedId)
+      val (firstGroupId, secondGroupId) = (assetGroupedIds.head, assetGroupedIds.last)
+
+      val firstTypeProperty = asset.propertyData.find(property => property.publicId == "trafficLight_type" && property.groupedId == firstGroupId)
+      val secondTypeProperty = asset.propertyData.find(property => property.publicId == "trafficLight_type" && property.groupedId == secondGroupId)
+
+      asset.id should be(id)
+      asset.propertyData.size should  be(34)
+      firstTypeProperty should not be secondTypeProperty
+      firstTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue should not be(secondTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue)
+
+      val correctTypes = Seq("1", "4.1")
+      correctTypes should contain (firstTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue)
+      correctTypes should contain (secondTypeProperty.get.values.head.asInstanceOf[PropertyValue].propertyValue)
+    }
+  }
+
+  test("update asset delete one of multiple") {
+    runWithRollback {
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData ++ secondPropertiesSet), "jakke", roadLink)
+      val assets = service.getPersistedAssetsByIds(Set(id))
+
+      assets.size should be(1)
+
+      val asset = assets.head
+
+      asset.vvhTimeStamp should not be(0)
+
+     val updatedId = service.update(id = asset.id, IncomingTrafficLight(2, 0.0, 388553075, trafficLightPropertyData), roadLink, "test")
+      val afterUpdate = service.getPersistedAssetsByIds(Set(updatedId)).head
+
+      afterUpdate.id should be(updatedId)
+      afterUpdate.propertyData.size should  be(17)
+      afterUpdate.propertyData.find(_.publicId == "trafficLight_type").get.values.head.asInstanceOf[PropertyValue].propertyValue should be("1")
     }
   }
 

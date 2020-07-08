@@ -2,12 +2,15 @@ package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2.asset.DateParser
+import fi.liikennevirasto.digiroad2.asset.{DateParser, PropertyValue, SimplePointAssetProperty}
+import fi.liikennevirasto.digiroad2.dao.Sequences
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
 import fi.liikennevirasto.digiroad2.{AssetProperty, CsvDataImporterOperations, ExcludedRow, GeometryUtils, ImportResult, IncompleteRow, MalformedRow, Point, Status}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.User
 import org.apache.commons.lang3.StringUtils.isBlank
 
+import scala.util.Try
 
 trait PointAssetCsvImporter extends CsvDataImporterOperations {
   case class CsvAssetRowAndRoadLink(properties: ParsedProperties, roadLink: Seq[RoadLink])
@@ -22,12 +25,16 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
   type ParsedCsv = (MalformedParameters, Seq[CsvAssetRowAndRoadLink])
   type ImportResultData = ImportResultPointAsset
 
+  case class CsvPointAsset(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimplePointAssetProperty], validityDirection: Int, bearing: Option[Int], mValue: Double, roadLink: RoadLink, isFloating: Boolean)
+
   final val MinimumDistanceFromRoadLink: Double = 3.0
 
   val coordinateMappings = Map(
     "koordinaatti x" -> "lon",
     "koordinaatti y" -> "lat"
   )
+
+  private val suggestBoxPublicId = "suggest_box"
 
   val longValueFieldsMapping: Map[String, String] = coordinateMappings
   val codeValueFieldsMapping: Map[String, String] = Map()
@@ -82,12 +89,40 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
     }
   }
 
+  def singleChoiceToProperty(parameterName: String, assetSingleChoice: String, singleChoiceAcceptableValues: Set[Int], singleChoiceMapping: Map[String, String]): ParsedRow = {
+    tryToInt(assetSingleChoice) match {
+      case Some(value) if singleChoiceAcceptableValues.contains(value) =>
+        (Nil, List(AssetProperty(columnName = singleChoiceMapping(parameterName), value = value)))
+      case _ =>
+        (List(s"Invalid value for $parameterName"), Nil)
+    }
+  }
+
+  def tryToInt(propertyValue: String ) : Option[Int] = {
+    Try(propertyValue.toInt).toOption
+  }
+
+  def tryToDouble(propertyValue: String ) : Option[Double] = {
+    Try(propertyValue.toDouble).toOption
+  }
+
   def getPropertyValue(pointAssetAttributes: ParsedProperties, propertyName: String): Any = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value).get
   }
 
   def getPropertyValueOption(pointAssetAttributes: ParsedProperties, propertyName: String): Option[Any] = {
     pointAssetAttributes.find(prop => prop.columnName == propertyName).map(_.value)
+  }
+
+  def extractPropertyValues(listPublicIds: Seq[String], listFieldNames: Seq[String], attributes: ParsedProperties, withGroupedId: Boolean): Seq[Option[SimplePointAssetProperty]] = {
+    val groupedId = if (withGroupedId) Sequences.nextGroupedIdSeqValue else 0
+    (listPublicIds, listFieldNames).zipped.map { (publicId, fieldName) =>
+      val propertyInfo = getPropertyValueOption(attributes, fieldName)
+      if (propertyInfo.get != null && propertyInfo.nonEmpty)
+        Some(SimplePointAssetProperty(publicId, Seq(PropertyValue(propertyInfo.get.toString)), groupedId))
+      else
+        None
+    } ++ Set(Some(SimplePointAssetProperty(suggestBoxPublicId, Seq(PropertyValue("0")), groupedId))) //not possible to insert suggested lights through csv
   }
 
   def getCoordinatesFromProperties(csvProperties: ParsedProperties): Point = {
@@ -109,6 +144,24 @@ trait PointAssetCsvImporter extends CsvDataImporterOperations {
         }
       case _ =>
         (Nil, Nil)
+    }
+  }
+
+  def csvLaneValidator(optLaneType: Option[Int], optLaneNumber: Option[String]): (Boolean, List[String]) = {
+    (optLaneType, optLaneNumber) match {
+      case (_, Some(lane)) if lane.trim.nonEmpty && !lane.matches("^([1-3][1-9])$") =>
+        (false, List("Invalid lane"))
+      case (Some(laneType), Some(laneNumber)) if laneType != LaneType.Unknown.value && laneNumber.trim.nonEmpty =>
+        val isMainTypeAndWrongLaneNumber = laneType == LaneType.Main.value && !LaneNumber.isMainLane(laneNumber.toInt)
+        val isNotMainTypeAndIsMainLaneNumber = laneType != LaneType.Main.value && LaneNumber.isMainLane(laneNumber.toInt)
+
+        if ( isMainTypeAndWrongLaneNumber || isNotMainTypeAndIsMainLaneNumber) {
+          (false, List("Invalid lane and lane type match") )
+        } else {
+          (true, Nil)
+        }
+
+      case (_,_) => (true, Nil)
     }
   }
 

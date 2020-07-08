@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.vvh._
-import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficSignCsvImporter}
+import fi.liikennevirasto.digiroad2.csvDataImporter.{LanesCsvImporter, RoadLinkCsvImporter, TrafficLightsCsvImporter, TrafficSignCsvImporter}
 import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO
 import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -65,6 +65,12 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   }
 
+  object trafficLightsCsvImporter extends TrafficLightsCsvImporter(mockRoadLinkService, mockEventBus) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def eventBus: DigiroadEventBus = mockEventBus
+  }
+
   object lanesCsvImporter extends LanesCsvImporter(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -107,6 +113,14 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val headers = trafficSignCsvImporter.mappings.keys.toList.mkString(";") + "\n"
     val rows = assets.map { asset =>
       trafficSignCsvImporter.mappings.keys.toList.map { key => asset.getOrElse(key, "") }.mkString(";")
+    }.mkString("\n")
+    headers + rows
+  }
+
+  private def createCsvForTrafficLights(assets: Map[String, Any]*): String = {
+    val headers = trafficLightsCsvImporter.mappings.keys.toList.mkString(";") + "\n"
+    val rows = assets.map { asset =>
+      trafficLightsCsvImporter.mappings.keys.toList.map { key => asset.getOrElse(key, "") }.mkString(";")
     }.mkString("\n")
     headers + rows
   }
@@ -372,6 +386,37 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       notImportedData = List(trafficSignCsvImporter.NotImportedData(
         reason = "No Rights for Municipality or nonexistent road links near asset position",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
+  }
+
+  test("validation for traffic light import fails if mandatory parameters are missing", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> "", "koordinaatti y" -> "", "liikennevalo tyyppi" -> "")
+    val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
+    val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+    val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
+
+    assets.malformedRows.flatMap(_.malformedParameters) should contain allOf ("koordinaatti x", "koordinaatti y", "liikennevalo tyyppi")
+    assets.malformedRows.foreach {
+      asset =>
+        asset.csvRow should be (trafficLightsCsvImporter.rowToString(defaultValues ++ assetFields))
+    }
+  }
+
+  test("validation for traffic light import fails if lane number is invalid", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 52828, "koordinaatti y" -> 58285, "liikennevalo tyyppi" -> 4.2, "kaista" -> 54)
+    val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
+    val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+    val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
+
+    assets.notImportedData.map(_.reason).head should be ("Invalid lane")
+  }
+
+  test("validation for traffic light import fails if lane number and lane type don't match", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 52828, "koordinaatti y" -> 58285, "liikennevalo tyyppi" -> 4.2, "kaista" -> 12, "kaistan tyyppi" -> 1)
+    val invalidCsv = csvToInputStream(createCsvForTrafficLights(assetFields))
+    val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+    val assets = trafficLightsCsvImporter.processing(invalidCsv, testUser)
+
+    assets.notImportedData.map(_.reason).head should be ("Invalid lane and lane type match")
   }
 
   test("validation for lanes import fails if parameters are missing", Tag("db")) {

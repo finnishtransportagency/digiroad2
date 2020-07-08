@@ -28,7 +28,9 @@
     };
 
     this.labeling = function () {
-      var laneModellingToolValues = ['Pääkaista', 'Lisäkaista'];
+      var laneModellingToolValues = ['Pääkaista', 'Lisäkaista', "Tielinkillä 1 lisäkaista",
+        "Tielinkillä 2 lisäkaistaa", "Tielinkillä 3 lisäkaistaa", "Tielinkillä 4 lisäkaistaa",
+        "Tielinkillä 5 lisäkaistaa", "Tielinkillä 6 lisäkaistaa tai enemmän"];
 
       return _.map(laneModellingToolValues, function (laneModellingToolValue, idx) {
         return '<div class="legend-entry">' +

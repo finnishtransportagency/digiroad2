@@ -51,6 +51,8 @@
       ]
     };
 
+    var propertyOrdering = ['suggest_box'];
+
     this.bindEvents = function(parameters) {
       var rootElement = $('#feature-attributes');
       var typeId = me.pointAsset.typeId;
@@ -106,7 +108,8 @@
       });
     };
 
-    this.renderValueElement = function(asset) {
+    this.renderValueElement = function(asset, collection, authorizationPolicy) {
+      var components = me.renderComponents(asset.propertyData, propertyOrdering, authorizationPolicy);
       var services = _(asset.services)
         .sortBy('serviceType', 'id')
         .map(renderService)
@@ -118,10 +121,11 @@
         services +
         renderNewServiceElement() +
         '      </ul>' +
-        '    </div>';
+        '    </div>' +
+          components;
     };
 
-    this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy, roadCollection, collection) {
+    this.boxEvents = function(rootElement, selectedAsset, localizedTexts, authorizationPolicy) {
 
       rootElement.find('.form-service textarea').on('input change', function (event) {
         var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);

@@ -647,7 +647,7 @@ trait MassTransitStopService extends PointAssetOperations {
       ChangedPointAsset(asset, roadLinks.find(_.linkId == asset.linkId).getOrElse(throw new IllegalStateException(s"Road link no longer available: ${asset.linkId}")))    }
   }
 
-  def getProperty(propertyData: Seq[AbstractProperty], property: String) : Seq[String] = {
+  def getAbstractProperty(propertyData: Seq[AbstractProperty], property: String) : Seq[String] = {
     propertyData.find(p => p.publicId == property) match {
       case Some(prop) => prop.values.map(_.asInstanceOf[PropertyValue].propertyValue)
       case _ => Seq()
@@ -656,13 +656,13 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def checkDuplicates(incomingMassTransitStop: NewMassTransitStop): Option[PersistedMassTransitStop] = {
     val position = Point(incomingMassTransitStop.lon, incomingMassTransitStop.lat)
-    val direction = getProperty(incomingMassTransitStop.properties, "vaikutussuunta")
-    val busTypes = getProperty(incomingMassTransitStop.properties, "pysakin_tyyppi")
+    val direction = getAbstractProperty(incomingMassTransitStop.properties, "vaikutussuunta")
+    val busTypes = getAbstractProperty(incomingMassTransitStop.properties, "pysakin_tyyppi")
 
     val assetsInRadius = fetchPointAssets(withBoundingBoxFilter(position, TwoMeters))
       .filter(asset => GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
-        direction == getProperty(asset.propertyData, "vaikutussuunta") &&
-        busTypes == getProperty(asset.propertyData, "pysakin_tyyppi"))
+        direction == getAbstractProperty(asset.propertyData, "vaikutussuunta") &&
+        busTypes == getAbstractProperty(asset.propertyData, "pysakin_tyyppi"))
 
     if(assetsInRadius.nonEmpty)
       return Some(getLatestModifiedAsset(assetsInRadius))
