@@ -340,7 +340,7 @@ BEGIN
     Insert Into tmp_signs (othId, name) Values (144, 'H11 Vaikutusalue päättyy');
     Insert Into tmp_signs (othId, name) Values (52, 'H12.1 Henkilöauto');
     Insert Into tmp_signs (othId, name) Values (53, 'H12.2 Linja-auto');
-    Insert Into tmp_signs (othId, name) Values (54, 'H12.3 Kuormaauto');
+    Insert Into tmp_signs (othId, name) Values (54, 'H12.3 Kuorma-auto');
     Insert Into tmp_signs (othId, name) Values (55, 'H12.4 Pakettiauto');
     Insert Into tmp_signs (othId, name) Values (150, 'H12.5 Matkailuperävaunu');
     Insert Into tmp_signs (othId, name) Values (349, 'H12.6 Matkailuauto');
