@@ -5,10 +5,7 @@ RUN apt-get update -y \
   && apt-get -qqy install software-properties-common gettext-base unzip \
 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-RUN add-apt-repository ppa:linuxuprising/java
-RUN apt update
-RUN apt install oracle-java13-installer
-RUN apt install oracle-java13-set-default
+RUN apt install openjdk-8-jdk
 RUN java -version
 
 ####################################################################################################
