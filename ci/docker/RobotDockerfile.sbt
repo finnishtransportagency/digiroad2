@@ -6,9 +6,9 @@ RUN apt-get update -y \
 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 RUN add-apt-repository ppa:linuxuprising/java
-RUN apt-get update
-RUN apt-get install oracle-java10-installer
-RUN apt-get install oracle-java10-set-default
+RUN apt update
+RUN apt install oracle-java13-installer
+RUN apt install oracle-java13-set-default
 RUN java -version
 
 ####################################################################################################
