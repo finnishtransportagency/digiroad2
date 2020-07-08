@@ -5,6 +5,9 @@ Variables  ../Variable/Variables.py
 
 *** Variables ***
 ${BROWSER}      chrome
+${ENV_URL}      https://devtest.liikennevirasto.fi/digiroad/
+${USERNAME}     K215271
+${PASSWORD}     Kesakuu2020
 
 *** Test Cases ***
 Validate if exist checkbox to show related traffic signs on the left box
