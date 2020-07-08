@@ -137,7 +137,7 @@ pipeline {
             agent {
                 docker {
                     image "digiroad2-robotframework-sbt"
-                    reuseNode true
+                    args '--shm-size=1g -u root'
                 }
             }
             steps {

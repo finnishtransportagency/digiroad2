@@ -1,1 +1,2 @@
-FROM ppodgorsek/robot-framework
+FROM ppodgorsek/robot-framework:latest
+
