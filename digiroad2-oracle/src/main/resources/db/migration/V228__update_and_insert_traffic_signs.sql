@@ -146,6 +146,7 @@ BEGIN
     Insert Into tmp_signs (othId, name) Values (245, 'E4.3 Ajoneuvojen sijoitus pysäköintipaikalla vinoon');
     Insert Into tmp_signs (othId, name) Values (246, 'E5 Kohtaamispaikka');
     Insert Into tmp_signs (othId, name) Values (66, 'E6 Linja-autopysäkki');
+    Insert Into tmp_signs (othId, name) Values (247, 'E6 Linja-autopysäkki');
     Insert Into tmp_signs (othId, name) Values (68, 'E7 Raitiovaunupysäkki');
     Insert Into tmp_signs (othId, name) Values (69, 'E8 Taksiasema');
     Insert Into tmp_signs (othId, name) Values (63, 'E9.1 Linja-autokaista');
@@ -200,8 +201,13 @@ BEGIN
     Insert Into tmp_signs (othId, name) Values (191, 'F11 Ajokaistan yläpuolinen viitta');
     Insert Into tmp_signs (othId, name) Values (159, 'F12 Ajokaistan yläpuolinen erkanemisviitta');
     Insert Into tmp_signs (othId, name) Values (160, 'F13 Tienviitta');
+    Insert Into tmp_signs (othId, name) Values (162, 'F13 Tienviitta');
+    Insert Into tmp_signs (othId, name) Values (167, 'F13 Tienviitta');
+    Insert Into tmp_signs (othId, name) Values (168, 'F13 Tienviitta');
     Insert Into tmp_signs (othId, name) Values (161, 'F14 Erkanemisviitta');
     Insert Into tmp_signs (othId, name) Values (165, 'F15 Kiertotien viitta');
+    Insert Into tmp_signs (othId, name) Values (166, 'F15 Kiertotien viitta');
+    Insert Into tmp_signs (othId, name) Values (274, 'F15 Kiertotien viitta');
     Insert Into tmp_signs (othId, name) Values (163, 'F16 Osoiteviitta');
     Insert Into tmp_signs (othId, name) Values (275, 'F17 Osoiteviitan ennakkomerkki');
     Insert Into tmp_signs (othId, name) Values (169, 'F18.1 Liityntäpysäköintiviitta juna');
@@ -222,6 +228,8 @@ BEGIN
     Insert Into tmp_signs (othId, name) Values (170, 'F25 Enimmäisnopeussuositus');
     Insert Into tmp_signs (othId, name) Values (171, 'F26 Etäisyystaulu');
     Insert Into tmp_signs (othId, name) Values (172, 'F27.1 Paikannimi');
+    Insert Into tmp_signs (othId, name) Values (287, 'F27.1 Paikannimi');
+    Insert Into tmp_signs (othId, name) Values (288, 'F27.1 Paikannimi');
     Insert Into tmp_signs (othId, name) Values (289, 'F27.2 Vesistön nimi');
     Insert Into tmp_signs (othId, name) Values (173, 'F28 Kansainvälisen pääliikenneväylän numero');
     Insert Into tmp_signs (othId, name) Values (175, 'F29 Valtatien numero');
@@ -328,6 +336,7 @@ BEGIN
     Insert Into tmp_signs (othId, name) Values (140, 'H9.1 Vaikutusalue molempiin suuntiin oikealle ja vasemmalle');
     Insert Into tmp_signs (othId, name) Values (141, 'H9.2 Vaikutusalue molempiin suuntiin eteen- ja taaksepäin');
     Insert Into tmp_signs (othId, name) Values (142, 'H10 Vaikutusalue nuolen suuntaan');
+    Insert Into tmp_signs (othId, name) Values (143, 'H10 Vaikutusalue nuolen suuntaan');
     Insert Into tmp_signs (othId, name) Values (144, 'H11 Vaikutusalue päättyy');
     Insert Into tmp_signs (othId, name) Values (52, 'H12.1 Henkilöauto');
     Insert Into tmp_signs (othId, name) Values (53, 'H12.2 Linja-auto');
@@ -354,8 +363,10 @@ BEGIN
     Insert Into tmp_signs (othId, name) Values (60, 'H19.1 Pysäköintiajan alkamisen osoittamisvelvollisuus (keltainen pohja)');
     Insert Into tmp_signs (othId, name) Values (356, 'H19.2 Pysäköintiajan alkamisen osoittamisvelvollisuus (sininen pohja)');
     Insert Into tmp_signs (othId, name) Values (59, 'H20 Maksullinen pysäköinti');
+    Insert Into tmp_signs (othId, name) Values (357, 'H20 Maksullinen pysäköinti');
     Insert Into tmp_signs (othId, name) Values (358, 'H21 Latauspaikka');
     Insert Into tmp_signs (othId, name) Values (146, 'H22.1 Etuajooikeutetun liikenteen suunta');
+    Insert Into tmp_signs (othId, name) Values (359, 'H22.1 Etuajooikeutetun liikenteen suunta');
     Insert Into tmp_signs (othId, name) Values (360, 'H22.2 Etuajooikeutetun liikenteen suunta kääntyville');
     Insert Into tmp_signs (othId, name) Values (361, 'H23.1 Kaksisuuntainen pyörätie (keltainen pohja)');
     Insert Into tmp_signs (othId, name) Values (362, 'H23.2 Kaksisuuntainen pyörätie (sininen pohja)');
