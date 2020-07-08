@@ -65,13 +65,13 @@ case class TrafficSignManager(manoeuvreService: ManoeuvreService, roadLinkServic
         manoeuvreService.createBasedOnTrafficSign(trSign, newTransaction, fromTierekisteriGenerator)
 
       case trSign if TrafficSignManager.belongsToProhibition(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, Prohibition)
+        insertTrafficSignToProcess(trSign.id, Prohibition, newTransaction = newTransaction)
 
       case trSign if TrafficSignManager.belongsToHazmat(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition)
+        insertTrafficSignToProcess(trSign.id, HazmatTransportProhibition, newTransaction = newTransaction)
 
       case trSign if TrafficSignManager.belongsToParking(trSign.signType) =>
-        insertTrafficSignToProcess(trSign.id, ParkingProhibition)
+        insertTrafficSignToProcess(trSign.id, ParkingProhibition, newTransaction = newTransaction)
 
       case _ => None
     }
