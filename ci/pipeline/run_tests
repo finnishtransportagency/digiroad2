@@ -138,6 +138,7 @@ pipeline {
                 docker {
                     image "digiroad2-robotframework-sbt"
                     args '--shm-size=1g -u root'
+                    args '--headless'
                 }
             }
             steps {
