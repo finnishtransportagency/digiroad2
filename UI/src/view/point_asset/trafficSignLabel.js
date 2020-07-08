@@ -212,7 +212,7 @@
           {signValue: [211], image: 'images/traffic-signs/general-warning-signs/ApproachLevelCrossingTwoStrips.png' },
           {signValue: [212], image: 'images/traffic-signs/general-warning-signs/ApproachLevelCrossingOneStrip.png'},
           {signValue: [213], image: 'images/traffic-signs/general-warning-signs/LowFlyingPlanes.png' },
-          /*{signValue: [214], image: 'images/traffic-signs/priority-and-give-way-signs/<missing image>.png', height: 60}*/
+          {signValue: [214], image: 'images/traffic-signs/priority-and-give-way-signs/priorityForCyclistsCrossing.png' },
           {signValue: [215], image: 'images/traffic-signs/prohibitions-and-restrictions/NoCyclists.png' },
           {signValue: [216], image: 'images/traffic-signs/prohibitions-and-restrictions/NoCyclistsOrPedestrians.png' },
           {signValue: [217], image: 'images/traffic-signs/prohibitions-and-restrictions/OvertakingProhibitedByTruck.png' },
@@ -363,52 +363,41 @@
           {signValue: [362], image: 'images/traffic-signs/additional-panels/twoWayBikePath2.png'},
           {signValue: [363], image: 'images/traffic-signs/additional-panels/emergencyPhoneAndExtinguisher.png'},
           {signValue: [364], image: 'images/traffic-signs/other-signs/barrier.png'},
-
-          /*{signValue: [365], image: 'images/traffic-signs/other-signs/<missing image>.png' }, fence */
-          /*{signValue: [366], image: 'images/traffic-signs/other-signs/<missing image>.png' }, fenceWithArrows */
-          /*{signValue: [367], image: 'images/traffic-signs/other-signs/<missing image>.png' }, barrierOnTheLeft */
-          /*{signValue: [368], image: 'images/traffic-signs/other-signs/<missing image>.png' }, barrierOnTheRight */
-          /*{signValue: [369], image: 'images/traffic-signs/other-signs/<missing image>.png' }, verticalBarrier */
-
+          {signValue: [365], image: 'images/traffic-signs/other-signs/fence.png' },
+          {signValue: [366], image: 'images/traffic-signs/other-signs/fenceWithArrows.png' },
+          {signValue: [367], image: 'images/traffic-signs/other-signs/barrierOnTheLeft.png' },
+          {signValue: [368], image: 'images/traffic-signs/other-signs/barrierOnTheRight.png' },
+          {signValue: [369], image: 'images/traffic-signs/other-signs/verticalBarrier.png' },
           {signValue: [370], image: 'images/traffic-signs/other-signs/trafficCone.png'},
           {signValue: [371], image: 'images/traffic-signs/other-signs/directionToAvoidObstacle.png'},
           {signValue: [372], image: 'images/traffic-signs/other-signs/curveDirectionSign.png'},
-
-          /*{signValue: [373], image: 'images/traffic-signs/other-signs/<missing image>.png'}, borderMarkOnTheLeft */
-          /*{signValue: [374], image: 'images/traffic-signs/other-signs/<missing image>.png'}, borderMarkOnTheRight */
-
+          {signValue: [373], image: 'images/traffic-signs/other-signs/borderMarkOnTheLeft.png'},
+          {signValue: [374], image: 'images/traffic-signs/other-signs/borderMarkOnTheRight.png'},
           {signValue: [375], image: 'images/traffic-signs/other-signs/heightBorder.png'},
           {signValue: [376], image: 'images/traffic-signs/other-signs/underpassHeight.png'},
-
-          /*{signValue: [377], image: 'images/traffic-signs/other-signs/<missing image>.png'}, trafficSignColumn */
-          /*{signValue: [378], image: 'images/traffic-signs/other-signs/<missing image>.png'}, trafficSignColumn2 */
-
+          {signValue: [377], image: 'images/traffic-signs/other-signs/trafficSignColumn.png'},
+          {signValue: [378], image: 'images/traffic-signs/other-signs/trafficSignColumn2.png'},
           {signValue: [379], image: 'images/traffic-signs/other-signs/divergingRoadSign.png'},
-
-          /*{signValue: [380], image: 'images/traffic-signs/other-signs/<missing image>.png'}, edgePoleOnTheLeft */
-          /*{signValue: [381], image: 'images/traffic-signs/other-signs/<missing image>.png'}, edgePoleOnTheRight */
+          {signValue: [380], image: 'images/traffic-signs/other-signs/edgePoleOnTheLeft.png'},
+          {signValue: [381], image: 'images/traffic-signs/other-signs/edgePoleOnTheRight.png'},
           {signValue: [382], image: 'images/traffic-signs/other-signs/towAwayZone.png'},
           {signValue: [383], image: 'images/traffic-signs/other-signs/SOSInformationBoard.png'},
           {signValue: [384], image: 'images/traffic-signs/other-signs/automaticTrafficControl.png'},
           {signValue: [385], image: 'images/traffic-signs/other-signs/surveillanceCamera.png'},
-
-          /*{signValue: [386], image: 'images/traffic-signs/other-signs/<missing image>.png'}, reindeerHerdingArea */
-          /*{signValue: [387], image: 'images/traffic-signs/other-signs/<missing image>.png'}, reindeerHerdingAreaWithoutText */
-
+          {signValue: [386], image: 'images/traffic-signs/other-signs/reindeerHerdingArea.png'},
+          {signValue: [387], image: 'images/traffic-signs/other-signs/reindeerHerdingAreaWithoutText.png'},
           {signValue: [388], image: 'images/traffic-signs/other-signs/speedLimitInformation.png'},
           {signValue: [389], image: 'images/traffic-signs/other-signs/countryBorder.png'},
-
-          /*{signValue: [390], image: 'images/traffic-signs/information-signs/<missing image>.png' }, truckRoute */
-          /*{signValue: [391], image: 'images/traffic-signs/information-signs/<missing image>.png' }, PassengerCarRoute */
-          /*{signValue: [392], image: 'images/traffic-signs/information-signs/<missing image>.png' }, busRoute */
-          /*{signValue: [393], image: 'images/traffic-signs/information-signs/<missing image>.png' }, vanRoute */
-          /*{signValue: [394], image: 'images/traffic-signs/information-signs/<missing image>.png' }, motorcycleRoute */
-          /*{signValue: [395], image: 'images/traffic-signs/information-signs/<missing image>.png' }, mopedRoute */
-          /*{signValue: [396], image: 'images/traffic-signs/information-signs/<missing image>.png' }, tractorRoute */
-          /*{signValue: [397], image: 'images/traffic-signs/information-signs/<missing image>.png' }, motorhomeRoute */
-          /*{signValue: [398], image: 'images/traffic-signs/information-signs/<missing image>.png' }, bicycleRoute */
+          {signValue: [390], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be truckRoute */
+          {signValue: [391], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be PassengerCarRoute */
+          {signValue: [392], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be busRoute */
+          {signValue: [393], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be vanRoute */
+          {signValue: [394], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be motorcycleRoute */
+          {signValue: [395], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be mopedRoute */
+          {signValue: [396], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be tractorRoute */
+          {signValue: [397], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be motorhomeRoute */
+          {signValue: [398], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be bicycleRoute */
           {signValue: [399], image: 'images/traffic-signs/information-signs/endOfLane2.png' }
-
         ];
       };
 
