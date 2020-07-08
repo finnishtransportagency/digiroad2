@@ -6,11 +6,14 @@ RUN apt-get update -y \
 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 RUN apt-get update
-RUN apt-get install default-jre
-RUN apt-get install default-jdk
-RUN add-apt-repository ppa:webupd8team/java
-RUN apt-get update
-RUN apt-get install oracle-java8-installer
+RUN apt-get install openjdk-8-jdk
+RUN java -version
+RUN javac -version
+
+RUN echo "JAVA_HOME=$(which java)"
+RUN tee -a /etc/environment
+RUN source /etc/environment
+RUN echo $JAVA_HOME
 
 ####################################################################################################
 # Adding Google Chrome and ChromeDriver like described in
