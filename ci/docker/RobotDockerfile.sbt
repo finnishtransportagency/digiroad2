@@ -5,8 +5,9 @@ RUN apt-get update -y \
   && apt-get -qqy install software-properties-common gettext-base unzip \
 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-RUN sudo apt-get update
-RUN sudo apt-get install default-jre
+RUN apt-get update
+RUN apt-get install default-jre
+RUN apt-get install default-jdk
 
 ####################################################################################################
 # Adding Google Chrome and ChromeDriver like described in
