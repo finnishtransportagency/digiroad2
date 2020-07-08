@@ -1,3 +1,3 @@
 FROM ppodgorsek/robot-framework
 
-RUN pip install jproperties
+RUN python3 -m pip install jproperties
