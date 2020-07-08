@@ -7,6 +7,9 @@ RUN apt-get update -y \
 
 RUN apt install openjdk-8-jdk
 RUN java -version
+RUN update-alternatives --config java
+RUN export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+RUN echo $JAVA_HOME
 
 ####################################################################################################
 # Adding Google Chrome and ChromeDriver like described in
