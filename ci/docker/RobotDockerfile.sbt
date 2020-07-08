@@ -8,6 +8,9 @@ RUN apt-get update -y \
 RUN apt-get update
 RUN apt-get install default-jre
 RUN apt-get install default-jdk
+RUN add-apt-repository ppa:webupd8team/java
+RUN apt-get update
+RUN apt-get install oracle-java8-installer
 
 ####################################################################################################
 # Adding Google Chrome and ChromeDriver like described in
