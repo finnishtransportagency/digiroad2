@@ -5,9 +5,10 @@ RUN apt-get update -y \
   && apt-get -qqy install software-properties-common gettext-base unzip \
 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-RUN add-apt-repository ppa:webupd8team/java
+RUN add-apt-repository ppa:linuxuprising/java
 RUN apt-get update
-RUN apt-get install oracle-java8-installer
+RUN apt-get install oracle-java10-installer
+RUN apt-get install oracle-java10-set-default
 RUN java -version
 
 ####################################################################################################
