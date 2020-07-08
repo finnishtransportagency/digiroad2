@@ -5,7 +5,7 @@ RUN apt-get update -y \
   && apt-get -qqy install software-properties-common gettext-base unzip \
 && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-RUN apt install openjdk-8-jdk
+RUN apt-get install openjdk-8-jdk
 RUN java -version
 RUN update-alternatives --config java
 RUN export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
