@@ -1,3 +1,3 @@
 FROM ppodgorsek/robot-framework:latest
 
-RUN pip install --user --upgrade robotframework-datadriver
+RUN pip3 install --no-cache-dir jproperties
