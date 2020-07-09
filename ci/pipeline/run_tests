@@ -140,6 +140,9 @@ pipeline {
                     args '--shm-size=1g -u root'
                 }
             }
+            environment {
+                BROWSER = 'chrome'
+            }
             steps {
                 sh 'robot -d RobotProjectTest/Test/TestSuite/Result RobotProjectTest/Test/TestSuite'
             }
