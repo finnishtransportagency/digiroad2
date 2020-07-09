@@ -26,7 +26,7 @@
         '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja väistämismerkit</label>' +
+        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus ja väistämismerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +
