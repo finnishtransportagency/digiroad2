@@ -89,7 +89,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     val signsInRadius = OracleRailwayCrossingDao.fetchByFilter(withBoundingBoxFilter(position, TwoMeters)).filter(
       asset =>
         GeometryUtils.geometryLength(Seq(position, Point(asset.lon, asset.lat))) <= TwoMeters &&
-          safetyEquipmentType == getProperty(asset, safetyEquipmentPublicId).get.propertyValue.toString
+          safetyEquipmentType == getProperty(asset.propertyData, safetyEquipmentPublicId).get.propertyValue.toString
     )
     if(signsInRadius.nonEmpty) Some(getLatestModifiedAsset(signsInRadius)) else None
   }

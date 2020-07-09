@@ -5,9 +5,9 @@ import java.text.Normalizer
 import java.util.Base64
 import fi.liikennevirasto.digiroad2._
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-import scala.util.Try
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter, ISODateTimeFormat}
 
+import scala.util.Try
 
 sealed trait LinkGeomSource{
   def value: Int
@@ -159,6 +159,51 @@ object TrafficDirection {
   case object UnknownDirection extends TrafficDirection { def value = 99 }
 
 
+}
+
+sealed trait PointAssetState {
+  def value: Int
+  def description: String
+}
+object PointAssetState {
+  val values = Set(Unknown, Planned, UnderConstruction, PermanentlyInUse, TemporarilyInUse, TemporarilyOutOfService, OutgoingPermanentDevice )
+
+  def apply(intValue: Int):PointAssetState = {
+    values.find(_.value == intValue).getOrElse(getDefault)
+  }
+
+  def getDefault: PointAssetState = PermanentlyInUse
+
+  case object Planned extends PointAssetState { def value = 1; def description = "Suunnitteilla"  }
+  case object UnderConstruction extends PointAssetState { def value = 2; def description = "Rakenteilla" }
+  case object PermanentlyInUse extends PointAssetState { def value = 3; def description = "Käytössä pysyvästi" }
+  case object TemporarilyInUse extends PointAssetState { def value = 4; def description = "Käytössä tilapäisesti" }
+  case object TemporarilyOutOfService extends PointAssetState { def value = 5; def description = "Pois käytössä tilapäisesti" }
+  case object OutgoingPermanentDevice extends PointAssetState { def value = 6; def description = "Poistuva pysyvä laite" }
+  case object Unknown extends PointAssetState { def value = 99; def description = "Ei tiedossa" }
+}
+
+sealed trait PointAssetStructure {
+  def value: Int
+  def description: String
+}
+object PointAssetStructure {
+  val values = Set(Unknown, Pole, Wall, Bridge, Portal, HalfPortal, Barrier, Other )
+
+  def apply(intValue: Int):PointAssetStructure = {
+    values.find(_.value == intValue).getOrElse(getDefault)
+  }
+
+  def getDefault: PointAssetStructure = Unknown
+
+  case object Pole extends PointAssetStructure { def value = 1; def description = "Pylväs"  }
+  case object Wall extends PointAssetStructure { def value = 2; def description = "Seinä" }
+  case object Bridge extends PointAssetStructure { def value = 3; def description = "Silta" }
+  case object Portal extends PointAssetStructure { def value = 4; def description = "Portaali" }
+  case object HalfPortal extends PointAssetStructure { def value = 5; def description = "Puoliportaali" }
+  case object Barrier extends PointAssetStructure { def value = 6; def description = "Puomi tai muu esterakennelma" }
+  case object Other extends PointAssetStructure { def value = 7; def description = "Muu" }
+  case object Unknown extends PointAssetStructure { def value = 99; def description = "Ei tiedossa" }
 }
 
 sealed trait SideCode {
@@ -668,7 +713,7 @@ object DateParser {
 }
 
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
-case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue]) extends AbstractProperty
+case class SimplePointAssetProperty(publicId: String, values: Seq[PointAssetValue], groupedId: Long = 0) extends AbstractProperty
 case class DynamicProperty(publicId: String, propertyType: String, required: Boolean = false, values: Seq[DynamicPropertyValue])
 
 abstract class AbstractProperty {
@@ -680,7 +725,7 @@ sealed trait PointAssetValue {
   def toJson: Any
 }
 
-case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None) extends AbstractProperty
+case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PointAssetValue], numCharacterMax: Option[Int] = None, groupedId: Long = 0) extends AbstractProperty
 
 case class AdditionalPanel(panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, text: String, size: Int, coating_type: Int, additional_panel_color: Int) extends PointAssetValue {
   override def toJson: Any = this

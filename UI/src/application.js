@@ -562,6 +562,7 @@
     var assetGroups = assetConfiguration.assetGroups;
     var massTransitBox = new MassTransitStopBox(selectedMassTransitStopModel);
     var trafficSignBox = new TrafficSignBox(_.find(pointAssets, {typeId: assetType.trafficSigns}), isExperimental);
+    var trafficLightBox = new TrafficLightBox(_.find(pointAssets, {typeId: assetType.trafficLights}));
     var heightBox = new HeightLimitationBox(_.find(pointAssets, {typeId: assetType.trHeightLimits}));
     var widthBox = new WidthLimitationBox(_.find(pointAssets, {typeId: assetType.trWidthLimits}));
     var pedestrianCrossingBox = new PedestrianCrossingBox(_.find(pointAssets, {typeId: assetType.pedestrianCrossings}));
@@ -572,7 +573,7 @@
         .concat(getPointAsset(assetType.railwayCrossings))
         .concat(getPointAsset(assetType.directionalTrafficSigns))
         .concat(pedestrianCrossingBox)
-        .concat(getPointAsset(assetType.trafficLights))
+        .concat(trafficLightBox)
         .concat([trafficSignBox])
         .concat(getPointAsset(assetType.servicePoints)),
       [].concat([heightBox])
