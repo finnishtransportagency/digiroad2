@@ -13,4 +13,7 @@ object Sequences {
     nextLrmPositionPrimaryKeyId.as[Long].first
   }
 
+  def nextGroupedIdSeqValue = {
+    nextGroupedId.as[Long].first
+  }
 }

@@ -8,7 +8,7 @@
     var showFormBtnVisible = true;
     var assetConfig = new AssetTypeConfiguration();
 
-    var availableAssetsTypeId = [190, 210, 430, 420];
+    var availableAssetsTypeId = [190, 210, 420, 430];
 
     this.initialize = function(mapBackend) {
       backend = mapBackend;

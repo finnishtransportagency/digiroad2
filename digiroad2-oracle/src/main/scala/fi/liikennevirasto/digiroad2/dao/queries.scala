@@ -5,22 +5,21 @@ import slick.driver.JdbcDriver.backend.Database
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.LorryParkingInDATEX2
-import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
+import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
 import _root_.oracle.spatial.geometry.JGeometry
 import _root_.oracle.sql.STRUCT
 import com.jolbox.bonecp.ConnectionHandle
-import scala.math.BigDecimal.RoundingMode
-import java.text.{DecimalFormat, NumberFormat}
-import Q._
-import org.joda.time.{DateTime, LocalDate}
-import com.github.tototoshi.slick.MySQLJodaSupport._
-import java.util.Locale
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import org.joda.time.{DateTime, LocalDate}
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.read
+import slick.jdbc.StaticQuery._
+import slick.jdbc.{GetResult, PositionedResult, SetParameter, StaticQuery => Q}
+import Q._
+import com.github.tototoshi.slick.MySQLJodaSupport._
+import java.util.Locale
 
 
 object Queries {
@@ -32,7 +31,7 @@ object Queries {
       case _ => this
     }
   }
-  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String, propertyMaxCharacters: Option[Int] = None)
+  case class PropertyRow(propertyId: Long, publicId: String, propertyType: String, propertyRequired: Boolean, propertyValue: String, propertyDisplayValue: String, propertyMaxCharacters: Option[Int] = None, propertyGroupedId: Long = 0)
   case class AdditionalPanelRow(publicId: String, propertyType: String, panelType: Int, panelInfo: String, panelValue: String, formPosition: Int, panelText: String, panelSize: Int, panelCoatingType: Int, panelColor: Int)
   case class DynamicPropertyRow(publicId: String, propertyType: String, required: Boolean = false, propertyValue: Option[Any])
 
@@ -62,11 +61,11 @@ object Queries {
     }
   }
 
-  case class EnumeratedPropertyValueRow(propertyId: Long, propertyPublicId: String, propertyType: String, propertyName: String, required: Boolean, value: Long, displayValue: String)
+  case class EnumeratedPropertyValueRow(propertyId: Long, propertyPublicId: String, propertyType: String, propertyName: String, required: Boolean, value: Double, displayValue: String)
 
   implicit val getEnumeratedValue = new GetResult[EnumeratedPropertyValueRow] {
     def apply(r: PositionedResult) = {
-      EnumeratedPropertyValueRow(r.nextLong, r.nextString, r.nextString, r.nextString, r.nextBoolean, r.nextLong, r.nextString)
+      EnumeratedPropertyValueRow(r.nextLong, r.nextString, r.nextString, r.nextString, r.nextBoolean, r.nextDouble, r.nextString)
     }
   }
 
@@ -75,6 +74,8 @@ object Queries {
   def nextNationalBusStopId = sql"select national_bus_stop_id_seq.nextval from dual"
 
   def nextLrmPositionPrimaryKeyId = sql"select lrm_position_primary_key_seq.nextval from dual"
+
+  def nextGroupedId = sql"select grouped_id_seq.nextval from dual"
 
   def nextViitePrimaryKeyId = sql"select viite_general_seq.nextval from dual"
 
@@ -132,29 +133,29 @@ object Queries {
 
   def deleteMultipleChoiceValue(valueId: Long) = sqlu"delete from multiple_choice_value WHERE id = $valueId"
 
-  def insertMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
+  def insertMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
     sqlu"""
-      insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date)
+      insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date, grouped_id)
       values (primary_key_seq.nextval, $propertyId, $assetId,
-        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE)
+        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE, $groupedId)
     """
 
-  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long) =
+  def updateMultipleChoiceValue(assetId: Long, propertyId: Long, propertyValue: Long, groupedId: Option[Long] = Some(0)) =
     sqlu"""
      update multiple_choice_value set enumerated_value_id =
        (select id from enumerated_value where value = $propertyValue and property_id = $propertyId)
-       where asset_id = $assetId and property_id = $propertyId
+       where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId
    """
 
-  def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
+  def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) = {
     sqlu"""
-      insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, SYSDATE)
+      insert into text_property_value(id, property_id, asset_id, value_fi, created_date, grouped_id)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, SYSDATE, $groupedId)
     """
   }
 
-  def updateTextProperty(assetId: Long, propertyId: Long, valueFi: String) =
-    sqlu"update text_property_value set value_fi = $valueFi where asset_id = $assetId and property_id = $propertyId"
+  def updateTextProperty(assetId: Long, propertyId: Long, valueFi: String, groupedId: Option[Long] = Some(0)) =
+    sqlu"update text_property_value set value_fi = $valueFi where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId"
 
   def deleteTextProperty(assetId: Long, propertyId: Long) =
     sqlu"delete from text_property_value where asset_id = $assetId and property_id = $propertyId"
@@ -162,17 +163,16 @@ object Queries {
   def existsTextProperty =
     "select id from text_property_value where asset_id = ? and property_id = ?"
 
+  def existsTextPropertyWithGroupedId =
+    "select id from text_property_value where asset_id = ? and property_id = ? and grouped_id = ?"
+
   def existsMultipleChoiceProperty =
     "select asset_id from multiple_choice_value where asset_id = ? and property_id = ?"
 
-  def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
-    sqlu"""
-      insert into number_property_value(id, property_id, asset_id, value)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $value)
-    """
-  }
+  def existsMultipleChoicePropertyWithGroupedId =
+    "select asset_id from multiple_choice_value where asset_id = ? and property_id = ? and grouped_id = ?"
 
-  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) = {
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Int) = {
     sqlu"""
       insert into number_property_value(id, property_id, asset_id, value)
       values (primary_key_seq.nextval, $propertyId, $assetId, $value)
@@ -186,8 +186,15 @@ object Queries {
     """
   }
 
-  def updateNumberProperty(assetId: Long, propertyId: Long, value: Option[Double]) =
-    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
+  def insertNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = Some(0)) = {
+    sqlu"""
+      insert into number_property_value(id, property_id, asset_id, value, grouped_id)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $value, $groupedId)
+    """
+  }
+
+  def updateNumberProperty(assetId: Long, propertyId: Long, value: Option[Double], groupedId: Option[Long] = Some(0)) =
+    sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId"
 
   def updateNumberProperty(assetId: Long, propertyId: Long, value: Double) =
     sqlu"update number_property_value set value = $value where asset_id = $assetId and property_id = $propertyId"
@@ -200,6 +207,12 @@ object Queries {
 
   def existsNumberProperty =
     "select id from number_property_value where asset_id = ? and property_id = ?"
+
+  def existsNumberPropertyWithGroupedId =
+    "select id from number_property_value where asset_id = ? and property_id = ? and grouped_id = ?"
+
+  def existingGroupedIdForAssetQuery =
+    "select grouped_id from single_choice_value where asset_id = ? and property_id = (select id from property where public_id = ?)"
 
   def insertDateProperty(assetId: Long, propertyId: Long, dateTime: DateTime) = {
     sqlu"""
@@ -238,11 +251,25 @@ object Queries {
     """
   }
 
+  def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Double, groupedId: Option[Long]) = {
+    sqlu"""
+      insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date, grouped_id)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE, $groupedId)
+    """
+  }
+
   def updateSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) =
     sqlu"""
       update single_choice_value set enumerated_value_id =
         (select id from enumerated_value where property_id = $propertyId and value = $value)
         where asset_id = $assetId and property_id = $propertyId
+    """
+
+  def updateSingleChoiceProperty(assetId: Long, propertyId: Long, value: Double, groupedId: Option[Long]) =
+    sqlu"""
+      update single_choice_value set enumerated_value_id =
+        (select id from enumerated_value where property_id = $propertyId and value = $value)
+        where asset_id = $assetId and property_id = $propertyId and grouped_id = $groupedId
     """
 
   def insertAdditionalPanelProperty(assetId: Long, value: AdditionalPanel) = {
@@ -261,6 +288,9 @@ object Queries {
 
   def existsSingleChoiceProperty =
     "select asset_id from single_choice_value where asset_id = ? and property_id = ?"
+
+  def existsSingleChoicePropertyWithGroupedId =
+    "select asset_id from single_choice_value where asset_id = ? and property_id = ? and grouped_id = ?"
 
   def updateCommonProperty(assetId: Long, propertyColumn: String, value: String, isLrmAssetProperty: Boolean = false) =
     if (isLrmAssetProperty)
@@ -283,8 +313,11 @@ object Queries {
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     Q.query[Long, EnumeratedPropertyValueRow](enumeratedPropertyValues).apply(assetTypeId).list.groupBy(_.propertyId).map { case (k, v) =>
-      val row = v(0)
-      EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => PropertyValue(r.value.toString, Some(r.displayValue))).toSeq)
+      val row = v.head
+      EnumeratedPropertyValue(row.propertyId, row.propertyPublicId, row.propertyName, row.propertyType, row.required, v.map(r => {
+        val value: AnyVal = if (r.value % 1 == 0) r.value.toInt else r.value
+        PropertyValue(value.toString , Some(r.displayValue))
+      }))
     }.toSeq
   }
 
@@ -416,5 +449,12 @@ object Queries {
     sqlu"""UPDATE TEMP_ROAD_ADDRESS_INFO SET MUNICIPALITY_CODE = $municipalityToMerge WHERE MUNICIPALITY_CODE = $municipalityToDelete""".execute
     sqlu"""DELETE FROM MUNICIPALITY_VERIFICATION WHERE MUNICIPALITY_ID = $municipalityToDelete""".execute
     sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
+  }
+
+  def deleteAdditionalGroupedAsset(assetId: Long, groupedId: Long): Unit = {
+    sqlu"""delete from number_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
+    sqlu"""delete from text_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
+    sqlu"""delete from single_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
+    sqlu"""delete from multiple_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
   }
 }

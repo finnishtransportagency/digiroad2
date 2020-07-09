@@ -59,18 +59,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   private val batchProcessName = "batch_process_trafficSigns"
   private val GroupingDistance = 2
   private val AdditionalPanelDistance = 2
-  private val defaultMultiChoiceValue = 0
-  private val defaultSingleChoiceValue = 99
 
   private val getSingleChoiceDefaultValueByPublicId = Map(
-    "structure" -> Structure.getDefault.value,
+    "structure" -> PointAssetStructure.getDefault.value,
     "condition" -> Condition.getDefault.value,
     "size" -> Size.getDefault.value,
     "coating_type" -> CoatingType.getDefault.value,
     "sign_material" -> SignMaterial.getDefault.value,
     "location_specifier" -> LocationSpecifier.getDefault.value,
     "lane_type" -> LaneType.getDefault.value,
-    "life_cycle" -> SignLifeCycle.getDefault.value,
+    "life_cycle" -> PointAssetState.getDefault.value,
     "type_of_damage" -> TypeOfDamage.getDefault.value,
     "urgency_of_repair" -> UrgencyOfRepair.getDefault.value
   )
@@ -259,28 +257,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       persistedStop.linkSource)
   }
 
-  def getAssetValidityDirection(bearing: Int): Int = {
-    bearing > 270 || bearing <= 90 match {
-      case true => TowardsDigitizing.value
-      case false => AgainstDigitizing.value
-    }
-  }
-
-  def getTrafficSignValidityDirection(assetLocation: Point, geometry: Seq[Point]): Int = {
-
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(assetLocation.x, assetLocation.y, 0), geometry)
-    val roadLinkPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue)
-    val linkBearing = GeometryUtils.calculateBearing(geometry, Some(mValue))
-
-    val lonDifference = assetLocation.x - roadLinkPoint.get.x
-    val latDifference = assetLocation.y - roadLinkPoint.get.y
-
-    (latDifference <= 0 && linkBearing <= 90) || (latDifference >= 0 && linkBearing > 270) match {
-      case true => TowardsDigitizing.value
-      case false => AgainstDigitizing.value
-    }
-  }
-
   def getAssetBearing(validityDirection: Int, geometry: Seq[Point], assetMValue: Option[Double] = None, geometryLength: Option[Double] = None): Int = {
     val linkBearing = GeometryUtils.calculateBearing(geometry, assetMValue)
     GeometryUtils.calculateActualBearing(validityDirection, Some(linkBearing)).get
@@ -425,16 +401,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     OracleTrafficSignDao.expireAssetsByMunicipality(municipalityCodes)
   }
 
-  def getValidityDirection(point: Point, roadLink: RoadLink, optBearing: Option[Int], twoSided: Boolean = false) : Int = {
-    if (twoSided)
-      BothDirections.value
-    else
-      SideCode.apply(optBearing match {
-      case Some(bearing) => getAssetValidityDirection(bearing)
-      case _ => getTrafficSignValidityDirection(point, roadLink.geometry)
-    }).value
-  }
-
   def verifyDatesOnTemporarySigns(asset: IncomingTrafficSign): Boolean = {
     val temporaryTrafficSigns = Seq(4, 5)
     val trafficSignLifeCycle = getProperty(asset, lifeCyclePublicId).get.propertyValue
@@ -460,9 +426,6 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
     val oldCode = getProperty(asset, oldTrafficCodePublicId)
     oldCode.get.propertyValue == checkedValue
   }
-
-  def getDefaultMultiChoiceValue: Int = defaultMultiChoiceValue
-  def getDefaultSingleChoiceValue: Int = defaultSingleChoiceValue
 
   def additionalPanelProperties(additionalProperties: Set[AdditionalPanelInfo]) : Set[SimplePointAssetProperty] = {
 

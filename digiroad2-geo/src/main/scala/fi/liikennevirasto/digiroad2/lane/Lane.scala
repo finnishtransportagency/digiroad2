@@ -156,7 +156,7 @@ object LaneType {
                   Reversible, Combined, Walking, Cycling, Unknown)
 
   def apply(value: Int): LaneType = {
-    values.find(_.value == value).getOrElse(Unknown)
+    values.find(_.value == value).getOrElse(getDefault)
   }
 
   def getDefault: LaneType = Unknown
