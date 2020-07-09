@@ -1,15 +1,12 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
 import java.io.{InputStream, InputStreamReader}
-
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.TrafficSignTypeGroup.AdditionalPanels
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.lane.LaneType
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.pointasset.{IncomingTrafficSign, TrafficSignService}
@@ -139,6 +136,12 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private val codeValueFieldMappings = Map(
     "liikennemerkin tyyppi" -> "trafficSignType"
   )
+
+  val speedLimit = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120)
+  val speedLimitSigns = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
+  val signsRequireArvo = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, NoWidthExceeding, MaxHeightExceeding,
+                        MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding )
+
   val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings ++ singleChoiceMapping ++ multiChoiceMapping ++
                                        additionalPanelMapping ++ dateFieldsMapping ++ intValueFieldsMapping
 
@@ -165,9 +168,16 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   override def findMissingParameters(csvRoadWithHeaders: Map[String, String]): List[String] = {
     val code = csvRoadWithHeaders.get("liikennemerkin tyyppi")
+
     code match {
       case Some(value) if value.nonEmpty && TrafficSignType.applyNewLawCode(value) == RoadWorks =>
-        mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList ++ dateFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
+        val requiredFields = mandatoryFieldsMapping.keySet ++ dateFieldsMapping.keySet
+        requiredFields.diff(csvRoadWithHeaders.keys.toSet).toList
+
+      case Some(value) if value.nonEmpty && signsRequireArvo.contains( TrafficSignType.applyNewLawCode(value) ) =>
+        val requiredFields = mandatoryFieldsMapping.keySet ++ Set("arvo")
+        requiredFields.diff(csvRoadWithHeaders.keys.toSet).toList
+
       case _ => mandatoryFieldsMapping.keySet.diff(csvRoadWithHeaders.keys.toSet).toList
     }
   }
@@ -234,8 +244,23 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     }
 
-
     val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
+
+    val (trafficSign, isSignOk) = optTrafficSignType match {
+      case Some(signType) =>
+        val sign = TrafficSignType.applyNewLawCode(signType)
+
+        if (sign == TrafficSignType.Unknown)
+          (sign, false)
+        else
+          (sign, true)
+
+      case _ => (TrafficSignType.Unknown, false)
+    }
+
+    //Validate if we get a valida sign
+    if (!isSignOk)
+      return (List("Not a valid sign!"), Seq() )
 
     /* start date validations */
     val temporaryDevices = Seq(4,5)
@@ -243,8 +268,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
     val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
 
-    val (isValidDate, datesErrorMsg) = optTrafficSignType match {
-      case Some(signType) if (!isBlank(optLifeCycle.toString) && temporaryDevices.contains(optLifeCycle)) || TrafficSignType.applyNewLawCode(signType) == RoadWorks =>
+    val (isValidDate, datesErrorMsg) =
+      if ((!isBlank(optLifeCycle.toString) && temporaryDevices.contains(optLifeCycle)) || trafficSign == RoadWorks ) {
         (optStartDate, optEndDate) match {
           case (Some(startDate), Some(endDate)) =>
             try {
@@ -260,8 +285,27 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
             }
           case (_, _) => (false, List("Invalid dates"))
         }
-      case _ => (true, Nil)
-    }
+      }
+    //If it is another sign but have dates
+      else if ( optStartDate.head.nonEmpty || optEndDate.head.nonEmpty) {
+        (optStartDate, optEndDate) match {
+          case (Some(startDate), Some(endDate)) => //If dates have value, lets check if they are ok
+            try {
+              val startDateFormat = DateParser.DatePropertyFormat.parseDateTime(startDate)
+              val endDateFormat = DateParser.DatePropertyFormat.parseDateTime(endDate)
+
+              val isDatesOk = endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+              val errorMsg = if (isDatesOk) Nil else List("The end date value is equal/previous to the start date value.")
+
+              (isDatesOk, errorMsg)
+            } catch {
+              case _: Throwable => (false, List("Invalid dates formats"))
+            }
+          case (_, _) => (true, Nil) //if they one or both are empty we ignore it because they are not mandatory
+        }
+      }
+      else
+        (true, Nil)
     /* end date validations */
 
     /* start direction validations */
@@ -302,9 +346,36 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val (lanesValidator, lanesValidatorErrorMsg) = csvLaneValidator(optLaneType, optLaneNumber)
     /* end lane type validations */
 
-    val allErrors = datesErrorMsg ++ directionValidatorErrorMsg ++ additionalPanelsErrorMsg ++ lanesValidatorErrorMsg
+    /* start Arvo validations field */
+    val (isArvoOk, arvoErrorMsg) =
+      if (signsRequireArvo.contains(trafficSign) ){
 
-    if(isValidDate && directionValidator && additionalPanelsValidator && lanesValidator) {
+        val arvoValue = getPropertyValueOption(parsedRow, "value").asInstanceOf[Option[String]]
+
+        arvoValue match {
+          case Some(value) if speedLimitSigns.contains(trafficSign) =>
+            if (speedLimit.contains(value.toInt) )
+              (true, Nil)
+            else
+              (false, Seq("Wrong speed limit value"))
+
+          case Some(value) =>
+              if (value.toInt > 0 )
+                (true, Nil)
+              else
+                (false, Seq("Wrong Arvo value"))
+
+          case _ =>
+            (false, Seq("Arvo field not ok."))
+        }
+      }
+      else
+        (true, Nil)
+    /* end Arvo validations field */
+
+    val allErrors = datesErrorMsg ++ directionValidatorErrorMsg ++ additionalPanelsErrorMsg ++ lanesValidatorErrorMsg ++ arvoErrorMsg
+
+    if(isValidDate && directionValidator && additionalPanelsValidator && lanesValidator && isArvoOk) {
       val optLon = getPropertyValueOption(parsedRow, "lon").asInstanceOf[Option[BigDecimal]]
       val optLat = getPropertyValueOption(parsedRow, "lat").asInstanceOf[Option[BigDecimal]]
 
