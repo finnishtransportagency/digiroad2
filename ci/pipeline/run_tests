@@ -124,14 +124,19 @@ pipeline {
         }
 
         stage("Run RobotFramework Tests") {
-            agent {
-                docker {
-                    image "digiroad2-robotframework-sbt"
-                    args '--shm-size=1g -u root'
-                }
+            agent { docker {
+                image 'ppodgorsek/robot-framework:latest'
+                args '--shm-size=1g -u root' }
+            }
+            environment {
+                BROWSER = 'chrome'
+                ROBOT_TESTS_DIR = "$WORKSPACE/RobotProjectTest/Test/TestSuite"
+                ROBOT_REPORTS_DIR = "$WORKSPACE/RobotProjectTest/Test/Result"
             }
             steps {
-                sh 'robot -d RobotProjectTest/Test/TestSuite/Result RobotProjectTest/Test/TestSuite'
+                sh '''
+                    /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+                '''
             }
         }
     }
