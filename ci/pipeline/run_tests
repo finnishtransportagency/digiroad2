@@ -134,8 +134,14 @@ pipeline {
         }
 
         stage("Run RobotFramework Tests") {
+            agent {
+                docker {
+                    image "digiroad2-robotframework-sbt"
+                    rgs '--shm-size=1g -u root'
+                }
+            }
             steps {
-                sh "docker run --shm-size=1g -e BROWSER=firefox -v $WORKSPACE/RobotProjectTest/Test/TestSuite:/opt/robotframework/tests:Z -v $WORKSPACE/RobotProjectTest/Test/TestSuite/Result:/opt/robotframework/reports:Z ppodgorsek/robot-framework:latest"
+                sh 'robot -d RobotProjectTest/Test/TestSuite/Result RobotProjectTest/Test/TestSuite'
             }
         }
     }
