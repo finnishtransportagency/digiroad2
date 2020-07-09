@@ -101,16 +101,6 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
-                        "digiroad2-frontend",
-                        "${build_args} -f ci/docker/Dockerfile.node ci"
-                    )
-
-                    docker.build(
-                        "digiroad2-backend-sbt",
-                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
-                    )
-
-                    docker.build(
                         "digiroad2-robotframework-sbt",
                         "${build_args} -f ci/docker/RobotDockerfile.sbt ci"
                     )
@@ -139,9 +129,6 @@ pipeline {
                     image "digiroad2-robotframework-sbt"
                     args '--shm-size=1g -u root'
                 }
-            }
-            environment {
-                BROWSER = 'chrome'
             }
             steps {
                 sh 'robot -d RobotProjectTest/Test/TestSuite/Result RobotProjectTest/Test/TestSuite'
