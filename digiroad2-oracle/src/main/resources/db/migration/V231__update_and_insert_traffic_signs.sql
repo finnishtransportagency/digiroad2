@@ -11,7 +11,7 @@ DECLARE
 
 BEGIN
 
-    -- Insert the values into the temporary table (tmp_signs)
+    -- Insert the values into the temporary table
     Insert Into tmp_signs (othId, name) Values (36, 'A1.1 Mutka oikealle');
     Insert Into tmp_signs (othId, name) Values (37, 'A1.2 Mutka vasemmalle');
     Insert Into tmp_signs (othId, name) Values (38, 'A2.1 Mutkia, joista ensimmäinen oikealle');
