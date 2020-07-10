@@ -233,6 +233,11 @@ trait RegulatorySignsType extends TrafficSignType {
 
   override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
     Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
+
+  override def isSpeedLimit: Boolean = {
+    val speedLimitsSign = Seq(5, 6)
+    speedLimitsSign.contains(OTHvalue)
+  }
 }
 
 case object PedestrianCrossingSign extends RegulatorySignsType {
