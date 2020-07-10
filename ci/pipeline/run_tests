@@ -76,10 +76,6 @@ pipeline {
                             "sbt-launch.jar",
                             "test"
                         ].join(" ")
-
-                        STAGE_RUN_ROBOT_FRAMEWORK_TESTS = [
-                            "robot -d RobotFrameWorkTests/Result RobotFrameWorkTests/Test"
-                        ].join(" ")
                     }
                 }
             }
@@ -101,8 +97,13 @@ pipeline {
                     ].join(" ")
 
                     docker.build(
-                        "digiroad2-robotframework-sbt",
-                        "${build_args} -f ci/docker/RobotDockerfile.sbt ci"
+                        "digiroad2-frontend",
+                        "${build_args} -f ci/docker/Dockerfile.node ci"
+                    )
+
+                    docker.build(
+                        "digiroad2-backend-sbt",
+                        "${build_args} -f ci/docker/Dockerfile.sbt ci"
                     )
                 }
             }
@@ -121,6 +122,40 @@ pipeline {
                 )
             }
 
+        }
+
+	    stage("Run Frontend Tests") {
+            agent {
+                docker {
+                    image "digiroad2-frontend"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_FRONTEND_RUN_TESTS
+                echo "Running frontend build... (skipped for now)"
+            }
+            post {
+                failure {
+                    slackSend(
+                        color: "danger",
+                        message: "${NOTIFY_SLACK_SUBJECT}\nStage ${STAGE_NAME} failure! Check <${BUILD_URL}console|console>!"
+                    )
+                }
+            }
+        }
+
+        stage("Run Backend Tests") {
+            agent {
+                docker {
+                    image "digiroad2-backend-sbt"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh STAGE_SETUP_ORACLE
+                sh STAGE_BACKEND_RUN_TESTS
+            }
         }
 
         stage("Run RobotFramework Tests") {
