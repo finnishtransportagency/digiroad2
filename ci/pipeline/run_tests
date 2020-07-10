@@ -130,6 +130,8 @@ pipeline {
             }
             environment {
                 BROWSER = 'chrome'
+                USERNAME = 'K215271'
+                PASSWORD = 'Kesakuu2020'
                 ROBOT_TESTS_DIR = "$WORKSPACE/RobotProjectTest/Test/TestSuite"
                 ROBOT_REPORTS_DIR = "$WORKSPACE/RobotProjectTest/Test/Result"
             }
