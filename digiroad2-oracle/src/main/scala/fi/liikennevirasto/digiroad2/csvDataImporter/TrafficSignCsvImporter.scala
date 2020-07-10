@@ -353,13 +353,13 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         val arvoValue = getPropertyValueOption(parsedRow, "value").asInstanceOf[Option[String]]
 
         arvoValue match {
-          case Some(value) if arvoValue.nonEmpty && speedLimitSigns.contains(trafficSign) =>
+          case Some(value) if value.trim.nonEmpty && speedLimitSigns.contains(trafficSign) =>
             if (speedLimit.contains(value.toInt) )
               (true, Nil)
             else
               (false, Seq("Wrong speed limit value"))
 
-          case Some(value) if arvoValue.nonEmpty =>
+          case Some(value) if value.trim.nonEmpty =>
               if (value.toInt > 0 )
                 (true, Nil)
               else
