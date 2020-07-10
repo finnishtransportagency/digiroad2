@@ -51,6 +51,7 @@ sealed trait TrafficSignType {
     relevantAdditionalPanel.contains(additionalPanelsType)
   }
 
+  def isSpeedLimit: Boolean = false
   def source = Seq("CSVimport", "TRimport")
 }
 
@@ -212,6 +213,8 @@ trait SpeedLimitsType extends TrafficSignType {
 
   override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
     Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
+
+  override def isSpeedLimit: Boolean = true
 }
 
 //TODO: Verify value
@@ -921,6 +924,12 @@ trait ProhibitionsAndRestrictionsType extends TrafficSignType {
 
   override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
     Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
+
+  override def isSpeedLimit : Boolean = {
+    val speedLimitsSigns = Seq(1, 2, 3, 4)
+    speedLimitsSigns.contains(OTHvalue)
+  }
+
 }
 
 case object ClosedToAllVehicles extends ProhibitionsAndRestrictionsType {

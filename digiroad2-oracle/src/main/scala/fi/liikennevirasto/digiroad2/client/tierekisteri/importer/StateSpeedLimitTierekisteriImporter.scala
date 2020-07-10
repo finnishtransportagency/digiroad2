@@ -92,9 +92,14 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
   }
 
   private def filterSectionTrafficSigns(trafficSigns: Seq[TierekisteriAssetData], roadAddress: ViiteRoadAddress, roadSide: RoadSide): Seq[TierekisteriAssetData] ={
-    val signs = trafficSigns.filter(trSign => trSign.assetType.group == TrafficSignTypeGroup.SpeedLimits &&
-      trSign.endRoadPartNumber == roadAddress.roadPartNumber && trSign.startAddressMValue >= roadAddress.startAddrMValue &&
-      trSign.startAddressMValue <= roadAddress.endAddrMValue && (trSign.roadSide == RoadSide.Left || trSign.roadSide == RoadSide.Right))
+    val signs = trafficSigns.filter{trSign =>
+      val isSpeedLimitSign = trSign.assetType.isSpeedLimit
+      val isRoadPartNumberOk = trSign.endRoadPartNumber == roadAddress.roadPartNumber
+      val isStartAddrMValueOk = trSign.startAddressMValue >= roadAddress.startAddrMValue && trSign.startAddressMValue <= roadAddress.endAddrMValue
+      val isRoadSideOk = trSign.roadSide == RoadSide.Left || trSign.roadSide == RoadSide.Right
+
+      isSpeedLimitSign && isRoadPartNumberOk &&  isStartAddrMValueOk && isRoadSideOk
+     }
 
     val currentTrack = roadSide match {
       case RoadSide.Left => Track.LeftSide
@@ -270,7 +275,8 @@ class StateSpeedLimitTierekisteriImporter extends TierekisteriAssetImporterOpera
           val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
           //Get all TelematicSpeedLimit
           val trTelematicSpeedLimitAssets = tierekisteriClientTelematicSpeedLimit.fetchActiveAssetData(roadNumber)
-          val trAssets = getAllTierekisteriAssets(roadNumber).filter(_.assetType.group == TrafficSignTypeGroup.SpeedLimits) ++ trTelematicSpeedLimitAssets
+          val trAssets = getAllTierekisteriAssets(roadNumber).filter( _.assetType.isSpeedLimit ) ++ trTelematicSpeedLimitAssets
+
           //Get all the existing road address for the road number
           val roadAddresses = roadAddressService.getAllByRoadNumber(roadNumber)
           //Generate all speed limits of the right side of the road
