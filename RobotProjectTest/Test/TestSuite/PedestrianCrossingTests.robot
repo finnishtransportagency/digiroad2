@@ -4,7 +4,7 @@ Library                 SeleniumLibrary
 Variables  ../Variable/Variables.py
 
 *** Variables ***
-${BROWSER}      chrome
+${BROWSER}      %{BROWSER}
 ${ENV_URL}      https://devtest.liikennevirasto.fi/digiroad/
 ${USERNAME}     K215271
 ${PASSWORD}     Kesakuu2020
