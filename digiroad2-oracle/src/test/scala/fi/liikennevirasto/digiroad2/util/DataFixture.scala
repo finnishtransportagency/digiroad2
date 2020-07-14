@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.io.{BufferedWriter, File, FileWriter}
 import java.security.InvalidParameterException
 import java.sql.SQLIntegrityConstraintViolationException
 import java.text.SimpleDateFormat
@@ -2260,6 +2261,56 @@ object DataFixture {
     }
   }
 
+  //TODO: There will be a CSV generator in the future, when that is done then we can apply that to this function
+  def extractCsvPrivateRoadAssociationInfo(): Unit = {
+    def geometryToWKT(geometry: Seq[Point]): String = {
+      val wktString = geometry.map { case p =>
+        p.x + " " + p.y + " " + p.z
+      }.mkString(", ")
+      s"LINESTRING Z($wktString)"
+    }
+
+    println("\nStart extracting private road association information to a csv file")
+    println(DateTime.now())
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] = OracleDatabase.withDynSession { Queries.getMunicipalities }
+
+    val newCsvFile = new File("private_road_association_information.csv")
+    val bw = new BufferedWriter(new FileWriter(newCsvFile))
+    bw.write("WKT;ASSOCIINFO\n")
+
+    municipalities.foreach { municipality =>
+      println(s"Obtaining all road links and private road association information for Municipality: $municipality")
+      val roadLinks = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHByMunicipality(municipality)._1
+      val privateInfo = roadLinkService.getPrivateRoadsInfoByLinkIds(roadLinks.map(_.linkId).toSet)
+
+      val privateRoadAssociationInfo = privateInfo.filter{ case (_, attributeInfo) =>
+        attributeInfo match {
+          case Some((name, value)) if name == roadLinkService.privateRoadAssociationPublicId && value.trim.nonEmpty => true
+          case _ => false
+        }
+      }
+
+      val rows = privateRoadAssociationInfo.map{ case (linkId, associationInfo) =>
+        val roadLink = roadLinks.find(_.linkId == linkId).get
+        val wtkGeometry = geometryToWKT(roadLink.geometry)
+        val associationInfoValue = associationInfo.get._2
+
+        s"$wtkGeometry;$associationInfoValue"
+      }.mkString("\n")
+
+      println("Writing information into file")
+      bw.write(rows + "\n")
+    }
+    bw.close()
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
     "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
@@ -2421,6 +2472,8 @@ object DataFixture {
         updateLastModifiedAssets()
       case Some("import_cycling_walking_info") =>
         importCyclingAndWalkingInfo()
+      case Some("extract_csv_private_road_association_info") =>
+        extractCsvPrivateRoadAssociationInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2434,7 +2487,8 @@ object DataFixture {
         " create_manoeuvres_using_traffic_signs | update_floating_stops_on_terminated_roads | update_private_roads | add_geometry_to_linear_assets | " +
         " merge_additional_panels_to_trafficSigns | create_traffic_signs_using_linear_assets | create_prohibitions_using_traffic_signs | resolving_Frozen_Links |" +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
-        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info")
+        " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
+        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info")
     }
   }
 }
