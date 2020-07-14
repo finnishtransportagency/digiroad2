@@ -4,7 +4,6 @@
     var me = this;
     var defaultAdditionalPanelValue = null;
     var additionalPanelWithTextCode = '61';
-    var collator = Intl.Collator(undefined, {numeric: true, sensitivity:'base'});
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -244,7 +243,7 @@
 
     var sortByPropertyDisplay = function(collection) {
       return collection.sort(function(element1, element2) {
-        return collator.compare(element1.propertyDisplayValue, element2.propertyDisplayValue);
+        return element1.propertyDisplayValue.localeCompare(element2.propertyDisplayValue, undefined, {numeric: true, sensitivity:'base'});
       });
     };
 
