@@ -4,6 +4,7 @@
     var me = this;
     var defaultAdditionalPanelValue = null;
     var additionalPanelWithTextCode = '61';
+    var collator = Intl.Collator(undefined, {numeric: true, sensitivity:'base'});
 
     this.initialize = function(parameters) {
       me.pointAsset = parameters.pointAsset;
@@ -231,6 +232,22 @@
       );
     }
 
+    var hideOldCodes = function (oldValues, propertyValue, groupPropertyValue) {
+      if (_.includes(oldValues, groupPropertyValue) && propertyValue == groupPropertyValue) {
+        //if true it will return false at the end.
+      }
+      else if (_.includes(oldValues, groupPropertyValue))
+        return true;
+
+      return false;
+    };
+
+    var sortByPropertyDisplay = function(collection) {
+      return collection.sort(function(element1, element2) {
+        return collator.compare(element1.propertyDisplayValue, element2.propertyDisplayValue);
+      });
+    };
+
     var singleChoiceSubType = function (collection, mainType, property) {
       var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
@@ -239,17 +256,12 @@
       var subTypesTrafficSigns;
       var oldValues = ["143", "162", "166", "167", "168", "247", "274", "287", "288", "357", "359"];
 
-      subTypesTrafficSigns = _.map( _.orderBy(_.map(groups)[mainType], ["propertyDisplayValue"], ["asc"] ), function (group) {
+      var orderedSubType = sortByPropertyDisplay(_.map(groups)[mainType]);
+
+      subTypesTrafficSigns = _.map(orderedSubType, function (group) {
         if (isPedestrianOrCyclingRoadLink() && !me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue))
           return '';
-
-        var toHide = false;
-
-        if (_.includes(oldValues, group.propertyValue) && propertyValue == group.propertyValue)
-          toHide = false;
-        else if (_.includes(oldValues, group.propertyValue) )
-          toHide = true;
-
+        var toHide = hideOldCodes(oldValues, propertyValue, group.propertyValue);
         return $('<option>',
           {
             value: group.propertyValue,
@@ -407,12 +419,17 @@
         propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
       }
 
-      var subTypesTrafficSigns = _.map(_.map(panels, function (group) {
+      var orderedPanels = sortByPropertyDisplay(panels);
+
+      var subTypesTrafficSigns = _.map(_.map(orderedPanels, function (group) {
+        var toHide = hideOldCodes(["147"], propertyValue, group.propertyValue);
+
         return $('<option>',
           {
             value: group.propertyValue,
             selected: propertyValue == group.propertyValue,
-            text: group.propertyDisplayValue
+            text: group.propertyDisplayValue,
+            hidden: toHide
           }
         )[0].outerHTML;
       })).join('');
