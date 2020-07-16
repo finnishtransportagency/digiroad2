@@ -244,6 +244,20 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     }
 
+    def datesValidator(startDate: String, endDate: String) = {
+      try {
+        val startDateFormat = DateParser.DatePropertyFormat.parseDateTime(startDate)
+        val endDateFormat = DateParser.DatePropertyFormat.parseDateTime(endDate)
+
+        val isDatesOk = endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
+        val errorMsg = if (isDatesOk) Nil else List("The end date value is equal/previous to the start date value.")
+
+        (isDatesOk, errorMsg)
+      } catch {
+        case _: Throwable => (false, List("Invalid dates formats"))
+      }
+    }
+
     val optTrafficSignType = getPropertyValueOption(parsedRow, "trafficSignType").asInstanceOf[Option[String]]
 
     val (trafficSign, isSignOk) = optTrafficSignType match {
@@ -265,47 +279,18 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     /* start date validations */
     val temporaryDevices = Seq(4,5)
     val optLifeCycle = getPropertyValueOption(parsedRow, "lifeCycle").asInstanceOf[Option[Int]].getOrElse(PointAssetState.Unknown.value)
-    val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]]
-    val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]]
+    val optStartDate = getPropertyValueOption(parsedRow, "startDate").asInstanceOf[Option[String]].map(_.trim).filterNot(_.isEmpty)
+    val optEndDate = getPropertyValueOption(parsedRow, "endDate").asInstanceOf[Option[String]].map(_.trim).filterNot(_.isEmpty)
 
     val (isValidDate, datesErrorMsg) =
-      if ((!isBlank(optLifeCycle.toString) && temporaryDevices.contains(optLifeCycle)) || trafficSign == RoadWorks ) {
-        (optStartDate, optEndDate) match {
-          case (Some(startDate), Some(endDate)) =>
-            try {
-              val startDateFormat = DateParser.DatePropertyFormat.parseDateTime(startDate)
-              val endDateFormat = DateParser.DatePropertyFormat.parseDateTime(endDate)
-
-              val isDatesOk = endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
-              val errorMsg = if (isDatesOk) Nil else List("The end date value is equal/previous to the start date value.")
-
-              (isDatesOk, errorMsg)
-            } catch {
-              case _: Throwable => (false, List("Invalid dates formats"))
-            }
-          case (_, _) => (false, List("Invalid dates"))
-        }
+      (optStartDate, optEndDate) match {
+        case (Some(startDate), Some(endDate)) =>
+          datesValidator(startDate, endDate)
+        case _ if (!isBlank(optLifeCycle.toString) && temporaryDevices.contains(optLifeCycle)) || trafficSign == RoadWorks =>
+          (false, List("Invalid dates"))
+        case _ =>
+          (true, Nil)
       }
-    //If it is another sign but have dates
-      else if ( optStartDate.head.nonEmpty || optEndDate.head.nonEmpty) {
-        (optStartDate, optEndDate) match {
-          case (Some(startDate), Some(endDate)) => //If dates have value, lets check if they are ok
-            try {
-              val startDateFormat = DateParser.DatePropertyFormat.parseDateTime(startDate)
-              val endDateFormat = DateParser.DatePropertyFormat.parseDateTime(endDate)
-
-              val isDatesOk = endDateFormat.isAfter(startDateFormat) || endDateFormat.isEqual(startDateFormat)
-              val errorMsg = if (isDatesOk) Nil else List("The end date value is equal/previous to the start date value.")
-
-              (isDatesOk, errorMsg)
-            } catch {
-              case _: Throwable => (false, List("Invalid dates formats"))
-            }
-          case (_, _) => (true, Nil) //if they one or both are empty we ignore it because they are not mandatory
-        }
-      }
-      else
-        (true, Nil)
     /* end date validations */
 
     /* start direction validations */
