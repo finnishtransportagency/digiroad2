@@ -535,11 +535,6 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
     }
 
-    def endDateWasSet(laneChange: LaneChange): Boolean ={
-      val oldLane = laneChange.oldLane
-      oldLane.isDefined && laneChange.lane.attributes.exists(_.publicId == "end_date") && !oldLane.get.attributes.exists(_.publicId == "end_date")
-    }
-
     def mapLaneAddressInfo(lane: PersistedLane, roadLink: RoadLink) = {
       val roadStartAddr = roadLink.attributes.getOrElse("VIITE_START_ADDR", roadLink.attributes.get("TEMP_START_ADDR")).toString.toDouble
       val roadEndAddr = roadLink.attributes.getOrElse("VIITE_END_ADDR", roadLink.attributes.get("TEMP_END_ADDR")).toString.toDouble
@@ -620,14 +615,6 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "createdBy" -> lane.createdBy,
               "modifiedAt" -> lane.expiredDateTime.map(DateTimePropertyFormat.print(_)),
               "modifiedBy" -> lane.expiredBy))
-
-          case LaneChangeType.AttributesChanged if endDateWasSet(laneChange) =>
-            Seq(Map("OldId" -> lane.id,
-              "OldLaneNumber" -> lane.laneCode,
-              "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "createdBy" -> lane.createdBy,
-              "modifiedAt" -> lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
-              "modifiedBy" -> lane.modifiedBy))
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
