@@ -297,12 +297,12 @@
     var redrawLinearAssets = function(linearAssetChains) {
       me.vectorSource.clear();
       me.indicatorLayer.getSource().clear();
-      var linearAssets = _.flatten(linearAssetChains);
       me.decorateSelection(selectedLane.exists() ? selectedLane.getCurrentLaneNumber() : undefined);
-      me.drawLinearAssets(linearAssets, me.vectorSource);
+      me.drawLinearAssets(linearAssetChains);
     };
 
-    this.drawLinearAssets = function(linearAssets) {
+    this.drawLinearAssets = function(linearAssetChains) {
+      var linearAssets = _.flatten(linearAssetChains);
       var allButSelected = _.filter(linearAssets, function(asset){ return !_.some(selectedLane.get(), function(selectedAsset){
         return selectedAsset.linkId === asset.linkId && selectedAsset.sideCode == asset.sideCode &&
           selectedAsset.startMeasure === asset.startMeasure && selectedAsset.endMeasure === asset.endMeasure; }) ;
@@ -311,7 +311,8 @@
       me.readOnlyLayer.showLayer();
       me.highLightReadOnlyLayer();
       if(assetLabel) {
-        var splitChangedAssets = _.partition(allButSelected, function(a){ return (a.sideCode !== 1 && _.has(a, 'value'));});
+        var middleLinks = extractMiddleLinksOfChains(_.filter(linearAssetChains, function (chain) { return !_.isEmpty(chain); }), allButSelected);
+        var splitChangedAssets = _.partition(middleLinks, function(a){ return (a.sideCode !== 1 && _.has(a, 'value'));});
         me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.cloneDeep(_.omit(splitChangedAssets[0], 'geometry')), me.offsetBySideCode), me.uiState.zoomLevel));
         me.vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map( _.omit(splitChangedAssets[1], 'geometry'), me.offsetBySideCode), me.uiState.zoomLevel));
       }
@@ -319,6 +320,18 @@
 
     var offsetByLaneNumber = function (linearAsset) {
       return laneUtils.offsetByLaneNumber(linearAsset);
+    };
+
+    var extractMiddleLinksOfChains = function (linearAssetChains, linksToConsider) {
+      return _.flatMap(linearAssetChains, function (chain) {
+        var  links = _.isEmpty(linksToConsider) ? chain : _.intersectionWith(chain, linksToConsider, _.isEqual);
+        return _.map(_.groupBy(links, 'roadPartNumber'), function (chainByRoadPartNumber) {
+          var minAddressMValue = _.minBy(chainByRoadPartNumber, 'startAddrMValue');
+          var maxAddressMValue = _.maxBy(chainByRoadPartNumber, 'endAddrMValue');
+          var middleMValue = (maxAddressMValue.endAddrMValue - minAddressMValue.startAddrMValue)/2 + minAddressMValue.startAddrMValue;
+          return _.find(chainByRoadPartNumber, function(linearAsset) { return linearAsset.startAddrMValue <= middleMValue && linearAsset.endAddrMValue > middleMValue; });
+        });
+      });
     };
 
     this.decorateSelection = function (laneNumber) {
@@ -345,9 +358,7 @@
 
             _.each(currentFeatures, me.removeFeature);
 
-              selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(_.map(selectedFeatures, function (feature) {
-                return feature.values_;
-              }), me.uiState.zoomLevel));
+            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(extractMiddleLinksOfChains([_.head(linearAssets).selectedLinks]), me.uiState.zoomLevel));
         }
 
         removeOldAssetFeatures();
