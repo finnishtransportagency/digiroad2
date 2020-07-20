@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2.csvDataExport
 
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, sTestTransactions}
 import org.scalatest.{FunSuite, Matchers}
-import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 
 
@@ -28,7 +27,7 @@ class CsvDataExporterSpec extends CsvDataExporterSupport {
     val headersOutput = headers.mkString(";").concat("\r\n")
     val valuesOutput = values.map( m => m.values.mkString(";")).mkString("\r\n")
 
-    val result = PassThroughCSVDataExport.createStandardCSV(headers, values)
+    val result = PassThroughCSVDataExport.createStandardCSVData(headers, values)
 
     result should be (headersOutput + valuesOutput)
   }
@@ -41,7 +40,7 @@ class CsvDataExporterSpec extends CsvDataExporterSupport {
     )
 
     val output = values.map( m => m.values.mkString(";")).mkString("\r\n")
-    val result = PassThroughCSVDataExport.createStandardCSV(headers, values)
+    val result = PassThroughCSVDataExport.createStandardCSVData(headers, values)
 
     result should be (output)
   }
@@ -51,7 +50,7 @@ class CsvDataExporterSpec extends CsvDataExporterSupport {
     val values = Seq()
 
     val headersOutput = headers.mkString(";").concat("\r\n")
-    val result = PassThroughCSVDataExport.createStandardCSV(headers, values)
+    val result = PassThroughCSVDataExport.createStandardCSVData(headers, values)
 
     result should be (headersOutput)
   }
@@ -60,7 +59,7 @@ class CsvDataExporterSpec extends CsvDataExporterSupport {
     val headers = Seq()
     val values = Seq()
 
-    val result = PassThroughCSVDataExport.createStandardCSV(headers, values)
+    val result = PassThroughCSVDataExport.createStandardCSVData(headers, values)
 
     result should be (empty)
   }

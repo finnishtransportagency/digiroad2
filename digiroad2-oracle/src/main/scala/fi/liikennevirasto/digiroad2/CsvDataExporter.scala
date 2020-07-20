@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
-
 import fi.liikennevirasto.digiroad2.dao.ExportReportDAO
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
+
 
 // myabe change ImportStatusInfo and ExportStatusInfo to something like FileStatusInfo ?
 // and use it on import and export files
@@ -17,38 +17,43 @@ trait CsvDataExporterOperations {
     def eventBus: DigiroadEventBus
     val exportReportDAO: ExportReportDAO = new ExportReportDAO
 
+    def insertData(username: String, fileName: String, exportType: String, fileContent: String): Long = {
+      withDynTransaction {
+        exportReportDAO.create(username, fileName, exportType, fileContent )
+      }
+    }
 
     def getImportById(id: Long) : Option[ExportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      withDynTransaction {
         exportReportDAO.get(id)
       }
     }
 
     def getByUser(username: String) : Seq[ExportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+     withDynTransaction {
         exportReportDAO.getByUser(username)
       }
     }
 
     def getById(id: Long) : Option[ExportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      withDynTransaction {
         exportReportDAO.get(id)
       }
     }
 
     def getByIds(ids: Set[Long]) : Seq[ExportStatusInfo]  = {
-      OracleDatabase.withDynTransaction {
+      withDynTransaction {
         exportReportDAO.getByIds(ids)
       }
     }
 
     def update(id: Long, status: Status, content: Option[String] = None) : Long  = {
-      OracleDatabase.withDynTransaction {
+      withDynTransaction {
         exportReportDAO.update(id, status, content)
       }
     }
 
-    def createStandardCSV(headers: Seq[String], values: Seq[Map[String, String]]): String = {
+    def createStandardCSVData(headers: Seq[String], values: Seq[Map[String, String]]): String = {
 
       if (headers.isEmpty && values.isEmpty)
         return ""

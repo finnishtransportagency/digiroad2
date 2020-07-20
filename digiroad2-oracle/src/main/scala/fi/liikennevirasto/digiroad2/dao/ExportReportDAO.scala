@@ -26,11 +26,11 @@ class ExportReportDAO {
   }
 
 
-  def create(username: String, fileName: String, importType: String): Long = {
+  def create(username: String, fileName: String, exportType: String, fileContent: String): Long = {
     val id = sql"""SELECT primary_key_seq.nextval FROM dual""".as[Long].first
 
-    sqlu"""INSERT INTO export_report(id, file_name, import_type, created_by)
-           VALUES ($id, $fileName, $importType, $username)
+    sqlu"""INSERT INTO export_report(id, file_name, export_type, content, created_by)
+           VALUES ($id, $fileName, $exportType, $fileContent, $username)
       """.execute
 
     id
