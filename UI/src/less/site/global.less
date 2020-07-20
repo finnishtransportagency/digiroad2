@@ -140,6 +140,17 @@ a {
   }
 }
 
+.header-link-reports:extend(.header-link ) {
+  background-color: @blue;
+
+  &:hover, &:focus {
+    background-color: @blue-dark;
+    color: #fff;
+    text-decoration: none;
+  }
+
+}
+
 //== Main site structure
 @feature-attribute-panel-width: 400px;
 
