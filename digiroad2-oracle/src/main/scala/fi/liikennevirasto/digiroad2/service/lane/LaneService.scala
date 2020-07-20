@@ -783,7 +783,8 @@ trait LaneOperations {
 
   def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String): Unit = {
     attributes.foreach{ prop =>
-      dao.updateLaneAttributes(id, prop, username)
+      if (prop.values.isEmpty) dao.deleteLaneAttribute(id, prop)
+      else dao.updateLaneAttributes(id, prop, username)
     }
   }
 
