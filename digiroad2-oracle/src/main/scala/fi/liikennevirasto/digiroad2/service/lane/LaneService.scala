@@ -928,7 +928,7 @@ trait LaneOperations {
       if (changeSet.adjustedMValues.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedMValues.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
-      val toAdjustMValuesLanes = getPersistedLanesByIds(changeSet.adjustedMValues.map(_.laneId).toSet)
+      val toAdjustMValuesLanes = getPersistedLanesByIds(changeSet.adjustedMValues.map(_.laneId).toSet, false)
       changeSet.adjustedMValues.foreach { adjustment =>
         val oldLane = toAdjustMValuesLanes.find(_.id == adjustment.laneId).get
         val newIncomeLane = persistedToIncomeWithNewMeasures(oldLane, adjustment.startMeasure, adjustment.endMeasure)
@@ -939,7 +939,7 @@ trait LaneOperations {
       if (changeSet.adjustedVVHChanges.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
-      val toAdjustVVHChangesLanes = getPersistedLanesByIds(changeSet.adjustedVVHChanges.map(_.laneId).toSet)
+      val toAdjustVVHChangesLanes = getPersistedLanesByIds(changeSet.adjustedVVHChanges.map(_.laneId).toSet, false)
       changeSet.adjustedVVHChanges.foreach { adjustment =>
         val oldLane = toAdjustVVHChangesLanes.find(_.id == adjustment.laneId).get
         val newIncomeLane = persistedToIncomeWithNewMeasures(oldLane, adjustment.startMeasure, adjustment.endMeasure)
