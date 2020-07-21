@@ -323,7 +323,6 @@ trait LaneOperations {
         else
           (Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps)), Seq())
 
-        //Adjust SideCode for lanes with correct laneCodes but wrong sideCodes
         val lanesWithSideCodeAdjustment = adjustedSideCode.map(lane => SideCodeAdjustment(lane.id, SideCode.BothDirections))
 
         val toRemove = lanesToProcess.filter { lane =>
