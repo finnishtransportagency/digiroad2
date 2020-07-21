@@ -316,17 +316,15 @@ trait LaneOperations {
         (updatedLanes, newChangeSet)
 
       case TrafficDirection.TowardsDigitizing | TrafficDirection.AgainstDigitizing  =>
-
-        val toAdd = if (!lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))
-          Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps))
-        else
-          Seq()
-
         val (laneCodeStart, laneCodeEnd) = getLaneNumbersRange(mainLaneDirectionOK)
 
+        val (toAdd, adjustedSideCode) = if (lanesToProcess.exists(lane => lane.laneCode == mainLaneDirectionOK))
+          (Seq(), editLanesNeedSideCodeAdjust(lanesToProcess, laneCodeStart, laneCodeEnd, SideCode.BothDirections))
+        else
+          (Seq(createPersistedLane(mainLaneDirectionOK, SideCode.BothDirections.value, baseLane.municipalityCode, baseProps)), Seq())
+
         //Adjust SideCode for lanes with correct laneCodes but wrong sideCodes
-        val lanesAdjustedNewSideCode = editLanesNeedSideCodeAdjust(lanesToProcess, laneCodeStart, laneCodeEnd, SideCode.BothDirections)
-        val lanesWithSideCodeAdjustment = lanesAdjustedNewSideCode.map(lane => SideCodeAdjustment(lane.id, SideCode.BothDirections))
+        val lanesWithSideCodeAdjustment = adjustedSideCode.map(lane => SideCodeAdjustment(lane.id, SideCode.BothDirections))
 
         val toRemove = lanesToProcess.filter { lane =>
           //all lanes with lane code opposite are to be deleted
@@ -338,7 +336,7 @@ trait LaneOperations {
           .map(_.id)
 
 
-        val updatedLanes = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id) || lanesAdjustedNewSideCode.exists(_.id == lane.id)) ++ lanesAdjustedNewSideCode
+        val updatedLanes = (lanes ++ toAdd).filterNot(lane => toRemove.contains(lane.id) || adjustedSideCode.exists(_.id == lane.id)) ++ adjustedSideCode
         val newChangeSet = changeSet.copy(generatedPersistedLanes = updatedLanes,
           expiredLaneIds = changeSet.expiredLaneIds ++ toRemove,
           adjustedSideCodes = changeSet.adjustedSideCodes ++ lanesWithSideCodeAdjustment)
