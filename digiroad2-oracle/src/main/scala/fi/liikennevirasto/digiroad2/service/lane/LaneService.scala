@@ -562,22 +562,23 @@ trait LaneOperations {
       val relevantHistory = historyLanes.find(history => history.newId == upToDate.id)
 
       relevantHistory match {
-        case Some(history) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2 =>
-          Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
-
-        case Some(history) if upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure =>
-          Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Lengthened, roadLink))
-
-        case Some(history) if upToDate.endMeasure - upToDate.startMeasure < history.endMeasure - history.startMeasure =>
-          Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Shortened, roadLink))
-
         case Some(history) =>
-          //fetch the lane with same id to this upToDate that was sent to history where it has the old lane code
           val uptoDateLastModification = historyLanes.filter(historyLane =>
-            history.newId == historyLane.oldId && historyLane.newId == 0 && (historyLane.historyCreatedDate.isAfter(history.historyCreatedDate) || historyLane.historyCreatedDate.isEqual(history.historyCreatedDate)))
-            .minBy(_.historyCreatedDate.getMillis)
-          if (upToDate.laneCode != uptoDateLastModification.laneCode)
-            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification)), LaneChangeType.LaneCodeTransfer, roadLink))
+            history.newId == historyLane.oldId && historyLane.newId == 0 &&
+              (historyLane.historyCreatedDate.isAfter(history.historyCreatedDate) || historyLane.historyCreatedDate.isEqual(history.historyCreatedDate)))
+
+          if (uptoDateLastModification.nonEmpty && upToDate.laneCode != uptoDateLastModification.minBy(_.historyCreatedDate.getMillis).laneCode)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification.minBy(_.historyCreatedDate.getMillis))), LaneChangeType.LaneCodeTransfer, roadLink))
+
+          else if (historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
+
+          else if (upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Lengthened, roadLink))
+
+          else if(upToDate.endMeasure - upToDate.startMeasure < history.endMeasure - history.startMeasure)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Shortened, roadLink))
+
           else
             None
 

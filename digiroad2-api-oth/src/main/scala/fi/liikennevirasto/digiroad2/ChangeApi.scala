@@ -681,7 +681,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "roadStartAddr" -> segmentStartAddr,
               "roadEndAddr" -> segmentEndAddr) ++ segmentModificationMap
 
-            Seq(Map("type" -> "Feature",
+            val sameSegmentMap = Map("type" -> "Feature",
               "changeType" -> "Modify",
               "geometry" -> getGeometryMap(laneChange.roadLink.get),
               "createdAt" -> oldLane.createdDateTime.map(DateTimePropertyFormat.print(_)),
@@ -697,8 +697,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "OldLaneNumber" -> oldLane.laneCode,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
-              "NewlaneType" -> laneType) ++ sameSegmentLaneAddressInfo,
-              segmentMap)
+              "NewlaneType" -> laneType) ++ sameSegmentLaneAddressInfo
+
+            //if there is a LaneCodeTransfer type than the sameSegment will already be made on the LaneCodeTransfer case
+            if(laneChanges.exists(lc => lc.changeType == LaneChangeType.LaneCodeTransfer && lc.lane.id == lane.id))
+              Seq(segmentMap + ("modifiedAt" -> oldLane.expiredDateTime.map(DateTimePropertyFormat.print(_)), "modifiedBy" -> oldLane.expiredBy))
+            else
+              Seq(sameSegmentMap, segmentMap)
 
           case _ => Seq()
         }
