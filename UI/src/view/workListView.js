@@ -147,6 +147,7 @@
         obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
         railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
         trafficSigns: 'Geometrian ulkopuolelle jääneet liikennemerkit',
+        directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
         maintenanceRoad: 'Tarkistamattomien huoltoteiden lista',
 
         hazardousMaterialTransportProhibitionErrors: {Title: 'Laatuvirhelista',  SourceLayer: 'hazardousMaterialTransportProhibition'},
