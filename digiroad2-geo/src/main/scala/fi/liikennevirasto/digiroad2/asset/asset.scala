@@ -76,6 +76,20 @@ case object SpecialTransportWithGate extends LinkType { def value = 15 }
 case object CableFerry extends LinkType { def value = 21 }
 case object UnknownLinkType extends LinkType { def value = 99 }
 
+sealed trait FunctionalClass
+{
+  def value: Int
+}
+object FunctionalClass {
+  val values = Set(WalkingAndCyclingPath, UnknownFunctionalClass)
+
+  def apply(value: Int): FunctionalClass = {
+    values.find(_.value == value).getOrElse(UnknownFunctionalClass)
+  }
+}
+case object WalkingAndCyclingPath extends FunctionalClass { def value = 8 }
+case object UnknownFunctionalClass extends FunctionalClass { def value = 99 }
+
 sealed trait AdministrativeClass {
   def value: Int
 }
@@ -117,11 +131,6 @@ case object MunicipalityMaintenainer extends InformationSource { def value = 2 }
 case object MmlNls extends InformationSource { def value = 3 }
 
 case object UnknownSource extends InformationSource { def value = 99 }
-
-
-object FunctionalClass {
-  val Unknown: Int = 99
-}
 
 sealed trait TrafficDirection {
   def value: Int

@@ -273,9 +273,15 @@
       };
     });
 
-    this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom) {
+    this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom, isWalkingCyclingActive) {
       return {
-        url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom
+        url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom + '&withWalkingCycling=' + isWalkingCyclingActive
+      };
+    });
+
+    this.getMapByBoundingBox = latestResponseRequestor(function(boundingBox) {
+      return {
+        url: 'api/map?bbox=' + boundingBox
       };
     });
 

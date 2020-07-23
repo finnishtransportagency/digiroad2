@@ -116,7 +116,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.modifiedAt should equal(None)
       beforeUpdate.validityDirection should equal(2)
 
-      val roadLink =  RoadLink(123, linkGeometry, 200, Municipality, FunctionalClass.Unknown, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), linkSource = NormalLinkInterface)
+      val roadLink =  RoadLink(123, linkGeometry, 200, Municipality, UnknownFunctionalClass.value, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)), linkSource = NormalLinkInterface)
       val textValues = Seq(PropertyValue("New text"))
       val simpleProperty = SimplePointAssetProperty("opastustaulun_teksti", textValues)
       val newAssetId = service.update(id = 600053, IncomingDirectionalTrafficSign(200, 0, 123, 3, Some(0), Set(simpleProperty)), roadLink,  "test")

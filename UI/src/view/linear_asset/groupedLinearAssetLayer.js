@@ -44,6 +44,16 @@
       isComplementaryChecked = false;
     };
 
+    //TODO: Map task
+    var showWalkingCycling = function() {
+      collection.activeWalkingCycling(true);
+    };
+
+    var hideWalkingCycling = function() {
+      removeLayerFeatures();
+      collection.activeWalkingCycling(false);
+    };
+
     var removeLayerFeatures = function(){
       vectorLayer.getSource().clear();
     };
@@ -88,7 +98,10 @@
       showLayer: showLayer,
       removeLayerFeatures: removeLayerFeatures,
       showWithComplementary: showWithComplementary,
-      hideComplementary: hideComplementary
+      hideComplementary: hideComplementary,
+      //TODO: Map task
+      showWalkingCycling: showWalkingCycling,
+      hideWalkingCycling: hideWalkingCycling
     };
   };
 })(this);

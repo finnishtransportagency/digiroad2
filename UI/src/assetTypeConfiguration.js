@@ -972,7 +972,9 @@
           title: 'Kaistan mallinnustyökalu',
         },
         isSeparable: false,
+        allowMapViewOnly: true,
         allowComplementaryLinks: true,
+        allowWalkingCyclingLinks: true,
         isVerifiable: false,
         style: new LaneModellingStyle(),
         form: new LaneModellingForm({

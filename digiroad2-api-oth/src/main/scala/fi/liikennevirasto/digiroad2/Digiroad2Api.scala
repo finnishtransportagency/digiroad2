@@ -2254,6 +2254,16 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/map") {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+
   get("/lanes") {
     params.get("bbox").map { bbox =>
       val zoom = params.getOrElse("zoom", halt(BadRequest("Missing zoom"))).toInt
@@ -2264,7 +2274,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         mapLightLane(usedService.getByZoomLevel( Some(LinkGeomSource.NormalLinkInterface)))
       } else {
         validateBoundingBox(boundingRectangle)
-        val assets = usedService.getByBoundingBox(boundingRectangle)
+        val assets = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params("withWalkingCycling").toBoolean)
 
         val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
         val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))

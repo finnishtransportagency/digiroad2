@@ -235,7 +235,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       roadLinks.find(_.linkId == 456).get.functionalClass should be(7)
       roadLinks.find(_.linkId == 456).get.linkType should be(TractorRoad)
 
-      roadLinks.find(_.linkId == 789).get.functionalClass should be(FunctionalClass.Unknown)
+      roadLinks.find(_.linkId == 789).get.functionalClass should be(UnknownFunctionalClass.value)
       roadLinks.find(_.linkId == 789).get.linkType should be(UnknownLinkType)
 
       roadLinks.find(_.linkId == 111).get.functionalClass should be(8)
@@ -294,7 +294,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into incomplete_link (id, link_id, municipality_code, administrative_class) values (43241231233, 1, 91, 1)""".execute
 
       simulateQuery {
-        val linkProperty = LinkProperties(1, FunctionalClass.Unknown, Freeway, TrafficDirection.BothDirections, Municipality)
+        val linkProperty = LinkProperties(1, UnknownFunctionalClass.value, Freeway, TrafficDirection.BothDirections, Municipality)
         service.updateLinkProperties(linkProperty, Option("test"), { (_, _) => })
       }
       simulateQuery {
@@ -427,7 +427,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(boundingBox, Set())).thenReturn(Promise.successful(Seq(newRoadLink)).future)
       when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(changeInfo).future)
       val after = service.getRoadLinksFromVVH(boundingBox)
-      after.head.functionalClass should be(FunctionalClass.Unknown)
+      after.head.functionalClass should be(UnknownFunctionalClass.value)
       after.head.linkType should be(UnknownLinkType)
       after.head.trafficDirection should be(TrafficDirection.BothDirections)
 

@@ -1,10 +1,23 @@
 (function(root) {
   root.LaneModellingCollection = function(backend, verificationCollection, spec) {
     LinearAssetsCollection.call(this, backend, verificationCollection, spec);
+    var isWalkingCyclingActive = false;
+    var isGeometryActive = true;
     var self = this;
 
     self.fetch = function(boundingBox, center, zoom) {
-      return self.fetchAssets(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom), center);
+      if (isGeometryActive)
+        return self.fetchAssets(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive), center);
+      else
+        return self.fetchAssets(boundingBox, backend.getMapByBoundingBox(boundingBox), center);
+    };
+
+    this.activeWalkingCycling = function(enable) {
+      isWalkingCyclingActive = enable;
+    };
+
+    this.activeGeometry = function(enable) {
+      isGeometryActive = enable;
     };
 
     self.getGroup = function(segment) {
