@@ -297,9 +297,12 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     lane.attributes match {
       case props: Seq[LaneProperty] =>
-        props.filterNot( _.publicId == "lane_code" )
-             .foreach( attr => updateLaneAttributes(lane.id, attr, username) )
-
+        props
+          .filterNot( _.publicId == "lane_code" )
+          .foreach { attr =>
+            if (attr.values.isEmpty) deleteLaneAttribute(lane.id, attr)
+            else updateLaneAttributes(lane.id, attr, username)
+          }
       case _ => None
     }
 
@@ -327,9 +330,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
   }
 
   def updateLaneAttributes(laneId: Long, props: LaneProperty, username: String ): Unit = {
-
-    val finalValue = if (props.values.isEmpty) "Null"
-                     else props.values.head.value.toString
+    val finalValue = props.values.head.value.toString
 
     sqlu"""MERGE INTO LANE_ATTRIBUTE
           USING dual
@@ -344,6 +345,11 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     """.execute
   }
 
+  def deleteLaneAttribute(laneId: Long, props: LaneProperty): Unit = {
+    sqlu"""
+      delete from LANE_ATTRIBUTE where LANE_ID = $laneId and NAME = ${props.publicId}
+    """.execute
+  }
 
   def updateLaneModifiedFields (laneId: Long, username: String): Unit = {
     sqlu"""
