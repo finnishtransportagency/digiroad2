@@ -180,6 +180,21 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
+  test("Remove unused attributes from database") {
+    runWithRollback {
+      val lanePropertiesWithDate = lanePropertiesValues12 ++ Seq( LaneProperty("start_date", Seq(LanePropertyValue("20.07.2020"))) )
+      val lanePropertiesWithEmptyDate = lanePropertiesValues12 ++ Seq( LaneProperty("start_date", Seq()) )
+
+      val newLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(100L), 1, usernameTest)
+      val createdLane = ServiceWithDao.getPersistedLanesByIds(newLaneId.toSet)
+      createdLane.head.attributes.length should be(3)
+
+      val updatedLaneId = ServiceWithDao.update(Seq(NewIncomeLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(100L), 1, usernameTest)
+      val updatedLane = ServiceWithDao.getPersistedLanesByIds(updatedLaneId.toSet)
+      updatedLane.head.attributes.length should be(2)
+    }
+  }
+
   test("Expire a sub lane") {
     runWithRollback {
       //NewIncomeLanes to create
