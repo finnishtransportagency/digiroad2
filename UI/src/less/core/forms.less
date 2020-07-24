@@ -698,6 +698,72 @@ input[type="checkbox"] {
     }
   }
 
+  &#csvExport:extend(#csvImport all) {
+    .form-group {
+      margin-left: 10px;
+      margin-top: 10px;
+      width: 100% !important;
+
+      .municipalities {
+        clear: both;
+        margin-left: -13px;
+        padding-top: 0;
+        display: none;
+      }
+    }
+
+    .row {
+      min-width: 750px !important;
+    }
+
+    #municipalities_search, #municipalities_search_to {
+      width: 300px  !important;
+      margin-top: 0;
+      max-height: 150px !important;
+    }
+
+    #right_municipalities, #left_municipalities{
+      width: 300px !important;
+    }
+
+    .col-xs-5 {
+      max-width: 300px !important;
+      display: inline-block;
+    }
+
+    .col-xs-2 {
+      max-width: 24px;
+      display: inline-block;
+      margin-left: 5px;
+      margin-right: 5px;
+      margin-bottom: 10px;
+    }
+
+    .labelBoxRight {
+      width: 300px !important;
+      text-align: center;
+    }
+
+    .labelBoxLeft {
+      width: 300px !important;
+      text-align: center;
+    }
+
+    #assets_search, #assets_search_to {
+      width: 300px;
+      margin-top: 0;
+      max-height: 150px;
+    }
+
+    #assets_search_rightSelected, #assets_search_leftSelected {
+      width: 24px;
+    }
+
+    #right_assets, #left_assets{
+      width: 300px;
+    }
+  }
+
 }
 
 .pdfBackgroundColor {
@@ -741,7 +807,7 @@ input[type="checkbox"] {
       border-color: @input-border-disabled-dark;
       color: @input-color-placeholder-dark;
       background-color: @input-bg-disabled-dark;
-    }    
+    }
   }
 
   .radio,

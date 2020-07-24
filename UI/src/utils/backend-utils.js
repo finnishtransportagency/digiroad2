@@ -531,6 +531,21 @@
       return $.getJSON('api/unverifiedMunicipality?municipalityCode=' + municipalityCode);
     };
 
+    this.getAssetTypes = function () {
+      return $.getJSON('api/getAssetTypes');
+    };
+
+    this.postGenerateCsvReport = function (municipalities, assets, success, failure) {
+      $.ajax({
+        url: 'api/export/generateCsvReport/'+municipalities+'/'+assets,
+        type: 'POST',
+        processData: false,
+        contentType: false,
+        success: success,
+        error: failure
+      });
+    };
+
     this.getMunicipalities = function () {
       return $.getJSON('api/municipalities/byUser');
     };

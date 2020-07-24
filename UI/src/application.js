@@ -138,6 +138,7 @@
     new SpeedLimitWorkList().initialize();
     new InaccurateWorkList().initialize();
     new PrivateRoadsWorkList().initialize(backend);
+    new csvReportsWorkList().initialize(backend);
     new UserNotificationPopup(models.userNotificationCollection).initialize();
     new MunicipalitySituationPopup(models.municipalitySituationCollection).initialize();
 

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao
 
+import fi.liikennevirasto.digiroad2.asset.AssetTypeInfo
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.{ExportStatusInfo, Status}
 import org.joda.time.DateTime
@@ -11,6 +12,8 @@ import slick.jdbc.StaticQuery.interpolation
 class ExportReportDAO {
   val logger = LoggerFactory.getLogger(getClass)
 
+  lazy val municipalityDao = new MunicipalityDao
+
   implicit val getResult = new GetResult[ExportStatusInfo] {
     def apply(r: PositionedResult) : ExportStatusInfo = {
       val id = r.nextLong()
@@ -18,19 +21,30 @@ class ExportReportDAO {
       val status = r.nextInt()
       val createdDate = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val createdBy = r.nextStringOption()
-      val export_type = r.nextString()
+      val exportedAssets = r.nextString()
+      val municipalities = r.nextString()
       val content = r.nextStringOption()
 
-      ExportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, export_type, content)
+      val assetsName = exportedAssets.split(",")
+                                      .map( AssetTypeInfo(_).nameFI )
+                                      .mkString(",")
+
+      val municipalitiesAsSet = municipalities.split(",").map(_.toInt).toSet
+      val municipalitiesName = municipalityDao.getMunicipalitiesNameAndIdByCode( municipalitiesAsSet )
+                                              .map(_.name)
+                                              .mkString(",")
+
+
+      ExportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, assetsName, municipalitiesName, content)
     }
   }
 
 
-  def create(username: String, fileName: String, exportType: String, fileContent: String): Long = {
+  def create(username: String, fileName: String, exportType: String, municipalities: String): Long = {
     val id = sql"""SELECT primary_key_seq.nextval FROM dual""".as[Long].first
 
-    sqlu"""INSERT INTO export_report(id, file_name, export_type, content, created_by)
-           VALUES ($id, $fileName, $exportType, $fileContent, $username)
+    sqlu"""INSERT INTO export_report(id, file_name, exported_assets, municipalities, created_by)
+           VALUES ($id, $fileName, $exportType, $municipalities, $username)
       """.execute
 
     id
@@ -46,7 +60,7 @@ class ExportReportDAO {
   }
 
   def get(logId: Long): Option[ExportStatusInfo] = {
-    sql"""SELECT ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, CONTENT
+    sql"""SELECT ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, EXPORTED_ASSETS, MUNICIPALITIES, CONTENT
           FROM export_report
           WHERE id = $logId
       """.as[ExportStatusInfo].firstOption
@@ -54,7 +68,7 @@ class ExportReportDAO {
 
   def getByIds(logIds: Set[Long]): Seq[ExportStatusInfo] = {
     MassQuery.withIds(logIds) { idTableName =>
-      sql"""SELECT er.ID, er.FILE_NAME, er.STATUS, er.CREATED_DATE, er.CREATED_BY, er.IMPORT_TYPE, NULL
+      sql"""SELECT er.ID, er.FILE_NAME, er.STATUS, er.CREATED_DATE, er.CREATED_BY, er.EXPORTED_ASSETS, er.MUNICIPALITIES, NULL
             FROM export_report er
               JOIN  #$idTableName i ON i.id = er.id
          """.as[ExportStatusInfo].list
@@ -62,7 +76,7 @@ class ExportReportDAO {
   }
 
   def getByUser(username: String): Seq[ExportStatusInfo] = {
-    sql"""SELECT ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, IMPORT_TYPE, NULL
+    sql"""SELECT ID, FILE_NAME, STATUS, CREATED_DATE, CREATED_BY, EXPORTED_ASSETS, MUNICIPALITIES, NULL
           FROM export_report
           WHERE created_by = $username
           ORDER BY created_date DESC

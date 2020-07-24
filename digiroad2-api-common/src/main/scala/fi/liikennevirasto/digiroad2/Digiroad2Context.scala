@@ -2,7 +2,6 @@ package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.client.tierekisteri.TierekisteriMassTransitStopClient
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
@@ -13,7 +12,7 @@ import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MassTransitStopD
 import fi.liikennevirasto.digiroad2.lane.{LaneFiller, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
-import fi.liikennevirasto.digiroad2.middleware.{CsvDataImporterInfo, DataImportManager, TrafficSignManager}
+import fi.liikennevirasto.digiroad2.middleware.{CsvDataExporterInfo, CsvDataImporterInfo, DataExportManager, DataImportManager, TrafficSignManager}
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.process.{WidthLimitValidator, _}
@@ -28,8 +27,8 @@ import fi.liikennevirasto.digiroad2.util.{GeometryTransform, JsonSerializer}
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import org.apache.http.impl.client.HttpClientBuilder
 import org.slf4j.LoggerFactory
-
 import scala.concurrent.duration.FiniteDuration
+
 
 class ValluActor(massTransitStopService: MassTransitStopService) extends Actor {
   val municipalityService: MunicipalityService = Digiroad2Context.municipalityService
@@ -99,6 +98,13 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
 class DataImporter(dataImportManager: DataImportManager) extends Actor {
   def receive = {
     case x: CsvDataImporterInfo => dataImportManager.importer(x)
+    case _ => println("DataImporter: Received unknown message")
+  }
+}
+
+class DataExporter(dataExportManager: DataExportManager) extends Actor {
+  def receive = {
+    case x: CsvDataExporterInfo => dataExportManager.processExport(x)
     case _ => println("DataImporter: Received unknown message")
   }
 }
@@ -340,6 +346,9 @@ object Digiroad2Context {
   val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
   eventbus.subscribe(importCSVDataUpdater, "importCSVData")
 
+  val exportCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "exportCSVDataUpdater")
+  eventbus.subscribe(exportCSVDataUpdater, "exportCSVData")
+
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")
   eventbus.subscribe(linearAssetUpdater, "linearAssets:update")
 
@@ -568,6 +577,10 @@ object Digiroad2Context {
 
   lazy val dataImportManager: DataImportManager = {
     new DataImportManager(vvhClient, roadLinkService, eventbus)
+  }
+
+  lazy val dataExportManager: DataExportManager = {
+    new DataExportManager(roadLinkService, eventbus, userProvider)
   }
 
   lazy val maintenanceRoadService: MaintenanceService = {

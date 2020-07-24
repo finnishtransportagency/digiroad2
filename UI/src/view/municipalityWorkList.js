@@ -278,7 +278,7 @@
         '<div class="content-box">' +
         '<header id="work-list-header">' + me.title +
          '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
-         '<a class="header-link-reports" href="#">Raportointityökalu</a>'+
+         '<a class="header-link-reports" href="#work-list/csvReports">Raportointityökalu</a>'+
         '</header>' +
         '<div class="work-list">' +
         '</div>' +

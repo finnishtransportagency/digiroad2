@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.csvDataExport
+package fi.liikennevirasto.digiroad2.dataexport
 
 import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
@@ -33,7 +33,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
   val mockMunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockUserProvider = MockitoSugar.mock[OracleUserProvider]
 
-  val assetReportCsvExporter = new AssetReportCsvExporter(mockRoadLinkService, mockEventBus){
+  val assetReportCsvExporter = new AssetReportCsvExporter(mockRoadLinkService, mockEventBus, mockUserProvider){
     override val assetReporterDAO: AssetReporterDAO = mockAssetReporterDAO
     override val municipalityDao: MunicipalityDao = mockMunicipalityDao
     override val userProvider: UserProvider = mockUserProvider

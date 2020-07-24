@@ -1832,6 +1832,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/getAssetTypes") {
+    AssetTypeInfo.values.filterNot(_.typeId == 99).toList.sortBy(_.typeId).map { asset =>
+      Map("id" -> asset.typeId,
+        "name" -> { if (asset.nameFI.nonEmpty) asset.nameFI else asset.label }
+      )
+    }
+  }
+
   get("/municipalities/byUser") {
     val municipalityCode = try {
       params("municipalityCode").asInstanceOf[Option[Int]]

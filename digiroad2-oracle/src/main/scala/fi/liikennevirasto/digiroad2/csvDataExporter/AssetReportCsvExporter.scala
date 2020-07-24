@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataExporter
 
-import fi.liikennevirasto.digiroad2.asset.{DateParser, TrafficSigns}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, DateParser, TrafficSigns}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -8,20 +8,27 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Status}
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 
 
 case class ExportAssetReport(municipalityName: String, assetTypeId: Int, assetNameFI: String, assetGeomType: String,
                              operatorUser: String, operatorModifiedDate: Option[DateTime],
                              municipalityUser: String, municipalityModifiedDate: Option[DateTime] )
 
+sealed trait SpecialAssetsTypeValues {
+  val id: Int
+}
+case object AllAssets extends SpecialAssetsTypeValues {val id = 1}
+case object PointAssets extends SpecialAssetsTypeValues {val id = 2}
+case object LinearAssets extends SpecialAssetsTypeValues {val id = 3}
 
-class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataExporter(eventBusImpl: DigiroadEventBus){
+
+
+class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, userProviderImpl: UserProvider) extends CsvDataExporter(eventBusImpl: DigiroadEventBus){
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
   val assetReporterDAO = new AssetReporterDAO()
   val municipalityDao = new MunicipalityDao()
-  val userProvider: UserProvider = new OracleUserProvider
+  val userProvider: UserProvider = userProviderImpl
 
   val mainHeaders = "Kunta;Tietolaji;kohteiden määrä (pistemäinen);Kohteita (viivamainen);Muokattu pvm (operaattori);Muokattu pvm (kuntakäyttäjä);Käyttäjä (operaattori);Käyttäjä (kuntakäyttäjä);*Liikennemerkit kpl lisätty 1.6.2020 jälkeen\r\n"
 
@@ -156,20 +163,56 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val allInfo = exportAssetsByMunicipality(assetTypesList, municipalitiesList, extractPointsAsset).sortBy(_.assetNameFI)
     val allRecords = extractRecords(allInfo)
 
-    mainHeaders + allRecords.mkString("\r\n")
+    allRecords.mkString("\r\n")
+  }
+
+  def decodeAssetsToProcess(assetTypesList: List[Int]): List[Int] = {
+
+    if ( assetTypesList.contains(AllAssets.id) ) {
+      AssetTypeInfo.values.map(_.typeId).toList
+    }
+    else if ( assetTypesList.contains(PointAssets.id) ) {
+      val result = AssetTypeInfo.values
+                                .filter(_.geometryType == "point")
+                                .map (_.typeId)
+
+      (result ++ assetTypesList).toList
+    }
+    else if ( assetTypesList.contains(LinearAssets.id) ) {
+      val result = AssetTypeInfo.values
+                                .filter(_.geometryType == "linear")
+                                .map(_.typeId)
+
+      (result ++ assetTypesList).toList
+    }
+    else
+      assetTypesList
   }
 
 
-  def exportAssetsByMunicipalityCSVGenerator(assetTypesList: List[Int], municipalitiesList: List[Int], extractPointsAsset: Boolean = false) = {
+  def decodeMunicipalitiesToProcess(municipalities: List[Int]): List[Int] = {
+    if (municipalities.isEmpty || municipalities.contains(1000)) /* 1000 = All municipalities */
+      municipalityDao.getMunicipalitiesInfo.map(_._1).toList
+    else
+      municipalities
+  }
 
-    val user = userProvider.getCurrentUser()
-    val filename = "export_".concat(DateParser.dateToString(DateTime.now, DateTimeFormat.forPattern("ddMMyyyy_HHmmss")) )
-                            .concat(".csv")
 
-    val logId = insertData( user.username, filename, assetTypesList.mkString(","), "" )
+
+  def exportAssetsByMunicipalityCSVGenerator(assetTypesList: List[Int], municipalitiesList: List[Int], logId: Long) = {
 
     try {
-      val fileContent = generateCSVContent(assetTypesList, municipalitiesList, extractPointsAsset)
+
+      val finalAssetList = decodeAssetsToProcess(assetTypesList)
+      val (linearAssets, pointAssets) = finalAssetList.partition( AssetTypeInfo(_).geometryType == "linear")
+
+      val linearContent = if (linearAssets.nonEmpty) generateCSVContent(assetTypesList, municipalitiesList)
+                        else ""
+
+      val pointContent = if (pointAssets.nonEmpty) generateCSVContent(assetTypesList, municipalitiesList, true)
+                        else ""
+
+      val fileContent = mainHeaders ++ linearContent ++ pointContent
       update(logId, Status.OK, Some(fileContent) )
 
     } catch {

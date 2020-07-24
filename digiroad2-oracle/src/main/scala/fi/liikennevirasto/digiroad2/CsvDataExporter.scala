@@ -5,9 +5,9 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.joda.time.DateTime
 
 
-// myabe change ImportStatusInfo and ExportStatusInfo to something like FileStatusInfo ?
-// and use it on import and export files
-case class ExportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String, createdBy: Option[String], createdDate: Option[DateTime], exportedAssets: String, content: Option[String])
+case class ExportStatusInfo(id: Long, status: Int, statusDescription: String, fileName: String,
+                            createdBy: Option[String], createdDate: Option[DateTime], exportedAssets: String,
+                            municipalities: String, content: Option[String])
 
 
 trait CsvDataExporterOperations {
@@ -17,9 +17,9 @@ trait CsvDataExporterOperations {
     def eventBus: DigiroadEventBus
     val exportReportDAO: ExportReportDAO = new ExportReportDAO
 
-    def insertData(username: String, fileName: String, exportType: String, fileContent: String): Long = {
+    def insertData(username: String, fileName: String, exportType: String, municipalities: String): Long = {
       withDynTransaction {
-        exportReportDAO.create(username, fileName, exportType, fileContent )
+        exportReportDAO.create(username, fileName, exportType, municipalities )
       }
     }
 

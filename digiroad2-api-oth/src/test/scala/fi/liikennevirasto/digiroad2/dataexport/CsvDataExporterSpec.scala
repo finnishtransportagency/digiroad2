@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.csvDataExport
+package fi.liikennevirasto.digiroad2.dataexport
 
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, sTestTransactions}
 import org.scalatest.{FunSuite, Matchers}
