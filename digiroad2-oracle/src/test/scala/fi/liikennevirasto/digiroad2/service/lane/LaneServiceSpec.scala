@@ -806,11 +806,11 @@ class LaneServiceSpec extends LaneTestSupporter {
       1, TrafficDirection.BothDirections, Motorway, None, None)
 
     val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
-      11, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+      11, 745L, 0, 10.0, None, None, None, None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))) )
 
     val lane21 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
-      21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+      21, 745L, 0, 10.0, None, None, None,  None, None, None, expired = false, 0L, None,
       Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21)))) )
 
     val roadAddress = RoadAddressTEMP(roadLinkTowards1.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
