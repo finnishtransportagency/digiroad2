@@ -18,6 +18,7 @@ import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 
 
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LaneOperations {
@@ -859,5 +860,26 @@ trait LaneOperations {
       }
     else
       expireProcess()
+  }
+
+  /**
+    * Populates start date property of lanes that don't have it filled with current date
+    * @param lanes lanes to populate start date property
+    * @return lanes with populated start date property
+    */
+  def populateStartDate(lanes: Set[NewIncomeLane]): Set[NewIncomeLane] = {
+    lanes.map { lane =>
+      val property = lane.properties.find(_.publicId == "start_date")
+      val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
+
+      val updatedProperty = property match {
+        case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty =>
+          prop.copy(values = lanePropertyDateValues)
+        case Some(prop) => prop
+        case _ => LaneProperty("start_date", lanePropertyDateValues)
+      }
+
+      lane.copy(properties = lane.properties.filterNot(_.publicId == updatedProperty.publicId) ++ Seq(updatedProperty))
+    }
   }
 }

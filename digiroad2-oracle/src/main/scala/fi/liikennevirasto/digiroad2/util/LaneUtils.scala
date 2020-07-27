@@ -72,7 +72,7 @@ object LaneUtils {
     withDynTransaction {
       laneService.deleteMultipleLanes(linkIds, laneCodesToBeDeleted, newTransaction = false)
       laneService.multipleLanesToHistory(linkIds, laneCodesToBeExpired, username, newTransaction = false)
-      laneService.create(toInsert.toSeq, linkIds, sideCode, username, newTransaction = false)
+      laneService.create(laneService.populateStartDate(toInsert).toSeq, linkIds, sideCode, username, newTransaction = false)
       laneService.update(toUpdate.toSeq, linkIds, sideCode, username, newTransaction = false)
     }
   }
@@ -196,7 +196,7 @@ object LaneUtils {
       val filteredRoadAddresses = getRoadAddressToProcess()
 
       //Get only the lanes to create
-      val lanesToInsert = newIncomeLanes.filter(_.id == 0)
+      val lanesToInsert = laneService.populateStartDate(newIncomeLanes.filter(_.id == 0))
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>

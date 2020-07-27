@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
+import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
@@ -10,6 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
@@ -379,4 +381,18 @@ class LaneServiceSpec extends LaneTestSupporter {
     changeSet.expiredLaneIds should be (Set(1L,2L))
   }
 
+  test("Populate start date automatically") {
+    val startDateTest = Seq(LaneProperty("start_date", Seq(LanePropertyValue("01.01.2020"))))
+
+    val laneWithStartDate = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
+    val laneWithoutStartDate = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12 ++ startDateTest)
+
+    val currentTime = DateTime.now().toString(DatePropertyFormat)
+
+    val populatedLanes = ServiceWithDao.populateStartDate(Set(laneWithStartDate, laneWithoutStartDate))
+
+    populatedLanes.size should be(2)
+    populatedLanes.map(_.properties.length) should be(Set(3))
+    populatedLanes.map(_.properties.filter(_.publicId == "start_date").head.values.head.value.toString) should be(Set(currentTime, "01.01.2020"))
+  }
 }
