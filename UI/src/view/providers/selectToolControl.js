@@ -52,7 +52,9 @@
                 return !isPolygonActive && !isRectangleActive && enabled && !ol.events.condition.platformModifierKeyOnly(events) && (ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
             style: settings.style,
-            filter : settings.filterGeometry
+            filter : function (feature) {
+                return (!feature.getProperties().notSelectable) ? settings.filterGeometry : false;
+            }
         });
 
         selectInteraction.set('name', layer.get('name'));

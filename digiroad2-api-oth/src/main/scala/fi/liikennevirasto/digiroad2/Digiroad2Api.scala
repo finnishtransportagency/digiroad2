@@ -2274,11 +2274,11 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         mapLightLane(usedService.getByZoomLevel( Some(LinkGeomSource.NormalLinkInterface)))
       } else {
         validateBoundingBox(boundingRectangle)
-        val assets = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params("withWalkingCycling").toBoolean)
+        val (assets, roadLinks) = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params("withWalkingCycling").toBoolean)
 
         val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
         val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
-        mapLanes(updatedInfo ++ frozenInfo)
+        mapLanes(updatedInfo ++ frozenInfo) ++ roadLinks.map( link => Seq(roadLinkToApi(link)))
       }
 
     } getOrElse {

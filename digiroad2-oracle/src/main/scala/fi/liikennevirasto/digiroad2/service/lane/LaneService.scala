@@ -65,20 +65,24 @@ trait LaneOperations {
     * @param municipalities
     * @return
     */
-  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): Seq[Seq[PieceWiseLane]] = {
+  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[Seq[PieceWiseLane]], Seq[RoadLink]) = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
     val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
     val linearAssets = getLanesByRoadLinks(filteredRoadLinks, change)
 
+    val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
+
     val partitionedLanes = LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
 
-    partitionedLanes.map(_.filter { lane =>
+    val lanes = partitionedLanes.map(_.filter { lane =>
       getPropertyValue(lane, "lane_code") match {
         case Some(laneValue) =>
           LaneNumber.isMainLane(laneValue.value.asInstanceOf[Int])
         case _ => false
       }
     })
+
+    (lanes, roadLinksWithoutLanes)
   }
 
   // Validate if lane.SideCode is ok with roadAddress.SideCode.

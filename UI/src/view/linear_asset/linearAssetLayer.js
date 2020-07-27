@@ -603,17 +603,15 @@ root.LinearAssetLayer  = function(params) {
     me.refreshView();
   };
 
-    //TODO: Map task
   var showWalkingCycling = function () {
-    me.readOnlyLayer.showWalkingCycling();
+    collection.activeWalkingCycling(true);
     me.refreshView();
   };
 
-  //TODO: Map task
   var hideWalkingCycling = function () {
     me.selectToolControl.clear();
     selectedLinearAsset.close();
-    me.readOnlyLayer.hideWalkingCycling();
+    collection.activeWalkingCycling(false);
     roadAddressInfoPopup.stop();
     me.refreshView();
   };
