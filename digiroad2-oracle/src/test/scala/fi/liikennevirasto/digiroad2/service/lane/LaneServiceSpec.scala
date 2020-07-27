@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
 import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
-import fi.liikennevirasto.digiroad2.lane.{LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
+import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions, Track}
@@ -382,17 +382,17 @@ class LaneServiceSpec extends LaneTestSupporter {
   }
 
   test("Populate start date automatically") {
-    val startDateTest = Seq(LaneProperty("start_date", Seq(LanePropertyValue("01.01.2020"))))
-
-    val laneWithStartDate = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
-    val laneWithoutStartDate = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12 ++ startDateTest)
+    val lanes = Set(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11),
+                    NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
     val currentTime = DateTime.now().toString(DatePropertyFormat)
 
-    val populatedLanes = ServiceWithDao.populateStartDate(Set(laneWithStartDate, laneWithoutStartDate))
+    val populatedLanes = ServiceWithDao.populateStartDate(lanes)
 
     populatedLanes.size should be(2)
-    populatedLanes.map(_.properties.length) should be(Set(3))
-    populatedLanes.map(_.properties.filter(_.publicId == "start_date").head.values.head.value.toString) should be(Set(currentTime, "01.01.2020"))
+    populatedLanes.map(_.properties.length) should be(Set(2, 3))
+
+    val lanePopulated = populatedLanes.find(lane => !LaneNumber.isMainLane(ServiceWithDao.getLaneCode(lane).toInt)).get
+    lanePopulated.properties.find(_.publicId == "start_date").get.values.head.value.toString should be(currentTime)
   }
 }
