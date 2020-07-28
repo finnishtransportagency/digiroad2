@@ -168,22 +168,35 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
   def decodeAssetsToProcess(assetTypesList: List[Int]): List[Int] = {
 
+    val ( pointAssets, linearAssets ) = ( assetTypesList.contains(PointAssets.id), assetTypesList.contains(LinearAssets.id) )
+
     if ( assetTypesList.contains(AllAssets.id) ) {
       AssetTypeInfo.values.map(_.typeId).toList
     }
-    else if ( assetTypesList.contains(PointAssets.id) ) {
-      val result = AssetTypeInfo.values
-                                .filter(_.geometryType == "point")
-                                .map (_.typeId)
+    else if ( pointAssets || linearAssets ) {
 
-      (result ++ assetTypesList).toList
-    }
-    else if ( assetTypesList.contains(LinearAssets.id) ) {
-      val result = AssetTypeInfo.values
-                                .filter(_.geometryType == "linear")
-                                .map(_.typeId)
+      val allPoints = AssetTypeInfo.values
+                                  .filter(_.geometryType == "point")
+                                  .map(_.typeId)
 
-      (result ++ assetTypesList).toList
+      val allLinears = AssetTypeInfo.values
+                                    .filter(_.geometryType == "linear")
+                                    .map(_.typeId)
+
+      (pointAssets, linearAssets) match {
+        case (true, false) =>
+          (allPoints ++ assetTypesList).filterNot(_ == PointAssets.id).toList
+
+        case (false, true) =>
+          (allLinears ++ assetTypesList).filterNot(_ == LinearAssets.id).toList
+
+        case (true, true) =>
+          (allPoints ++ allLinears).filterNot(id => id == PointAssets.id || id == LinearAssets.id).toList
+
+        case _ =>
+          List()
+      }
+
     }
     else
       assetTypesList
@@ -191,15 +204,17 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
 
   def decodeMunicipalitiesToProcess(municipalities: List[Int]): List[Int] = {
-    if (municipalities.isEmpty || municipalities.contains(1000)) /* 1000 = All municipalities */
-      municipalityDao.getMunicipalitiesInfo.map(_._1).toList
+    if (municipalities.isEmpty || municipalities.contains(1000)) { /* 1000 = All municipalities */
+      withDynSession {
+        municipalityDao.getMunicipalitiesInfo.map(_._1).toList
+      }
+    }
     else
       municipalities
   }
 
 
-
-  def exportAssetsByMunicipalityCSVGenerator(assetTypesList: List[Int], municipalitiesList: List[Int], logId: Long) = {
+  def exportAssetsByMunicipalityCSVGenerator(assetTypesList: List[Int], municipalitiesList: List[Int], logId: Long): Long = {
 
     try {
 

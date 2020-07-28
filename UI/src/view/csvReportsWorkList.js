@@ -12,29 +12,19 @@
 
     this.initialize = function (mapBackend) {
       backend = mapBackend;
-     // addMultiselectScript();
-
       me.bindEvents();
     };
 
-
-   /* function addMultiselectScript() {
-      var script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = 'node_modules/multiselect-two-sides/dist/js/multiselect.min.js';
-
-      document.getElementsByTagName('head')[0].appendChild(script);
-    }*/
 
     this.bindEvents = function () {
       eventbus.on('csvReports:select', function (listP) {
         $('.container').hide();
         $('#work-list').show();
         $('body').addClass('scrollable');
-
-        me.generateWorkList(listP);
-
         me.addSpinner();
+        me.generateWorkList(listP);
+        me.getJobs();
+        me.removeSpinner();
       });
 
     };
@@ -180,7 +170,6 @@
 
     this.generateWorkList = function (listP) {
       listP.then(function (result) {
-        me.removeSpinner();
 
         $('#work-list').html('' +
             '<div style="overflow: auto;">' +
@@ -195,7 +184,6 @@
             '</div>'
         );
 
-        // $('.page').find('#work-list-header').append($('<a class="header-link"></a>').attr('href', '#work-list/municipality/' + result.municipalityCode).html('Kuntavalinta'));
         $('#work-list .work-list').html(me.workListItemTable(result));
 
         populatedMultiSelectBoxes();
@@ -207,7 +195,6 @@
 
        $('#municipalities_search_rightSelected, #municipalities_search_leftSelected, #assets_search_rightSelected, #assets_search_leftSelected').on('click', enableSubmitButton);
        $('#municipalities_search, #municipalities_search_to, #assets_search, #assets_search_to').on('dblclick', enableSubmitButton);
-
       });
     };
 
@@ -223,17 +210,6 @@
 
 
     this.workListItemTable = function (result) {
-
-      var downloadCsvButton = $('<a />').addClass('btn btn-primary btn-download')
-          .text('Lataa CSV')
-          .append("<img src='images/icons/export-icon.png'/>")
-          .click(function () {
-            var html = $(".work-list").find(" table");
-            var date = new Date();
-            // When extracting the month from the date (date.getMonth()), we add 1 to the result since the method returns the month as a number from 0 to 11.
-            // me.exportTableToCSV(result.municipalityName, html, me.title.toLowerCase()  + "_" + result.municipalityCode + "_" + String(date.getDate()).padStart(2, '0') + "-" + String(date.getMonth() + 1).padStart(2, '0') + "-" + String(date.getFullYear())+ ".csv");
-          });
-
 
       var form =
           '<div class="form form-horizontal" id="csvExport" role="form" >' +
@@ -274,7 +250,7 @@
               '</div>' +
             '</div>' +
             '<div class="form-controls" style="text-align: right;">' +
-              '<button id="send_btn" class="btn btn-primary btn-report">Luo raportti</button>' +
+              '<button id="send_btn" class="btn btn-primary btn-lg" disabled="disabled">Luo raportti</button>' +
             '</div>' +
           '</div>'+
           '<div class="job-status">' +
@@ -292,7 +268,7 @@
       });
 
       if(!_.isEmpty(jobsInProgress)) {
-        backend.getJobsByIds(jobsInProgress.toArray()).then(function(jobs){
+        backend.getExportsJobsByIds(jobsInProgress.toArray()).then(function(jobs){
           var endedJobs = _.filter(jobs, function(job){return job.status !== 1;});
           _.map(endedJobs, replaceRow);
         });
@@ -302,15 +278,33 @@
       }
     };
 
+    function downloadCsv(event){
+      var id = $(event.currentTarget).prop('id');
+
+      backend.getCsvReport(id).then(function(info){
+        var csvFile = new Blob(["\ufeff", info.content], {type: "text/csv;charset=ANSI"});
+
+        var auxElem = $('<a />').attr("id","tmp_csv_dwn").attr("href",window.URL.createObjectURL(csvFile)).attr("download", info.fileName);
+        auxElem[0].click(); /*trigger href*/
+      });
+    }
+
     function replaceRow(job) {
       if (!_.isEmpty(job)) {
         var newRow = jobRow(job);
         $("#"+job.id).replaceWith(newRow);
-        rootElement.find('.job-status-link').on('click', function (event) {
+
+        $(".job-status-table").find('.job-status-link').on('click', function (event) {
           getJob(event);
         });
+
+        $(".job-status-table").find("#"+job.id).on('click', function (event) {
+          downloadCsv(event);
+        });
+
       }
     }
+
 
     var hideImporter = function() {
       $('#csvExport').hide();
@@ -329,6 +323,29 @@
         buildJobView(job);
       });
     }
+
+    this.getJobs = function () {
+      backend.getExportJobs().then(function(jobs){
+        if(!_.isEmpty(jobs))
+          $('.job-status').empty().html(buildJobTable(jobs));
+
+        _.forEach(jobs, function(job) {
+          if (job.status > 2){
+            $(".job-status-table").find('.job-status-link#'+job.id).on('click', function (event) {
+              getJob(event);
+            });
+          }
+          else if ( job.status == 2) {
+            $(".job-status-table").find("#" + job.id).on('click', function (event) {
+              downloadCsv(event);
+            });
+          }
+        });
+
+        scrollbarResize();
+        refresh = setInterval(refreshJobs, 3000);
+      });
+    };
 
     var buildJobView = function(job) {
       var jobView = $('.job-content');
@@ -358,6 +375,7 @@
 
         if(!refresh)
           refresh = setInterval(refreshJobs, 3000);
+
         scrollbarResize();
       }
     }
@@ -376,6 +394,8 @@
                 '<th id="date" class="date">Päivämäärä</th>'+
                 '<th class="jobName">Tietolajityyppi</th>'+
                 '<th id="file" class="file"">Tiedosto</th>'+
+              /*  '<th id="exportedAssets">Tietolajit</th>'+
+                '<th id="municipalities">Kunnat</th>'+*/
                 '<th id="status" class="status">Tila</th>'+
                 '<th id="detail" class="detail">Raportti</th>'+
             '</tr>'+
@@ -385,22 +405,35 @@
       var tableBodyRows = function (jobs) {
         return $('<tbody>').append(tableContentRows(jobs));
       };
+
       var tableContentRows = function (jobs) {
         return _.map(jobs, function (job) {
           return jobRow(job).concat('');
         });
       };
+
       return table(jobs);
     };
 
     var jobRow = function (job) {
+      var btnToDetail = "";
+
+      if (job.status > 2){
+        btnToDetail = '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>';
+      }
+      else if ( job.status == 2)
+        btnToDetail = '<a id="' + job.id + '" class="btn btn-primary btn-download">Lataa CSV<img src="images/icons/export-icon.png"/></a>';
+
+
       return '' +
           '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
             '<td headers="date" class="date">' + job.createdDate + '</td>' +
-            '<td headers="jobName" class="jobName">Reports</td>'+ /*+ (_.isUndefined(jobNameConvert[job.jobName]) ? "" : jobNameConvert[job.jobName]) + '</td>' +*/
+            '<td headers="jobName" class="jobName">Raportti</td>'+
             '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
+           /* '<td headers="exportedAssets">'+ job.exportedAssets + '</td>' +
+            '<td headers="municipalities">'+ job.municipalities + '</td>' +*/
             '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-            '<td headers="detail" class="detail">' + (job.status > 2 ? '<button class="btn btn-block btn-primary job-status-link" id="'+ job.id + '">Avaa</button>' : '') + '</td>' +
+            '<td headers="detail" class="detail">' + btnToDetail + '</td>' +
           '</tr>';
     };
 

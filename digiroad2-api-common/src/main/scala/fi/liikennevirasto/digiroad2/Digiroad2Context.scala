@@ -346,7 +346,7 @@ object Digiroad2Context {
   val importCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "importCSVDataUpdater")
   eventbus.subscribe(importCSVDataUpdater, "importCSVData")
 
-  val exportCSVDataUpdater = system.actorOf(Props(classOf[DataImporter], dataImportManager), name = "exportCSVDataUpdater")
+  val exportCSVDataUpdater = system.actorOf(Props(classOf[DataExporter], dataExportManager), name = "exportCSVDataUpdater")
   eventbus.subscribe(exportCSVDataUpdater, "exportCSVData")
 
   val linearAssetUpdater = system.actorOf(Props(classOf[LinearAssetUpdater], linearAssetService), name = "linearAssetUpdater")

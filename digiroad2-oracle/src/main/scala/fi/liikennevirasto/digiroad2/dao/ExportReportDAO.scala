@@ -26,7 +26,7 @@ class ExportReportDAO {
       val content = r.nextStringOption()
 
       val assetsName = exportedAssets.split(",")
-                                      .map( AssetTypeInfo(_).nameFI )
+                                      .map( asset => AssetTypeInfo(asset.toInt).nameFI )
                                       .mkString(",")
 
       val municipalitiesAsSet = municipalities.split(",").map(_.toInt).toSet

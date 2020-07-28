@@ -535,6 +535,22 @@
       return $.getJSON('api/getAssetTypes');
     };
 
+    this.getCsvReport = function(id){
+      return $.getJSON('api/export/downloadCsv/' + id);
+    };
+
+    this.getExportJobById = function(id) {
+      return $.getJSON('api/export/log/' + id);
+    };
+
+    this.getExportJobs = function() {
+      return $.getJSON('api/export/log');
+    };
+
+    this.getExportsJobsByIds = function(ids){
+      return $.getJSON('api/export/logs/' + ids);
+    };
+
     this.postGenerateCsvReport = function (municipalities, assets, success, failure) {
       $.ajax({
         url: 'api/export/generateCsvReport/'+municipalities+'/'+assets,

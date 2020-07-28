@@ -23,7 +23,7 @@ trait CsvDataExporterOperations {
       }
     }
 
-    def getImportById(id: Long) : Option[ExportStatusInfo]  = {
+    def getExportById(id: Long) : Option[ExportStatusInfo]  = {
       withDynTransaction {
         exportReportDAO.get(id)
       }
