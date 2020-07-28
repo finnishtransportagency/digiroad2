@@ -1040,8 +1040,9 @@
                                            _.isUndefined(_.head(endRoadPartNumber.values)) || _.isUndefined(_.head(endDistance.values));
 
                 if (isSomeValueUndefined ||
-                  _.head(endRoadPartNumber.values).value < _.head(startRoadPartNumber.values).value ||
-                  (_.head(endRoadPartNumber.values).value == _.head(startRoadPartNumber.values).value && _.head(endDistance.values).value <= _.head(startDistance.values).value)) {
+                  parseInt(_.head(endRoadPartNumber.values).value) < parseInt(_.head(startRoadPartNumber.values).value) ||
+                  (_.head(endRoadPartNumber.values).value == _.head(startRoadPartNumber.values).value &&
+                    parseInt(_.head(endDistance.values).value) <= parseInt(_.head(startDistance.values).value))) {
                   isValidRoadAddress = false;
                 }
               }
