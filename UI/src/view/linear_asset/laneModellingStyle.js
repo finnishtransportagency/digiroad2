@@ -36,13 +36,20 @@
         var type = {type: 'line'};
 
         if (isRoadlink || (!_.isUndefined(linearAsset.points) && !isRoadlink && linearAsset.selectedLinks.length == 1)) {
-          return _.merge({}, linearAsset, {hasAsset: hasAsset}, type, {notSelectable: !hasAsset});
+         if (!_.isEmpty(linearAsset.selectedLinks)) {
+           var link = _.find(linearAsset.selectedLinks, {'linkId': linearAsset.linkId});
+           return _.merge({}, linearAsset, {hasAsset: hasAsset}, type, {notSelectable: !hasAsset}, {roadPartNumber: link.roadPartNumber}, {startAddrMValue: link.startAddrMValue}, {endAddrMValue: link.endAddrMValue});
+         } else
+           return _.merge({}, linearAsset, {hasAsset: hasAsset}, type, {notSelectable: !hasAsset});
         }else{
             return _.map(linearAsset.selectedLinks, function(roadLink) {
               var roadLinkWithAsset = linearAsset;
               roadLinkWithAsset.points = roadLink.points;
               roadLinkWithAsset.trafficDirection = roadLink.trafficDirection;
               roadLinkWithAsset.sideCode = roadLink.sideCode;
+              roadLinkWithAsset.roadPartNumber = roadLink.roadPartNumber;
+              roadLinkWithAsset.startAddrMValue = roadLink.startAddrMValue;
+              roadLinkWithAsset.endAddrMValue = roadLink.endAddrMValue;
               return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset}, type);
             });
         }

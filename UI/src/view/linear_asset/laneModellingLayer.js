@@ -358,7 +358,9 @@
 
             _.each(currentFeatures, me.removeFeature);
 
-            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(extractMiddleLinksOfChains([_.head(linearAssets).selectedLinks]), me.uiState.zoomLevel));
+            selectedFeatures = selectedFeatures.concat(assetLabel.renderFeaturesByLinearAssets(extractMiddleLinksOfChains([_.map(selectedFeatures, function (feature) {
+              return feature.getProperties();
+            })]), me.uiState.zoomLevel));
         }
 
         removeOldAssetFeatures();
