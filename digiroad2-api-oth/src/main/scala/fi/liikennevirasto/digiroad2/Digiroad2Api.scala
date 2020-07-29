@@ -2286,6 +2286,26 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/lanes/viewOnlyLanes") {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle, withWalkingCycling = params("withWalkingCycling").toBoolean)
+      viewOnlyLanes.map { lane =>
+        Map (
+          "linkId" -> lane.linkId,
+          "sideCode" -> lane.sideCode,
+          "startMeasure" -> lane.startMeasure,
+          "endMeasure" -> lane.endMeasure,
+          "points" -> lane.geometry,
+          "lanes" -> lane.lanes
+        )
+      }
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   post("/lanes") {
     val user = userProvider.getCurrentUser()
 

@@ -85,6 +85,39 @@ trait LaneOperations {
     (lanes, roadLinksWithoutLanes)
   }
 
+  /**
+   * Returns lanes for Digiroad2Api /lanes/viewOnlyLanes GET endpoint.
+   * This is only to be used for visualization purposes after the getByBoundingBox ran first
+   */
+  def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): Seq[ViewOnlyLane] = {
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
+
+    val linkIds = filteredRoadLinks.map(_.linkId)
+    val allLanes = fetchExistingLanesByLinkIds(linkIds)
+
+    /* Find measures for the segments in the lanes by linkId and sideCode */
+    val segments = allLanes
+      .groupBy(lane => (lane.linkId, lane.sideCode))
+      .map {
+        case ((linkId, sideCode), lanes) => (linkId, sideCode, lanes.flatMap(lane => Seq(lane.startMeasure, lane.endMeasure)).distinct)
+      }
+
+    /* Separate each segment in the lane as a ViewOnlyLane for all the lanes */
+    segments.flatMap {
+      case (linkId, sideCode, segment) =>
+        val roadLink = filteredRoadLinks.find(_.linkId == linkId).get
+        segment.sorted.sliding(2).map { measures =>
+          val startMeasure = measures.head
+          val endMeasure = measures.last
+          val consideredLanes = allLanes.filter(lane => lane.linkId == linkId && lane.sideCode == sideCode && lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
+          val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
+
+          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, geometry, consideredLanes)
+        }
+    }.toSeq
+  }
+
   // Validate if lane.SideCode is ok with roadAddress.SideCode.
   // adjustLanesSideCodes function will validate that
   def checkSideCodes (roadLinks: Seq[RoadLink], changedSet: ChangeSet, allLanes: Seq[PersistedLane] ): (Seq[PersistedLane], ChangeSet) = {

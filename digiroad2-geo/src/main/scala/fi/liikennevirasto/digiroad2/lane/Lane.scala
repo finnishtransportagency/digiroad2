@@ -35,6 +35,8 @@ case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, val
 case class NewIncomeLane ( id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
                            isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty] )
 
+case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, geometry: Seq[Point], lanes: Seq[Int])
+
 sealed trait LaneValue {
   def toJson: Any
 }
