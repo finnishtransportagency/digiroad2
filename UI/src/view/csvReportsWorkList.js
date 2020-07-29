@@ -98,9 +98,36 @@
       getAssetsType();
     }
 
+    function municipalitySort(a, b){
+      /* value: "1000", text: "Kaikki kunnat"  /* all municipalities */
+
+      if (a.value == "1000")
+        return -1;
+      else if ( b.value == "1000")
+        return 1;
+
+      return a.text > b.text ? 1 : -1;
+    }
+
+    function assetTypeSort(a, b){
+      /* value: "1", text: "Kaikki tietolajit"}, /* all assets */
+      /* value: "2", text: "Pistemäiset tietolajit"}, /* point assets */
+      /* value: "3", text: "Viivamaiset tietolajit"} /* linear assets */
+
+      var topElems = ["1", "2", "3"];
+
+      if (_.includes(topElems, a.value) && _.includes(topElems, b.value))
+        return a.value > b.value ? 1 : -1;
+      else if (_.includes(topElems, a.value))
+        return -1;
+      else if (_.includes(topElems, b.value))
+        return 1;
+
+      return  a.text > b.text ? 1 : -1;
+    }
 
     function multiSelectBoxForMunicipalities() {
-      jQuery('#municipalities_search').multiselect({
+      $('#municipalities_search').multiselect({
         search: {
           left:
               '<label class="control-label labelBoxLeft">Kaikki kunnat</label>' +
@@ -109,9 +136,12 @@
               '<label class="control-label labelBoxRight">Valitut Kunnat</label>' +
               '<input type="text" id = "right_municipalities" class="form-control" placeholder="Kuntanimi" />'
         },
-        sort: {
+        sort:  {
           left: function (a, b) {
-            return (a.value == "1000" || b.value == "1000") ? 1 : a.text > b.text ? 1 : -1;
+            return municipalitySort(a, b);
+          },
+          right:   function (a, b) {
+            return municipalitySort(a, b);
           }
         },
         fireSearch: function (value) {
@@ -121,7 +151,7 @@
     }
 
     function multiSelectBoxForAssets() {
-      jQuery('#assets_search').multiselect({
+      $('#assets_search').multiselect({
         search: {
           left:
               '<label class="control-label labelBoxLeft">Kaikki Tietolajit</label>' +
@@ -132,8 +162,10 @@
         },
         sort: {
           left: function (a, b) {
-            var topElems = ["1", "2", "3"];
-            return (_.includes(topElems, a.value) || _.includes(topElems, b.value)) ? 1 : a.text > b.text ? 1 : -1;
+            return assetTypeSort(a, b);
+          },
+          right:   function (a, b) {
+            return assetTypeSort(a, b);
           }
         },
         fireSearch: function (value) {
@@ -391,19 +423,19 @@
         return ''+
           '<thead>'+
               '<tr>'+
-                '<th id="date" class="date">Päivämäärä</th>'+
-                '<th class="jobName">Tietolajityyppi</th>'+
-                '<th id="file" class="file"">Tiedosto</th>'+
-              /*  '<th id="exportedAssets">Tietolajit</th>'+
-                '<th id="municipalities">Kunnat</th>'+*/
-                '<th id="status" class="status">Tila</th>'+
-                '<th id="detail" class="detail">Raportti</th>'+
+                '<th id="date" class="csvReport">Päivämäärä</th>'+
+                '<th class="csvReport">Tietolajityyppi</th>'+
+                '<th id="file" class="csvReport"">Tiedosto</th>'+
+                '<th id="exportedAssets" class="csvReport">Tietolajit</th>'+
+                '<th id="municipalities" class="csvReport">Kunnat</th>'+
+                '<th id="status" class="csvReport">Tila</th>'+
+                '<th id="detail" class="csvReport">Raportti</th>'+
             '</tr>'+
           '</thead>';
       };
 
       var tableBodyRows = function (jobs) {
-        return $('<tbody>').append(tableContentRows(jobs));
+        return $('<tbody>').attr("id",'tblCsvReport').append(tableContentRows(jobs));
       };
 
       var tableContentRows = function (jobs) {
@@ -427,13 +459,13 @@
 
       return '' +
           '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
-            '<td headers="date" class="date">' + job.createdDate + '</td>' +
-            '<td headers="jobName" class="jobName">Raportti</td>'+
-            '<td headers="file" class="file" id="file">' + job.fileName + '</td>' +
-           /* '<td headers="exportedAssets">'+ job.exportedAssets + '</td>' +
-            '<td headers="municipalities">'+ job.municipalities + '</td>' +*/
-            '<td headers="status" class="status">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-            '<td headers="detail" class="detail">' + btnToDetail + '</td>' +
+            '<td headers="date" class="csvReport">' + job.createdDate + '</td>' +
+            '<td headers="jobName" class="csvReport">Raportti</td>'+
+            '<td headers="file" class="csvReport" id="file">' + job.fileName + '</td>' +
+            '<td headers="exportedAssets" class="csvReport">'+ job.exportedAssets.replace(/\,/g,"\r\n") + '</td>' +
+            '<td headers="municipalities" class="csvReport">'+ job.municipalities.replace(/\,/g,"\r\n") + '</td>' +
+            '<td headers="status" class="csvReport">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
+            '<td headers="detail" class="csvReport">' + btnToDetail + '</td>' +
           '</tr>';
     };
 
@@ -449,8 +481,8 @@
     };
 
     var scrollbarResize = function () {
-      if ( $('.job-status tbody tr').length >= 5)
-        $('.job-status thead').css("width", "calc(100% - 17px)");
+      //if ( $('.job-status tbody tr').length >= 5)
+       // $('.job-status thead').css("width", "calc(100% - 17px)");
     };
 
   };
