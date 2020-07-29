@@ -22,7 +22,7 @@ object  LaneFiller {
                         generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane])
 
 
-  case class SegmentPiece(laneId: Long, laneCode: Int, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
+  case class SegmentPiece(laneId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Seq[LaneProperty])
 }
 
 class LaneFiller {
@@ -232,7 +232,7 @@ class LaneFiller {
     def SegmentPieceCreation(startM: Double, endM: Double, lanes: Seq[PersistedLane]): Seq[SegmentPiece] = {
 
       lanes.filter(lane => lane.startMeasure <= startM && lane.endMeasure >= endM)
-           .map( x => SegmentPiece(x.id, x.laneCode, startM, endM, SideCode(x.sideCode), x.attributes) )
+           .map( x => SegmentPiece(x.id, startM, endM, SideCode(x.sideCode), x.attributes) )
     }
 
 
@@ -313,13 +313,13 @@ class LaneFiller {
 
     val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
     val segmentPieces = pieces.flatMap(p => SegmentPieceCreation(p._1, p._2, lanesZipped))
-                              .groupBy(_.laneCode)
+                              .groupBy(_.laneId)
 
-    val segmentsAndOrphanPieces = segmentPieces.map(n => extendOrDivide(n._2, lanesZipped.find(_.laneCode == n._1).get))
+    val segmentsAndOrphanPieces = segmentPieces.map(n => extendOrDivide(n._2, lanesZipped.find(_.id == n._1).get))
     val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
     val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
 
-    val changedSideCodes = combinedSegment.filter(cl => lanesZipped.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode) && sl.laneCode == cl.laneCode))
+    val changedSideCodes = combinedSegment.filter(cl => lanesZipped.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode)))
                                            .map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode)))
 
     val resultingNumericalLimits = combinedSegment ++ newSegments
