@@ -21,10 +21,8 @@
         $('.container').hide();
         $('#work-list').show();
         $('body').addClass('scrollable');
-        me.addSpinner();
         me.generateWorkList(listP);
         me.getJobs();
-        me.removeSpinner();
       });
 
     };
@@ -187,6 +185,7 @@
          return asset.value;
       });
 
+      me.addSpinner();
       backend.postGenerateCsvReport(formData.municipalityNumbers, formData.assetNumbers,
           function(data) {
             me.removeSpinner();
@@ -201,6 +200,7 @@
     }
 
     this.generateWorkList = function (listP) {
+      me.addSpinner();
       listP.then(function (result) {
 
         $('#work-list').html('' +
@@ -227,6 +227,7 @@
 
        $('#municipalities_search_rightSelected, #municipalities_search_leftSelected, #assets_search_rightSelected, #assets_search_leftSelected').on('click', enableSubmitButton);
        $('#municipalities_search, #municipalities_search_to, #assets_search, #assets_search_to').on('dblclick', enableSubmitButton);
+        me.removeSpinner();
       });
     };
 
