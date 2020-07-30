@@ -331,13 +331,11 @@
           getJob(event);
         });
 
-        $(".job-status-table").find("#"+job.id).on('click', function (event) {
+        $(".job-status-table").find("#" + job.id + ".btn-download").on('click', function (event) {
           downloadCsv(event);
         });
-
       }
     }
-
 
     var hideImporter = function() {
       $('#csvExport').hide();
@@ -369,7 +367,7 @@
             });
           }
           else if ( job.status == 2) {
-            $(".job-status-table").find("#" + job.id).on('click', function (event) {
+            $(".job-status-table").find("#" + job.id + ".btn-download").on('click', function (event) {
               downloadCsv(event);
             });
           }

@@ -272,13 +272,15 @@
       var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
+      var reportButton = authorizationPolicy.isOperator() ? '<a class="header-link-reports" href="#work-list/csvReports">Raportointityökalu</a>' : '';
+
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +
         '<div class="content-box">' +
         '<header id="work-list-header">' + me.title +
          '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
-         '<a class="header-link-reports" href="#work-list/csvReports">Raportointityökalu</a>'+
+        reportButton +
         '</header>' +
         '<div class="work-list">' +
         '</div>' +

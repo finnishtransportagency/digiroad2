@@ -93,8 +93,8 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
   }
 
   def validateOperation(): Unit = {
-    if(!(userProvider.getCurrentUser().isOperator() || userProvider.getCurrentUser().isMunicipalityMaintainer())) {
-      halt(Forbidden("Vain operaattori tai kuntaylläpitäjä voi suorittaa Excel-ajon"))
+    if(!(userProvider.getCurrentUser().isOperator())) {
+      halt(Forbidden("Vain operaattori voi suorittaa tämän toiminnon"))
     }
   }
 
