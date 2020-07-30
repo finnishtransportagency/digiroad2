@@ -263,11 +263,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val (trafficSign, isSignOk) = optTrafficSignType match {
       case Some(signType) =>
         val sign = TrafficSignType.applyNewLawCode(signType)
+        val isSignOk = sign != TrafficSignType.Unknown
 
-        if (sign == TrafficSignType.Unknown)
-          (sign, false)
-        else
-          (sign, true)
+        (sign, isSignOk)
 
       case _ => (TrafficSignType.Unknown, false)
     }

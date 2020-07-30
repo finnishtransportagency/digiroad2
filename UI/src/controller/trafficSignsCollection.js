@@ -39,6 +39,12 @@
 
     var trafficSignsTypeLinearGenerators = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 85, 100, 101];
 
+    var trafficSignsNoLongerAvailable = ["143", "147", "162", "166", "167", "168", "247", "274", "287", "288", "357", "359"];
+
+    this.isNoLongerAvailable = function (currentSignValue) {
+      return _.includes(trafficSignsNoLongerAvailable, currentSignValue);
+    };
+
     var isTrafficSignTypeLinearGenerator = function(current) {
       return _.includes(trafficSignsTypeLinearGenerators, parseInt(getValue(current)));
     };

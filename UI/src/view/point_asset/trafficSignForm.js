@@ -231,14 +231,8 @@
       );
     }
 
-    var hideOldCodes = function (oldValues, propertyValue, groupPropertyValue) {
-      if (_.includes(oldValues, groupPropertyValue) && propertyValue == groupPropertyValue) {
-        //if true it will return false at the end.
-      }
-      else if (_.includes(oldValues, groupPropertyValue))
-        return true;
-
-      return false;
+    var hideOldCodes = function (propertyValue, groupPropertyValue) {
+      return me.collection.isNoLongerAvailable(groupPropertyValue) && propertyValue != groupPropertyValue;
     };
 
     var sortByPropertyDisplay = function(collection) {
@@ -253,14 +247,13 @@
       var signTypes = getValuesFromEnumeratedProperty ('trafficSigns_type');
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns;
-      var oldValues = ["143", "162", "166", "167", "168", "247", "274", "287", "288", "357", "359"];
 
       var orderedSubType = sortByPropertyDisplay(_.map(groups)[mainType]);
 
       subTypesTrafficSigns = _.map(orderedSubType, function (group) {
         if (isPedestrianOrCyclingRoadLink() && !me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue))
           return '';
-        var toHide = hideOldCodes(oldValues, propertyValue, group.propertyValue);
+        var toHide = hideOldCodes(propertyValue, group.propertyValue);
         return $('<option>',
           {
             value: group.propertyValue,
@@ -421,7 +414,7 @@
       var orderedPanels = sortByPropertyDisplay(panels);
 
       var subTypesTrafficSigns = _.map(_.map(orderedPanels, function (group) {
-        var toHide = hideOldCodes(["147"], propertyValue, group.propertyValue);
+        var toHide = hideOldCodes(propertyValue, group.propertyValue);
 
         return $('<option>',
           {
