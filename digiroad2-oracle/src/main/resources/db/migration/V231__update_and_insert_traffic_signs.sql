@@ -414,7 +414,7 @@ BEGIN
     	ON (ev.PROPERTY_ID  = v_property_id AND ts.othId = ev.value)
   	WHEN MATCHED THEN
     	UPDATE SET ev.NAME_FI = ts.name, ev.MODIFIED_DATE = SYSDATE, ev.MODIFIED_BY = 'db_migration_v231'
-	    WHERE ev.NAME_FI <> ts.name;
+	    WHERE ev.NAME_FI <> ts.name
 	WHEN NOT MATCHED  THEN
         INSERT INTO ENUMERATED_VALUE (id, PROPERTY_ID, VALUE, NAME_FI, CREATED_BY, CREATED_DATE )
 	    VALUES (primary_key_seq.nextval, v_property_id, ts.othId, ts.name, 'db_migration_v231', SYSDATE );
