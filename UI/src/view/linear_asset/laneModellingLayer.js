@@ -11,6 +11,9 @@
     LinearAssetLayer.call(this, params);
     var me = this;
 
+    this.readOnlyLayer = new ViewOnlyLaneModellingLayer(params, map);
+    me.vectorLayer.setZIndex(2);
+
     var LinearAssetCutter = function(eventListener, vectorLayer) {
       var scissorFeatures = [];
       var CUT_THRESHOLD = 20;
@@ -211,7 +214,11 @@
       eventListener.listenTo(eventbus, me.singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
       eventListener.listenTo(eventbus, me.multiElementEvent('massUpdateFailed'), me.cancelSelection);
       eventListener.listenTo(eventbus, me.multiElementEvent('valueChanged'), linearAssetChanged);
-      eventListener.listenTo(eventbus, me.singleElementEvents('linearAsset'), me.refreshReadOnlyLayer);
+      eventListener.listenTo(eventbus, me.singleElementEvents('viewOnlyAsset'), me.refreshViewOnlyLayer);
+    };
+
+    this.refreshViewOnlyLayer = function () {
+      me.readOnlyLayer.refreshView();
     };
 
     var selectLinearAssetByLinkId = function(linkId) {
@@ -248,7 +255,10 @@
       me.adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
 
       collection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getCenter(), Math.round(map.getView().getZoom())).then(function() {
-        eventbus.trigger(me.singleElementEvents('linearAsset'));
+        if (!selectedLane.exists())
+          eventbus.trigger(me.singleElementEvents('viewOnlyAsset'));
+        else
+          me.readOnlyLayer.hideLayer();
       });
     };
 
@@ -325,11 +335,11 @@
     var extractMiddleLinksOfChains = function (linearAssetChains, linksToConsider) {
       return _.flatMap(linearAssetChains, function (chain) {
         var  links = _.isEmpty(linksToConsider) ? chain : _.intersectionWith(chain, linksToConsider, _.isEqual);
-        return _.map(_.groupBy(links, 'roadPartNumber'), function (chainByRoadPartNumber) {
+        return _.flatMap(_.groupBy(links, 'roadPartNumber'), function (chainByRoadPartNumber) {
           var minAddressMValue = _.minBy(chainByRoadPartNumber, 'startAddrMValue');
           var maxAddressMValue = _.maxBy(chainByRoadPartNumber, 'endAddrMValue');
           var middleMValue = (maxAddressMValue.endAddrMValue - minAddressMValue.startAddrMValue)/2 + minAddressMValue.startAddrMValue;
-          return _.find(chainByRoadPartNumber, function(linearAsset) { return linearAsset.startAddrMValue <= middleMValue && linearAsset.endAddrMValue > middleMValue; });
+          return _.filter(chainByRoadPartNumber, function(linearAsset) { return linearAsset.startAddrMValue <= middleMValue && linearAsset.endAddrMValue > middleMValue; });
         });
       });
     };

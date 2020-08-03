@@ -2298,7 +2298,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startMeasure" -> lane.startMeasure,
           "endMeasure" -> lane.endMeasure,
           "points" -> lane.geometry,
-          "lanes" -> lane.lanes
+          "lanes" -> lane.lanes,
+          "isViewOnly" -> true
         )
       }
     } getOrElse {

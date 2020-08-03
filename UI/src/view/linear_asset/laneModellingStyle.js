@@ -4,7 +4,7 @@
     var me = this;
 
     var isMainLane = function (asset) {
-      if (!_.isUndefined(asset.value)){
+      if (!_.isUndefined(asset.value) || asset.isViewOnly){
         return true;
       }
 
@@ -32,15 +32,23 @@
       }
 
       var linearAssetsWithType = _.flatten(_.map(relevantLinears, function(linearAsset) {
-        var hasAsset = me.hasValue(linearAsset);
+        var hasAsset = me.hasValue(linearAsset) || !_.isUndefined(linearAsset.isViewOnly);
         var type = {type: 'line'};
 
         if (isRoadlink || (!_.isUndefined(linearAsset.points) && !isRoadlink && linearAsset.selectedLinks.length == 1)) {
          if (!_.isEmpty(linearAsset.selectedLinks)) {
            var link = _.find(linearAsset.selectedLinks, {'linkId': linearAsset.linkId});
-           return _.merge({}, linearAsset, {hasAsset: hasAsset}, type, {notSelectable: !hasAsset}, {roadPartNumber: link.roadPartNumber}, {startAddrMValue: link.startAddrMValue}, {endAddrMValue: link.endAddrMValue});
+           var options = {
+           hasAsset: hasAsset,
+           notSelectable: !hasAsset,
+           roadPartNumber: link.roadPartNumber,
+           startAddrMValue: link.startAddrMValue,
+           endAddrMValue: link.endAddrMValue,
+           isSelected: true
+           };
+           return _.merge({}, linearAsset, type, options);
          } else
-           return _.merge({}, linearAsset, {hasAsset: hasAsset}, type, {notSelectable: !hasAsset});
+           return _.merge({}, linearAsset, {hasAsset: hasAsset, notSelectable: !hasAsset}, type);
         }else{
             return _.map(linearAsset.selectedLinks, function(roadLink) {
               var roadLinkWithAsset = linearAsset;
@@ -50,7 +58,7 @@
               roadLinkWithAsset.roadPartNumber = roadLink.roadPartNumber;
               roadLinkWithAsset.startAddrMValue = roadLink.startAddrMValue;
               roadLinkWithAsset.endAddrMValue = roadLink.endAddrMValue;
-              return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset}, type);
+              return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset, isSelected: true}, type);
             });
         }
       }));
@@ -79,10 +87,9 @@
         return asset.lanes.length - 1;
     };
 
-    var laneModellingStyleRules = [
+    var viewOnlyLaneModellingStyleRules = [
       new StyleRule().where('hasAsset').is(false).use({ stroke : { color: '#7f7f7c'}}),
       new StyleRule().where('hasAsset').is(true).and(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { color: '#ff0000' }}),
-      new StyleRule().where('hasAsset').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { color: '#11bb00' }}),
       new StyleRule().where('hasAsset').is(true).and(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfAdditionalLanes(asset);}).is(1).use({ stroke : { color: '#00ccdd' }}),
       new StyleRule().where('hasAsset').is(true).and(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfAdditionalLanes(asset);}).is(2).use({ stroke : { color: '#0011bb' }}),
       new StyleRule().where('hasAsset').is(true).and(function (asset){return isMainLane(asset);}).is(true).and(function (asset) { return numberOfAdditionalLanes(asset);}).is(3).use({ stroke : { color: '#a800a8' }}),
@@ -106,6 +113,12 @@
       new StyleRule().where('type').is('cutter').use({ icon: { src: 'images/cursor-crosshair.svg' } })
     ];
 
+    var laneModellingStyleRules = [
+      new StyleRule().where('hasAsset').is(false).use({ stroke : { opacity: 0.7, color: '#7f7f7c'}}),
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(true).use({ stroke : { opacity: 0.7, color: '#ff0000' }}),
+      new StyleRule().where('hasAsset').is(true).and('isSelected').is(true).and(function (asset){return isMainLane(asset);}).is(false).use({ stroke : { opacity: 0.7, color: '#11bb00' }})
+    ];
+
     var laneModellingSizeRules = [
       new StyleRule().where('zoomLevel').isIn([2,3,4]).use({stroke: {width: 5}}),
       new StyleRule().where('zoomLevel').isIn([5,6,7,8]).use({stroke: {width: 4}}),
@@ -116,10 +129,16 @@
       new StyleRule().where('zoomLevel').isIn([14,15]).use({stroke: {width: 9}})
     ];
 
-    me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
-    me.browsingStyleProvider.addRules(laneModellingStyleRules);
-    me.browsingStyleProvider.addRules(overlayStyleRules);
+    me.browsingStyleProvider = new StyleRuleProvider({ stroke : { opacity: 0.01, color: '#7f7f7c' }});
     me.browsingStyleProvider.addRules(laneModellingSizeRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
+    me.browsingStyleProvider.addRules(overlayStyleRules);
+    me.browsingStyleProvider.addRules(laneModellingStyleRules);
+
+
+    me.browsingStyleProviderViewOnly = new StyleRuleProvider({ stroke : { opacity: 0.7 }});
+    me.browsingStyleProviderViewOnly.addRules(viewOnlyLaneModellingStyleRules);
+    me.browsingStyleProviderViewOnly.addRules(laneModellingSizeRules);
+    me.browsingStyleProviderViewOnly.addRules(featureTypeRules);
   };
 })(this);

@@ -12,11 +12,11 @@
         return self.fetchAssets(boundingBox, backend.getMapByBoundingBox(boundingBox), center);
     };
 
-    this.activeWalkingCycling = function(enable) {
+    self.activeWalkingCycling = function(enable) {
       isWalkingCyclingActive = enable;
     };
 
-    this.activeGeometry = function(enable) {
+    self.activeGeometry = function(enable) {
       isGeometryActive = enable;
     };
 
@@ -26,6 +26,12 @@
           var laneLaneCode = _.head(Property.getPropertyByPublicId(la.value, 'lane_code').values).value;
           var segmentLaneCode = _.head(Property.getPropertyByPublicId(segment.value, 'lane_code').values).value;
           return la.linkId == segment.linkId && laneLaneCode == segmentLaneCode;});
+      });
+    };
+
+    self.fetchViewOnlyLanes = function(boundingBox, zoom) {
+      return backend.getViewOnlyLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive).then(function(lanes) {
+        eventbus.trigger('fetchedViewOnly', lanes.concat([]));
       });
     };
 
