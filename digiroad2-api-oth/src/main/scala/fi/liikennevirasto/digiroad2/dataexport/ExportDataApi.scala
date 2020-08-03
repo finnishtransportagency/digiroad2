@@ -82,8 +82,8 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
                             .concat(".csv")
 
 
-    val municipalities = assetReportCsvExporter.decodeMunicipalitiesToProcess( municipalitiesParam.split(",").map(_.toInt).toList )
-    val assetTypes = assetReportCsvExporter.decodeAssetsToProcess( assetTypesParam.split(",").map(_.toInt).toList )
+    val municipalities = assetReportCsvExporter.decodeMunicipalitiesToProcess( municipalitiesParam.split(",").map(_.trim.toInt).toList )
+    val assetTypes = assetReportCsvExporter.decodeAssetsToProcess( assetTypesParam.split(",").map(_.trim.toInt).toList )
 
     val logId = csvDataExporter.insertData( user.username, filename, assetTypes.mkString(","), municipalities.mkString(",") )
 

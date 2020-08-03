@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2.csvDataExporter
 
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, DateParser, TrafficSigns}
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleUserProvider}
+import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Status}
 import org.joda.time.DateTime
 
@@ -33,7 +33,8 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   val mainHeaders = "Kunta;Tietolaji;kohteiden määrä (pistemäinen);Kohteita (viivamainen);Muokattu pvm (operaattori);Muokattu pvm (kuntakäyttäjä);Käyttäjä (operaattori);Käyttäjä (kuntakäyttäjä);*Liikennemerkit kpl lisätty 1.6.2020 jälkeen\r\n"
 
 
-  def exportAssetsByMunicipality( assetTypesList: List[Int], municipalitiesList: List[Int], extractPointsAsset: Boolean = false): List[ExportAssetReport] = {
+  def exportAssetsByMunicipality( assetTypesList: List[Int], municipalitiesList: List[Int], extractPointsAsset: Boolean = false,
+                                  withTransaction: Boolean = true): List[ExportAssetReport] = {
 
     def extractUserAndDateTime( assetReports: List[AssetReport], userNameList: Seq[String]): (String, Option[DateTime]) = {
 
@@ -48,28 +49,48 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         ("", None)
     }
 
+    def executeQuery(municipality: Int): List[AssetReport] = {
+      if (extractPointsAsset) {
+        assetReporterDAO.pointAssetQuery(Seq(municipality), assetTypesList)
+      }
+      else {
+        val linkIds = roadLinkServiceImpl.getVVHRoadLinksF(municipality)
+                                         .map(_.linkId)
+
+        assetReporterDAO.linearAssetQuery(linkIds, assetTypesList)
+      }
+    }
+
     def extractData(municipality: Int): List[AssetReport] = {
-      withDynTransaction {
-
-        if(extractPointsAsset) {
-          assetReporterDAO.pointAssetQuery(Seq(municipality), assetTypesList)
+      if (withTransaction) {
+        withDynTransaction {
+          executeQuery(municipality)
         }
-        else {
-          val linkIds = roadLinkServiceImpl.getVVHRoadLinksF(municipality)
-                                            .map(_.linkId)
+      }
+      else {
+        executeQuery(municipality)
+      }
+    }
 
-          assetReporterDAO.linearAssetQuery(linkIds, assetTypesList)
+    def getUserAndMunicipalitiesInfo(): (Seq[User], List[MunicipalityInfo]) = {
+      if(withTransaction) {
+        withDynSession {
+          val userResults = userProvider.getUsers()
+          val municResults = municipalityDao.getMunicipalitiesNameAndIdByCode(municipalitiesList.toSet)
+
+          (userResults, municResults)
         }
+      }
+      else{
+        val userResults = userProvider.getUsers()
+        val municResults = municipalityDao.getMunicipalitiesNameAndIdByCode(municipalitiesList.toSet)
+
+        (userResults, municResults)
       }
     }
 
 
-    val (users, municipalitiesInfo) = withDynSession {
-      val userResults = userProvider.getUsers()
-      val municResults = municipalityDao.getMunicipalitiesNameAndIdByCode(municipalitiesList.toSet)
-
-      (userResults, municResults)
-    }
+    val (users, municipalitiesInfo) = getUserAndMunicipalitiesInfo()
 
     val operatorUsers = users.filter(_.isOperator())
     val operatorUsersUsername = operatorUsers.map(_.username)
@@ -77,7 +98,7 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     municipalitiesList.flatMap{ municipality =>
 
       val municipalityUsers = users.filter( _.isAuthorizedToWrite(municipality) )
-                                    .filterNot( u => operatorUsersUsername.contains(u.username) )
+                                    .filterNot( user => operatorUsersUsername.contains(user.username) )
                                     .map( _.username )
 
       val linearAssets = extractData(municipality)
@@ -104,7 +125,6 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
       else
         None
-
     }
   }
 
@@ -112,23 +132,36 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   def extractDateToString(dateTime: Option[DateTime]): String = {
     dateTime match {
       case Some(date) =>
-        DateParser.dateToString(date, DateParser.DateTimePropertyFormat)
+        DateParser.dateToString(date, DateParser.DatePropertyFormat)
       case _ => ""
     }
   }
 
 
-  def generateCSVContent(assetTypesList: List[Int], municipalitiesList: List[Int], extractPointsAsset: Boolean = false): String = {
+  def extractRecords( exportAssetReports: List[ExportAssetReport], withTransaction: Boolean = true): String = {
 
-    def extractRecords( exportAssetReports: List[ExportAssetReport]): List[String] = {
-      if (exportAssetReports.isEmpty) {
+    def getTotalNewLawTrafficSigns(municipalityName: String): Int = {
+      if(withTransaction) {
+        withDynSession {
+          val municipalityInfo = municipalityDao.getMunicipalityIdByName(municipalityName)
+          assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.head.id)
+        }
+      }
+      else{
+        val municipalityInfo = municipalityDao.getMunicipalityIdByName(municipalityName)
+        assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.head.id)
+      }
+    }
+
+
+    val output = if (exportAssetReports.isEmpty) {
         List()
       }
       else {
         val allInfoGroupedByMunicipality = exportAssetReports.groupBy(_.municipalityName)
 
         val result = allInfoGroupedByMunicipality.map { case (municipality, records) =>
-          val output = municipality + ";\r\n"
+          val line = municipality + ";\r\n"
           val totalRecords = records.size
 
           val rows = records.map { elem =>
@@ -138,33 +171,25 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                 val operatorDate = extractDateToString(elem.operatorModifiedDate)
                 val municipalityDate = extractDateToString(elem.municipalityModifiedDate)
 
-                val baseRow = s";${elem.assetNameFI};$totalPoints;$isLinear;${operatorDate};${municipalityDate};${elem.operatorUser};${elem.municipalityUser}"
+                val baseRow = s";${elem.assetNameFI};$totalPoints;$isLinear;$operatorDate;$municipalityDate;${elem.operatorUser};${elem.municipalityUser}"
 
                 if (elem.assetTypeId == TrafficSigns.typeId) {
-                  withDynSession {
-                    val municipalityInfo = municipalityDao.getMunicipalityIdByName(municipality)
-                    val totalNewLawTrafficSigns = assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.head.id)
-
-                    baseRow.concat(s";${totalNewLawTrafficSigns}")
-                  }
+                  val totalNewLawTrafficSigns = getTotalNewLawTrafficSigns(municipality)
+                  baseRow.concat(s";$totalNewLawTrafficSigns")
                 }
                 else
                   baseRow
-          }
+                }
 
-          output + rows.mkString("\r\n")
+          line + rows.mkString("\r\n")
         }
 
-        result.toList
-      }
-
+      result.toList
     }
 
-    val allInfo = exportAssetsByMunicipality(assetTypesList, municipalitiesList, extractPointsAsset).sortBy(_.assetNameFI)
-    val allRecords = extractRecords(allInfo)
-
-    allRecords.mkString("\r\n")
+    output.mkString("\r\n")
   }
+
 
   def decodeAssetsToProcess(assetTypesList: List[Int]): List[Int] = {
 
@@ -175,13 +200,10 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
     else if ( pointAssets || linearAssets ) {
 
-      val allPoints = AssetTypeInfo.values
-                                  .filter(_.geometryType == "point")
-                                  .map(_.typeId)
+      val (linearAssetType, pointAssetType) = AssetTypeInfo.values.partition( _.geometryType == "linear" )
 
-      val allLinears = AssetTypeInfo.values
-                                    .filter(_.geometryType == "linear")
-                                    .map(_.typeId)
+      val allPoints = pointAssetType.map(_.typeId)
+      val allLinears = linearAssetType.map(_.typeId)
 
       (pointAssets, linearAssets) match {
         case (true, false) =>
@@ -214,25 +236,28 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
 
-  def exportAssetsByMunicipalityCSVGenerator(assetTypesList: List[Int], municipalitiesList: List[Int], logId: Long): Long = {
+  def exportAssetsByMunicipalityCSVGenerator(assetTypesList: List[Int], municipalitiesList: List[Int], logId: Long, withTransaction: Boolean = true): Long = {
 
     try {
 
       val finalAssetList = decodeAssetsToProcess(assetTypesList)
       val (linearAssets, pointAssets) = finalAssetList.partition( AssetTypeInfo(_).geometryType == "linear")
 
-      val linearContent = if (linearAssets.nonEmpty) generateCSVContent(assetTypesList, municipalitiesList)
-                        else ""
+      val linearContent = if (linearAssets.nonEmpty) exportAssetsByMunicipality(assetTypesList, municipalitiesList, withTransaction = withTransaction)
+                        else List()
 
-      val pointContent = if (pointAssets.nonEmpty) generateCSVContent(assetTypesList, municipalitiesList, true)
-                        else ""
+      val pointContent = if (pointAssets.nonEmpty) exportAssetsByMunicipality(assetTypesList, municipalitiesList, extractPointsAsset = true, withTransaction)
+                        else List()
 
-      val fileContent = mainHeaders ++ linearContent ++ pointContent
-      update(logId, Status.OK, Some(fileContent) )
+      val allContent = (linearContent ++ pointContent).sortBy(_.assetNameFI)
+      val csvData = extractRecords( allContent, withTransaction )
+
+      val fileContent = mainHeaders ++ csvData
+      update(logId, Status.OK, Some(fileContent), withTransaction )
 
     } catch {
       case e: Exception =>
-        update(logId, Status.Abend, Some("Tapahtui odottamaton virhe: " + e.toString))
+        update(logId, Status.Abend, Some("Tapahtui odottamaton virhe: " + e.toString), withTransaction)
     }
   }
 

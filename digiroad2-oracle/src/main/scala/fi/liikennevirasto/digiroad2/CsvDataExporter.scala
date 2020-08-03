@@ -17,40 +17,59 @@ trait CsvDataExporterOperations {
     def eventBus: DigiroadEventBus
     val exportReportDAO: ExportReportDAO = new ExportReportDAO
 
-    def insertData(username: String, fileName: String, exportType: String, municipalities: String): Long = {
-      withDynTransaction {
+    def insertData(username: String, fileName: String, exportType: String, municipalities: String, withTransaction: Boolean = true): Long = {
+      if (withTransaction)
+        withDynTransaction {
+          exportReportDAO.create(username, fileName, exportType, municipalities )
+        }
+      else
         exportReportDAO.create(username, fileName, exportType, municipalities )
-      }
+
     }
 
-    def getExportById(id: Long) : Option[ExportStatusInfo]  = {
-      withDynTransaction {
+    def getExportById(id: Long, withTransaction: Boolean = true) : Option[ExportStatusInfo]  = {
+      if (withTransaction)
+        withDynTransaction {
+          exportReportDAO.get(id)
+        }
+      else
         exportReportDAO.get(id)
-      }
     }
 
-    def getByUser(username: String) : Seq[ExportStatusInfo]  = {
-     withDynTransaction {
+    def getByUser(username: String, withTransaction: Boolean = true) : Seq[ExportStatusInfo]  = {
+      if (withTransaction)
+        withDynTransaction {
+          exportReportDAO.getByUser(username)
+        }
+      else
         exportReportDAO.getByUser(username)
-      }
     }
 
-    def getById(id: Long) : Option[ExportStatusInfo]  = {
-      withDynTransaction {
+    def getById(id: Long, withTransaction: Boolean = true) : Option[ExportStatusInfo]  = {
+      if (withTransaction)
+        withDynTransaction {
+          exportReportDAO.get(id)
+        }
+      else
         exportReportDAO.get(id)
-      }
     }
 
-    def getByIds(ids: Set[Long]) : Seq[ExportStatusInfo]  = {
-      withDynTransaction {
+    def getByIds(ids: Set[Long], withTransaction: Boolean = true) : Seq[ExportStatusInfo]  = {
+      if (withTransaction)
+        withDynTransaction {
+          exportReportDAO.getByIds(ids)
+        }
+      else
         exportReportDAO.getByIds(ids)
-      }
     }
 
-    def update(id: Long, status: Status, content: Option[String] = None) : Long  = {
-      withDynTransaction {
+    def update(id: Long, status: Status, content: Option[String] = None, withTransaction: Boolean = true) : Long  = {
+      if (withTransaction)
+        withDynTransaction {
+          exportReportDAO.update(id, status, content)
+        }
+      else
         exportReportDAO.update(id, status, content)
-      }
     }
 
     def createStandardCSVData(headers: Seq[String], values: Seq[Map[String, String]]): String = {

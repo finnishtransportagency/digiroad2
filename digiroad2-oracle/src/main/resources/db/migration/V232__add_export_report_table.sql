@@ -12,3 +12,9 @@ CREATE TABLE export_report (
 );
 
 CREATE INDEX export_report_created_by_idx ON export_report (created_by);
+
+/* Obstacles Asset = 220
+   Change the name from esterakennelma to Esterakennelma */
+UPDATE ASSET_TYPE
+SET name = TRIM(INITCAP(name))
+WHERE ID = 220;

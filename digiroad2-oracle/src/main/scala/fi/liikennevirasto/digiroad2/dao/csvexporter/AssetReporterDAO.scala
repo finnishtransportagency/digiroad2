@@ -34,9 +34,8 @@ class AssetReporterDAO {
         JOIN ASSET_LINK al ON a.id = al.asset_id
         JOIN LRM_POSITION pos ON al.position_id = pos.id
         JOIN #$idTableName i ON i.id = pos.link_id
-      WHERE (a.valid_to IS NULL OR a.valid_to > sysdate)
-      AND a.modified_by IS NOT NULL
-        AND at2.GEOMETRY_TYPE = 'linear'
+      WHERE (a.valid_to IS NULL OR a.valid_to > SYSDATE)
+      AND at2.GEOMETRY_TYPE = 'linear'
       #$filter
       """.as[AssetReport](getResult).list
     }
@@ -50,10 +49,8 @@ class AssetReporterDAO {
       sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE, a.MODIFIED_BY, a.MODIFIED_DATE
       FROM ASSET a
         JOIN ASSET_TYPE at2 ON at2.id = a.asset_type_id
-        JOIN ASSET_LINK al ON a.id = al.asset_id
         JOIN #$idTableName i ON i.id = a.municipality_code
-      WHERE (a.valid_to IS NULL OR a.valid_to > sysdate)
-      AND a.modified_by IS NOT NULL
+      WHERE (a.valid_to IS NULL OR a.valid_to > SYSDATE)
       AND at2.GEOMETRY_TYPE = 'point'
       #$filter
       """.as[AssetReport](getResult).list
