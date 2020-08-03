@@ -304,7 +304,7 @@
         laneToClone = self.getLane(laneNumber-2);
       }
 
-      var newLane = _.cloneDeep(_.omit(laneToClone, ['createdBy', 'createdAt', 'modifiedBy', 'modifiedAt']));
+      var newLane = _.cloneDeep(_.omit(laneToClone, ['marker', 'createdBy', 'createdAt', 'modifiedBy', 'modifiedAt']));
 
       var outerLaneIsMainLane = laneNumber.toString()[1] == 2 || laneNumber.toString()[1] == 3;
 
