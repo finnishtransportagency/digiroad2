@@ -299,12 +299,14 @@
     };
 
     this.setNewLane = function(laneNumber) {
-      var newLane;
+      var laneToClone;
       if(laneNumber.toString()[1] == 2){
-        newLane = _.cloneDeep(self.getLane(laneNumber-1));
+        laneToClone = self.getLane(laneNumber-1);
       }else{
-        newLane = _.cloneDeep(self.getLane(laneNumber-2));
+        laneToClone = self.getLane(laneNumber-2);
       }
+
+      var newLane = _.cloneDeep(_.omit(laneToClone, ['marker', 'createdBy', 'createdAt', 'modifiedBy', 'modifiedAt']));
 
       var outerLaneIsMainLane = laneNumber.toString()[1] == 2 || laneNumber.toString()[1] == 3;
 
