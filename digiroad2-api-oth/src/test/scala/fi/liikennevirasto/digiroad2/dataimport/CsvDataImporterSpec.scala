@@ -1,8 +1,6 @@
-
 package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{ByteArrayInputStream, InputStream}
-
 import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -23,6 +21,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
 
 object sTestTransactions {
   def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
@@ -51,7 +50,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val mockLaneUtils = MockitoSugar.mock[LaneUtils]
 
   val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
-  val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None))
+  val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway,  None, None, Map("MUNICIPALITYCODE" -> BigInt(408))))
 
   when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
   when(mockRoadLinkService.enrichRoadLinksFromVVH(any[Seq[VVHRoadlink]], any[Seq[ChangeInfo]])).thenReturn(roadLink)
@@ -62,7 +61,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def eventBus: DigiroadEventBus = mockEventBus
-
   }
 
   object trafficLightsCsvImporter extends TrafficLightsCsvImporter(mockRoadLinkService, mockEventBus) {
@@ -372,7 +370,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     assets.malformedRows.flatMap(_.malformedParameters) should contain allOf ("koordinaatti x", "koordinaatti y", "liikennemerkin tyyppi")
     assets.malformedRows.foreach {
       asset =>
-        asset.csvRow should be (trafficSignCsvImporter.rowToString(defaultValues ++ assetFields))
+        asset.csvRow should be (csvRow)
     }
   }
 
@@ -387,6 +385,166 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         reason = "No Rights for Municipality or nonexistent road links near asset position",
         csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
+
+  test("validation for traffic sign import with sign roadwork and dates", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "A11", "suuntima" -> "40",
+      "alkupaivamaara" -> "03.08.2020", "loppupaivamaara" -> "07.08.2020", "kunnan id" -> "408")
+
+    val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(0)
+      result.createdData.size should be(1)
+
+      val startDate = result.createdData.head.properties.find(_.columnName == "startDate").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      val endDate = result.createdData.head.properties.find(_.columnName == "endDate").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      startDate should be("03.08.2020")
+      endDate should be("07.08.2020")
+
+    }
+
+  }
+
+  test("validation for traffic sign import with only start dates", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "A13", "suuntima" -> "40",
+      "alkupaivamaara" -> "03.08.2020", "loppupaivamaara" -> "", "kunnan id" -> "408")
+
+    val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(0)
+      result.createdData.size should be(1)
+
+      val startDate = result.createdData.head.properties.find(_.columnName == "startDate").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      val endDate = result.createdData.head.properties.find(_.columnName == "endDate").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      startDate should be("03.08.2020")
+      endDate should be("")
+
+    }
+
+  }
+
+  test("validation for traffic sign import with without date", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "A13", "suuntima" -> "40",
+      "alkupaivamaara" -> "", "loppupaivamaara" -> "", "kunnan id" -> "408")
+
+    val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(0)
+      result.createdData.size should be(1)
+
+      val startDate = result.createdData.head.properties.find(_.columnName == "startDate").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      val endDate = result.createdData.head.properties.find(_.columnName == "endDate").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      startDate should be("")
+      endDate should be("")
+
+    }
+
+  }
+
+  test("validation for traffic sign import with arvo", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "C32", "suuntima" -> "40",
+      "arvo" -> "50", "kunnan id" -> "408")
+
+    val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(0)
+      result.createdData.size should be(1)
+
+      val arvo = result.createdData.head.properties.find( _.columnName == "value").get match {
+        case v => v.value
+        case _ => ""
+      }
+
+      arvo should be("50")
+
+    }
+
+  }
+
+  test("validation for traffic sign import with arvo empty", Tag("db")) {
+    val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "C32", "suuntima" -> "40",
+      "arvo" -> "", "kunnan id" -> "408")
+
+    val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+    val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+    val csvData = trafficLightsCsvImporter.rowToString(assetFields ++ defaultValues)
+
+    runWithRollback {
+      when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
+      when(mockRoadLinkService.filterRoadLinkByBearing(any[Option[Int]], any[Option[Int]], any[Point], any[Seq[RoadLink]])).thenReturn(roadLink)
+
+      val result = trafficSignCsvImporter.processing(validCsv, Set(), testUser)
+
+      result.incompleteRows.size should be(0)
+      result.malformedRows.size should be(0)
+      result.excludedRows.size should be(0)
+      result.notImportedData.size should be(1)
+      result.createdData.size should be(0)
+
+      result.notImportedData.head.reason should equal( "Arvo field not ok.")
+
+    }
+  }
+
 
   test("validation for traffic light import fails if mandatory parameters are missing", Tag("db")) {
     val assetFields = Map("koordinaatti x" -> "", "koordinaatti y" -> "", "liikennevalo tyyppi" -> "")
