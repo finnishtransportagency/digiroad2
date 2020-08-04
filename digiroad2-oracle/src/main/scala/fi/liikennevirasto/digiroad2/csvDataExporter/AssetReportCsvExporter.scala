@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Status}
 import org.joda.time.DateTime
 
 
-case class ExportAssetReport(municipalityName: String, assetTypeId: Int, assetNameFI: String, assetGeomType: String,
+case class ExportAssetReport(municipalityName: String, assetTypeId: Int, totalAssets: Int, assetNameFI: String, assetGeomType: String,
                              operatorUser: String, operatorModifiedDate: Option[DateTime],
                              municipalityUser: String, municipalityModifiedDate: Option[DateTime] )
 
@@ -115,8 +115,8 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
             val firstElem = currentAssetType.head
 
-            Some( ExportAssetReport(municipalitiesInfo.filter(_.id == municipality).head.name, firstElem.assetType, firstElem.assetNameFI,
-                              firstElem.assetGeometryType, operatorUser, operatorDate, municipalityUser, municipalityDate) )
+            Some( ExportAssetReport(municipalitiesInfo.filter(_.id == municipality).head.name, firstElem.assetType, currentAssetType.size,
+                              firstElem.assetNameFI, firstElem.assetGeometryType, operatorUser, operatorDate, municipalityUser, municipalityDate) )
           }
           else
             None
@@ -162,11 +162,10 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
         val result = allInfoGroupedByMunicipality.map { case (municipality, records) =>
           val line = municipality + ";\r\n"
-          val totalRecords = records.size
 
           val rows = records.map { elem =>
                 val (totalPoints, isLinear) = if (elem.assetGeomType.trim == "linear") ("", "Kyllä")
-                                              else (totalRecords.toString, "")
+                                              else (elem.totalAssets, "")
 
                 val operatorDate = extractDateToString(elem.operatorModifiedDate)
                 val municipalityDate = extractDateToString(elem.municipalityModifiedDate)
