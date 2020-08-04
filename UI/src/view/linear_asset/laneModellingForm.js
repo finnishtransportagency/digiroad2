@@ -211,7 +211,7 @@
             info = 'Valinnan tieosoitetiedot:';
             break;
           case "startRoadPartNumber":
-            info = "Kaista alkaa";
+            info = "Kaista alkaa:";
             break;
           case "endRoadPartNumber":
             info = 'Kaista loppuu:';
@@ -244,22 +244,6 @@
             return property.publicId === field.publicId;
           });
           if (_.isUndefined(existingProperty)) {
-            var pickUniqueValues = function(selectedData, property) {
-              return _.chain(selectedData)
-                .map(property)
-                .uniq()
-                .value();
-            };
-
-            var chainValuesByPublicIdAndRoadPartNumber = function (selectedData, roadPartNumber, publicId) {
-              return _.chain(selectedData)
-                .filter(function (data) {
-                  return data.roadPartNumber == roadPartNumber;
-                })
-                .map(publicId)
-                .value();
-            };
-
             var value;
             var roadPartNumber;
             var selectedLinks = asset.selectedLinks;
@@ -268,15 +252,15 @@
             switch(publicId) {
               case "roadNumber":
               case "roadPartNumber":
-                value = pickUniqueValues(selectedLinks, publicId).join(', ');
+                value = Property.pickUniqueValues(selectedLinks, publicId).join(', ');
                 break;
               case "startAddrMValue":
-                  roadPartNumber = Math.min.apply(null, _.compact(pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  value = Math.min.apply(null, chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  roadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  value = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                 break;
               case "endAddrMValue":
-                  roadPartNumber = Math.max.apply(null, _.compact(pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  value = Math.max.apply(null, chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  roadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  value = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                 break;
               case "administrativeClass":
                 value = administrativeClassValues[_.head(selectedLinks)[publicId]];

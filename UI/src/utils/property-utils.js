@@ -25,10 +25,29 @@
       return _.filter(properties, {'propertyType': propertyType});
     };
 
+    this.pickUniqueValues = function(selectedData, property) {
+      return _.chain(selectedData)
+        .map(property)
+        .uniq()
+        .value();
+    };
+
+    //Use this one with road links as selectedData or data with roadPartNumber attribute
+    this.chainValuesByPublicIdAndRoadPartNumber = function (selectedData, roadPartNumber, publicId) {
+      return _.chain(selectedData)
+        .filter(function (data) {
+          return data.roadPartNumber == roadPartNumber;
+        })
+        .map(publicId)
+        .value();
+    };
+
   root.Property = {
     getPropertyValue: getPropertyValue,
     getPropertyByPublicId: getPropertyByPublicId,
-    filterPropertiesByPropertyType: filterPropertiesByPropertyType
+    filterPropertiesByPropertyType: filterPropertiesByPropertyType,
+    pickUniqueValues: pickUniqueValues,
+    chainValuesByPublicIdAndRoadPartNumber: chainValuesByPublicIdAndRoadPartNumber
   };
 
 }(this));

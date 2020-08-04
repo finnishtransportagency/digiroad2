@@ -132,8 +132,8 @@
 
     this.setInitialRoadFields = function(){
       roadNumber = selectedRoadlink.roadNumber;
-      startRoadPartNumber = selectedRoadlink.roadPartNumber;
-      startDistance = selectedRoadlink.startAddrMValue;
+      startRoadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(linksSelected, 'roadPartNumber')));
+      startDistance = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(linksSelected, startRoadPartNumber, 'startAddrMValue'));
       track = selectedRoadlink.track;
 
       var roadPartNumberElement = {publicId: "startRoadPartNumber", propertyType: "number", required: 'required', values: [{value: startRoadPartNumber}]};
