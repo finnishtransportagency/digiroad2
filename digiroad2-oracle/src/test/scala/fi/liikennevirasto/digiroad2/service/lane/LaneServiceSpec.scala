@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadLinkClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
 import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
-import fi.liikennevirasto.digiroad2.lane.LaneFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.lane.LaneFiller.{ChangeSet, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneProperty, LanePropertyValue, NewIncomeLane, PersistedLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -185,6 +185,21 @@ class LaneServiceSpec extends LaneTestSupporter {
       }
   }
 
+  test("Remove unused attributes from database") {
+    runWithRollback {
+      val lanePropertiesWithDate = lanePropertiesValues12 ++ Seq( LaneProperty("start_date", Seq(LanePropertyValue("20.07.2020"))) )
+      val lanePropertiesWithEmptyDate = lanePropertiesValues12 ++ Seq( LaneProperty("start_date", Seq()) )
+
+      val newLaneId = ServiceWithDao.create(Seq(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesWithDate)), Set(100L), 1, usernameTest)
+      val createdLane = ServiceWithDao.getPersistedLanesByIds(newLaneId.toSet)
+      createdLane.head.attributes.length should be(3)
+
+      val updatedLaneId = ServiceWithDao.update(Seq(NewIncomeLane(newLaneId.head, 0, 500, 745, false, false, lanePropertiesWithEmptyDate)), Set(100L), 1, usernameTest)
+      val updatedLane = ServiceWithDao.getPersistedLanesByIds(updatedLaneId.toSet)
+      updatedLane.head.attributes.length should be(2)
+    }
+  }
+
   test("Should not be able to Update main Lane") {
     runWithRollback {
 
@@ -360,7 +375,7 @@ class LaneServiceSpec extends LaneTestSupporter {
                             1, TrafficDirection.TowardsDigitizing, Motorway, None, None)
 
     val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
-                  21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+                  11, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
                   Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))) )
 
     val lane21 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
@@ -374,16 +389,45 @@ class LaneServiceSpec extends LaneTestSupporter {
 
 
     persistedLanes should have size 1
+    persistedLanes.map(_.id) should be (List(1L))
     persistedLanes.map(_.sideCode) should be (Seq(SideCode.BothDirections.value))
     persistedLanes.map(_.laneCode) should be (List(11))
     persistedLanes.map(_.linkId) should be (Seq(roadLinkTowards1.linkId))
 
-    changeSet.expiredLaneIds should be (Set(1L,2L))
+    changeSet.expiredLaneIds should be (Set(2L))
+  }
+
+  test("Fix wrong sideCodes on a BothDirections roadlink") {
+    val roadLinkTowards1 = RoadLink(1L, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None)
+
+    val lane11 = PersistedLane(1L, roadLinkTowards1.linkId, SideCode.AgainstDigitizing.value,
+      11, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(11)))) )
+
+    val lane21 = PersistedLane(2L, roadLinkTowards1.linkId, SideCode.TowardsDigitizing.value,
+      21, 745L, 0, 10.0, None, None, None, None, expired = false, 0L, None,
+      Seq(LaneProperty("lane_code", Seq(LanePropertyValue(21)))) )
+
+    val roadAddress = RoadAddressTEMP(roadLinkTowards1.linkId, 6, 202, Track.Combined, 1, 150, 0, 150,
+      Seq(Point(0.0, 0.0), Point(15.0, 0.0)), Some(SideCode.TowardsDigitizing), None)
+
+    val (persistedLanes, changeSet) = ServiceWithDao.adjustLanesSideCodes(roadLinkTowards1,Seq(lane11, lane21), ChangeSet(), Seq(roadAddress) )
+
+    persistedLanes should have size 2
+    persistedLanes.map(_.id).sorted should be (List(1L, 2L))
+    persistedLanes.map(_.sideCode).sorted should be (Seq(SideCode.TowardsDigitizing.value, SideCode.AgainstDigitizing.value))
+    persistedLanes.map(_.laneCode).sorted should be (List(11, 21))
+    persistedLanes.find(_.laneCode == 11).get.sideCode should be (SideCode.TowardsDigitizing.value)
+    persistedLanes.map(_.linkId) should be (Seq(roadLinkTowards1.linkId, roadLinkTowards1.linkId))
+
+    changeSet.expiredLaneIds should be (Set())
+    changeSet.adjustedSideCodes should be (Seq(SideCodeAdjustment(1L, SideCode.TowardsDigitizing), SideCodeAdjustment(2L, SideCode.AgainstDigitizing)))
   }
 
   test("Populate start date automatically") {
     val lanes = Set(NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11),
-                    NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
+      NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12))
 
     val currentTime = DateTime.now().toString(DatePropertyFormat)
 
