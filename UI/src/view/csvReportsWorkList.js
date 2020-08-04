@@ -22,7 +22,6 @@
         $('#work-list').show();
         $('body').addClass('scrollable');
         me.generateWorkList(listP);
-        me.getJobs();
       });
 
     };
@@ -227,6 +226,8 @@
 
        $('#municipalities_search_rightSelected, #municipalities_search_leftSelected, #assets_search_rightSelected, #assets_search_leftSelected').on('click', enableSubmitButton);
        $('#municipalities_search, #municipalities_search_to, #assets_search, #assets_search_to').on('dblclick', enableSubmitButton);
+
+        me.getJobs();
         me.removeSpinner();
       });
     };
