@@ -64,7 +64,7 @@
 
     var numberOfAdditionalLanes = function (asset) {
       if (!_.isUndefined(asset.lanes))
-        return asset.lanes.length - 1;
+        return _.uniq(asset.lanes).length - 1;
     };
 
     var laneModellingStyleRules = [
