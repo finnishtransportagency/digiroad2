@@ -432,7 +432,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     }
   }
 
-  test("validation for traffic sign import with without dates", Tag("db")) {
+  test("validation for traffic sign import without dates", Tag("db")) {
     val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "A13", "suuntima" -> "40",
       "alkupaivamaara" -> "", "loppupaivamaara" -> "", "kunnan id" -> "408")
 
