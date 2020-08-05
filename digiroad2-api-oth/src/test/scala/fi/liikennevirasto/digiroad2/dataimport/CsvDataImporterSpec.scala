@@ -404,21 +404,9 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result.notImportedData.size should be(0)
       result.createdData.size should be(1)
 
-      val startDate = result.createdData.head.properties.find(_.columnName == "startDate").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      val endDate = result.createdData.head.properties.find(_.columnName == "endDate").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      startDate should be("03.08.2020")
-      endDate should be("07.08.2020")
-
+      result.createdData.head.properties.find(_.columnName == "startDate").get.value should be("03.08.2020")
+      result.createdData.head.properties.find(_.columnName == "endDate").get.value should be("07.08.2020")
     }
-
   }
 
   test("validation for traffic sign import with only start dates", Tag("db")) {
@@ -439,24 +427,12 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result.notImportedData.size should be(0)
       result.createdData.size should be(1)
 
-      val startDate = result.createdData.head.properties.find(_.columnName == "startDate").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      val endDate = result.createdData.head.properties.find(_.columnName == "endDate").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      startDate should be("03.08.2020")
-      endDate should be("")
-
+      result.createdData.head.properties.find(_.columnName == "startDate").get.value should be("03.08.2020")
+      result.createdData.head.properties.find(_.columnName == "endDate").get.value should be("")
     }
-
   }
 
-  test("validation for traffic sign import with without date", Tag("db")) {
+  test("validation for traffic sign import with without dates", Tag("db")) {
     val assetFields = Map("koordinaatti x" -> 1, "koordinaatti y" -> 1, "liikennemerkin tyyppi" -> "A13", "suuntima" -> "40",
       "alkupaivamaara" -> "", "loppupaivamaara" -> "", "kunnan id" -> "408")
 
@@ -474,21 +450,9 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result.notImportedData.size should be(0)
       result.createdData.size should be(1)
 
-      val startDate = result.createdData.head.properties.find(_.columnName == "startDate").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      val endDate = result.createdData.head.properties.find(_.columnName == "endDate").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      startDate should be("")
-      endDate should be("")
-
+      result.createdData.head.properties.find(_.columnName == "startDate").get.value should be("")
+      result.createdData.head.properties.find(_.columnName == "endDate").get.value should be("")
     }
-
   }
 
   test("validation for traffic sign import with arvo", Tag("db")) {
@@ -509,15 +473,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result.notImportedData.size should be(0)
       result.createdData.size should be(1)
 
-      val arvo = result.createdData.head.properties.find( _.columnName == "value").get match {
-        case v => v.value
-        case _ => ""
-      }
-
-      arvo should be("50")
-
+      result.createdData.head.properties.find( _.columnName == "value").get.value should be("50")
     }
-
   }
 
   test("validation for traffic sign import with arvo empty", Tag("db")) {
@@ -525,8 +482,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       "arvo" -> "", "kunnan id" -> "408")
 
     val validCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
-    val defaultValues = trafficLightsCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
-    val csvData = trafficLightsCsvImporter.rowToString(assetFields ++ defaultValues)
 
     runWithRollback {
       when(mockRoadLinkService.getClosestRoadlinkForCarTrafficFromVVH(any[User], any[Point], any[Boolean])).thenReturn(roadLink)
@@ -541,7 +496,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       result.createdData.size should be(0)
 
       result.notImportedData.head.reason should equal( "Arvo field not ok.")
-
     }
   }
 
