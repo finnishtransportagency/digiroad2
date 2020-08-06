@@ -1388,7 +1388,7 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(2), dateAtThisMoment.plusDays(2))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Divided, LaneChangeType.Divided))
       val lanesDivides = lanesChanged.filter(_.changeType == LaneChangeType.Divided)
