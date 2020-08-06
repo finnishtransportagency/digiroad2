@@ -1372,7 +1372,7 @@ class LaneServiceSpec extends LaneTestSupporter {
   }
 
   //TODO: check this because locally is ok(sometimes fails) but in jenkins always fails
-  ignore("Lane Change:Show 1 Add and 2 Divided") {
+  test("Lane Change:Show 1 Add and 2 Divided") {
     //2 divides because two new lanes with same old lane
     runWithRollback {
       val newLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
