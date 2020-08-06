@@ -2285,7 +2285,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     validateUserRightsForLanes(linkIds, user)
     laneService.processNewIncomeLanes(incomingLanes.toSet, linkIds, sideCode, user.username)
-    Map("success" -> true) //TODO: check this because server cant send empty response as Jquery will think it failed
   }
 
   post("/lanesByRoadAddress") {
