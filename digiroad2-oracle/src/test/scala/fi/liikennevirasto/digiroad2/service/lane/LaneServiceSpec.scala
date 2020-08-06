@@ -1379,7 +1379,6 @@ class LaneServiceSpec extends LaneTestSupporter {
       val lane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
       val lane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesValues12)
 
-      val dateAtThisMoment = DateTime.now()
       val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
 
       ServiceWithDao.createMultiLanesOnLink(Seq(lane12SplitA,lane12SplitB), Set(100L), 2, usernameTest)
@@ -1388,7 +1387,12 @@ class LaneServiceSpec extends LaneTestSupporter {
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
 
-      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1), token = Some("cGFnZU51bWJlcjoxLHJlY29yZE51bWJlcjoy"))
+      val currentLanes = ServiceWithDao.fetchExistingLanesByLinkIds(Seq(100L))
+      currentLanes.length should be(2)
+
+      val dateAtThisMoment = currentLanes.head.createdDateTime.get
+
+      val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 
       lanesChanged.map(_.changeType).sortBy(_.value) should be(Seq(LaneChangeType.Add, LaneChangeType.Divided, LaneChangeType.Divided))
       val lanesDivides = lanesChanged.filter(_.changeType == LaneChangeType.Divided)
