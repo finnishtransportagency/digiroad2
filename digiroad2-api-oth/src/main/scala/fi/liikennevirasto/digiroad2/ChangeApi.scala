@@ -577,6 +577,16 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
       }
     }
 
+    def generateCommondFiledsWithDiffSource(laneToUseOnCreates: PersistedLane, modifiedAt: Option[String] = None,
+                                            modifiedBy: Option[String]  = None) = {
+
+      Map("createdAt" -> laneToUseOnCreates.createdDateTime.map(DateTimePropertyFormat.print(_)),
+        "createdBy" -> laneToUseOnCreates.createdBy,
+        "modifiedAt" -> modifiedAt.getOrElse(""),
+        "modifiedBy" -> modifiedBy.getOrElse("")
+      )
+    }
+
     Map("type" -> "FeatureCollection",
       "features" -> laneChanges.flatMap{ laneChange =>
         val lane = laneChange.lane
@@ -602,19 +612,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
           case LaneChangeType.Add =>
             Seq(Map("newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
-              "NewlaneType" -> laneType,
-              "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "createdBy" -> lane.createdBy,
-              "modifiedAt" -> "",
-              "modifiedBy" -> ""))
+              "NewlaneType" -> laneType)
+              ++ generateCommondFiledsWithDiffSource(lane))
 
           case LaneChangeType.Expired =>
             Seq(Map("OldId" -> lane.id,
-              "OldLaneNumber" -> lane.laneCode,
-              "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "createdBy" -> lane.createdBy,
-              "modifiedAt" -> lane.expiredDateTime.map(DateTimePropertyFormat.print(_)),
-              "modifiedBy" -> lane.expiredBy))
+              "OldLaneNumber" -> lane.laneCode)
+              ++ generateCommondFiledsWithDiffSource(lane, lane.expiredDateTime.map(DateTimePropertyFormat.print(_)), lane.expiredBy))
 
           case LaneChangeType.LaneCodeTransfer | LaneChangeType.AttributesChanged =>
             val oldLane = laneChange.oldLane.get
@@ -623,11 +627,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "OldLaneNumber" -> laneChange.oldLane.get.laneCode,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
-              "NewlaneType" -> laneType,
-              "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "createdBy" -> lane.createdBy,
-              "modifiedAt" -> lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
-              "modifiedBy" -> lane.modifiedBy))
+              "NewlaneType" -> laneType)
+              ++ generateCommondFiledsWithDiffSource(lane, lane.modifiedDateTime.map(DateTimePropertyFormat.print(_)), lane.modifiedBy))
 
           case LaneChangeType.Divided =>
             val oldLane = laneChange.oldLane.get
@@ -636,11 +637,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "OldLaneNumber" -> oldLane.laneCode,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
-              "NewlaneType" -> laneType,
-              "createdAt" -> oldLane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "createdBy" -> oldLane.createdBy,
-              "modifiedAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "modifiedBy" -> lane.createdBy))
+              "NewlaneType" -> laneType) ++ generateCommondFiledsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy))
 
           case LaneChangeType.Lengthened | LaneChangeType.Shortened =>
             val oldLane = laneChange.oldLane.get
@@ -649,21 +646,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             val sameSegmentLaneAddressInfo = if(laneChange.changeType == LaneChangeType.Lengthened) mapLaneAddressInfo(oldLane, laneChange.roadLink.get) else mapLaneAddressInfo(lane, laneChange.roadLink.get)
 
             val segmentModificationMap = {
-              if(laneChange.changeType == LaneChangeType.Lengthened){
+              if (laneChange.changeType == LaneChangeType.Lengthened) {
                 Map("newId" -> lane.id,
                   "NewlaneNumber" -> lane.laneCode,
-                  "NewlaneType" -> laneType,
-                  "createdAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-                  "createdBy" -> lane.createdBy,
-                  "modifiedAt" -> "",
-                  "modifiedBy" -> "")
+                  "NewlaneType" -> laneType) ++ generateCommondFiledsWithDiffSource(lane)
               } else {
                 Map("OldId" -> oldLane.id,
-                  "OldLaneNumber" -> oldLane.laneCode,
-                  "createdAt" -> oldLane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-                  "createdBy" -> oldLane.createdBy,
-                  "modifiedAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-                  "modifiedBy" -> lane.createdBy)
+                  "OldLaneNumber" -> oldLane.laneCode) ++ generateCommondFiledsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
               }
             }
 
@@ -684,10 +673,6 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
             val sameSegmentMap = Map("type" -> "Feature",
               "changeType" -> "Modify",
               "geometry" -> getGeometryMap(laneChange.roadLink.get),
-              "createdAt" -> oldLane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "createdBy" -> oldLane.createdBy,
-              "modifiedAt" -> lane.createdDateTime.map(DateTimePropertyFormat.print(_)),
-              "modifiedBy" -> lane.createdBy,
               "startDate" -> startDate,
               "endDate" -> endDate,
               "linkId" -> lane.linkId,
@@ -697,7 +682,7 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
               "OldLaneNumber" -> oldLane.laneCode,
               "newId" -> lane.id,
               "NewlaneNumber" -> lane.laneCode,
-              "NewlaneType" -> laneType) ++ sameSegmentLaneAddressInfo
+              "NewlaneType" -> laneType) ++ sameSegmentLaneAddressInfo ++ generateCommondFiledsWithDiffSource(oldLane, lane.createdDateTime.map(DateTimePropertyFormat.print(_)), lane.createdBy)
 
             //if there is a LaneCodeTransfer type than the sameSegment will already be made on the LaneCodeTransfer case
             if(laneChanges.exists(lc => lc.changeType == LaneChangeType.LaneCodeTransfer && lc.lane.id == lane.id))
