@@ -1371,14 +1371,18 @@ class LaneServiceSpec extends LaneTestSupporter {
     }
   }
 
-  //TODO: check this because locally is ok(sometimes fails) but in jenkins always fails
   test("Lane Change:Show 1 Add and 2 Divided") {
     //2 divides because two new lanes with same old lane
     runWithRollback {
+      val lanePropertiesValues12B = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(12))),
+        LaneProperty("lane_type", Seq(LanePropertyValue("3")))
+      )
+
       val newLane12 = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues12)
       val lane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
-      val lane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesValues12)
+      val lane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, lanePropertiesValues12B)
 
+      val dateAtThisMoment = DateTime.now()
       val lane12Id = ServiceWithDao.create(Seq(newLane12), Set(100L), 2, usernameTest).head
 
       ServiceWithDao.createMultiLanesOnLink(Seq(lane12SplitA,lane12SplitB), Set(100L), 2, usernameTest)
@@ -1386,11 +1390,6 @@ class LaneServiceSpec extends LaneTestSupporter {
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(100L), false)).thenReturn(
         Seq(RoadLink(100L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(745))))
       )
-
-      val currentLanes = ServiceWithDao.fetchExistingLanesByLinkIds(Seq(100L))
-      currentLanes.length should be(2)
-
-      val dateAtThisMoment = currentLanes.head.createdDateTime.get
 
       val lanesChanged = ServiceWithDao.getChanged(dateAtThisMoment.minusDays(1), dateAtThisMoment.plusDays(1))
 

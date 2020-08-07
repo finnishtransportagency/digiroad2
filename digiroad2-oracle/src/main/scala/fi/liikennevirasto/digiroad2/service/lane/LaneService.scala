@@ -605,41 +605,49 @@ trait LaneOperations {
     val historyLaneChanges = historyLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
       val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == lanes.head.linkId)
 
-      lanes.flatMap { case lane =>
+      val lanesSorted = lanes.sortBy(- _.historyCreatedDate.getMillis)
+      lanesSorted.foldLeft(Seq.empty[Option[LaneChange]], lanesSorted){ case (foldLeftParameters, lane) =>
+
+        val (treatedLaneChanges, lanesNotTreated) = foldLeftParameters
         val laneAsPersistedLane = historyLaneToPersistedLane(lane)
-        val relevantLanes = lanes.filter(l => l.id != lane.id && (l.historyCreatedDate.isBefore(lane.historyCreatedDate) || l.historyCreatedDate.isEqual(lane.historyCreatedDate)))
+        val relevantLanes = lanesNotTreated.filterNot(_.id == lane.id)
 
-        if (relevantLanes.isEmpty) {
-          val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
+        val laneChangeReturned = {
+          if (relevantLanes.isEmpty) {
+            val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
 
-          newIdRelation match {
-            case Some(relation) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
-              Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink))
+            newIdRelation match {
+              case Some(relation) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
+                Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink))
 
-            case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
-              Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Lengthened, roadLink))
+              case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
+                Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Lengthened, roadLink))
 
-            case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure < relation.endMeasure - relation.startMeasure =>
-              Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Shortened, roadLink))
+              case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure < relation.endMeasure - relation.startMeasure =>
+                Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Shortened, roadLink))
 
-            case _ =>
-              val wasCreateInTimePeriod = lane.modifiedDateTime.isEmpty &&
-                (lane.createdDateTime.get.isAfter(sinceDate) || lane.createdDateTime.get.isEqual(sinceDate))
+              case _ =>
+                val wasCreateInTimePeriod = lane.modifiedDateTime.isEmpty &&
+                  (lane.createdDateTime.get.isAfter(sinceDate) || lane.createdDateTime.get.isEqual(sinceDate))
 
-              if (wasCreateInTimePeriod)
-                Some(LaneChange(laneAsPersistedLane, None, LaneChangeType.Add, roadLink))
-              else
-                None
+                if (wasCreateInTimePeriod)
+                  Some(LaneChange(laneAsPersistedLane, None, LaneChangeType.Add, roadLink))
+                else
+                  None
+            }
+          } else {
+            val relevantLane = historyLaneToPersistedLane(relevantLanes.maxBy(_.historyCreatedDate.getMillis))
+
+            if (isSomePropertyDifferent(relevantLane, laneAsPersistedLane))
+              Some(LaneChange(laneAsPersistedLane, Some(relevantLane), LaneChangeType.AttributesChanged, roadLink))
+            else
+              None
           }
-        } else {
-          val relevantLane = historyLaneToPersistedLane(relevantLanes.maxBy(_.historyCreatedDate.getMillis))
-
-          if (isSomePropertyDifferent(relevantLane, laneAsPersistedLane))
-            Some(LaneChange(laneAsPersistedLane, Some(relevantLane), LaneChangeType.AttributesChanged, roadLink))
-          else
-            None
         }
-      }
+
+        (treatedLaneChanges :+ laneChangeReturned, relevantLanes)
+
+      }._1.flatten
     }
 
     val relevantLanesChanged = (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
