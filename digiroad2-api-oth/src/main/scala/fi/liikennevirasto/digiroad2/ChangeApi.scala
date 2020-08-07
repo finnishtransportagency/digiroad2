@@ -590,14 +590,15 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     Map("type" -> "FeatureCollection",
       "features" -> laneChanges.flatMap{ laneChange =>
         val lane = laneChange.lane
+        val laneAttributes = lane.attributes
 
-        val startDateValue = laneService.getPropertyValue(lane, "start_date")
+        val startDateValue = laneService.getPropertyValue(laneAttributes, "start_date")
         val startDate = if(Try(startDateValue.asInstanceOf[LaneProperty]).isFailure) startDateValue else ""
 
-        val endDateValue = laneService.getPropertyValue(lane, "end_date")
+        val endDateValue = laneService.getPropertyValue(laneAttributes, "end_date")
         val endDate = if(Try(endDateValue.asInstanceOf[LaneProperty]).isFailure) endDateValue else ""
 
-        val laneType = laneService.getPropertyValue(lane, "lane_type")
+        val laneType = laneService.getPropertyValue(laneAttributes, "lane_type")
 
         val commonJson = Map("type" -> "Feature",
           "changeType" -> {if(laneChange.changeType == LaneChangeType.Add) "Add" else "Modify"},

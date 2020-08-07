@@ -587,7 +587,7 @@ trait LaneOperations {
           if(historyRelatedLanes.nonEmpty){
             val historyLane = historyLaneToPersistedLane(historyRelatedLanes.maxBy(_.historyCreatedDate.getMillis))
 
-            if (isSomePropertyDifferent(historyLane, upToDate))
+            if (isSomePropertyDifferent(historyLane, upToDate.attributes))
               Some(LaneChange(upToDate, Some(historyLane), LaneChangeType.AttributesChanged, roadLink))
             else
               None
@@ -638,7 +638,7 @@ trait LaneOperations {
           } else {
             val relevantLane = historyLaneToPersistedLane(relevantLanes.maxBy(_.historyCreatedDate.getMillis))
 
-            if (isSomePropertyDifferent(relevantLane, laneAsPersistedLane))
+            if (isSomePropertyDifferent(relevantLane, laneAsPersistedLane.attributes))
               Some(LaneChange(laneAsPersistedLane, Some(relevantLane), LaneChangeType.AttributesChanged, roadLink))
             else
               None
@@ -724,19 +724,9 @@ trait LaneOperations {
       dao.fetchLanesByIds( ids )
   }
 
-  def getPropertyValue(lane: PersistedLane, publicId: String) = {
-    val laneProperty = lane.attributes.find(_.publicId == publicId)
-      .getOrElse(LaneProperty("Error", Seq()))
-
-    if (laneProperty.values.nonEmpty)
-      laneProperty.values.head.value
-    else
-      None
-  }
-
-  def getPropertyValue(newLane: NewIncomeLane, publicId: String) = {
-    val laneProperty = newLane.properties.find(_.publicId == publicId)
-                                        .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
+  def getPropertyValue(newLaneProperties: Seq[LaneProperty], publicId: String) = {
+    val laneProperty = newLaneProperties.find(_.publicId == publicId)
+      .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
 
     if (laneProperty.values.nonEmpty)
       laneProperty.values.head.value
@@ -749,7 +739,7 @@ trait LaneOperations {
   }
 
   def getLaneCode (newIncomeLane: NewIncomeLane): String = {
-    val laneCodeValue = getPropertyValue(newIncomeLane, "lane_code")
+    val laneCodeValue = getPropertyValue(newIncomeLane.properties, "lane_code")
 
     if (laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty)
       laneCodeValue.toString.trim
@@ -757,21 +747,11 @@ trait LaneOperations {
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
 
-  def isSomePropertyDifferent(oldLane: PersistedLane, newLane: PersistedLane): Boolean = {
-    oldLane.attributes.length != newLane.attributes.length ||
+  def isSomePropertyDifferent(oldLane: PersistedLane, newLaneProperties: Seq[LaneProperty]): Boolean = {
+    oldLane.attributes.length != newLaneProperties.length ||
       oldLane.attributes.exists { property =>
         val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
-        val newPropertyValue = getPropertyValue(newLane, property.publicId)
-
-        oldPropertyValue != newPropertyValue
-      }
-  }
-
-  def isSomePropertyDifferent(oldLane: PersistedLane, newLane: NewIncomeLane): Boolean = {
-    oldLane.attributes.length != newLane.properties.length ||
-      oldLane.attributes.exists { property =>
-        val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
-        val newPropertyValue = getPropertyValue(newLane, property.publicId)
+        val newPropertyValue = getPropertyValue(newLaneProperties, property.publicId)
 
         oldPropertyValue != newPropertyValue
       }
@@ -810,7 +790,7 @@ trait LaneOperations {
               val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
               moveToHistory(oldLane.id, Some(newLaneID.head), true, true, username)
               newLaneID.head
-            } else if (oldLane.laneCode != laneToUpdateCode || isSomePropertyDifferent(oldLane, laneToUpdate)) {
+            } else if (oldLane.laneCode != laneToUpdateCode || isSomePropertyDifferent(oldLane, laneToUpdate.properties)) {
               //Something changed on properties or lane code
               val persistedLaneToUpdate = PersistedLane(oldLane.id, linkId, sideCode, laneToUpdateCode, oldLane.municipalityCode,
                 oldLane.startMeasure, oldLane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
@@ -833,7 +813,7 @@ trait LaneOperations {
               val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
               moveToHistory(laneRelatedByUpdatedLaneCode.id, Some(newLaneID.head), true, true, username)
               newLaneID.head
-            } else if(isSomePropertyDifferent(laneRelatedByUpdatedLaneCode, laneToUpdate)){
+            } else if(isSomePropertyDifferent(laneRelatedByUpdatedLaneCode, laneToUpdate.properties)){
               val persistedLaneToUpdate = PersistedLane(laneRelatedByUpdatedLaneCode.id, linkId, sideCode, laneToUpdateCode, laneToUpdate.municipalityCode,
                 laneToUpdate.startMeasure, laneToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
 
@@ -1030,7 +1010,7 @@ trait LaneOperations {
     //Get multiple lanes in one link
     val resultWithMultiLanesInLink = newIncomeLanes.filter(_.isExpired != true).foldLeft(resultWithDeleteActions) {
       (result, incomeLane) =>
-        val incomeLaneCode: Int = getPropertyValue(incomeLane, "lane_code").toString.toInt
+        val incomeLaneCode: Int = getPropertyValue(incomeLane.properties, "lane_code").toString.toInt
 
         val numberOfOldLanesByCode = allExistingLanes.count(_.laneCode == incomeLaneCode)
         val numberOfFutureLanesByCode = newIncomeLanes.filter(_.isExpired != true).count { incomeLane => getLaneCode(incomeLane).toInt == incomeLaneCode }
@@ -1046,7 +1026,7 @@ trait LaneOperations {
       newIncomeLanes.filter(_.isExpired != true).diff(resultWithMultiLanesInLink.multiLanesOnLink)
         .foldLeft(resultWithMultiLanesInLink) {
           (result, lane) =>
-            val laneCode = getPropertyValue(lane, "lane_code")
+            val laneCode = getPropertyValue(lane.properties, "lane_code")
 
             // If new Income Lane already exist at data base will be marked to be updated
             if (allExistingLanes.exists(_.laneCode == laneCode)) {
@@ -1105,7 +1085,7 @@ trait LaneOperations {
         oldLanesByCode.map { oldLane =>
           val newDataToUpdate = lanesToUpdate.filter(_.id == oldLane.id).head
 
-          if (isSomePropertyDifferent(oldLane, newDataToUpdate)) {
+          if (isSomePropertyDifferent(oldLane, newDataToUpdate.properties)) {
             val persistedLaneToUpdate = PersistedLane(newDataToUpdate.id, linkIds.head, sideCode, oldLane.laneCode, newDataToUpdate.municipalityCode,
               newDataToUpdate.startMeasure, newDataToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, newDataToUpdate.properties)
 
