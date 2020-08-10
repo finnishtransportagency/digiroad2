@@ -140,18 +140,8 @@ module.exports = function(grunt) {
         }
       }
     },
-    jshint: {
-      files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/' ],
-      options: {
-        reporterOutput: "",
-        // options here to override JSHint defaults
-        globals: {
-          jQuery: true,
-          console: true,
-          module: true,
-          document: true
-        }
-      }
+    eslint: {
+      src: ['gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/' ]
     },
     mocha: {
       unit: {
@@ -188,8 +178,8 @@ module.exports = function(grunt) {
     },
     watch: {
       oth: {
-        files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-        tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
+        files: ['<%= eslint.src %>', 'UI/src/**/*.less', 'UI/**/*.html'],
+        tasks: ['properties', 'eslint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
         options: {
           livereload: true
         }
@@ -208,7 +198,7 @@ module.exports = function(grunt) {
   });
 
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('gruntify-eslint');
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -227,13 +217,13 @@ module.exports = function(grunt) {
 
   grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'watch:oth']);
 
-  grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['properties', 'eslint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'eslint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:production', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
-  grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
+  grunt.registerTask('integration-test', ['properties', 'eslint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
