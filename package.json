@@ -7,7 +7,7 @@
     "eslint": "^5.16.0",
     "grunt": "~1.1.0",
     "grunt-cache-breaker": "~2.0.1",
-    "grunt-connect-proxy": "~0.2.0",
+    "grunt-connect-proxy": "0.1.10",
     "grunt-contrib-clean": "~2.0.0",
     "grunt-contrib-concat": "~1.0.1",
     "grunt-contrib-connect": "^2.1.0",
