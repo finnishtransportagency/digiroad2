@@ -33,7 +33,7 @@
           '  <div class="form-group editable form-heigh">' +
           '      <label class="control-label">Rajoitus</label>' +
           '      <p class="form-control-static">' + (asset.limit ? (asset.limit + ' cm') : '–') + '</p>' +
-          '  </div>' + '' +
+          '  </div>' +
           (asset.reason ? '<div class="form-group editable form-width">' +
             '      <label class="control-label">Syy</label>' +
             '      <p class="form-control-static">' + selectedReason.label + '</p>' +

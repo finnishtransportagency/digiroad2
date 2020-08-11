@@ -10,9 +10,9 @@
     var pointAssets = $('<div class="point-assets-column"></div>');
     var maintenanceAsset = $('<div class="maintenance-asset-column"></div>');
 
-    var linearGroup = $('<span><h2>' + "Viivamaiset kohteet" + '</h2></span>');
-    var pointGroup = $('<span><h2>' + "Pistemäiset kohteet" + '</h2></span>');
-    var maintenanceGroup = $('<span><h3>' + "Vain ELYn ylläpidossa" + '</h3></span>');
+    var linearGroup = $('<span><h2>"Viivamaiset kohteet</h2></span>');
+    var pointGroup = $('<span><h2>Pistemäiset kohteet</h2></span>');
+    var maintenanceGroup = $('<span><h3>Vain ELYn ylläpidossa</h3></span>');
 
     var linearAssetLinks =
       _.chain(linearAssetGroups)

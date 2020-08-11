@@ -15,7 +15,7 @@
 
     var newIntermediateTemplate = '' +
         '<div class="target-link-selection">' +
-        '<ul>' + '' +
+        '<ul>' +
         '<li><input type="radio" name="target" value="0" checked="checked"> Viimeinen linkki</input></li>' +
         '<% _.forEach(adjacentLinks, function(l) { %>' +
         '<li><input type="radio" name="target" value="<%=l.linkId%>"> LINK ID <%= l.linkId %> ' +
@@ -247,7 +247,7 @@
         // Create html elements for edit mode (adjacent links and non-adjacent targets)
         _.each(roadLink.adjacent, function(adjacentLink) {
           var manoeuvre = _.find(roadLink.manoeuvres, function(manoeuvre) { return adjacentLink.linkId === manoeuvre.destLinkId; });
-          var manoeuvreExists = manoeuvre ? true : false;
+          var manoeuvreExists = !!manoeuvre;
           var manoeuvreId = manoeuvre ? manoeuvre.id.toString(10) : "";
           var localizedExceptions = manoeuvre ? localizeExceptions(manoeuvre.exceptions) : '';
           var additionalInfo = (manoeuvre && !_.isEmpty(manoeuvre.additionalInfo)) ? manoeuvre.additionalInfo : null;

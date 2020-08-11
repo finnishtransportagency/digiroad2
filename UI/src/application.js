@@ -1,4 +1,5 @@
 (function(application) {
+  var defaultLocation, startupAssetTypeId;
   application.start = function(customBackend, withTileMaps, isExperimental, clusterDistance) {
     var assetTypeLayerName = 'massTransitStop';
     var backend = customBackend || new Backend();

@@ -245,9 +245,9 @@
           if (_.isNumber(selectedMassTransitStopModel.getByProperty('nationalId'))) {
             header = $('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.getByProperty('nationalId') + '</span>');
           } else if (selectedMassTransitStopModel.isTerminalType(busStopTypeSelected)) {
-            header = $('' + '<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
+            header = $('<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
           } else {
-            header = $('' + '<span>Uusi pys&auml;kki</span>');
+            header = $('<span>Uusi pys&auml;kki</span>');
           }
           return header;
         }
@@ -556,9 +556,7 @@
           });
 
           return input;
-
         }
-        return '';
       };
 
       var directionChoiceHandler = function(property){

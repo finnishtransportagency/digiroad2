@@ -74,7 +74,7 @@
        var confirmDiv =
            '<div class="modal-overlay confirm-modal" id="feedback">' +
                 '<div class="modal-dialog">' +
-                    '<div class="content">' + options.message + '<a class="header-link sulje">Sulje</a>' + '</div>' +
+                    '<div class="content">' + options.message + '<a class="header-link sulje">Sulje</a></div>' +
                     '<form class="form form-horizontal" role="form">' +
                         '<label class="control-label" id="title">Anna palautetta ylläpitosovelluksesta alapuolelle</label>'+
                         '<label class="control-label" id="suggestion-label">' + suggestionText + '</label>' +

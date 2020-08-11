@@ -50,10 +50,10 @@
       var convertedVertex = { x: vertex[0] , y: vertex[1] };
       if (acc.firstSplit) {
         if (acc.previousVertex) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, convertedVertex));
+          acc.splitMeasure += vectorLength(subtractVector(acc.previousVertex, convertedVertex));
         }
         if (index === splitSegment.index) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(convertedVertex, splitSegment.splitPoint));
+          acc.splitMeasure += vectorLength(subtractVector(convertedVertex, splitSegment.splitPoint));
           acc.firstSplit = false;
         }
         acc.previousVertex = convertedVertex;

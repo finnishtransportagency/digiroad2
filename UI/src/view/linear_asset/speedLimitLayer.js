@@ -275,7 +275,6 @@ window.SpeedLimitLayer = function(params) {
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
       adjustStylesByZoomLevel(zoom);
-      start();
       return collection.fetch(boundingBox, map.getView().getCenter());
     } else {
       return $.Deferred().resolve();

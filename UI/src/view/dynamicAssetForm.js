@@ -723,7 +723,7 @@
             }
 
             function createPeriodElement(period) {
-                elementNumber = elementNumber + 1;
+                elementNumber += 1;
                return $('' +
                     '<li class="form-group existing-date-period">')
                     .append(inputLabel('start', period ? period.startDate : undefined))

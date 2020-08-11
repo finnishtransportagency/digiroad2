@@ -126,7 +126,7 @@ window.MunicipalitySituationPopup = function (models) {
         return '' +
             '<div class="modal-overlay confirm-modal" id="municipalitySituation">' +
                 '<div class="modal-dialog municipalitySituation">' +
-                    '<div class="content">' + options.message + '<a class="header-link sulje"">Sulje</a>' + '</div>' +
+                    '<div class="content">' + options.message + '<a class="header-link sulje"">Sulje</a></div>' +
                         '<label class="control-label" id="title">Viimeisimmät päivitykset</label>' +
                          me.createLatestsAssetModificationsInfoForm(modificationsInfo) +
                         '<label class="control-label" id="title">Tarkistetut tietolajit</label>' +

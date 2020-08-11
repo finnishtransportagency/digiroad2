@@ -969,7 +969,7 @@
         className: 'lane-modelling-tool',
         authorizationPolicy: new LinearAssetAuthorizationPolicy(),
         editControlLabels: {
-          title: 'Kaistan mallinnustyökalu',
+          title: 'Kaistan mallinnustyökalu'
         },
         isSeparable: false,
         allowComplementaryLinks: true,
@@ -1001,7 +1001,7 @@
                 {id: 11, label: 'Vaihtuvasuuntainen kaista'},
                 {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
                 {id: 21, label: 'Jalankulun kaista'},
-                {id: 22, label: 'Pyöräilykaista'},
+                {id: 22, label: 'Pyöräilykaista'}
               ],  defaultValue: "2", weight: 10
             },
             {

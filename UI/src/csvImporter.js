@@ -180,7 +180,7 @@ $(function() {
     var jobView = $('.job-content');
     jobView.append('' +
       '<div class="job-content-box">' +
-      '<header id="error-list-header">' + 'CSV-eräajon virhetilanteet: ' + job.fileName +
+      '<header id="error-list-header">CSV-eräajon virhetilanteet: ' + job.fileName +
       '<a class="header-link" style="cursor: pointer;">Sulje</a>' +
       '</header>' +
       '<div class="error-list">' +

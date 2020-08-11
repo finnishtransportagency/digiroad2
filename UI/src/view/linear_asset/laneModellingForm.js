@@ -499,7 +499,7 @@
           if(currentLaneNumber.toString()[1] == "2"){
             currentLaneNumber = parseInt(currentLaneNumber.toString()[0] + '1');
           }else{
-            currentLaneNumber = currentLaneNumber-2;
+            currentLaneNumber -= 2;
           }
         }
 
@@ -531,7 +531,7 @@
 
       var sideCodeClass = self.generateClassName(sideCode);
 
-      var formGroup = $('' + '<div class="dynamic-form editable form-editable-'+ sideCodeClass +'">' + '</div>');
+      var formGroup = $('<div class="dynamic-form editable form-editable-'+ sideCodeClass +'"></div>');
       setValueFn(lanesAssets.getCurrentLaneNumber(), {properties: asset.properties}, sideCode);
 
       formGroup.append($('' + self.createSideCodeMarker(sideCode)));

@@ -137,13 +137,13 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
         '<div class="modal-overlay confirm-modal">' +
             '<div class="modal-dialog">' +
                 '<div class="content">' +
-                    '<b>' + "Aloitussivu" + '</b>' +
+                    '<b>Aloitussivu</b>' +
                     '<a class="header-link cancel" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
                 '</div>' +
 
                 '<div class="contentNoBackColor">' +
                     '<div>' +
-                        '<p>' + "Aloitussijainti" + '<span class="municipalityElyText">' + municipality + '</span>' + '</p>' +
+                        '<p>Aloitussijainti<span class="municipalityElyText">' + municipality + '</span></p>' +
                     '</div>' +
 
                     '<div>' +
@@ -159,7 +159,7 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
 
                 '<div class="contentNoBackColor">' +
                     '<div>' +
-                        '<p>' + "Tielolaji" + '<span class="assetTypeText">' + defaultAsset + '</span>' + '</p>'+
+                        '<p>Tielolaji<span class="assetTypeText">' + defaultAsset + '</span></p>'+
                     '</div>' +
                     '<div>' +
                         '<select id="assetType" class="form-dark form-control assetType"  name="form-control places">' +

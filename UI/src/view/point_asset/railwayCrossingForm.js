@@ -33,7 +33,7 @@
       var safetyEquipmentValue = me.selectedAsset.getByProperty(safetyEquipmentPublicId);
         return '' +
           '    <div class="form-group editable form-railway-crossing">' +
-          '        <label class="control-label">' + 'Tasoristeystunnus' + '</label>' +
+          '        <label class="control-label">Tasoristeystunnus</label>' +
           '        <p class="form-control-static">' + ( me.selectedAsset.getByProperty(codePublicId) || '–') + '</p>' +
           '        <input type="text" class="form-control"  maxlength="15" name="tasoristeystunnus" id="tasoristeystunnus" value="' + ( me.selectedAsset.getByProperty(codePublicId) || '')  + '">' +
           '    </div>' +
@@ -49,7 +49,7 @@
           '      </select>' +
           '    </div>' +
           '    <div class="form-group editable form-railway-crossing">' +
-          '        <label class="control-label">' + 'Nimi' + '</label>' +
+          '        <label class="control-label">Nimi</label>' +
           '        <p class="form-control-static">' + ( me.selectedAsset.getByProperty(namePublicId) || '–') + '</p>' +
           '        <input type="text" class="form-control" name="rautatien_tasoristeyksen_nimi" id="rautatien_tasoristeyksen_nimi" value="' + ( me.selectedAsset.getByProperty(namePublicId) || '')  + '">' +
           '    </div>' +

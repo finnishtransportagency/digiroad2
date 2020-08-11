@@ -1,4 +1,4 @@
-(function(geometrycalculator, undefined) {
+(function(geometrycalculator) {
   geometrycalculator.getDistanceFromLine = function(line, point) {
     var nearest_point = geometrycalculator.nearestPointOnLine(line, point);
     var dx = nearest_point.x - point.x;

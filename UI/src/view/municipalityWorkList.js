@@ -133,7 +133,7 @@
           }
 
           var date = new Date();
-            doc.save('DR' + '_' + municipalityName.toLowerCase() + '_' + String(date.getDate()).padStart(2, '0') + String(date.getMonth() + 1).padStart(2, '0') + String(date.getFullYear()) + '.pdf');
+            doc.save('DR_' + municipalityName.toLowerCase() + '_' + String(date.getDate()).padStart(2, '0') + String(date.getMonth() + 1).padStart(2, '0') + String(date.getFullYear()) + '.pdf');
             });
         pdf.html('').removeClass('pdfSize').addClass('pdfHide');
       };
@@ -227,7 +227,7 @@
         return '' +
           '<tr>' +
           '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
-          '<td headers="name">' + asset.assetName + '<img src="images/error-icon-small.png" title="Tarkistus Vanhentumassa"' + '</td>' +
+          '<td headers="name">' + asset.assetName + '<img src="images/error-icon-small.png" title="Tarkistus Vanhentumassa"</td>' +
           '<td style="color:red" headers="count">' + (asset.counter ? asset.counter : '' )  + '</td>' +
           '<td style="color:red" headers="date">' + asset.verified_date + '</td>' +
           '<td style="color:red" headers="verifier">' + asset.verified_by + '</td>' +
@@ -284,7 +284,6 @@
       listP.then(function (limits) {
         var element = $('#work-list .work-list');
         if (limits.length === 1){
-          showFormBtnVisible = false;
           me.createVerificationForm(_.head(limits));
         }
         else {

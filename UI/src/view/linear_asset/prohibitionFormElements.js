@@ -142,7 +142,7 @@
         function typeElement() {
           var optionTags = _.map(prohibitionValues, function (prohibitionValue) {
             var selected = prohibition.typeId === prohibitionValue.typeId ? 'selected' : '';
-            return '<option value="' + prohibitionValue.typeId + '"' + ' ' + selected + '>' + prohibitionValue.title + '</option>';
+            return '<option value="' + prohibitionValue.typeId + '" ' + selected + '>' + prohibitionValue.title + '</option>';
           }).join('');
           return '' +
             '<div class="form-group prohibition-type">' +
