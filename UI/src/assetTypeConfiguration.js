@@ -1036,13 +1036,18 @@
                 var endRoadPartNumber = Property.getPropertyByPublicId(fields, 'endRoadPartNumber');
                 var endDistance = Property.getPropertyByPublicId(fields, 'endDistance');
 
-                var isSomeValueUndefined = _.isUndefined(_.head(startRoadPartNumber.values)) || _.isUndefined(_.head(startDistance.values)) ||
-                                           _.isUndefined(_.head(endRoadPartNumber.values)) || _.isUndefined(_.head(endDistance.values));
+                var startRoadPartNumberValue = _.head(startRoadPartNumber.values);
+                var startDistanceValue = _.head(startDistance.values);
+                var endRoadPartNumberValue = _.head(endRoadPartNumber.values);
+                var endDistanceValue = _.head(endDistance.values);
+
+                var isSomeValueUndefined = !(startRoadPartNumberValue && startDistanceValue &&
+                  endRoadPartNumberValue && endDistanceValue);
 
                 if (isSomeValueUndefined ||
-                  parseInt(_.head(endRoadPartNumber.values).value) < parseInt(_.head(startRoadPartNumber.values).value) ||
-                  (_.head(endRoadPartNumber.values).value == _.head(startRoadPartNumber.values).value &&
-                    parseInt(_.head(endDistance.values).value) <= parseInt(_.head(startDistance.values).value))) {
+                  parseInt(endRoadPartNumberValue.value) < parseInt(startRoadPartNumberValue.value) ||
+                  (endRoadPartNumberValue.value == startRoadPartNumberValue.value &&
+                    parseInt(endDistanceValue.value) <= parseInt(startDistanceValue.value))) {
                   isValidRoadAddress = false;
                 }
               }
@@ -1061,7 +1066,8 @@
         selected: SelectedLaneModelling,
         collection: LaneModellingCollection,
         layer: LaneModellingLayer,
-        label: new LaneModellingLabel()
+        label: new LaneModellingLabel(),
+        laneReadOnlyLayer: ViewOnlyLaneModellingLayer
       }
     ];
 

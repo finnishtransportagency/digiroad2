@@ -136,13 +136,13 @@
       startDistance = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(linksSelected, startRoadPartNumber, 'startAddrMValue'));
       track = selectedRoadlink.track;
 
-      var roadPartNumberElement = {publicId: "startRoadPartNumber", propertyType: "number", required: 'required', values: [{value: startRoadPartNumber}]};
-      var startAddrMValueElement = {publicId: "startDistance", propertyType: "number", required: 'required', values: [{value: startDistance}]};
+      var startRoadPartNumberElement  = {publicId: "startRoadPartNumber", propertyType: "number", required: 'required', values: [{value: startRoadPartNumber}]};
+      var startDistanceElement = {publicId: "startDistance", propertyType: "number", required: 'required', values: [{value: startDistance}]};
       var endRoadPartNumberElement = {publicId: "endRoadPartNumber", propertyType: "number", required: 'required', values: [{value: ''}]};
       var endDistanceElement = {publicId: "endDistance", propertyType: "number", required: 'required', values: [{value: ''}]};
 
       _.forEach(self.selection, function (lane) {
-        lane.properties.push(roadPartNumberElement, startAddrMValueElement, endRoadPartNumberElement, endDistanceElement);
+        lane.properties.push(startRoadPartNumberElement, startDistanceElement, endRoadPartNumberElement, endDistanceElement);
       });
     };
 

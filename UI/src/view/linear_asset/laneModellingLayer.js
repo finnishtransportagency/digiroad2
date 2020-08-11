@@ -6,12 +6,13 @@
       selectedLane = params.selectedLinearAsset,
       style = params.style,
       assetLabel = params.assetLabel,
-      authorizationPolicy = params.authorizationPolicy;
+      authorizationPolicy = params.authorizationPolicy,
+      laneReadOnlyLayer = params.laneReadOnlyLayer;
 
     LinearAssetLayer.call(this, params);
     var me = this;
 
-    this.readOnlyLayer = new ViewOnlyLaneModellingLayer(params, map);
+    this.readOnlyLayer = laneReadOnlyLayer(params, map);
     me.vectorLayer.setZIndex(2);
 
     var LinearAssetCutter = function(eventListener, vectorLayer) {

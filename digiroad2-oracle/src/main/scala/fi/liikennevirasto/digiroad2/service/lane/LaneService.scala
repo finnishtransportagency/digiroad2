@@ -874,13 +874,14 @@ trait LaneOperations {
     * @return lanes with populated start date property
     */
   def populateStartDate(lanes: Set[NewIncomeLane]): Set[NewIncomeLane] = {
+    val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
+
     lanes.map { lane =>
       //There is no start date in main lanes so return unaltered lane
       if(LaneNumber.isMainLane(getLaneCode(lane).toInt)){
         lane
       }else{
         val property = lane.properties.find(_.publicId == "start_date")
-        val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
 
         val updatedProperty = property match {
           case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty =>

@@ -8,8 +8,6 @@
     self.fetch = function(boundingBox, center, zoom) {
       if (isGeometryActive)
         return self.fetchAssets(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive), center);
-      else
-        return self.fetchAssets(boundingBox, backend.getMapByBoundingBox(boundingBox), center);
     };
 
     self.activeWalkingCycling = function(enable) {
@@ -31,7 +29,7 @@
 
     self.fetchViewOnlyLanes = function(boundingBox, zoom) {
       return backend.getViewOnlyLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive).then(function(lanes) {
-        eventbus.trigger('fetchedViewOnly', lanes.concat([]));
+        eventbus.trigger('fetchedViewOnly', lanes);
       });
     };
 

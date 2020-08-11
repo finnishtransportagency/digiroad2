@@ -285,12 +285,6 @@
       };
     });
 
-    this.getMapByBoundingBox = latestResponseRequestor(function(boundingBox) {
-      return {
-        url: 'api/map?bbox=' + boundingBox
-      };
-    });
-
     this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress, zoom) {
       return {
         url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress + '&zoom=' + zoom
