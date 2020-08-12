@@ -96,21 +96,31 @@ trait LaneOperations {
     val linkIds = filteredRoadLinks.map(_.linkId)
     val allLanes = fetchExistingLanesByLinkIds(linkIds)
 
-    /* Find measures for the segments in the lanes by linkId and sideCode */
-    val segments = allLanes
-      .groupBy(lane => (lane.linkId, lane.sideCode))
-      .map {
-        case ((linkId, sideCode), lanes) => (linkId, sideCode, lanes.flatMap(lane => Seq(lane.startMeasure, lane.endMeasure)).distinct)
-      }
+    getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
+  }
 
-    /* Separate each segment in the lane as a ViewOnlyLane for all the lanes */
-    segments.flatMap {
-      case (linkId, sideCode, segment) =>
-        val roadLink = filteredRoadLinks.find(_.linkId == linkId).get
-        segment.sorted.sliding(2).map { measures =>
+  /**
+    * Use lanes measures to create segments with lanes with same link id and side code
+    * @param allLanes lanes to be segmented
+    * @param roadLinks  roadlinks to relate to a segment piece and use it to construct the segment points
+    * @return Segmented view only lanes
+    */
+  def getSegmentedViewOnlyLanes(allLanes: Seq[PersistedLane], roadLinks: Seq[RoadLink]): Seq[ViewOnlyLane] = {
+    //Separate lanes into groups by linkId and side code
+    val lanesGroupedByLinkIdAndSideCode = allLanes.groupBy(lane => (lane.linkId, lane.sideCode))
+
+    lanesGroupedByLinkIdAndSideCode.flatMap {
+      case ((linkId, sideCode), lanes) =>
+        val roadLink = roadLinks.find(_.linkId == linkId).get
+
+        //Find measures for the segments
+        val segments = lanes.flatMap(lane => Seq(lane.startMeasure, lane.endMeasure)).distinct
+
+        //Separate each segment in the lanes as a ViewOnlyLane
+        segments.sorted.sliding(2).map { measures =>
           val startMeasure = measures.head
           val endMeasure = measures.last
-          val consideredLanes = allLanes.filter(lane => lane.linkId == linkId && lane.sideCode == sideCode && lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
+          val consideredLanes = lanes.filter(lane => lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
           val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
 
           ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, geometry, consideredLanes)

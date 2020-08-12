@@ -37,7 +37,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   val lanePropertiesValues11 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(11))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("1")))
                               )
 
 
@@ -51,7 +51,7 @@ class LaneTestSupporter extends FunSuite with Matchers {
 
 
   val lanePropertiesValues21 = Seq( LaneProperty("lane_code", Seq(LanePropertyValue(21))),
-                                LaneProperty("lane_type", Seq(LanePropertyValue("2")))
+                                LaneProperty("lane_type", Seq(LanePropertyValue("1")))
                               )
 
 
@@ -438,5 +438,41 @@ class LaneServiceSpec extends LaneTestSupporter {
 
     val lanePopulated = populatedLanes.find(lane => !LaneNumber.isMainLane(ServiceWithDao.getLaneCode(lane).toInt)).get
     lanePopulated.properties.find(_.publicId == "start_date").get.values.head.value.toString should be(currentTime)
+  }
+
+  test("Correctly create view only segmented lanes") {
+    val roadLink11 = RoadLink(11L, Seq(Point(0.0, 0.0), Point(100.0, 0.0)), 100.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None)
+
+    def constructPersistedLane(laneCode: Int, startMeasure: Double, endMeasure: Double, lanePropertiesValues: Seq[LaneProperty]) = {
+      val sideCode = if(laneCode.toString.charAt(0) == '1') SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+
+      PersistedLane(laneCode.toLong, roadLink11.linkId, sideCode.value,
+        laneCode, 745L, startMeasure, endMeasure, None, None, None, None, expired = false, 0L, None, lanePropertiesValues)
+    }
+
+    val lane11 = constructPersistedLane(11,0, 100, lanePropertiesValues11)
+    val lane12 = constructPersistedLane(12, 0, 90, lanePropertiesValues12)
+    val lane14 = constructPersistedLane(14, 0, 40, lanePropertiesValues14)
+
+    val lane21 = constructPersistedLane(21, 0, 100, lanePropertiesValues21)
+    val lane22 = constructPersistedLane(22, 50, 80, lanePropertiesValues22)
+
+    val allLanes = Seq(lane11, lane12, lane14, lane21, lane22)
+
+    val segmentedViewOnlyLanes = ServiceWithDao.getSegmentedViewOnlyLanes(allLanes, Seq(roadLink11))
+    segmentedViewOnlyLanes.size should be(6)
+
+    def verifySegment(sideCodeValue: Int, startMeasure: Double, endMeasure: Double, lanes: Seq[Int]) = {
+      segmentedViewOnlyLanes.find(svol => svol.startMeasure == startMeasure && svol.endMeasure == endMeasure && svol.sideCode == sideCodeValue).get.lanes.sorted should be(lanes)
+    }
+
+    verifySegment(SideCode.TowardsDigitizing.value, 0, 40, Seq(11, 12, 14))
+    verifySegment(SideCode.TowardsDigitizing.value, 40, 90, Seq(11, 12))
+    verifySegment(SideCode.TowardsDigitizing.value, 90, 100, Seq(11))
+
+    verifySegment(SideCode.AgainstDigitizing.value, 0, 50, Seq(21))
+    verifySegment(SideCode.AgainstDigitizing.value, 50, 80, Seq(21, 22))
+    verifySegment(SideCode.AgainstDigitizing.value, 80, 100, Seq(21))
   }
 }
