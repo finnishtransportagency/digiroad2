@@ -33,22 +33,22 @@
 
       var linearAssetsWithType = _.flatten(_.map(relevantLinears, function(linearAsset) {
         var hasAsset = me.hasValue(linearAsset) || !_.isUndefined(linearAsset.isViewOnly);
-        var type = {type: 'line'};
+        var hasAssetAndType = {hasAsset: hasAsset, type: 'line'};
 
         if (isRoadlink || (!_.isUndefined(linearAsset.points) && !isRoadlink && linearAsset.selectedLinks.length == 1)) {
+          var notSelectable = {notSelectable: !hasAsset};
+
          if (!_.isEmpty(linearAsset.selectedLinks)) {
            var link = _.find(linearAsset.selectedLinks, {'linkId': linearAsset.linkId});
            var options = {
-           hasAsset: hasAsset,
-           notSelectable: !hasAsset,
            roadPartNumber: link.roadPartNumber,
            startAddrMValue: link.startAddrMValue,
            endAddrMValue: link.endAddrMValue,
            isSelected: true
            };
-           return _.merge({}, linearAsset, type, options);
+           return _.merge({}, linearAsset, notSelectable, hasAssetAndType, options);
          } else
-           return _.merge({}, linearAsset, {hasAsset: hasAsset, notSelectable: !hasAsset}, type);
+           return _.merge({}, linearAsset, notSelectable, hasAssetAndType);
         }else{
             return _.map(linearAsset.selectedLinks, function(roadLink) {
               var roadLinkWithAsset = linearAsset;
@@ -58,7 +58,7 @@
               roadLinkWithAsset.roadPartNumber = roadLink.roadPartNumber;
               roadLinkWithAsset.startAddrMValue = roadLink.startAddrMValue;
               roadLinkWithAsset.endAddrMValue = roadLink.endAddrMValue;
-              return _.merge({}, roadLinkWithAsset, {hasAsset: hasAsset, isSelected: true}, type);
+              return _.merge({}, roadLinkWithAsset, {isSelected: true}, hasAssetAndType);
             });
         }
       }));
