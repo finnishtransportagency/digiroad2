@@ -8,17 +8,23 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import org.joda.time.DateTime
 
 
-object  LaneFiller {
-  case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double)
-  case class VVHChangesAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long)
+object LaneFiller {
+
+  trait baseAdjustment {
+    val laneId: Long
+    val linkId: Long
+    val startMeasure: Double
+    val endMeasure: Double
+  }
+
+  case class MValueAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double) extends baseAdjustment
+  case class VVHChangesAdjustment(laneId: Long, linkId: Long, startMeasure: Double, endMeasure: Double, vvhTimestamp: Long) extends baseAdjustment
   case class SideCodeAdjustment(laneId: Long, sideCode: SideCode)
-  case class ValueAdjustment(lane: PersistedLane)
 
   case class ChangeSet( adjustedMValues: Seq[MValueAdjustment] = Seq.empty[MValueAdjustment],
                         adjustedVVHChanges: Seq[VVHChangesAdjustment] = Seq.empty[VVHChangesAdjustment],
                         adjustedSideCodes: Seq[SideCodeAdjustment] = Seq.empty[SideCodeAdjustment],
                         expiredLaneIds: Set[Long] = Set.empty[Long],
-                        valueAdjustments: Seq[ValueAdjustment] = Seq.empty[ValueAdjustment],
                         generatedPersistedLanes: Seq[PersistedLane] = Seq.empty[PersistedLane])
 
 
@@ -184,8 +190,8 @@ class LaneFiller {
     }
 
     (PersistedLane(laneId, newLinkId, newSideCode,lane.laneCode, lane.municipalityCode, newStart, newEnd, lane.createdBy,
-      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, expired = false, projection.vvhTimeStamp,
-      lane.geomModifiedDate, lane.attributes), changeSet)
+      lane.createdDateTime, lane.modifiedBy, lane.modifiedDateTime, lane.expiredBy, lane.expiredDateTime,
+      expired = false, projection.vvhTimeStamp, lane.geomModifiedDate, lane.attributes), changeSet)
 
   }
 

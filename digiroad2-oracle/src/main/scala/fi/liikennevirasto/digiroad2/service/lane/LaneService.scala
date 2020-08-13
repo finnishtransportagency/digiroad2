@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
+
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{ChangeInfo, ChangeType, VVHClient}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, RoadAddressTEMP}
-import fi.liikennevirasto.digiroad2.dao.lane.LaneDao
+import fi.liikennevirasto.digiroad2.dao.lane.{LaneDao, LaneHistoryDao}
 import fi.liikennevirasto.digiroad2.lane.LaneFiller._
 import fi.liikennevirasto.digiroad2.lane.LaneNumber.{FourthRightAdditional, MainLane}
 import fi.liikennevirasto.digiroad2.lane._
@@ -19,11 +20,13 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
 
 class LaneService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LaneOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def dao: LaneDao = new LaneDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
+  override def historyDao: LaneHistoryDao = new LaneHistoryDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def municipalityDao: MunicipalityDao = new MunicipalityDao
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def polygonTools: PolygonTools = new PolygonTools()
@@ -37,6 +40,7 @@ trait LaneOperations {
   def roadLinkService: RoadLinkService
   def vvhClient: VVHClient
   def dao: LaneDao
+  def historyDao: LaneHistoryDao
   def municipalityDao: MunicipalityDao
   def eventBus: DigiroadEventBus
   def polygonTools: PolygonTools
@@ -49,6 +53,11 @@ trait LaneOperations {
 
   val logger = LoggerFactory.getLogger(getClass)
   lazy val VvhGenerated = "vvh_generated"
+
+  case class ActionsPerLanes(lanesToDelete: Set[NewIncomeLane] = Set(),
+                             lanesToUpdate: Set[NewIncomeLane] = Set(),
+                             lanesToInsert: Set[NewIncomeLane] = Set(),
+                             multiLanesOnLink: Set[NewIncomeLane] = Set())
 
   def getByZoomLevel( linkGeomSource: Option[LinkGeomSource] = None) : Seq[Seq[LightLane]] = {
     withDynTransaction {
@@ -117,24 +126,22 @@ trait LaneOperations {
                       )
 
     val (projectedLanes, changedSet) = fillNewRoadLinksWithPreviousAssetsData(roadLinks, assetsOnChangedLinks, assetsOnChangedLinks, changes, initChangeSet)
-
     val newLanes = projectedLanes ++ lanesWithoutChangedLinks
 
     if (newLanes.nonEmpty) {
       logger.info("Finnish transfer %d assets at %d ms after start".format(newLanes.length, System.currentTimeMillis - timing))
     }
 
-
     val allLanes = assetsOnChangedLinks.filterNot(a => projectedLanes.exists(_.linkId == a.linkId)) ++ projectedLanes ++ lanesWithoutChangedLinks
     val roadLinksToAdjust = roadLinks.filter( road =>  allLanes.exists(_.linkId == road.linkId))
 
-    val (lanesAfterSideCodeAdjust, changeSetInterm) = checkSideCodes(roadLinksToAdjust, changedSet, allLanes )
+    val (lanesAfterSideCodeAdjust, changeSetInterm) = checkSideCodes(roadLinksToAdjust, changedSet, allLanes)
 
     val groupedAssets = lanesAfterSideCodeAdjust.groupBy(_.linkId)
     val (filledTopology, changeSet) = laneFiller.fillTopology(roadLinks, groupedAssets, Some(changeSetInterm) )
 
     val generatedMappedById = changeSet.generatedPersistedLanes.groupBy(_.id)
-    val modifiedLanes = projectedLanes.filterNot {lane => generatedMappedById(lane.id).nonEmpty } ++ changeSet.generatedPersistedLanes
+    val modifiedLanes = projectedLanes.filterNot(lane => generatedMappedById(lane.id).nonEmpty) ++ changeSet.generatedPersistedLanes
 
     publish(eventBus, changeSet, modifiedLanes)
     filledTopology
@@ -222,7 +229,7 @@ trait LaneOperations {
       val lanePropertiesValues = baseProperties ++ Seq(LaneProperty("lane_code", Seq(LanePropertyValue(laneCode))))
 
       PersistedLane(0L, roadLink.linkId, sideCode, laneCode, municipalityCode,
-        0, roadLink.length, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
+        0, roadLink.length, None, None, None, None, None, None, expired = false, roadLink.vvhTimeStamp, None,
         lanePropertiesValues)
     }
 
@@ -476,6 +483,12 @@ trait LaneOperations {
     }.filterNot(_.expired)
   }
 
+  def fetchAllLanesByLinkIds(linkIds: Seq[Long]): Seq[PersistedLane] = {
+    withDynTransaction {
+      dao.fetchAllLanesByLinkIds(linkIds)
+    }
+  }
+
   def fetchExistingLanesByLinksIdAndSideCode(linkId: Long, sideCode: Int): Seq[PieceWiseLane] = {
     val roadLink = roadLinkService.getRoadLinkByLinkIdFromVVH(linkId).head
 
@@ -506,7 +519,158 @@ trait LaneOperations {
     lanes.filter(_.laneCode.toString.charAt(0) == direction)
   }
 
-  def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit ={
+  /**
+    * Get lanes that were touched between two dates
+    * @param sinceDate  start date
+    * @param untilDate  end date
+    * @param withAutoAdjust with automatic modified lanes
+    * @param token  interval of records
+    * @return lanes modified between the dates
+    */
+  def getChanged(sinceDate: DateTime, untilDate: DateTime, withAutoAdjust: Boolean = false, token: Option[String] = None): Seq[LaneChange] = {
+    //Sort changes by id and their created/modified/expired times
+    //With this we get a unique ordering with the same values position so the token can be effective
+    def customSort(laneChanges: Seq[LaneChange]): Seq[LaneChange] = {
+      laneChanges.sortBy{ laneChange =>
+        val lane = laneChange.lane
+        val defaultTime = DateTime.now()
+
+        (lane.id, lane.createdDateTime.getOrElse(defaultTime).getMillis,
+          lane.modifiedDateTime.getOrElse(defaultTime).getMillis, lane.expiredDateTime.getOrElse(defaultTime).getMillis)
+      }
+    }
+
+    val (upToDateLanes, historyLanes) = withDynTransaction {
+      (dao.getLanesChangedSince(sinceDate, untilDate, withAutoAdjust),
+        historyDao.getHistoryLanesChangedSince(sinceDate, untilDate, withAutoAdjust))
+    }
+
+    val linkIds = (upToDateLanes.map(_.linkId) ++ historyLanes.map(_.linkId)).toSet
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIds)
+
+    val viiteInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddress(roadLinks)
+    val vkmInformation = LaneUtils.roadAddressService.roadLinkWithRoadAddressTemp(viiteInformation.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER")))
+    val roadLinksWithRoadAddressInfo = viiteInformation.filter(_.attributes.contains("VIITE_ROAD_NUMBER")) ++ vkmInformation
+
+
+    val upToDateLaneChanges = upToDateLanes.flatMap{ upToDate =>
+      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == upToDate.linkId)
+      val relevantHistory = historyLanes.find(history => history.newId == upToDate.id)
+
+      relevantHistory match {
+        case Some(history) =>
+          val uptoDateLastModification = historyLanes.filter(historyLane =>
+            history.newId == historyLane.oldId && historyLane.newId == 0 &&
+              (historyLane.historyCreatedDate.isAfter(history.historyCreatedDate) || historyLane.historyCreatedDate.isEqual(history.historyCreatedDate)))
+
+          if (uptoDateLastModification.nonEmpty && upToDate.laneCode != uptoDateLastModification.minBy(_.historyCreatedDate.getMillis).laneCode)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(uptoDateLastModification.minBy(_.historyCreatedDate.getMillis))), LaneChangeType.LaneCodeTransfer, roadLink))
+
+          else if (historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == history.oldId) == 2)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Divided, roadLink))
+
+          else if (upToDate.endMeasure - upToDate.startMeasure > history.endMeasure - history.startMeasure)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Lengthened, roadLink))
+
+          else if(upToDate.endMeasure - upToDate.startMeasure < history.endMeasure - history.startMeasure)
+            Some(LaneChange(upToDate, Some(historyLaneToPersistedLane(history)), LaneChangeType.Shortened, roadLink))
+
+          else
+            None
+
+        case None if upToDate.modifiedDateTime.isEmpty =>
+          Some(LaneChange(upToDate, None, LaneChangeType.Add, roadLink))
+
+        case _ =>
+          val historyRelatedLanes = historyLanes.filter(_.oldId == upToDate.id)
+
+          if(historyRelatedLanes.nonEmpty){
+            val historyLane = historyLaneToPersistedLane(historyRelatedLanes.maxBy(_.historyCreatedDate.getMillis))
+
+            if (isSomePropertyDifferent(historyLane, upToDate.attributes))
+              Some(LaneChange(upToDate, Some(historyLane), LaneChangeType.AttributesChanged, roadLink))
+            else
+              None
+          }else{
+            None
+          }
+      }
+    }
+
+    val expiredLanes = historyLanes.filter(lane => lane.expired && lane.newId == 0).map{ history =>
+      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == history.linkId)
+      LaneChange(historyLaneToPersistedLane(history), None, LaneChangeType.Expired, roadLink)
+    }
+
+    val historyLaneChanges = historyLanes.groupBy(_.oldId).flatMap{ case (_, lanes) =>
+      val roadLink = roadLinksWithRoadAddressInfo.find(_.linkId == lanes.head.linkId)
+
+      val lanesSorted = lanes.sortBy(- _.historyCreatedDate.getMillis)
+      lanesSorted.foldLeft(Seq.empty[Option[LaneChange]], lanesSorted){ case (foldLeftParameters, lane) =>
+
+        val (treatedLaneChanges, lanesNotTreated) = foldLeftParameters
+        val laneAsPersistedLane = historyLaneToPersistedLane(lane)
+        val relevantLanes = lanesNotTreated.filterNot(_.id == lane.id)
+
+        val laneChangeReturned = {
+          if (relevantLanes.isEmpty) {
+            val newIdRelation = historyLanes.find(_.newId == laneAsPersistedLane.id)
+
+            newIdRelation match {
+              case Some(relation) if historyLanes.count(historyLane => historyLane.newId != 0 && historyLane.oldId == relation.oldId) == 2 =>
+                Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Divided, roadLink))
+
+              case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure > relation.endMeasure - relation.startMeasure =>
+                Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Lengthened, roadLink))
+
+              case Some(relation) if laneAsPersistedLane.endMeasure - laneAsPersistedLane.startMeasure < relation.endMeasure - relation.startMeasure =>
+                Some(LaneChange(laneAsPersistedLane, Some(historyLaneToPersistedLane(relation)), LaneChangeType.Shortened, roadLink))
+
+              case _ =>
+                val wasCreateInTimePeriod = lane.modifiedDateTime.isEmpty &&
+                  (lane.createdDateTime.get.isAfter(sinceDate) || lane.createdDateTime.get.isEqual(sinceDate))
+
+                if (wasCreateInTimePeriod)
+                  Some(LaneChange(laneAsPersistedLane, None, LaneChangeType.Add, roadLink))
+                else
+                  None
+            }
+          } else {
+            val relevantLane = historyLaneToPersistedLane(relevantLanes.maxBy(_.historyCreatedDate.getMillis))
+
+            if (isSomePropertyDifferent(relevantLane, laneAsPersistedLane.attributes))
+              Some(LaneChange(laneAsPersistedLane, Some(relevantLane), LaneChangeType.AttributesChanged, roadLink))
+            else
+              None
+          }
+        }
+
+        (treatedLaneChanges :+ laneChangeReturned, relevantLanes)
+
+      }._1.flatten
+    }
+
+    val relevantLanesChanged = (upToDateLaneChanges ++ expiredLanes ++ historyLaneChanges).filter(_.roadLink.isDefined)
+    val sortedLanesChanged = customSort(relevantLanesChanged)
+
+    token match {
+      case Some(tk) =>
+        val (start, end) = Decode.getPageAndRecordNumber(tk)
+
+        sortedLanesChanged.slice(start - 1, end)
+      case _ => sortedLanesChanged
+    }
+  }
+
+  def historyLaneToPersistedLane(historyLane: PersistedHistoryLane): PersistedLane = {
+    PersistedLane(historyLane.oldId, historyLane.linkId, historyLane.sideCode, historyLane.laneCode,
+                  historyLane.municipalityCode, historyLane.startMeasure, historyLane.endMeasure, historyLane.createdBy,
+                  historyLane.createdDateTime, historyLane.modifiedBy, historyLane.modifiedDateTime,
+                  Some(historyLane.historyCreatedBy), Some(historyLane.historyCreatedDate),
+                  historyLane.expired, historyLane.vvhTimeStamp, historyLane.geomModifiedDate, historyLane.attributes)
+  }
+
+  def persistModifiedLinearAssets(newLanes: Seq[PersistedLane]): Unit = {
     if (newLanes.nonEmpty) {
       logger.info("Saving modified lanes")
 
@@ -515,13 +679,14 @@ trait LaneOperations {
 
       withDynTransaction {
         if(toUpdate.nonEmpty) {
-          updatePersistedLanes(toUpdate, username)
+          toUpdate.foreach{ lane =>
+            moveToHistory(lane.id, None, false, false, username)
+            dao.updateEntryLane(lane, username)
+          }
           logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
         }
         if (toInsert.nonEmpty){
-          toInsert.foreach{ lane =>
-            createWithoutTransaction( lane , username)
-          }
+          toInsert.foreach(createWithoutTransaction(_ , username))
           logger.info("Added lanes for linkids " + toInsert.map(_.linkId))
         }
       }
@@ -559,9 +724,9 @@ trait LaneOperations {
       dao.fetchLanesByIds( ids )
   }
 
-  def getPropertyValue(newLane: NewIncomeLane, publicId: String) = {
-    val laneProperty = newLane.properties.find(_.publicId == publicId)
-                                        .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
+  def getPropertyValue(newLaneProperties: Seq[LaneProperty], publicId: String) = {
+    val laneProperty = newLaneProperties.find(_.publicId == publicId)
+      .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
 
     if (laneProperty.values.nonEmpty)
       laneProperty.values.head.value
@@ -574,7 +739,7 @@ trait LaneOperations {
   }
 
   def getLaneCode (newIncomeLane: NewIncomeLane): String = {
-    val laneCodeValue = getPropertyValue(newIncomeLane, "lane_code")
+    val laneCodeValue = getPropertyValue(newIncomeLane.properties, "lane_code")
 
     if (laneCodeValue != None && laneCodeValue.toString.trim.nonEmpty)
       laneCodeValue.toString.trim
@@ -582,69 +747,88 @@ trait LaneOperations {
       throw new IllegalArgumentException("Lane code attribute not found!")
   }
 
+  def isSomePropertyDifferent(oldLane: PersistedLane, newLaneProperties: Seq[LaneProperty]): Boolean = {
+    oldLane.attributes.length != newLaneProperties.length ||
+      oldLane.attributes.exists { property =>
+        val oldPropertyValue = if (property.values.nonEmpty) {property.values.head.value} else None
+        val newPropertyValue = getPropertyValue(newLaneProperties, property.publicId)
+
+        oldPropertyValue != newPropertyValue
+      }
+  }
+
   /**
-    * @param newIncomeLane The lanes that will be updated
+    * @param updateIncomeLane The lanes that will be updated
     * @param linkIds  If only 1 means the user are change a specific lane and it can be cut or properties update
     *                 If multiple means the chain is being updated and only properties are change ( Lane size / cut cannot be done)
     * @param sideCode To know the direction
     * @param username Username of the user is doing the changes
     * @return
     */
-  def update(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String, newTransaction: Boolean = true): Seq[Long] = {
-    def updateProcess(): Seq[Long] = {
-      if (linkIds.size == 1) {
-        val linkId = linkIds.head
-
-        newIncomeLane.map { lane =>
-          val laneToUpdate = PersistedLane(lane.id, linkId, sideCode, getLaneCode(lane).toInt, lane.municipalityCode,
-            lane.startMeasure, lane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
-
-          dao.updateEntryLane(laneToUpdate, username)
-        }
-
-      } else {
-        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
-
-        newIncomeLane.flatMap{ lane =>
-          //we need original lane code so we can propagate the update to the other lanes on other links
-          val originalLaneCode = allExistingLanes.find(_.id == lane.id)
-                                                  .getOrElse(throw new InvalidParameterException(s"Error: Could not find lane with lane Id ${lane.id}!"))
-                                                  .laneCode
-
-          linkIds.map{ linkId =>
-            val currentLane = allExistingLanes.find(laneAux => laneAux.laneCode == originalLaneCode && laneAux.linkId == linkId)
-                                                .getOrElse(throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $originalLaneCode for update!"))
-
-            val laneToUpdate = PersistedLane(currentLane.id, linkId, sideCode, getLaneCode(lane).toInt, currentLane.municipalityCode,
-              currentLane.startMeasure, currentLane.endMeasure, Some(username), None, None, None, false, 0, None, lane.properties)
-
-            dao.updateEntryLane(laneToUpdate, username)
-          }
-        }
-      }
-    }
-
-    if (newIncomeLane.isEmpty || linkIds.isEmpty)
+  def update(updateIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+    if (updateIncomeLane.isEmpty || linkIds.isEmpty)
       return Seq()
 
-    if(newTransaction)
-      withDynTransaction {
-        updateProcess()
-      }
-    else
-      updateProcess()
-  }
+    val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq)
 
-  def updatePersistedLanes ( lanes: Seq[PersistedLane], username: String ): Seq[Long] = {
-    withDynTransaction {
-      lanes.map { lane =>
-        dao.updateEntryLane(lane, username)
+    updateIncomeLane.flatMap { laneToUpdate =>
+      val originalLane = allExistingLanes.find(_.id == laneToUpdate.id)
+      val laneToUpdateCode = getLaneCode(laneToUpdate).toInt
+
+      linkIds.map{ linkId =>
+        val laneRelatedByUpdatedLaneCode = allExistingLanes.find(laneAux => laneAux.laneCode == laneToUpdateCode && laneAux.linkId == linkId)
+          .getOrElse(throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: $laneToUpdateCode for update!"))
+
+        originalLane match {
+          case Some(lane) =>
+            //oldLane is the lane related with the laneToUpdate by Id, when various links we need to find this lane Id and lane code
+            val oldLane = allExistingLanes.find(laneAux => laneAux.laneCode == lane.laneCode && laneAux.linkId == linkId)
+              .getOrElse(throw new InvalidParameterException(s"LinkId: $linkId dont have laneCode: ${lane.laneCode} for update!"))
+
+            if (linkIds.size == 1 &&
+              (oldLane.startMeasure != laneToUpdate.startMeasure || oldLane.endMeasure != laneToUpdate.endMeasure)) {
+              val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
+              moveToHistory(oldLane.id, Some(newLaneID.head), true, true, username)
+              newLaneID.head
+            } else if (oldLane.laneCode != laneToUpdateCode || isSomePropertyDifferent(oldLane, laneToUpdate.properties)) {
+              //Something changed on properties or lane code
+              val persistedLaneToUpdate = PersistedLane(oldLane.id, linkId, sideCode, laneToUpdateCode, oldLane.municipalityCode,
+                oldLane.startMeasure, oldLane.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
+
+              if (oldLane.laneCode != laneToUpdateCode)
+                moveToHistory(laneRelatedByUpdatedLaneCode.id, Some(oldLane.id), true, true, username)
+
+              moveToHistory(oldLane.id, None, false, false, username)
+              dao.updateEntryLane(persistedLaneToUpdate, username)
+
+            } else {
+              oldLane.id
+            }
+          case _ if laneToUpdate.id == 0 =>
+            //User deleted and created another lane in same lane code
+            //so it will be a update, if have some modification, and not a expire and then create
+
+            if (linkIds.size == 1 &&
+              (laneRelatedByUpdatedLaneCode.startMeasure != laneToUpdate.startMeasure || laneRelatedByUpdatedLaneCode.endMeasure != laneToUpdate.endMeasure)) {
+              val newLaneID = create(Seq(laneToUpdate), Set(linkId), sideCode, username)
+              moveToHistory(laneRelatedByUpdatedLaneCode.id, Some(newLaneID.head), true, true, username)
+              newLaneID.head
+            } else if(isSomePropertyDifferent(laneRelatedByUpdatedLaneCode, laneToUpdate.properties)){
+              val persistedLaneToUpdate = PersistedLane(laneRelatedByUpdatedLaneCode.id, linkId, sideCode, laneToUpdateCode, laneToUpdate.municipalityCode,
+                laneToUpdate.startMeasure, laneToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, laneToUpdate.properties)
+
+              moveToHistory(laneRelatedByUpdatedLaneCode.id, None, false, false, username)
+              dao.updateEntryLane(persistedLaneToUpdate, username)
+            } else {
+              laneRelatedByUpdatedLaneCode.id
+            }
+          case _ => throw new InvalidParameterException(s"Error: Could not find lane with lane Id ${laneToUpdate.id}!")
+        }
       }
     }
   }
 
-  def createWithoutTransaction( newLane: PersistedLane, username: String ): Long = {
-
+  def createWithoutTransaction(newLane: PersistedLane, username: String): Long = {
     val laneId = dao.createLane( newLane, username )
 
     newLane.attributes match {
@@ -668,8 +852,11 @@ trait LaneOperations {
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  def create(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long] ,sideCode: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp(), newTransaction: Boolean = true): Seq[Long] = {
-    def createProcess(): Seq[Long] = {
+  def create(newIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long] ,sideCode: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+
+    if (newIncomeLane.isEmpty || linkIds.isEmpty)
+      return Seq()
+
       // if it is only 1 link it can be just a new lane with same size as the link or it can be a cut
       // for that reason we need to use the measure that come inside the newIncomeLane
       if (linkIds.size == 1) {
@@ -681,7 +868,7 @@ trait LaneOperations {
                                           .getOrElse(throw new IllegalArgumentException("Lane Code attribute not found!"))
 
           val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
-                                      newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None,
+                                      newLane.startMeasure, newLane.endMeasure, Some(username), Some(DateTime.now()), None, None, None, None,
                                       expired = false, vvhTimeStamp, None, newLane.properties)
 
           createWithoutTransaction(laneToInsert, username)
@@ -706,7 +893,7 @@ trait LaneOperations {
                             throw new InvalidParameterException(s"No RoadLink found: $linkId")
 
             val laneToInsert = PersistedLane(0, linkId, sideCode, laneCode.values.head.value.toString.toInt, newLane.municipalityCode,
-                                  roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None,
+                                  roadLink.startMValue,roadLink.endMValue, Some(username), Some(DateTime.now()), None, None, None, None,
                                   expired = false, vvhTimeStamp, None, newLane.properties)
 
             createWithoutTransaction(laneToInsert, username)
@@ -715,67 +902,48 @@ trait LaneOperations {
 
         result.head
       }
-    }
-
-    if (newIncomeLane.isEmpty || linkIds.isEmpty)
-      return Seq()
-
-    if(newTransaction)
-      withDynTransaction {
-        createProcess()
-      }
-    else
-      createProcess()
   }
 
   def updateChangeSet(changeSet: ChangeSet) : Unit = {
-    withDynTransaction {
+    def treatChangeSetData(changeSetToTreat: Seq[baseAdjustment]): Unit = {
+      val toAdjustLanes = getPersistedLanesByIds(changeSetToTreat.map(_.laneId).toSet, false)
 
+      changeSetToTreat.foreach { adjustment =>
+        val oldLane = toAdjustLanes.find(_.id == adjustment.laneId).get
+        val newIncomeLane = persistedToIncomeWithNewMeasures(oldLane, adjustment.startMeasure, adjustment.endMeasure)
+        val newLaneID = create(Seq(newIncomeLane), Set(oldLane.linkId), oldLane.sideCode, VvhGenerated)
+        moveToHistory(oldLane.id, Some(newLaneID.head), true, true, VvhGenerated)
+      }
+    }
+
+    def persistedToIncomeWithNewMeasures(persistedLane: PersistedLane, newStartMeasure: Double, newEndMeasure: Double): NewIncomeLane = {
+      NewIncomeLane(0, newStartMeasure, newEndMeasure, persistedLane.municipalityCode, false, false, persistedLane.attributes)
+    }
+
+    withDynTransaction {
       if (changeSet.adjustedMValues.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedMValues.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedMValues.foreach { adjustment =>
-        dao.updateMValues(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), VvhGenerated)
-      }
+      treatChangeSetData(changeSet.adjustedMValues)
 
       if (changeSet.adjustedVVHChanges.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
-      changeSet.adjustedVVHChanges.foreach { adjustment =>
-        dao.updateMValues(adjustment.laneId, (adjustment.startMeasure, adjustment.endMeasure), VvhGenerated, adjustment.vvhTimestamp)
-      }
-
-      val ids = changeSet.expiredLaneIds.toSeq
-      if (ids.nonEmpty)
-        logger.info("Expiring ids " + ids.mkString(", "))
-      ids.foreach(id => dao.updateExpiration(id, VvhGenerated))
+      treatChangeSetData(changeSet.adjustedVVHChanges)
 
       if (changeSet.adjustedSideCodes.nonEmpty)
         logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
 
       changeSet.adjustedSideCodes.foreach { adjustment =>
-        adjustedSideCode(adjustment)
+        moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
+        dao.updateSideCode(adjustment.laneId, adjustment.sideCode.value, VvhGenerated)
       }
 
-      if (changeSet.valueAdjustments.nonEmpty)
-        logger.info("Saving value adjustments for assets: " + changeSet.valueAdjustments.map(a => "" + a.lane.id).mkString(", "))
-      changeSet.valueAdjustments.foreach { adjustment =>
-        updatePersistedLaneAttributes( adjustment.lane.id, adjustment.lane.attributes, adjustment.lane.modifiedBy.get)
-      }
+      val ids = changeSet.expiredLaneIds.toSeq
+      if (ids.nonEmpty)
+        logger.info("Expiring ids " + ids.mkString(", "))
+      ids.foreach(moveToHistory(_, None, true, true, VvhGenerated))
     }
-  }
-
-  def adjustedSideCode(adjustment: SideCodeAdjustment): Unit = {
-    val oldAsset = getPersistedLanesByIds( Set(adjustment.laneId), newTransaction = false).head
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-                                  .getOrElse(throw new IllegalStateException("Road link no longer available"))
-
-    val newLane = PersistedLane (0, oldAsset.linkId, adjustment.sideCode.value, oldAsset.laneCode, roadLink.municipalityCode,
-      oldAsset.startMeasure, oldAsset.endMeasure, Some(VvhGenerated), Some( DateTime.now() ),
-      None,None, expired = false, vvhClient.roadLinkData.createVVHTimeStamp(), oldAsset.geomModifiedDate, oldAsset.attributes)
-
-    dao.updateExpiration(oldAsset.id, VvhGenerated)
-   createWithoutTransaction( newLane, VvhGenerated )
   }
 
   def updatePersistedLaneAttributes( id: Long, attributes: Seq[LaneProperty], username: String): Unit = {
@@ -787,44 +955,147 @@ trait LaneOperations {
 
   /**
     * Delete lanes with specified laneCodes on linkIds given
-    * @param linkIds  LinkIds where are the lanes to be deleted
-    * @param laneCodes  Lane codes to delete
-    * @param newTransaction with or without transaction
+    * @param laneCodes  lanes codes to delete
+    * @param linkIds  linkIds where are the lanes to be expired
+    * @param username username of the one who expired the lanes
     */
-  def deleteMultipleLanes(linkIds: Set[Long], laneCodes: Set[Int], newTransaction: Boolean = true): Unit = {
-    def deleteProcess(): Unit = {
-      if (laneCodes.nonEmpty) {
-        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodes.toSeq)
-        allExistingLanes.map(_.id).foreach(id => dao.deleteEntryLane(id))
-      }
-    }
-    if(newTransaction)
-      withDynTransaction {
-        deleteProcess()
-      }
-    else
-      deleteProcess()
+  def deleteMultipleLanes(laneCodes: Set[Int], linkIds: Set[Long], username: String): Seq[Long] = {
+    if (laneCodes.nonEmpty) {
+      val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodes.toSeq)
+      allExistingLanes.map(_.id).map(moveToHistory(_, None, true, true, username))
+    } else
+      Seq()
   }
 
-  /**
-    * Expire lanes with specified laneCodes on linkIds given
-    * @param linkIds  LinkIds where are the lanes to be expired
-    * @param laneCodes  Lane codes to expire
-    * @param username username of the one who expired the lanes
-    * @param newTransaction with or without transaction
-    */
-  def multipleLanesToHistory(linkIds: Set[Long], laneCodes: Set[Int], username: String, newTransaction: Boolean = true): Unit = {
-    def expireProcess(): Unit = {
-      if (laneCodes.nonEmpty) {
-        val allExistingLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodes.toSeq)
-        allExistingLanes.map(_.id).foreach(id => dao.updateLaneExpiration(id, username))
-      }
-    }
-    if(newTransaction)
-      withDynTransaction {
-        expireProcess()
-      }
-    else
-      expireProcess()
+  def moveToHistory(oldId: Long, newId: Option[Long], expireHistoryLane: Boolean = false, deleteFromLanes: Boolean = false,
+                    username: String): Long = {
+    val historyLaneId = historyDao.insertHistoryLane(oldId, newId, username)
+
+    if (expireHistoryLane)
+      historyDao.expireHistoryLane(historyLaneId, username)
+
+    if (deleteFromLanes)
+      dao.deleteEntryLane(oldId)
+
+    historyLaneId
   }
+
+  def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
+                            sideCode: Int, username: String): Seq[Long] = {
+    withDynTransaction {
+      val actionsLanes = separateNewIncomeLanesInActions(newIncomeLanes, linkIds, sideCode)
+      val laneCodesToBeDeleted = actionsLanes.lanesToDelete.map(getLaneCode(_).toInt)
+
+      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username) ++
+      update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
+      deleteMultipleLanes(laneCodesToBeDeleted, linkIds, username) ++
+      createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+    }
+  }
+
+  def separateNewIncomeLanesInActions(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long], sideCode: Int): ActionsPerLanes = {
+    //Get Current Lanes for sended linkIds
+    val allExistingLanes: Seq[PersistedLane] = dao.fetchLanesByLinkIdAndSideCode(linkIds.head, sideCode)
+
+    //Get Lanes to be deleted
+    val resultWithDeleteActions = newIncomeLanes.foldLeft(ActionsPerLanes()) {
+      (result, existingLane) =>
+        if (existingLane.isExpired)
+          result.copy(lanesToDelete = Set(existingLane) ++ result.lanesToDelete)
+        else
+          result
+    }
+
+    //Get multiple lanes in one link
+    val resultWithMultiLanesInLink = newIncomeLanes.filter(_.isExpired != true).foldLeft(resultWithDeleteActions) {
+      (result, incomeLane) =>
+        val incomeLaneCode: Int = getPropertyValue(incomeLane.properties, "lane_code").toString.toInt
+
+        val numberOfOldLanesByCode = allExistingLanes.count(_.laneCode == incomeLaneCode)
+        val numberOfFutureLanesByCode = newIncomeLanes.filter(_.isExpired != true).count { incomeLane => getLaneCode(incomeLane).toInt == incomeLaneCode }
+
+        if ((numberOfFutureLanesByCode == 2 && numberOfOldLanesByCode >= 1) || (numberOfFutureLanesByCode == 1 && numberOfOldLanesByCode == 2))
+          result.copy(multiLanesOnLink = Set(incomeLane) ++ result.multiLanesOnLink)
+        else
+          result
+    }
+
+    //Get Lanes to be created and updated
+    val resultWithAllActions =
+      newIncomeLanes.filter(_.isExpired != true).diff(resultWithMultiLanesInLink.multiLanesOnLink)
+        .foldLeft(resultWithMultiLanesInLink) {
+          (result, lane) =>
+            val laneCode = getPropertyValue(lane.properties, "lane_code")
+
+            // If new Income Lane already exist at data base will be marked to be updated
+            if (allExistingLanes.exists(_.laneCode == laneCode)) {
+              result.copy(lanesToUpdate = Set(lane) ++ result.lanesToUpdate)
+            } else {
+              // If new Income Lane doesnt exist at data base will be marked to be created
+              result.copy(lanesToInsert = Set(lane) ++ result.lanesToInsert)
+            }
+        }
+
+    resultWithAllActions
+  }
+
+  def createMultiLanesOnLink(updateIncomeLane: Seq[NewIncomeLane], linkIds: Set[Long], sideCode: Int, username: String): Seq[Long] = {
+    // Get all lane codes from lanes to update
+    val laneCodesToModify = updateIncomeLane.map { incomeLane => getLaneCode(incomeLane).toInt }
+
+    //Fetch from db the existing lanes
+    val oldLanes = dao.fetchLanesByLinkIdsAndLaneCode(linkIds.toSeq, laneCodesToModify)
+
+    val incomeLanesByLaneCode = updateIncomeLane.groupBy(il => getLaneCode(il).toInt)
+
+    //By lane check if exist something to modify
+    incomeLanesByLaneCode.flatMap { case (laneCode, lanesToUpdate) =>
+      val oldLanesByCode = oldLanes.filter(_.laneCode == laneCode)
+
+
+      if (lanesToUpdate.size == 2 && oldLanesByCode.size == 1) {
+        //When its to create two lanes in one link
+        val newLanesIDs = lanesToUpdate.map { lane =>
+          create(Seq(lane), linkIds, sideCode, username).head
+        }
+
+        newLanesIDs.foreach { newLane =>
+          moveToHistory(oldLanesByCode.head.id, Some(newLane), true, false, username)
+        }
+        dao.deleteEntryLane(oldLanesByCode.head.id)
+
+        newLanesIDs
+
+      } else if (lanesToUpdate.size == 1 && oldLanesByCode.size == 2) {
+        //When its to transform two lanes in one on same roadlink
+        val newLanesIDs = lanesToUpdate.map { lane =>
+          create(Seq(lane), linkIds, sideCode, username).head
+        }
+
+        oldLanesByCode.foreach { oldLane =>
+          moveToHistory(oldLane.id, Some(newLanesIDs.head), true, true, username)
+        }
+
+        newLanesIDs
+
+      } else {
+        //When its to update both lanes in one link
+        oldLanesByCode.map { oldLane =>
+          val newDataToUpdate = lanesToUpdate.filter(_.id == oldLane.id).head
+
+          if (isSomePropertyDifferent(oldLane, newDataToUpdate.properties)) {
+            val persistedLaneToUpdate = PersistedLane(newDataToUpdate.id, linkIds.head, sideCode, oldLane.laneCode, newDataToUpdate.municipalityCode,
+              newDataToUpdate.startMeasure, newDataToUpdate.endMeasure, Some(username), None, None, None, None, None, false, 0, None, newDataToUpdate.properties)
+
+            moveToHistory(oldLane.id, None, false, false, username)
+            dao.updateEntryLane(persistedLaneToUpdate, username)
+
+          } else {
+            oldLane.id
+          }
+        }
+      }
+    }.toSeq
+  }
+
 }
