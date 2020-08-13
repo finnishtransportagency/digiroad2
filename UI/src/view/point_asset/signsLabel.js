@@ -129,15 +129,16 @@
     };
 
     this.getStyle = function (trafficSign, position) {
+      var labelProperty = me.getLabelProperty(trafficSign);
       return [me.backgroundStyle(trafficSign, position), new ol.style.Style({
         text: new ol.style.Text({
           text: me.textStyle(trafficSign),
           fill: new ol.style.Fill({
-            color: trafficSign.textColor ?  trafficSign.textColor : me.getLabelProperty(trafficSign).getTextColor()
+            color: trafficSign.textColor ?  trafficSign.textColor : labelProperty.getTextColor()
           }),
           font: '12px sans-serif',
-          offsetX: me.getLabelProperty(trafficSign).getTextOffsetX(),
-          offsetY: me.getLabelProperty(trafficSign).getTextOffsetY() - position.y
+          offsetX: labelProperty.getTextOffsetX(),
+          offsetY: labelProperty.getTextOffsetY() - position.y
         })
       })];
     };
