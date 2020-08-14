@@ -1423,7 +1423,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       val sideCode = if(laneCode.toString.charAt(0) == '1') SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
 
       PersistedLane(laneCode.toLong, roadLink11.linkId, sideCode.value,
-        laneCode, 745L, startMeasure, endMeasure, None, None, None, None, expired = false, 0L, None, lanePropertiesValues)
+        laneCode, 745L, startMeasure, endMeasure, None, None, None, None, None, None, expired = false, 0L, None, lanePropertiesValues)
     }
 
     val lane11 = constructPersistedLane(11,0, 100, lanePropertiesValues11)
