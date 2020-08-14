@@ -9,6 +9,7 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
+
 class ExportReportDAO {
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -35,7 +36,7 @@ class ExportReportDAO {
                                               .mkString(",")
 
 
-      ExportStatusInfo(id, status, Status.apply(status).descriptionFi, fileName, createdBy, createdDate, assetsName, municipalitiesName, content)
+      ExportStatusInfo(id, status, Status(status).descriptionFi, fileName, createdBy, createdDate, assetsName, municipalitiesName, content)
     }
   }
 

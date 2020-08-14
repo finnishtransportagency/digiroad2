@@ -15,7 +15,7 @@ class DataExportManager(roadLinkService: RoadLinkService, eventBus: DigiroadEven
 
 
   def processExport(data: CsvDataExporterInfo): Unit ={
-    assetReportCsvExporter.exportAssetsByMunicipalityCSVGenerator(data.assetTypeList,data.municipalitiesList, data.logId);
+    assetReportCsvExporter.exportAssetsByMunicipalityCSVGenerator(data.assetTypeList,data.municipalitiesList, data.logId)
   }
 
 }

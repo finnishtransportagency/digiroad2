@@ -1,5 +1,5 @@
 (function (root) {
-  root.csvReportsWorkList = function () {
+  root.CsvReportsWorkList = function () {
     WorkListView.call(this);
     var me = this;
     this.hrefDir = "#work-list/csvReports";
@@ -344,7 +344,7 @@
     };
 
     var showImporter = function() {
-      $('.csvExport').show();
+      $('#csvExport').show();
       $('.job-content').empty();
     };
 
@@ -374,7 +374,6 @@
           }
         });
 
-        scrollbarResize();
         refresh = setInterval(refreshJobs, 3000);
       });
     };
@@ -408,7 +407,6 @@
         if(!refresh)
           refresh = setInterval(refreshJobs, 3000);
 
-        scrollbarResize();
       }
     }
 
@@ -480,10 +478,6 @@
       return '<img src="' + icon[status] + '" title="' + description + '"/>';
     };
 
-    var scrollbarResize = function () {
-      //if ( $('.job-status tbody tr').length >= 5)
-       // $('.job-status thead').css("width", "calc(100% - 17px)");
-    };
 
   };
 })(this);

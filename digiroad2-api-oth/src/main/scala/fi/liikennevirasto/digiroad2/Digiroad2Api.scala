@@ -1833,9 +1833,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   get("/getAssetTypes") {
-    AssetTypeInfo.values.filterNot(_.typeId == 99).toList.sortBy(_.typeId).map { asset =>
+    AssetTypeInfo.values.filterNot(_.typeId == UnknownAssetTypeId).toList.sortBy(_.typeId).map { asset =>
       Map("id" -> asset.typeId,
-        "name" -> { if (asset.nameFI.nonEmpty) asset.nameFI else asset.label }
+        "name" -> { if (asset.nameFI.trim.nonEmpty) asset.nameFI else asset.label }
       )
     }
   }
