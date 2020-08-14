@@ -115,7 +115,13 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   }
 
   lazy val speedLimitTrafficSignClient: SpeedLimitTrafficSignClient = {
-    def filterCondition(assetNumber : Int): Boolean = TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.AdditionalPanels || TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits
+    def filterCondition(assetNumber : Int): Boolean = {
+      val trafficSign = TrafficSignType.applyTRValue(assetNumber)
+      val isAdditionalPanel = trafficSign.group == TrafficSignTypeGroup.AdditionalPanels
+      val isSpeedLimitSign = trafficSign.isSpeedLimit
+
+      isAdditionalPanel || isSpeedLimitSign
+    }
 
     new SpeedLimitTrafficSignClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,

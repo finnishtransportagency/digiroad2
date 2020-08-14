@@ -91,6 +91,18 @@
       });
     };
 
+    //Outer lanes that are expired are to be considered, the other are updates so we need to take those out
+    //Here a outer lane is a lane with lane code that existed in the original but not in the modified configuration
+    function omitIrrelevantExpiredLanes() {
+      var lanesToBeRemovedFromExpire = _.filter(assetsToBeExpired, function (lane) {
+        return !_.isUndefined(self.getLane(getLaneCodeValue(lane)));
+      });
+
+      _.forEach(lanesToBeRemovedFromExpire, function (lane) {
+        _.remove(assetsToBeExpired, {'id': lane.id});
+      });
+    }
+
     self.splitLinearAsset = function(laneNumber, split) {
       collection.splitLinearAsset(self.getLane(laneNumber), split, function(splitLinearAssets) {
         if (self.getLane(laneNumber).id === 0) {
@@ -217,6 +229,7 @@
 
     self.save = function(isAddByRoadAddressActive) {
       eventbus.trigger(self.singleElementEvent('saving'));
+      omitIrrelevantExpiredLanes();
 
       var linkIds = _.head(self.selection).linkIds;
       var sideCode = _.head(self.selection).sideCode;
@@ -313,7 +326,7 @@
         laneToClone = self.getLane(laneNumber-2);
       }
 
-      var newLane = _.cloneDeep(_.omit(laneToClone, ['createdBy', 'createdAt', 'modifiedBy', 'modifiedAt']));
+      var newLane = _.cloneDeep(_.omit(laneToClone, ['marker', 'createdBy', 'createdAt', 'modifiedBy', 'modifiedAt']));
 
       var outerLaneIsMainLane = laneNumber.toString()[1] == 2 || laneNumber.toString()[1] == 3;
 

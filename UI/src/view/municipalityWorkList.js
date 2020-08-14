@@ -227,11 +227,11 @@
         return '' +
           '<tr>' +
           '<td><input type="checkbox" class="verificationCheckbox" value=' + asset.typeId + '></td>' +
-          '<td headers="name">' + asset.assetName + '<img src="images/error-icon-small.png" title="Tarkistus Vanhentumassa"' + '</td>' +
+          '<td headers="name">' + asset.assetName + '<img src="images/csv-status-icons/error-icon-small.png" title="Tarkistus Vanhentumassa"' + '</td>' +
           '<td style="color:red" headers="count">' + (asset.counter ? asset.counter : '' )  + '</td>' +
           '<td style="color:red" headers="date">' + asset.verified_date + '</td>' +
           '<td style="color:red" headers="verifier">' + asset.verified_by + '</td>' +
-          '</tr>'.join('');
+          '</tr>';
       };
 
       var saveBtn = $('<button />').addClass('save btn btn-municipality').text('Merkitse tarkistetuksi').click(function () {
