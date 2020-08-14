@@ -220,7 +220,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("drop segments less than 2 meters"){
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 1.9, Some("guy"),
@@ -237,7 +237,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("Don't drop segments less than 2 meters on a road link with length less that 2 meters"){
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 1.9, Some("guy"),
@@ -286,7 +286,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("combine two segments with same value in same RoadLink") {
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 4.5, Some("guy"),
@@ -308,7 +308,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
 
   test("fuse two segments with same value in same RoadLink with different side code") {
     val roadLinks = Seq(
-      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
         TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     )
     val assets = Seq(
@@ -334,7 +334,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("adjustSegments with None value") {
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
     TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.BothDirections.value, None, 0.0, 4.5, Some("guy"),
@@ -356,7 +356,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("adjustSegments with value") {
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(10)), 0.0, 4.5, Some("guy"),
@@ -378,7 +378,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("adjust Segments with diferent direction") {
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 0.0, 5.0, Some("guy"),
@@ -404,7 +404,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("combine segments into one") {
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 0.0, 10.0, Some("guy"),
@@ -419,7 +419,7 @@ class AssetFillerSpec extends FunSuite with Matchers {
   }
 
   test("combine segments into one with none value") {
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       PersistedLinearAsset(1, 1, SideCode.AgainstDigitizing.value, None, 0.0, 10.0, Some("guy"),

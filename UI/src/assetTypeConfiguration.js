@@ -971,7 +971,9 @@
           title: 'Kaistan mallinnustyökalu',
         },
         isSeparable: false,
+        allowMapViewOnly: true,
         allowComplementaryLinks: true,
+        allowWalkingCyclingLinks: true,
         isVerifiable: false,
         style: new LaneModellingStyle(),
         form: new LaneModellingForm({
@@ -983,7 +985,7 @@
             {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
             {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
             {
-              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 9
+              label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11
             },
             {
               label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type",
@@ -1001,13 +1003,13 @@
                 {id: 20, label: 'Yhdistetty jalankulun ja pyöräilyn kaista'},
                 {id: 21, label: 'Jalankulun kaista'},
                 {id: 22, label: 'Pyöräilykaista'},
-              ],  defaultValue: "2", weight: 10
+              ],  defaultValue: "2", weight: 12
             },
             {
-              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 11
+              label: 'Alkupvm', type: 'date', publicId: "start_date", weight: 13
             },
             {
-              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 12
+              label: 'Loppupvm', type: 'date', publicId: "end_date", weight: 14
             }
           ]
         }),
@@ -1018,26 +1020,33 @@
               var startDate = Property.getPropertyByPublicId(fields, 'start_date');
               var endDate = Property.getPropertyByPublicId(fields, 'end_date');
 
-              if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(startDate.values[0]) && !_.isUndefined(endDate.values[0]))
+              if (startDate && endDate && !_.isEmpty(startDate.values) && !_.isEmpty(endDate.values) && !_.isUndefined(_.head(startDate.values)) && !_.isUndefined(_.head(endDate.values)))
                 isValidDate = isValidPeriodDate(dateExtract(_.head(startDate.values).value), dateExtract(_.head(endDate.values).value));
               return isValidDate;
             };
 
             var isValidRoadAddress = function (fields) {
               var isValidRoadAddress = true;
-              var initialRoadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'read_only_number');
-              var initialRoadPartNumber = Property.getPropertyByPublicId(initialRoadAddressesFields, 'roadPartNumber');
-              var initialDistance = Property.getPropertyByPublicId(initialRoadAddressesFields, 'startAddrMValue');
+              var startRoadPartNumber = Property.getPropertyByPublicId(fields, 'startRoadPartNumber');
 
-              if (!_.isUndefined(initialRoadPartNumber)) {
-                var roadAddressesFields = Property.filterPropertiesByPropertyType(fields, 'number');
-                var endRoadPartNumber = Property.getPropertyByPublicId(roadAddressesFields, 'endRoadPartNumber');
-                var endDistance = Property.getPropertyByPublicId(roadAddressesFields, 'endDistance');
+              //if the property startRoadPartNumber exists then the user is adding lanes by road address
+              if (startRoadPartNumber) {
+                var startDistance = Property.getPropertyByPublicId(fields, 'startDistance');
+                var endRoadPartNumber = Property.getPropertyByPublicId(fields, 'endRoadPartNumber');
+                var endDistance = Property.getPropertyByPublicId(fields, 'endDistance');
 
-                if (_.isUndefined(endRoadPartNumber) || _.isUndefined(endDistance) || _.isEmpty(endRoadPartNumber.values) ||
-                  _.isEmpty(endDistance.values) || _.isUndefined(endRoadPartNumber.values[0]) || _.isUndefined(endDistance.values[0]) ||
-                  _.head(endRoadPartNumber.values).value < _.head(initialRoadPartNumber.values).value ||
-                  (_.head(endRoadPartNumber.values).value == _.head(initialRoadPartNumber.values).value && _.head(endDistance.values).value <= _.head(initialDistance.values).value)) {
+                var startRoadPartNumberValue = _.head(startRoadPartNumber.values);
+                var startDistanceValue = _.head(startDistance.values);
+                var endRoadPartNumberValue = _.head(endRoadPartNumber.values);
+                var endDistanceValue = _.head(endDistance.values);
+
+                var isSomeValueUndefined = !(startRoadPartNumberValue && startDistanceValue &&
+                  endRoadPartNumberValue && endDistanceValue);
+
+                if (isSomeValueUndefined ||
+                  parseInt(endRoadPartNumberValue.value) < parseInt(startRoadPartNumberValue.value) ||
+                  (endRoadPartNumberValue.value == startRoadPartNumberValue.value &&
+                    parseInt(endDistanceValue.value) <= parseInt(startDistanceValue.value))) {
                   isValidRoadAddress = false;
                 }
               }
@@ -1056,7 +1065,8 @@
         selected: SelectedLaneModelling,
         collection: LaneModellingCollection,
         layer: LaneModellingLayer,
-        label: new LaneModellingLabel()
+        label: new LaneModellingLabel(),
+        laneReadOnlyLayer: ViewOnlyLaneModellingLayer
       }
     ];
 

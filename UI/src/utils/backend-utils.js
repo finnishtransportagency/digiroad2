@@ -273,9 +273,15 @@
       };
     });
 
-    this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom) {
+    this.getLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom, withWalkingCycling) {
       return {
-        url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom
+        url: 'api/lanes?bbox=' + boundingBox + '&zoom=' + zoom + '&withWalkingCycling=' + withWalkingCycling
+      };
+    });
+
+    this.getViewOnlyLanesByBoundingBox = latestResponseRequestor(function(boundingBox, zoom, withWalkingCycling) {
+      return {
+        url: 'api/lanes/viewOnlyLanes?bbox=' + boundingBox + '&zoom=' + zoom + '&withWalkingCycling=' + withWalkingCycling
       };
     });
 

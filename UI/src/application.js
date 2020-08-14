@@ -373,6 +373,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        authorizationPolicy: asset.authorizationPolicy,
        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
+       laneReadOnlyLayer: asset.laneReadOnlyLayer,
        massLimitation: asset.editControlLabels.additionalInfo,
        typeId: asset.typeId,
        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed,

@@ -127,7 +127,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val simpleProperty = SimplePointAssetProperty("esterakennelma", values)
       val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, Set(simpleProperty))
 
-      val roadLink =  RoadLink(obstacle.linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 200, Municipality, FunctionalClass.Unknown, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), linkSource = NormalLinkInterface)
+      val roadLink =  RoadLink(obstacle.linkId, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 200, Municipality, UnknownFunctionalClass.value, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)), linkSource = NormalLinkInterface)
       service.update(obstacle.id, updated, roadLink, "unit_test")
       val updatedObstacle = service.getById(600046).get
 

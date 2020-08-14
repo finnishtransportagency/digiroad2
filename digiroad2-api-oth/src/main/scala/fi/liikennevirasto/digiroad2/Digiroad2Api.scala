@@ -690,12 +690,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def partitionRoadLinks(roadLinks: Seq[RoadLink]): Seq[Seq[Map[String, Any]]] = {
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
-      _.map(roadLinkToApi)
+      _.map(rl => roadLinkToApi(rl))
     }
   }
 
-  def roadLinkToApi(roadLink: RoadLink): Map[String, Any] = {
-    val laneInfo = laneService.fetchExistingLanesByLinkIds(Seq(roadLink.linkId))
+  def roadLinkToApi(roadLink: RoadLink, withLaneInfo: Boolean = true): Map[String, Any] = {
+    val laneInfo = if(withLaneInfo) laneService.fetchExistingLanesByLinkIds(Seq(roadLink.linkId)) else Seq()
 
     Map(
       "lanes" -> laneInfo.map(_.laneCode).sorted,
@@ -796,14 +796,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   get("/roadlinks/adjacent/:id") {
     val user = userProvider.getCurrentUser()
     val id = params("id").toLong
-    roadLinkService.getAdjacent(id, true).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(roadLinkToApi)
+    roadLinkService.getAdjacent(id, true).filter(link => user.isAuthorizedToWrite(link.municipalityCode)).map(rl => roadLinkToApi(rl))
 
   }
 
   get("/roadlinks/adjacents/:ids") {
     val user = userProvider.getCurrentUser()
     val ids = params("ids").split(',').map(_.toLong)
-    roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).mapValues(_.map(roadLinkToApi))
+    roadLinkService.getAdjacents(ids.toSet).mapValues(_.filter(link => user.isAuthorizedToWrite(link.municipalityCode))).mapValues(_.map(rl => roadLinkToApi(rl)))
   }
 
   get("/roadlinks/complementaries"){
@@ -2264,13 +2264,34 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         mapLightLane(usedService.getByZoomLevel( Some(LinkGeomSource.NormalLinkInterface)))
       } else {
         validateBoundingBox(boundingRectangle)
-        val assets = usedService.getByBoundingBox(boundingRectangle)
+        val (assets, roadLinksWithoutLanes) = usedService.getByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
 
         val updatedInfo = roadAddressService.laneWithRoadAddress(assets)
         val frozenInfo = roadAddressService.experimentalLaneWithRoadAddress( updatedInfo.map(_.filterNot(_.attributes.contains("VIITE_ROAD_NUMBER"))))
-        mapLanes(updatedInfo ++ frozenInfo)
+        mapLanes(updatedInfo ++ frozenInfo) ++ roadLinksWithoutLanes.map(link => Seq(roadLinkToApi(link, false)))
       }
 
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  get("/lanes/viewOnlyLanes") {
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      val viewOnlyLanes = laneService.getViewOnlyByBoundingBox(boundingRectangle, withWalkingCycling = params.getAsOrElse[Boolean]("withWalkingCycling", false))
+      viewOnlyLanes.map { lane =>
+        Map (
+          "linkId" -> lane.linkId,
+          "sideCode" -> lane.sideCode,
+          "startMeasure" -> lane.startMeasure,
+          "endMeasure" -> lane.endMeasure,
+          "points" -> lane.geometry,
+          "lanes" -> lane.lanes,
+          "isViewOnly" -> true
+        )
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }

@@ -19,6 +19,7 @@ import fi.liikennevirasto.digiroad2.util.{LaneUtils, PolygonTools, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
 
 case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
 
@@ -73,19 +74,67 @@ trait LaneOperations {
     * @param municipalities
     * @return
     */
-  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLane]] = {
+  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): (Seq[Seq[PieceWiseLane]], Seq[RoadLink]) = {
     val (roadLinks, change) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities)
-    val linearAssets = getLanesByRoadLinks(roadLinks, change)
+    val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
+    val linearAssets = getLanesByRoadLinks(filteredRoadLinks, change)
+
+    val roadLinksWithoutLanes = filteredRoadLinks.filter { link => !linearAssets.exists(_.linkId == link.linkId) }
 
     val partitionedLanes = LanePartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
 
-    partitionedLanes.map(_.filter { lane =>
+    val lanes = partitionedLanes.map(_.filter { lane =>
       getPropertyValue(lane, "lane_code") match {
         case Some(laneValue) =>
           LaneNumber.isMainLane(laneValue.value.asInstanceOf[Int])
         case _ => false
       }
     })
+
+    (lanes, roadLinksWithoutLanes)
+  }
+
+  /**
+   * Returns lanes for Digiroad2Api /lanes/viewOnlyLanes GET endpoint.
+   * This is only to be used for visualization purposes after the getByBoundingBox ran first
+   */
+  def getViewOnlyByBoundingBox (bounds :BoundingRectangle, municipalities: Set[Int] = Set(), withWalkingCycling: Boolean = false): Seq[ViewOnlyLane] = {
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
+    val filteredRoadLinks = if (withWalkingCycling) roadLinks else roadLinks.filter(_.functionalClass != WalkingAndCyclingPath.value)
+
+    val linkIds = filteredRoadLinks.map(_.linkId)
+    val allLanes = fetchExistingLanesByLinkIds(linkIds)
+
+    getSegmentedViewOnlyLanes(allLanes, filteredRoadLinks)
+  }
+
+  /**
+    * Use lanes measures to create segments with lanes with same link id and side code
+    * @param allLanes lanes to be segmented
+    * @param roadLinks  roadlinks to relate to a segment piece and use it to construct the segment points
+    * @return Segmented view only lanes
+    */
+  def getSegmentedViewOnlyLanes(allLanes: Seq[PersistedLane], roadLinks: Seq[RoadLink]): Seq[ViewOnlyLane] = {
+    //Separate lanes into groups by linkId and side code
+    val lanesGroupedByLinkIdAndSideCode = allLanes.groupBy(lane => (lane.linkId, lane.sideCode))
+
+    lanesGroupedByLinkIdAndSideCode.flatMap {
+      case ((linkId, sideCode), lanes) =>
+        val roadLink = roadLinks.find(_.linkId == linkId).get
+
+        //Find measures for the segments
+        val segments = lanes.flatMap(lane => Seq(lane.startMeasure, lane.endMeasure)).distinct
+
+        //Separate each segment in the lanes as a ViewOnlyLane
+        segments.sorted.sliding(2).map { measures =>
+          val startMeasure = measures.head
+          val endMeasure = measures.last
+          val consideredLanes = lanes.filter(lane => lane.startMeasure <= startMeasure && lane.endMeasure >= endMeasure).map(_.laneCode)
+          val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
+
+          ViewOnlyLane(linkId, startMeasure, endMeasure, sideCode, geometry, consideredLanes)
+        }
+    }.toSeq
   }
 
   // Validate if lane.SideCode is ok with roadAddress.SideCode.
@@ -986,10 +1035,10 @@ trait LaneOperations {
       val actionsLanes = separateNewIncomeLanesInActions(newIncomeLanes, linkIds, sideCode)
       val laneCodesToBeDeleted = actionsLanes.lanesToDelete.map(getLaneCode(_).toInt)
 
-      create(actionsLanes.lanesToInsert.toSeq, linkIds, sideCode, username) ++
+      create(populateStartDate(actionsLanes.lanesToInsert).toSeq, linkIds, sideCode, username) ++
       update(actionsLanes.lanesToUpdate.toSeq, linkIds, sideCode, username) ++
       deleteMultipleLanes(laneCodesToBeDeleted, linkIds, username) ++
-      createMultiLanesOnLink(actionsLanes.multiLanesOnLink.toSeq, linkIds, sideCode, username)
+      createMultiLanesOnLink(populateStartDate(actionsLanes.multiLanesOnLink).toSeq, linkIds, sideCode, username)
     }
   }
 
@@ -1098,4 +1147,31 @@ trait LaneOperations {
     }.toSeq
   }
 
+  /**
+   * Populates start date property of lanes that don't have it filled with current date
+   * Main lanes are not altered
+   * @param lanes lanes to populate start date property
+   * @return lanes with populated start date property
+   */
+  def populateStartDate(lanes: Set[NewIncomeLane]): Set[NewIncomeLane] = {
+    val lanePropertyDateValues = Seq(LanePropertyValue(DateTime.now().toString(DatePropertyFormat)))
+
+    lanes.map { lane =>
+      //There is no start date in main lanes so return unaltered lane
+      if(LaneNumber.isMainLane(getLaneCode(lane).toInt)){
+        lane
+      }else{
+        val property = lane.properties.find(_.publicId == "start_date")
+
+        val updatedProperty = property match {
+          case Some(prop) if prop.values.isEmpty || prop.values.head.value.toString.trim.isEmpty =>
+            prop.copy(values = lanePropertyDateValues)
+          case Some(prop) => prop
+          case _ => LaneProperty("start_date", lanePropertyDateValues)
+        }
+
+        lane.copy(properties = lane.properties.filterNot(_.publicId == updatedProperty.publicId) ++ Seq(updatedProperty))
+      }
+    }
+  }
 }

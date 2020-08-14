@@ -9,8 +9,8 @@
     var currentLane;
 
     var roadNumber;
-    var roadPartNumber;
-    var startAddrMValue;
+    var startRoadPartNumber;
+    var startDistance;
     var endRoadPartNumber;
     var endDistance;
     var track;
@@ -143,17 +143,18 @@
     };
 
     this.setInitialRoadFields = function(){
-      var roadNumberElement = {publicId: "roadNumber", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadNumber}]};
-      var roadPartNumberElement = {publicId: "roadPartNumber", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.roadPartNumber}]};
-      var startAddrMValueElement = {publicId: "startAddrMValue", propertyType: "read_only_number", required: 'required', values: [{value: selectedRoadlink.startAddrMValue}]};
-
       roadNumber = selectedRoadlink.roadNumber;
-      roadPartNumber = selectedRoadlink.roadPartNumber;
-      startAddrMValue = selectedRoadlink.startAddrMValue;
+      startRoadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(linksSelected, 'roadPartNumber')));
+      startDistance = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(linksSelected, startRoadPartNumber, 'startAddrMValue'));
       track = selectedRoadlink.track;
 
+      var startRoadPartNumberElement  = {publicId: "startRoadPartNumber", propertyType: "number", required: 'required', values: [{value: startRoadPartNumber}]};
+      var startDistanceElement = {publicId: "startDistance", propertyType: "number", required: 'required', values: [{value: startDistance}]};
+      var endRoadPartNumberElement = {publicId: "endRoadPartNumber", propertyType: "number", required: 'required', values: [{value: ''}]};
+      var endDistanceElement = {publicId: "endDistance", propertyType: "number", required: 'required', values: [{value: ''}]};
+
       _.forEach(self.selection, function (lane) {
-        lane.properties.push(roadNumberElement, roadPartNumberElement, startAddrMValueElement);
+        lane.properties.push(startRoadPartNumberElement, startDistanceElement, endRoadPartNumberElement, endDistanceElement);
       });
     };
 
@@ -188,7 +189,7 @@
     this.isAddByRoadAddress = function() {
       var lane = _.find(self.selection, function (lane){
         return _.find(lane.properties, function (property) {
-          return property.publicId == "roadNumber";
+          return property.publicId == "startRoadPartNumber";
         });
       });
 
@@ -220,7 +221,7 @@
       return _.map(lanes, function (lane) {
         var laneWithoutUnrelevantInfo = _.omit(lane, ['linkId', 'linkIds', 'sideCode', 'selectedLinks', 'points', 'marker']);
         laneWithoutUnrelevantInfo.properties = _.filter(laneWithoutUnrelevantInfo.properties, function (prop) {
-          return !_.includes(['roadNumber', 'roadPartNumber', 'startAddrMValue', 'endRoadPartNumber', 'endDistance'], prop.publicId);
+          return !_.includes(['startRoadPartNumber', 'startDistance', 'endRoadPartNumber', 'endDistance'], prop.publicId);
         });
         return laneWithoutUnrelevantInfo;
       });
@@ -241,8 +242,8 @@
           sideCode: sideCode,
           laneRoadAddressInfo:{
             roadNumber: roadNumber,
-            initialRoadPartNumber: roadPartNumber,
-            initialDistance: startAddrMValue,
+            initialRoadPartNumber: parseInt(startRoadPartNumber),
+            initialDistance: parseInt(startDistance),
             endRoadPartNumber: parseInt(endRoadPartNumber),
             endDistance: parseInt(endDistance),
             track: track
@@ -285,14 +286,22 @@
       return _.has(lane, propertyName) ? lane[propertyName] : null;
     };
 
-    this.setEndAddressesValues = function(currentPropertyValue) {
-      var endValue = _.head(currentPropertyValue.values);
+    this.setAddressesValues = function(currentPropertyValue) {
+      var propertyValue = _.head(currentPropertyValue.values);
+      var value = _.isEmpty(propertyValue) ? propertyValue : propertyValue.value;
+
       switch(currentPropertyValue.publicId) {
+        case "startRoadPartNumber":
+          startRoadPartNumber = value;
+          break;
+        case "startDistance":
+          startDistance = value;
+          break;
         case "endRoadPartNumber":
-          endRoadPartNumber = _.isEmpty(endValue) ? endValue : endValue.value;
+          endRoadPartNumber = value;
           break;
         case "endDistance":
-          endDistance = _.isEmpty(endValue) ? endValue : endValue.value;
+          endDistance = value;
           break;
       }
 

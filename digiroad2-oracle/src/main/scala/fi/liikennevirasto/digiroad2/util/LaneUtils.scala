@@ -167,7 +167,7 @@ object LaneUtils {
       val filteredRoadAddresses = getRoadAddressToProcess()
 
       //Get only the lanes to create
-      val lanesToInsert = newIncomeLanes.filter(_.id == 0)
+      val lanesToInsert = laneService.populateStartDate(newIncomeLanes.filter(_.id == 0))
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>

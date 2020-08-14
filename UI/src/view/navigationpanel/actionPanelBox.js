@@ -87,6 +87,7 @@
     this.layerName = undefined;
     this.labeling = function () {};
     this.checkboxPanel = function () {};
+    this.walkingCyclingPanel = function () {};
     this.predicate = function () {};
     this.radioButton = function () {};
     this.legendName = function () {};
@@ -102,6 +103,7 @@
         me.radioButton(),
         me.labeling(),
         me.checkboxPanel(),
+        me.walkingCyclingPanel(),
         me.bindExternalEventHandlers(),
         '  </div>',
         '</div>'].join(''))  };
@@ -152,27 +154,36 @@
       });
     };
 
-    this.eventHandler = function(){
-      $(me.expanded).find('#complementaryLinkCheckBox').on('change', function (event) {
+    var handlerWithConfirmation = function(id, layer) {
+      $(me.expanded).find('#' + id).on('change', function (event) {
         if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger(me.layerName + '-complementaryLinks:show');
+          eventbus.trigger(me.layerName + '-' + layer + ':show');
         } else {
           if (applicationModel.isDirty()) {
             $(event.currentTarget).prop('checked', true);
             new Confirm();
           } else {
-            eventbus.trigger(me.layerName +'-complementaryLinks:hide');
+            eventbus.trigger(me.layerName + '-' + layer + ':hide');
           }
         }
       });
+    };
 
-      $(me.expanded).find('#trafficSignsCheckbox').on('change', function (event) {
+    var handlerWithoutConfirmation = function(id, layer) {
+      $(me.expanded).find('#' + id).on('change', function (event) {
         if ($(event.currentTarget).prop('checked')) {
-          eventbus.trigger(me.layerName + '-readOnlyTrafficSigns:show');
+          eventbus.trigger(me.layerName + '-' + layer + ':show');
         } else {
-          eventbus.trigger(me.layerName + '-readOnlyTrafficSigns:hide');
+          eventbus.trigger(me.layerName + '-' + layer + ':hide');
         }
       });
+    };
+
+    this.eventHandler = function(){
+      handlerWithConfirmation('mapViewOnlyCheckbox', 'mapViewOnly');
+      handlerWithConfirmation('complementaryLinkCheckBox', 'complementaryLinks');
+      handlerWithConfirmation('walkingCyclingCheckbox', 'walkingCyclingLinks');
+      handlerWithoutConfirmation('trafficSignsCheckbox', 'readOnlyTrafficSigns');
     };
   };
 })(this);

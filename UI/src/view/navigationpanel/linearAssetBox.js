@@ -25,6 +25,13 @@
     };
 
     this.checkboxPanel = function () {
+      var mapViewOnlyCheckbox = assetConfig.allowMapViewOnly ? [
+          '     <div class="check-box-container">' +
+          '       <input id="mapViewOnlyCheckbox" type="checkbox" checked/> ' +
+          '       <lable>Näytä geometria</lable>' +
+          '     </div>'
+      ].join('') : '';
+
       var trafficSignsCheckbox = assetConfig.readOnlyLayer ? [
           '<div class="check-box-container">' +
           '   <input id="trafficSignsCheckbox" type="checkbox" /> ' +
@@ -39,7 +46,16 @@
           '   </div>'
         ].join('') : '';
 
-      return trafficSignsCheckbox.concat(complementaryLinkCheckBox);
+      return mapViewOnlyCheckbox.concat(trafficSignsCheckbox.concat(complementaryLinkCheckBox));
+    };
+
+    this.walkingCyclingPanel = function () {
+      return assetConfig.allowWalkingCyclingLinks ? [
+        '     <div class="check-box-container">' +
+        '       <input id="walkingCyclingCheckbox" type="checkbox" />' +
+        '       <lable>Näytä käpy-väylät</lable>' +
+        '     </div>'
+      ].join('') : '';
     };
 
     this.predicate = function () {
