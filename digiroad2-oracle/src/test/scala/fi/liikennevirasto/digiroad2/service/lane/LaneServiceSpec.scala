@@ -61,6 +61,9 @@ class LaneTestSupporter extends FunSuite with Matchers {
                                 LaneProperty("lane_type", Seq(LanePropertyValue("2")))
                               )
 
+  val laneStartDatePropertyValue = Seq(LaneProperty("start_date", Seq(LanePropertyValue(DateTime.now().toString("dd.MM.yyyy")))))
+  val lanePropertiesValues12WithStartDate = lanePropertiesValues12 ++ laneStartDatePropertyValue
+
 
 
   object PassThroughLaneService extends LaneOperations {
@@ -440,14 +443,15 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues12.contains(laneProp) should be(true)
+        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
       }
 
       val lane12B = lanesAfterSplit.filter(l => l.startMeasure == 250.0).head
+      val lanePropertiesSubLaneSplit2WithStartDate = lanePropertiesSubLaneSplit2 ++ laneStartDatePropertyValue
       lane12B.startMeasure should be(250.0)
       lane12B.endMeasure should be(500.0)
       lane12B.attributes.foreach { laneProp =>
-        lanePropertiesSubLaneSplit2.contains(laneProp) should be(true)
+        lanePropertiesSubLaneSplit2WithStartDate.contains(laneProp) should be(true)
       }
 
 
@@ -500,16 +504,17 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues12.contains(laneProp) should be(true)
+        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
       }
 
 
       val lane12B = currentLanes.filter(_.id == newSubLane12SplitBId).head
+      val lanePropertiesSubLaneSplit2WithStartDate = lanePropertiesSubLaneSplit2 ++ laneStartDatePropertyValue
       lane12B.id should be(newSubLane12SplitBId)
       lane12B.startMeasure should be(250.0)
       lane12B.endMeasure should be(500.0)
       lane12B.attributes.foreach { laneProp =>
-        lanePropertiesSubLaneSplit2.contains(laneProp) should be(true)
+        lanePropertiesSubLaneSplit2WithStartDate.contains(laneProp) should be(true)
       }
 
 
@@ -531,7 +536,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12AfterSplit.endMeasure should be(500)
       lane12AfterSplit.expired should be(false)
       lane12AfterSplit.attributes.foreach { laneProp =>
-        lanePropertiesValues12.contains(laneProp) should be(true)
+        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
       }
 
 
@@ -574,6 +579,9 @@ class LaneServiceSpec extends LaneTestSupporter {
         LaneProperty("lane_type", Seq(LanePropertyValue("8")))
       )
 
+      val modifiedLaneProperties1WithStartDate = modifiedLaneProperties1 ++ laneStartDatePropertyValue
+      val modifiedLaneProperties2WithStartDate = modifiedLaneProperties2 ++ laneStartDatePropertyValue
+
       val mainLane = NewIncomeLane(0, 0, 500, 745, false, false, lanePropertiesValues11)
       val subLane12SplitA = NewIncomeLane(0, 0, 250, 745, false, false, lanePropertiesValues12)
       val subLane12SplitB = NewIncomeLane(0, 250, 500, 745, false, false, modifiedLaneProperties1)
@@ -597,7 +605,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12A.startMeasure should be(0)
       lane12A.endMeasure should be(250.0)
       lane12A.attributes.foreach { laneProp =>
-        lanePropertiesValues12.contains(laneProp) should be(true)
+        lanePropertiesValues12WithStartDate.contains(laneProp) should be(true)
       }
 
       val lane12B = currentLanes.filter(_.id == newSubLane12SplitBId).head
@@ -605,7 +613,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       lane12B.startMeasure should be(250.0)
       lane12B.endMeasure should be(500.0)
       lane12B.attributes.foreach { laneProp =>
-        modifiedLaneProperties1.contains(laneProp) should be(true)
+        modifiedLaneProperties1WithStartDate.contains(laneProp) should be(true)
       }
 
 
@@ -630,7 +638,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       laneA12AfterUpdate.endMeasure should be(250.0)
       laneA12AfterUpdate.expired should be(false)
       laneA12AfterUpdate.attributes.foreach { laneProp =>
-        modifiedLaneProperties1.contains(laneProp) should be(true)
+        modifiedLaneProperties1WithStartDate.contains(laneProp) should be(true)
       }
 
       val laneB12AfterUpdate = lanesAfterSplit.filter(_.id == newSubLane12SplitBId).head
@@ -639,7 +647,7 @@ class LaneServiceSpec extends LaneTestSupporter {
       laneB12AfterUpdate.endMeasure should be(500.0)
       laneB12AfterUpdate.expired should be(false)
       laneB12AfterUpdate.attributes.foreach { laneProp =>
-        modifiedLaneProperties2.contains(laneProp) should be(true)
+        modifiedLaneProperties2WithStartDate.contains(laneProp) should be(true)
       }
 
       //Verify the presence of the old splitted lanes attributes on histories tables
