@@ -455,10 +455,17 @@
       };
 
       this.renderGroupedFeatures = function (assets, zoomLevel, getPoint) {
+        var zI = 0; //z index for the styles
+
         if (!this.isVisibleZoom(zoomLevel))
           return [];
         var groupedAssets = me.getGroupedFeatures(assets, zoomLevel);
-        return _.flatten(_.chain(groupedAssets).map(function (assets) {
+
+        // Begin rendering grouped features with highest lat first (these will stay at lower z index)
+        // To avoid overlapping when setting the z index of each feature styles
+        var groupedAssetsSortedByLat = _.sortBy(groupedAssets, function (assets){return -_.head(assets).lat;});
+
+        return _.flatten(_.chain(groupedAssetsSortedByLat).map(function (assets) {
           var imgPosition = {x: 0, y: me.stickPosition.y};
           return _.map(assets, function (asset) {
             var values = me.getValue(asset);
@@ -476,6 +483,8 @@
                 styles = me.suggestionStyle(suggestionInfo, styles, imgPosition.y);
               }
 
+              _.forEach(styles, function(style){style.setZIndex(zI);});
+              zI++;
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);
               feature.setProperties(_.omit(asset, 'geometry'));
