@@ -72,20 +72,23 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       }
     }
 
-    def getUserAndMunicipalitiesInfo(): (Seq[User], List[MunicipalityInfo]) = {
-      if(withTransaction) {
-        withDynSession {
-          val userResults = userProvider.getUsers()
-          val municResults = municipalityDao.getMunicipalitiesNameAndIdByCode(municipalitiesList.toSet)
 
-          (userResults, municResults)
-        }
-      }
-      else{
+    def getUserAndMunicipalitiesInfo(): (Seq[User], List[MunicipalityInfo]) = {
+
+      def getUserAndMunicipalitiesFromDB(): (Seq[User], List[MunicipalityInfo]) = {
         val userResults = userProvider.getUsers()
         val municResults = municipalityDao.getMunicipalitiesNameAndIdByCode(municipalitiesList.toSet)
 
         (userResults, municResults)
+      }
+
+      if(withTransaction) {
+        withDynSession {
+          getUserAndMunicipalitiesFromDB()
+        }
+      }
+      else{
+        getUserAndMunicipalitiesFromDB()
       }
     }
 
@@ -101,30 +104,26 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                                     .filterNot( user => operatorUsersUsername.contains(user.username) )
                                     .map( _.username )
 
-      val linearAssets = extractData(municipality)
+      val extractedAssets = extractData(municipality)
 
-      if ( linearAssets != null && linearAssets.nonEmpty) {
-        val linearAssetsGroupedBy = linearAssets.groupBy(_.assetType)
+      val linearAssetsGroupedBy = extractedAssets.groupBy(_.assetType)
 
-        assetTypesList.flatMap { assetType =>
-          if (linearAssetsGroupedBy.contains(assetType)) {
-            val currentAssetType = linearAssetsGroupedBy(assetType)
+      assetTypesList.flatMap { assetType =>
+        if (linearAssetsGroupedBy.contains(assetType)) {
+          val currentAssetType = linearAssetsGroupedBy(assetType)
 
-            val (operatorUser, operatorDate) = extractUserAndDateTime(currentAssetType, operatorUsersUsername)
-            val (municipalityUser, municipalityDate) = extractUserAndDateTime(currentAssetType, municipalityUsers)
+          val (operatorUser, operatorDate) = extractUserAndDateTime(currentAssetType, operatorUsersUsername)
+          val (municipalityUser, municipalityDate) = extractUserAndDateTime(currentAssetType, municipalityUsers)
 
-            val firstElem = currentAssetType.head
+          val firstElem = currentAssetType.head
 
-            Some( ExportAssetReport(municipalitiesInfo.filter(_.id == municipality).head.name, firstElem.assetType, currentAssetType.size,
-                              firstElem.assetNameFI, firstElem.assetGeometryType, operatorUser, operatorDate, municipalityUser, municipalityDate) )
-          }
-          else
-            None
+          Some( ExportAssetReport(municipalitiesInfo.filter(_.id == municipality).head.name, firstElem.assetType, currentAssetType.size,
+                            firstElem.assetNameFI, firstElem.assetGeometryType, operatorUser, operatorDate, municipalityUser, municipalityDate) )
         }
-
+        else
+          None
       }
-      else
-        None
+
     }
   }
 
@@ -154,13 +153,9 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
 
 
-    val output = if (exportAssetReports.isEmpty) {
-        List()
-      }
-      else {
-        val allInfoGroupedByMunicipality = exportAssetReports.groupBy(_.municipalityName)
+    val allInfoGroupedByMunicipality = exportAssetReports.groupBy(_.municipalityName)
 
-        val result = allInfoGroupedByMunicipality.map { case (municipality, records) =>
+    val output = allInfoGroupedByMunicipality.map { case (municipality, records) =>
           val line = municipality + ";\r\n"
 
           val rows = records.map { elem =>
@@ -181,10 +176,7 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
                 }
 
           line + rows.mkString("\r\n")
-        }
-
-      result.toList
-    }
+        }.toList
 
     output.mkString("\r\n")
   }
@@ -199,23 +191,20 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
     else if ( pointAssets || linearAssets ) {
 
-      val (linearAssetType, pointAssetType) = AssetTypeInfo.values.partition( _.geometryType == "linear" )
+      val (linearAssetType, pointAssetType) = AssetTypeInfo.values.toList.partition( _.geometryType == "linear" )
 
       val allPoints = pointAssetType.map(_.typeId)
       val allLinears = linearAssetType.map(_.typeId)
 
       (pointAssets, linearAssets) match {
         case (true, false) =>
-          (allPoints ++ assetTypesList).filterNot(_ == PointAssets.id).toList
+          (allPoints ++ assetTypesList).filterNot(_ == PointAssets.id)
 
         case (false, true) =>
-          (allLinears ++ assetTypesList).filterNot(_ == LinearAssets.id).toList
-
-        case (true, true) =>
-          (allPoints ++ allLinears).filterNot(id => id == PointAssets.id || id == LinearAssets.id).toList
+          (allLinears ++ assetTypesList).filterNot(_ == LinearAssets.id)
 
         case _ =>
-          List()
+          allPoints ++ allLinears
       }
 
     }
@@ -225,7 +214,7 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
 
   def decodeMunicipalitiesToProcess(municipalities: List[Int]): List[Int] = {
-    if (municipalities.isEmpty || municipalities.contains(1000)) { /* 1000 = All municipalities */
+    if ( municipalities.contains(1000)) { /* 1000 = All municipalities */
       withDynSession {
         municipalityDao.getMunicipalitiesInfo.map(_._1).toList
       }

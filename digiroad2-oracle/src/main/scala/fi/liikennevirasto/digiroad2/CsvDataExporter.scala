@@ -27,15 +27,6 @@ trait CsvDataExporterOperations {
 
     }
 
-    def getExportById(id: Long, withTransaction: Boolean = true) : Option[ExportStatusInfo]  = {
-      if (withTransaction)
-        withDynTransaction {
-          exportReportDAO.get(id)
-        }
-      else
-        exportReportDAO.get(id)
-    }
-
     def getByUser(username: String, withTransaction: Boolean = true) : Seq[ExportStatusInfo]  = {
       if (withTransaction)
         withDynTransaction {
@@ -80,21 +71,16 @@ trait CsvDataExporterOperations {
       val headerLine = if(headers.nonEmpty) headers.toList.mkString(";").concat("\r\n")
                         else ""
 
-      val rows = if (values.isEmpty) {
-                  Seq()
-                }
-                else{
-                  values.map { mapValues =>
+      val rows = values.map { mapValues =>
                     if (headers.isEmpty) {
                       mapValues.values.toList
                     }
                     else {
-                      var elems = Seq[String]()
-                      headers.foreach{h => elems = elems ++ Seq(mapValues(h)) }
-                      elems
+                      headers.foldLeft(Seq[String]()) { case (elems, h) =>
+                        elems :+ mapValues(h)
+                      }
                     }
                   }
-                }
 
       headerLine ++ rows.map( _.mkString(";")).mkString("\r\n")
     }

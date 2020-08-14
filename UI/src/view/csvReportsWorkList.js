@@ -9,6 +9,15 @@
     var assetsList;
     var refresh;
 
+    var assetExtraOptions = {
+      allAssets: { id: "1", name: "Kaikki tietolajit" },
+      allPoints: { id: "2", name: "Pistemäiset tietolajit" },
+      allLinears: { id: "3", name: "Viivamaiset tietolajit" }
+    };
+
+    var municipalityExtraOptions = {
+      allMunicipalities: { id: "1000", name: "Kaikki kunnat" }
+    };
 
     this.initialize = function (mapBackend) {
       backend = mapBackend;
@@ -54,12 +63,9 @@
     }
 
     function setMunicipalities() {
-      $('#municipalities_search').append($('<option>', {
-        value: "1000",
-        text: "Kaikki kunnat"  /* all municipalities */
-      }));
+      var allMunicipalityOptions = _.concat([municipalityExtraOptions.allMunicipalities], municipalities);
 
-      _.forEach(municipalities, function (municipality) {
+      _.forEach(allMunicipalityOptions, function (municipality) {
         $('#municipalities_search').append($('<option>', {
           value: municipality.id,
           text: municipality.name
@@ -67,21 +73,12 @@
       });
     }
 
+
     function setAssets() {
-      var topOptions = [
-        {"id": "1", "value": "Kaikki tietolajit"}, /* all assets */
-        {"id": "2", "value": "Pistemäiset tietolajit"}, /* point assets */
-        {"id": "3", "value": "Viivamaiset tietolajit"} /* linear assets */
-      ];
+      var topOptions = [assetExtraOptions.allAssets, assetExtraOptions.allPoints, assetExtraOptions.allLinears];
+      var allAssetOptions = _.concat(topOptions, assetsList);
 
-      _.forEach(topOptions, function (option) {
-        $('#assets_search').append($('<option>', {
-          value: option.id,
-          text: option.value
-        }));
-      });
-
-      _.forEach(assetsList, function (asset) {
+      _.forEach(allAssetOptions, function (asset) {
         $('#assets_search').append($('<option>', {
           value: asset.id,
           text: asset.name
@@ -96,22 +93,18 @@
     }
 
     function municipalitySort(a, b){
-      /* value: "1000", text: "Kaikki kunnat"  /* all municipalities */
+      var allMunicipalitiesId = municipalityExtraOptions.allMunicipalities.id;
 
-      if (a.value == "1000")
+      if (a.value == allMunicipalitiesId)
         return -1;
-      else if ( b.value == "1000")
+      else if ( b.value == allMunicipalitiesId)
         return 1;
 
       return a.text > b.text ? 1 : -1;
     }
 
     function assetTypeSort(a, b){
-      /* value: "1", text: "Kaikki tietolajit"}, /* all assets */
-      /* value: "2", text: "Pistemäiset tietolajit"}, /* point assets */
-      /* value: "3", text: "Viivamaiset tietolajit"} /* linear assets */
-
-      var topElems = ["1", "2", "3"];
+      var topElems = [assetExtraOptions.allAssets.id, assetExtraOptions.allLinears.id, assetExtraOptions.allPoints.id];
 
       if (_.includes(topElems, a.value) && _.includes(topElems, b.value))
         return a.value > b.value ? 1 : -1;
@@ -238,8 +231,8 @@
       var isMunicipalityEmpty = _.isEmpty($("#municipalities_search_to, select[name*='municipalityNumbers']").find('option'));
       var isAssetEmpty = _.isEmpty($("#assets_search_to, select[name*='assetNumbers']").find('option'));
 
-      var disableStatus = !isAssetEmpty && !isMunicipalityEmpty;
-      $('.btn.btn-primary.btn-lg').prop('disabled', !disableStatus);
+      var disableStatus = isAssetEmpty || isMunicipalityEmpty;
+      $('.btn.btn-primary.btn-lg').prop('disabled', disableStatus);
     }
 
 
@@ -301,15 +294,19 @@
         return $(this).attr('id');
       });
 
-      if(!_.isEmpty(jobsInProgress)) {
-        backend.getExportsJobsByIds(jobsInProgress.toArray()).then(function(jobs){
-          var endedJobs = _.filter(jobs, function(job){return job.status !== 1;});
-          _.map(endedJobs, replaceRow);
-        });
-      } else {
+      if(_.isEmpty(jobsInProgress)) {
         clearInterval(refresh);
         refresh = null;
       }
+      else {
+        backend.getExportsJobsByIds(jobsInProgress.toArray()).then(function (jobs) {
+          var endedJobs = _.filter(jobs, function (job) {
+            return job.status !== 1;
+          });
+          _.map(endedJobs, replaceRow);
+        });
+      }
+
     };
 
     function downloadCsv(event){
@@ -357,7 +354,7 @@
     }
 
     this.getJobs = function () {
-      backend.getExportJobs().then(function(jobs){
+      backend.getExportJobsByUser().then(function(jobs){
         if(!_.isEmpty(jobs))
           $('.job-status').empty().html(buildJobTable(jobs));
 

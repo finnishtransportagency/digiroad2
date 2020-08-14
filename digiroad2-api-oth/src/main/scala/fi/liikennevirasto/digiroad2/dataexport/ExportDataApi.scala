@@ -8,11 +8,11 @@ import fi.liikennevirasto.digiroad2.dao.ExportReportDAO
 import fi.liikennevirasto.digiroad2.middleware.CsvDataExporterInfo
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, Digiroad2Context, DigiroadEventBus}
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s.{CustomSerializer, DefaultFormats, Formats, JString}
-import org.scalatra.{Forbidden, ScalatraServlet, Unauthorized}
+import org.scalatra.{BadRequest, Forbidden, NotFound, ScalatraServlet, Unauthorized}
 import org.scalatra.json.JacksonJsonSupport
 
 
@@ -42,48 +42,35 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
   }
 
   get("/downloadCsv/:id") {
-    val id = params("id")
-
-    if (id.trim.isEmpty) {
-      ""
-    } else {
-      val data = csvDataExporter.getExportById(id.toLong)
-
-      data match {
-        case  Some(info) => info
-        case _ =>
-      }
-    }
-
+    val id = params.getOrElse("id", halt(BadRequest("Missing mandatory 'ID' parameter")))
+    csvDataExporter.getById(id.toLong).getOrElse(halt(NotFound("No records found for sent ID")))
   }
 
-  get("/log") {
+  get("/logByUser") {
     csvDataExporter.getByUser(userProvider.getCurrentUser().username)
   }
 
-  get("/logs/:id") {
-    val id = params("id").toLong
-    csvDataExporter.getById(id).getOrElse("Logia ei löytynyt.")
-  }
 
   get("/logs/:ids") {
     val ids = params("ids").split(',').map(_.toLong).toSet
     csvDataExporter.getByIds(ids)
   }
 
-  post("/generateCsvReport/:municipalities/:assetTypes") {
-    val municipalitiesParam = params("municipalities")
-    val assetTypesParam = params("assetTypes")
+  post("/generateCsvReport") {
 
-    validateOperation()
+    val municipalitiesParam = (parsedBody \ "municipalities").extractOrElse[List[String]](halt(BadRequest("Malformed 'municipalities' parameter")))
+    val assetTypesParam = (parsedBody \ "assets").extractOrElse[List[String]](halt(BadRequest("Malformed 'assetTypes' parameter")))
 
     val user = userProvider.getCurrentUser()
+
+    validateOperation(user)
+
     val filename = "export_".concat(DateParser.dateToString(DateTime.now, DateTimeFormat.forPattern("ddMMyyyy_HHmmss")) )
                             .concat(".csv")
 
 
-    val municipalities = assetReportCsvExporter.decodeMunicipalitiesToProcess( municipalitiesParam.split(",").map(_.trim.toInt).toList )
-    val assetTypes = assetReportCsvExporter.decodeAssetsToProcess( assetTypesParam.split(",").map(_.trim.toInt).toList )
+    val municipalities = assetReportCsvExporter.decodeMunicipalitiesToProcess( municipalitiesParam.map(_.trim.toInt) )
+    val assetTypes = assetReportCsvExporter.decodeAssetsToProcess( assetTypesParam.map(_.trim.toInt) )
 
     val logId = csvDataExporter.insertData( user.username, filename, assetTypes.mkString(","), municipalities.mkString(",") )
 
@@ -92,8 +79,8 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
     csvDataExporter.getById(logId)
   }
 
-  def validateOperation(): Unit = {
-    if(!(userProvider.getCurrentUser().isOperator())) {
+  def validateOperation(user: User): Unit = {
+    if(!user.isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa tämän toiminnon"))
     }
   }

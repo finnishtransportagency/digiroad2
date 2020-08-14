@@ -1826,18 +1826,23 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   get("/unverifiedMunicipality") {
     val municipalityCode = params("municipalityCode")
-    municipalityService.getMunicipalitiesNameAndIdByCode(Set(municipalityCode.toInt)).sortBy(_.name).map { municipality =>
-      Map("id" -> municipality.id,
-        "name" -> municipality.name)
-    }
+    municipalityService.getMunicipalitiesNameAndIdByCode(Set(municipalityCode.toInt))
+                      .sortBy(_.name)
+                      .map { municipality =>
+                        Map("id" -> municipality.id,
+                            "name" -> municipality.name
+                          )
+                      }
   }
 
   get("/getAssetTypes") {
-    AssetTypeInfo.values.filterNot(_.typeId == UnknownAssetTypeId).toList.sortBy(_.typeId).map { asset =>
-      Map("id" -> asset.typeId,
-        "name" -> { if (asset.nameFI.trim.nonEmpty) asset.nameFI else asset.label }
-      )
-    }
+    AssetTypeInfo.values.filterNot(_.typeId == UnknownAssetTypeId.typeId).toList
+                        .sortBy(_.typeId)
+                        .map { asset =>
+                          Map("id" -> asset.typeId,
+                            "name" -> { if (asset.nameFI.trim.nonEmpty) asset.nameFI else asset.label }
+                          )
+                        }
   }
 
   get("/municipalities/byUser") {

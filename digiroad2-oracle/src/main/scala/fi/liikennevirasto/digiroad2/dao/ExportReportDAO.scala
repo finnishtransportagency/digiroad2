@@ -26,14 +26,22 @@ class ExportReportDAO {
       val municipalities = r.nextString()
       val content = r.nextStringOption()
 
-      val assetsName = exportedAssets.split(",")
-                                      .map( asset => AssetTypeInfo(asset.toInt).nameFI )
-                                      .mkString(",")
+      val assetsName = if ( exportedAssets == null ) //can occur with status = 2
+                          ""
+                        else {
+                          exportedAssets.split(",")
+                                        .map( asset => AssetTypeInfo(asset.toInt).nameFI )
+                                        .mkString(",")
+                        }
 
-      val municipalitiesAsSet = municipalities.split(",").map(_.toInt).toSet
-      val municipalitiesName = municipalityDao.getMunicipalitiesNameAndIdByCode( municipalitiesAsSet )
-                                              .map(_.name)
-                                              .mkString(",")
+      val municipalitiesName = if ( municipalities == null ) //can occur with status = 2
+                                  ""
+                                else {
+                                  val municipalitiesAsset = municipalities.split(",").map(_.toInt).toSet
+                                  municipalityDao.getMunicipalitiesNameAndIdByCode(municipalitiesAsset)
+                                                .map(_.name)
+                                                .mkString(",")
+                                }
 
 
       ExportStatusInfo(id, status, Status(status).descriptionFi, fileName, createdBy, createdDate, assetsName, municipalitiesName, content)

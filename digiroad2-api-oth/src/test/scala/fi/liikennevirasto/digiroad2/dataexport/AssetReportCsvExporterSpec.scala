@@ -1,21 +1,20 @@
 package fi.liikennevirasto.digiroad2.dataexport
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.asset.{Municipality, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{DamagedByThaw, Municipality, TrafficDirection, TrafficSigns}
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Point}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.csvDataExporter.AssetReportCsvExporter
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
+import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 
 class AssetReportCsvExporterSpec extends FunSuite with Matchers {
@@ -28,6 +27,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
 
   val csvSeparator = ";"
   val newLine = "\r\n"
+
+  private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -57,9 +58,9 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
 
 
   test("test function exportAssetsByMunicipality") {
-    OracleDatabase.withDynTransaction {
+    runWithRollback {
       val municipalitiesParam = "408, 739"
-      val assetTypesParam = "130"
+      val assetTypesParam = DamagedByThaw.typeId.toString
       val fileName = "test_export.csv"
 
       val municipalitiesList = List(LupaMunicipalityInfo, SavitaipaleMunicipalityInfo)
@@ -84,13 +85,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       val generatedDataId = assetReportCsvExporter.exportAssetsByMunicipalityCSVGenerator(assetTypes, municipalities, logId, false)
 
       val result = csvDataExporter.getById(generatedDataId, false)
-      val finalContent = result match{
-        case Some(x) => x.content match {
-          case Some(content) => content
-          case _ => ""
-        }
-        case _ => ""
-      }
+      val finalContent = result.head.content.getOrElse("")
 
       finalContent.contains("Lapua") should be(true)
       finalContent.contains("lx775599") should be(false)
@@ -99,15 +94,14 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       val lastValueInLastLine = lasLine.split(csvSeparator).last
 
       lastValueInLastLine should be("k647320")
-      dynamicSession.rollback()
     }
   }
 
 
   test("test function exportAssetsByMunicipality with Points") {
-    OracleDatabase.withDynTransaction {
+    runWithRollback {
       val municipalitiesParam = "408, 739"
-      val assetTypesParam = "300"
+      val assetTypesParam = TrafficSigns.typeId.toString
       val fileName = "test_export.csv"
 
       val municipalitiesInfoList = List(LupaMunicipalityInfo, SavitaipaleMunicipalityInfo)
@@ -138,13 +132,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       val generatedDataId = assetReportCsvExporter.exportAssetsByMunicipalityCSVGenerator(assetTypes, municipalities, logId, false)
 
       val result = csvDataExporter.getById(generatedDataId, false)
-      val finalContent = result match{
-        case Some(x) => x.content match {
-                        case Some(content) => content
-                        case _ => ""
-                      }
-        case _ => ""
-      }
+      val finalContent = result.head.content.getOrElse("")
 
       finalContent.contains("Savitaipale") should be(true)
       finalContent.contains("lx775599") should be(false)
@@ -153,7 +141,6 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       val lastCharOfLine2 = line2.split(csvSeparator).last
 
       lastCharOfLine2 should be("2")
-      dynamicSession.rollback()
     }
   }
 

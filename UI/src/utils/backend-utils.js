@@ -539,12 +539,8 @@
       return $.getJSON('api/export/downloadCsv/' + id);
     };
 
-    this.getExportJobById = function(id) {
-      return $.getJSON('api/export/log/' + id);
-    };
-
-    this.getExportJobs = function() {
-      return $.getJSON('api/export/log');
+    this.getExportJobsByUser = function() {
+      return $.getJSON('api/export/logByUser');
     };
 
     this.getExportsJobsByIds = function(ids){
@@ -552,14 +548,21 @@
     };
 
     this.postGenerateCsvReport = function (municipalities, assets, success, failure) {
+      var data = {
+        municipalities: municipalities,
+        assets: assets
+      };
+
       $.ajax({
-        url: 'api/export/generateCsvReport/'+municipalities+'/'+assets,
+        contentType: "application/json",
         type: 'POST',
-        processData: false,
-        contentType: false,
+        url: 'api/export/generateCsvReport',
+        data: JSON.stringify(data),
+        dataType: "json",
         success: success,
         error: failure
       });
+
     };
 
     this.getMunicipalities = function () {
