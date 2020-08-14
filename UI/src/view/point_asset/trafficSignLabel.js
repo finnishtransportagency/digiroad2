@@ -283,7 +283,8 @@
                 styles = me.suggestionStyle(suggestionInfo, styles, imgPosition.y);
               }
 
-              _.forEach(styles, function(style){style.setZIndex(++zI);});
+              _.forEach(styles, function(style){style.setZIndex(zI);});
+              zI++;
               var feature = me.createFeature(getPoint(asset));
               feature.setStyle(styles);
               feature.setProperties(_.omit(asset, 'geometry'));
