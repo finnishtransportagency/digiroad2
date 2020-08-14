@@ -519,7 +519,6 @@
         },
         label: new LinearAssetLabel(),
         authorizationPolicy: new ReadOnlyAuthorizationPolicy(),
-        isVerifiable: true,
         hasMunicipalityValidation: true
       },
       {
@@ -695,7 +694,7 @@
         }),
         style: new ServiceRoadStyle(),
         label : new ServiceRoadLabel(),
-        isVerifiable: false,
+        isVerifiable: true,
         layer : ServiceRoadLayer,
         collection: ServiceRoadCollection,
         authorizationPolicy: new ServiceRoadAuthorizationPolicy(),
