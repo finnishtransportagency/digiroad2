@@ -725,15 +725,22 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val validTo = if (expired) "sysdate" else "null"
     val verifiedDate = if (verifiedBy.getOrElse("") == "") "null" else "sysdate"
 
-    val geom: String = if(geometry.nonEmpty) {
+    val geom: String = if (geometry.nonEmpty) {
       val geom = GeometryUtils.truncateGeometry2D(geometry, measures.startMeasure, measures.endMeasure)
-      val assetLength = measures.endMeasure - measures.startMeasure
 
-      s"""DSYS.SDO_GEOMETRY(4002,
+      //TODO This IF clause it's to be removed when VIITE finally stops using frozen VVH because besides we have different road links, we can have different or empty geometries between them too. In that case we don't want to store that.
+      if (geom.nonEmpty) {
+        val assetLength = measures.endMeasure - measures.startMeasure
+
+        s"""DSYS.SDO_GEOMETRY(4002,
         3067,
         NULL,
         MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
         MDSYS.SDO_ORDINATE_ARRAY(${geom.head.x},${geom.head.y},0,0.0,${geom.last.x},${geom.last.y},0,$assetLength))"""
+      } else {
+        "null"
+      }
+
     } else {
       "null"
     }
