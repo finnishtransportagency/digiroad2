@@ -282,8 +282,8 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
   protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData, sectionRoadAddresses: Map[(Long, Long, Track), Seq[ViiteRoadAddress]], mappedRoadLinks: Seq[VVHRoadlink]): Unit
 
 
-  def expireAssets() : Unit = {
-    val municipalities = getAllMunicipalities
+  def expireAssetsFromAllMunicipalitiesExcept(municipalitiesToIgnore: Seq[Int] = Seq.empty[Int]) : Unit = {
+    val municipalities = getAllMunicipalities.filterNot(municipalitiesToIgnore.contains)
     municipalities.foreach { municipality =>
       withDynTransaction {
         expireAssets(municipality, Some(State))
@@ -304,8 +304,13 @@ trait TierekisteriAssetImporterOperations extends TierekisteriImporterOperations
   }
 
   def importAssets(): Unit = {
+    //Ahvenanmaa municipalities to ignore in TR expire
+    val municipalitiesToIgnore = withDynSession {
+       municipalityDao.getMunicipalitiesNameAndIdByEly(Set(AhvenanmaaEly.id)).map(_.id)
+    }
+
     //Expire all asset in state roads in all the municipalities
-    expireAssets()
+    expireAssetsFromAllMunicipalitiesExcept(municipalitiesToIgnore)
 
     val roadNumbers = getAllViiteRoadNumbers
 
