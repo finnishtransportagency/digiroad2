@@ -345,8 +345,10 @@ root.LinearAssetLayer  = function(params) {
   };
 
   var startListeningExtraEvents = function(){
-    extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:show', showWithComplementary);
-    extraEventListener.listenTo(eventbus, layerName+'-complementaryLinks:hide', hideComplementary);
+    extraEventListener.listenTo(eventbus, layerName + '-complementaryLinks:show', showWithComplementary);
+    extraEventListener.listenTo(eventbus, layerName + '-complementaryLinks:hide', hideComplementary);
+    extraEventListener.listenTo(eventbus, layerName + '-walkingCyclingLinks:show', showWalkingCycling);
+    extraEventListener.listenTo(eventbus, layerName + '-walkingCyclingLinks:hide', hideWalkingCycling);
   };
 
   this.stopListeningExtraEvents = function(){
@@ -600,6 +602,36 @@ root.LinearAssetLayer  = function(params) {
     roadAddressInfoPopup.stop();
     me.refreshView();
   };
+
+  var showWalkingCycling = function () {
+    collection.activeWalkingCycling(true);
+    me.refreshView();
+  };
+
+  var hideWalkingCycling = function () {
+    me.selectToolControl.clear();
+    selectedLinearAsset.close();
+    collection.activeWalkingCycling(false);
+    roadAddressInfoPopup.stop();
+    me.refreshView();
+  };
+
+  var showGeometry = function () {
+    collection.activeGeometry(true);
+    me.showLayer(map);
+    me.refreshView();
+  };
+
+  var hideGeometry = function () {
+    me.selectToolControl.clear();
+    collection.activeGeometry(false);
+    roadAddressInfoPopup.stop();
+    me.hideLayer();
+    me.refreshView();
+  };
+
+  eventbus.on( layerName + '-mapViewOnly:show', showGeometry);
+  eventbus.on( layerName  + '-mapViewOnly:hide', hideGeometry);
 
   this.hideReadOnlyLayer = function(){
     if(trafficSignReadOnlyLayer){

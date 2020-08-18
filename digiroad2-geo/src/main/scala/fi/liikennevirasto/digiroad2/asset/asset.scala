@@ -76,6 +76,28 @@ case object SpecialTransportWithGate extends LinkType { def value = 15 }
 case object CableFerry extends LinkType { def value = 21 }
 case object UnknownLinkType extends LinkType { def value = 99 }
 
+sealed trait FunctionalClass
+{
+  def value: Int
+}
+object FunctionalClass {
+  val values = Set(FunctionalClass1, FunctionalClass2, FunctionalClass3, FunctionalClass4, FunctionalClass5,
+                   AnotherPrivateRoad, PrimitiveRoad, WalkingAndCyclingPath, UnknownFunctionalClass)
+
+  def apply(value: Int): FunctionalClass = {
+    values.find(_.value == value).getOrElse(UnknownFunctionalClass)
+  }
+}
+case object FunctionalClass1 extends FunctionalClass { def value = 1 }
+case object FunctionalClass2 extends FunctionalClass { def value = 2 }
+case object FunctionalClass3 extends FunctionalClass { def value = 3 }
+case object FunctionalClass4 extends FunctionalClass { def value = 4 }
+case object FunctionalClass5 extends FunctionalClass { def value = 5 }
+case object AnotherPrivateRoad extends FunctionalClass { def value = 6 }
+case object PrimitiveRoad extends FunctionalClass { def value = 7 }
+case object WalkingAndCyclingPath extends FunctionalClass { def value = 8 }
+case object UnknownFunctionalClass extends FunctionalClass { def value = 99 }
+
 sealed trait AdministrativeClass {
   def value: Int
 }
@@ -117,11 +139,6 @@ case object MunicipalityMaintenainer extends InformationSource { def value = 2 }
 case object MmlNls extends InformationSource { def value = 3 }
 
 case object UnknownSource extends InformationSource { def value = 99 }
-
-
-object FunctionalClass {
-  val Unknown: Int = 99
-}
 
 sealed trait TrafficDirection {
   def value: Int
@@ -987,3 +1004,25 @@ object Decode {
     (startNum, endNum)
   }
 }
+
+sealed trait Ely {
+  val id: Int
+  val nameFi: String
+  val nameSV: String
+}
+object Ely {
+  val values =  Set(
+    AhvenanmaaEly, LappiEly, PohjoisPohjanmaaEly, EtelaPohjanmaaEly, KeskiSuomiEly, PohjoisSavoEly,
+    PirkanmaaEly, KaakkoisSuomiEly, UusimaaEly, VarsinaisSuomiEly
+  )
+}
+case object AhvenanmaaEly extends Ely { val id = 0; val nameFi = "Ahvenanmaa"; val nameSV = "Aland"}
+case object LappiEly extends Ely { val id = 1; val nameFi = "Lappi"; val nameSV = "Lappland"}
+case object PohjoisPohjanmaaEly extends Ely { val id = 2; val nameFi = "Pohjois-Pohjanmaa"; val nameSV = "Norra Osterbotten"}
+case object EtelaPohjanmaaEly extends Ely { val id = 3; val nameFi = "Etela-Pohjanmaa"; val nameSV = "Sodra Osterbotten"}
+case object KeskiSuomiEly extends Ely { val id = 4; val nameFi = "Keski-Suomi"; val nameSV = "Mellersta Finland"}
+case object PohjoisSavoEly extends Ely { val id = 5; val nameFi = "Pohjois-Savo"; val nameSV = "Norra Savolax"}
+case object PirkanmaaEly extends Ely { val id = 6; val nameFi = "Pirkanmaa"; val nameSV = "Birkaland"}
+case object KaakkoisSuomiEly extends Ely { val id = 7; val nameFi = "Kaakkois-Suomi"; val nameSV = "Sydvastra Finland"}
+case object UusimaaEly extends Ely { val id = 8; val nameFi = "Uusimaa"; val nameSV = "Nyland"}
+case object VarsinaisSuomiEly extends Ely { val id = 9; val nameFi = "Varsinais-Suomi"; val nameSV = "Egentliga Finland"}

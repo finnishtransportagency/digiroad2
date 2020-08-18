@@ -688,13 +688,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       municipalityValidation(vvhRoadLink.municipalityCode, vvhRoadLink.administrativeClass)
       withDynTransaction {
         setLinkProperty(RoadLinkDAO.TrafficDirection, linkProperty, username, vvhRoadLink, None, None)
-        if (linkProperty.functionalClass != FunctionalClass.Unknown) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvhRoadLink, None, None)
+        if (linkProperty.functionalClass != UnknownFunctionalClass.value) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvhRoadLink, None, None)
         if (linkProperty.linkType != UnknownLinkType) setLinkProperty(RoadLinkDAO.LinkType, linkProperty, username, vvhRoadLink, None, None)
         if (linkProperty.administrativeClass != State && vvhRoadLink.administrativeClass != State) setLinkProperty(RoadLinkDAO.AdministrativeClass, linkProperty, username, vvhRoadLink, None, None)
         if (linkProperty.administrativeClass == Private) setLinkAttributes(RoadLinkDAO.LinkAttributes, linkProperty, username, vvhRoadLink, None, None)
         else LinkAttributesDao.expireValues(linkProperty.linkId, username)
         val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
-        if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
+        if (enrichedLink.functionalClass != UnknownFunctionalClass.value && enrichedLink.linkType != UnknownLinkType) {
           removeIncompleteness(linkProperty.linkId)
         }
         enrichedLink
@@ -965,7 +965,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       vvhRoadLink.foreach {
         vvh =>
           if (roadLink.trafficDirection != TrafficDirection.UnknownDirection) setLinkProperty(RoadLinkDAO.TrafficDirection, linkProperty, username, vvh, None, None)
-          if (roadLink.functionalClass != FunctionalClass.Unknown) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy)
+          if (roadLink.functionalClass != UnknownFunctionalClass.value) setLinkProperty(RoadLinkDAO.FunctionalClass, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy)
           if (roadLink.linkType != UnknownLinkType) setLinkProperty(RoadLinkDAO.LinkType, linkProperty, username, vvh, roadLink.modifiedAt, roadLink.modifiedBy)
       }
     }
@@ -973,7 +973,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     adjustedRoadLinks.foreach(updateProperties(vvhRoadLinks))
     adjustedRoadLinks.foreach(link =>
-      if (link.functionalClass != FunctionalClass.Unknown && link.linkType != UnknownLinkType) removeIncompleteness(link.linkId)
+      if (link.functionalClass != UnknownFunctionalClass.value && link.linkType != UnknownLinkType) removeIncompleteness(link.linkId)
     )
   }
 
@@ -1038,7 +1038,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val oldIdsForIncompleteLink = changes.filter(_.newId == Option(incompleteLink.linkId)).flatMap(_.oldId)
       val oldPropertiesForIncompleteLink = oldRoadLinkProperties.filter(oldLink => oldIdsForIncompleteLink.contains(oldLink.linkId))
       val newFunctionalClass = incompleteLink.functionalClass match {
-        case FunctionalClass.Unknown =>  useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.functionalClass)).getOrElse(FunctionalClass.Unknown)
+        case value if (value == UnknownFunctionalClass.value) =>  useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.functionalClass)).getOrElse(UnknownFunctionalClass.value)
         case _ => incompleteLink.functionalClass
       }
       val newLinkType = incompleteLink.linkType match {
@@ -1069,7 +1069,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def isComplete(roadLink: RoadLink): Boolean = {
     roadLink.linkSource != LinkGeomSource.NormalLinkInterface ||
-      roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
+      roadLink.functionalClass != UnknownFunctionalClass.value && roadLink.linkType.value != UnknownLinkType.value
   }
 
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
@@ -1090,8 +1090,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Checks if road link is partially complete (has functional class OR link type but not both). Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
   def isPartiallyIncomplete(roadLink: RoadLink): Boolean = {
-    val onlyFunctionalClassIsSet = roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value == UnknownLinkType.value
-    val onlyLinkTypeIsSet = roadLink.functionalClass == FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
+    val onlyFunctionalClassIsSet = roadLink.functionalClass != UnknownFunctionalClass.value && roadLink.linkType.value == UnknownLinkType.value
+    val onlyLinkTypeIsSet = roadLink.functionalClass == UnknownFunctionalClass.value && roadLink.linkType.value != UnknownLinkType.value
     onlyFunctionalClassIsSet || onlyLinkTypeIsSet
   }
 
@@ -1198,8 +1198,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case FeatureClass.TractorRoad => roadLink.copy(functionalClass = 7, linkType = TractorRoad, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.DrivePath | FeatureClass.CarRoad_IIIb => roadLink.copy(functionalClass = 6, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.CycleOrPedestrianPath => roadLink.copy(functionalClass = 8, linkType = CycleOrPedestrianPath, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithoutGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
-        case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = FunctionalClass.Unknown, linkType = SpecialTransportWithGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.SpecialTransportWithoutGate => roadLink.copy(functionalClass = UnknownFunctionalClass.value, linkType = SpecialTransportWithoutGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
+        case FeatureClass.SpecialTransportWithGate => roadLink.copy(functionalClass = UnknownFunctionalClass.value, linkType = SpecialTransportWithGate, modifiedBy = Some("auto_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
         case FeatureClass.CarRoad_IIIa => vvhRoadLink.get.administrativeClass match {
           case State => roadLink.copy(functionalClass = 4, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
           case Municipality | Private => roadLink.copy(functionalClass = 5, linkType = SingleCarriageway, modifiedBy = Some("automatic_generation"), modifiedAt = Some(DateTimePropertyFormat.print(DateTime.now())))
@@ -1324,7 +1324,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     def functionalClassValue(linkId: Long): Int = {
       val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
-      functionalClassRowOption.map(_._2).getOrElse(FunctionalClass.Unknown)
+      functionalClassRowOption.map(_._2).getOrElse(UnknownFunctionalClass.value)
     }
 
     def linkTypeValue(linkId: Long): LinkType = {

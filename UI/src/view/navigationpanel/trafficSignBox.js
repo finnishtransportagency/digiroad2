@@ -14,31 +14,28 @@
       }).join('').concat ([
         '<div class="panel-section">' +
         '   <div class="checkbox">' +
-        '     <label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
+        '     <label><input name="generalWarningSigns" type="checkbox" /> Varoitusmerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="regulatorySigns" type="checkbox" /> Ohjemerkit</label> <br>' +
+        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus ja väistämismerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="maximumRestrictions" type="checkbox" /> Suurin sallittu - rajoitukset</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="generalWarningSigns" type="checkbox" /> Varoitukset</label> <br>' +
-        '   </div>' +
-        '   <div class="checkbox">' +
-        '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kiellot ja rajoitukset</label>' +
+        '     <label><input name="prohibitionsAndRestrictions" type="checkbox" /> Kielto- ja rajoitusmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="mandatorySigns" type="checkbox" /> Määräysmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="priorityAndGiveWaySigns" type="checkbox" /> Etuajo-oikeus- ja väistämismerkit</label>' +
+        '     <label><input name="regulatorySigns" type="checkbox" /> Sääntömerkit</label> <br>' +
         '   </div>' +
         '   <div class="checkbox">' +
         '     <label><input name="informationSigns" type="checkbox" /> Opastusmerkit</label>' +
         '   </div>' +
         '   <div class="checkbox">' +
-        '     <label><input name="serviceSigns" type="checkbox" /> Palvelukohteiden opastusmerkit</label>' +
+        '     <label><input name="serviceSigns" type="checkbox" /> Palvelukohteet</label>' +
+        '   </div>' +
+        '   <div class="checkbox">' +
+        '     <label><input name="otherSigns" type="checkbox" /> Muut merkit</label>' +
         '   </div>' +
         '</div>'].join(''));
     };

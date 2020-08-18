@@ -1,10 +1,21 @@
 (function(root) {
   root.LaneModellingCollection = function(backend, verificationCollection, spec) {
     LinearAssetsCollection.call(this, backend, verificationCollection, spec);
+    var isWalkingCyclingActive = false;
+    var isGeometryActive = true;
     var self = this;
 
     self.fetch = function(boundingBox, center, zoom) {
-      return self.fetchAssets(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom), center);
+      if (isGeometryActive)
+        return self.fetchAssets(boundingBox, backend.getLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive), center);
+    };
+
+    self.activeWalkingCycling = function(enable) {
+      isWalkingCyclingActive = enable;
+    };
+
+    self.activeGeometry = function(enable) {
+      isGeometryActive = enable;
     };
 
     self.getGroup = function(segment) {
@@ -13,6 +24,12 @@
           var laneLaneCode = _.head(Property.getPropertyByPublicId(la.value, 'lane_code').values).value;
           var segmentLaneCode = _.head(Property.getPropertyByPublicId(segment.value, 'lane_code').values).value;
           return la.linkId == segment.linkId && laneLaneCode == segmentLaneCode;});
+      });
+    };
+
+    self.fetchViewOnlyLanes = function(boundingBox, zoom) {
+      return backend.getViewOnlyLanesByBoundingBox(boundingBox, zoom, isWalkingCyclingActive).then(function(lanes) {
+        eventbus.trigger('fetchedViewOnly', lanes);
       });
     };
 

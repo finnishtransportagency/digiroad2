@@ -231,6 +231,16 @@
       );
     }
 
+    var hideOldCodes = function (propertyValue, groupPropertyValue) {
+      return me.collection.isNoLongerAvailable(groupPropertyValue) && propertyValue != groupPropertyValue;
+    };
+
+    var sortByPropertyDisplay = function(collection) {
+      return collection.sort(function(element1, element2) {
+        return element1.propertyDisplayValue.localeCompare(element2.propertyDisplayValue, undefined, {numeric: true, sensitivity:'base'});
+      });
+    };
+
     var singleChoiceSubType = function (collection, mainType, property) {
       var propertyValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyValue;
       var propertyDisplayValue = (_.isUndefined(property) || property.values.length === 0) ? '' : _.head(property.values).propertyDisplayValue;
@@ -238,15 +248,18 @@
       var groups = collection.getGroup(signTypes);
       var subTypesTrafficSigns;
 
-      subTypesTrafficSigns = _.map(_.map(groups)[mainType], function (group) {
+      var orderedSubType = sortByPropertyDisplay(_.map(groups)[mainType]);
+
+      subTypesTrafficSigns = _.map(orderedSubType, function (group) {
         if (isPedestrianOrCyclingRoadLink() && !me.collection.isAllowedSignInPedestrianCyclingLinks(group.propertyValue))
           return '';
-
+        var toHide = hideOldCodes(propertyValue, group.propertyValue);
         return $('<option>',
           {
             value: group.propertyValue,
             selected: propertyValue == group.propertyValue,
-            text: group.propertyDisplayValue
+            text: group.propertyDisplayValue,
+            hidden: toHide
           }
         )[0].outerHTML;
       }).join('');
@@ -399,12 +412,17 @@
         propertyDisplayValue = _.find(panels, function(panel){return panel.propertyValue == propertyValue.toString();}).propertyDisplayValue;
       }
 
-      var subTypesTrafficSigns = _.map(_.map(panels, function (group) {
+      var orderedPanels = sortByPropertyDisplay(panels);
+
+      var subTypesTrafficSigns = _.map(_.map(orderedPanels, function (group) {
+        var toHide = hideOldCodes(propertyValue, group.propertyValue);
+
         return $('<option>',
           {
             value: group.propertyValue,
             selected: propertyValue == group.propertyValue,
-            text: group.propertyDisplayValue
+            text: group.propertyDisplayValue,
+            hidden: toHide
           }
         )[0].outerHTML;
       })).join('');

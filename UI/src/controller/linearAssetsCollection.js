@@ -44,9 +44,12 @@
       };
 
     this.generateUnknownLimitId = function(linearAsset) {
-      return linearAsset.linkId.toString() +
-          linearAsset.startMeasure.toFixed(2) +
-          linearAsset.endMeasure.toFixed(2);
+      if (!_.isUndefined(linearAsset.startMeasure) && !_.isUndefined(linearAsset.endMeasure)){
+        return linearAsset.linkId.toString() +
+            linearAsset.startMeasure.toFixed(2) +
+            linearAsset.endMeasure.toFixed(2);
+      } else
+        return linearAsset.linkId.toString() + linearAsset.mmlId.toString();
     };
 
     this.fetch = function(boundingBox, center, zoom) {

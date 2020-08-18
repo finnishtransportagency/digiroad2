@@ -49,7 +49,7 @@
       var baseOffset = reverse ? 3.5 : -3.5;
 
       if(isRoadlink) {
-        if (asset.sideCode === 1) {
+        if (_.isUndefined(asset.sideCode) || asset.sideCode === 1) {
           return asset;
         }
 

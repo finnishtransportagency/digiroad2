@@ -23,7 +23,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
   test("drop speedlimit segments less than 2 meters"){
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0),
@@ -40,7 +40,7 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
   }
 
   test("Don't drop speedlimit segments less than 2 meters on a road link with length less that 2 meters"){
-    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
       TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
       SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(SpeedLimitValue(80)), Seq(Point(0.0, 0.0),

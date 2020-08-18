@@ -1122,8 +1122,15 @@
         }
 
         this.renderLinkToWorkList = function(layerName) {
-            $('ul[class=information-content]').append('' +
-              '<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">Vanhentuneiden kohteiden lista</button></li>');
+            var textName;
+            switch(layerName) {
+                case "maintenanceRoad":
+                    textName = "Tarkistamattomien huoltoteiden lista";
+                    break;
+                default:
+                    textName = "Vanhentuneiden kohteiden lista";
+            }
+            $('ul[class=information-content]').append('<li><button id="unchecked-links" class="unchecked-linear-assets btn btn-tertiary" onclick=location.href="#work-list/' + layerName + '">' + textName + '</button></li>');
         };
 
         this.renderInaccurateWorkList = function(layerName) {

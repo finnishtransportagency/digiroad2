@@ -26,14 +26,24 @@ case class PieceWiseLane ( id: Long, linkId: Long, sideCode: Int, expired: Boole
 case class PersistedLane ( id: Long, linkId: Long, sideCode: Int, laneCode: Int, municipalityCode: Long,
                            startMeasure: Double, endMeasure: Double,
                            createdBy: Option[String], createdDateTime: Option[DateTime],
-                           modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
+                           modifiedBy: Option[String], modifiedDateTime: Option[DateTime],
+                           expiredBy: Option[String], expiredDateTime: Option[DateTime], expired: Boolean,
                            vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty] )
+
+case class PersistedHistoryLane(id: Long, newId: Long, oldId: Long, linkId: Long, sideCode: Int, laneCode: Int, municipalityCode: Long,
+                                startMeasure: Double, endMeasure: Double,
+                                createdBy: Option[String], createdDateTime: Option[DateTime],
+                                modifiedBy: Option[String], modifiedDateTime: Option[DateTime], expired: Boolean,
+                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], attributes: Seq[LaneProperty],
+                                historyCreatedDate: DateTime, historyCreatedBy: String)
 
 case class NewLane ( linkId: Long, startMeasure: Double, endMeasure: Double, value: LanePropertyValue, sideCode: Int,
                           vvhTimeStamp: Long, geomModifiedDate: Option[DateTime] )
 
 case class NewIncomeLane ( id: Long, startMeasure: Double, endMeasure: Double, municipalityCode : Long,
                            isExpired: Boolean = false, isDeleted: Boolean = false, properties: Seq[LaneProperty] )
+
+case class ViewOnlyLane(linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, geometry: Seq[Point], lanes: Seq[Int])
 
 sealed trait LaneValue {
   def toJson: Any
@@ -168,4 +178,28 @@ object LaneType {
   case object Walking extends LaneType { def value = 21; def typeDescription = "Walking lane"; def finnishDescription = "Jalankulun kaista"; }
   case object Cycling extends LaneType { def value = 22; def typeDescription = "Cycling lane"; def finnishDescription = "Pyöräilykaista"; }
   case object Unknown extends LaneType { def value = 99;  def typeDescription = "Unknown"; def finnishDescription = "Tuntematon"; }
+}
+
+/**
+  * Values for changeType of lanes
+  */
+sealed trait LaneChangeType {
+  def value: Int
+  def description: String
+}
+object LaneChangeType {
+  val values = Set(Add, Lengthened, Shortened, Expired, LaneCodeTransfer, AttributesChanged, Divided, Unknown)
+
+  def apply(value: Int): LaneChangeType = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object Add extends LaneChangeType { def value = 1; def description = "Lane is added normally";}
+  case object Lengthened extends LaneChangeType {def value = 2; def description = "Old lane is deleted and then a new lane is created with more length";}
+  case object Shortened extends LaneChangeType {def value = 3; def description = "Old lane is deleted and then a new lane is created with less length";}
+  case object Expired extends LaneChangeType {def value = 4; def description = "Lane is expired normally";}
+  case object LaneCodeTransfer extends LaneChangeType {def value = 5; def description = "Lane with some code was changed to another code";}
+  case object AttributesChanged extends LaneChangeType {def value = 6; def description = "Lane attributes were changed";}
+  case object Divided extends LaneChangeType {def value = 7; def description = "Old lane is deleted and then two more appear in same lane code";}
+  case object Unknown extends LaneChangeType {def value = 99; def description = "Unknown change to lane";}
 }

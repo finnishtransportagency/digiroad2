@@ -52,7 +52,8 @@ class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable:
     val signSidePlacement = getFieldValue(data, trLIIKVAST)
 
     //Check if the traffic sign is in SpeedLimits group
-    if (TrafficSignType.applyTRValue(assetNumber).group == TrafficSignTypeGroup.SpeedLimits || !signSidePlacement.contains(alongTheRoad)) {
+    val sign = TrafficSignType.applyTRValue(assetNumber)
+    if ( sign.isSpeedLimit || !signSidePlacement.contains(alongTheRoad)) {
       val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
       val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
       val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
@@ -62,10 +63,10 @@ class TierekisteriTrafficSignAssetSpeedLimitClient(trEndPoint: String, trEnable:
       val signSidePlacement = getFieldValue(data, trLIIKVAST).orElse(Some("0"))
 
       signSidePlacement match {
-        case Some(sideInfo) if sideInfo == againstTraffic && Seq(SpeedLimitSign, SpeedLimitZone, UrbanArea).contains(TrafficSignType.applyTRValue(assetNumber)) =>
+        case Some(sideInfo) if sideInfo == againstTraffic && Seq(SpeedLimitSign, SpeedLimitZone, UrbanArea).contains(sign) =>
           None
         case _ =>
-          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TrafficSignType.applyTRValue(assetNumber), assetValue, signSidePlacement))
+          Some(TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, sign, assetValue, signSidePlacement))
       }
     }else
       None

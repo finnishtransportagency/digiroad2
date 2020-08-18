@@ -48,35 +48,6 @@ object LaneUtils {
       throw new RuntimeException(s"cannot find property $name")
   }
 
-  /**
-    * Separate lanes into lanes to create, update, delete and expire
-    * @param newIncomeLanes lanes to be separated
-    * @return tuple with lanes separated (to delete, to expire, to update, to create)
-    */
-  def separateNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane]) : (Set[NewIncomeLane], Set[NewIncomeLane], Set[NewIncomeLane], Set[NewIncomeLane]) = {
-    val lanesWithoutFlags = newIncomeLanes.filterNot(lane => lane.isDeleted || lane.isExpired) //Remove records with those flags as true
-
-    val toDelete = newIncomeLanes.filter(_.isDeleted == true)
-    val toHistory = newIncomeLanes.filter(_.isExpired == true)
-    val (toInsert, toUpdate) = lanesWithoutFlags.partition(_.id == 0)
-
-    (toDelete, toHistory, toUpdate, toInsert)
-  }
-
-  def processNewIncomeLanes(newIncomeLanes: Set[NewIncomeLane], linkIds: Set[Long],
-                            sideCode: Int, username: String) = {
-    val (toDelete, toHistory, toUpdate, toInsert) = separateNewIncomeLanes(newIncomeLanes)
-    val laneCodesToBeDeleted = toDelete.map(laneService.getLaneCode(_).toInt)
-    val laneCodesToBeExpired = toHistory.map(laneService.getLaneCode(_).toInt)
-
-    withDynTransaction {
-      laneService.deleteMultipleLanes(linkIds, laneCodesToBeDeleted, newTransaction = false)
-      laneService.multipleLanesToHistory(linkIds, laneCodesToBeExpired, username, newTransaction = false)
-      laneService.create(toInsert.toSeq, linkIds, sideCode, username, newTransaction = false)
-      laneService.update(toUpdate.toSeq, linkIds, sideCode, username, newTransaction = false)
-    }
-  }
-
   def processNewLanesByRoadAddress(newIncomeLanes: Set[NewIncomeLane], laneRoadAddressInfo: LaneRoadAddressInfo,
                                    sideCode: Int, username: String, withTransaction: Boolean = true): Any = {
 
@@ -196,7 +167,7 @@ object LaneUtils {
       val filteredRoadAddresses = getRoadAddressToProcess()
 
       //Get only the lanes to create
-      val lanesToInsert = newIncomeLanes.filter(_.id == 0)
+      val lanesToInsert = laneService.populateStartDate(newIncomeLanes.filter(_.id == 0))
 
 
       val allLanesToCreate = filteredRoadAddresses.flatMap { road =>
@@ -224,8 +195,8 @@ object LaneUtils {
           calculateStartAndEndPoint(road, startPoint, endPoint) match {
             case (start: Double, end: Double) =>
               Some(PersistedLane(0, road.linkId, finalSideCode.value, laneCode, road.municipalityCode.getOrElse(0).toLong,
-                                                    start, end, Some(username), Some(DateTime.now()), None, None, expired = false,
-                                                    vvhTimeStamp, None, lane.properties))
+                start, end, Some(username), Some(DateTime.now()), None, None, None, None, expired = false,
+                vvhTimeStamp, None, lane.properties))
 
             case _ => None
             }

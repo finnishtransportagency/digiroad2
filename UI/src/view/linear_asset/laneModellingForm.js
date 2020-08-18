@@ -15,8 +15,10 @@
     me.setSelectedValue = function(setValue, getValue, sideCode){
       var currentPropertyValue = me.hasValue() ?  me.getPropertyValue() : (me.hasDefaultValue() ? me.getPropertyDefaultValue() : me.emptyPropertyValue());
 
-      if(isAddByRoadAddressActive && (currentPropertyValue.publicId === "endRoadPartNumber" ||  currentPropertyValue.publicId === "endDistance")){
-        lanesAssets.setEndAddressesValues(currentPropertyValue);
+      var editableRoadAddressPublicIds = _.map(roadAddressFormStructure.fields, 'publicId');
+
+      if(isAddByRoadAddressActive && _.includes(editableRoadAddressPublicIds, currentPropertyValue.publicId)){
+        lanesAssets.setAddressesValues(currentPropertyValue);
       }else{
         var laneNumber = lanesAssets.getCurrentLaneNumber();
         var properties = _.filter(getValue(laneNumber, sideCode), function(property){ return property.publicId !== currentPropertyValue.publicId; });
@@ -86,9 +88,9 @@
       {label: 'Etäisyys tieosan alusta', type: 'read_only_number', publicId: "startAddrMValue", weight: 4},
       {label: 'Etäisyys tieosan lopusta', type: 'read_only_number', publicId: "endAddrMValue", weight: 5},
       {label: 'Hallinnollinen Luokka', type: 'read_only_text', publicId: "administrativeClass", weight: 6},
-      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 9},
+      {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", weight: 11},
       {
-        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 10,
+        label: 'Kaistan tyypi', required: 'required', type: 'single_choice', publicId: "lane_type", defaultValue: "1", weight: 12,
         values: [
           {id: 1, label: 'Pääkaista'}
           ]
@@ -98,8 +100,10 @@
 
   var roadAddressFormStructure = {
     fields : [
-      {label: 'Osa', required: 'required', type: 'number', publicId: "endRoadPartNumber", weight: 7},
-      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "endDistance", weight: 8}
+      {label: 'Osa', required: 'required', type: 'number', publicId: "startRoadPartNumber", weight: 7},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "startDistance", weight: 8},
+      {label: 'Osa', required: 'required', type: 'number', publicId: "endRoadPartNumber", weight: 9},
+      {label: 'Etäisyys', required: 'required', type: 'number', publicId: "endDistance", weight: 10}
     ]
   };
 
@@ -203,14 +207,17 @@
         var infoElement;
 
         switch(publicId) {
-          case "lane_code":
-            info = 'Kaistan lisäys:';
+          case "roadNumber":
+            info = 'Valinnan tieosoitetiedot:';
+            break;
+          case "startRoadPartNumber":
+            info = "Kaista alkaa:";
             break;
           case "endRoadPartNumber":
-            info = 'Kaistan loppuu:';
+            info = 'Kaista loppuu:';
             break;
-          case "roadNumber":
-            info = 'Kaistan alkaa:';
+          case "lane_code":
+            info = 'Kaistan tiedot:';
             break;
         }
 
@@ -237,22 +244,6 @@
             return property.publicId === field.publicId;
           });
           if (_.isUndefined(existingProperty)) {
-            var pickUniqueValues = function(selectedData, property) {
-              return _.chain(selectedData)
-                .map(property)
-                .uniq()
-                .value();
-            };
-
-            var chainValuesByPublicIdAndRoadPartNumber = function (selectedData, roadPartNumber, publicId) {
-              return _.chain(selectedData)
-                .filter(function (data) {
-                  return data.roadPartNumber == roadPartNumber;
-                })
-                .map(publicId)
-                .value();
-            };
-
             var value;
             var roadPartNumber;
             var selectedLinks = asset.selectedLinks;
@@ -261,15 +252,15 @@
             switch(publicId) {
               case "roadNumber":
               case "roadPartNumber":
-                value = pickUniqueValues(selectedLinks, publicId).join(', ');
+                value = Property.pickUniqueValues(selectedLinks, publicId).join(', ');
                 break;
               case "startAddrMValue":
-                  roadPartNumber = Math.min.apply(null, _.compact(pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  value = Math.min.apply(null, chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  roadPartNumber = Math.min.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  value = Math.min.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                 break;
               case "endAddrMValue":
-                  roadPartNumber = Math.max.apply(null, _.compact(pickUniqueValues(selectedLinks, 'roadPartNumber')));
-                  value = Math.max.apply(null, chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
+                  roadPartNumber = Math.max.apply(null, _.compact(Property.pickUniqueValues(selectedLinks, 'roadPartNumber')));
+                  value = Math.max.apply(null, Property.chainValuesByPublicIdAndRoadPartNumber(selectedLinks, roadPartNumber, publicId));
                 break;
               case "administrativeClass":
                 value = administrativeClassValues[_.head(selectedLinks)[publicId]];
@@ -638,7 +629,7 @@
 
     var newLaneStructure = function (laneNumber) {
       var indexOfProperty = _.findIndex(defaultFormStructure.fields, {'publicId': 'lane_code'});
-      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 9};
+      defaultFormStructure.fields[indexOfProperty] = {label: 'Kaista', type: 'read_only_number', publicId: "lane_code", defaultValue: laneNumber, weight: 11};
       currentFormStructure = defaultFormStructure;
     };
 

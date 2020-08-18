@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.util.{Date, NoSuchElementException, Properties}
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{HeightLimit, _}
 import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
@@ -2315,6 +2315,35 @@ object DataFixture {
     println("\n")
   }
 
+  def restoreExpiredAssetsFromTRImport() = {
+    val processName = "batch_restore_expired_assets"
+    val municipalitiesToRestoreFrom = municipalityService.getMunicipalitiesNameAndIdByEly(Set(AhvenanmaaEly.id)).map(_.id)
+    val assetTypeIdsToRestore = Seq(
+      BogieWeightLimit.typeId, AxleWeightLimit.typeId, TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId,
+      HeightLimit.typeId, LitRoad.typeId, PavedRoad.typeId, DamagedByThaw.typeId, MassTransitLane.typeId, EuropeanRoads.typeId
+    )
+    val startDate = "2020-08-12 04:30:00"
+    val endDate = "2020-08-13 12:05:00"
+
+    val roadLinksFromMunicipalities = municipalitiesToRestoreFrom
+      .flatMap { municipality =>
+        println(s"Obtaining all road links and for Municipality: $municipality")
+        roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+      }
+      .map(_.linkId).toSet
+    println(s"All road links obtained")
+
+    OracleDatabase.withDynTransaction {
+      println(s"Fetching all assets wrongfully expired in TR import")
+      val expiredAssets = assetDao.getExpiredAssetsByRoadLinkAndTypeIdAndBetweenDates(roadLinksFromMunicipalities, assetTypeIdsToRestore, startDate, endDate)
+      println(s"All assets fetched")
+
+      println(s"Starting restoration process for the expired assets")
+      assetDao.restoreExpiredAssetsByIds(expiredAssets.toSet, processName)
+      println(s"Restoration process completed")
+    }
+  }
+
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
     "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
@@ -2480,6 +2509,8 @@ object DataFixture {
         importCyclingAndWalkingInfo()
       case Some("extract_csv_private_road_association_info") =>
         extractCsvPrivateRoadAssociationInfo()
+      case Some("restore_expired_assets_from_TR_import") =>
+        restoreExpiredAssetsFromTRImport()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2495,7 +2526,7 @@ object DataFixture {
         " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
-        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info")
+        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import")
     }
   }
 }
