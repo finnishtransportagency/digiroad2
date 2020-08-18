@@ -161,7 +161,7 @@ trait  PointAssetOperations{
   protected def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
                        adjustment: (Seq[RoadLink], Seq[ChangeInfo], PersistedAsset, Boolean, Option[FloatingReason]) => Option[AssetBeforeUpdate]): Seq[PersistedAsset] = {
 
-    withDynSession {
+    withDynTransaction {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
       val persistedAssets: Seq[PersistedAsset] = fetchPointAssets(withFilter(filter), roadLinks)
@@ -285,7 +285,7 @@ trait  PointAssetOperations{
     def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
       mapRoadLinks.get(linkId)
 
-    withDynSession {
+    withDynTransaction {
       fetchPointAssets(withFilter)
         .map(withFloatingUpdate(adjustPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks, adjustment)))
         .toList
@@ -299,7 +299,7 @@ trait  PointAssetOperations{
     def findRoadlink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
 
-    withDynSession {
+    withDynTransaction {
       persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
     }
   }
@@ -311,7 +311,7 @@ trait  PointAssetOperations{
     def findRoadlink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
 
-    withDynSession {
+    withDynTransaction {
       persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
     }
   }
@@ -362,13 +362,13 @@ trait  PointAssetOperations{
   def getDefaultSingleChoiceValue: Int = defaultSingleChoiceValue
 
   def expire(id: Long, username: String): Long = {
-    withDynSession {
+    withDynTransaction {
       expireWithoutTransaction(id, username)
     }
   }
 
   def expire(id: Long): Long = {
-    withDynSession{
+    withDynTransaction {
       expireWithoutTransaction(id)
     }
   }
