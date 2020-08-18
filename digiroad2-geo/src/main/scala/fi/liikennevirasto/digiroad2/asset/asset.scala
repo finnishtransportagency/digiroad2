@@ -987,3 +987,25 @@ object Decode {
     (startNum, endNum)
   }
 }
+
+sealed trait Ely {
+  val id: Int
+  val nameFi: String
+  val nameSV: String
+}
+object Ely {
+  val values =  Set(
+    AhvenanmaaEly, LappiEly, PohjoisPohjanmaaEly, EtelaPohjanmaaEly, KeskiSuomiEly, PohjoisSavoEly,
+    PirkanmaaEly, KaakkoisSuomiEly, UusimaaEly, VarsinaisSuomiEly
+  )
+}
+case object AhvenanmaaEly extends Ely { val id = 0; val nameFi = "Ahvenanmaa"; val nameSV = "Aland"}
+case object LappiEly extends Ely { val id = 1; val nameFi = "Lappi"; val nameSV = "Lappland"}
+case object PohjoisPohjanmaaEly extends Ely { val id = 2; val nameFi = "Pohjois-Pohjanmaa"; val nameSV = "Norra Osterbotten"}
+case object EtelaPohjanmaaEly extends Ely { val id = 3; val nameFi = "Etela-Pohjanmaa"; val nameSV = "Sodra Osterbotten"}
+case object KeskiSuomiEly extends Ely { val id = 4; val nameFi = "Keski-Suomi"; val nameSV = "Mellersta Finland"}
+case object PohjoisSavoEly extends Ely { val id = 5; val nameFi = "Pohjois-Savo"; val nameSV = "Norra Savolax"}
+case object PirkanmaaEly extends Ely { val id = 6; val nameFi = "Pirkanmaa"; val nameSV = "Birkaland"}
+case object KaakkoisSuomiEly extends Ely { val id = 7; val nameFi = "Kaakkois-Suomi"; val nameSV = "Sydvastra Finland"}
+case object UusimaaEly extends Ely { val id = 8; val nameFi = "Uusimaa"; val nameSV = "Nyland"}
+case object VarsinaisSuomiEly extends Ely { val id = 9; val nameFi = "Varsinais-Suomi"; val nameSV = "Egentliga Finland"}
