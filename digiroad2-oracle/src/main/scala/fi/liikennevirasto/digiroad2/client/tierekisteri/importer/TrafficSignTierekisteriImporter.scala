@@ -171,7 +171,7 @@ class TrafficSignTierekisteriImporter extends TierekisteriAssetImporterOperation
 
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    expireAssets()
+    expireAssetsFromAllMunicipalitiesExcept()
 
     val roadNumbers = getAllViiteRoadNumbers
 
@@ -252,8 +252,8 @@ trait TrafficSignByGroupTierekisteriImporter extends TrafficSignTierekisteriImpo
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())(filterCondition)
 
-  override def expireAssets() : Unit = {
-    val municipalities = getAllMunicipalities
+  override def expireAssetsFromAllMunicipalitiesExcept(municipalitiesToIgnore: Seq[Int] = Seq.empty[Int]) : Unit = {
+    val municipalities = getAllMunicipalities.filterNot(municipalitiesToIgnore.contains)
     municipalities.foreach { municipality =>
       println("\nStart assets expiration in municipality %d".format(municipality))
       withDynTransaction {
