@@ -48,7 +48,7 @@
             new StyleRule().where('zoomLevel', roadLayer.uiState).is(15).use({ pointRadius: 16 })
         ];
 
-        var defaultStyleProvider = new StyleRuleProvider({stroke: {opacity: 0.65, rotation : ''}});
+        var defaultStyleProvider = new StyleRuleProvider({stroke: {opacity: 0.65}});
 
         defaultStyleProvider.addRules([
             new StyleRule().where('manoeuvreSource').is(1).use({ stroke: {color: '#00f'}, icon: { src: 'images/link-properties/arrow-drop-blue.svg'}}),
@@ -66,7 +66,7 @@
             new StyleRule().where('zoomLevel').is(15).use({ pointRadius: 16 })
         ]);
 
-        var selectionProvider = new StyleRuleProvider({stroke: {opacity: 0.9, rotation : '', color: '#00f'},
+        var selectionProvider = new StyleRuleProvider({stroke: {opacity: 0.9, color: '#00f'},
                                             icon: {src: 'images/link-properties/arrow-drop-blue.svg'}});
 
         selectionProvider.addRules(zoomLevelRules);

@@ -15,7 +15,6 @@
                 icon: {
                     scale : 0.75,
                     rotateWithView: true,
-                    rotation: '',
                     src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg'
                 }}),
 
@@ -23,7 +22,6 @@
                 icon: {
                     scale : 0.75,
                     rotateWithView: true,
-                    rotation: '',
                     src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning-directional-traffic-sign.svg'
                 }})
 
