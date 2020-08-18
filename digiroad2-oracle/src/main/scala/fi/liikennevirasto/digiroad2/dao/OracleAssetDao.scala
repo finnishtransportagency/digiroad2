@@ -127,4 +127,27 @@ class OracleAssetDao {
     Queries.updateAssetModified(id, username).first
     sqlu"update asset set valid_to = sysdate where id = $id".first
   }
+
+  def getExpiredAssetsByRoadLinkAndTypeIdAndBetweenDates(roadLinksFromMunicipalities: Set[Long], assetTypeIdsToRestore: Seq[Int], startDate: String, endDate: String) = {
+    MassQuery.withIds(roadLinksFromMunicipalities) { idTableName =>
+      sql"""
+            select a.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lp on lp.id = al.position_id
+            join #$idTableName i on i.id = lp.link_id
+            where a.asset_type_id in (#${assetTypeIdsToRestore.mkString(",")}) and (a.valid_to between to_date($startDate, 'yyyy-mm-dd hh24:mi:ss') and to_date($endDate, 'yyyy-mm-dd hh24:mi:ss'))
+         """.as[Long].list
+    }
+  }
+
+  def restoreExpiredAssetsByIds(assetsToBeRestored: Set[Long], username: String) = {
+    MassQuery.withIds(assetsToBeRestored) { idTableName =>
+      sqlu"""
+          update asset
+          set modified_date = sysdate, modified_by = $username, valid_to = null
+          where id in (select id from #$idTableName)
+    """.execute
+    }
+  }
 }
