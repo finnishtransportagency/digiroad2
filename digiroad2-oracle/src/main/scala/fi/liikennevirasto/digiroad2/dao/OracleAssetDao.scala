@@ -142,9 +142,12 @@ class OracleAssetDao {
   }
 
   def restoreExpiredAssetsByIds(assetsToBeRestored: Set[Long], username: String) = {
-    sqlu"""
+    MassQuery.withIds(assetsToBeRestored) { idTableName =>
+      sqlu"""
           update asset
           set modified_date = sysdate, modified_by = $username, valid_to = null
-          where id in (#${assetsToBeRestored.mkString(",")})""".execute
+          where id in (select id from #$idTableName)
+    """.execute
+    }
   }
 }
