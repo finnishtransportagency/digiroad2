@@ -106,10 +106,9 @@ object TrafficSignType {
     SignAppliesDirectionOfTheArrowWithDistance, SignAppliesDirectionOfTheArrowWithDistance2, Motorhome, MotorSledges, Tractor,
     LowEmissionVehicle, ParkingOnTopOfCurb, ParkingOnTheEdgeOfTheCurb, TunnelCategory, ObligatoryUseOfParkingDisc2, ParkingAgainstFee2,
     ChargingSite, DirectionOfPriorityRoad2, DirectionOfPriorityRoad3, TwoWayBikePath, TwoWayBikePath2, EmergencyPhoneAndExtinguisher,
-    Barrier, Fence,  FenceWithArrows, BarrierOnTheLeft, BarrierOnTheRight, VerticalBarrier, TrafficCone, DirectionToAvoidObstacle, CurveDirectionSign,
-    BorderMarkOnTheLeft, BorderMarkOnTheRight, HeightBorder, UnderpassHeight, TrafficSignColumn, TrafficSignColumn2, DivergingRoadSign, EdgePoleOnTheLeft,
-    EdgePoleOnTheRight, TowAwayZone, SOSInformationBoard, AutomaticTrafficControl, SurveillanceCamera, ReindeerHerdingArea, ReindeerHerdingAreaWithoutText,
-    SpeedLimitInformation, CountryBorder
+    DirectionToAvoidObstacle, CurveDirectionSign, BorderMarkOnTheLeft, BorderMarkOnTheRight, HeightBorder, UnderpassHeight, TrafficSignColumn,
+    TrafficSignColumn2, DivergingRoadSign, TowAwayZone, SOSInformationBoard, AutomaticTrafficControl, SurveillanceCamera, ReindeerHerdingArea,
+    ReindeerHerdingAreaWithoutText, SpeedLimitInformation, CountryBorder
   )
 
   def applyOTHValue(intValue: Int): TrafficSignType = {
@@ -2898,48 +2897,6 @@ trait OtherSigns extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.OtherSigns
 }
 
-case object Barrier extends OtherSigns {
-  override val OTHvalue = 364
-  override val TRvalue = 91 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I1"
-}
-
-case object Fence extends OtherSigns {
-  override val OTHvalue = 365
-  override val TRvalue = 9201 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I2.1"
-}
-
-case object FenceWithArrows extends OtherSigns {
-  override val OTHvalue = 366
-  override val TRvalue = 9202 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I2.2"
-}
-
-case object BarrierOnTheLeft extends OtherSigns {
-  override val OTHvalue = 367
-  override val TRvalue = 9301 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I3.1"
-}
-
-case object BarrierOnTheRight extends OtherSigns {
-  override val OTHvalue = 368
-  override val TRvalue = 9302 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I3.2"
-}
-
-case object VerticalBarrier extends OtherSigns {
-  override val OTHvalue = 369
-  override val TRvalue = 9303 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I3.3"
-}
-
 case object TrafficCone extends OtherSigns {
   override val OTHvalue = 370
   override val TRvalue = 94 // UUSIASNR Value in TR
@@ -3008,20 +2965,6 @@ case object DivergingRoadSign extends OtherSigns {
   override val TRvalue = 911 // UUSIASNR Value in TR
   override val OldLawCode = "911"
   override val NewLawCode = "I11"
-}
-
-case object EdgePoleOnTheLeft extends OtherSigns {
-  override val OTHvalue = 380
-  override val TRvalue = 91201 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I12.1"
-}
-
-case object EdgePoleOnTheRight extends OtherSigns {
-  override val OTHvalue = 381
-  override val TRvalue = 91202 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I12.2"
 }
 
 case object TowAwayZone extends OtherSigns {
