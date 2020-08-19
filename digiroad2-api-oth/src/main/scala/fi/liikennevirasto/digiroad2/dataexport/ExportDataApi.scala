@@ -51,9 +51,10 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
   }
 
 
-  get("/logs/:ids") {
-    val ids = params("ids").split(',').map(_.toLong).toSet
-    csvDataExporter.getByIds(ids)
+  get("/logs") {
+    val ids = params.getOrElse("ids", halt(BadRequest("Missing mandatory 'ids' parameter")))
+    val idsList = ids.split(',').map(_.toLong).toSet
+    csvDataExporter.getByIds(idsList)
   }
 
   post("/generateCsvReport") {

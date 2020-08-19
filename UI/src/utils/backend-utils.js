@@ -544,7 +544,7 @@
     };
 
     this.getExportsJobsByIds = function(ids){
-      return $.getJSON('api/export/logs/' + ids);
+      return $.getJSON('api/export/logs?ids=' + ids);
     };
 
     this.postGenerateCsvReport = function (municipalities, assets, success, failure) {
@@ -755,7 +755,7 @@
           var params = {
             katunimi :   parsedAddress[0],
             katunumero : parsedAddress[1],
-            kuntakoodi : _.head(municipalityInfo).id
+            kuntakoodi : municipalityInfo.id
           };
           return $.get("vkm-api/geocode", params).then(function(x) { return x; });
         });

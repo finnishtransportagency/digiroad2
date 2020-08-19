@@ -2,7 +2,6 @@
   root.CsvReportsWorkList = function () {
     WorkListView.call(this);
     var me = this;
-    this.hrefDir = "#work-list/csvReports";
     this.title = 'Raportointityökalu';
     var backend;
     var municipalities;

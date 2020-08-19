@@ -108,22 +108,15 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val linearAssetsGroupedBy = extractedAssets.groupBy(_.assetType)
 
-      assetTypesList.flatMap { assetType =>
-        if (linearAssetsGroupedBy.contains(assetType)) {
-          val currentAssetType = linearAssetsGroupedBy(assetType)
+      linearAssetsGroupedBy.map { case (_, assetReports) =>
+          val (operatorUser, operatorDate) = extractUserAndDateTime(assetReports, operatorUsersUsername)
+          val (municipalityUser, municipalityDate) = extractUserAndDateTime(assetReports, municipalityUsers)
 
-          val (operatorUser, operatorDate) = extractUserAndDateTime(currentAssetType, operatorUsersUsername)
-          val (municipalityUser, municipalityDate) = extractUserAndDateTime(currentAssetType, municipalityUsers)
+          val firstElem = assetReports.head
 
-          val firstElem = currentAssetType.head
-
-          Some( ExportAssetReport(municipalitiesInfo.filter(_.id == municipality).head.name, firstElem.assetType, currentAssetType.size,
-                            firstElem.assetNameFI, firstElem.assetGeometryType, operatorUser, operatorDate, municipalityUser, municipalityDate) )
-        }
-        else
-          None
+          ExportAssetReport(municipalitiesInfo.filter(_.id == municipality).head.name, firstElem.assetType, assetReports.size,
+            firstElem.assetNameFI, firstElem.assetGeometryType, operatorUser, operatorDate, municipalityUser, municipalityDate)
       }
-
     }
   }
 
@@ -142,13 +135,13 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     def getTotalNewLawTrafficSigns(municipalityName: String): Int = {
       if(withTransaction) {
         withDynSession {
-          val municipalityInfo = municipalityDao.getMunicipalityIdByName(municipalityName)
-          assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.head.id)
+          val municipalityInfo = municipalityDao.getMunicipalityInfoByName(municipalityName).get
+          assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.id)
         }
       }
       else{
-        val municipalityInfo = municipalityDao.getMunicipalityIdByName(municipalityName)
-        assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.head.id)
+        val municipalityInfo = municipalityDao.getMunicipalityInfoByName(municipalityName).get
+        assetReporterDAO.getTotalTrafficSignNewLaw(municipalityInfo.id)
       }
     }
 

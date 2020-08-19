@@ -121,8 +121,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockAssetReporterDAO.getTotalTrafficSignNewLaw(408)).thenReturn(0)
       when(mockAssetReporterDAO.getTotalTrafficSignNewLaw(739)).thenReturn(2)
 
-      when(mockMunicipalityDao.getMunicipalityIdByName("Lapua")).thenReturn(List(LupaMunicipalityInfo))
-      when(mockMunicipalityDao.getMunicipalityIdByName("Savitaipale")).thenReturn(List(SavitaipaleMunicipalityInfo))
+      when(mockMunicipalityDao.getMunicipalityInfoByName("Lapua")).thenReturn(Option(LupaMunicipalityInfo))
+      when(mockMunicipalityDao.getMunicipalityInfoByName("Savitaipale")).thenReturn(Option(SavitaipaleMunicipalityInfo))
 
 
       val municipalities = assetReportCsvExporter.decodeMunicipalitiesToProcess(municipalitiesParam.split(",").map(_.trim.toInt).toList)
