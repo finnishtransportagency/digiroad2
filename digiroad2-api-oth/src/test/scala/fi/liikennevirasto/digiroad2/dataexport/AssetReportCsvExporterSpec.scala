@@ -7,14 +7,36 @@ import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.csvDataExporter.AssetReportCsvExporter
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import javax.sql.DataSource
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
+object sTestTransactions {
+  def runWithRollback(ds: DataSource = OracleDatabase.ds)(f: => Unit): Unit = {
+    Database.forDataSource(ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
+    }
+  }
+  def withDynTransaction[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+    Database.forDataSource(ds).withDynTransaction {
+      f
+    }
+  }
+  def withDynSession[T](ds: DataSource = OracleDatabase.ds)(f: => T): T = {
+    Database.forDataSource(ds).withDynSession {
+      f
+    }
+  }
+}
 
 
 class AssetReportCsvExporterSpec extends FunSuite with Matchers {
@@ -28,7 +50,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
   val csvSeparator = ";"
   val newLine = "\r\n"
 
-  private def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
+  private def runWithRollback(test: => Unit): Unit = sTestTransactions.runWithRollback()(test)
 
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
