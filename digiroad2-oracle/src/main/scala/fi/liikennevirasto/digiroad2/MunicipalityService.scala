@@ -16,13 +16,13 @@ class MunicipalityService {
     }
   }
 
-  def getMunicipalityIdByName(municipalityName: String, newTransaction: Boolean = true): List[MunicipalityInfo] = {
+  def getMunicipalityByName(municipalityName: String, newTransaction: Boolean = true): Option[MunicipalityInfo] = {
     if (newTransaction) {
       withDynSession {
-        municipalityDao.getMunicipalityIdByName(municipalityName)
+        municipalityDao.getMunicipalityInfoByName(municipalityName)
       }
     } else
-      municipalityDao.getMunicipalityIdByName(municipalityName)
+      municipalityDao.getMunicipalityInfoByName(municipalityName)
   }
 
   def getMunicipalityNameByCode(municipalityId: Int, newTransaction: Boolean = true): String = {

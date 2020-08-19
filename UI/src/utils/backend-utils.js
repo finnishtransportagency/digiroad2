@@ -537,6 +537,40 @@
       return $.getJSON('api/unverifiedMunicipality?municipalityCode=' + municipalityCode);
     };
 
+    this.getAssetTypes = function () {
+      return $.getJSON('api/getAssetTypes');
+    };
+
+    this.getCsvReport = function(id){
+      return $.getJSON('api/export/downloadCsv/' + id);
+    };
+
+    this.getExportJobsByUser = function() {
+      return $.getJSON('api/export/logByUser');
+    };
+
+    this.getExportsJobsByIds = function(ids){
+      return $.getJSON('api/export/logs?ids=' + ids);
+    };
+
+    this.postGenerateCsvReport = function (municipalities, assets, success, failure) {
+      var data = {
+        municipalities: municipalities,
+        assets: assets
+      };
+
+      $.ajax({
+        contentType: "application/json",
+        type: 'POST',
+        url: 'api/export/generateCsvReport',
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+
+    };
+
     this.getMunicipalities = function () {
       return $.getJSON('api/municipalities/byUser');
     };
@@ -727,7 +761,7 @@
           var params = {
             katunimi :   parsedAddress[0],
             katunumero : parsedAddress[1],
-            kuntakoodi : _.head(municipalityInfo).id
+            kuntakoodi : municipalityInfo.id
           };
           return $.get("vkm-api/geocode", params).then(function(x) { return x; });
         });

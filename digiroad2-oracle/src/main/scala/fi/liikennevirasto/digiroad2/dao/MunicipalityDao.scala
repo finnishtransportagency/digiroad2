@@ -50,12 +50,12 @@ class MunicipalityDao {
       select name_fi from municipality where id = $id""".as[String].first
   }
 
-  def getMunicipalityIdByName(municipalityName: String): List[MunicipalityInfo] = {
+  def getMunicipalityInfoByName(municipalityName: String): Option[MunicipalityInfo] = {
     sql"""
       select id, ely_nro, name_fi
       from municipality
       where LOWER(name_fi) = LOWER($municipalityName)"""
-      .as[MunicipalityInfo].list
+      .as[MunicipalityInfo].firstOption
   }
 
   def getMunicipalityById(id: Int): Seq[Int] = {

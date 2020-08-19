@@ -56,10 +56,15 @@
       $('.filter-box').hide();
       var page = $('.page');
       page.attr('class', 'page-content-box');
-      if (fromMunicipalityTabel) page.find('#work-list-header').append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function(){
-          me.generateWorkList(municipalityList);
-        })
-      );
+      if (fromMunicipalityTabel) {
+        var innerRoot = page.find('#work-list-header');
+        innerRoot.find('.header-link-reports').remove();
+
+        innerRoot.append($('<a class="header-link"></a>').attr('href', me.hrefDir).html('Kuntavalinta').click(function () {
+              me.generateWorkList(municipalityList);
+            })
+        );
+      }
       municipalityName = municipality.name;
       me.reloadForm(municipality.id);
     };
@@ -267,12 +272,15 @@
       var searchbox = $('<div class="filter-box">' +
         '<input type="text" class="location input-sm" placeholder="Kuntanimi" id="searchBox"></div>');
 
+      var reportButton = authorizationPolicy.isOperator() ? '<a class="header-link-reports" href="#work-list/csvReports">Raportointityökalu</a>' : '';
+
       $('#work-list').html('' +
         '<div style="overflow: auto;">' +
         '<div class="page">' +
         '<div class="content-box">' +
         '<header id="work-list-header">' + me.title +
-        '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
+         '<a class="header-link" href="#' + window.applicationModel.getSelectedLayer() + '">Sulje</a>' +
+        reportButton +
         '</header>' +
         '<div class="work-list">' +
         '</div>' +
