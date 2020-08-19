@@ -16,7 +16,7 @@ class MunicipalityService {
     }
   }
 
-  def getMunicipalityInfoByName(municipalityName: String, newTransaction: Boolean = true): Option[MunicipalityInfo] = {
+  def getMunicipalityByName(municipalityName: String, newTransaction: Boolean = true): Option[MunicipalityInfo] = {
     if (newTransaction) {
       withDynSession {
         municipalityDao.getMunicipalityInfoByName(municipalityName)

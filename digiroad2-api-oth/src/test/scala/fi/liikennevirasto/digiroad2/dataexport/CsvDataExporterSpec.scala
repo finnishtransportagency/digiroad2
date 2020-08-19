@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dataexport
 
-import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, sTestTransactions}
+import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus}
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mockito.MockitoSugar
 
