@@ -2897,13 +2897,6 @@ trait OtherSigns extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.OtherSigns
 }
 
-case object TrafficCone extends OtherSigns {
-  override val OTHvalue = 370
-  override val TRvalue = 94 // UUSIASNR Value in TR
-  override val OldLawCode = ""
-  override val NewLawCode = "I4"
-}
-
 case object DirectionToAvoidObstacle extends OtherSigns {
   override val OTHvalue = 371
   override val TRvalue = 95 // UUSIASNR Value in TR
