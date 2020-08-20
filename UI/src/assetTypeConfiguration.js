@@ -1379,7 +1379,7 @@
         saveCondition: function (selectedAsset, authorizationPolicy) {
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
-            { types: [1, 2, 3, 4], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
+            { types: [1, 2, 3, 4, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
           ];
           var lifecycleValidations = [

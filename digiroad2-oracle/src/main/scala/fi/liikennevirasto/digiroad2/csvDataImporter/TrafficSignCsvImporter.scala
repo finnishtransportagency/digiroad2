@@ -138,9 +138,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
 
   val speedLimit = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120)
-  val speedLimitSigns = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone)
-  val signsRequireArvo = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, NoWidthExceeding, MaxHeightExceeding,
-                        MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding )
+  val speedLimitSigns: Seq[TrafficSignType] = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, MinimumSpeed, MinimumSpeedEnds)
+  val signsRequireArvo: Seq[TrafficSignType] = Seq(NoWidthExceeding, MaxHeightExceeding, MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding,
+                                                    MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding ) ++ speedLimitSigns
 
   val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings ++ singleChoiceMapping ++ multiChoiceMapping ++
                                        additionalPanelMapping ++ dateFieldsMapping ++ intValueFieldsMapping

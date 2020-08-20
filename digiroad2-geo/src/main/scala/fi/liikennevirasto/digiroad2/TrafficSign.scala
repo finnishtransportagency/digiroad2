@@ -1300,6 +1300,11 @@ case object NoStuddedTires extends ProhibitionsAndRestrictionsType {
 trait MandatorySignsType extends TrafficSignType {
   def group: TrafficSignTypeGroup = TrafficSignTypeGroup.MandatorySigns
 
+  override def isSpeedLimit : Boolean = {
+    val speedLimitsSigns = Seq(237, 238)
+    speedLimitsSigns.contains(OTHvalue)
+  }
+
   override def relevantAdditionalPanel: Seq[AdditionalPanelsType] = supportedAdditionalPanel ++
     Seq(AdditionalPanelWithText, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, ValidMonFri, ValidSat, ValidMultiplePeriod)
 }
