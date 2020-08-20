@@ -970,6 +970,14 @@ trait LaneOperations {
     }
 
     withDynTransaction {
+      if (changeSet.adjustedSideCodes.nonEmpty)
+        logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
+
+      changeSet.adjustedSideCodes.foreach { adjustment =>
+        moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
+        dao.updateSideCode(adjustment.laneId, adjustment.sideCode.value, VvhGenerated)
+      }
+
       if (changeSet.adjustedMValues.nonEmpty)
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedMValues.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
@@ -979,14 +987,6 @@ trait LaneOperations {
         logger.info("Saving adjustments for lane/link ids=" + changeSet.adjustedVVHChanges.map(a => "" + a.laneId + "/" + a.linkId).mkString(", "))
 
       treatChangeSetData(changeSet.adjustedVVHChanges)
-
-      if (changeSet.adjustedSideCodes.nonEmpty)
-        logger.info("Saving SideCode adjustments for lane/link ids=" + changeSet.adjustedSideCodes.map(a => "" + a.laneId).mkString(", "))
-
-      changeSet.adjustedSideCodes.foreach { adjustment =>
-        moveToHistory(adjustment.laneId, None, false, false, VvhGenerated)
-        dao.updateSideCode(adjustment.laneId, adjustment.sideCode.value, VvhGenerated)
-      }
 
       val ids = changeSet.expiredLaneIds.toSeq
       if (ids.nonEmpty)
