@@ -11,9 +11,9 @@
     me.getPropertiesConfiguration = function () {
         return [
           {signValue: [1], image: 'images/traffic-signs/speed-limits/speedLimitSign.png', validation: validateSpeedLimitValues},
-          {signValue: [2], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
+          {signValue: [2], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues, textColor: '#ABABAB'},
           {signValue: [3], image: 'images/traffic-signs/speed-limits/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
-          {signValue: [4], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
+          {signValue: [4], image: 'images/traffic-signs/speed-limits/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues, textColor: '#ABABAB'},
           {signValue: [5], image: 'images/traffic-signs/speed-limits/urbanAreaSign.png', height: 30},
           {signValue: [6], image: 'images/traffic-signs/speed-limits/endOfUrbanAreaSign.png', height: 30},
           {signValue: [7], image: 'images/traffic-signs/regulatory-signs/crossingSign.png'},
@@ -83,7 +83,6 @@
           {signValue: [74], image: 'images/traffic-signs/mandatory-signs/directionToBeFollowed3.png'},
           {signValue: [77], image: 'images/traffic-signs/mandatory-signs/compulsoryRoundabout.png'},
           {signValue: [78], image: 'images/traffic-signs/mandatory-signs/passThisSide.png'},
-          {signValue: [79], image: 'images/traffic-signs/mandatory-signs/passThisSide.png'},
           {signValue: [80], image: 'images/traffic-signs/prohibitions-and-restrictions/taxiStationZoneBeginning.png'},
           {signValue: [81], image: 'images/traffic-signs/prohibitions-and-restrictions/standingPlaceForTaxi.png'},
           {signValue: [82], image: 'images/traffic-signs/general-warning-signs/roadNarrows.png'},
@@ -110,7 +109,7 @@
           {signValue: [103], image: 'images/traffic-signs/prohibitions-and-restrictions/endOfParkingProhibitedZone.png'},
           {signValue: [104], image: 'images/traffic-signs/prohibitions-and-restrictions/alternativeParkingOddDays.png'},
           {signValue: [105], image: 'images/traffic-signs/regulatory-signs/parkingLot.png'},
-          {signValue: [106], image: 'images/traffic-signs/regulatory-signs/oneWayRoad.png', height: 17},
+          {signValue: [106], image: 'images/traffic-signs/regulatory-signs/oneWayRoad.png'},
           {signValue: [107], image: 'images/traffic-signs/regulatory-signs/motorway.png', height: 40},
           {signValue: [108], image: 'images/traffic-signs/regulatory-signs/motorwayEnds.png', height: 40},
           {signValue: [109], image: 'images/traffic-signs/regulatory-signs/residentialZone.png'},
@@ -156,7 +155,6 @@
           {signValue: [149], image: 'images/traffic-signs/additional-panels/DistanceFromSignToPointWhichSignApplies.png',  height: 35},
           {signValue: [150], image: 'images/traffic-signs/additional-panels/HusvagnCaravan.png', height: 20},
           {signValue: [151], image: 'images/traffic-signs/additional-panels/Moped.png', height: 20},
-          {signValue: [178], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignSmall.png', height: 24, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, offsetX: -12, textColor: '#ffffff'},
           {signValue: [152], image: 'images/traffic-signs/information-signs/AdvisorySignDetourLarge.png', height: 55},
           {signValue: [153], image: 'images/traffic-signs/information-signs/Detour.png'},
           {signValue: [154], image: 'images/traffic-signs/information-signs/RouteToBeFollowed.png', height: 35},
@@ -183,6 +181,7 @@
           {signValue: [175], image: 'images/traffic-signs/information-signs/RoadNumberPrimaryRoad.png', textColor: '#ffffff',  validation: validateNumber, maxLabelLength: 4 },
           {signValue: [176], image: 'images/traffic-signs/information-signs/RoadNumberRegionalOrSecondaryRoad.png', height: 25, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo},
           {signValue: [177], image: 'images/traffic-signs/information-signs/RoadNumberOtherRoad.png', height: 26, validation: validateAdditionalInfo, maxLabelLength: 8, additionalInfo: showAdditionalInfo, textColor: '#ffffff'},
+          {signValue: [178], image: 'images/traffic-signs/information-signs/AdvanceDirectionSignSmall.png', height: 24, validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo, offsetX: -12, textColor: '#ffffff'},
           {signValue: [179], image: 'images/traffic-signs/information-signs/RoadForMotorVehicles.png'},
           {signValue: [180], image: 'images/traffic-signs/information-signs/Airport.png'},
           {signValue: [181], image: 'images/traffic-signs/information-signs/Ferry.png'},
@@ -397,7 +396,8 @@
           {signValue: [396], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be tractorRoute */
           {signValue: [397], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be motorhomeRoute */
           {signValue: [398], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be bicycleRoute */
-          {signValue: [399], image: 'images/traffic-signs/information-signs/endOfLane2.png' }
+          {signValue: [399], image: 'images/traffic-signs/information-signs/endOfLane2.png' },
+          {signValue: [400], image: 'images/traffic-signs/information-signs/regionalRoadNumber.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo}
         ];
       };
 
