@@ -21,3 +21,5 @@ UPDATE ENUMERATED_VALUE SET NAME_FI = 'C42 Taksin pysähtymispaikka' WHERE NAME_
 UPDATE ENUMERATED_VALUE SET NAME_FI = 'D2 Pakollinen ajosuunta' WHERE NAME_FI = 'D2 Pakollinen kiertosuunta';
 UPDATE ENUMERATED_VALUE SET NAME_FI = 'H22.1 Etuajo-oikeutetun liikenteen suunta' WHERE NAME_FI = 'H22.1 Etuajooikeutetun liikenteen suunta';
 UPDATE ENUMERATED_VALUE SET NAME_FI = 'H22.2 Etuajo-oikeutetun liikenteen suunta kääntyville' WHERE NAME_FI = 'H22.2 Etuajooikeutetun liikenteen suunta kääntyville';
+UPDATE ENUMERATED_VALUE SET NAME_FI = 'E3.2 Liityntäpysäköintipaikka linja-auto' WHERE NAME_FI = 'E3.2 Liityntäpysäköintipaikka bussi';
+UPDATE ENUMERATED_VALUE SET NAME_FI = 'E3.3 Liityntäpysäköintipaikka raitiovaunu' WHERE NAME_FI = 'E3.3 Liityntäpysäköintipaikka tram';
