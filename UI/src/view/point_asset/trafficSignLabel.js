@@ -140,7 +140,7 @@
           {signValue: [134], image: 'images/traffic-signs/prohibitions-and-restrictions/AlternativeParkingEvenDays.png'},
           {signValue: [135], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackMotorSledges.png'},
           {signValue: [136], image: 'images/traffic-signs/mandatory-signs/CompulsoryTrackRidersHorseback.png'},
-          {signValue: [137], image: 'images/traffic-signs/regulatory-signs/ParkingLotAndAccessToTrain.png'},
+          {signValue: [137], image: 'images/traffic-signs/regulatory-signs/parkingLotAndAccessToTrain.png'},
           {signValue: [138], image: 'images/traffic-signs/additional-panels/DistanceCompulsoryStop.png', height: 40, validation: validateAdditionalInfo, maxLabelLength: 15, offsetY: 10, unit: me.addMeters},
           {signValue: [139], image: 'images/traffic-signs/additional-panels/HeightElectricLine.png', height: 40, validation: validateAdditionalInfo, maxLabelLength: 15, unit: me.addMeters},
           {signValue: [140], image: 'images/traffic-signs/additional-panels/SignAppliesBothDirections.png'},
