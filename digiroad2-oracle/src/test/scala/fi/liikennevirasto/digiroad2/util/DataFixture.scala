@@ -2344,6 +2344,36 @@ object DataFixture {
     }
   }
 
+  def moveOldExpiredAssets() = {
+    println("\nStart transferring old expired asset information until last year to the history tables\n")
+    println(DateTime.now())
+
+    val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset)
+    val assetTypes = AssetTypeInfo.values.filterNot(excludedAssetTypes.contains)
+    val yearGap = 1 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
+
+    assetTypes.map(_.typeId).foreach { assetTypeId =>
+      OracleDatabase.withDynTransaction {
+        println(s"\nFetching all relevant expired assets with asset type $assetTypeId")
+
+        val assetIds = HistoryDAO.getExpiredAssetsIdsByAssetTypeAndYearGap(assetTypeId, yearGap)
+        println(s"\nProcessing ${assetIds.size} assets")
+
+        assetIds.foreach { id =>
+          println(s"\nProcessing asset $id")
+          val historyId = HistoryDAO.transferExpiredAssetToHistoryById(id)
+          println(s"\n Asset history new Id $historyId")
+        }
+        println("\n")
+      }
+    }
+
+    println("\n")
+    println("Completed at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   private val trafficSignGroup = Map[String, TrafficSignTypeGroup] (
     "SpeedLimits" -> TrafficSignTypeGroup.SpeedLimits,
     "RegulatorySigns" ->  TrafficSignTypeGroup.RegulatorySigns,
@@ -2511,6 +2541,8 @@ object DataFixture {
         extractCsvPrivateRoadAssociationInfo()
       case Some("restore_expired_assets_from_TR_import") =>
         restoreExpiredAssetsFromTRImport()
+      case Some("move_old_expired_assets") =>
+        moveOldExpiredAssets()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -2526,7 +2558,7 @@ object DataFixture {
         " create_hazmat_transport_prohibition_using_traffic_signs | create_parking_prohibition_using_traffic_signs | " +
         " load_municipalities_verification_info | import_private_road_info | normalize_user_roles | get_state_roads_with_overridden_functional_class | get_state_roads_with_undefined_functional_class |" +
         " add_obstacles_shapefile | merge_municipalities | transform_lorry_parking_into_datex2 | fill_new_roadLinks_info | update_last_modified_assets_info | import_cycling_walking_info |" +
-        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import")
+        " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets")
     }
   }
 }
