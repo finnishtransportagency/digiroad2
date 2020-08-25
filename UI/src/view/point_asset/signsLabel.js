@@ -120,6 +120,10 @@
       return ''.concat(' m');
     };
 
+    me.addKilometers = function() {
+      return ''.concat(' km');
+    };
+
     me.convertToTons = function(){
       return this.value / 1000;
     };
