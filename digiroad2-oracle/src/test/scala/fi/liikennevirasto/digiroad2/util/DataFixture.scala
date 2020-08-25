@@ -2345,7 +2345,7 @@ object DataFixture {
   }
 
   def moveOldExpiredAssets() = {
-    println("\nStart transferring old expired asset information until last year to the history tables\n")
+    println("\nStart transferring old expired asset information until last year to the history tables")
     println(DateTime.now())
 
     val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset)
@@ -2357,14 +2357,13 @@ object DataFixture {
         println(s"\nFetching all relevant expired assets with asset type $assetTypeId")
 
         val assetIds = HistoryDAO.getExpiredAssetsIdsByAssetTypeAndYearGap(assetTypeId, yearGap)
-        println(s"\nProcessing ${assetIds.size} assets")
+        println(s"Processing ${assetIds.size} assets")
 
         assetIds.foreach { id =>
           println(s"\nProcessing asset $id")
           val historyId = HistoryDAO.transferExpiredAssetToHistoryById(id)
           println(s"\n Asset history new Id $historyId")
         }
-        println("\n")
       }
     }
 
