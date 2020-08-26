@@ -1286,7 +1286,7 @@
           ],
           newValues: [
             {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg', label: 'Opastinlaite'},
-            {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-for-multiple.svg', label: 'label'}, //TODO: label to be decided
+            {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-for-multiple.svg', label: 'Useita samansuuntaisia opastinlaitteita'},
             {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-for-multiple.svg', label: 'Useita erisuuntaisia opastinlaitteita'}
           ]
         },
