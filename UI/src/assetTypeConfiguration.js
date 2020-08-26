@@ -1380,7 +1380,8 @@
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
             { types: [1, 2, 3, 4, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
-            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
+            { types: [8, 30, 31, 32, 33, 34, 35, 170, 174, 175, 176, 177, 268, 290, 291, 292, 400], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue); }},
+            { types: [172, 173, 287, 288, 289, 342, 343], validate: function (someValue) { return /\w+|\d+/.test(someValue || ''); }}
           ];
           var lifecycleValidations = [
             { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
