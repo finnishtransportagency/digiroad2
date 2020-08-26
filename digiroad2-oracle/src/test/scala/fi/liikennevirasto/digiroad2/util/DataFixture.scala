@@ -2362,7 +2362,7 @@ object DataFixture {
         assetIds.foreach { id =>
           println(s"\nProcessing asset $id")
           val historyId = HistoryDAO.transferExpiredAssetToHistoryById(id)
-          println(s"\n Asset history new Id $historyId")
+          println(s"Asset history new Id $historyId")
         }
       }
     }
