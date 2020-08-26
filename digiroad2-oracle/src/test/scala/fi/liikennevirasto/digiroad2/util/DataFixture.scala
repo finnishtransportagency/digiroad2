@@ -2352,17 +2352,17 @@ object DataFixture {
     val assetTypes = AssetTypeInfo.values.filterNot(excludedAssetTypes.contains)
     val yearGap = 1 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
 
-    assetTypes.map(_.typeId).foreach { assetTypeId =>
+    assetTypes.foreach { at =>
       OracleDatabase.withDynTransaction {
+        val assetTypeId = at.typeId
         println(s"\nFetching all relevant expired assets with asset type $assetTypeId")
 
         val assetIds = HistoryDAO.getExpiredAssetsIdsByAssetTypeAndYearGap(assetTypeId, yearGap)
         println(s"Processing ${assetIds.size} assets")
 
         assetIds.foreach { id =>
-          println(s"\nProcessing asset $id")
-          val historyId = HistoryDAO.transferExpiredAssetToHistoryById(id)
-          println(s"Asset history new Id $historyId")
+          println(s"Processing asset $id")
+          val historyId = HistoryDAO.transferExpiredAssetToHistoryById(id, at)
         }
       }
     }
