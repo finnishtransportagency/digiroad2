@@ -6,16 +6,9 @@ import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, ServicePoints}
 import slick.jdbc.StaticQuery.interpolation
 
 object HistoryDAO {
-    val standardTableValuesRelations = Map(
-      "DATE_PERIOD_VALUE" -> "DATE_PERIOD_VALUE_HISTORY",
-      "ADDITIONAL_PANEL" -> "ADDITIONAL_PANEL_HISTORY",
-      "VALIDITY_PERIOD_PROPERTY_VALUE" -> "VAL_PERIOD_PROPERTY_VALUE_HIST",
-      "DATE_PROPERTY_VALUE" -> "DATE_PROPERTY_VALUE_HISTORY",
-      "SERVICE_POINT_VALUE" -> "SERVICE_POINT_VALUE_HISTORY",
-      "NUMBER_PROPERTY_VALUE" -> "NUMBER_PROPERTY_VALUE_HISTORY",
-      "MULTIPLE_CHOICE_VALUE" -> "MULTIPLE_CHOICE_VALUE_HISTORY",
-      "SINGLE_CHOICE_VALUE" -> "SINGLE_CHOICE_VALUE_HISTORY",
-      "TEXT_PROPERTY_VALUE" -> "TEXT_PROPERTY_VALUE_HISTORY")
+  val standardTableValues = Seq("DATE_PERIOD_VALUE","ADDITIONAL_PANEL", "VALIDITY_PERIOD_PROPERTY_VALUE",
+    "DATE_PROPERTY_VALUE", "SERVICE_POINT_VALUE", "NUMBER_PROPERTY_VALUE", "MULTIPLE_CHOICE_VALUE",
+    "SINGLE_CHOICE_VALUE", "TEXT_PROPERTY_VALUE")
 
   def getExpiredAssetsIdsByAssetTypeAndYearGap(assetTypeId: Int, yearGap: Int) = {
     sql"""
@@ -53,11 +46,64 @@ object HistoryDAO {
 
 
     //Copy standard values
-    standardTableValuesRelations.foreach { case (original, history) =>
-      sqlu"""
-        INSERT INTO #$history SELECT primary_key_seq.nextval, * FROM #$original WHERE ASSET_ID = $assetId
+
+    sqlu"""
+        INSERT INTO DATE_PERIOD_VALUE_HISTORY
+          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, START_DATE, END_DATE
+          FROM DATE_PERIOD_VALUE WHERE ASSET_ID = $assetId
     """.execute
-    }
+
+    sqlu"""
+        INSERT INTO ADDITIONAL_PANEL_HISTORY
+          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, ADDITIONAL_SIGN_TYPE, ADDITIONAL_SIGN_VALUE,
+          ADDITIONAL_SIGN_INFO, FORM_POSITION, ADDITIONAL_SIGN_TEXT, ADDITIONAL_SIGN_SIZE, ADDITIONAL_SIGN_COATING_TYPE,
+          ADDITIONAL_SIGN_PANEL_COLOR
+          FROM ADDITIONAL_PANEL WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO VAL_PERIOD_PROPERTY_VALUE_HIST
+          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, TYPE, PERIOD_WEEK_DAY, START_HOUR, END_HOUR,
+          START_MINUTE, END_MINUTE
+          FROM VALIDITY_PERIOD_PROPERTY_VALUE WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO DATE_PROPERTY_VALUE_HISTORY
+          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, DATE_TIME
+          FROM DATE_PROPERTY_VALUE WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO SERVICE_POINT_VALUE_HISTORY
+          SELECT primary_key_seq.nextval, ASSET_ID, TYPE, ADDITIONAL_INFO, PARKING_PLACE_COUNT, NAME, TYPE_EXTENSION,
+          IS_AUTHORITY_DATA, WEIGHT_LIMIT
+          FROM SERVICE_POINT_VALUE WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO NUMBER_PROPERTY_VALUE_HISTORY
+          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, VALUE, GROUPED_ID
+          FROM NUMBER_PROPERTY_VALUE WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO MULTIPLE_CHOICE_VALUE_HISTORY
+          SELECT primary_key_seq.nextval, PROPERTY_ID, ENUMERATED_VALUE_ID, ASSET_ID, MODIFIED_DATE, MODIFIED_BY,
+          GROUPED_ID
+          FROM MULTIPLE_CHOICE_VALUE WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO SINGLE_CHOICE_VALUE_HISTORY SELECT * FROM SINGLE_CHOICE_VALUE WHERE ASSET_ID = $assetId
+    """.execute
+
+    sqlu"""
+        INSERT INTO TEXT_PROPERTY_VALUE_HISTORY
+          SELECT primary_key_seq.nextval, ASSET_ID, PROPERTY_ID, VALUE_FI, VALUE_SV, CREATED_DATE, CREATED_BY,
+          MODIFIED_DATE, MODIFIED_BY, GROUPED_ID
+          FROM TEXT_PROPERTY_VALUE WHERE ASSET_ID = $assetId
+    """.execute
 
 
 
@@ -66,7 +112,7 @@ object HistoryDAO {
 
     sqlu"""
         INSERT INTO PROHIBITION_VALUE_HISTORY
-          SELECT $historyProhibitionValueId, *
+          SELECT $historyProhibitionValueId, ASSET_ID, TYPE, ADDITIONAL_INFO
           FROM PROHIBITION_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
@@ -88,7 +134,7 @@ object HistoryDAO {
 
   def deleteAsset(assetId: Long, assetType: AssetTypeInfo) = {
     //Delete standard values
-    standardTableValuesRelations.keys.foreach { tableValue =>
+    standardTableValues.foreach { tableValue =>
       sqlu"""DELETE FROM #$tableValue WHERE ASSET_ID = $assetId""".execute
     }
 
