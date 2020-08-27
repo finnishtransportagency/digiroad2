@@ -2354,15 +2354,14 @@ object DataFixture {
 
     assetTypes.foreach { at =>
       OracleDatabase.withDynTransaction {
-        val assetTypeId = at.typeId
-        println(s"\nFetching all relevant expired assets with asset type $assetTypeId")
+        println(s"\nFetching all relevant expired assets with asset type ${at.typeId}")
 
-        val assetIds = HistoryDAO.getExpiredAssetsIdsByAssetTypeAndYearGap(assetTypeId, yearGap)
-        println(s"Processing ${assetIds.size} assets")
+        val assetIds = HistoryDAO.getExpiredAssetsIdsByAssetTypeAndYearGap(at, yearGap)
+        println(s"Transferring ${assetIds.size} assets")
 
         assetIds.foreach { id =>
-          println(s"Processing asset $id")
-          val historyId = HistoryDAO.transferExpiredAssetToHistoryById(id, at)
+          println(s"Transferring asset $id")
+          HistoryDAO.transferExpiredAssetToHistoryById(id, at)
         }
       }
     }
