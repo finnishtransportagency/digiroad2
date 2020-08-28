@@ -775,12 +775,12 @@ trait LaneOperations {
 
   def getPropertyValue(newLaneProperties: Seq[LaneProperty], publicId: String) = {
     val laneProperty = newLaneProperties.find(_.publicId == publicId)
-      .getOrElse(throw new IllegalArgumentException(s"Attribute '$publicId' not found!"))
 
-    if (laneProperty.values.nonEmpty)
-      laneProperty.values.head.value
-    else
-      None
+    laneProperty match {
+      case Some(prop) if prop.values.nonEmpty =>
+        prop.values.head.value
+      case _ => None
+    }
   }
 
   def getPropertyValue(pwLane: PieceWiseLane, publicIdToSearch: String): Option[LanePropertyValue] = {
