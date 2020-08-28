@@ -1416,19 +1416,16 @@
           var isValidSign = signsValidations ?  signsValidations.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
 
           //Validation conditions for additional signs
-          var isValidAdditionalSign = false;
+          var isValidAdditionalSign = true;
           var additionalPanelsProps = Property.getPropertyByPublicId(selectedAsset.get().propertyData, 'additional_panel');
 
-          if (_.isEmpty(additionalPanelsProps.values)) {
-            isValidAdditionalSign = true;
-          } else {
+          if (!_.isEmpty(additionalPanelsProps.values)) {
             isValidAdditionalSign = _.every(additionalPanelsProps.values, function (additionalPanelProp) {
               var additionalSignsValidations = _.find(validations, function (validation) {
                 return _.includes(validation.types, additionalPanelProp.panelType);
               });
 
-              var additionalPanelValue = additionalPanelProp.panelValue;
-              var isValidPanelValue = additionalSignsValidations ? additionalSignsValidations.validate(additionalPanelValue, additionalSignsValidations.regexToUse) : true;
+              var isValidPanelValue = additionalSignsValidations ? additionalSignsValidations.validate(additionalPanelProp.panelValue, additionalSignsValidations.regexToUse) : true;
 
               return isValidPanelValue;
             });
