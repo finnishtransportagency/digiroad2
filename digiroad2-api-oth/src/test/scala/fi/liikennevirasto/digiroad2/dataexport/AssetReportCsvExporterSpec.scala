@@ -137,8 +137,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockRoadLinkService.getVVHRoadLinksF(408)).thenReturn(vvhRoadlinks1)
       when(mockRoadLinkService.getVVHRoadLinksF(739)).thenReturn(vvhRoadlinks2)
 
-      when(mockAssetReporterDAO.pointAssetQuery(Seq(408), Seq(300))).thenReturn(assetReportsList1)
-      when(mockAssetReporterDAO.pointAssetQuery(Seq(739), Seq(300))).thenReturn(assetReportsList2)
+      when(mockAssetReporterDAO.pointAssetQuery(Seq(388562360L), Seq(300))).thenReturn(assetReportsList1)
+      when(mockAssetReporterDAO.pointAssetQuery(Seq(38856690L), Seq(300))).thenReturn(assetReportsList2)
 
       when(mockAssetReporterDAO.getTotalTrafficSignNewLaw(408)).thenReturn(0)
       when(mockAssetReporterDAO.getTotalTrafficSignNewLaw(739)).thenReturn(2)

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.csvDataExporter
 
-import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, DateParser, TrafficSigns}
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, DateParser, Lanes, Manoeuvres, Municipality, ServicePoints, TrafficSigns}
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -50,14 +50,27 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
 
     def executeQuery(municipality: Int): List[AssetReport] = {
-      if (extractPointsAsset) {
-        assetReporterDAO.pointAssetQuery(Seq(municipality), assetTypesList)
-      }
-      else {
-        val linkIds = roadLinkServiceImpl.getVVHRoadLinksF(municipality)
-                                         .map(_.linkId)
+      val linkIds = roadLinkServiceImpl.getVVHRoadLinksF(municipality)
+        .filter(_.administrativeClass == Municipality)
+        .map(_.linkId)
 
-        assetReporterDAO.linearAssetQuery(linkIds, assetTypesList)
+      if (extractPointsAsset) {
+        if(assetTypesList.size == 1 && assetTypesList.head == ServicePoints.typeId) {
+          assetReporterDAO.servicePointQuery(Seq(municipality))
+        } else {
+          val pointAssetReports = assetReporterDAO.pointAssetQuery(linkIds, assetTypesList.filterNot(_ == ServicePoints.typeId))
+
+          val servicePointAssetReports = if(assetTypesList.contains(ServicePoints.typeId)) assetReporterDAO.servicePointQuery(Seq(municipality)) else List()
+
+          pointAssetReports ++ servicePointAssetReports
+        }
+      } else {
+        val linearAssetReports = assetReporterDAO.linearAssetQuery(linkIds, assetTypesList)
+
+        val laneAssetReports = if(assetTypesList.contains(Lanes.typeId)) assetReporterDAO.laneQuery(linkIds) else List()
+        val manoeuvreAssetReports = if(assetTypesList.contains(Manoeuvres.typeId)) assetReporterDAO.manoeuvreQuery(linkIds) else List()
+
+        linearAssetReports ++ laneAssetReports ++ manoeuvreAssetReports
       }
     }
 
