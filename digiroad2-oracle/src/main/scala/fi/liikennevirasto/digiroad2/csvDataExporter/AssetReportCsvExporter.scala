@@ -55,18 +55,12 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         .map(_.linkId)
 
       if (extractPointsAsset) {
-        if(assetTypesList.size == 1 && assetTypesList.head == ServicePoints.typeId) {
-          assetReporterDAO.servicePointQuery(Seq(municipality))
-        } else {
-          val pointAssetReports = assetReporterDAO.pointAssetQuery(linkIds, assetTypesList.filterNot(_ == ServicePoints.typeId))
-
+          val pointAssetReports = assetReporterDAO.pointAssetQuery(linkIds, assetTypesList)
           val servicePointAssetReports = if(assetTypesList.contains(ServicePoints.typeId)) assetReporterDAO.servicePointQuery(Seq(municipality)) else List()
 
           pointAssetReports ++ servicePointAssetReports
-        }
       } else {
         val linearAssetReports = assetReporterDAO.linearAssetQuery(linkIds, assetTypesList)
-
         val laneAssetReports = if(assetTypesList.contains(Lanes.typeId)) assetReporterDAO.laneQuery(linkIds) else List()
         val manoeuvreAssetReports = if(assetTypesList.contains(Manoeuvres.typeId)) assetReporterDAO.manoeuvreQuery(linkIds) else List()
 

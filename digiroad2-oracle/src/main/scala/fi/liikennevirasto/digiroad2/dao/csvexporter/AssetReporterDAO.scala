@@ -66,8 +66,6 @@ class AssetReporterDAO {
   }
 
   def pointAssetQuery(linkIds: Seq[Long], assetTypesList: Seq[Int]): List[AssetReport] = {
-    val filter = if (assetTypesList.isEmpty) "" else s"AND a.asset_type_id IN (${assetTypesList.mkString(",")})"
-
     MassQuery.withIds(linkIds.toSet){ idTableName =>
       sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE, a.MODIFIED_BY, a.MODIFIED_DATE
       FROM ASSET a
@@ -77,7 +75,7 @@ class AssetReporterDAO {
         JOIN #$idTableName i ON i.id = pos.link_id
       WHERE (a.valid_to IS NULL OR a.valid_to > SYSDATE)
       AND at2.GEOMETRY_TYPE = 'point'
-      #$filter
+      AND a.asset_type_id IN (#${assetTypesList.mkString(",")})
       """.as[AssetReport](getResult).list
     }
   }
