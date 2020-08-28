@@ -525,6 +525,13 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
     )
 
   def laneChangesToGeoJson(laneChanges: Seq[LaneChange], withGeometry: Boolean = false): Map[String, Any] = {
+    def decodePropertyValue(value: Any): String = {
+      value match {
+        case v: String => v
+        case _ => ""
+      }
+    }
+
     def getGeometryMap(roadLink: RoadLink) = {
       if (withGeometry) {
         Map("type" -> "LineString",
@@ -592,11 +599,8 @@ class ChangeApi(val swagger: Swagger) extends ScalatraServlet with JacksonJsonSu
         val lane = laneChange.lane
         val laneAttributes = lane.attributes
 
-        val startDateValue = laneService.getPropertyValue(laneAttributes, "start_date")
-        val startDate = if(Try(startDateValue.asInstanceOf[LaneProperty]).isFailure) startDateValue else ""
-
-        val endDateValue = laneService.getPropertyValue(laneAttributes, "end_date")
-        val endDate = if(Try(endDateValue.asInstanceOf[LaneProperty]).isFailure) endDateValue else ""
+        val startDate = decodePropertyValue(laneService.getPropertyValue(laneAttributes, "start_date"))
+        val endDate = decodePropertyValue(laneService.getPropertyValue(laneAttributes, "end_date"))
 
         val laneType = laneService.getPropertyValue(laneAttributes, "lane_type")
 
