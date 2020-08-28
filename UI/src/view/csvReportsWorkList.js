@@ -468,10 +468,10 @@
             '<td headers="date" class="csvReportDate">' + job.createdDate + '</td>' +
             '<td headers="file" class="csvReportFile" id="file">' + job.fileName + '</td>' +
             '<td headers="exportedAssets" class="csvReportExportedAssets">'+
-              '<a id="viewAssets' + job.id + '" class="clickableText">Näytä</a>' +
+              '<a id="viewAssets' + job.id + '" class="selectable">Näytä</a>' +
             '</td>' +
             '<td headers="municipalities" class="csvReportMunicipalities">'+
-              '<a id="viewMunicipalities' + job.id + '" class="clickableText">Näytä</a>' +
+              '<a id="viewMunicipalities' + job.id + '" class="selectable">Näytä</a>' +
             '</td>' +
             '<td headers="status" class="csvReportStatus">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
             '<td headers="detail" class="csvReportDetail">' + btnToDetail + '</td>' +
