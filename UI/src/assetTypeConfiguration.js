@@ -123,6 +123,22 @@
       };
     };
 
+    // Function to validation the additional panels values where can be define restrictions times like
+    // Monday to Friday 8-20
+    // Saturday (8-20)
+    // Sunday 8-20
+    var dateRestrictionValidator = function (additionalPanelValue, regexToApply) {
+      var isValidOrderPanelValue = false;
+      var isFormatValid = regexToApply.test(additionalPanelValue);
+
+      if (isFormatValid) {
+        var panelValueTrimed = _.split(_.replace(additionalPanelValue, /[( )]/g, ''), '-');
+        isValidOrderPanelValue = parseInt(panelValueTrimed[0]) < parseInt(panelValueTrimed[1]);
+      }
+
+      return isFormatValid && isValidOrderPanelValue;
+    };
+
     //To use the new lane preview on the assets form(point and dynamic forms) put lanePreview: true
 
     var linearAssetSpecs = [
@@ -1381,7 +1397,9 @@
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
             { types: [1, 2, 3, 4, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
-            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }}
+            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }},
+            {types: [50], validate: dateRestrictionValidator, regexToUse: /^([(])([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])([)])$/},
+            {types: [49, 145], validate: dateRestrictionValidator, regexToUse: /^([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])$/}
           ];
           var lifecycleValidations = [
             { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
@@ -1393,10 +1411,32 @@
             selectedAsset.setPropertyByPublicId('opposite_side_sign', '0');
           }
 
-          var functionFn = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
+          //Validation conditions for signs
+          var signsValidations = _.find(validations, function(validation){ return _.includes(validation.types, parseInt(Property.getPropertyValue('Tyyppi', selectedAsset.get())));});
+          var isValidSign = signsValidations ?  signsValidations.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
+
+          //Validation conditions for additional signs
+          var isValidAdditionalSign = false;
+          var additionalPanelsProps = Property.getPropertyByPublicId(selectedAsset.get().propertyData, 'additional_panel');
+
+          if (_.isEmpty(additionalPanelsProps.values)) {
+            isValidAdditionalSign = true;
+          } else {
+            isValidAdditionalSign = _.every(additionalPanelsProps.values, function (additionalPanelProp) {
+              var additionalSignsValidations = _.find(validations, function (validation) {
+                return _.includes(validation.types, additionalPanelProp.panelType);
+              });
+
+              var additionalPanelValue = additionalPanelProp.panelValue;
+              var isValidPanelValue = additionalSignsValidations ? additionalSignsValidations.validate(additionalPanelValue, additionalSignsValidations.regexToUse) : true;
+
+              return isValidPanelValue;
+            });
+          }
+
+          //Validation conditions for suggestedBox
           var suggestedBoxValue = !!parseInt(_.find(fields, function(asset) { return asset.publicId === "suggest_box"; }).values[0].propertyValue);
           var suggestedAssetCondition = !(suggestedBoxValue && authorizationPolicy.isMunicipalityMaintainer()) || authorizationPolicy.isOperator();
-          var isValidFunc = functionFn ?  functionFn.validate(Property.getPropertyValue('Arvo', selectedAsset.get())) : true;
 
           /* Begin: Special validate for roadwork sign */
           var trafficSignTypeField = _.find(fields, function(field) { return field.publicId === 'trafficSigns_type'; });
@@ -1409,7 +1449,7 @@
           var isValidaRoadWorkInfo = trafficSignTypeExtracted === roadworksTrafficCode && !_.isUndefined(startDateExtracted) && !_.isUndefined(endDateExtracted) ? endDateExtracted >= startDateExtracted : false;
 
           if (trafficSignTypeExtracted === roadworksTrafficCode)
-            return isValidFunc && isValidaRoadWorkInfo && suggestedAssetCondition;
+            return isValidSign && isValidaRoadWorkInfo && suggestedAssetCondition;
           /* End: Special validate for roadwork sign */
 
           var lifecycleField = _.find(fields, function(field) { return field.publicId === 'life_cycle'; });
@@ -1423,7 +1463,7 @@
 
           var isValidLane = lanesValidation(laneNumberProperty.values, laneTypeProperty.values);
 
-          return isValidFunc && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
+          return isValidSign && isValidAdditionalSign && suggestedAssetCondition && validLifecycleDates && isValidNumericalFields && isValidLane;
         },
         readOnlyLayer: TrafficSignReadOnlyLayer,
         showRoadLinkInfo: true,
