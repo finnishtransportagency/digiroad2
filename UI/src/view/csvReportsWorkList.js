@@ -239,7 +239,7 @@
 
       var form =
           '<div class="form form-horizontal" id="csvExport" role="form" >' +
-          '<div class="form-group">' +
+          '<div class="form-group multiSelectItems">' +
               '<div class="form-group" disabled="disabled" >' +
                 '<div class="row">' +
                   '<div class="col-xs-5">' +
@@ -257,7 +257,7 @@
                 '</div>' +
               '</div>' +
             '</div>' +
-            '<div class="form-group">' +
+            '<div class="form-group multiSelectItems">' +
               '<div class="form-group" disabled="disabled" >' +
                 '<div class="row">' +
                   '<div class="col-xs-5">' +
@@ -331,6 +331,8 @@
         $(".job-status-table").find("#" + job.id + ".btn-download").on('click', function (event) {
           downloadCsv(event);
         });
+
+        bindTableViews(job);
       }
     }
 
@@ -368,9 +370,20 @@
               downloadCsv(event);
             });
           }
+          bindTableViews(job);
         });
 
         refresh = setInterval(refreshJobs, 3000);
+      });
+    };
+
+    var bindTableViews = function (job) {
+      $("#viewAssets"+job.id).on('click', function () {
+        GenericConfirmPopup(convertToListItem("Tietolajit", job.exportedAssets), {type: "alert", container: "#work-list"});
+      });
+
+      $("#viewMunicipalities"+job.id).on('click', function () {
+        GenericConfirmPopup(convertToListItem("Kunnat", job.municipalities), {type: "alert", container: "#work-list"});
       });
     };
 
@@ -400,9 +413,10 @@
         else
           table.before(newRow);
 
+        bindTableViews(job);
+
         if(!refresh)
           refresh = setInterval(refreshJobs, 3000);
-
       }
     }
 
@@ -417,13 +431,12 @@
         return ''+
           '<thead>'+
               '<tr>'+
-                '<th id="date" class="csvReport">Päivämäärä</th>'+
-                '<th class="csvReport">Tietolajityyppi</th>'+
-                '<th id="file" class="csvReport"">Tiedosto</th>'+
-                '<th id="exportedAssets" class="csvReport">Tietolajit</th>'+
-                '<th id="municipalities" class="csvReport">Kunnat</th>'+
-                '<th id="status" class="csvReport">Tila</th>'+
-                '<th id="detail" class="csvReport">Raportti</th>'+
+                '<th id="date" class="csvReportDate">Päivämäärä</th>'+
+                '<th id="file" class="csvReportFile"">Tiedosto</th>'+
+                '<th id="exportedAssets" class="csvReportExportedAssets">Tietolajit</th>'+
+                '<th id="municipalities" class="csvReportMunicipalities">Kunnat</th>'+
+                '<th id="status" class="csvReportStatus">Tila</th>'+
+                '<th id="detail" class="csvReportDetail">Raportti</th>'+
             '</tr>'+
           '</thead>';
       };
@@ -450,16 +463,18 @@
       else if ( job.status == 2)
         btnToDetail = '<a id="' + job.id + '" class="btn btn-primary btn-download">Lataa CSV<img src="images/icons/export-icon.png"/></a>';
 
-
       return '' +
           '<tr class="' + (job.status === 1 ? 'in-progress' : '') + '" id="' + job.id + '">' +
-            '<td headers="date" class="csvReport">' + job.createdDate + '</td>' +
-            '<td headers="jobName" class="csvReport">Raportti</td>'+
-            '<td headers="file" class="csvReport" id="file">' + job.fileName + '</td>' +
-            '<td headers="exportedAssets" class="csvReport">'+ job.exportedAssets.replace(/\,/g,"\r\n") + '</td>' +
-            '<td headers="municipalities" class="csvReport">'+ job.municipalities.replace(/\,/g,"\r\n") + '</td>' +
-            '<td headers="status" class="csvReport">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
-            '<td headers="detail" class="csvReport">' + btnToDetail + '</td>' +
+            '<td headers="date" class="csvReportDate">' + job.createdDate + '</td>' +
+            '<td headers="file" class="csvReportFile" id="file">' + job.fileName + '</td>' +
+            '<td headers="exportedAssets" class="csvReportExportedAssets">'+
+              '<a id="viewAssets' + job.id + '" class="selectable">Näytä</a>' +
+            '</td>' +
+            '<td headers="municipalities" class="csvReportMunicipalities">'+
+              '<a id="viewMunicipalities' + job.id + '" class="selectable">Näytä</a>' +
+            '</td>' +
+            '<td headers="status" class="csvReportStatus">' + getStatusIcon(job.status, job.statusDescription) + '</td>' +
+            '<td headers="detail" class="csvReportDetail">' + btnToDetail + '</td>' +
           '</tr>';
     };
 
@@ -473,7 +488,16 @@
       };
       return '<img src="' + icon[status] + '" title="' + description + '"/>';
     };
-
-
+    var convertToListItem = function (name, stringList) {
+      return '' +
+          '<header>' +
+            '<h2>' + name + '</h2>' +
+          '</header>' +
+          '<div class="bigListPopUp">' +
+            _.map(_.split(stringList, ","), function (listItem){
+              return '<li>' + listItem + '</li>';
+            }).join('') +
+          '</div>';
+    };
   };
 })(this);
