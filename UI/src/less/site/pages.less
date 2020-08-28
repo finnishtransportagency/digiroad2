@@ -72,6 +72,7 @@
     font-family: arial, sans-serif;
     border-collapse: collapse;
     word-wrap: break-word;
+    font-size: 14px;
     .file{
       width: 35%;
     }
@@ -88,8 +89,25 @@
     .jobName {
       width: 22%;
     }
-    .csvReport{
-      width: auto;
+    .csvReportDate{
+      width: 17%;
+    }
+    .csvReportFile{
+      width: 30%;
+    }
+    .csvReportExportedAssets{
+      width: 9%;
+      overflow-y: auto;
+    }
+    .csvReportMunicipalities{
+      width: 8%;
+      overflow-y: auto;
+    }
+    .csvReportStatus{
+      width: 5%;
+    }
+    .csvReportDetail{
+      width: 15%;
     }
   }
 
@@ -97,8 +115,8 @@
     display: block;
     overflow-y: auto;
     flex-direction: column;
-    overflow-x: auto;
-    max-height: 300px;
+    overflow-x: hidden;
+    max-height: 350px;
   }
 
   tbody {
@@ -128,4 +146,14 @@
   tr:nth-child(even) {
     background-color: #dddddd;
   }
+}
+
+.bigListPopUp {
+  overflow-y: auto;
+  height: auto;
+  max-height: 500px;
+}
+
+.clickableText {
+  cursor: pointer;
 }
