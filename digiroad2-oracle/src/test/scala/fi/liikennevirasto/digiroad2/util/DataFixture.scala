@@ -2348,20 +2348,21 @@ object DataFixture {
     println("\nStart transferring old expired asset information until last year to the history tables")
     println(DateTime.now())
 
+    val historyService = new HistoryService
     val excludedAssetTypes = Seq(UnknownAssetTypeId, Lanes, MassTransitStopAsset)
     val assetTypes = AssetTypeInfo.values.filterNot(excludedAssetTypes.contains)
-    val yearGap = 1 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
+    val yearGap = 2 //current and previous X years are to maintain (1 = until one year ago, 2 = until two years ago, etc.)
 
     assetTypes.foreach { at =>
       OracleDatabase.withDynTransaction {
         println(s"\nFetching all relevant expired assets with asset type ${at.typeId}")
 
-        val assetIds = HistoryDAO.getExpiredAssetsIdsByAssetTypeAndYearGap(at, yearGap)
+        val assetIds = historyService.getExpiredAssetsIdsByAssetTypeAndYearGap(at, yearGap)
         println(s"Transferring ${assetIds.size} assets")
 
         assetIds.foreach { id =>
           println(s"Transferring asset $id")
-          HistoryDAO.transferExpiredAssetToHistoryById(id, at)
+          historyService.transferExpiredAssetToHistoryById(id, at)
         }
       }
     }
