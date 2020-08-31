@@ -58,7 +58,7 @@
           {signValue: [47], image: 'images/traffic-signs/additional-panels/hazmatProhibitionA.png', height: 27},
           {signValue: [48], image: 'images/traffic-signs/additional-panels/hazmatProhibitionB.png', height: 27},
           {signValue: [49], image: 'images/traffic-signs/additional-panels/validPeriod.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showPeriodTimeAdditionalInfo, height: 20},
-          {signValue: [50], image: 'images/traffic-signs/additional-panels/validPeriod.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showPeriodTimeAdditionalInfo, height: 20},
+          {signValue: [50], image: 'images/traffic-signs/additional-panels/validPeriod.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showPeriodTimeAdditionalInfo, height: 20, convertion: me.convertToSaturdayDatePeriod},
           {signValue: [51], image: 'images/traffic-signs/additional-panels/validPeriod.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showPeriodTimeAdditionalInfo, height: 20},
           {signValue: [52], image: 'images/traffic-signs/additional-panels/passengerCar.png', height: 20},
           {signValue: [53], image: 'images/traffic-signs/additional-panels/bus.png', height: 20},

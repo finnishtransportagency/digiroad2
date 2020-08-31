@@ -124,6 +124,10 @@
       return ''.concat(' km');
     };
 
+    me.convertToSaturdayDatePeriod = function () {
+      return ('(') + this.value + (')');
+    };
+
     me.convertToTons = function(){
       return this.value / 1000;
     };

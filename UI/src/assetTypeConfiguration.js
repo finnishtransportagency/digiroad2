@@ -125,7 +125,7 @@
 
     // Function to validation the additional panels values where can be define restrictions times like
     // Monday to Friday 8-20
-    // Saturday (8-20)
+    // Saturday (8-20) brackets only applied on frontend
     // Sunday 8-20
     var dateRestrictionValidator = function (additionalPanelValue, regexToApply) {
       var isValidOrderPanelValue = false;
@@ -1398,8 +1398,7 @@
           var validations = [
             { types: [1, 2, 3, 4, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
             { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }},
-            {types: [50], validate: dateRestrictionValidator, regexToUse: /^([(])([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])([)])$/},
-            {types: [49, 145], validate: dateRestrictionValidator, regexToUse: /^([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])$/}
+            {types: [49, 50, 145], validate: dateRestrictionValidator, regexToUse: /^([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])$/}
           ];
           var lifecycleValidations = [
             { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
