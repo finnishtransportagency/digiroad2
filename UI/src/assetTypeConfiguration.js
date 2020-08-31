@@ -1397,7 +1397,7 @@
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
             { types: [1, 2, 3, 4, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
-            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }},
+            { types: [8, 30, 31, 32, 33, 34, 35, 45, 46, 51, 60, 138, 139, 148, 149, 308, 347, 348, 356, 376], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }},
             {types: [49, 50, 145], validate: dateRestrictionValidator, regexToUse: /^([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])$/}
           ];
           var lifecycleValidations = [
