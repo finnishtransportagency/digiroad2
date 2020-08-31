@@ -124,6 +124,10 @@
       return ''.concat(' km');
     };
 
+    me.addMinutes = function() {
+      return ''.concat(' min');
+    };
+
     me.convertToSaturdayDatePeriod = function () {
       return ('(') + this.value + (')');
     };
