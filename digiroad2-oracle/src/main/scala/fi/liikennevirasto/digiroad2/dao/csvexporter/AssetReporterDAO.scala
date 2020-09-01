@@ -28,7 +28,9 @@ class AssetReporterDAO {
     val filter = if (assetTypesList.isEmpty) "" else s"AND a.asset_type_id IN (${assetTypesList.mkString(",")})"
 
     MassQuery.withIds(linkIds.toSet){idTableName =>
-      sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE, a.MODIFIED_BY, a.MODIFIED_DATE
+      sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE,
+            CASE WHEN a.MODIFIED_BY IS NULL THEN a.CREATED_BY ELSE a.MODIFIED_BY END AS UPDATED_BY,
+            CASE WHEN a.MODIFIED_DATE IS NULL THEN a.CREATED_DATE ELSE a.MODIFIED_DATE END AS UPDATED_DATE
       FROM ASSET a
         JOIN ASSET_TYPE at2 ON at2.id = a.asset_type_id
         JOIN ASSET_LINK al ON a.id = al.asset_id
@@ -43,7 +45,9 @@ class AssetReporterDAO {
 
   def laneQuery(linkIds: Seq[Long]): List[AssetReport] = {
     MassQuery.withIds(linkIds.toSet){ idTableName =>
-      sql"""SELECT ${Lanes.typeId}, ${Lanes.nameFI}, ${Lanes.geometryType}, l.MODIFIED_BY, l.MODIFIED_DATE
+      sql"""SELECT ${Lanes.typeId}, ${Lanes.nameFI}, ${Lanes.geometryType},
+            CASE WHEN l.MODIFIED_BY IS NULL THEN l.CREATED_BY ELSE l.MODIFIED_BY END AS UPDATED_BY,
+            CASE WHEN l.MODIFIED_DATE IS NULL THEN l.CREATED_DATE ELSE l.MODIFIED_DATE END AS UPDATED_DATE
       FROM LANE l
         JOIN LANE_LINK ll ON l.id = ll.lane_id
         JOIN LANE_POSITION pos ON ll.lane_position_id = pos.id
@@ -54,7 +58,9 @@ class AssetReporterDAO {
 
   def manoeuvreQuery(linkIds: Seq[Long]): List[AssetReport] = {
     MassQuery.withIds(linkIds.toSet){ idTableName =>
-      sql"""SELECT ${Manoeuvres.typeId}, ${Manoeuvres.nameFI}, ${Manoeuvres.geometryType}, m.MODIFIED_BY, m.MODIFIED_DATE
+      sql"""SELECT ${Manoeuvres.typeId}, ${Manoeuvres.nameFI}, ${Manoeuvres.geometryType},
+            CASE WHEN m.MODIFIED_BY IS NULL THEN m.CREATED_BY ELSE m.MODIFIED_BY END AS UPDATED_BY,
+            CASE WHEN m.MODIFIED_DATE IS NULL THEN m.CREATED_DATE ELSE m.MODIFIED_DATE END AS UPDATED_DATE
       FROM MANOEUVRE m
       WHERE (m.valid_to IS NULL OR m.valid_to > SYSDATE)
       AND EXISTS
@@ -67,7 +73,9 @@ class AssetReporterDAO {
 
   def pointAssetQuery(linkIds: Seq[Long], assetTypesList: Seq[Int]): List[AssetReport] = {
     MassQuery.withIds(linkIds.toSet){ idTableName =>
-      sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE, a.MODIFIED_BY, a.MODIFIED_DATE
+      sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE,
+            CASE WHEN a.MODIFIED_BY IS NULL THEN a.CREATED_BY ELSE a.MODIFIED_BY END AS UPDATED_BY,
+            CASE WHEN a.MODIFIED_DATE IS NULL THEN a.CREATED_DATE ELSE a.MODIFIED_DATE END AS UPDATED_DATE
       FROM ASSET a
         JOIN ASSET_TYPE at2 ON at2.id = a.asset_type_id
         JOIN ASSET_LINK al ON a.id = al.asset_id
@@ -82,7 +90,9 @@ class AssetReporterDAO {
 
   def servicePointQuery(municipalities: Seq[Long]): List[AssetReport] = {
     MassQuery.withIds(municipalities.toSet){ idTableName =>
-      sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE, a.MODIFIED_BY, a.MODIFIED_DATE
+      sql"""SELECT a.ASSET_TYPE_ID, at2.NAME, at2.GEOMETRY_TYPE,
+            CASE WHEN a.MODIFIED_BY IS NULL THEN a.CREATED_BY ELSE a.MODIFIED_BY END AS UPDATED_BY,
+            CASE WHEN a.MODIFIED_DATE IS NULL THEN a.CREATED_DATE ELSE a.MODIFIED_DATE END AS UPDATED_DATE
       FROM ASSET a
         JOIN ASSET_TYPE at2 ON at2.id = a.asset_type_id
         JOIN #$idTableName i ON i.id = a.municipality_code
