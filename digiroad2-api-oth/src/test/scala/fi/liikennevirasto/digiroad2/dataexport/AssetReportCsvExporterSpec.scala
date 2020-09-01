@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2.dataexport
 
 import java.util.Properties
-import fi.liikennevirasto.digiroad2.asset.{DamagedByThaw, Municipality, TrafficDirection, TrafficSigns}
+
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.{CsvDataExporter, DigiroadEventBus, Point}
-import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.csvDataExporter.AssetReportCsvExporter
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, MunicipalityInfo, OracleUserProvider}
 import fi.liikennevirasto.digiroad2.dao.csvexporter.{AssetReport, AssetReporterDAO}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
@@ -69,8 +70,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
   val LupaMunicipalityInfo = MunicipalityInfo(408, 3, "Lapua")
   val SavitaipaleMunicipalityInfo = MunicipalityInfo(739, 8, "Savitaipale")
 
-  val vvhRoadlinks1 = Seq(VVHRoadlink(388562360L, 408, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-  val vvhRoadlinks2 = Seq(VVHRoadlink(38856690L, 739, Seq(Point(10, 0), Point(65, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
+  val vvhRoadlinks1 = Seq(RoadLink(388562360L, Seq(Point(0, 0), Point(10, 0)), 10.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
+  val vvhRoadlinks2 = Seq(RoadLink(38856690L, Seq(Point(10, 0), Point(65, 0)), 55.0, Municipality, 1, TrafficDirection.UnknownDirection, LinkType.apply(3), None, None, Map()))
 
   val operatorUser = User(26867454, "k647320", Configuration(None, None, None, None, None, Set(), Set(), Set("operator"), Some("2018-11-27"), None), None)
 
@@ -93,8 +94,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockUserProvider.getUsers()).thenReturn(users)
       when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesList)
 
-      when(mockRoadLinkService.getVVHRoadLinksF(408)).thenReturn(vvhRoadlinks1)
-      when(mockRoadLinkService.getVVHRoadLinksF(739)).thenReturn(vvhRoadlinks2)
+      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
+      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
 
       when(mockAssetReporterDAO.linearAssetQuery(Seq(388562360L), Seq(130))).thenReturn(assetReportsList1)
       when(mockAssetReporterDAO.linearAssetQuery(Seq(38856690L), Seq(130))).thenReturn(assetReportsList2)
@@ -134,8 +135,8 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       when(mockUserProvider.getUsers()).thenReturn(users)
       when(mockMunicipalityDao.getMunicipalitiesNameAndIdByCode(any[Set[Int]])).thenReturn(municipalitiesInfoList)
 
-      when(mockRoadLinkService.getVVHRoadLinksF(408)).thenReturn(vvhRoadlinks1)
-      when(mockRoadLinkService.getVVHRoadLinksF(739)).thenReturn(vvhRoadlinks2)
+      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(408, false)).thenReturn(vvhRoadlinks1)
+      when(mockRoadLinkService.getRoadLinksFromVVHByMunicipality(739, false)).thenReturn(vvhRoadlinks2)
 
       when(mockAssetReporterDAO.pointAssetQuery(Seq(388562360L), Seq(300))).thenReturn(assetReportsList1)
       when(mockAssetReporterDAO.pointAssetQuery(Seq(38856690L), Seq(300))).thenReturn(assetReportsList2)
