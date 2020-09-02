@@ -546,11 +546,15 @@
     };
 
     this.getExportJobsByUser = function() {
-      return $.getJSON('api/export/logByUser');
+      return $.getJSON('api/export/jobsByUser');
     };
 
     this.getExportsJobsByIds = function(ids){
-      return $.getJSON('api/export/logs?ids=' + ids);
+      return $.getJSON('api/export/jobsInfoBoard?ids=' + ids);
+    };
+
+    this.getExportJob = function (id) {
+      return $.getJSON('api/export/jobErrorInfo?id=' + id);
     };
 
     this.postGenerateCsvReport = function (municipalities, assets, success, failure) {

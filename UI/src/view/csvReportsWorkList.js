@@ -207,7 +207,7 @@
             '</div>'
         );
 
-        $('#work-list .work-list').html(me.workListItemTable(result));
+        $('#work-list .work-list').html(me.workListItemTable());
 
         populatedMultiSelectBoxes();
 
@@ -235,7 +235,7 @@
     }
 
 
-    this.workListItemTable = function (result) {
+    this.workListItemTable = function() {
 
       var form =
           '<div class="form form-horizontal" id="csvExport" role="form" >' +
@@ -324,11 +324,11 @@
         var newRow = jobRow(job);
         $("#"+job.id).replaceWith(newRow);
 
-        $(".job-status-table").find('.job-status-link').on('click', function (event) {
+        $(".job-status-table").find('.job-status-link#' + job.id).on('click', function (event) {
           getJob(event);
         });
 
-        $(".job-status-table").find("#" + job.id + ".btn-download").on('click', function (event) {
+        $(".job-status-table").find('.btn-download#' + job.id).on('click', function (event) {
           downloadCsv(event);
         });
 
@@ -336,21 +336,11 @@
       }
     }
 
-    var hideImporter = function() {
-      $('#csvExport').hide();
-      $('.job-content').show();
-    };
-
-    var showImporter = function() {
-      $('#csvExport').show();
-      $('.job-content').empty();
-    };
 
     function getJob(evt){
       var id = $(evt.currentTarget).prop('id');
-      backend.getJob(id).then(function(job){
-        hideImporter();
-        buildJobView(job);
+      backend.getExportJob(id).then(function(job){
+        GenericConfirmPopup(buildJobView(job), {type: "alert", container: "#work-list"});
       });
     }
 
@@ -361,12 +351,12 @@
 
         _.forEach(jobs, function(job) {
           if (job.status > 2){
-            $(".job-status-table").find('.job-status-link#'+job.id).on('click', function (event) {
+            $(".job-status-table").find('.job-status-link#' + job.id).on('click', function (event) {
               getJob(event);
             });
           }
           else if ( job.status == 2) {
-            $(".job-status-table").find("#" + job.id + ".btn-download").on('click', function (event) {
+            $(".job-status-table").find('.btn-download#' + job.id).on('click', function (event) {
               downloadCsv(event);
             });
           }
@@ -388,19 +378,10 @@
     };
 
     var buildJobView = function(job) {
-      var jobView = $('.job-content');
-      jobView.append('' +
-          '<div class="job-content-box">' +
-          '<header id="error-list-header">' + 'CSV-eräajon virhetilanteet: ' + job.fileName +
-          '<a class="header-link" style="cursor: pointer;">Sulje</a>' +
-          '</header>' +
-          '<div class="error-list">' +
-          '</div>'
-      );
-      jobView.find('.header-link').on('click', function(){
-        showImporter();
-      });
-      $('.error-list').html(job.content);
+      return  '<header>' +
+                '<h2> CSV-eräajon virhetilanteet: ' + job.fileName + '</h2>' +
+              '</header>' +
+              '<div class="bigListPopUp">' + job.content + '</div>';
     };
 
     function addNewRow(job) {
@@ -488,6 +469,7 @@
       };
       return '<img src="' + icon[status] + '" title="' + description + '"/>';
     };
+
     var convertToListItem = function (name, stringList) {
       return '' +
           '<header>' +
@@ -499,5 +481,6 @@
             }).join('') +
           '</div>';
     };
+
   };
 })(this);
