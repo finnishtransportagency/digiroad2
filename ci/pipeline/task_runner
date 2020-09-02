@@ -56,7 +56,7 @@ pipeline {
         								'traffic_sign_extract',
         								'remove_unnecessary_unknown_speedLimits',
         								'list_incorrect_SpeedLimits_created',
-        								move_old_expired_assets
+        								'move_old_expired_assets'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
