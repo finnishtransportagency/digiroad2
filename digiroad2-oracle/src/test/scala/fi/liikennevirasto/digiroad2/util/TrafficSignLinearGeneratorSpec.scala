@@ -235,15 +235,12 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "", "9-10", 1, "", 99, 99, 99),
                             AdditionalPanel(ValidSat.OTHvalue, "", "(11-12)",2, "", 99, 99, 99),
-                            AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "15-16 (17-18) 19-20", 3, "", 99, 99, 99),
+                            AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "(17-18)", 3, "", 99, 99, 99),
                             AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "17-18", 4, "", 99, 99, 99))
 
     val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday),
                             ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday),
-                            ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday),
-                            ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday),
-                            ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday),
-                            ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
+                            ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday) )
 
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sign.OTHvalue.toString))) , Property(0, "additional_panel", "", false, additionalPanel))
@@ -261,15 +258,12 @@ class TrafficSignLinearGeneratorSpec extends FunSuite with Matchers {
     val prohibitionGenerator = new TestTrafficSignProhibitionGenerator()
     val additionalPanel = Seq(AdditionalPanel(ValidMonFri.OTHvalue, "", "9-10", 1, "", 99, 99, 99),
                           AdditionalPanel(ValidSat.OTHvalue, "", "(11-12)", 2, "", 99, 99, 99),
-                          AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "15-16 (17-18) 19-20", 3, "", 99, 99, 99),
+                          AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "(17-18)", 3, "", 99, 99, 99),
                           AdditionalPanel(ValidMultiplePeriod.OTHvalue, "", "17-18", 4, "", 99, 99, 99))
 
     val prohibitionPeriod = Set(ValidityPeriod(9, 10, ValidityPeriodDayOfWeek.Weekday),
                             ValidityPeriod(11, 12, ValidityPeriodDayOfWeek.Saturday),
-                            ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday),
-                            ValidityPeriod(15, 16, ValidityPeriodDayOfWeek.Weekday),
-                            ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Saturday),
-                            ValidityPeriod(19, 20, ValidityPeriodDayOfWeek.Sunday))
+                            ValidityPeriod(17, 18, ValidityPeriodDayOfWeek.Sunday) )
 
     relationSignProhibition.foreach { case (sign, prohibitionsType) =>
       val simpleProp = Seq(Property(0, "trafficSigns_type", "", false, Seq(PropertyValue(sign.OTHvalue.toString))) , Property(0, "additional_panel", "", false, additionalPanel))
