@@ -139,8 +139,8 @@ trait TrafficSignLinearGenerator {
   def createValidPeriod(trafficSignType: TrafficSignType, additionalPanel: AdditionalPanel): Set[ValidityPeriod] = {
     TimePeriodClass.fromTrafficSign(trafficSignType).filterNot(_ == TimePeriodClass.Unknown).flatMap { period =>
       val regexMatch = "[(]?\\d+\\s*[-]{1}\\s*\\d+[)]?".r
-      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelInfo)
-      val validPeriods = regexMatch.findAllMatchIn(additionalPanel.panelInfo)
+      val validPeriodsCount = regexMatch.findAllIn(additionalPanel.panelValue)
+      val validPeriods = regexMatch.findAllMatchIn(additionalPanel.panelValue)
 
       if (validPeriodsCount.length == 3 && ValidityPeriodDayOfWeek.fromTimeDomainValue(period.value) == ValidityPeriodDayOfWeek.Sunday) {
         val convertPeriod = Map(0 -> ValidityPeriodDayOfWeek.Weekday, 1 -> ValidityPeriodDayOfWeek.Saturday, 2 -> ValidityPeriodDayOfWeek.Sunday)
