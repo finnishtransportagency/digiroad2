@@ -107,7 +107,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       val logId = csvDataExporter.insertData(operatorUser.username, fileName, assetTypes.mkString(","), municipalities.mkString(","), false)
       val generatedDataId = assetReportCsvExporter.exportAssetsByMunicipalityCSVGenerator(assetTypes, municipalities, logId, false)
 
-      val result = csvDataExporter.getById(generatedDataId, false)
+      val result = csvDataExporter.getInfoById(generatedDataId, false)
       val finalContent = result.head.content.getOrElse("")
 
       finalContent.contains("Lapua") should be(true)
@@ -154,7 +154,7 @@ class AssetReportCsvExporterSpec extends FunSuite with Matchers {
       val logId = csvDataExporter.insertData(operatorUser.username, fileName, assetTypes.mkString(","), municipalities.mkString(","), false)
       val generatedDataId = assetReportCsvExporter.exportAssetsByMunicipalityCSVGenerator(assetTypes, municipalities, logId, false)
 
-      val result = csvDataExporter.getById(generatedDataId, false)
+      val result = csvDataExporter.getInfoById(generatedDataId, false)
       val finalContent = result.head.content.getOrElse("")
 
       finalContent.contains("Savitaipale") should be(true)
