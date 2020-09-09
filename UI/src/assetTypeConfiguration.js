@@ -1397,8 +1397,11 @@
           var possibleSpeedLimitsValues = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
           var validations = [
             { types: [1, 2, 3, 4, 237, 238], validate: function (someValue) { return /^\d+$/.test(someValue) && _.includes(possibleSpeedLimitsValues, parseInt(someValue)); }},
-            { types: [8, 30, 31, 32, 33, 34, 35], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }},
-            {types: [49, 50, 145], validate: dateRestrictionValidator, regexToUse: /^([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])$/}
+            { types: [8, 30, 31, 32, 33, 34, 35, 45, 46, 138, 139, 148, 149, 170, 174, 175, 176, 177, 290, 291, 292, 347, 348, 376, 400], validate: function (someValue) { return /^\d*\.?\d+$/.test(someValue) ; }},
+            { types: [49, 50, 145], validate: dateRestrictionValidator, regexToUse: /^([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])$/},
+            { types: [59, 357], validate: dateRestrictionValidator, regexToUse: /^([(]?)([0-1]?[0-9]|[2][0-3])\s*[-]{1}\s*([0-1]?[0-9]|[2][0-3])([)]?)$/},
+            { types: [120, 152, 158, 159, 161, 163, 178, 191, 192, 193, 264, 265, 266, 267, 268, 273, 275, 280, 285, 288, 289, 304, 305, 306, 307, 342, 343], validate: function (someValue) { return /^[a-zA-Z ]*$/.test(someValue); }},
+            { types: [51, 60, 160, 162, 164, 167, 168, 171, 173, 281, 282, 284, 356], validate: function (someValue) { return /^[A-Za-z0-9 ]*$/.test(someValue); }}
           ];
           var lifecycleValidations = [
             { values: [4, 5], validate: function (startDate, endDate) { return !_.isUndefined(startDate) && !_.isUndefined(endDate) && endDate >= startDate; }}
