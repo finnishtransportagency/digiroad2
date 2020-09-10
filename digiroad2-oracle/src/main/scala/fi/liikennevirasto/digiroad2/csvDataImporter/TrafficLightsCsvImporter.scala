@@ -169,9 +169,15 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(position, roadLink.geometry)
 
       val sidecodeProperty = AssetProperty("trafficLightSidecode", validityDirection)
-      val bearingProperty = AssetProperty("trafficLightBearing", assetBearing.get)
 
-      val finalProperties = csvProperties.filterNot(_.columnName == "trafficLightBearing") ++ Seq(sidecodeProperty, bearingProperty)
+      val finalProperties = (assetBearing match {
+        case Some(bearing) =>
+          val bearingProperty = AssetProperty("trafficLightBearing", bearing)
+          csvProperties.filterNot(_.columnName == "trafficLightBearing") ++ Seq(bearingProperty)
+
+        case _ =>
+          csvProperties
+      }) ++ Seq(sidecodeProperty)
 
       (csvProperties, CsvPointAsset(position.x, position.y, roadLink.linkId, generateBaseProperties(finalProperties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
