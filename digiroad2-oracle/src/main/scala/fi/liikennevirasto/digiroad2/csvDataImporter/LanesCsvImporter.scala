@@ -5,12 +5,13 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
+import fi.liikennevirasto.digiroad2.lane.LaneNumber.{FourthRightAdditional, MainLane}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{LaneUtils, Track}
 import org.apache.commons.lang3.StringUtils.isBlank
+import scala.util.{Success, Try}
 
 
 class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends CsvDataImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -40,7 +41,6 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     "let" -> "end distance"
   )
 
-  private val mainLanes = Seq( MainLane.againstDirection.toString, MainLane.towardsDirection.toString, MainLane.motorwayMaintenance.toString)
 
   private val laneNumberFieldMapping: Map[String, String] = Map("kaista" -> "lane")
   private val laneTypeFieldMapping: Map[String, String] = Map("katyyppi" -> "lane type")
@@ -70,7 +70,18 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   def verifyLaneNumber(parameterName: String, parameterValue: String): ParsedRow = {
     val trimmedValue = parameterValue.trim
 
-    if ( mainLanes.contains(trimmedValue) ) {
+    val isValidLaneNumber = Try(trimmedValue.toInt) match {
+                case Success(value) =>
+                      val isMotorwayMaintenance = value == MainLane.motorwayMaintenance
+                      val isAgainstDirection = value >= MainLane.againstDirection && value <= FourthRightAdditional.againstDirection
+                      val isTowardsDirection = value >= MainLane.towardsDirection && value <= FourthRightAdditional.towardsDirection
+
+                      isMotorwayMaintenance || isAgainstDirection || isTowardsDirection
+
+                case _ => false
+              }
+
+    if ( isValidLaneNumber ) {
       (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = trimmedValue)))
     } else {
       (List(parameterName), Nil)
