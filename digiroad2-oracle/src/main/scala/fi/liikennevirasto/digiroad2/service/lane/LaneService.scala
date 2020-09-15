@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.lane
 
 import java.security.InvalidParameterException
-
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.{TrafficDirection, _}
@@ -20,6 +19,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import fi.liikennevirasto.digiroad2.asset.DateParser.DatePropertyFormat
+
 
 case class LaneChange(lane: PersistedLane, oldLane: Option[PersistedLane], changeType: LaneChangeType, roadLink: Option[RoadLink])
 
@@ -1174,4 +1174,14 @@ trait LaneOperations {
       }
     }
   }
+
+
+  def expireAllLanesInStateRoad(username: String) = {
+    val existingLinkIds = dao.getAllLinkIdsInLanePosition()
+    val stateRoadLinks = roadLinkService.getRoadsLinksFromVVH(existingLinkIds.toSet)
+                                      .filter(_.administrativeClass == State)
+
+    dao.expireLanesByLinkId( stateRoadLinks.map(_.linkId).toSet, username)
+  }
+
 }

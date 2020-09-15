@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.dao.lane
 
-import fi.liikennevirasto.digiroad2.asset.{Decode, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.lane.{LaneNumber, PersistedLane, _}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
@@ -13,7 +13,6 @@ import fi.liikennevirasto.digiroad2.lane.LaneNumber.MainLane
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
-
 import scala.language.implicitConversions
 
 
@@ -138,7 +137,7 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
     fetchAllLanesByLinkIds(linkIds, includeExpired, lanesCodeToFilter)
   }
 
-  def   getLanesFilterQuery( queryFilter: String => String ): Seq[PersistedLane] = {
+  def getLanesFilterQuery( queryFilter: String => String ): Seq[PersistedLane] = {
     val lanes = StaticQuery.queryNA[LaneRow](queryFilter(query()))(getLaneAsset).iterator.toSeq
 
     convertLaneRowToPersistedLane(lanes)
@@ -376,4 +375,29 @@ class LaneDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ){
 
     updateLaneModifiedFields(id, username)
   }
+
+  def getAllLinkIdsInLanePosition(): List[Long] = {
+    sql"""SELECT DISTINCT LINK_ID FROM LANE_POSITION""".as[Long].list
+  }
+
+
+  def expireLanesByLinkId(linkIds: Set[Long], username: String) = {
+    MassQuery.withIds(linkIds) { idTableName =>
+      sqlu"""
+         MERGE
+         INTO LANE l
+         USING (SELECT ll.LANE_ID
+                FROM LANE_LINK ll
+                JOIN LANE_POSITION lp ON lp.ID = ll.LANE_POSITION_ID
+                JOIN #$idTableName i ON i.id = lp.LINK_ID
+              ) src
+        ON ( src.LANE_ID = l.ID )
+        WHEN MATCHED THEN
+          UPDATE
+          SET l.VALID_TO = SYSDATE, l.EXPIRED_DATE = SYSDATE, l.EXPIRED_BY = $username
+      """.execute
+
+    }
+  }
+
 }
