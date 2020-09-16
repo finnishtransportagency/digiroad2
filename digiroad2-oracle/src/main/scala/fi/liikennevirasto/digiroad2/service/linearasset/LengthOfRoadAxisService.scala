@@ -31,17 +31,26 @@ class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
 
   /// get
   def get(): Unit = {
+
+
     val id: Seq[Long] =Seq(0,1)
     id
     throw new NotImplementedError
   }
 
   /// create
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int,
-                      username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
-    val id: Seq[Long] =Seq(0,1)
-    id
-     throw new NotImplementedError
+  def create[typeId: Int, assetSequence: Seq[NewLinearAsset]]
+  (mapOfAsset: Map[typeId, assetSequence],
+   username: String,
+   vvhTimeStamp: Long = vvhClient.roadLinkData.
+     createVVHTimeStamp())= {
+    try{
+      for ((typeId: Int, assetSequence: Seq[NewLinearAsset]) <- mapOfAsset) {
+        super.create(assetSequence, typeId, username, vvhTimeStamp)
+      }
+    }catch {
+      case e:Exception =>println("error"+e.getMessage)
+    }
   }
 
   /// Delete
@@ -55,11 +64,16 @@ class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
   //}
 
   /// Update
-  override def update(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None,
-                      sideCode: Option[Int] = None, measures: Option[Measures] = None): Seq[Long] = {
-    val id: Seq[Long] =Seq(0,1)
-    id
-
-    throw new NotImplementedError
+  def update[value: Value, ids: Seq[Long]]
+  (mapOfAsset: Map[value, ids],
+   username: String
+  )= {
+    try{
+      for ((value: Value, ids: Seq[Long]) <- mapOfAsset) {
+        super.update(ids, value, username)
+      }
+    }catch {
+      case e:Exception =>println("error"+e.getMessage)
+    }
   }
 }
