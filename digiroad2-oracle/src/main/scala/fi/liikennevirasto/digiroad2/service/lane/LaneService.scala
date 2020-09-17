@@ -1176,7 +1176,7 @@ trait LaneOperations {
   }
 
 
-  def expireAllLanesInStateRoad(username: String) = {
+  def expireAllLanesInStateRoad(username: String): Any = {
     val existingLinkIds = dao.getAllLinkIdsInLanePosition()
     val stateRoadLinks = roadLinkService.getRoadsLinksFromVVH(existingLinkIds.toSet, false)
                                       .filter(_.administrativeClass == State)
