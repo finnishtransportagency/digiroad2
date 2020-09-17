@@ -30,7 +30,7 @@ class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
   //crud
 
   /// get
-  def get(): Unit = {
+  def getRaodwayLinear(): Unit = {
 
 
     val id: Seq[Long] =Seq(0,1)
@@ -39,18 +39,21 @@ class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
   }
 
   /// create
-  def create[typeId: Int, assetSequence: Seq[NewLinearAsset]]
+  //[typeId:int, assetSequence: Seq[NewLinearAsset]]
+  def createRaodwayLinear[typeId, assetSequence]
   (mapOfAsset: Map[typeId, assetSequence],
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
      createVVHTimeStamp())= {
+    val addedElementId:Seq[Int]= Seq.empty[Int]
     try{
       for ((typeId: Int, assetSequence: Seq[NewLinearAsset]) <- mapOfAsset) {
-        super.create(assetSequence, typeId, username, vvhTimeStamp)
+        addedElementId:+super.create(assetSequence, typeId, username, vvhTimeStamp)
       }
     }catch {
       case e:Exception =>println("error"+e.getMessage)
     }
+    addedElementId
   }
 
   /// Delete
@@ -64,7 +67,8 @@ class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
   //}
 
   /// Update
-  def update[value: Value, ids: Seq[Long]]
+  //value: Value, ids: Seq[Long]
+  def update[value , ids]
   (mapOfAsset: Map[value, ids],
    username: String
   )= {
