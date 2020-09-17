@@ -1,4 +1,7 @@
 -- NEW ASSET TYPE
+-- these are property not types
+
+
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
 VALUES (450, 'K1 keskiviiva', 'linear', 'db_migration_v236');
 INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
