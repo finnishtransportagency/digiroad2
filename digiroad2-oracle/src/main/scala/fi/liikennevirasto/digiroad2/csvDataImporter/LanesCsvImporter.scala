@@ -32,7 +32,6 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     "id" -> "id",
     "tietyyppi" -> "road type",
     "s_tietyyppi" -> "name road type",
-    "alkupvm" -> "date",
     "s_katyyppi" -> "name lane type"
   )
 
@@ -64,11 +63,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   }
 
   def verifyDateType(parameterName: String, parameterValue: String): ParsedRow = {
-    val trimmedValue = parameterValue.trim
-    val isDateParserOk = Try(DateParser.stringToDate(trimmedValue, DateParser.DatePropertyFormat))
+    val formattedValue = parameterValue.trim.replaceAll("[/-]", ".")
+
+    val isDateParserOk = Try(DateParser.stringToDate(formattedValue, DateParser.DatePropertyFormat))
 
     if (isDateParserOk.isSuccess) {
-      (Nil, List(AssetProperty(columnName = dateFieldMapping(parameterName), value = isDateParserOk.get)))
+      (Nil, List(AssetProperty(columnName = dateFieldMapping(parameterName), value = formattedValue)))
     } else {
       (List(parameterName), Nil)
     }
