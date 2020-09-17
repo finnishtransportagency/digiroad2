@@ -561,7 +561,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     assets.malformedRows.size should be (2)
     assets.malformedRows.last.malformedParameters should contain allOf ("kaista", "tie")
-    assets.malformedRows.head.malformedParameters should contain allOf ("kaista", "katyyppi", "aet", "let")
+    assets.malformedRows.head.malformedParameters should contain allOf ("katyyppi", "aet", "let")
   }
 
   test("validation for lanes import fails if parameters combinations are invalid", Tag("db")) {
