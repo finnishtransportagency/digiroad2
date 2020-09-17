@@ -185,7 +185,8 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         val endDistance = getPropertyValue(props, "end distance").toLong
         val track = getPropertyValue(props, "track").toInt
         val laneType = getPropertyValue(props, "lane type").toInt
-        val startDate = getPropertyValue(props, "start date")
+
+        val startDate = getPropertyValueOption(props, "start date").getOrElse("")
 
         val sideCode = track match {
           case 1 | 2 => SideCode.BothDirections

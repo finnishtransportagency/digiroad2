@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.lane.{LaneRoadAddressInfo, NewIncomeLane}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
+import fi.liikennevirasto.digiroad2.service.lane.LaneService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.{GeometryTransform, LaneUtils}
 import javax.sql.DataSource
@@ -48,6 +49,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   private val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   private val mockLaneUtils = MockitoSugar.mock[LaneUtils]
+  private val mockLaneService = MockitoSugar.mock[LaneService]
 
   val vvHRoadlink = Seq(VVHRoadlink(1611400, 235, Seq(Point(2, 2), Point(4, 4)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
   val roadLink = Seq(RoadLink(1, Seq(Point(2, 2), Point(4, 4)), 3.5, Municipality, 1, TrafficDirection.BothDirections, Motorway,  None, None, Map("MUNICIPALITYCODE" -> BigInt(408))))
@@ -74,6 +76,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override def roadLinkService: RoadLinkService = mockRoadLinkService
     override def laneUtils = mockLaneUtils
     override def eventBus: DigiroadEventBus = mockEventBus
+    override lazy val laneService = mockLaneService
   }
 
   object roadLinkCsvImporter extends RoadLinkCsvImporter(mockRoadLinkService, mockEventBus) {
@@ -575,6 +578,8 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     runWithRollback {
       when(lanesCsvImporter.laneUtils.processNewLanesByRoadAddress(any[Set[NewIncomeLane]], any[LaneRoadAddressInfo],
         any[Int], any[String], any[Boolean])).thenReturn()
+
+      when(lanesCsvImporter.laneService.expireAllLanesInStateRoad(any[String])).thenReturn()
 
       val laneRow = Map("kaista" -> 11, "katyyppi" -> 1, "tie" -> 999, "osa" -> 999, "ajorata" -> 1, "aet" -> 0, "let" -> 1000)
 
