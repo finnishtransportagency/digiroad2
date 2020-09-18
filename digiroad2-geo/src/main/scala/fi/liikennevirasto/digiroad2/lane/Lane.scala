@@ -91,6 +91,11 @@ object LaneNumber {
     mainLanes.contains(laneCode)
   }
 
+  def isValidLaneNumber (laneCode: Int): Boolean = {
+    val lanesNumbers = values.filterNot(_ == Unknown)
+    lanesNumbers.exists(x => x.againstDirection == laneCode || x.towardsDirection == laneCode) || MainLane.motorwayMaintenance == laneCode
+  }
+
   case object MainLane extends LaneNumber {
     def towardsDirection = 11
     def againstDirection = 21
