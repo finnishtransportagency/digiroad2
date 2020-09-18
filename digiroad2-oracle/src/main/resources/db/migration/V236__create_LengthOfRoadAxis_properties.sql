@@ -3,36 +3,105 @@ INSERT INTO ASSET_TYPE(ID, NAME, GEOMETRY_TYPE, CREATED_BY )
     VALUES (450,'Pituussuuntaiset tiemerkinnät','linear','db_migration_v236');
 
 -- LOCALIZED_STRING VALUE
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Asetus numero', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Kaistannumero', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Kaistantyyppi', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Suhteellinen sijainti', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'id', 'db_migration_v236', SYSDATE);
+DECLARE
+    foundItem;
+BEGIN
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Asetus numero';
+IF foundItem='Asetus numero'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Asetus numero', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Kaistannumero';
+IF foundItem='Kaistannumero'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Kaistannumero', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Kaistantyyppi';
+IF foundItem='Kaistantyyppi'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Kaistantyyppi', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Suhteellinen sijainti';
+IF foundItem='Suhteellinen sijainti'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Suhteellinen sijainti', 'db_migration_v236', SYSDATE);
+END IF;
+
+--INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+--VALUES (primary_key_seq.nextval, 'id', 'db_migration_v236', SYSDATE);
 --INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 --VALUES (primary_key_seq.nextval, 'kunto', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Merkinnän materiaali', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Merkinnän pituus', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Merkinnän leveys', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Profiilimerkintä', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Lisätieto', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Tila', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Loppu päivämäärä', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Alku päivämäärä', 'db_migration_v236', SYSDATE);
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Jyrsitty', 'db_migration_v236', SYSDATE);
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Merkinnän materiaali';
+IF foundItem='Merkinnän materiaali' THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Merkinnän materiaali', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Merkinnän pituus';
+IF foundItem='Merkinnän pituus' THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Merkinnän pituus', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Merkinnän leveys';
+IF foundItem='Merkinnän leveys' THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Merkinnän leveys', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Profiilimerkintä';
+IF foundItem='Profiilimerkintä'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Profiilimerkintä', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Lisätieto';
+IF foundItem='Lisätieto'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Lisätieto', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Tila';
+IF foundItem='Tila'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Tila', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Loppu päivämäärä';
+IF foundItem='Loppu päivämäärä'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Loppu päivämäärä', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Alku päivämäärä';
+IF foundItem='Alku päivämäärä'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Alku päivämäärä', 'db_migration_v236', SYSDATE);
+END IF;
+
+SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Jyrsitty';
+IF foundItem='Jyrsitty'  THEN
+ELSE
+    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+    VALUES (primary_key_seq.nextval, 'Jyrsitty', 'db_migration_v236', SYSDATE);
+END IF;
+END;
 
 -- add propeties
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
