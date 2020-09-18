@@ -101,7 +101,6 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
 
   override val intValueFieldsMapping = Map(
-    "arvo" -> "value",
     "korkeus" -> "height",
     "kaista" -> "lane",
     "arvioitu kayttoika" -> "lifespanLeft",
@@ -137,13 +136,33 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     "liikennemerkin tyyppi" -> "trafficSignType"
   )
 
-  val speedLimit = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120)
+  private val multiTypeValueFieldsMapping = Map(
+    "arvo" -> "value"
+  )
+
+  val speedLimitAllowedValues = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120)
   val speedLimitSigns: Seq[TrafficSignType] = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, MinimumSpeed, MinimumSpeedEnds)
+
+  val signsWithNumberAndSpecialMarksArvo: Seq[TrafficSignType] = Seq(ValidMonFri, ValidSat, ValidMultiplePeriod, ParkingAgainstFee)
+
+  val signsWithTextArvo: Seq[TrafficSignType] = Seq(AdvanceDirectionSign, AdvanceDirectionSign2, AdvanceDirectionSign3, AdvanceDirectionSignSmall, AdvanceDirectionSignSmall2, AdvanceDirectionSignSmall3, LaneSpecificNavigationBoard, AdvisorySignDetourLarge,
+                                                    AdvisorySignDetour, CompilationSign, AdvanceDirectionSignAbove, AdvanceDirectionSignAboveSmall, ExitSignAbove, ExitSign, LocationSign, AdvanceLocationSign, DirectionSignForCyclistsWithoutDistances,
+                                                    PlaceName3, RiverName, InformationSignForServices, InformationSignForServices2, AdvanceInformationSignForServices, LocationSignForTouristService, AdvanceLocationSignForTouristService,
+                                                    TouristRouteTextOnly, TouristRoute)
+
+  val signsWithNumberAndTextArvo: Seq[TrafficSignType] = Seq(DirectionSign, DirectionSignOnPrivateRoad, DirectionSignForLocalPurposes, DirectionSignForMotorway, DirectionSignForPedestrians, DirectionSignForCyclistsWithDistances,
+                                                             AdvanceDirectionSignForCyclistsWithDistances, DistanceBoardForCyclists, SignShowingDistance, RoadNumberInternationalRoad, TimeLimit, ObligatoryUseOfParkingDisc, ObligatoryUseOfParkingDisc2)
+
+  val signsWithNumberArvo: Seq[TrafficSignType] = Seq(NoWidthExceeding, MaxHeightExceeding, MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, RecommendedMaxSpeed, RoadNumberHighway,
+                                                      RoadNumberPrimaryRoad, RoadNumberRegionalRoad, RoadNumberOtherRoad, RoadNumberRingRoad, ExitNumber, DirectionToTheNumberedRoad, DirectionToTheNumberedPrimaryRoad,
+                                                      SignAppliesDirectionOfTheArrowWithDistance, SignAppliesDirectionOfTheArrowWithDistance2, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, DistanceCompulsoryStop, FreeWidth, FreeHeight,
+                                                      UnderpassHeight)
+
   val signsRequireArvo: Seq[TrafficSignType] = Seq(NoWidthExceeding, MaxHeightExceeding, MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding,
                                                     MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding ) ++ speedLimitSigns
 
   val mappings : Map[String, String] = longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings ++ singleChoiceMapping ++ multiChoiceMapping ++
-                                       additionalPanelMapping ++ dateFieldsMapping ++ intValueFieldsMapping
+                                       additionalPanelMapping ++ dateFieldsMapping ++ intValueFieldsMapping ++ multiTypeValueFieldsMapping
 
   override def mandatoryFields: Set[String] = longValueFieldMappings.keySet ++ codeValueFieldMappings.keySet
 
@@ -183,6 +202,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   override def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedRow = {
+    val trafficSignCode = csvRowWithHeaders.get("liikennemerkin tyyppi")
+
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
       val (key, value) = parameter
 
@@ -200,6 +221,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           result.copy(_2 = AssetProperty(columnName = dateFieldsMapping(key), value = value) :: result._2)
         } else if (intValueFieldsMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = intValueFieldsMapping(key), value = value) :: result._2)
+        } else if (multiTypeValueFieldsMapping.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = multiTypeValueFieldsMapping(key), value = value) :: result._2)
         } else if (nonMandatoryMappings.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
         } else
@@ -223,6 +246,9 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (intValueFieldsMapping.contains(key)) {
           val (malformedParameters, properties) = verifyIntType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (multiTypeValueFieldsMapping.contains(key)) {
+          val (malformedParameters, properties) = verifyMultiType(key, value.toString, trafficSignCode.get)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (additionalPanelMapping.contains(key)) {
           result.copy(_2 = AssetProperty(columnName = additionalPanelMapping(key), value = value) :: result._2)
@@ -337,7 +363,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
         arvoValue match {
           case Some(value) if value.trim.nonEmpty && speedLimitSigns.contains(trafficSign) =>
-            if (speedLimit.contains(value.toInt) )
+            if (speedLimitAllowedValues.contains(value.toInt) )
               (true, Nil)
             else
               (false, Seq("Wrong speed limit value"))
@@ -431,6 +457,21 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
         case _ =>
       }})
     Set(Some(SimplePointAssetProperty(additionalPanelPublicId, res)))
+  }
+
+  private def verifyMultiType(parameterName: String, parameterValue: String, trafficSignCode: String): ParsedRow = {
+    val trafficSignType: TrafficSignType = TrafficSignType.applyNewLawCode(trafficSignCode)
+
+    if ((signsWithNumberArvo.contains(trafficSignType) && !parameterValue.forall(_.isDigit)) ||
+      (signsWithNumberAndTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9 ]*$")) ||
+      (signsWithTextArvo.contains(trafficSignType) && !parameterValue.forall(_.isLetter)) ||
+      (signsWithNumberAndSpecialMarksArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)$"))) {
+
+      (List(parameterName), Nil)
+    }
+    else
+      (Nil, List(AssetProperty(columnName = multiTypeValueFieldsMapping(parameterName), value = parameterValue)))
+
   }
 
   override def createAsset(trafficSignAttributes: Seq[CsvAssetRowAndRoadLink], user: User, result: ImportResultData ): ImportResultData = {
