@@ -1,6 +1,6 @@
 -- NEW ASSET TYPE
 INSERT INTO ASSET_TYPE(ID, NAME, GEOMETRY_TYPE, CREATED_BY)
-VALUES (450, 'Pituussuuntaiset tiemerkinnät', 'linear', 'db_migration_v236');
+VALUES (460, 'Pituussuuntaiset tiemerkinnät', 'linear', 'db_migration_v236');
 
 -- LOCALIZED_STRING VALUE
 DECLARE
@@ -157,7 +157,6 @@ VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'milled'
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'condition',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kunto'));
-
 
 -- ENUMARATED VALUE CONDITION
 
