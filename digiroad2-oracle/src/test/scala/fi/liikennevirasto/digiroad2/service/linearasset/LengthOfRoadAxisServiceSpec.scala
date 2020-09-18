@@ -71,6 +71,29 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
 class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
 
 
+  // create new asset
+ test ("create new LengthOfRoadAxis asset"){
+
+ }
+
+
+  // get new asset
+  test ("get new LengthOfRoadAxis asset"){
+
+  }
+
+  // update new asset
+
+  test ("update new LengthOfRoadAxis asset"){
+
+  }
+
+  // delete new asset
+
+  test ("delete new LengthOfRoadAxis asset"){
+
+  }
+
 }
 
 
