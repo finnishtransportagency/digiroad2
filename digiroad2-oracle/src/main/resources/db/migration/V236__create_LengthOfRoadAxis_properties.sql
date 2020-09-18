@@ -6,11 +6,10 @@ VALUES (450, 'Pituussuuntaiset tiemerkinnät', 'linear', 'db_migration_v236');
 DECLARE
     foundItem VARCHAR2(256);
 BEGIN
-    -- LOCALIZED_STRING VALUE
-    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Asetus numero';
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Asetusnumero';
     IF foundItem = 0 THEN
         INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-        VALUES (primary_key_seq.nextval, 'Asetus numero', 'db_migration_v236', SYSDATE);
+        VALUES (primary_key_seq.nextval, 'Asetusnumero', 'db_migration_v236', SYSDATE);
     END IF;
 
     SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Kaistannumero';
@@ -91,23 +90,28 @@ BEGIN
         INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
         VALUES (primary_key_seq.nextval, 'Kuntanumero', 'db_migration_v236', SYSDATE);
     END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Kunto';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Kunto', 'db_migration_v236', SYSDATE);
+    END IF;
 END;
 
 -- add propeties
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'single_choice', 1, 'db_migration_v236', 'asetus_num',
-        (select id from LOCALIZED_STRING where VALUE_FI = 'Asetus numero'));
+VALUES (primary_key_seq.nextval, 450, 'single_choice', 1, 'db_migration_v236', 'regulatory_number',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Asetusnumero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'kaistanro',
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'lane_number',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kaistannumero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'kaistatyyp',
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'lane_type',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kaistantyyppi'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 1, 'db_migration_v236', 's_sijainti',
+VALUES (primary_key_seq.nextval, 450, 'number', 1, 'db_migration_v236', 'lane_location',
         (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Suhteellinen sijainti'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
@@ -115,59 +119,63 @@ VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'municip
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kuntanumero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'materiaali',
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'material',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän materiaali'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'pituus',
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'length',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän pituus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'leveys',
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'width',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän leveys'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'koholla',
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'raised',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Profiilimerkintä'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'lisatieto',
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'additional_information',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Lisätieto'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID,
                       DEFAULT_VALUE)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'tila',
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'state',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Tila'), 3);
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'loppu_pvm',
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'end_date',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Loppu päivämäärä'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'alku_pvm',
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'start_date',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Alku päivämäärä'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'jyrsitty',
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'milled',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Jyrsitty'));
+INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'condition',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Kunto'));
+
 
 -- ENUMARATED VALUE CONDITION
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 1, 'Erittäin huono', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 2, 'Huono', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 3, 'Tyydyttävä', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 5, 'Hyvä', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 6, 'Erittäin hyvä', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 --material
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 1, 'Maali', '', 'db_migration_v236',
@@ -179,19 +187,19 @@ VALUES (primary_key_seq.nextval, 2, 'Massa', '', 'db_migration_v236',
 -- RoadMark asetusnumero
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K1 keskiviiva', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'asetus_num'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K2 ajokaistaviiva', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'asetus_num'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K3 Sulkuviiva', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'asetus_num'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K4 Varoitusviiva', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'asetus_num'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K5 Sulkualue', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'asetus_num'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K6 Reunaviiva', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'asetus_num'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
