@@ -69,7 +69,7 @@ VALUES (primary_key_seq.nextval, 460, 'number', 0, 'db_migration_v236', 'width',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän leveys'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', 'raised',
+VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', 'profile_mark',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Profiilimerkintä'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
@@ -92,6 +92,7 @@ VALUES (primary_key_seq.nextval, 460, 'date', 0, 'db_migration_v236', 'start_dat
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', 'milled',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Jyrsitty'));
+
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', 'condition',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kunto'));
@@ -140,3 +141,46 @@ VALUES (primary_key_seq.nextval, 'K5 Sulkualue', '', 'db_migration_v236',
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 'K6 Reunaviiva', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
+
+-- profile mark
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 1, 'Ei', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'profile_mark'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 2, 'Kellä', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'profile_mark'));
+
+-- state tila
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 1, 'Suunnitteilla', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'state'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 2, 'Rakenteilla', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'state'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 3, 'Käytössä pysyvästi', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'state'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 4, 'Käytössä tilapäisesti', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'state'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 5, 'Pois käytössä tilapäisesti', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'state'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 6, 'Poistuva pysyvä laite', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'state'));
+-- jyrsitty
+
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 1, 'Ei', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'milled'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 2, 'Pintamerkintä', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'milled'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 3, 'Siniaalto', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'milled'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 4, 'Sylinterimerkintä', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'milled'));
