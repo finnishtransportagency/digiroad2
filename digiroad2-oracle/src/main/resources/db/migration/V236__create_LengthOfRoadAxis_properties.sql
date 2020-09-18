@@ -1,168 +1,180 @@
 -- NEW ASSET TYPE
-INSERT INTO ASSET_TYPE(ID, NAME, GEOMETRY_TYPE, CREATED_BY )
-    VALUES (450,'Pituussuuntaiset tiemerkinnät','linear','db_migration_v236');
+INSERT INTO ASSET_TYPE(ID, NAME, GEOMETRY_TYPE, CREATED_BY)
+VALUES (450, 'Pituussuuntaiset tiemerkinnät', 'linear', 'db_migration_v236');
 
 -- LOCALIZED_STRING VALUE
 DECLARE
-    foundItem;
+    foundItem VARCHAR2(256);
 BEGIN
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Asetus numero';
-IF foundItem='Asetus numero'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Asetus numero', 'db_migration_v236', SYSDATE);
-END IF;
+    -- LOCALIZED_STRING VALUE
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Asetus numero';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Asetus numero', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Kaistannumero';
-IF foundItem='Kaistannumero'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Kaistannumero', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Kaistannumero';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Kaistannumero', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Kaistantyyppi';
-IF foundItem='Kaistantyyppi'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Kaistantyyppi', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Kaistantyyppi';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Kaistantyyppi', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Suhteellinen sijainti';
-IF foundItem='Suhteellinen sijainti'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Suhteellinen sijainti', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Suhteellinen sijainti';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Suhteellinen sijainti', 'db_migration_v236', SYSDATE);
+    END IF;
 
---INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
---VALUES (primary_key_seq.nextval, 'id', 'db_migration_v236', SYSDATE);
---INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
---VALUES (primary_key_seq.nextval, 'kunto', 'db_migration_v236', SYSDATE);
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Merkinnän materiaali';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Merkinnän materiaali', 'db_migration_v236', SYSDATE);
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Merkinnän materiaali';
-IF foundItem='Merkinnän materiaali' THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Merkinnän materiaali', 'db_migration_v236', SYSDATE);
-END IF;
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Merkinnän pituus';
-IF foundItem='Merkinnän pituus' THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Merkinnän pituus', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Merkinnän pituus';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Merkinnän pituus', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Merkinnän leveys';
-IF foundItem='Merkinnän leveys' THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Merkinnän leveys', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Merkinnän leveys';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Merkinnän leveys', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Profiilimerkintä';
-IF foundItem='Profiilimerkintä'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Profiilimerkintä', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Profiilimerkintä';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Profiilimerkintä', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Lisätieto';
-IF foundItem='Lisätieto'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Lisätieto', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Lisätieto';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Lisätieto', 'db_migration_v236', SYSDATE);
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Tila';
-IF foundItem='Tila'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Tila', 'db_migration_v236', SYSDATE);
-END IF;
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Loppu päivämäärä';
-IF foundItem='Loppu päivämäärä'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Loppu päivämäärä', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Tila';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Tila', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Alku päivämäärä';
-IF foundItem='Alku päivämäärä'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Alku päivämäärä', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Loppu päivämäärä';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Loppu päivämäärä', 'db_migration_v236', SYSDATE);
+    END IF;
 
-SELECT VALUE_FI INTO foundItem  FROM LOCALIZED_STRING WHERE VALUE_FI ='Jyrsitty';
-IF foundItem='Jyrsitty'  THEN
-ELSE
-    INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-    VALUES (primary_key_seq.nextval, 'Jyrsitty', 'db_migration_v236', SYSDATE);
-END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Alku päivämäärä';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Alku päivämäärä', 'db_migration_v236', SYSDATE);
+    END IF;
+
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Jyrsitty';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Jyrsitty', 'db_migration_v236', SYSDATE);
+    END IF;
+    SELECT COUNT(*) INTO foundItem FROM LOCALIZED_STRING WHERE VALUE_FI = 'Kuntanumero';
+    IF foundItem = 0 THEN
+        INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
+        VALUES (primary_key_seq.nextval, 'Kuntanumero', 'db_migration_v236', SYSDATE);
+    END IF;
 END;
 
 -- add propeties
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 1, 'db_migration_v236', 'asetus_num', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Asetus numero'));
+VALUES (primary_key_seq.nextval, 450, 'single_choice', 1, 'db_migration_v236', 'asetus_num',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Asetus numero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'kaistanro', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Kaistannumero'));
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'kaistanro',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Kaistannumero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'kaistatyyp', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'kaistatyyp'));
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'kaistatyyp',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Kaistantyyppi'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 1, 'db_migration_v236', 's_sijainti', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Suhteellinen sijainti'));
+VALUES (primary_key_seq.nextval, 450, 'number', 1, 'db_migration_v236', 's_sijainti',
+        (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Suhteellinen sijainti'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'id', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'id'));
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'municipal_id',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Kuntanumero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'materiaali', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Merkinnän materiaali'));
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'materiaali',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän materiaali'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'pituus', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Merkinnän pituus'));
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'pituus',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän pituus'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'leveys', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Merkinnän leveys'));
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'leveys',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Merkinnän leveys'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'koholla', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Profiilimerkintä'));
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'koholla',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Profiilimerkintä'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'lisatieto', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Lisätieto'));
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'lisatieto',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Lisätieto'));
 
-INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID,DEFAULT_VALUE)
-VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'tila', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Tila'),3);
-
-INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'loppu_pvm', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Loppu päivämäärä'));
-
-INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'alku_pvm', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Alku päivämäärä'));
+INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID,
+                      DEFAULT_VALUE)
+VALUES (primary_key_seq.nextval, 450, 'number', 0, 'db_migration_v236', 'tila',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Tila'), 3);
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'jyrsitty', (select max(id) from LOCALIZED_STRING where VALUE_FI = 'Jyrsitty'));
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'loppu_pvm',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Loppu päivämäärä'));
+
+INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'alku_pvm',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Alku päivämäärä'));
+
+INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
+VALUES (primary_key_seq.nextval, 450, 'string', 0, 'db_migration_v236', 'jyrsitty',
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Jyrsitty'));
 
 -- ENUMARATED VALUE CONDITION
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 1, 'Erittäin huono', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'tila'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 2, 'Huono', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'tila'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 3, 'Tyydyttävä', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'tila'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 5, 'Hyvä', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'tila'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 6, 'Erittäin hyvä', '', 'db_migration_v236',
-        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'tila'));
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'kunto'));
+--material
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 1, 'Maali', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'material'));
+INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 2, 'Massa', '', 'db_migration_v236',
+        (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'material'));
 
 -- RoadMark asetusnumero
 INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
