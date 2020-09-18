@@ -4,7 +4,6 @@ import java.io.{InputStream, InputStreamReader}
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.{DateParser, SideCode}
-import fi.liikennevirasto.digiroad2.lane.LaneNumber.{FourthRightAdditional, MainLane}
 import fi.liikennevirasto.digiroad2.lane._
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -86,21 +85,12 @@ class LanesCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   def verifyLaneNumber(parameterName: String, parameterValue: String): ParsedRow = {
     val trimmedValue = parameterValue.trim
 
-    val isValidLaneNumber = Try(trimmedValue.toInt) match {
-                case Success(value) =>
-                      val isMotorwayMaintenance = value == MainLane.motorwayMaintenance
-                      val isAgainstDirection = value >= MainLane.againstDirection && value <= FourthRightAdditional.againstDirection
-                      val isTowardsDirection = value >= MainLane.towardsDirection && value <= FourthRightAdditional.towardsDirection
+    Try(trimmedValue.toInt) match {
+                case Success(value) if (LaneNumber.isValidLaneNumber(value)) =>
+                  (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = trimmedValue)))
 
-                      isMotorwayMaintenance || isAgainstDirection || isTowardsDirection
-
-                case _ => false
-              }
-
-    if ( isValidLaneNumber ) {
-      (Nil, List(AssetProperty(columnName = laneNumberFieldMapping(parameterName), value = trimmedValue)))
-    } else {
-      (List(parameterName), Nil)
+                case _ =>
+                  (List(parameterName), Nil)
     }
   }
 
