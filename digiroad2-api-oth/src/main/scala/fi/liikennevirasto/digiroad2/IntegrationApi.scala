@@ -841,7 +841,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         "additionalPanelText" -> panel.text,
         "additionalPanelSize" -> AdditionalPanelSize.apply(panel.size).getOrElse(SizeOption99).propertyDisplayValue,
         "additionalPanelCoatingType" -> AdditionalPanelCoatingType.apply(panel.coating_type).getOrElse(CoatingTypeOption99).propertyDisplayValue,
-        "additionalPanelColor" -> AdditionalPanelColor.apply(panel.additional_panel_color).getOrElse(ColorOption99).propertyDisplayValue
+        "additionalPanelColor" -> AdditionalPanelColor.apply(panel.additional_panel_color).getOrElse(UnknownColorOption).propertyDisplayValue
       )
     }
   }
