@@ -9,8 +9,13 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.apache.commons.lang3.NotImplementedException
 
-class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
-                         eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+
+case class assestDTO(typeId: Int, assetSequence: Seq[NewLinearAsset]) {}
+
+class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
+                              eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
 
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
@@ -33,51 +38,50 @@ class LengthOfRoadAxisService (roadLinkServiceImpl: RoadLinkService,
   def getRaodwayLinear(): Unit = {
 
 
-    val id: Seq[Long] =Seq(0,1)
+    val id: Seq[Long] = Seq(0, 1)
     id
     throw new NotImplementedError
   }
 
   /// create
   //[typeId:int, assetSequence: Seq[NewLinearAsset]]
-  def createRaodwayLinear[typeId, assetSequence]
-  (mapOfAsset: Map[typeId, assetSequence],
+  def createRoadwayLinear
+  (listOfAsset: List[assestDTO],
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
-     createVVHTimeStamp())= {
-    val addedElementId:Seq[Int]= Seq.empty[Int]
-    try{
-      for ((typeId: Int, assetSequence: Seq[NewLinearAsset]) <- mapOfAsset) {
-        addedElementId:+super.create(assetSequence, typeId, username, vvhTimeStamp)
-      }
-    }catch {
-      case e:Exception =>println("error"+e.getMessage)
+     createVVHTimeStamp()) = {
+    val addedElementId = for (item <- listOfAsset) yield {
+       super.create(item.assetSequence, item.typeId, username, vvhTimeStamp)
     }
     addedElementId
   }
 
+  /// create
+  //[typeId:int, assetSequence: Seq[NewLinearAsset]]
+
+
   /// Delete
   //override def expire(ids: Seq[Long], username: String): Seq[Long] = {
-   // if (ids.nonEmpty)
-    //  logger.info("Expiring ids " + ids.mkString(", "))
-   // withDynTransaction {
-    //  ids.foreach(dao.updateExpiration(_, true, username))
-     // ids
-   // }
+  // if (ids.nonEmpty)
+  //  logger.info("Expiring ids " + ids.mkString(", "))
+  // withDynTransaction {
+  //  ids.foreach(dao.updateExpiration(_, true, username))
+  // ids
+  // }
   //}
 
   /// Update
   //value: Value, ids: Seq[Long]
-  def update[value , ids]
+  def update[value, ids]
   (mapOfAsset: Map[value, ids],
    username: String
-  )= {
-    try{
+  ) = {
+    try {
       for ((value: Value, ids: Seq[Long]) <- mapOfAsset) {
         super.update(ids, value, username)
       }
-    }catch {
-      case e:Exception =>println("error"+e.getMessage)
+    } catch {
+      case e: Exception => println("error" + e.getMessage)
     }
   }
 }
