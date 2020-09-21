@@ -9,10 +9,9 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.apache.commons.lang3.NotImplementedException
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-
-case class assestDTO(typeId: Int, assetSequence: Seq[NewLinearAsset]) {}
+case class assestCreateDTO(typeId: Int, assetSequence: Seq[NewLinearAsset]) {}
+case class assestUpdateDTO(ids:Seq[Long], value:Value) {}
+case class assestExpireDTO(ids:Seq[Long]) {}
 
 class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
                               eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -31,9 +30,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   override def assetDao: OracleAssetDao = new OracleAssetDao
 
   override def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
-
   //crud
-
   /// get
   def getRaodwayLinear(): Unit = {
 
@@ -46,7 +43,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   /// create
   //[typeId:int, assetSequence: Seq[NewLinearAsset]]
   def createRoadwayLinear
-  (listOfAsset: List[assestDTO],
+  (listOfAsset: List[assestCreateDTO],
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
      createVVHTimeStamp()) = {
@@ -56,32 +53,20 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
     addedElementId
   }
 
-  /// create
-  //[typeId:int, assetSequence: Seq[NewLinearAsset]]
-
-
-  /// Delete
-  //override def expire(ids: Seq[Long], username: String): Seq[Long] = {
-  // if (ids.nonEmpty)
-  //  logger.info("Expiring ids " + ids.mkString(", "))
-  // withDynTransaction {
-  //  ids.foreach(dao.updateExpiration(_, true, username))
-  // ids
-  // }
-  //}
-
-  /// Update
-  //value: Value, ids: Seq[Long]
-  def update[value, ids]
-  (mapOfAsset: Map[value, ids],
+  def expireRoadwayLinear
+  (mapOfAsset: List[assestUpdateDTO],
    username: String
   ) = {
-    try {
-      for ((value: Value, ids: Seq[Long]) <- mapOfAsset) {
-        super.update(ids, value, username)
-      }
-    } catch {
-      case e: Exception => println("error" + e.getMessage)
-    }
+    val expiredElement=   for (item <- mapOfAsset) yield {super.expire(item.ids, username)}
+    expiredElement
+  }
+
+  /// Update
+  def update
+  (mapOfAsset: List[assestUpdateDTO],
+   username: String
+  ) = {
+   val modifiedElement=   for (item <- mapOfAsset) yield {super.update(item.ids, item.value, username)}
+    modifiedElement
   }
 }
