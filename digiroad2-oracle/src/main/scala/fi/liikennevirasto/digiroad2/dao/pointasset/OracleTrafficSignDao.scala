@@ -413,24 +413,8 @@ object OracleTrafficSignDao {
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 
-  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
-  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
-  private def numberPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsNumberProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
   private def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
-  private def datePropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsDateProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   private def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
@@ -439,14 +423,14 @@ object OracleTrafficSignDao {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
-        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+        } else if (PropertyValidator.textPropertyValueDoesNotExist(assetId, propertyId)) {
           insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         } else {
           updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
+        if (PropertyValidator.singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
@@ -469,18 +453,18 @@ object OracleTrafficSignDao {
       case Date =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
         val isBlank =  propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty
-        if (!datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
+        if (!PropertyValidator.datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
           deleteDateProperty(assetId, propertyId).execute
-        } else if (datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
+        } else if (PropertyValidator.datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
           insertDateProperty(assetId, propertyId, DateParser.DatePropertyFormat.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue)).execute
-        } else if (!datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank){
+        } else if (!PropertyValidator.datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank){
           updateDateProperty(assetId, propertyId, DateParser.DatePropertyFormat.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue)).execute
         }
       case Number =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty) {
           deleteNumberProperty(assetId, propertyId).execute
-        } else if (numberPropertyValueDoesNotExist(assetId, propertyId)) {
+        } else if (PropertyValidator.numberPropertyValueDoesNotExist(assetId, propertyId)) {
           insertNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
         } else {
           updateNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute

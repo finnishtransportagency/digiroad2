@@ -236,14 +236,6 @@ object OracleRailwayCrossingDao {
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 
-  def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
-  def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
   def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
@@ -254,14 +246,14 @@ object OracleRailwayCrossingDao {
         if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
         if (propertyValues.isEmpty) {
           deleteTextProperty(assetId, propertyId).execute
-        } else if (textPropertyValueDoesNotExist(assetId, propertyId)) {
+        } else if (PropertyValidator.textPropertyValueDoesNotExist(assetId, propertyId)) {
           insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         } else {
           updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
         }
       case SingleChoice =>
         if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-        if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
+        if (PropertyValidator.singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
         } else {
           updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute

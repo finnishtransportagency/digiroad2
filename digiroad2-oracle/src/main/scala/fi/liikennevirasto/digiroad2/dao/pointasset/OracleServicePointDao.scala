@@ -256,14 +256,6 @@ object OracleServicePointDao {
     (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
   }
 
-  def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
-  def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    StaticQuery.query[(Long, Long), Long](existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
   def multipleChoiceValueDoesNotExist(assetId: Long, propertyId: Long): Boolean = {
     StaticQuery.query[(Long, Long), Long](existsMultipleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
