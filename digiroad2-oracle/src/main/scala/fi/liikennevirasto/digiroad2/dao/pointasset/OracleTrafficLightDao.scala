@@ -289,12 +289,16 @@ object OracleTrafficLightDao {
           updateTextProperty(assetId, propertyId, extractedPropertyValue, groupedId).execute
         }
       case SingleChoice =>
-        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
-
-        if (singleChoiceValueDoesNotExist(assetId, propertyId, groupedId)) {
-          insertSingleChoiceProperty(assetId, propertyId, extractedPropertyValue.toDouble, groupedId).execute
-        } else {
-          updateSingleChoiceProperty(assetId, propertyId, extractedPropertyValue.toDouble, groupedId).execute
+        if (propertyValues.size != 1) {
+          throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
+        }
+        else if (extractedPropertyValue.trim.nonEmpty) {
+          /* This need to do cast to Double because of the property trafficLight_type */
+          if (singleChoiceValueDoesNotExist(assetId, propertyId, groupedId)) {
+            insertSingleChoiceProperty(assetId, propertyId, extractedPropertyValue.toDouble, groupedId).execute
+          } else {
+            updateSingleChoiceProperty(assetId, propertyId, extractedPropertyValue.toDouble, groupedId).execute
+          }
         }
       case Number =>
         if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
