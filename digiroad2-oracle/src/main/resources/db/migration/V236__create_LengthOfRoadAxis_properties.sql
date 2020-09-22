@@ -123,23 +123,23 @@ VALUES (primary_key_seq.nextval, 2, 'Massa', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'material'));
 
 -- RoadMark asetusnumero
-INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 'K1 keskiviiva', '', 'db_migration_v236',
+INSERT INTO ENUMERATED_VALUE (ID,VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval,1, 'K1 keskiviiva', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
-INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 'K2 ajokaistaviiva', '', 'db_migration_v236',
+INSERT INTO ENUMERATED_VALUE (ID,VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 2,'K2 ajokaistaviiva', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
-INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 'K3 Sulkuviiva', '', 'db_migration_v236',
+INSERT INTO ENUMERATED_VALUE (ID,VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 3,'K3 Sulkuviiva', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
-INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 'K4 Varoitusviiva', '', 'db_migration_v236',
+INSERT INTO ENUMERATED_VALUE (ID, VALUE,NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 4,'K4 Varoitusviiva', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
-INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 'K5 Sulkualue', '', 'db_migration_v236',
+INSERT INTO ENUMERATED_VALUE (ID,VALUE ,NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 5,'K5 Sulkualue', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
-INSERT INTO ENUMERATED_VALUE (ID, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 'K6 Reunaviiva', '', 'db_migration_v236',
+INSERT INTO ENUMERATED_VALUE (ID,VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
+VALUES (primary_key_seq.nextval, 6,'K6 Reunaviiva', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'regulatory_number'));
 
 -- profile mark
