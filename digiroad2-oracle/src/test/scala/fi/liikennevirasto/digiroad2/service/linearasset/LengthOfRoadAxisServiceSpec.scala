@@ -114,11 +114,13 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
       .thenReturn(roadLinkSequence)
 
-    var value = DynamicProperty(publicId = ???, propertyType = ???, required = ???, values = ???)
+    val valueTest = DynamicProperty(publicId = "test", propertyType = "test", required = false,
+      values = Seq(DynamicPropertyValue("0")))
+    val valuesAssetTest= DynamicAssetValue(Seq(valueTest))
     val listOfElement: List[assestUpdateDTO] = List(
-      assestUpdateDTO(Seq(200293),DynamicValue(DynamicAssetValue(Seq(DynamicProperty())))) ,
-      assestUpdateDTO(Seq(200293L),DynamicValue(11)) ,
-      assestUpdateDTO(Seq(200293L), DynamicValue(100))
+      assestUpdateDTO(Seq(200293),DynamicValue(valuesAssetTest)),
+      assestUpdateDTO(Seq(200293L),DynamicValue(valuesAssetTest)) ,
+      assestUpdateDTO(Seq(200293L), DynamicValue(valuesAssetTest))
     )
     val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
     val result2 = service.updateRoadwayLinear(
