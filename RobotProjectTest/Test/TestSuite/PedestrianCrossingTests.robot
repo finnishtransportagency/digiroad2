@@ -28,5 +28,5 @@ Open Staging webpage by Chrome
 
 Go to a specific Asset
     [Arguments]    ${asset_id}
-    Click Element    //*[contains(text(),'Valitse tietolaji')]
+    Click Element    xpath://*[contains(text(),'Valitse tietolaji')]
     Click Element    id=${asset_id}
