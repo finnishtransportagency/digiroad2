@@ -2354,4 +2354,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       )
     }
   }
+
+
+  get("/lane/lengthOfRoadAxis/"){}
+  //add
+  post("/lane/lengthOfRoadAxis/"){}
+  //update
+  post("/lane/lengthOfRoadAxis/"){}
+
+  delete("/lane/lengthOfRoadAxis/"){}
+
 }

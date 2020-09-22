@@ -62,7 +62,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   }
 
   /// Update
-  def update
+  def updateRoadwayLinear
   (mapOfAsset: List[assestUpdateDTO],
    username: String
   ) = {
