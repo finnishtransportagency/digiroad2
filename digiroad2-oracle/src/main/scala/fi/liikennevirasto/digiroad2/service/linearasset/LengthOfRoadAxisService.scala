@@ -50,6 +50,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
     val addedElementId = for (item <- listOfAsset) yield {
        super.create(item.assetSequence, item.typeId, username, vvhTimeStamp)
     }
+    eventBusImpl.publish("LengthOfRoadAxisService:create",addedElementId.toSet)
     addedElementId
   }
 
@@ -58,6 +59,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
    username: String
   ) = {
     val expiredElement=   for (item <- mapOfAsset) yield {super.expire(item.ids, username)}
+    eventBusImpl.publish("LengthOfRoadAxisService:expire",expiredElement.toSet)
     expiredElement
   }
 
@@ -67,6 +69,8 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
    username: String
   ) = {
    val modifiedElement=   for (item <- mapOfAsset) yield {super.update(item.ids, item.value, username)}
+
+    eventBusImpl.publish("LengthOfRoadAxisService:update",modifiedElement.toSet)
     modifiedElement
   }
 }
