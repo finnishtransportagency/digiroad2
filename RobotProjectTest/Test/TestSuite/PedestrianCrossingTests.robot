@@ -1,7 +1,6 @@
 *** Settings ***
 Documentation           Suite description
 Library                 SeleniumLibrary
-Variables  ../Variable/Variables.py
 
 *** Variables ***
 ${BROWSER}      %{BROWSER}
