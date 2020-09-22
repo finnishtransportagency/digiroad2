@@ -88,7 +88,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
-                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService)
+                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
+                  val lengthOfRoadAxisService:LengthOfRoadAxisService= Digiroad2Context.lengthOfRoadAxisService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -2356,12 +2357,24 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
 
-  get("/lane/lengthOfRoadAxis/"){}
+  get("/lane/lengthOfRoadAxis/"){
+    var test ="test"
+    test
+  }
   //add
-  post("/lane/lengthOfRoadAxis/"){}
+  post("/lane/lengthOfRoadAxis/"){
+    var test ="test"
+    test
+  }
   //update
-  post("/lane/lengthOfRoadAxis/"){}
+  post("/lane/lengthOfRoadAxis/"){
+    var test ="test"
+    test
+  }
 
-  delete("/lane/lengthOfRoadAxis/"){}
+  delete("/lane/lengthOfRoadAxis/"){
+    var test ="test"
+    test
+  }
 
 }
