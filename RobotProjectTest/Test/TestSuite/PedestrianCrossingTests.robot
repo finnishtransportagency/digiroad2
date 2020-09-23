@@ -26,8 +26,7 @@ Open Staging webpage by Chrome
     Click Button    class=submit
     Sleep    5s
 
-
 Go to a specific Asset
     [Arguments]    ${asset_id}
-    Click Element    xpath=(//button[text() = "Valitse tietolaji")])[1]
+    Click Element     //*[contains(text(),'Valitse tietolaji')]
     Click Element    id=${asset_id}
