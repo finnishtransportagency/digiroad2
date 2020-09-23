@@ -65,21 +65,27 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   }
 
   def expireRoadwayLinear
-  (mapOfAsset: List[LengthOfRoadAxisUpdate],
+  (listOfAsset: List[LengthOfRoadAxisUpdate],
    username: String
   ) = {
-    val expiredElement=   for (item <- mapOfAsset) yield {super.expire(item.ids, username)}
+    withDynTransaction{
+
+    }
+
+    val expiredElement=   for (item <- listOfAsset) yield {super.expire(item.ids, username)}
     eventBusImpl.publish("LengthOfRoadAxisService:expire",expiredElement.toSet)
     expiredElement
   }
 
   /// Update
   def updateRoadwayLinear
-  (mapOfAsset: List[LengthOfRoadAxisUpdate],
+  (listOfAsset: List[LengthOfRoadAxisUpdate],
    username: String
   ) = {
-   val modifiedElement=   for (item <- mapOfAsset) yield {super.update(item.ids, item.value, username)}
-
+   val modifiedElement=
+     withDynTransaction{
+       for (item <- listOfAsset) yield {super.updateWithoutTransaction(item.ids, item.value, username)}
+     }
     eventBusImpl.publish("LengthOfRoadAxisService:update",modifiedElement.toSet)
     modifiedElement
   }
