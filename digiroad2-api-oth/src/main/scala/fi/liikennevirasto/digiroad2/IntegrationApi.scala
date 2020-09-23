@@ -567,26 +567,33 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
   }
 
   def trafficLightsToApi(trafficLights: Seq[TrafficLight]): Seq[Map[String, Any]] = {
+
+    def getProperty( properties: Seq[Property], publicId: String): Option[String] = {
+      if ( !properties.exists(_.publicId == publicId) )
+        Some("")
+      else
+        trafficLightService.getProperty(properties, publicId).map(_.propertyDisplayValue.getOrElse(""))
+    }
+
     trafficLights.filterNot(x => x.floating | isSuggested(x)).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "trafficLights" -> trafficLight.propertyData.groupBy(_.groupedId).map { case (_, properties) =>
         Map(
-          "trafficLightType" -> trafficLightService.getProperty(properties, "trafficLight_type").map(_.propertyDisplayValue.getOrElse("")),
-          "suunta" -> trafficLightService.getProperty(properties, "bearing").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
-          "s_sijainti" -> trafficLightService.getProperty(properties, "trafficLight_relative_position").map(_.propertyDisplayValue.getOrElse("")),
-          "rakennelma" -> trafficLightService.getProperty(properties, "trafficLight_structure").map(_.propertyDisplayValue.getOrElse("")),
-          "korkeus" -> trafficLightService.getProperty(properties, "trafficLight_height").map(_.propertyDisplayValue.getOrElse("")),
-          "a_merkki" -> trafficLightService.getProperty(properties, "trafficLight_sound_signal").map(_.propertyDisplayValue.getOrElse("")),
-          "tunnistus" -> trafficLightService.getProperty(properties, "trafficLight_vehicle_detection").map(_.propertyDisplayValue.getOrElse("")),
-          "tunnistus" -> trafficLightService.getProperty(properties, "trafficLight_vehicle_detection").map(_.propertyDisplayValue.getOrElse("")),
-          "painonappi" -> trafficLightService.getProperty(properties, "trafficLight_push_button").map(_.propertyDisplayValue.getOrElse("")),
-          "lisatieto" -> trafficLightService.getProperty(properties, "trafficLight_info").map(_.propertyDisplayValue.getOrElse("")),
-          "kaistanro" -> trafficLightService.getProperty(properties, "trafficLight_lane").map(_.propertyDisplayValue.getOrElse("")),
-          "kaista_tyyppi" -> trafficLightService.getProperty(properties, "trafficLight_lane_type").map(_.propertyDisplayValue.getOrElse("")),
-          "maastosijainti_x" -> trafficLightService.getProperty(properties, "location_coordinates_x").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
-          "maastosijainti_y" -> trafficLightService.getProperty(properties, "location_coordinates_y").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
-          "kunta_id" -> trafficLightService.getProperty(properties, "trafficLight_municipality_id").map(_.propertyDisplayValue.getOrElse("")),
-          "tila" -> trafficLightService.getProperty(properties, "trafficLight_state").map(_.propertyDisplayValue.getOrElse(""))
+          "trafficLightType" -> getProperty( properties, "trafficLight_type"),
+          "suunta" -> getProperty( properties, "bearing").map(_.replace(",", ".")),
+          "s_sijainti" -> getProperty( properties, "trafficLight_relative_position"),
+          "rakennelma" -> getProperty( properties, "trafficLight_structure"),
+          "korkeus" -> getProperty( properties, "trafficLight_height"),
+          "a_merkki" -> getProperty( properties, "trafficLight_sound_signal"),
+          "tunnistus" -> getProperty( properties, "trafficLight_vehicle_detection"),
+          "painonappi" -> getProperty( properties, "trafficLight_push_button"),
+          "lisatieto" -> getProperty( properties, "trafficLight_info"),
+          "kaistanro" -> getProperty( properties, "trafficLight_lane"),
+          "kaista_tyyppi" -> getProperty( properties, "trafficLight_lane_type"),
+          "maastosijainti_x" -> getProperty( properties, "location_coordinates_x").map(_.replace(",", ".")),
+          "maastosijainti_y" -> getProperty( properties, "location_coordinates_y").map(_.replace(",", ".")),
+          "kunta_id" -> getProperty( properties, "trafficLight_municipality_id"),
+          "tila" -> getProperty( properties, "trafficLight_state")
         )},
         "point" -> Point(trafficLight.lon, trafficLight.lat),
         geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
