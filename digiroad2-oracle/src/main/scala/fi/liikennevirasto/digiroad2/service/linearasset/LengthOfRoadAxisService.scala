@@ -45,13 +45,20 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
      createVVHTimeStamp()) = {
-    val addedElementId = for (item <- listOfAsset) yield {
-      item.assetSequence.map{asset=>
-        val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(asset.linkId), false)
-        super.createWithoutTransaction(item.typeId,asset.linkId ,asset.value,sideCode = 0,measures = Measures(asset.startMeasure,asset.startMeasure),
-          username, vvhTimeStamp, roadlink.find(_.linkId == asset.linkId), verifiedBy = getVerifiedBy(username, item.typeId))
+
+
+    val addedElementId = withDynTransaction {
+      for (item <- listOfAsset) yield {
+        item.assetSequence.map{asset=>
+          val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(Set(asset.linkId), false).
+            find(_.linkId == asset.linkId)
+          super.createWithoutTransaction(item.typeId,asset.linkId ,asset.value,sideCode = 0,
+            measures = Measures(asset.startMeasure,asset.startMeasure),
+            username, vvhTimeStamp, roadlink,
+            verifiedBy = getVerifiedBy(username, item.typeId))
+        }
       }
-      }
+    }
 
     eventBusImpl.publish("LengthOfRoadAxisService:create",addedElementId.toSet)
     addedElementId
