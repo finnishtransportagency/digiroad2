@@ -2427,15 +2427,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(existingAssets, newLinearAssets, user, typeId)
     assets.foreach(usedService.validateCondition)
 
-    val updatedNumericalIds = if (valueOption.nonEmpty) {
+     if (valueOption.nonEmpty) {
       try {
         valueOption.map(usedService.update(existingAssetIds.toSeq, _, user.username)).getOrElse(Nil)
       } catch {
         case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
         case e: IllegalArgumentException => halt(BadRequest("Property not found"))
       }
-    } else {
-      usedService.clearValue(existingAssetIds.toSeq, user.username)
     }
 
 
