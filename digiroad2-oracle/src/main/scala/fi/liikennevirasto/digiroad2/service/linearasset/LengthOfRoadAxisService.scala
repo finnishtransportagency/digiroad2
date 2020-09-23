@@ -39,14 +39,11 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   }
 
   /// create
-  //[typeId:int, assetSequence: Seq[NewLinearAsset]]
   def createRoadwayLinear
   (listOfAsset: List[LengthOfRoadAxisCreate],
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
      createVVHTimeStamp()) = {
-
-
     val addedElementId = withDynTransaction {
       for (item <- listOfAsset) yield {
         item.assetSequence.map{asset=>
@@ -59,7 +56,6 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
         }
       }
     }
-
     eventBusImpl.publish("LengthOfRoadAxisService:create",addedElementId.toSet)
     addedElementId
   }
@@ -68,11 +64,9 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   (listOfAsset: List[LengthOfRoadAxisUpdate],
    username: String
   ) = {
-    withDynTransaction{
-
+    val expiredElement=  withDynTransaction{
+      for (item <- listOfAsset) yield {super.expire(item.ids, username)}
     }
-
-    val expiredElement=   for (item <- listOfAsset) yield {super.expire(item.ids, username)}
     eventBusImpl.publish("LengthOfRoadAxisService:expire",expiredElement.toSet)
     expiredElement
   }

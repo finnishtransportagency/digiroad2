@@ -32,10 +32,6 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
    // .thenReturn(Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)),
     //  Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-  val roadLinkVvh = Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-
-  when(mockVVHClient.fetchRoadLinkByLinkId(1611690L))
-    .thenReturn(roadLinkVvh)
 
 
   val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
@@ -118,6 +114,12 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
 
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
       .thenReturn(roadLinkSequence)
+
+    val roadLinkVvh = Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
+
+    when(mockVVHClient.fetchRoadLinkByLinkId(1611690L))
+      .thenReturn(roadLinkVvh)
+
 
     val valueTest = DynamicProperty(publicId = "test", propertyType = PropertyTypes.Number, required = false,
       values = Seq(DynamicPropertyValue(0)))

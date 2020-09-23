@@ -22,26 +22,6 @@ case class LengthOfRoadAxisModel(
                           start_date: DateTime,
                           end_date: DateTime
                         )
-case class LengthOfRoadAxisModelDynamic(
-                                  regulatoryNumber: String,
-                                  laneNumber: Int,
-                                  laneType: Optional[Int],
-                                  locationRelativeToLane: String,
-                                  municipalId: String,
-                                  condition: Optional[Int],
-                                  material: Optional[Int],
-                                  length: Optional[Int],
-                                  width: Optional[Int],
-                                  raised: Optional[Int],
-                                  milled: Optional[Int],
-                                  additional_info: Int,
-                                  state: Int,
-                                  start_date: DateTime,
-                                  end_date: DateTime
-                                )
-
-
-
 class LengthOfRoadAxisMethod{
   private def createDynamicField()={
     DynamicValue(DynamicAssetValue(Seq(
