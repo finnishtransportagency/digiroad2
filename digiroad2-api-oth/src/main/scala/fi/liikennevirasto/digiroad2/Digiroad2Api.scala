@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
 import java.time.LocalDate
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
@@ -12,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane._
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadWayLinear, SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -2026,6 +2027,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case RoadWorksAsset.typeId => roadWorkService
       case ParkingProhibition.typeId => parkingProhibitionService
       case CyclingAndWalking.typeId => cyclingAndWalkingService
+      case LengthOfRoadAxis.typeId => lengthOfRoadAxisService
       case _ => linearAssetService
     }
   }
@@ -2357,22 +2359,31 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
 
-  get("/lane/lengthOfRoadAxis/"){
+  get("/line/lengthOfRoadAxis/"){
+      val user = userProvider.getCurrentUser()
     var test ="test"
     test
   }
   //add
-  post("/lane/lengthOfRoadAxis/"){
+  post("/line/lengthOfRoadAxis/"){
+    val user = userProvider.getCurrentUser()
+    val roadWayLinearReturn =(parsedBody \ "value").
+      extractOrElse[LengthOfRoadAxisModel](halt(BadRequest("Response was malformed")))
+
+    lengthOfRoadAxisService.createRoadwayLinear(,user,vvhTimeStamp = )
     var test ="test"
     test
   }
   //update
-  post("/lane/lengthOfRoadAxis/"){
+  post("/line/lengthOfRoadAxis/"){
+    val user = userProvider.getCurrentUser()
+    val roadWayLinearReturn =(parsedBody \ "value").
+      extractOrElse[LengthOfRoadAxisModel](halt(BadRequest("Response was malformed")))
     var test ="test"
     test
   }
 
-  delete("/lane/lengthOfRoadAxis/"){
+  delete("/line/lengthOfRoadAxis/"){
     var test ="test"
     test
   }

@@ -4,14 +4,12 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, Value, LengthOfRoadAxisCreate, LengthOfRoadAxisUpdate}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.apache.commons.lang3.NotImplementedException
 
-case class assestCreateDTO(typeId: Int, assetSequence: Seq[NewLinearAsset]) {}
-case class assestUpdateDTO(ids:Seq[Long], value:Value) {}
-case class assestExpireDTO(ids:Seq[Long]) {}
+
 
 class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
                               eventBusImpl: DigiroadEventBus) extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) {
@@ -43,7 +41,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   /// create
   //[typeId:int, assetSequence: Seq[NewLinearAsset]]
   def createRoadwayLinear
-  (listOfAsset: List[assestCreateDTO],
+  (listOfAsset: List[LengthOfRoadAxisCreate],
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
      createVVHTimeStamp()) = {
@@ -55,7 +53,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
   }
 
   def expireRoadwayLinear
-  (mapOfAsset: List[assestUpdateDTO],
+  (mapOfAsset: List[LengthOfRoadAxisUpdate],
    username: String
   ) = {
     val expiredElement=   for (item <- mapOfAsset) yield {super.expire(item.ids, username)}
@@ -65,7 +63,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
 
   /// Update
   def updateRoadwayLinear
-  (mapOfAsset: List[assestUpdateDTO],
+  (mapOfAsset: List[LengthOfRoadAxisUpdate],
    username: String
   ) = {
    val modifiedElement=   for (item <- mapOfAsset) yield {super.update(item.ids, item.value, username)}

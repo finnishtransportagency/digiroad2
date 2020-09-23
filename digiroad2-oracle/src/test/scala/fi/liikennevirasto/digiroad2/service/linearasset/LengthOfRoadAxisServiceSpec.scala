@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, NumericValue, RoadLink, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, NumericValue, RoadLink, Value, LengthOfRoadAxisCreate, LengthOfRoadAxisUpdate}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
@@ -79,10 +79,10 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       .thenReturn(roadLinkSequence)
 
     val addItem2 = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
-    val listOfElement: List[assestCreateDTO] = List(
-      assestCreateDTO(440, Seq(addItem2)),
-      assestCreateDTO(440, Seq(addItem2)),
-      assestCreateDTO(440, Seq(addItem2))
+    val listOfElement: List[LengthOfRoadAxisCreate] = List(
+      LengthOfRoadAxisCreate(440, Seq(addItem2)),
+      LengthOfRoadAxisCreate(440, Seq(addItem2)),
+      LengthOfRoadAxisCreate(440, Seq(addItem2))
     )
     val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
     val result2 = service.createRoadwayLinear(
@@ -111,16 +111,22 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
 
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
-      .thenReturn(roadLinkSequence)
+    val roadLinkVvh = Some(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
 
-    val valueTest = DynamicProperty(publicId = "test", propertyType = "test", required = false,
-      values = Seq(DynamicPropertyValue("0")))
+    //when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
+      //.thenReturn(roadLinkSequence)
+
+    when(mockVVHClient.fetchRoadLinkByLinkId(1611690L))
+      .thenReturn(roadLinkVvh)
+
+
+    val valueTest = DynamicProperty(publicId = "test", propertyType = PropertyTypes.Number, required = false,
+      values = Seq(DynamicPropertyValue(0)))
     val valuesAssetTest= DynamicAssetValue(Seq(valueTest))
-    val listOfElement: List[assestUpdateDTO] = List(
-      assestUpdateDTO(Seq(200293),DynamicValue(valuesAssetTest)),
-      assestUpdateDTO(Seq(200293L),DynamicValue(valuesAssetTest)) ,
-      assestUpdateDTO(Seq(200293L), DynamicValue(valuesAssetTest))
+    val listOfElement: List[LengthOfRoadAxisUpdate] = List(
+      LengthOfRoadAxisUpdate(Seq(200293),DynamicValue(valuesAssetTest)),
+      LengthOfRoadAxisUpdate(Seq(200293L),DynamicValue(valuesAssetTest)) ,
+      LengthOfRoadAxisUpdate(Seq(200293L), DynamicValue(valuesAssetTest))
     )
     val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
     val result2 = service.updateRoadwayLinear(
