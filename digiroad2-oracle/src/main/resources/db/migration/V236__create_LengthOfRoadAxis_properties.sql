@@ -37,9 +37,6 @@ INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 VALUES (primary_key_seq.nextval, 'Kuntanumero', 'db_migration_v236', SYSDATE);
 
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
-VALUES (primary_key_seq.nextval, 'Kunto', 'db_migration_v236', SYSDATE);
-
-INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 VALUES (primary_key_seq.nextval, 'Herätemerkintä', 'db_migration_v236', SYSDATE);
 
 -- add propeties
