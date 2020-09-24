@@ -2368,39 +2368,44 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 /*{
     "typeId":460,
     "lengthOfRoadAxis":{
-        "lengthOfRoadAxi":{"asset":["newLinearAsset"]}
+        "lengthOfRoadAxi":{"typeId":460 "asset":["newLinearAsset"]}
     }
 }*/
 
+  case class assetDto(asses:Seq[NewLinearAsset])
+  case class createDto(typeId:Int,lengthOfRoadAxis:Seq[LengthOfRoadAxisCreate])
   post("/linear/lengthOfRoadAxis/"){
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
+    val response = (parsedBody \ "lengthOfRoadAxis").extractOrElse[createDto](halt(BadRequest("error")))
     val usedService = getLinearAssetService(typeId)
     if (!(typeId == LengthOfRoadAxis.typeId)) {
       halt(BadRequest("wrong type"))
     }
 
-    val valueOption = extractLinearAssetValue(parsedBody \ "value")
+   /* val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssetIds = (parsedBody \ "ids").extract[Set[Long]]
-    val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "lengthOfRoadAxis")
+    //val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "lengthOfRoadAxis")
     val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
-    val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
+    //val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
 
-    validateUserRights(existingAssets, newLinearAssets, user, typeId)
-    assets.foreach(usedService.validateCondition)
+    //validateUserRights(existingAssets, newLinearAssets, user, typeId)
+    //assets.foreach(usedService.validateCondition)
     //val updatedNumericalIds
-    try {
-      val createdIds = usedService.create(newLinearAssets, typeId, user.username)
-      val inputTest=Seq(newLinearAssets)
-      lengthOfRoadAxisService.createRoadwayLinear(List(LengthOfRoadAxisCreate(typeId,newLinearAssets)),user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())
-     createdIds
+    //var createdIds: List[Seq[Long]]
+  val idlist = try {
+      //val createdIds = usedService.create(newLinearAssets, typeId, user.username)
+      //val inputTest=Seq(newLinearAssets)
+      //val createdIds= lengthOfRoadAxisService.createRoadwayLinear(List(LengthOfRoadAxisCreate(typeId,newLinearAssets)),user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())
+       val createdIds= lengthOfRoadAxisService.createRoadwayLinear(response.lengthOfRoadAxis,user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())
+      createdIds
     } catch {
       case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
     }
 
 
-    val addItem2 = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
+/*    val addItem2 = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
     val roadWayLinearReturn =(parsedBody \ "value").
       extractOrElse[LengthOfRoadAxisModel](halt(BadRequest("Response was malformed")))
     val listOfElement: List[LengthOfRoadAxisCreate] = List(
@@ -2408,12 +2413,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       LengthOfRoadAxisCreate(440, Seq(addItem2)),
       LengthOfRoadAxisCreate(440, Seq(addItem2))
     )
-    lengthOfRoadAxisService.createRoadwayLinear(listOfElement,user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())
+    lengthOfRoadAxisService.createRoadwayLinear(listOfElement,user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())*/
     var test ="test"
-    test
+    idlist*/
+   //var test ="test"
+    var test = createDto
+    response
   }
   //update
-  post("/linear/lengthOfRoadAxis/"){
+  post("/linear/lengthOfRoadAxisUpdate/"){
 
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))

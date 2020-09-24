@@ -22,6 +22,8 @@ case class LengthOfRoadAxisModel(
                           start_date: DateTime,
                           end_date: DateTime
                         )
+
+
 class LengthOfRoadAxisMethod{
   private def createDynamicField()={
     DynamicValue(DynamicAssetValue(Seq(
