@@ -116,7 +116,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       .thenReturn(roadLinkSequence)
 
     val roadLinkVvh = Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-
+//this mocking seems to be not wokrking
     when(mockVVHClient.fetchRoadLinkByLinkId(1611690L))
       .thenReturn(roadLinkVvh)
 
