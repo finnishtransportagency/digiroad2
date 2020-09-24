@@ -109,10 +109,10 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 3, 'Tyydyttävä', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 5, 'Hyvä', '', 'db_migration_v236',
+VALUES (primary_key_seq.nextval, 4, 'Hyvä', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-VALUES (primary_key_seq.nextval, 6, 'Erittäin hyvä', '', 'db_migration_v236',
+VALUES (primary_key_seq.nextval, 5, 'Erittäin hyvä', '', 'db_migration_v236',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'condition'));
 --material
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
