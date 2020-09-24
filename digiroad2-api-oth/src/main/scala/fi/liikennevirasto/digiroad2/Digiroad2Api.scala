@@ -2365,10 +2365,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     test
   }
   //add
+/*{
+    "typeId":460,
+    "lengthOfRoadAxis":{
+        "lengthOfRoadAxi":{"asset":["newLinearAsset"]}
+    }
+}*/
+
   post("/linear/lengthOfRoadAxis/"){
-
-
-
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService = getLinearAssetService(typeId)
@@ -2378,7 +2382,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssetIds = (parsedBody \ "ids").extract[Set[Long]]
-    val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
+    val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "lengthOfRoadAxis")
     val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
 
     val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
