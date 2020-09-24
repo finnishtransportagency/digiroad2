@@ -299,9 +299,13 @@ root.PointAssetForm = function() {
   };
 
   this.singleChoiceHandler = function (property) {
-    var propertyValue = me.extractPropertyValue(property);
     var propertyValues = _.head(_.map(_.filter(me.enumeratedPropertyValues, { 'publicId': property.publicId}), function(val) {return val.values; }));
-    var propertyDefaultValue = _.indexOf(_.map(propertyValues, function (prop) {return _.some(prop, function(propValue) {return propValue == propertyValue;});}), true);
+
+    var propertyValue = me.extractPropertyValue(property);
+    var propertyDefaultValue = _.find(me.pointAsset.newAsset.propertyData, ['publicId', property.publicId]).values[0].propertyValue.toString();
+
+    propertyValue = _.isEmpty(propertyValue) ? propertyDefaultValue : propertyValue;
+
     var selectableValues = _.map(propertyValues, function (label) {
       return $('<option>',
           { selected: propertyValue == label.propertyValue,
@@ -311,7 +315,7 @@ root.PointAssetForm = function() {
     return '' +
         '    <div class="form-group editable form-point-asset">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
-        '      <p class="form-control-static">' + (propertyValues[propertyDefaultValue].propertyDisplayValue || '-') + '</p>' +
+        '      <p class="form-control-static">' + (_.find(propertyValues, ['propertyValue', propertyValue]).propertyDisplayValue || '-') + '</p>' +
         '      <select class="form-control" data-grouped-id="'+ property.groupedId +'" id=' + property.publicId + (property.groupedId ? ('-' + property.groupedId) : '') +'>' +
         selectableValues +
         '      </select>' +
