@@ -170,9 +170,9 @@ pipeline {
                 ROBOT_REPORTS_DIR = "$WORKSPACE/RobotProjectTest/Test/Result"
             }
             steps {
-                sh '''
-                    /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-                '''
+                #sh '''
+                #    /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+                #'''
             }
         }
     }
