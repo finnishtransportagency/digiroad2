@@ -157,7 +157,7 @@ pipeline {
                 sh STAGE_BACKEND_RUN_TESTS
             }
         }
-
+/*
         stage("Run RobotFramework Tests") {
             agent { docker {
                 image 'ppodgorsek/robot-framework:latest'
@@ -170,11 +170,12 @@ pipeline {
                 ROBOT_REPORTS_DIR = "$WORKSPACE/RobotProjectTest/Test/Result"
             }
             steps {
-                #sh '''
-                #    /opt/robotframework/bin/run-tests-in-virtual-screen.sh
-                #'''
+                sh '''
+                    /opt/robotframework/bin/run-tests-in-virtual-screen.sh
+                '''
             }
         }
+*/
     }
 
     post {
