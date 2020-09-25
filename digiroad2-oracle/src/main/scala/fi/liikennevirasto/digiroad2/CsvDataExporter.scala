@@ -36,7 +36,7 @@ trait CsvDataExporterOperations {
         exportReportDAO.getByUser(username)
     }
 
-    def getById(id: Long, withTransaction: Boolean = true) : Option[ExportStatusInfo]  = {
+    def getInfoById(id: Long, withTransaction: Boolean = true) : Option[ExportStatusInfo]  = {
       if (withTransaction)
         withDynTransaction {
           exportReportDAO.get(id)

@@ -43,18 +43,22 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
 
   get("/downloadCsv/:id") {
     val id = params.getOrElse("id", halt(BadRequest("Missing mandatory 'ID' parameter")))
-    csvDataExporter.getById(id.toLong).getOrElse(halt(NotFound("No records found for sent ID")))
+    csvDataExporter.getInfoById(id.toLong).getOrElse(halt(NotFound("No records found for sent ID")))
   }
 
-  get("/logByUser") {
+  get("/jobsByUser") {
     csvDataExporter.getByUser(userProvider.getCurrentUser().username)
   }
 
-
-  get("/logs") {
+  get("/jobsInfoBoard") {
     val ids = params.getOrElse("ids", halt(BadRequest("Missing mandatory 'ids' parameter")))
     val idsList = ids.split(',').map(_.toLong).toSet
     csvDataExporter.getByIds(idsList)
+  }
+
+  get("/jobErrorInfo") {
+    val id = params.getOrElse("id", halt(BadRequest("Missing mandatory 'ids' parameter")))
+    csvDataExporter.getInfoById(id.toLong)
   }
 
   post("/generateCsvReport") {
@@ -77,7 +81,7 @@ extends ScalatraServlet with JacksonJsonSupport with RequestHeaderAuthentication
 
     eventBus.publish("exportCSVData", CsvDataExporterInfo(assetTypes, municipalities, filename, user, logId) )
 
-    csvDataExporter.getById(logId)
+    csvDataExporter.getInfoById(logId)
   }
 
   def validateOperation(user: User): Unit = {

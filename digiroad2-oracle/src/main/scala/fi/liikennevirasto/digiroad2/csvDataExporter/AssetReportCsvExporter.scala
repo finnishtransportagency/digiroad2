@@ -50,7 +50,7 @@ class AssetReportCsvExporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     }
 
     def executeQuery(municipality: Int): List[AssetReport] = {
-      val linkIds = roadLinkServiceImpl.getVVHRoadLinksF(municipality)
+      val linkIds = roadLinkServiceImpl.getRoadLinksFromVVHByMunicipality(municipality, false)
         .filter(_.administrativeClass == Municipality)
         .map(_.linkId)
 

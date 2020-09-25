@@ -107,27 +107,25 @@ class HistoryDAO {
     """.execute
 
     //Copy prohibition value
-    val historyProhibitionValueId = Sequences.nextPrimaryKeySeqValue
-
     sqlu"""
         INSERT INTO PROHIBITION_VALUE_HISTORY
-          SELECT $historyProhibitionValueId, ASSET_ID, TYPE, ADDITIONAL_INFO
+          SELECT ID, ASSET_ID, TYPE, ADDITIONAL_INFO
           FROM PROHIBITION_VALUE WHERE ASSET_ID = $assetId
     """.execute
 
     sqlu"""
         INSERT INTO PROHIBITION_EXCEPTION_HISTORY
-          SELECT primary_key_seq.nextval, $historyProhibitionValueId, TYPE
+          SELECT primary_key_seq.nextval, PROHIBITION_VALUE_ID, TYPE
           FROM PROHIBITION_EXCEPTION
-          WHERE PROHIBITION_VALUE_ID = (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)
+          WHERE PROHIBITION_VALUE_ID IN (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)
     """.execute
 
     sqlu"""
         INSERT INTO PROH_VAL_PERIOD_HISTORY
-          SELECT primary_key_seq.nextval, $historyProhibitionValueId, TYPE, START_HOUR, END_HOUR, START_MINUTE,
+          SELECT primary_key_seq.nextval, PROHIBITION_VALUE_ID, TYPE, START_HOUR, END_HOUR, START_MINUTE,
           END_MINUTE
           FROM PROHIBITION_VALIDITY_PERIOD
-          WHERE PROHIBITION_VALUE_ID = (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)
+          WHERE PROHIBITION_VALUE_ID IN (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)
     """.execute
   }
 
@@ -152,9 +150,9 @@ class HistoryDAO {
   def deleteAsset(assetId: Long, assetType: AssetTypeInfo) = {
     //Delete prohibition value related information
     sqlu"""DELETE FROM PROHIBITION_EXCEPTION
-          WHERE PROHIBITION_VALUE_ID = (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)""".execute
+          WHERE PROHIBITION_VALUE_ID IN (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)""".execute
     sqlu"""DELETE FROM PROHIBITION_VALIDITY_PERIOD
-          WHERE PROHIBITION_VALUE_ID = (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)""".execute
+          WHERE PROHIBITION_VALUE_ID IN (SELECT pv.ID FROM PROHIBITION_VALUE pv WHERE pv.ASSET_ID = $assetId)""".execute
 
     //Delete standard values
     standardTableValues.foreach { tableValue =>

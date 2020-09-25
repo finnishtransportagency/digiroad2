@@ -1,9 +1,9 @@
 package fi.liikennevirasto.digiroad2.csvDataImporter
 
-import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, PropertyValue, SimplePointAssetProperty, State}
+import fi.liikennevirasto.digiroad2.asset.{PointAssetState, PointAssetStructure, SimplePointAssetProperty, State}
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.TrafficLight
-import fi.liikennevirasto.digiroad2.lane.{LaneNumber, LaneType}
+import fi.liikennevirasto.digiroad2.lane.LaneType
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{AssetProperty, DigiroadEventBus, GeometryUtils, Point, TrafficLightPushButton, TrafficLightRelativePosition, TrafficLightSoundSignal, TrafficLightType, TrafficLightVehicleDetection}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -170,7 +170,16 @@ class TrafficLightsCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImp
 
       val sidecodeProperty = AssetProperty("trafficLightSidecode", validityDirection)
 
-      (csvProperties, CsvPointAsset(position.x, position.y, roadLink.linkId, generateBaseProperties(csvProperties ++ Seq(sidecodeProperty)), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
+      val finalProperties = (assetBearing match {
+        case Some(bearing) =>
+          val bearingProperty = AssetProperty("trafficLightBearing", bearing)
+          csvProperties.filterNot(_.columnName == "trafficLightBearing") ++ Seq(bearingProperty)
+
+        case _ =>
+          csvProperties
+      }) ++ Seq(sidecodeProperty)
+
+      (csvProperties, CsvPointAsset(position.x, position.y, roadLink.linkId, generateBaseProperties(finalProperties), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
     val notImportedData: Seq[NotImportedData] = trafficLights.map { case (csvRow, trafficLight) =>
