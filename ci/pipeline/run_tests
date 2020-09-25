@@ -157,7 +157,7 @@ pipeline {
                 sh STAGE_BACKEND_RUN_TESTS
             }
         }
-
+/*
         stage("Run RobotFramework Tests") {
             agent { docker {
                 image 'ppodgorsek/robot-framework:latest'
@@ -175,6 +175,7 @@ pipeline {
                 '''
             }
         }
+*/
     }
 
     post {
