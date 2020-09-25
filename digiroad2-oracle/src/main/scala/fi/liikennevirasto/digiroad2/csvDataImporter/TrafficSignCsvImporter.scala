@@ -463,8 +463,8 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val trafficSignType: TrafficSignType = TrafficSignType.applyNewLawCode(trafficSignCode)
 
     if ((signsWithNumberArvo.contains(trafficSignType) && !parameterValue.forall(_.isDigit)) ||
-      (signsWithNumberAndTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9 ]*$")) ||
-      (signsWithTextArvo.contains(trafficSignType) && !parameterValue.forall(_.isLetter)) ||
+      (signsWithNumberAndTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9\\u0080-\\uFFFF\\s]*$")) ||
+      (signsWithTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z\\u0080-\\uFFFF\\s]*$")) ||
       (signsWithNumberAndSpecialMarksArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)$"))) {
 
       (List(parameterName), Nil)
@@ -548,7 +548,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   def processing(inputStream: InputStream, municipalitiesToExpire: Set[Int], user: User): ImportResultData = {
-    val streamReader = new InputStreamReader(inputStream, "UTF-8")
+    val streamReader = new InputStreamReader(inputStream, "ISO-8859-15")
     val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
       override val delimiter: Char = ';'
     })
