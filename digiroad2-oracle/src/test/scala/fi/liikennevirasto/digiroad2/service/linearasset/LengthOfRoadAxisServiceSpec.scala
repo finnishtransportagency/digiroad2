@@ -95,12 +95,6 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
     })
   }
 
-
-  // get new asset
-  test("get new LengthOfRoadAxis asset") {
-
-  }
-
   // update new asset
 
   test("update new LengthOfRoadAxis asset") {
