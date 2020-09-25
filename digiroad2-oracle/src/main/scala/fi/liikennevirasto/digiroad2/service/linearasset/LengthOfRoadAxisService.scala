@@ -29,14 +29,6 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
 
   override def dynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
   //crud
-  /// get
-  def getRaodwayLinear(): Unit = {
-
-
-    val id: Seq[Long] = Seq(0, 1)
-    id
-    throw new NotImplementedError
-  }
 
   /// create
   def createRoadwayLinear
@@ -44,6 +36,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
    username: String,
    vvhTimeStamp: Long = vvhClient.roadLinkData.
      createVVHTimeStamp()) = {
+    //TODO validate link
     val addedElementId = withDynTransaction {
       for (item <- listOfAsset) yield {
         item.assetSequence.map{asset=>
@@ -59,7 +52,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
     eventBusImpl.publish("LengthOfRoadAxisService:create",addedElementId.toSet)
     addedElementId
   }
-
+  //TODO unit test
   def expireRoadwayLinear
   (listOfAsset: List[LengthOfRoadAxisUpdate],
    username: String
