@@ -2,6 +2,11 @@ insert into ASSET (ID,ASSET_TYPE_ID,CREATED_BY,MUNICIPALITY_CODE, CREATED_DATE) 
 INSERT INTO LRM_POSITION (ID, LINK_ID, START_MEASURE, END_MEASURE, MML_ID) VALUES (70000037, 1611317, 103.000, 103.000, 388553074);
 insert into asset_link (ASSET_ID, POSITION_ID) values (600081, 70000037);
 insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600081, (select id from enumerated_value where name_fi='L1 pysäytysviiva'), (select id from property where public_id='widthOfRoadAxisMarking_regulation_number'));
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600081, (select id from enumerated_value where name_fi='Ei tiedossa' AND PROPERTY_ID = (select id from property where public_id='widthOfRoadAxisMarking_raised')), (select id from property where public_id='widthOfRoadAxisMarking_raised'));
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600081, (select id from enumerated_value where name_fi='Erittäin huono' AND PROPERTY_ID = (select id from property where public_id='widthOfRoadAxisMarking_condition')), (select id from property where public_id='widthOfRoadAxisMarking_condition'));
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600081, (select id from enumerated_value where name_fi='Ei tiedossa' AND PROPERTY_ID = (select id from property where public_id='widthOfRoadAxisMarking_material')), (select id from property where public_id='widthOfRoadAxisMarking_material'));
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600081, (select id from enumerated_value where name_fi='Ei tiedossa' AND PROPERTY_ID = (select id from property where public_id='widthOfRoadAxisMarking_milled')), (select id from property where public_id='widthOfRoadAxisMarking_milled'));
+insert into single_choice_value(asset_id, enumerated_value_id, property_id) values (600081, (select id from enumerated_value where name_fi='Poistuva pysyvä laite' AND PROPERTY_ID = (select id from property where public_id='widthOfRoadAxisMarking_state')), (select id from property where public_id='widthOfRoadAxisMarking_state'));
 UPDATE asset
   SET geometry = MDSYS.SDO_GEOMETRY(4401,
                                     3067,

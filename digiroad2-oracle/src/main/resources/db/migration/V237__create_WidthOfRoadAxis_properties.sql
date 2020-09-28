@@ -144,9 +144,9 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 
 
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-	VALUES (primary_key_seq.nextval, 1,'Suunnitteilla ','','db_migration_v237',(SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'widthOfRoadAxisMarking_state'));
+	VALUES (primary_key_seq.nextval, 1,'Suunnitteilla','','db_migration_v237',(SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'widthOfRoadAxisMarking_state'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
-	VALUES (primary_key_seq.nextval, 2,'Rakenteilla ','','db_migration_v237',(SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'widthOfRoadAxisMarking_state'));
+	VALUES (primary_key_seq.nextval, 2,'Rakenteilla','','db_migration_v237',(SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'widthOfRoadAxisMarking_state'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 	VALUES (primary_key_seq.nextval, 3,'Käytössä pysyvästi (oletus)','','db_migration_v237',(SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'widthOfRoadAxisMarking_state'));
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)

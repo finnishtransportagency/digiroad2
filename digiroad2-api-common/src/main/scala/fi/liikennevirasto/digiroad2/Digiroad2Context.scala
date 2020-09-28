@@ -701,6 +701,10 @@ object Digiroad2Context {
     new LaneService(roadLinkService, eventbus)
   }
 
+  lazy val widthOfRoadAxisMarkingService: WidthOfRoadAxisMarkingService = {
+    new WidthOfRoadAxisMarkingService(roadLinkService)
+  }
+
   lazy val applicationFeedback : FeedbackApplicationService = new FeedbackApplicationService()
 
   lazy val dataFeedback : FeedbackDataService = new FeedbackDataService()

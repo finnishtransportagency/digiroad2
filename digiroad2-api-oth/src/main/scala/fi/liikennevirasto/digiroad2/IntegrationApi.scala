@@ -832,6 +832,33 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
      )}
   }
 
+  def widthOfRoadAxisMarkingsToApi(widthOfRoadAxisMarkings: Seq[WidthOfRoadAxisMarking]): Seq[Map[String, Any]] = {
+    widthOfRoadAxisMarkings.filterNot(x => x.floating).map { widthOfRoadAxisMarking =>
+      Map("id" -> widthOfRoadAxisMarking.id,
+        "point" -> Point(widthOfRoadAxisMarking.lon, widthOfRoadAxisMarking.lat),
+        geometryWKTForPoints(widthOfRoadAxisMarking.lon, widthOfRoadAxisMarking.lat),
+        "linkId" -> widthOfRoadAxisMarking.linkId,
+        "m_value" -> widthOfRoadAxisMarking.mValue,
+        latestModificationTime(widthOfRoadAxisMarking.createdAt, widthOfRoadAxisMarking.modifiedAt),
+        lastModifiedBy(widthOfRoadAxisMarking.createdBy, widthOfRoadAxisMarking.modifiedBy),
+        "linkSource" -> widthOfRoadAxisMarking.linkSource.value,
+        "regulation_number" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_regulation_number").map(_.propertyDisplayValue).get,
+        "lane_number" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_lane_number").map(_.propertyDisplayValue).getOrElse(""),
+        "lane_type" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_lane_type").map(_.propertyDisplayValue).getOrElse(""),
+        "condition" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_condition").map(_.propertyDisplayValue).getOrElse(""),
+        "material" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_material").map(_.propertyDisplayValue).getOrElse(""),
+        "length" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_length").map(_.propertyDisplayValue).getOrElse(""),
+        "width" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_width").map(_.propertyDisplayValue).getOrElse(""),
+        "raised" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_raised").map(_.propertyDisplayValue).getOrElse(""),
+        "milled" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_milled").map(_.propertyDisplayValue).getOrElse(""),
+        "additional_info" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_additional_info").map(_.propertyDisplayValue).getOrElse(""),
+        "state" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_state").map(_.propertyDisplayValue).getOrElse(""),
+        "start_date" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_start_date").map(_.propertyDisplayValue).getOrElse(""),
+        "end_date" -> widthOfRoadAxisMarkingService.getProperty(widthOfRoadAxisMarking.propertyData, "widthOfRoadAxisMarking_end_date").map(_.propertyDisplayValue).getOrElse("")
+      )
+    }
+  }
+
   private def mapAdditionalPanels(panels: Seq[AdditionalPanel]): Seq[Map[String, Any]] = {
     panels.map{panel =>
       Map(
@@ -967,6 +994,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
+        case "width_of_roadAxis_marking" => widthOfRoadAxisMarkingsToApi(widthOfRoadAxisMarkingService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
