@@ -415,21 +415,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimplePointAssetProperty] = {
-    val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
-      SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value.toString)))}
+    val value = getPropertyValue(trafficSignAttributes, "value").toString
+    val valueProperty = Some( SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value))) )
 
     val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(TrafficSignType.applyNewLawCode(getPropertyValue(trafficSignAttributes, "trafficSignType").toString).OTHvalue.toString)))
 
     val listPublicIds = Seq(infoPublicId, startDatePublicId, endDatePublicId, municipalityPublicId, mainSignTextPublicId, structurePublicId, conditionPublicId, sizePublicId,
                             heightPublicId, coatingTypePublicId, signMaterialPublicId, locationSpecifierPublicId, terrainCoordinatesXPublicId, terrainCoordinatesYPublicId,
                             laneTypePublicId, lanePublicId, lifeCyclePublicId, typeOfDamagePublicId, urgencyOfRepairPublicId, lifespanLeftPublicId, oldTrafficCodePublicId,
-                            oppositeSideSignPublicId
-                            )
+                            oppositeSideSignPublicId )
 
     val listFieldNames = Seq("additionalInfo", "startDate", "endDate", "municipalityId", "mainSignText", "structure", "condition", "size", "height", "coatingType", "signMaterial",
                               "locationSpecifier", "lon", "lat", "laneType", "lane", "lifeCycle", "typeOfDamage", "urgencyOfRepair", "lifespanLeft",
-                              "oldTrafficCode", "oppositeSideSign"
-                            )
+                              "oldTrafficCode", "oppositeSideSign" )
 
     val propertiesValues = extractPropertyValues(listPublicIds, listFieldNames, trafficSignAttributes, withGroupedId = false)
 
