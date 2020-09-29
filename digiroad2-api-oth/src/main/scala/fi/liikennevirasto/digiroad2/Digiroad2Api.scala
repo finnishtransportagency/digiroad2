@@ -27,6 +27,7 @@ import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.json4s.JsonAST.JValue
 import org.json4s._
+import org.json4s.jackson.Json
 import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
@@ -2368,101 +2369,38 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
 }*/
 
-  case class assetDto(asses:Seq[NewLinearAsset])
-  case class createDto(typeId:Int,lengthOfRoadAxis:Seq[LengthOfRoadAxisCreate])
+ private def  extractCreateDto(typeId:Int,input:JValue): Unit ={
+println(input)
+/*input.extract.productIterator.foreach(item=>{
+  println
+})*/
+   input.children.map(item=>{
+     //item.
+   })
+   val test2=input.children(1)
+   println(test2)
+   val lengthOfRoadAxisBody:Seq[LengthOfRoadAxisCreateDynamic]=input.extract[Seq[LengthOfRoadAxisCreateDynamic]]
+   //val testValue =input.extractOpt[Seq[NewDynamicLinearAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, DynamicValue(x.value), x.sideCode, 0, None))
+val result:createDto=createDto(typeId,lengthOfRoadAxisBody)
+
+}
+
+  case class assetDto(asses:Seq[NewLinearAsset]){}
+  case class LengthOfRoadAxisCreateDynamic(typeId: Int, assetSequence: Seq[NewDynamicLinearAsset]) {}
+  case class createDto(typeId:Int,lengthOfRoadAxis:Seq[LengthOfRoadAxisCreateDynamic]){}
   post("/linear/lengthOfRoadAxis/"){
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val response = (parsedBody \ "response").extractOrElse[createDto](halt(BadRequest("error")))
+    val response = extractCreateDto(typeId,(parsedBody \ "lengthOfRoadAxis"))
+    //(parsedBody \ "lengthOfRoadAxis").extractOrElse[Seq[LengthOfRoadAxisCreate]](halt(BadRequest("error")))
     val usedService = getLinearAssetService(typeId)
     if (!(typeId == LengthOfRoadAxis.typeId)) {
       halt(BadRequest("wrong type"))
     }
-
-//validate response
-
-   /* val valueOption = extractLinearAssetValue(parsedBody \ "value")
-    val existingAssetIds = (parsedBody \ "ids").extract[Set[Long]]
-    //val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "lengthOfRoadAxis")
-    val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
-
-    //val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
-
-    //validateUserRights(existingAssets, newLinearAssets, user, typeId)
-    //assets.foreach(usedService.validateCondition)
-    //val updatedNumericalIds
-    //var createdIds: List[Seq[Long]]
-  val idlist = try {
-      //val createdIds = usedService.create(newLinearAssets, typeId, user.username)
-      //val inputTest=Seq(newLinearAssets)
-      //val createdIds= lengthOfRoadAxisService.createRoadwayLinear(List(LengthOfRoadAxisCreate(typeId,newLinearAssets)),user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())
-       val createdIds= lengthOfRoadAxisService.createRoadwayLinear(response.lengthOfRoadAxis,user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())
-      createdIds
-    } catch {
-      case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
-    }
-
-
-/*    val addItem2 = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = NumericValue(1), sideCode = 1, 0, None)
-    val roadWayLinearReturn =(parsedBody \ "value").
-      extractOrElse[LengthOfRoadAxisModel](halt(BadRequest("Response was malformed")))
-    val listOfElement: List[LengthOfRoadAxisCreate] = List(
-      LengthOfRoadAxisCreate(440, Seq(addItem2)),
-      LengthOfRoadAxisCreate(440, Seq(addItem2)),
-      LengthOfRoadAxisCreate(440, Seq(addItem2))
-    )
-    lengthOfRoadAxisService.createRoadwayLinear(listOfElement,user.username,vvhTimeStamp = vvhClient.createVVHTimeStamp())*/
-    var test ="test"
-    idlist*/
    //var test ="test"
     var test = createDto
+    //testObject
     response
-  }
-  //update
-  post("/linear/lengthOfRoadAxisUpdate/"){
-
-    val user = userProvider.getCurrentUser()
-    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService = getLinearAssetService(typeId)
-    if (!(typeId == LengthOfRoadAxis.typeId)) {
-      halt(BadRequest("wrong type"))
-    }
-    val valueOption = extractLinearAssetValue(parsedBody \ "value")
-    val existingAssetIds = (parsedBody \ "ids").extract[Set[Long]]
-    val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
-    val existingAssets = usedService.getPersistedAssetsByIds(typeId, existingAssetIds)
-
-    val assets = newLinearAssets ++ createFakeNewLinearAssetsForValidations(existingAssets, valueOption)
-
-    validateUserRights(existingAssets, newLinearAssets, user, typeId)
-    assets.foreach(usedService.validateCondition)
-
-     if (valueOption.nonEmpty) {
-      try {
-        valueOption.map(usedService.update(existingAssetIds.toSeq, _, user.username)).getOrElse(Nil)
-      } catch {
-        case e: MissingMandatoryPropertyException => halt(BadRequest("Missing Mandatory Properties: " + e.missing.mkString(",")))
-        case e: IllegalArgumentException => halt(BadRequest("Property not found"))
-      }
-    }
-
-
-
-    val roadWayLinearReturn =(parsedBody \ "value").
-      extractOrElse[LengthOfRoadAxisModel](halt(BadRequest("Response was malformed")))
-    var test ="test"
-    test
-  }
-
-  delete("/linear/lengthOfRoadAxis/"){
-    val user = userProvider.getCurrentUser()
-    val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService = getLinearAssetService(typeId)
-    if (!(typeId == LengthOfRoadAxis.typeId)) {
-      halt(BadRequest("wrong type"))
-    }
-    var test ="test"
-    test
   }
 
 
