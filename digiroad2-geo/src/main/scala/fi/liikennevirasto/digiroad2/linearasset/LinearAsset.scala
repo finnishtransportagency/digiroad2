@@ -44,6 +44,7 @@ case class MassLimitationValue(massLimitation: Seq[AssetTypes]) extends Value{
 }
 
 case class DynamicAssetValue(properties: Seq[DynamicProperty])
+case class DynamicAssetValues(multipleValue:Seq[DynamicAssetValue])
 case class DynamicValue(value: DynamicAssetValue) extends Value {
   override def toJson: Any = value
 

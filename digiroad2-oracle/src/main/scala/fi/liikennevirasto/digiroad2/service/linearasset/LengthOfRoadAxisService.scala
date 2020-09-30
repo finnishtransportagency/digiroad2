@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicValue, LengthOfRoadAxisCreate, LengthOfRoadAxisUpdate, NewLinearAsset, RoadLinkLike, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicAssetValues, DynamicValue, LengthOfRoadAxisCreate, LengthOfRoadAxisUpdate, NewLinearAsset, RoadLinkLike, Value}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.PolygonTools
 import org.apache.commons.lang3.NotImplementedException
@@ -27,18 +27,25 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate,
       createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
-
     value match {
       case DynamicValue(multiTypeProps) =>
-        val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
-        val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(
-                            defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-        val props = properties ++ defaultValues.toSet
-        validateRequiredProperties(typeId, props)
-        dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
+        saveValue(typeId,id,multiTypeProps,roadLink)
+      case DynamicAssetValues(manyValues) =>
+        manyValues.foreach(item=>{
+          saveValue(typeId,id,item,roadLink)
+        })
       case _ => None
     }
     id
+  }
+
+  def saveValue(typeId:Int,id:Long,multiTypeProps:DynamicAssetValue,roadLink: Option[RoadLinkLike]): Unit ={
+    val properties = setPropertiesDefaultValues(multiTypeProps.properties, roadLink)
+    val defaultValues = dynamicLinearAssetDao.propertyDefaultValues(typeId).filterNot(
+      defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+    val props = properties ++ defaultValues.toSet
+    validateRequiredProperties(typeId, props)
+    dynamicLinearAssetDao.updateAssetProperties(id, props, typeId)
   }
 
   /// create
