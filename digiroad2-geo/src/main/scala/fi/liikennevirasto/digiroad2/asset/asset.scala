@@ -793,17 +793,18 @@ sealed trait AdditionalPanelColor {
   def propertyDisplayValue : String
 }
 object AdditionalPanelColor {
-  val values = Set(ColorOption1, ColorOption2, ColorOption99)
+  val values = Set(BlueColorOption, YellowColorOption, GreenColorOption, UnknownColorOption)
 
   def apply(value: Int): Option[AdditionalPanelColor] = {
     values.find(_.value == value)
   }
 
-  def getDefault: AdditionalPanelColor = ColorOption99
+  def getDefault: AdditionalPanelColor = UnknownColorOption
 }
-case object ColorOption1 extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
-case object ColorOption2 extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
-case object ColorOption99 extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
+case object BlueColorOption extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
+case object YellowColorOption extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
+case object GreenColorOption extends AdditionalPanelColor { def value = 3; def propertyDisplayValue = "Vihreä"}
+case object UnknownColorOption extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
   override def toJson: Any = this

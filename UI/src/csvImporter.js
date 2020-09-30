@@ -46,6 +46,7 @@ $(function() {
     var formData = new FormData(this);
     formData.delete('municipalityNumbers');
     var assetType = $('#asset-selection').find(":selected").val();
+
     function uploadFile() {
       backend.uploadFile(formData, assetType,
         function(data) {
@@ -59,6 +60,7 @@ $(function() {
           addNewRow(xhr.responseText);
         });
     }
+
     if ($('#deleteCheckbox').is(':checked')) {
       new GenericConfirmPopup('Haluatko varmasti poistaa kaikki jo aiemmin kunnan alueelle lisätyt liikennemerkit?', {
         container: '.csv-content',
@@ -71,7 +73,17 @@ $(function() {
           spinnerOn();
         }
       });
-    } else {
+
+    } else if (assetType === "lanes") {
+        new GenericConfirmPopup('Huom: Kaikki vanha kaistadata poistetaan, ja korvataan uudella', {
+        container: '.csv-content',
+        successCallback: function () {
+          uploadFile();
+          spinnerOn();
+        }
+      });
+
+    }else {
       uploadFile();
       spinnerOn();
     }
