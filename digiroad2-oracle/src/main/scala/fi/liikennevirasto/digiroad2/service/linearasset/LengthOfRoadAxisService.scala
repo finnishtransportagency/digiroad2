@@ -25,14 +25,13 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate,
       createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
-    value match {
-      case DynamicValue(multiTypeProps) =>
-        saveValue(typeId, id, multiTypeProps, roadLink)
-      case DynamicAssetValues(manyValues) =>
-        manyValues.foreach(item => {
-          saveValue(typeId, id, item, roadLink)
-        })
-      case _ => None
+    val values = value.asInstanceOf[DynamicAssetValues]
+    values.multipleValue.foreach { item => {
+      item.properties match {
+        case DynamicValue(multiTypeProps) => saveValue(typeId, id, multiTypeProps, roadLink)
+        case _ => None
+      }
+    }
     }
     id
   }
@@ -53,8 +52,8 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
       return ids
 
     val assetTypeId = assetDao.getAssetTypeId(ids)
-    val validateValues = value.asInstanceOf[DynamicAssetValues].multipleValue
-    validateValues.foreach(item => {
+    val values = value.asInstanceOf[DynamicAssetValues].multipleValue
+    values.foreach(item => {
       validateRequiredProperties(assetTypeId.head._2, item.properties)
     })
 
@@ -71,33 +70,23 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
         validateMinDistance(newMeasures.endMeasure, oldLinearAsset.endMeasure)) ||
         newSideCode != oldLinearAsset.sideCode
 
-      value match {
-        case DynamicValue(multiTypeProps) =>
-          if (validateItem) {
-            dao.updateExpiration(id)
-            Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId,
-              DynamicValue(multiTypeProps), newSideCode, newMeasures, username,
-              vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
-          }
-          else {
-            Some(updateValues(id, typeId, DynamicValue(multiTypeProps), username, Some(roadLink)))
-          }
-        case DynamicAssetValues(manyValues) =>
-          manyValues.map(item => {
+      values.foreach(item => {
+        item.properties match {
+          case DynamicValue(multiTypeProps) =>
             if (validateItem) {
               dao.updateExpiration(id)
               Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId,
-                DynamicValue(item), newSideCode, newMeasures, username,
+                DynamicValue(multiTypeProps), newSideCode, newMeasures, username,
                 vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
             }
             else {
-              Some(updateValues(id, typeId, DynamicValue(item), username, Some(roadLink)))
+              Some(updateValues(id, typeId, DynamicValue(multiTypeProps), username, Some(roadLink)))
             }
-          })
-          Some(id)
-        case _ =>
-          Some(id)
-      }
+          case _ =>
+            Some(id)
+        }
+      })
+      Some(id)
     }
   }
 
@@ -112,5 +101,4 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
     }
     id
   }
-
 }
