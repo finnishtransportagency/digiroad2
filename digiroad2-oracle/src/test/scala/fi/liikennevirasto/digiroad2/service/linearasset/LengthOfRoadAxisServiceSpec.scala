@@ -28,11 +28,6 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]]))
     .thenReturn(Seq(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)),
       Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  //when(mockVVHClient.fetchRoadLinkByLinkId(any[Long]))
-   // .thenReturn(Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)),
-    //  Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-
-
 
   val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -86,13 +81,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       LengthOfRoadAxisCreate(440, Seq(addItem2))
     )
     val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
-    val result2 = service.createRoadwayLinear(
-      listOfElement, "testuser",
-      vvhTimeStamp = mockVVHClient.roadLinkData.createVVHTimeStamp())
-    assert(result2.nonEmpty)
-    result2.foreach(item => {
-      println(item)
-    })
+
   }
 
   // update new asset
@@ -124,13 +113,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       LengthOfRoadAxisUpdate(Seq(200293L), DynamicValue(valuesAssetTest))
     )
     val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
-    val result2 = service.updateRoadwayLinear(
-      listOfElement, "testuser"
-    )
-    assert(result2.nonEmpty)
-    result2.foreach(item => {
-      println(item)
-    })
+
 
 
   }
