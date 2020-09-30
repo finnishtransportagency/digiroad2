@@ -26,12 +26,10 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate,
       createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
     val values = value.asInstanceOf[DynamicAssetValues]
-    values.multipleValue.foreach { item => {
-      item.properties match {
-        case DynamicValue(multiTypeProps) => saveValue(typeId, id, multiTypeProps, roadLink)
-        case _ => None
+    values.multipleValue.foreach {
+      item => {
+        saveValue(typeId, id, item, roadLink)
       }
-    }
     }
     id
   }
@@ -71,20 +69,16 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
         newSideCode != oldLinearAsset.sideCode
 
       values.foreach(item => {
-        item.properties match {
-          case DynamicValue(multiTypeProps) =>
-            if (validateItem) {
-              dao.updateExpiration(id)
-              Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId,
-                DynamicValue(multiTypeProps), newSideCode, newMeasures, username,
-                vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
-            }
-            else {
-              Some(updateValues(id, typeId, DynamicValue(multiTypeProps), username, Some(roadLink)))
-            }
-          case _ =>
-            Some(id)
+        if (validateItem) {
+          dao.updateExpiration(id)
+          Some(createWithoutTransaction(oldLinearAsset.typeId, oldLinearAsset.linkId,
+            DynamicValue(item), newSideCode, newMeasures, username,
+            vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink)))
         }
+        else {
+          Some(updateValues(id, typeId, DynamicValue(item), username, Some(roadLink)))
+        }
+
       })
       Some(id)
     }
