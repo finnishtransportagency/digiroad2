@@ -1,13 +1,8 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao}
-import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicAssetValues, DynamicValue, LengthOfRoadAxisCreate, LengthOfRoadAxisUpdate, NewLinearAsset, PersistedLinearAsset, RoadLinkLike, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, DynamicValues, RoadLinkLike, Value}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.util.PolygonTools
-import org.apache.commons.lang3.NotImplementedException
 import org.joda.time.DateTime
 
 class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
@@ -21,15 +16,19 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
                                         createdByFromUpdate: Option[String] = Some(""),
                                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()),
                                         verifiedBy: Option[String] = None, informationSource: Option[Int] = None): Long = {
-
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate,
       createdDateTimeFromUpdate, verifiedBy, informationSource = informationSource)
-    val values = value.asInstanceOf[DynamicAssetValues]
-    values.multipleValue.foreach {
-      item => {
-        saveValue(typeId, id, item, roadLink)
-      }
+    value match {
+      case values: DynamicValues =>
+        values.multipleValue.foreach {
+          item => {
+            saveValue(typeId, id, item, roadLink)
+          }
+        }
+      case DynamicValue(multiTypeProps) =>
+        saveValue(typeId, id, multiTypeProps, roadLink)
+      case _ => None
     }
     id
   }
@@ -50,7 +49,7 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
       return ids
 
     val assetTypeId = assetDao.getAssetTypeId(ids)
-    val values = value.asInstanceOf[DynamicAssetValues].multipleValue
+    val values = value.asInstanceOf[DynamicValues].multipleValue
     values.foreach(item => {
       validateRequiredProperties(assetTypeId.head._2, item.properties)
     })
