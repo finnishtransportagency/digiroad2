@@ -223,6 +223,26 @@ object PointAssetStructure {
   case object Unknown extends PointAssetStructure { def value = 99; def description = "Ei tiedossa" }
 }
 
+
+sealed trait YesOrNoField {
+  def value: Int
+  def description: String
+}
+object YesOrNoField {
+  val values = Set(Unknown, No, Yes)
+
+  def apply(intValue: Int):YesOrNoField = {
+    values.find(_.value == intValue).getOrElse(getDefault)
+  }
+
+  def getDefault: YesOrNoField = Unknown
+
+  case object No extends YesOrNoField { def value = 1; def description = "Ei"  }
+  case object Yes extends YesOrNoField { def value = 2; def description = "Kyllä" }
+  case object Unknown extends YesOrNoField { def value = 99; def description = "Ei tiedossa" }
+}
+
+
 sealed trait SideCode {
   def value: Int
 }
