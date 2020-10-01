@@ -2,8 +2,6 @@ package fi.liikennevirasto.digiroad2.linearasset
 
 import java.util.Optional
 
-
-import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, DynamicPropertyValue}
 import org.joda.time.DateTime
 
 case class LengthOfRoadAxisModel(
@@ -23,9 +21,3 @@ case class LengthOfRoadAxisModel(
                           start_date: DateTime,
                           end_date: DateTime
                         )
-case class LengthOfRoadAxisCreate(typeId: Int, assetSequence: Seq[NewLinearAsset]) {}
-
-
-case class LengthOfRoadAxisUpdate(ids: Seq[Long], value: Value) {}
-
-case class LengthOfRoadAxisExpire(ids: Seq[Long]) {}
