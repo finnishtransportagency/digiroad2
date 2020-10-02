@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
 import fi.liikennevirasto.digiroad2.DigiroadEventBus
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, DynamicValues, RoadLinkLike, Value}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, DynamicValues, NewLinearAsset, RoadLinkLike, Value}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import org.joda.time.DateTime
 

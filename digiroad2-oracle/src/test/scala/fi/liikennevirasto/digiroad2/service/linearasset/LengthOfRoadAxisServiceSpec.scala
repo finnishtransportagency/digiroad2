@@ -3,7 +3,7 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValues, NewLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
@@ -14,6 +14,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
+import slick.jdbc.StaticQuery.interpolation
 
 class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -29,20 +30,22 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]]))
     .thenReturn(Seq(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)),
       Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  //when(mockVVHClient.roadLinkData.createVVHTimeStamp())
 
   val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
+  val mockDynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
-  def createValue(PT_regulatory_number: String="K1", PT_lane_number: String="",
-                  PT_lane_type: String="", PT_lane_location: String="00",
-                  PT_material: String="", PT_length: String="",
-                  PT_width: String="", PT_profile_mark: String="",
-                  PT_additional_information: String="", PT_state: String="",
-                  PT_end_date: String="", PT_start_date: String="",
-                  PT_milled: String="", PT_condition: String="", PT_rumble_strip: String=""): DynamicAssetValue = {
+  def createValue(PT_regulatory_number: String = "K1", PT_lane_number: String = "",
+                  PT_lane_type: String = "", PT_lane_location: String = "00",
+                  PT_material: String = "", PT_length: String = "",
+                  PT_width: String = "", PT_profile_mark: String = "",
+                  PT_additional_information: String = "", PT_state: String = "",
+                  PT_end_date: String = "", PT_start_date: String = "",
+                  PT_milled: String = "", PT_condition: String = "", PT_rumble_strip: String = ""): DynamicAssetValue = {
     DynamicAssetValue(Seq(
       DynamicProperty("PT_regulatory_number", "single_choice", required = true, Seq(DynamicPropertyValue(PT_regulatory_number))),
       DynamicProperty("PT_lane_number", "number", required = false, Seq(DynamicPropertyValue(PT_lane_number))),
@@ -62,7 +65,7 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
     ))
   }
 
-  object PassThroughService extends LinearAssetOperations {
+  object PassThroughService extends LengthOfRoadAxisService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     def lengthOfRoadAxisService: LengthOfRoadAxisService = mockLengthOfRoadAxisService
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -85,6 +88,21 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
 
 class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
 
+  object ServiceWithDao extends LengthOfRoadAxisService(mockRoadLinkService, mockEventBus) {
+    override def withDynTransaction[T](f: => T): T = f
+    override def roadLinkService: RoadLinkService = mockRoadLinkService
+    override def dao: OracleLinearAssetDao = linearAssetDao
+    override def eventBus: DigiroadEventBus = mockEventBus
+    override def vvhClient: VVHClient = mockVVHClient
+    override def polygonTools: PolygonTools = mockPolygonTools
+    override def municipalityDao: MunicipalityDao = mockMunicipalityDao
+    override def assetDao: OracleAssetDao = mockAssetDao
+    override def dynamicLinearAssetDao: DynamicLinearAssetDao = mockDynamicLinearAssetDao
+
+    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+    override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
+  }
+
   // create new asset
   test("create new LengthOfRoadAxis asset") {
 
@@ -95,27 +113,23 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
     val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
       TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
-
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
       .thenReturn(roadLinkSequence)
-    val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValues(Seq(createValue(),createValue())), sideCode = 1, 0, None)
-    val newLinearAssets = Seq(asset)
-    val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
 
-    val id=  OracleDatabase.withDynSession{
-      newLinearAssets.map { newAsset =>
-        val roadLink = mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
-        service.createWithoutTransaction(typeId = 460,
-          newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username = "test",
-          mockVVHClient.roadLinkData.createVVHTimeStamp(), roadLink.find(_.linkId == newAsset.linkId)
-        )
-      }
+    runWithRollback {
+
+      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValues(Seq(createValue(), createValue())), sideCode = 1, 0, None)
+      val newLinearAssets = Seq(asset)
+
+
+      val id = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      id should not be (null)
     }
 
-    id should not be (null)
   }
 
   test("update new LengthOfRoadAxis asset") {
+
     val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
       TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
@@ -131,16 +145,17 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
     //this mocking seems to be not wokrking
     when(mockVVHClient.fetchRoadLinkByLinkId(1611690L))
       .thenReturn(roadLinkVvh)
-    val ids = Seq(0L, 1L, 1L)
-    val values =  DynamicValues(Seq(createValue(),createValue()))
-    val username = "testuser"
-    val measure = Option(Measures(10, 20))
-    val service = new LengthOfRoadAxisService(eventBusImpl = mockEventBus, roadLinkServiceImpl = mockRoadLinkService)
 
-    OracleDatabase.withDynSession{
-      service.updateWithoutTransaction(ids, values,  "testuser", sideCode = Option(1), measures = measure)
+
+    runWithRollback {
+      val ids = Seq(0L, 1L, 1L)
+
+      val values = DynamicValues(Seq(createValue(), createValue()))
+      val username = "testuser"
+      val measure = Option(Measures(10, 20))
+
+      ServiceWithDao.update(ids, values, "testuser", sideCode = Option(1), measures = measure)
     }
-
   }
 }
 
