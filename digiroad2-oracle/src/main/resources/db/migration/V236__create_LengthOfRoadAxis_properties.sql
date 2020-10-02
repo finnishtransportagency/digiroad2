@@ -76,8 +76,7 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
 VALUES (primary_key_seq.nextval, 460, 'string', 0, 'db_migration_v236', 'PT_additional_information',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Lisätieto'));
 
-INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID,
-                      DEFAULT_VALUE)
+INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', 'PT_state',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Tila'));
 
