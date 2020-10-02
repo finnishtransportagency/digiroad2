@@ -79,7 +79,7 @@ VALUES (primary_key_seq.nextval, 460, 'string', 0, 'db_migration_v236', 'PT_addi
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID,
                       DEFAULT_VALUE)
 VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', 'PT_state',
-        (select id from LOCALIZED_STRING where VALUE_FI = 'Tila'), 3);
+        (select id from LOCALIZED_STRING where VALUE_FI = 'Tila'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, 460, 'date', 0, 'db_migration_v236', 'PT_end_date',
