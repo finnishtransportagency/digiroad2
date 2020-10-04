@@ -49,7 +49,7 @@ VALUES (primary_key_seq.nextval, 460, 'number', 0, 'db_migration_v236', 'PT_lane
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kaistan numero'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 460, 'string', 0, 'db_migration_v236', 'PT_lane_type',
+VALUES (primary_key_seq.nextval, 460, 'text', 0, 'db_migration_v236', 'PT_lane_type',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Kaistan tyyppi'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
@@ -73,7 +73,7 @@ VALUES (primary_key_seq.nextval, 460, 'single_choice', 0, 'db_migration_v236', '
         (select id from LOCALIZED_STRING where VALUE_FI = 'Profiilimerkintä'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
-VALUES (primary_key_seq.nextval, 460, 'string', 0, 'db_migration_v236', 'PT_additional_information',
+VALUES (primary_key_seq.nextval, 460, 'long_text', 0, 'db_migration_v236', 'PT_additional_information',
         (select id from LOCALIZED_STRING where VALUE_FI = 'Lisätieto'));
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
