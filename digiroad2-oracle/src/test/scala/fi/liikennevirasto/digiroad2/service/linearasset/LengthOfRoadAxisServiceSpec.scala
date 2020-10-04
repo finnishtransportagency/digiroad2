@@ -1,10 +1,14 @@
 package fi.liikennevirasto.digiroad2.service.linearasset
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes.{Date, DatePeriodType}
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValues, NewLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, DynamicValues, NewLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
@@ -39,23 +43,26 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
   val mockDynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
 
-  def createValue(PT_regulatory_number: String = "K1", PT_lane_number: String = "",
-                  PT_lane_type: String = "", PT_lane_location: String = "00",
-                  PT_material: String = "", PT_length: String = "",
-                  PT_width: String = "", PT_profile_mark: String = "",
-                  PT_additional_information: String = "", PT_state: String = "",
-                  PT_end_date: String = "", PT_start_date: String = "",
-                  PT_milled: String = "", PT_condition: String = "", PT_rumble_strip: String = ""): DynamicAssetValue = {
+
+ val formatter = new SimpleDateFormat("dd.MM.yyyy")
+
+  def createValue(PT_regulatory_number: String = "1", PT_lane_number: String = "1",
+                  PT_lane_type: String = "test", PT_lane_location: String = "00",
+                  PT_material: String = "1", PT_length: String = "10",
+                  PT_width: String = "10", PT_profile_mark: String = "1",
+                  PT_additional_information: String = "test", PT_state: String = "1",
+                  PT_end_date: String = formatter.format(new Date()), PT_start_date: String =formatter.format(new Date()),
+                  PT_milled: String = "1", PT_condition: String = "1", PT_rumble_strip: String = "1"): DynamicAssetValue = {
     DynamicAssetValue(Seq(
       DynamicProperty("PT_regulatory_number", "single_choice", required = true, Seq(DynamicPropertyValue(PT_regulatory_number))),
       DynamicProperty("PT_lane_number", "number", required = false, Seq(DynamicPropertyValue(PT_lane_number))),
-      DynamicProperty("PT_lane_type", "string", required = false, Seq(DynamicPropertyValue(PT_lane_type))),
+      DynamicProperty("PT_lane_type", "text", required = false, Seq(DynamicPropertyValue(PT_lane_type))),
       DynamicProperty("PT_lane_location", "number", required = true, Seq(DynamicPropertyValue(PT_lane_location))),
       DynamicProperty("PT_material", "single_choice", required = false, Seq(DynamicPropertyValue(PT_material))),
       DynamicProperty("PT_length", "number", required = false, Seq(DynamicPropertyValue(PT_length))),
       DynamicProperty("PT_width", "number", required = false, Seq(DynamicPropertyValue(PT_width))),
       DynamicProperty("PT_profile_mark", "single_choice", required = false, Seq(DynamicPropertyValue(PT_profile_mark))),
-      DynamicProperty("PT_additional_information", "string", required = false, Seq(DynamicPropertyValue(PT_additional_information))),
+      DynamicProperty("PT_additional_information", "long_text", required = false, Seq(DynamicPropertyValue(PT_additional_information))),
       DynamicProperty("PT_state", "single_choice", required = false, Seq(DynamicPropertyValue(PT_state))),
       DynamicProperty("PT_end_date", "date", required = false, Seq(DynamicPropertyValue(PT_end_date))),
       DynamicProperty("PT_start_date", "date", required = false, Seq(DynamicPropertyValue(PT_start_date))),
@@ -117,13 +124,54 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       .thenReturn(roadLinkSequence)
 
     runWithRollback {
-
       val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValues(Seq(createValue(), createValue())), sideCode = 1, 0, None)
       val newLinearAssets = Seq(asset)
-
-
       val id = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
       id should not be (null)
+    }
+
+  }
+
+  test("create new LengthOfRoadAxis asset, one value DynamicValue") {
+
+    val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
+      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
+      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
+      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
+      .thenReturn(roadLinkSequence)
+
+    runWithRollback {
+      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None)
+      val newLinearAssets = Seq(asset)
+      val id = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      id should not be (null)
+    }
+
+  }
+
+  test("create new LengthOfRoadAxis asset, save two item to one roadlink") {
+
+    val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
+      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
+      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
+      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
+      .thenReturn(roadLinkSequence)
+
+    runWithRollback {
+      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None)
+      val newLinearAssets = Seq(asset)
+      val id1 = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      val id2 = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      id1 should not be (null)
+      id2 should not be (null)
     }
 
   }
