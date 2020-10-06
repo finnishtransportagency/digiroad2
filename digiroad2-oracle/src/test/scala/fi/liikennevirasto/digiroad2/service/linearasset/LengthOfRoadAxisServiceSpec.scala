@@ -3,22 +3,18 @@ package fi.liikennevirasto.digiroad2.service.linearasset
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import fi.liikennevirasto.digiroad2.asset.PropertyTypes.{Date, DatePeriodType}
 import fi.liikennevirasto.digiroad2.asset.{DynamicProperty, _}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHClient, VVHRoadLinkClient, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.dao.linearasset.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao, Sequences}
-import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, DynamicValues, NewLinearAsset, RoadLink}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.dao.{DynamicLinearAssetDao, MunicipalityDao, OracleAssetDao}
+import fi.liikennevirasto.digiroad2.linearasset.{DynamicAssetValue, DynamicValue, NewLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point}
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
-import slick.jdbc.StaticQuery.interpolation
 
 class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -109,53 +105,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
     override def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()) = throw new UnsupportedOperationException("Not supported method")
   }
-
   // create new asset
-  test("create new LengthOfRoadAxis asset") {
-
-    val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
-      .thenReturn(roadLinkSequence)
-
-    runWithRollback {
-      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValues(Seq(createValue(), createValue())), sideCode = 1, 0, None)
-      val newLinearAssets = Seq(asset)
-      val id = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
-      id should not be (null)
-    }
-
-  }
-
-  // create new asset
-  test("create new LengthOfRoadAxis asset and get it") {
-
-    val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
-      .thenReturn(roadLinkSequence)
-
-    runWithRollback {
-      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValues(Seq(createValue(), createValue())), sideCode = 1, 0, None)
-      val newLinearAssets = Seq(asset)
-      val id = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
-      val assetReturn =ServiceWithDao.getPersistedAssetsByIds(460,id.toSet)
-      assetReturn should not be null
-      assetReturn(0).value should not be null
-    }
-
-  }
-
   test("create new LengthOfRoadAxis asset, one DynamicValue") {
 
     val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
@@ -292,7 +242,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
     runWithRollback {
       val ids = Seq(0L, 1L, 1L)
 
-      val values = DynamicValues(Seq(createValue(), createValue()))
+      val values = DynamicValue(createValue())
       val username = "testuser"
       val measure = Option(Measures(10, 20))
 
