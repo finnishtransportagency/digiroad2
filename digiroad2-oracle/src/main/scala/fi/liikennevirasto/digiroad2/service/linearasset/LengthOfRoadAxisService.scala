@@ -7,6 +7,4 @@ class LengthOfRoadAxisService(roadLinkServiceImpl: RoadLinkService,
                               eventBusImpl: DigiroadEventBus)
   extends DynamicLinearAssetService(roadLinkServiceImpl: RoadLinkService,
     eventBusImpl: DigiroadEventBus) {
-
-
 }
