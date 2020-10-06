@@ -131,11 +131,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
 
     val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
       TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
+    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1 )
     when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
       .thenReturn(roadLinkSequence)
 
@@ -148,45 +144,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       id2 should not be (null)
     }
   }
-
-  test("create new LengthOfRoadAxis asset, save two item to one roadlink, get two item from one roadlin") {
-
-    val roadLinks = Seq(
-      RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
-      RoadLink(442443, Seq(Point(384985, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(384970, 6671649)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
-      RoadLink(442442, Seq(Point(384985, 6671649), Point(384986, 6671650), Point(384987, 6671657), Point(384986, 6671660)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
-      RoadLink(442444, Seq(Point(384986, 6671660), Point(384983, 6671663), Point(384976, 6671665), Point(384975, 6671664)), 2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
-    )
-
-    val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
-      .thenReturn(roadLinkSequence)
-
-    runWithRollback {
-      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None)
-      val asset2 = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None)
-      val newLinearAssets = Seq(asset)
-      val newLinearAssets2 = Seq(asset2)
-      val id1 = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
-      val id2 = ServiceWithDao.create(newLinearAssets2, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
-      val ids = id1 ++ id2
-      val assetReturn =ServiceWithDao.getPersistedAssetsByIds(460,ids.toSet)
-      val testValue2 =   assetReturn(0).value
-      val testValue =   assetReturn(1).value
-      assetReturn should not be null
-      assetReturn(0).value should not be null
-      assetReturn(1).value should not be null
-    }
-  }
-
-
-  test("create new LengthOfRoadAxis asset, save two item to one roadlink, get two item from one roadlin, test with rounabout") {
+  test("create new LengthOfRoadAxis asset, save two item to one roadlink, get two item from one roadlin by using getPersistedAssetsByIds, test with rounabout") {
 
     val roadLinks = Seq(
       RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)),
@@ -198,55 +156,99 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       RoadLink(442444, Seq(Point(384986, 6671660), Point(384983, 6671663), Point(384976, 6671665), Point(384975, 6671664)),
         2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
     )
-
-
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(442445,442443,442442,442444), false))
       .thenReturn(roadLinks)
 
     runWithRollback {
-      val asset = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None)
-      val asset2 = NewLinearAsset(linkId = 388562360, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None)
-      val newLinearAssets = Seq(asset)
-      val newLinearAssets2 = Seq(asset2)
+      val newLinearAssets = Seq( NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442443, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442442, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442444, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None))
+      val newLinearAssets2 = Seq(NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442443, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442442, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442444, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None))
       val id1 = ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
       val id2 = ServiceWithDao.create(newLinearAssets2, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
       val ids = id1 ++ id2
       val assetReturn =ServiceWithDao.getPersistedAssetsByIds(460,ids.toSet)
-      val testValue2 =   assetReturn(0).value
-      val testValue =   assetReturn(1).value
       assetReturn should not be null
       assetReturn(0).value should not be null
       assetReturn(1).value should not be null
     }
   }
 
-  test("update new LengthOfRoadAxis asset") {
+  test("create new LengthOfRoadAxis asset, save two item to one roadlink, get two item from one getPersistedAssetsByLinkIds by using populate, test with rounabout") {
 
-    val roadLink1 = RoadLink(388562360, Seq(Point(0.0, 10.0), Point(10, 10.0)), 5, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink2 = RoadLink(388562360, Seq(Point(10.0, 10.0), Point(10, 5.0)), 10.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLink3 = RoadLink(388562360, Seq(Point(10.0, 0.0), Point(10.0, 5.0)), 5.0, Municipality, 1,
-      TrafficDirection.BothDirections, SingleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-    val roadLinkSequence: Seq[RoadLink] = Seq(roadLink1, roadLink2, roadLink3)
-
-    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(388562360), false))
-      .thenReturn(roadLinkSequence)
-
-    val roadLinkVvh = Some(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
-    //this mocking seems to be not wokrking
-    when(mockVVHClient.fetchRoadLinkByLinkId(1611690L))
-      .thenReturn(roadLinkVvh)
-
+    val roadLinks = Seq(
+      RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442443, Seq(Point(384985, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(384970, 6671649)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442442, Seq(Point(384985, 6671649), Point(384986, 6671650), Point(384987, 6671657), Point(384986, 6671660)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442444, Seq(Point(384986, 6671660), Point(384983, 6671663), Point(384976, 6671665), Point(384975, 6671664)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(442445,442443,442442,442444), false))
+      .thenReturn(roadLinks)
 
     runWithRollback {
-      val ids = Seq(0L, 1L, 1L)
+      val newLinearAssets = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442443, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442442, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442444, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None))
+      val newLinearAssets2 = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442443, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442442, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442444, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None))
+      ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      ServiceWithDao.create(newLinearAssets2, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      val assetReturn =ServiceWithDao.getPersistedAssetsByLinkIds(460,roadLinks.map(roadLinks =>roadLinks.linkId))
+      val values =(index:Int)=>assetReturn(index).value.getOrElse("error").asInstanceOf[DynamicValue].value.properties
+      assetReturn should not be null
+      values(0) should not be null
+      values(1) should  not be null
+    }
+  }
 
-      val values = DynamicValue(createValue())
-      val username = "testuser"
-      val measure = Option(Measures(10, 20))
 
-      ServiceWithDao.update(ids, values, "testuser", sideCode = Option(1), measures = measure)
+
+  test("create new LengthOfRoadAxis asset, save two item to one roadlink, get two item from one getByRoadLinks by using populate, test with rounabout") {
+
+    val roadLinks = Seq(
+      RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442443, Seq(Point(384985, 6671649), Point(384980, 6671646), Point(384972, 6671647), Point(384970, 6671649)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442442, Seq(Point(384985, 6671649), Point(384986, 6671650), Point(384987, 6671657), Point(384986, 6671660)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None),
+      RoadLink(442444, Seq(Point(384986, 6671660), Point(384983, 6671663), Point(384976, 6671665), Point(384975, 6671664)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(442445,442443,442442,442444), false))
+      .thenReturn(roadLinks)
+
+    runWithRollback {
+      val newLinearAssets = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442443, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442442, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442444, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None))
+      val newLinearAssets2 = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442443, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442442, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None),
+        NewLinearAsset(linkId = 442444, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None))
+     ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+     ServiceWithDao.create(newLinearAssets2, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      val assetReturn =ServiceWithDao.getPersistedAssetsByLinkIds(460,roadLinks.map(roadLinks =>roadLinks.linkId))
+      val values =(index:Int)=>assetReturn(index).value.getOrElse("error").asInstanceOf[DynamicValue].value.properties
+      assetReturn should not be null
+      values(0) should not be null
+      values(1) should  not be null
     }
   }
 }
