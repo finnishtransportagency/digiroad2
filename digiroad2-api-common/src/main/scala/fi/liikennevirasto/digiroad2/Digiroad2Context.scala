@@ -744,7 +744,9 @@ object Digiroad2Context {
   lazy val pedestrianCrossingValidator: PedestrianCrossingValidator = {
     new PedestrianCrossingValidator()
   }
-
+  lazy val lengthOfRoadAxisService: LengthOfRoadAxisService = {
+    new LengthOfRoadAxisService(roadLinkService, eventbus)
+  }
   val env = System.getProperty("env")
   def getProperty(name: String) = {
     val property = properties.getProperty(name)

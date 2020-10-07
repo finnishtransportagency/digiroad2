@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import java.security.InvalidParameterException
 import java.time.LocalDate
+
 import com.newrelic.api.agent.NewRelic
 import fi.liikennevirasto.digiroad2.Digiroad2Context.municipalityProvider
 import fi.liikennevirasto.digiroad2.asset.DateParser._
@@ -12,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane._
-import fi.liikennevirasto.digiroad2.linearasset.{SpeedLimitValue, _}
+import fi.liikennevirasto.digiroad2.linearasset.{LengthOfRoadAxisModel, SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
@@ -26,6 +27,7 @@ import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.json4s.JsonAST.JValue
 import org.json4s._
+import org.json4s.jackson.Json
 import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
@@ -88,7 +90,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val parkingProhibitionService: ParkingProhibitionService = Digiroad2Context.parkingProhibitionService,
                    val cyclingAndWalkingService: CyclingAndWalkingService = Digiroad2Context.cyclingAndWalkingService,
                    val laneService: LaneService = Digiroad2Context.laneService,
-                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService)
+                   val servicePointStopService: ServicePointStopService = Digiroad2Context.servicePointStopService,
+                  val lengthOfRoadAxisService:LengthOfRoadAxisService= Digiroad2Context.lengthOfRoadAxisService)
 
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -2025,6 +2028,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case RoadWorksAsset.typeId => roadWorkService
       case ParkingProhibition.typeId => parkingProhibitionService
       case CyclingAndWalking.typeId => cyclingAndWalkingService
+      case LengthOfRoadAxis.typeId => lengthOfRoadAxisService
       case _ => linearAssetService
     }
   }
