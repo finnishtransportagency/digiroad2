@@ -5,51 +5,62 @@ INSERT INTO ASSET_TYPE (ID, NAME, GEOMETRY_TYPE, CREATED_BY)
 
 
 -- LOCALIZED_STRING VALUE
--- Asetusnumero
+-- Asetusnumero / regulatory number
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Asetusnumero', 'db_migration_v238', SYSDATE);
 
--- Tiemerkinnän esittämän liikennemerkin luokka (pakollinen, jos merkintä kuvaa liikennemerkkiä)
+-- Tiemerkinnän esittämän liikennemerkin luokka (pakollinen, jos merkintä kuvaa liikennemerkkiä) /
+-- Class of traffic sign represented by the road marking ((mandatory, if the marking depicts a traffic sign))
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Tiemerkinnän esittämän liikennemerkin luokka', 'db_migration_v238', SYSDATE);
 
 -- Tiemerkinnän tai tiemerkinnän esittämän liikennemerkin arvo (pakollinen, jos merkinnällä on arvo)
+-- Value of road marking or traffic sign represented by road marking (mandatory, if the marking has a value)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Tiemerkinnän tai tiemerkinnän esittämän liikennemerkin arvo', 'db_migration_v238', SYSDATE);
 	
 -- Käännös (pakollinen tiemerkinnöille M1 ja M2)
+-- Turn (mandatory for markings M1 and M2)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Käännös', 'db_migration_v238', SYSDATE);
 	
 -- Suhteellinen sijainti (valinnainen)
+-- Relative position (optional)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Suhteellinen sijainti', 'db_migration_v238', SYSDATE);
 
 -- Määrä (valinnainen)
+-- Quantity (optional)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Määrä', 'db_migration_v238', SYSDATE);
 
 -- Merkinnän materiaali (valinnainen, LOCALIZED_STRING-taulussa jo Merkin materiaali -value!!)
+-- Material of marking (optional, Material of marking -value already exsists in the LOCALIZED_STRING table)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Merkinnän materiaali', 'db_migration_v238', SYSDATE);
 
--- Merkinnän pituus (valinnainen, Tien leveys -value LOCALIZED_STRING-taulussa)
+-- Merkinnän pituus (valinnainen)
+-- Length of marking (optional)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Merkinnän pituus', 'db_migration_v238', SYSDATE);
 	
 -- Merkinnän leveys (valinnainen)
+-- Width of marking (optional)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Merkinnän leveys', 'db_migration_v238', SYSDATE);
 
 -- Profiilimerkintä (valinnainen)
+-- Profile marking (optional)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Profiilimerkintä', 'db_migration_v238', SYSDATE);
 
 -- Jyrsitty (valinnainen)
+-- Milled (optional)
 INSERT INTO LOCALIZED_STRING (ID, VALUE_FI, CREATED_BY, CREATED_DATE)
 	VALUES (primary_key_seq.nextval, 'Jyrsitty', 'db_migration_v238', SYSDATE);
 
 -- Tila ja lisätieto poistettu (molemmat on jo olemassa LOCALIZED_STRING-taulussa)
+-- State and Additional info values deleted (both already exsists in the LOCALIZED_STRING table)
 
 
 -- Add properties
@@ -113,6 +124,7 @@ INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PU
 
 -- ENUMARATED VALUE ASETUSNUMERO
 -- Tiemerkintöjen asetusnumero
+-- Regulatory number of road markings
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 	VALUES (primary_key_seq.nextval, 1, 'M1 ajokaistanuoli', '', 'db_migration_v238', 
 			(SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'MT_regulatory_number'));
@@ -242,7 +254,7 @@ INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_
 VALUES (primary_key_seq.nextval, 2, 'Kyllä', '', 'db_migration_v238',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'MT_road_marking_profile_mark'));
        
--- ENUMERATED VALUE JYRSITTY
+-- ENUMERATED VALUE MILLED
 INSERT INTO ENUMERATED_VALUE (ID, VALUE, NAME_FI, NAME_SV, CREATED_BY, PROPERTY_ID)
 VALUES (primary_key_seq.nextval, 99, 'Ei tietoa', '', 'db_migration_v238',
         (SELECT ID FROM PROPERTY WHERE PUBLIC_ID = 'MT_road_marking_milled'));
