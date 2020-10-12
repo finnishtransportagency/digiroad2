@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.vvh.VVHClient
 import fi.liikennevirasto.digiroad2.dao.pointasset.{IncomingServicePoint, ServicePoint}
 import fi.liikennevirasto.digiroad2.dao.{MapViewZoom, MunicipalityDao}
 import fi.liikennevirasto.digiroad2.lane._
-import fi.liikennevirasto.digiroad2.linearasset.{LengthOfRoadAxisModel, SpeedLimitValue, _}
+import fi.liikennevirasto.digiroad2.linearasset.{ SpeedLimitValue, _}
 import fi.liikennevirasto.digiroad2.service._
 import fi.liikennevirasto.digiroad2.service.feedback.{Feedback, FeedbackApplicationService, FeedbackDataService}
 import fi.liikennevirasto.digiroad2.service.lane.LaneService
