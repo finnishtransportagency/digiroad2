@@ -212,7 +212,6 @@ class AssetFiller {
       }
     }
 
-
     /**
       * Take pieces of segment and combine two of them if they are related to the similar segment and extend each other
       * (matching startM, endM, value and sidecode)
@@ -306,7 +305,7 @@ class AssetFiller {
     * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
     */
   protected def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
-    def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
+    def chooseSegment(seg1: SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
       val sl1 = segments.find(_.id == seg1.assetId).get
       val sl2 = segments.find(_.id == seg2.assetId).get
       if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
@@ -488,38 +487,56 @@ class AssetFiller {
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int, changedSet: Option[ChangeSet] = None): (Seq[PieceWiseLinearAsset], ChangeSet) = {
-    val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
-      expireSegmentsOutsideGeometry,
-      capSegmentsThatOverflowGeometry,
-      expireOverlappingSegments,
-      combine,
-      fuse,
-      dropShortSegments,
-      adjustAssets,
-      droppedSegmentWrongDirection,
-      adjustSegmentSideCodes,
-      generateTwoSidedNonExistingLinearAssets(typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
-      generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
-      updateValues
-    )
+
+    val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet)
+      => (Seq[PersistedLinearAsset], ChangeSet)] = typeId match {
+      // Removed expireOverlappingSegments and combine method to make possible to have two asset in one place
+      case 460 => Seq(
+        expireSegmentsOutsideGeometry,
+        capSegmentsThatOverflowGeometry,
+        fuse,
+        dropShortSegments,
+        adjustAssets,
+        droppedSegmentWrongDirection,
+        adjustSegmentSideCodes,
+        generateTwoSidedNonExistingLinearAssets(typeId),
+        generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+        generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+        updateValues
+      )
+      case _ => Seq(
+        expireSegmentsOutsideGeometry,
+        capSegmentsThatOverflowGeometry,
+        expireOverlappingSegments,
+        combine,
+        fuse,
+        dropShortSegments,
+        adjustAssets,
+        droppedSegmentWrongDirection,
+        adjustSegmentSideCodes,
+        generateTwoSidedNonExistingLinearAssets(typeId),
+        generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
+        generateOneSidedNonExistingLinearAssets(SideCode.AgainstDigitizing, typeId),
+        updateValues
+      )
+    }
 
     val changeSet = changedSet match {
       case Some(change) => change
-      case None => ChangeSet( droppedAssetIds = Set.empty[Long],
-                              expiredAssetIds = Set.empty[Long],
-                              adjustedMValues = Seq.empty[MValueAdjustment],
-                              adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
-                              adjustedSideCodes = Seq.empty[SideCodeAdjustment],
-                              valueAdjustments = Seq.empty[ValueAdjustment])
+      case None => ChangeSet(droppedAssetIds = Set.empty[Long],
+        expiredAssetIds = Set.empty[Long],
+        adjustedMValues = Seq.empty[MValueAdjustment],
+        adjustedVVHChanges = Seq.empty[VVHChangesAdjustment],
+        adjustedSideCodes = Seq.empty[SideCodeAdjustment],
+        valueAdjustments = Seq.empty[ValueAdjustment])
     }
 
     topology.foldLeft(Seq.empty[PieceWiseLinearAsset], changeSet) { case (acc, roadLink) =>
       val (existingAssets, changeSet) = acc
       val assetsOnRoadLink = linearAssets.getOrElse(roadLink.linkId, Nil)
-
-      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-        operation(roadLink, currentSegments, currentAdjustments)
+      val (adjustedAssets, assetAdjustments) = fillOperations.foldLeft(assetsOnRoadLink, changeSet) {
+        case ((currentSegments, currentAdjustments), operation) =>
+          operation(roadLink, currentSegments, currentAdjustments)
       }
       (existingAssets ++ toLinearAsset(adjustedAssets, roadLink), assetAdjustments)
     }

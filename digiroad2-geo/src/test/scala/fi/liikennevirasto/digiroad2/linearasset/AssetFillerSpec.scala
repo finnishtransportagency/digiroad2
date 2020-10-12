@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.linearasset
 
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Duration}
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.ProhibitionClass.Motorcycle
@@ -431,6 +431,48 @@ class AssetFillerSpec extends FunSuite with Matchers {
     filledTopology.length should be (1)
     filledTopology.head.startMeasure should be (0.0)
     filledTopology.head.endMeasure should be (10.00)
+  }
+
+  test("Drop one LinearAsset if there is two in same place"){
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(12.0, 0.0)), 10.0, AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+
+    val duration =Duration.ZERO
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 8.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 140, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(2, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(2)), 8.0, 10.0, Some("guy"),
+        Some(DateTime.now.withDurationAdded(duration.getStandardDays,1)), None, None,
+        expired = false, 140, 1, None, linkSource = NormalLinkInterface, None, None, None)
+    )
+
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 140)
+    filledTopology should have size 2
+    changeSet.expiredAssetIds should have size 1
+    changeSet.expiredAssetIds.head should be (1)
+  }
+  test("Do not drop/expire LinearAsset if there is two in same place when asset is 460"){
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(12.0, 0.0)), 12.0,
+      AdministrativeClass.apply(1), UnknownFunctionalClass.value,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+
+    val duration =Duration.ZERO
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(1)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 460, 0, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(2, 1, SideCode.BothDirections.value, Some(NumericValue(2)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now.withDurationAdded(duration.getStandardDays,1)), None, None,
+        expired = false, 460, 1, None, linkSource = NormalLinkInterface, None, None, None),
+      PersistedLinearAsset(3, 1, SideCode.BothDirections.value, Some(NumericValue(3)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now.withDurationAdded(duration.getStandardDays,2)), None, None,
+        expired = false, 460, 1, None, linkSource = NormalLinkInterface, None, None, None)
+    )
+
+    val (filledTopology, changeSet) = assetFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 460)
+
+    filledTopology should have size 4
+    filledTopology.map(item=>item.id).seq should be (Seq(1,2,3,0))
+    changeSet.expiredAssetIds should have size 0
   }
 
   private def roadLink(linkId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {
