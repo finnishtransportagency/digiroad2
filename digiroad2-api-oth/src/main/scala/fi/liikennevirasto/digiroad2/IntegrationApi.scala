@@ -293,6 +293,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
       case RoadWorksAsset.typeId => roadWorkService
       case ParkingProhibition.typeId => parkingProhibitionService
       case CyclingAndWalking.typeId => cyclingAndWalkingService
+      case LengthOfRoadAxis.typeId => lengthOfRoadAxisService
       case _ => linearAssetService
     }
   }
@@ -974,6 +975,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
         case "road_works_asset" => roadWorksToApi(municipalityNumber)
         case "parking_prohibitions" => parkingProhibitionsToApi(municipalityNumber)
         case "cycling_and_walking" => linearAssetsToApi(CyclingAndWalking.typeId, municipalityNumber)
+        case "length_of_roadaxis" => linearAssetsToApi(LengthOfRoadAxis.typeId, municipalityNumber)
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
