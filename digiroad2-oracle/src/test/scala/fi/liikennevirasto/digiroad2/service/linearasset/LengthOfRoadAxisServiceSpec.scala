@@ -30,7 +30,6 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]]))
     .thenReturn(Seq(VVHRoadlink(388562360L, 235, Seq(Point(0, 0), Point(10, 0)),
       Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
-  //when(mockVVHClient.roadLinkData.createVVHTimeStamp())
 
   val mockLinearAssetDao: OracleLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockEventBus: DigiroadEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -38,7 +37,6 @@ class LengthOfRoadAxisSpecSupport extends FunSuite with Matchers {
   val mockMunicipalityDao: MunicipalityDao = MockitoSugar.mock[MunicipalityDao]
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
   val mockDynamicLinearAssetDao: DynamicLinearAssetDao = new DynamicLinearAssetDao
-
 
  val formatter = new SimpleDateFormat("dd.MM.yyyy")
 
@@ -249,6 +247,31 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       assetReturn should not be null
       values(0) should not be null
       values(1) should  not be null
+    }
+  }
+  test("validate") {
+
+    val roadLinks = Seq(
+      RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)),
+        2, Municipality, 1, TrafficDirection.BothDirections, Roundabout, None, None)
+    )
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(Set(442445), false))
+      .thenReturn(roadLinks)
+
+    runWithRollback {
+      val newLinearAssets = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue()), sideCode = 1, 0, None))
+      val newLinearAssets2 = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None))
+      val newLinearAssets3 = Seq(
+        NewLinearAsset(linkId = 442445, startMeasure = 0, endMeasure = 10, value = DynamicValue(createValue(PT_regulatory_number="2")), sideCode = 1, 0, None))
+      ServiceWithDao.create(newLinearAssets, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+      ServiceWithDao.create(newLinearAssets2, typeId = 460, username = "testuser", mockVVHClient.createVVHTimeStamp())
+
+      val thrown = intercept[Exception]{
+        ServiceWithDao.validateCondition(newLinearAssets3(0))
+      }
+      assert(thrown.getMessage === "This regulatory number already exist in this roadlink.")
     }
   }
 }
