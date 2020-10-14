@@ -141,22 +141,28 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   )
 
   val speedLimitAllowedValues = Seq(20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120)
-  val speedLimitSigns: Seq[TrafficSignType] = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, MinimumSpeed, MinimumSpeedEnds)
+  val speedLimitSigns: Seq[TrafficSignType] = Seq(SpeedLimitSign, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, MinimumSpeed, MinimumSpeedEnds, RecommendedMaxSpeed)
 
-  val signsWithNumberAndSpecialMarksArvo: Seq[TrafficSignType] = Seq(ValidMonFri, ValidSat, ValidMultiplePeriod, ParkingAgainstFee)
+  val signsWithNumberAndSpecialMarksArvo: Seq[TrafficSignType] = Seq(ValidMonFri, ValidSat, ValidMultiplePeriod)
+  val signsWithNumberAndSpecialMarksExtendedArvo: Seq[TrafficSignType] = Seq(ParkingAgainstFee, ParkingAgainstFee2)
 
   val signsWithTextArvo: Seq[TrafficSignType] = Seq(AdvanceDirectionSign, AdvanceDirectionSign2, AdvanceDirectionSign3, AdvanceDirectionSignSmall, AdvanceDirectionSignSmall2, AdvanceDirectionSignSmall3, LaneSpecificNavigationBoard, AdvisorySignDetourLarge,
                                                     AdvisorySignDetour, CompilationSign, AdvanceDirectionSignAbove, AdvanceDirectionSignAboveSmall, ExitSignAbove, ExitSign, LocationSign, AdvanceLocationSign, DirectionSignForCyclistsWithoutDistances,
-                                                    PlaceName3, RiverName, InformationSignForServices, InformationSignForServices2, AdvanceInformationSignForServices, LocationSignForTouristService, AdvanceLocationSignForTouristService,
-                                                    TouristRouteTextOnly, TouristRoute)
+                                                    PlaceName, PlaceName2, PlaceName3, RiverName, InformationSignForServices, InformationSignForServices2, AdvanceInformationSignForServices, LocationSignForTouristService, AdvanceLocationSignForTouristService,
+                                                    TouristRouteTextOnly, TouristRoute, PlaceNameForCyclists)
 
-  val signsWithNumberAndTextArvo: Seq[TrafficSignType] = Seq(DirectionSign, DirectionSignOnPrivateRoad, DirectionSignForLocalPurposes, DirectionSignForMotorway, DirectionSignForPedestrians, DirectionSignForCyclistsWithDistances,
-                                                             AdvanceDirectionSignForCyclistsWithDistances, DistanceBoardForCyclists, SignShowingDistance, RoadNumberInternationalRoad, TimeLimit, ObligatoryUseOfParkingDisc, ObligatoryUseOfParkingDisc2)
+  val signsWithNumberAndTextArvo: Seq[TrafficSignType] = Seq(RoadNumberInternationalRoad, TimeLimit, ObligatoryUseOfParkingDisc, ObligatoryUseOfParkingDisc2)
 
-  val signsWithNumberArvo: Seq[TrafficSignType] = Seq(NoWidthExceeding, MaxHeightExceeding, MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, RecommendedMaxSpeed, RoadNumberHighway,
-                                                      RoadNumberPrimaryRoad, RoadNumberRegionalRoad, RoadNumberOtherRoad, RoadNumberRingRoad, ExitNumber, DirectionToTheNumberedRoad, DirectionToTheNumberedPrimaryRoad,
-                                                      SignAppliesDirectionOfTheArrowWithDistance, SignAppliesDirectionOfTheArrowWithDistance2, DistanceWhichSignApplies, DistanceFromSignToPointWhichSignApplies, DistanceCompulsoryStop, FreeWidth, FreeHeight,
-                                                      UnderpassHeight)
+  val signsWithNumberAndTextExtendedArvo: Seq[TrafficSignType] = Seq(DirectionSign, DirectionSignOnPrivateRoad, DirectionSignForLocalPurposes, DirectionSignForMotorway,
+                                                                DirectionSignForPedestrians, DirectionSignForCyclistsWithDistances, AdvanceDirectionSignForCyclistsWithDistances,
+                                                                DistanceBoardForCyclists, SignShowingDistance)
+
+  val signsWithNumberArvo: Seq[TrafficSignType] = Seq(NoWidthExceeding, MaxHeightExceeding, MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding, MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding, RoadNumberHighway,
+                                                      RoadNumberPrimaryRoad, RoadNumberRegionalRoad, RoadNumberOtherRoad, RoadNumberRingRoad, ExitNumber, DirectionToTheNumberedRoad, DirectionToTheNumberedPrimaryRoad )
+
+  val signsWithDecimalNumberArvo: Seq[TrafficSignType] = Seq(SignAppliesDirectionOfTheArrowWithDistance, SignAppliesDirectionOfTheArrowWithDistance2, DistanceWhichSignApplies,
+                                                          DistanceFromSignToPointWhichSignApplies, DistanceCompulsoryStop, FreeWidth, FreeHeight, HeightElectricLine, UnderpassHeight,
+                                                          RadioStationFrequency)
 
   val signsRequireArvo: Seq[TrafficSignType] = Seq(NoWidthExceeding, MaxHeightExceeding, MaximumLength, MaxLadenExceeding, MaxMassCombineVehiclesExceeding,
                                                     MaxTonsOneAxleExceeding, MaxTonsOnBogieExceeding ) ++ speedLimitSigns
@@ -409,21 +415,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   }
 
   private def generateBaseProperties(trafficSignAttributes: ParsedProperties) : Set[SimplePointAssetProperty] = {
-    val valueProperty = tryToInt(getPropertyValue(trafficSignAttributes, "value").toString).map { value =>
-      SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value.toString)))}
+    val value = getPropertyValue(trafficSignAttributes, "value").toString
+    val valueProperty = Some( SimplePointAssetProperty(valuePublicId, Seq(PropertyValue(value))) )
 
     val typeProperty = SimplePointAssetProperty(typePublicId, Seq(PropertyValue(TrafficSignType.applyNewLawCode(getPropertyValue(trafficSignAttributes, "trafficSignType").toString).OTHvalue.toString)))
 
     val listPublicIds = Seq(infoPublicId, startDatePublicId, endDatePublicId, municipalityPublicId, mainSignTextPublicId, structurePublicId, conditionPublicId, sizePublicId,
                             heightPublicId, coatingTypePublicId, signMaterialPublicId, locationSpecifierPublicId, terrainCoordinatesXPublicId, terrainCoordinatesYPublicId,
                             laneTypePublicId, lanePublicId, lifeCyclePublicId, typeOfDamagePublicId, urgencyOfRepairPublicId, lifespanLeftPublicId, oldTrafficCodePublicId,
-                            oppositeSideSignPublicId
-                            )
+                            oppositeSideSignPublicId )
 
     val listFieldNames = Seq("additionalInfo", "startDate", "endDate", "municipalityId", "mainSignText", "structure", "condition", "size", "height", "coatingType", "signMaterial",
                               "locationSpecifier", "lon", "lat", "laneType", "lane", "lifeCycle", "typeOfDamage", "urgencyOfRepair", "lifespanLeft",
-                              "oldTrafficCode", "oppositeSideSign"
-                            )
+                              "oldTrafficCode", "oppositeSideSign" )
 
     val propertiesValues = extractPropertyValues(listPublicIds, listFieldNames, trafficSignAttributes, withGroupedId = false)
 
@@ -462,15 +466,24 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
   private def verifyMultiType(parameterName: String, parameterValue: String, trafficSignCode: String): ParsedRow = {
     val trafficSignType: TrafficSignType = TrafficSignType.applyNewLawCode(trafficSignCode)
 
-    if ((signsWithNumberArvo.contains(trafficSignType) && !parameterValue.forall(_.isDigit)) ||
-      (signsWithNumberAndTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9\\u0080-\\uFFFF\\s]*$")) ||
-      (signsWithTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z\\u0080-\\uFFFF\\s]*$")) ||
-      (signsWithNumberAndSpecialMarksArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)$"))) {
+    val isSignNumberArvoAndValueNotOK = signsWithNumberArvo.contains(trafficSignType) && !parameterValue.forall(_.isDigit)
+    val isSignNumberAndTextAndValueNotOk = signsWithNumberAndTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9\\p{L}\\s]*$")
+    val isSignNumberAndTextExtendedAndValueNotOk = signsWithNumberAndTextExtendedArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9\\p{L}.,;\\-\\s]*$")
+    val isSignTextArvoAndValueNotOk = signsWithTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z\\p{L}.,;\\-\\s]*$")
+    val isSignNumbAndSpecialMarksAndValueNotOk = signsWithNumberAndSpecialMarksArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)$")
+    val isSignNumbAndSpecialMarksExtendedAndValueNotOk = signsWithNumberAndSpecialMarksExtendedArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)\\s*(([(]?)\\s*([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])\\s*([)]?)?)*$")
+    val isSignDecimalNumberAndValueNotOk = signsWithDecimalNumberArvo.contains(trafficSignType) && !parameterValue.matches("^\\d*(,\\d+)?$")
+
+
+    if ( isSignNumberArvoAndValueNotOK || isSignNumberAndTextAndValueNotOk || isSignNumberAndTextExtendedAndValueNotOk ||
+      isSignTextArvoAndValueNotOk || isSignNumbAndSpecialMarksAndValueNotOk || isSignNumbAndSpecialMarksExtendedAndValueNotOk ||
+      isSignDecimalNumberAndValueNotOk ) {
 
       (List(parameterName), Nil)
     }
-    else
+    else {
       (Nil, List(AssetProperty(columnName = multiTypeValueFieldsMapping(parameterName), value = parameterValue)))
+    }
 
   }
 

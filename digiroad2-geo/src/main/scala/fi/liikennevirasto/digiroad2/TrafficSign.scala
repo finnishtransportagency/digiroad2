@@ -120,7 +120,11 @@ object TrafficSignType {
   }
 
   def applyNewLawCode(value: String): TrafficSignType = {
-    values.find(_.NewLawCode == value).getOrElse(Unknown)
+    values.filter(_.NewLawCode == value)
+          .toSeq                // To be able to do the sortBy
+          .sortBy(_.OTHvalue)   // Sort the elements by OTHvalue ASC
+          .headOption           // To get first element of the sortBy inside an Option
+          .getOrElse(Unknown)   // If previous result is empty then we return Unknown otherwise we return the first element of the sortBy
   }
 
   def apply(TrafficSignTypeGroup: TrafficSignTypeGroup): Set[Int] = {
