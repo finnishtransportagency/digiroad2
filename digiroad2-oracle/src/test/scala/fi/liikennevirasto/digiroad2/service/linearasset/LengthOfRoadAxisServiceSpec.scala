@@ -249,7 +249,7 @@ class LengthOfRoadAxisServiceSpec extends LengthOfRoadAxisSpecSupport {
       values(1) should  not be null
     }
   }
-  test("validate") {
+  test("Fail if regulatory number already exist int the roadlink") {
 
     val roadLinks = Seq(
       RoadLink(442445, Seq(Point(384970, 6671649), Point(384968, 6671653), Point(384969, 6671660), Point(384975, 6671664)),
