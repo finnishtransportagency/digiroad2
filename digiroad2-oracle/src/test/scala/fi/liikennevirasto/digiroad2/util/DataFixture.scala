@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.client.tierekisteri._
 import fi.liikennevirasto.digiroad2.client.viite.SearchViiteClient
 import fi.liikennevirasto.digiroad2.client.vvh.ChangeType.New
 import fi.liikennevirasto.digiroad2.client.vvh.{VVHClient, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributesDao}
+import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, FunctionalClassDao, LinkAttributes, LinkAttributesDao}
 import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, _}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
@@ -2282,7 +2282,7 @@ object DataFixture {
 
     val newCsvFile = new File("private_road_association_information.csv")
     val bw = new BufferedWriter(new FileWriter(newCsvFile))
-    bw.write("WKT;ASSOCIINFO\n")
+    bw.write("WKT;ASSOCIINFO;ACCESS_RIGHT_ID\n")
 
     municipalities.foreach { municipality =>
       println(s"Obtaining all road links and private road association information for Municipality: $municipality")
@@ -2300,8 +2300,9 @@ object DataFixture {
         val roadLink = roadLinks.find(_.linkId == linkId).get
         val wtkGeometry = geometryToWKT(roadLink.geometry)
         val associationInfoValue = associationInfo.get._2
+        val accessRightId: String = GetAccessRightID(linkId)
 
-        s"$wtkGeometry;$associationInfoValue"
+        s"$wtkGeometry;$associationInfoValue;$accessRightId"
       }.mkString("\n")
 
       println("Writing information into file")
@@ -2313,6 +2314,14 @@ object DataFixture {
     println("Complete at time: ")
     println(DateTime.now())
     println("\n")
+  }
+
+  def GetAccessRightID(linkId:Long):String ={
+    OracleDatabase.withDynSession {
+     val response= LinkAttributesDao.getExistingValues(linkId).getOrElse("ACCESS_RIGHT_ID", "")
+      response
+    }
+
   }
 
   def restoreExpiredAssetsFromTRImport() = {
