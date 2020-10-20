@@ -9,4 +9,5 @@ javaopts="$javaopts -Dfile.encoding=UTF8 -Djava.security.egd=file:///dev/urandom
 logfile="digiroad2.boot.log"
 jmxmonitoring="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.rmi.port=9010"
 
-nohup java $jmxmonitoring $javaopts > $logfile &
+heapdumpparameter="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/web/digiroad2/current/logs"
+nohup java $heapdumpparameter $jmxmonitoring $javaopts > $logfile &
