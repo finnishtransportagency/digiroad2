@@ -1,16 +1,24 @@
 package fi.liikennevirasto.digiroad2.service.pointasset
 
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.TestTransactions
+import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 import fi.liikennevirasto.digiroad2.client.vvh.{FeatureClass, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
-import fi.liikennevirasto.digiroad2.user.{Configuration, User}
-import fi.liikennevirasto.digiroad2.util.TestTransactions
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FunSuite, Matchers}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+
 
 class otherRoadwayMarkingServiceSpec extends FunSuite with Matchers {
+
+  def toRoadLink(l: VVHRoadlink) = {
+    RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
+      l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
+  }
 
   val testUser = User(
     id = 1,
@@ -40,7 +48,7 @@ class otherRoadwayMarkingServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
 
-  test("Create new Width Of RoadAxis Marking") {
+  test("Create new Other Roadway Marking") {
     runWithRollback {
       val properties = propertiesL1
 

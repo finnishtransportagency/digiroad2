@@ -1,13 +1,17 @@
 package fi.liikennevirasto.digiroad2.dao.pointasset
 
+import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.{PersistedPoint, Point}
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, OtherRoadwayMarkings, Property, PropertyValue}
+import fi.liikennevirasto.digiroad2.asset.{DateParser, Decode, LinkGeomSource, OtherRoadwayMarkings, PointAssetValue, Property, PropertyValue, SimplePointAssetProperty}
 import fi.liikennevirasto.digiroad2.dao.Queries._
 import fi.liikennevirasto.digiroad2.dao.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.service.pointasset.IncomingOtherRoadwayMarking
 import org.joda.time.DateTime
 import slick.jdbc.StaticQuery.interpolation
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
 
 
 
@@ -61,13 +65,13 @@ object OracleOtherRoadwayMarkingDao {
     """
   }
 
- /** def fetchByFilterWithExpired(queryFilter: String => String): Seq[OtherRoadwayMarking] = {
+  def fetchByFilterWithExpired(queryFilter: String => String): Seq[OtherRoadwayMarking] = {
     val queryWithFilter = queryFilter(query())
     queryToOtherRoadwayMarking(queryWithFilter)
-  }**/
+  }
 
   // This works as long as there is only one (and exactly one) property (currently type) for WidthOfRoadAxisMarking and up to one value
- /** def fetchByFilter(queryFilter: String => String, withDynSession: Boolean = false): Seq[OtherRoadwayMarking] = {
+  def fetchByFilter(queryFilter: String => String, withDynSession: Boolean = false): Seq[OtherRoadwayMarking] = {
     val queryWithFilter = queryFilter(query()) + " and (a.valid_to > sysdate or a.valid_to is null)"
     if (withDynSession) {
       OracleDatabase.withDynSession {
@@ -76,7 +80,7 @@ object OracleOtherRoadwayMarkingDao {
     } else {
       queryToOtherRoadwayMarking(queryWithFilter)
     }
-  }**/
+  }
 
   def assetRowToProperty(assetRows: Iterable[OtherRoadwayMarkingRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
@@ -96,8 +100,8 @@ object OracleOtherRoadwayMarkingDao {
     }.toSeq
   }
 
- /* private def queryToOtherRoadwayMarking(query: String): Seq[OtherRoadwayMarking] = {
-    /*val rows = StaticQuery.queryNA[OtherRoadwayMarkingRow](query)(getPointAsset).iterator.toSeq
+  private def queryToOtherRoadwayMarking(query: String): Seq[OtherRoadwayMarking] = {
+    val rows = StaticQuery.queryNA[OtherRoadwayMarkingRow](query)(getPointAsset).iterator.toSeq
 
     rows.groupBy(_.id).map { case (id, signRows) =>
       val row = signRows.head
@@ -107,10 +111,10 @@ object OracleOtherRoadwayMarkingDao {
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
         expired = row.expired, linkSource = row.linkSource)
-    }.values.toSeq*/
-  }*/
+    }.values.toSeq
+  }
 
-  private def createOrUpdateOtherRoadwayMarking(widthOfRoadAxisMarking: IncomingOtherRoadwayMarking, id: Long): Unit = {
+  private def createOrUpdateOtherRoadwayMarking(otherRoadwayMarking: IncomingOtherRoadwayMarking, id: Long): Unit = {
     otherRoadwayMarking.propertyData.map(propertyWithTypeAndId(OtherRoadwayMarkings.typeId)).foreach { propertyWithTypeAndId =>
       val propertyType = propertyWithTypeAndId._1
       val propertyPublicId = propertyWithTypeAndId._3.publicId
@@ -120,6 +124,54 @@ object OracleOtherRoadwayMarkingDao {
       createOrUpdateProperties(id, propertyPublicId, propertyId, propertyType, propertyValues)
     }
   }
+
+  def fetchByFilterWithExpiredLimited(queryFilter: String => String, token: Option[String]): Seq[OtherRoadwayMarking] = {
+    val recordLimit = token match {
+      case Some(tk) =>
+        val (startNum, endNum) = Decode.getPageAndRecordNumber(tk)
+
+        val counter = ", DENSE_RANK() over (ORDER BY a.id) line_number from "
+        s" select asset_id, link_id, geometry, start_measure, floating, adjusted_timestamp, municipality_code, property_id, public_id, property_type, required, value, display_value, created_by, created_date," +
+          s" modified_by, modified_date, expired, link_source from ( ${queryFilter(query().replace("from", counter))} ) WHERE line_number between $startNum and $endNum"
+
+      case _ => queryFilter(query())
+    }
+    queryToOtherRoadwayMarking(recordLimit)
+  }
+
+  implicit val getPointAsset: GetResult[OtherRoadwayMarkingRow] = new GetResult[OtherRoadwayMarkingRow] {
+    def apply(r: PositionedResult): OtherRoadwayMarkingRow = {
+      val id = r.nextLong()
+      val linkId = r.nextLong()
+      val point = r.nextBytesOption().map(bytesToPoint).get
+      val mValue = r.nextDouble()
+      val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
+      val municipalityCode = r.nextInt()
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = PropertyRow(
+        propertyId = propertyId,
+        publicId = propertyPublicId,
+        propertyType = propertyType,
+        propertyRequired = propertyRequired,
+        propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
+        propertyDisplayValue = propertyDisplayValue.orNull)
+      val createdBy = r.nextStringOption()
+      val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val modifiedBy = r.nextStringOption()
+      val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val expired = r.nextBoolean()
+      val linkSource = r.nextInt()
+
+      OtherRoadwayMarkingRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, createdBy, createdDateTime, modifiedBy, modifiedDateTime, expired, LinkGeomSource(linkSource))
+    }
+  }
+
 
   def create(widthOfRoadAxisMarking: IncomingOtherRoadwayMarking, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
@@ -162,7 +214,7 @@ object OracleOtherRoadwayMarkingDao {
     """.execute
     updateAssetGeometry(id, Point(widthOfRoadAxisMarking.lon, widthOfRoadAxisMarking.lat))
 
-    createOrUpdateWidthOfRoadAxisMarking(widthOfRoadAxisMarking, id)
+    createOrUpdateOtherRoadwayMarking(widthOfRoadAxisMarking, id)
 
     id
   }
@@ -171,6 +223,53 @@ object OracleOtherRoadwayMarkingDao {
   def updateFloatingAsset(otherRoadwayMarkingUpdated: OtherRoadwayMarking): Unit = {
     val id = otherRoadwayMarkingUpdated.id
   }
+
+  def propertyWithTypeAndId(typeId: Int)(property: SimplePointAssetProperty): Tuple3[String, Option[Long], SimplePointAssetProperty] = {
+    val propertyId = StaticQuery.query[(String, Int), Long](propertyIdByPublicIdAndTypeId).apply(property.publicId, typeId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + property.publicId + " not found"))
+    (StaticQuery.query[Long, String](propertyTypeByPropertyId).apply(propertyId).first, Some(propertyId), property)
+  }
+
+  def createOrUpdateProperties(assetId: Long, propertyPublicId: String, propertyId: Long, propertyType: String, propertyValues: Seq[PointAssetValue]) {
+    propertyType match {
+      case Text =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Text property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty) {
+          deleteTextProperty(assetId, propertyId).execute
+        } else if (PropertyValidator.textPropertyValueDoesNotExist(assetId, propertyId)) {
+          insertTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
+        } else {
+          updateTextProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue).execute
+        }
+      case SingleChoice =>
+        if (propertyValues.size != 1) throw new IllegalArgumentException("Single choice property must have exactly one value. publicId: " + propertyPublicId)
+        if (PropertyValidator.singleChoiceValueDoesNotExist(assetId, propertyId)) {
+          insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
+        } else {
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toLong).execute
+        }
+      case Date =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Date property must have exactly one value: " + propertyValues)
+        val isBlank = propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty
+        if (!PropertyValidator.datePropertyValueDoesNotExist(assetId, propertyId) && isBlank) {
+          deleteDateProperty(assetId, propertyId).execute
+        } else if (PropertyValidator.datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
+          insertDateProperty(assetId, propertyId, DateParser.DatePropertyFormat.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue)).execute
+        } else if (!PropertyValidator.datePropertyValueDoesNotExist(assetId, propertyId) && !isBlank) {
+          updateDateProperty(assetId, propertyId, DateParser.DatePropertyFormat.parseDateTime(propertyValues.head.asInstanceOf[PropertyValue].propertyValue)).execute
+        }
+      case Number =>
+        if (propertyValues.size > 1) throw new IllegalArgumentException("Number property must have exactly one value: " + propertyValues)
+        if (propertyValues.isEmpty || propertyValues.head.asInstanceOf[PropertyValue].propertyValue.isEmpty) {
+          deleteNumberProperty(assetId, propertyId).execute
+        } else if (PropertyValidator.numberPropertyValueDoesNotExist(assetId, propertyId)) {
+          insertNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
+        } else {
+          updateNumberProperty(assetId, propertyId, propertyValues.head.asInstanceOf[PropertyValue].propertyValue.toDouble).execute
+        }
+      case t: String => throw new UnsupportedOperationException("Asset property type: " + t + " not supported")
+    }
+  }
+
 
 
 

@@ -468,7 +468,7 @@ trait  PointAssetOperations{
   def getInaccurateRecords(typeId: Int, municipalities: Set[Int] = Set(), adminClass: Set[AdministrativeClass] = Set()): Map[String, Map[String, Any]] = Map()
 
 
-  def getProperty(properties: Seq[Property], property: String) : Option[PropertyValue] = {
+  def getProperty(properties: Seq[AbstractProperty], property: String) : Option[PropertyValue] = {
     properties.find(p => p.publicId == property).get.values.map(_.asInstanceOf[PropertyValue]).headOption
   }
 
@@ -520,7 +520,12 @@ trait  PointAssetOperations{
       case false => AgainstDigitizing.value
     }
   }
+
+  def getLatestModifiedAsset(assets: Seq[PersistedPoint]): PersistedPoint = {
+    assets.maxBy(asset => asset.modifiedAt.getOrElse(asset.createdAt.get).getMillis)
+  }
 }
+
 
 object PointAssetOperations {
   def calculateBearing(persistedPointAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): Option[Int] = {
