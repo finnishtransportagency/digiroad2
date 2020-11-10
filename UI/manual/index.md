@@ -18,7 +18,7 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erot
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
 - Ilman Digiroad-oikeuksia Liikenneviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
-- Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin tai vain pys&auml;kkiaineistoihin.
+- Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin.
 - Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
 
 Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Liikenneviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
