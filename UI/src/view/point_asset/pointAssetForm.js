@@ -393,7 +393,11 @@ root.PointAssetForm = function() {
     var asset = selectedAsset.get();
     var lanes;
     if (!asset.floating){
-      lanes = roadCollection.getRoadLinkByLinkId(asset.linkId).getData().lanes;
+      var laneObject = roadCollection.getRoadLinkByLinkId(asset.linkId);
+      if( typeof laneObject === "undefined"){
+        return '';
+      }
+      lanes = laneObject.getData().lanes;
       lanes = laneUtils.filterByValidityDirection(asset.validityDirection, lanes);
     }
 
