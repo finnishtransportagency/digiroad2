@@ -470,14 +470,22 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
     val isSignNumberAndTextAndValueNotOk = signsWithNumberAndTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9\\p{L}\\s]*$")
     val isSignNumberAndTextExtendedAndValueNotOk = signsWithNumberAndTextExtendedArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z0-9\\p{L}.,;\\-\\s]*$")
     val isSignTextArvoAndValueNotOk = signsWithTextArvo.contains(trafficSignType) && !parameterValue.matches("^[a-zA-Z\\p{L}.,;\\-\\s]*$")
-    val isSignNumbAndSpecialMarksAndValueNotOk = signsWithNumberAndSpecialMarksArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)$")
-    val isSignNumbAndSpecialMarksExtendedAndValueNotOk = signsWithNumberAndSpecialMarksExtendedArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)\\s*(([(]?)\\s*([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])\\s*([)]?)?)*$")
-    val isSignDecimalNumberAndValueNotOk = signsWithDecimalNumberArvo.contains(trafficSignType) && !parameterValue.matches("^\\d*(,\\d+)?$")
+    val isSignNumbAndSpecialMarksArvoAndValueNotOk = signsWithNumberAndSpecialMarksArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)$")
+    val isSignNumbAndSpecialMarksExtendedArvoAndValueNotOk = signsWithNumberAndSpecialMarksExtendedArvo.contains(trafficSignType) && !parameterValue.matches("^([(]?)([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])([)]?)\\s*(([(]?)\\s*([0-1]?[0-9]|[2][0-3])\\s*[-]{1}\\s*([0-1]?[0-9]|[2][0-3])\\s*([)]?)?)*$")
+    val isSignDecimalNumberAndValueArvoNotOk = signsWithDecimalNumberArvo.contains(trafficSignType) && !parameterValue.matches("^\\d*(,\\d+)?$")
 
+    val arvoFieldIsNumber =parameterValue.matches("^\\d*$")
+
+    if(parameterName == "arvo" || !arvoFieldIsNumber ){
+
+      (List(parameterName), Nil)
+    }else{
+      (Nil, List(AssetProperty(columnName = multiTypeValueFieldsMapping(parameterName), value = parameterValue)))
+    }
 
     if ( isSignNumberArvoAndValueNotOK || isSignNumberAndTextAndValueNotOk || isSignNumberAndTextExtendedAndValueNotOk ||
-      isSignTextArvoAndValueNotOk || isSignNumbAndSpecialMarksAndValueNotOk || isSignNumbAndSpecialMarksExtendedAndValueNotOk ||
-      isSignDecimalNumberAndValueNotOk ) {
+      isSignTextArvoAndValueNotOk || isSignNumbAndSpecialMarksArvoAndValueNotOk || isSignNumbAndSpecialMarksExtendedArvoAndValueNotOk ||
+      isSignDecimalNumberAndValueArvoNotOk ) {
 
       (List(parameterName), Nil)
     }
