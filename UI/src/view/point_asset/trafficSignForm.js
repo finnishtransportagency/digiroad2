@@ -438,7 +438,6 @@
     var additionalPanelColorSettings = [
       { propertyValue: "1", propertyDisplayValue: "Sininen", checked: false },
       { propertyValue: "2", propertyDisplayValue: "Keltainen", checked: false },
-      { propertyValue: "3", propertyDisplayValue: "Vihreä", checked: false },
       { propertyValue: "99", propertyDisplayValue: "Ei tietoa", checked: false }
     ];
 
