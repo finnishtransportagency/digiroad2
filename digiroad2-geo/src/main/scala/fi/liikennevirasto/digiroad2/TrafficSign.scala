@@ -3120,7 +3120,7 @@ object SignMaterial {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
 
-  def getDefault: SignMaterial = Unknown
+  def getDefault: SignMaterial = Aluminum
 
   case object Plywood extends SignMaterial { def value = 1; def description = "Vaneri"  }
   case object Aluminum extends SignMaterial { def value = 2; def description = "Alumiini" }

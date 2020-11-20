@@ -211,7 +211,7 @@ object PointAssetStructure {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
 
-  def getDefault: PointAssetStructure = Unknown
+  def getDefault: PointAssetStructure = Pole
 
   case object Pole extends PointAssetStructure { def value = 1; def description = "Pylväs"  }
   case object Wall extends PointAssetStructure { def value = 2; def description = "Seinä" }
