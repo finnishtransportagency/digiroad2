@@ -1358,7 +1358,7 @@
           {'name': "Sijaintitarkenne", 'propertyType': 'single_choice', 'publicId': "location_specifier", values: [{ propertyValue: 99 }]},
           {'name': "Rakenne", 'propertyType': 'single_choice', 'publicId': "structure", values: [{ propertyValue: 99 }]},
           {'name': "Kunto", 'propertyType': 'single_choice', 'publicId': "condition", values: [{ propertyValue: 99 }]},
-          {'name': "Koko", 'propertyType': 'single_choice', 'publicId': "size", values: [{ propertyValue: 99 }]},
+          {'name': "Koko", 'propertyType': 'single_choice', 'publicId': "size", values: [{ propertyValue: 2 }]},
           {'name': "Korkeus", 'propertyType': 'number', 'publicId': "height", values: []},
           {'name': "Kalvon tyyppi", 'propertyType': 'single_choice', 'publicId': "coating_type", values: [{ propertyValue: 99 }]},
           {'name': "Kaista", 'propertyType': 'number', 'publicId': "lane", values: []},
