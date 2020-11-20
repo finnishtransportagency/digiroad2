@@ -3080,7 +3080,7 @@ object Size {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
 
-  def getDefault: Size = Unknown
+  def getDefault: Size = RegularSign
 
   case object CompactSign extends Size { def value = 1; def description = "Pienikokoinen merkki"  }
   case object RegularSign extends Size { def value = 2; def description = "Normaalikokoinen merkki" }
