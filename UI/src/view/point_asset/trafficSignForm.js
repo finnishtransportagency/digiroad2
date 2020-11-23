@@ -21,9 +21,9 @@
     var propertyOrdering = [
       'trafficSigns_type',
       'trafficSigns_value',
-      'trafficSigns_info',
-      'municipality_id',
       'main_sign_text',
+      'municipality_id',
+      'trafficSigns_info',
       'structure',
       'condition',
       'size',
@@ -336,8 +336,8 @@
         'formPosition',
         'panelType',
         'panelValue',
-        'panelInfo',
         'text',
+        'panelInfo',
         'size',
         'coating_type',
         'additional_panel_color'
