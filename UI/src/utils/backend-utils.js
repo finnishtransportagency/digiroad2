@@ -778,10 +778,10 @@
     };
 
     this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
-      return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
+      return $.get("viitekehysmuunnin/muunna", {x: lon, y: lat})
           .then(
               function (result) {
-                return onSuccess(_.head(result));
+                return onSuccess(_.head(result.features));
               },
               function (fail) {
                 return onFailure(fail.code);
