@@ -767,21 +767,16 @@
             katunumero : parsedAddress[1],
             kuntakoodi : municipalityInfo.id
           };
-          return $.get("vkm-api/geocode", params).then(function(x) { return x; });
+          return $.get("viitekehysmuunnin/muunna", params).then(function(x) { return x; });
         });
-    };
-
-    this.getRoadLinkToPromise= function(linkid)
-    {
-     return $.get("api/roadlinks/" + linkid);
     };
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
       return $.get("vkm-api/tieosoitehaku", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
-        .then(function(x) { return x; });
+          .then(function(x) { return x; });
     };
 
-    var returnedMunicipality = function(lon, lat, onSuccess, onFailure) {
+    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
       return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
           .then(
               function (result) {
@@ -792,8 +787,9 @@
               });
     };
 
-    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
-      return returnedMunicipality(lon, lat, onSuccess, onFailure);
+    this.getRoadLinkToPromise= function(linkid)
+    {
+     return $.get("api/roadlinks/" + linkid);
     };
 
     this.getStartLocationNameByCoordinates = function (startCoordinates) {

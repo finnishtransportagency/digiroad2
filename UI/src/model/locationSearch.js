@@ -16,12 +16,11 @@
      */
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
-        var resultLength = _.get(result, 'length');
         var vkmResultToCoordinates = function(r) {
-          return { title: r.tienimiFi +" "+ r.katunumero + ", "+ r.kuntaNimi, lon: r.x, lat: r.y ,resultType:"street" };
+          return { title: r.properties.katunimi +" "+ r.properties.katunumero + ", "+ r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y ,resultType:"street" };
         };
-        if (resultLength > 0) {
-          return _.map(result, vkmResultToCoordinates);
+        if (result.features.length > 0) {
+          return _.map(result.features, vkmResultToCoordinates);
         } else {
           return $.Deferred().reject('Tuntematon katuosoite');
         }
