@@ -131,10 +131,10 @@
         var titleParts = [_.get(road, 'tie'), _.get(road, 'osa'), _.get(road, 'etaisyys'), _.get(road, 'ajorata')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
-      var auxRoadData = _.head(roadData);
-      var lon = _.get(auxRoadData, 'x');
-      var lat = _.get(auxRoadData, 'y');
-      var title = constructTitle(auxRoadData);
+      var auxRoadData = _.head(roadData.features);
+      var lon = _.get(auxRoadData.properties, 'x');
+      var lat = _.get(auxRoadData.properties, 'y');
+      var title = constructTitle(auxRoadData.properties);
       if (lon && lat) {
         return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
       } else {

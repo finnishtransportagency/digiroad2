@@ -772,8 +772,9 @@
     };
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
-      return $.get("vkm-api/tieosoitehaku", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
-          .then(function(x) { return x; });
+      console.log("getCoordinatesFromRoadAddress");
+      return $.get("viitekehysmuunnin/muunna", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
+          .then(function(response) { return response; });
     };
 
     this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
