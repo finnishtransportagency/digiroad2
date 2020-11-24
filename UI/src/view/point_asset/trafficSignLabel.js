@@ -379,14 +379,14 @@
           {signValue: [388], image: 'images/traffic-signs/other-signs/speedLimitInformation.png'},
           {signValue: [389], image: 'images/traffic-signs/other-signs/countryBorder.png'},
           {signValue: [390], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be truckRoute */
-          {signValue: [391], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be PassengerCarRoute */
-          {signValue: [392], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be busRoute */
-          {signValue: [393], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be vanRoute */
-          {signValue: [394], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be motorcycleRoute */
-          {signValue: [395], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be mopedRoute */
-          {signValue: [396], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be tractorRoute */
-          {signValue: [397], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be motorhomeRoute */
-          {signValue: [398], image: 'images/traffic-signs/information-signs/itineraryForIndicatedVehicleCategory.png'}, /* should be bicycleRoute */
+          {signValue: [391], image: 'images/traffic-signs/information-signs/PassengerCarRoute.png'}, /* should be PassengerCarRoute */
+          {signValue: [392], image: 'images/traffic-signs/information-signs/busRoute.png'}, /* should be busRoute */
+          {signValue: [393], image: 'images/traffic-signs/information-signs/vanRoute.png'}, /* should be vanRoute */
+          {signValue: [394], image: 'images/traffic-signs/information-signs/motorcycleRoute.png'}, /* should be motorcycleRoute */
+          {signValue: [395], image: 'images/traffic-signs/information-signs/mopedRoute.png'}, /* should be mopedRoute */
+          {signValue: [396], image: 'images/traffic-signs/information-signs/tractorRoute.png'}, /* should be tractorRoute */
+          {signValue: [397], image: 'images/traffic-signs/information-signs/motorhomeRoute.png'}, /* should be motorhomeRoute */
+          {signValue: [398], image: 'images/traffic-signs/information-signs/bicycleRoute.png'}, /* should be bicycleRoute */
           {signValue: [399], image: 'images/traffic-signs/information-signs/endOfLane2.png' },
           {signValue: [400], image: 'images/traffic-signs/information-signs/regionalRoadNumber.png', validation: validateAdditionalInfo, maxLabelLength: 15, additionalInfo: showAdditionalInfo}
         ];
