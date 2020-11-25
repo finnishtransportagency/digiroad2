@@ -132,7 +132,7 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 }
 
-//TODO remove VKM when VIITE is 100% done
+
 case class FeatureCollection(`type`:String, features: List[Features])
 case class Features(`type`:String,  geometry: Geometry, properties: Map[String, Any])
 case class Geometry( `type`:String, coordinates: List[Point])
@@ -207,7 +207,7 @@ class VKMGeometryTransform {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
-  // xyhaku
+
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
@@ -227,7 +227,7 @@ class VKMGeometryTransform {
     }
   }
 
-  // xyhaku
+
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
                         distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                         includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
@@ -236,7 +236,7 @@ class VKMGeometryTransform {
 
   }
 
-  // tieosoitehaku
+
   def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
     val params = Map(
       VkmRoad -> roadAddress.road,
@@ -245,9 +245,7 @@ class VKMGeometryTransform {
       VkmDistance -> roadAddress.addrM
     )
 
-    var test =request(vkmBaseUrl + "muunna?" + urlParamsReverse(params))
-
-    test match  {
+   request(vkmBaseUrl + "muunna?" + urlParamsReverse(params)) match  {
       case Left(addressData) =>
         if (addressData.features.nonEmpty)
           mapCoordinates(addressData)
