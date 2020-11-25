@@ -767,33 +767,30 @@
             katunumero : parsedAddress[1],
             kuntakoodi : municipalityInfo.id
           };
-          return $.get("vkm-api/geocode", params).then(function(x) { return x; });
+          return $.get("viitekehysmuunnin/muunna", params).then(function(x) { return x; });
         });
     };
 
-    this.getRoadLinkToPromise= function(linkid)
-    {
-     return $.get("api/roadlinks/" + linkid);
-    };
-
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
-      return $.get("vkm-api/tieosoitehaku", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
-        .then(function(x) { return x; });
+      console.log("getCoordinatesFromRoadAddress");
+      return $.get("viitekehysmuunnin/muunna", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
+          .then(function(response) { return response; });
     };
 
-    var returnedMunicipality = function(lon, lat, onSuccess, onFailure) {
-      return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
+    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
+      return $.get("viitekehysmuunnin/muunna", {x: lon, y: lat})
           .then(
               function (result) {
-                return onSuccess(_.head(result));
+                return onSuccess(_.head(result.features));
               },
               function (fail) {
                 return onFailure(fail.code);
               });
     };
 
-    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
-      return returnedMunicipality(lon, lat, onSuccess, onFailure);
+    this.getRoadLinkToPromise= function(linkid)
+    {
+     return $.get("api/roadlinks/" + linkid);
     };
 
     this.getStartLocationNameByCoordinates = function (startCoordinates) {

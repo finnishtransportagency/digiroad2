@@ -12,7 +12,6 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -133,7 +132,10 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 }
 
-//TODO remove VKM when VIITE is 100% done
+
+case class FeatureCollection(`type`:String, features: List[Features])
+case class Features(`type`:String,  geometry: Geometry, properties: Map[String, Any])
+case class Geometry( `type`:String, coordinates: List[Point])
 class VKMGeometryTransform {
   case class VKMError(content: Map[String, Any], url: String)
 
@@ -153,7 +155,7 @@ class VKMGeometryTransform {
   private def vkmBaseUrl = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    properties.getProperty("digiroad2.VKMUrl") + "/vkm-api/"
+    properties.getProperty("digiroad2.VKMUrl") + "/viitekehysmuunnin/"
   }
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
@@ -166,8 +168,7 @@ class VKMGeometryTransform {
       + "=" + URLEncoder.encode(entry._2.toString, "UTF-8")).mkString("&")
   }
 
-
-  private def request(url: String): Either[List[Map[String, Any]], VKMError] = {
+  private def request(url: String): Either[FeatureCollection, VKMError] = {
     val request = new HttpGet(url)
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
@@ -175,7 +176,7 @@ class VKMGeometryTransform {
       if (response.getStatusLine.getStatusCode >= 400)
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val aux = response.getEntity.getContent
-      val content:List[Map[String, Any]] = parse(StreamInput(aux)).values.asInstanceOf[List[Map[String, Any]]]
+      val content:FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
       Left(content)
     } catch {
       case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
@@ -206,7 +207,7 @@ class VKMGeometryTransform {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
-  // xyhaku
+
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
@@ -220,13 +221,13 @@ class VKMGeometryTransform {
             VkmSearchRadius -> searchDistance //Default in new VKM is 100
       )
 
-    request(vkmBaseUrl + "xyhaku?sade=500&" + urlParams(params)) match {
-      case Left(address) => mapFields(address.head)
+    request(vkmBaseUrl + "muunna?sade=500&" + urlParams(params)) match {
+      case Left(address) => mapFields(address.features.head)
       case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
 
-  // xyhaku
+
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
                         distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                         includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
@@ -235,7 +236,7 @@ class VKMGeometryTransform {
 
   }
 
-  // tieosoitehaku
+
   def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
     val params = Map(
       VkmRoad -> roadAddress.road,
@@ -244,9 +245,9 @@ class VKMGeometryTransform {
       VkmDistance -> roadAddress.addrM
     )
 
-    request(vkmBaseUrl + "tieosoitehaku?" + urlParamsReverse(params)) match  {
+   request(vkmBaseUrl + "muunna?" + urlParamsReverse(params)) match  {
       case Left(addressData) =>
-        if (addressData.nonEmpty)
+        if (addressData.features.nonEmpty)
           mapCoordinates(addressData)
         else
           throw new RoadAddressException("empty response")
@@ -293,29 +294,25 @@ class VKMGeometryTransform {
     }
   }
 
-  private def extractRoadAddresses(data: List[Map[String, Any]]) = {
-    data.sortBy(_.getOrElse(VkmQueryIdentifier, Int.MaxValue).toString.toInt).map(mapFields)
-  }
-
-  private def mapFields(data: Map[String, Any]) = {
-    val municipalityCode = data.get(VkmMunicipalityCode)
-    val road = validateAndConvertToInt(VkmRoad, data)
-    val roadPart = validateAndConvertToInt(VkmRoadPart, data)
-    val track = validateAndConvertToInt(VkmTrackCode, data)
-    val mValue = validateAndConvertToInt(VkmDistance, data)
+  private def mapFields(data: Features) = {
+    val municipalityCode = data.properties.get(VkmMunicipalityCode)
+    val road = validateAndConvertToInt(VkmRoad, data.properties)
+    val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
+    val track = validateAndConvertToInt(VkmTrackCode, data.properties)
+    val mValue = validateAndConvertToInt(VkmDistance, data.properties)
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
     RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue)
   }
 
-  private def mapCoordinates(data: List[Map[String, Any]]) = {
+  private def mapCoordinates(data: FeatureCollection) = {
 
     try {
-      data.map {
+      data.features.map {
         addr =>
-          val x = addr("x").asInstanceOf[Double]
-          val y = addr("y").asInstanceOf[Double]
+          val x = addr.properties("x").asInstanceOf[Double]
+          val y = addr.properties("y").asInstanceOf[Double]
           Point(x,y)
       }
     } catch {

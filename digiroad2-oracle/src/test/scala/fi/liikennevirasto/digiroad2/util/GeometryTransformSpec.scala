@@ -12,7 +12,7 @@ import org.scalatest.mockito.MockitoSugar
 class GeometryTransformSpec extends FunSuite with Matchers {
   val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val transform = new GeometryTransform(mockRoadAddressService)
-
+  val vKMGeometryTransform = new VKMGeometryTransform()
   test("Resolve location on left when asset SideCode different than AgainstDigitizing value") {
     val linkId = 1641830
     val mValue = 60
