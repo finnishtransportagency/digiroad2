@@ -96,15 +96,4 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     roadAddress.track should be(Track.Combined)
     roadSide should be(RoadSide.Left)
   }
-
-  test("addressToCoords"){
-    val coords = vKMGeometryTransform.addressToCoords( RoadAddress(municipalityCode=Some("10") ,road=2,roadPart=1, track=Track(0),addrM = 150))
-
-  }
-
-  test("coordToAddress"){
-    //val address = vKMGeometryTransform.coordToAddress(Point(x=385130,y=6671374),Some(5),Some(1))
-    val address = vKMGeometryTransform.coordToAddress(Point(x=354384,y=6687141))
-
-  }
 }
