@@ -507,7 +507,13 @@
         if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
           return;
         var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
-        var additionalInfo = getProperty(asset, "trafficSigns_info") ? getProperty(asset, "trafficSigns_info").propertyValue : '';
+        var additionalInfo;
+        if(getProperty(asset, "main_sign_text").propertyValue) {
+          additionalInfo = getProperty(asset, "main_sign_text").propertyValue;
+        } else if(getProperty(asset, "trafficSigns_info").propertyValue) {
+          additionalInfo = getProperty(asset, "trafficSigns_info").propertyValue;
+        } else additionalInfo = '';
+
         var panels = _.map(getProperties(asset, "additional_panel"), function(panel){
           return {
             value: panel.panelValue,
