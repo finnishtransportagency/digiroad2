@@ -761,17 +761,17 @@
       };
       if (parsedAddress[2] !== undefined) {
         return this.getMunicipalityIdByName(parsedAddress[2]).then(function (result) {
-          params.katunimi = parsedAddress[0]
-          params.katunumero = parsedAddress[1]
-          params.kuntakoodi = result.id
+          params.katunimi = parsedAddress[0];
+          params.katunumero = parsedAddress[1];
+          params.kuntakoodi = result.id;
           return $.get("viitekehysmuunnin/muunna", params).then(function (x) {
             return x;
           });
         });
       } else {
-        params.katunimi = parsedAddress[0] !== undefined ? parsedAddress[0] : null
-        params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null
-        return $.get("viitekehysmuunnin/muunna", params).then(function (x) {
+        params.katunimi = parsedAddress[0] !== undefined ? parsedAddress[0] : null;
+        params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null;
+        return $.get("viitekehysmuunnin/muunna", _.omitBy(params, _.isNil)).then(function (x) {
           return x;
         });
       }
