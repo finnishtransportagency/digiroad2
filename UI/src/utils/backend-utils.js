@@ -752,24 +752,53 @@
         });
     };
 
-    this.getGeocode = function(address) {
-      var addressNormalized = address.normalize("NFC");
-      var parsedAddress = addressNormalized.split(/^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/)
-        .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
-        .map(function(elem) { return elem.trim(); });
-
-      return this.getMunicipalityIdByName(parsedAddress[2]).then(
-        function(municipalityInfo) {
-          if (_.isEmpty(municipalityInfo))
-            return municipalityInfo;
-          var params = {
-            katunimi :   parsedAddress[0],
-            katunumero : parsedAddress[1],
-            kuntakoodi : municipalityInfo.id
-          };
-          return $.get("viitekehysmuunnin/muunna", params).then(function(x) { return x; });
+    this.getGeocode = function (address) {
+      var parsedAddress = parseAddress(address.normalize("NFC"));
+      var params = {
+        katunimi: null,
+        katunumero: null,
+        kuntakoodi: null
+      };
+      if (parsedAddress[2] !== undefined) {
+        return this.getMunicipalityIdByName(parsedAddress[2]).then(function (result) {
+          params.katunimi = parsedAddress[0]
+          params.katunumero = parsedAddress[1]
+          params.kuntakoodi = result.id
+          return $.get("viitekehysmuunnin/muunna", params).then(function (x) {
+            return x;
+          });
         });
+      } else {
+        params.katunimi = parsedAddress[0] !== undefined ? parsedAddress[0] : null
+        params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null
+        return $.get("viitekehysmuunnin/muunna", params).then(function (x) {
+          return x;
+        });
+      }
     };
+
+    function parseAddress(addressNormalized) {
+      var streetNameAndNumber = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)$/;
+      var allInputOrOnlyStreetNameRegex = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
+      var streetNameAndNumberRegex = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)/;
+      if (addressNormalized.match(streetNameAndNumber)) {
+        return addressNormalized.split(streetNameAndNumberRegex)
+            .filter(function (elem) {
+              return !_.isEmpty(elem.trim());
+            })
+            .map(function (elem) {
+              return elem.trim();
+            });
+      } else {
+        return addressNormalized.split(allInputOrOnlyStreetNameRegex)
+            .filter(function (elem) {
+              return !_.isEmpty(elem.trim());
+            })
+            .map(function (elem) {
+              return elem.trim();
+            });
+      }
+    }
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
       console.log("getCoordinatesFromRoadAddress");

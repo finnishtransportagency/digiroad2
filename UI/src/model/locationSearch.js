@@ -15,14 +15,20 @@
      * @returns {*}
      */
     var geocode = function(street) {
-      return backend.getGeocode(street.address).then(function(result) {
-        var vkmResultToCoordinates = function(r) {
-          return { title: r.properties.katunimi +" "+ r.properties.katunumero + ", "+ r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y ,resultType:"street" };
+      return backend.getGeocode(street.address).then(function(data) {
+        var result = data.features;
+        var withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
+        var vkmResultToCoordinates = function (r) {
+          return {
+            title: r.properties.katunimi +
+                " " + r.properties.katunumero +
+                ", " + r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y, resultType: "street"
+          };
         };
-        if (result.features.length > 0) {
-          return _.map(result.features, vkmResultToCoordinates);
-        } else {
+        if (withErrors) {
           return $.Deferred().reject('Tuntematon katuosoite');
+        } else {
+          return _.map(result, vkmResultToCoordinates);
         }
       });
     };

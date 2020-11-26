@@ -1,7 +1,7 @@
 (function(root) {
   var parse = function(input, selectedLayer) {
     var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-    var streetRegex = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
+    var streetRegex = /^(\s*[A-Za-zÀ-ÿ].*)/;
     var roadRegex = /^\s*\d+\s+\d+\s+\d+\s*\d*$/;
     var idOrRoadRegex = /^\d+$/;
     var liviIdRegex = /^[a-zA-Z]+\d+$/; // At least one letter and one digit, no space between
