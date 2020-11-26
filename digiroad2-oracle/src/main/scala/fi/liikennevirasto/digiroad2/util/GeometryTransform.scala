@@ -132,7 +132,6 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 }
 
-
 case class FeatureCollection(`type`:String, features: List[Features])
 case class Features(`type`:String,  geometry: GeometryGEOJSON, properties: Map[String, Any])
 case class GeometryGEOJSON( `type`:String, coordinates: List[Point])
@@ -177,6 +176,9 @@ class VKMGeometryTransform {
         return Right(VKMError(Map("error" -> "Request returned HTTP Error %d".format(response.getStatusLine.getStatusCode)), url))
       val aux = response.getEntity.getContent
       val content:FeatureCollection = parse(StreamInput(aux)).extract[FeatureCollection]
+      if(content.features.head.properties.contains("virheet")){
+        return Right(VKMError(Map("error" -> content.features.head.properties("virheet")), url))
+      }
       Left(content)
     } catch {
       case e: Exception => Right(VKMError(Map("error" -> e.getMessage), url))
@@ -207,7 +209,6 @@ class VKMGeometryTransform {
     def verify(s: String, sslSession: SSLSession) = true
   }
 
-
   def coordToAddress(coord: Point, road: Option[Int] = None, roadPart: Option[Int] = None,
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
@@ -227,15 +228,12 @@ class VKMGeometryTransform {
     }
   }
 
-
   def coordsToAddresses(coords: Seq[Point], road: Option[Int] = None, roadPart: Option[Int] = None,
                         distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                         includePedestrian: Option[Boolean] = Option(false)) : Seq[RoadAddress] = {
 
     coords.map( coord => coordToAddress(coord, road, roadPart, distance, track, searchDistance, includePedestrian) )
-
   }
-
 
   def addressToCoords(roadAddress: RoadAddress) : Seq[Point] = {
     val params = Map(
