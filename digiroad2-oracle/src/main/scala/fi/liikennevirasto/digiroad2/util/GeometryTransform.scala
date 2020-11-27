@@ -3,10 +3,11 @@ package fi.liikennevirasto.digiroad2.util
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.dao.{RoadAddress => RoadAddressDTO}
 import fi.liikennevirasto.digiroad2.service.RoadAddressService
-import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import fi.liikennevirasto.digiroad2.{Feature, FeatureCollection, Point, Vector3d}
 import javax.net.ssl.{HostnameVerifier, HttpsURLConnection, SSLContext, SSLSession, TrustManager, X509TrustManager}
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
@@ -132,9 +133,9 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 }
 
-case class FeatureCollection(`type`:String, features: List[Features])
-case class Features(`type`:String,  geometry: GeometryGEOJSON, properties: Map[String, Any])
-case class GeometryGEOJSON( `type`:String, coordinates: List[Point])
+//case class FeatureCollection(`type`:String, features: List[Features])
+//case class Features(`type`:String,  geometry: GeometryGEOJSON, properties: Map[String, Any])
+//case class GeometryGEOJSON( `type`:String, coordinates:  List[Any])
 class VKMGeometryTransform {
   case class VKMError(content: Map[String, Any], url: String)
 
@@ -292,7 +293,7 @@ class VKMGeometryTransform {
     }
   }
 
-  private def mapFields(data: Features) = {
+  private def mapFields(data: Feature) = {
     val municipalityCode = data.properties.get(VkmMunicipalityCode)
     val road = validateAndConvertToInt(VkmRoad, data.properties)
     val roadPart = validateAndConvertToInt(VkmRoadPart, data.properties)
@@ -301,7 +302,7 @@ class VKMGeometryTransform {
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
-    RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue)
+    RoadAddress(municipalityCode, road, roadPart, Track.apply(track), mValue)
   }
 
   private def mapCoordinates(data: FeatureCollection) = {
@@ -309,8 +310,8 @@ class VKMGeometryTransform {
     try {
       data.features.map {
         addr =>
-          val x = addr.properties("x").asInstanceOf[Double]
-          val y = addr.properties("y").asInstanceOf[Double]
+          val x = addr.properties("x").toDouble
+          val y = addr.properties("y").toDouble
           Point(x,y)
       }
     } catch {
@@ -318,7 +319,7 @@ class VKMGeometryTransform {
     }
   }
 
-  private def validateAndConvertToInt(fieldName: String, map: Map[String, Any]) = {
+  private def validateAndConvertToInt(fieldName: String, map: Map[String, String]) = {
     def value = map.get(fieldName)
     if (value.isEmpty) {
       throw new RoadAddressException(
@@ -326,7 +327,7 @@ class VKMGeometryTransform {
           fieldName))
     }
     try {
-      value.get.toString.toInt
+      value.get.toInt
     } catch {
       case e: NumberFormatException =>
         throw new RoadAddressException("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
