@@ -133,9 +133,6 @@ class GeometryTransform(roadAddressService: RoadAddressService) {
   }
 }
 
-//case class FeatureCollection(`type`:String, features: List[Features])
-//case class Features(`type`:String,  geometry: GeometryGEOJSON, properties: Map[String, Any])
-//case class GeometryGEOJSON( `type`:String, coordinates:  List[Any])
 class VKMGeometryTransform {
   case class VKMError(content: Map[String, Any], url: String)
 

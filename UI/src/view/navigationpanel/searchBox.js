@@ -46,11 +46,11 @@
       jQuery('#search-results').append('<div class="spinner-overlay-search"></div>');
 
       var showDialog = function(message) {
-        console.log(message);
         instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         jQuery('.spinner-overlay-search').remove();
         jQuery('#search-results').parent().hide();
       };
+
       locationSearch.search(coordinatesText.val()).then(function(results) {
         populateSearchResults(results);
         if (results.length === 1) {
