@@ -25,7 +25,19 @@
     } else if(matchedAssociationRoadIdRegex){
       return {type: 'roadAssociationName', name: input.slice(3)};
     } else if (matchedStreet) {
-      return {type: 'street', address: input};
+      var streetNameAndNumberCheck = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)$/;
+      var allInputOrOnlyStreetNameCheck = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
+      var onlyNameCheck =/^\b[A-Za-zÀ-ÿ]+\b$/;
+      if(onlyNameCheck){
+        return {type: 'street', address: input};
+      }else
+      if(input.match(streetNameAndNumberCheck)){
+        return {type: 'street', address: input};
+      }else if(input.match(allInputOrOnlyStreetNameCheck)){
+        return {type: 'street', address: input};
+      }else{
+        return { type: 'invalid' };
+      }
     } else if (matchedIdOrRoad) {
       return { type: 'assetId', text: input};
     } else if (matchedRoad) {

@@ -770,7 +770,7 @@
           });
         });
       } else {
-        params.katunimi = parsedAddress[0] !== undefined && parsedAddress[0].match(/^\b[a-zA-Z0-9_]+\b$/) ? parsedAddress[0] : null;
+        params.katunimi = parsedAddress[0] !== undefined && parsedAddress[0].match(/^\b[A-Za-zÀ-ÿ]+\b$/) ? parsedAddress[0] : null;
         params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null;
         params =_.omitBy(params, _.isNil);
         if(_.isEmpty(params) ){
@@ -784,10 +784,10 @@
     };
 
     function parseAddress(addressNormalized) {
-      var streetNameAndNumber = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)$/;
+      var streetNameAndNumberCheck = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)$/;
       var allInputOrOnlyStreetNameRegex = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
       var streetNameAndNumberRegex = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)/;
-      if (addressNormalized.match(streetNameAndNumber)) {
+      if (addressNormalized.match(streetNameAndNumberCheck)) {
         return addressNormalized.split(streetNameAndNumberRegex)
             .filter(function (elem) {
               return !_.isEmpty(elem.trim());
