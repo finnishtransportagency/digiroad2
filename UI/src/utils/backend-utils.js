@@ -759,6 +759,7 @@
         katunumero: null,
         kuntakoodi: null
       };
+
       if (parsedAddress[2] !== undefined) {
         return this.getMunicipalityIdByName(parsedAddress[2]).then(function (result) {
           params.katunimi = parsedAddress[0];
@@ -769,9 +770,14 @@
           });
         });
       } else {
-        params.katunimi = parsedAddress[0] !== undefined ? parsedAddress[0] : null;
+        params.katunimi = parsedAddress[0] !== undefined && parsedAddress[0].match(/^\b[a-zA-Z0-9_]+\b$/) ? parsedAddress[0] : null;
         params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null;
-        return $.get("viitekehysmuunnin/muunna", _.omitBy(params, _.isNil)).then(function (x) {
+        params =_.omitBy(params, _.isNil);
+        if(_.isEmpty(params) ){
+         return $.Deferred().reject('Syote väärin');
+        }
+
+        return $.get("viitekehysmuunnin/muunna",params).then(function (x) {
           return x;
         });
       }
@@ -801,7 +807,6 @@
     }
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
-      console.log("getCoordinatesFromRoadAddress");
       return $.get("viitekehysmuunnin/muunna", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
           .then(function(response) { return response; });
     };
