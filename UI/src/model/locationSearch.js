@@ -19,9 +19,10 @@
         var result = data.features;
         var withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
         var vkmResultToCoordinates = function (r) {
+          var streetNumber =r.properties.katunumero !== undefined ?r.properties.katunumero:"";
           return {
             title: r.properties.katunimi +
-                " " + r.properties.katunumero +
+                " " + streetNumber +
                 ", " + r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y, resultType: "street"
           };
         };
