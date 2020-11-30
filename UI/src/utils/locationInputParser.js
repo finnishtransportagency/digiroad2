@@ -26,14 +26,13 @@
       return {type: 'roadAssociationName', name: input.slice(3)};
     } else if (matchedStreet) {
       var streetNameAndNumberCheck = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)$/;
-      var allInputOrOnlyStreetNameCheck = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
+      var allInput = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
       var onlyNameCheck =/^\b[A-Za-zÀ-ÿ]+\b$/;
-      if(onlyNameCheck){
+      if(input.match(onlyNameCheck)){
         return {type: 'street', address: input};
-      }else
-      if(input.match(streetNameAndNumberCheck)){
+      }else if(input.match(streetNameAndNumberCheck)){
         return {type: 'street', address: input};
-      }else if(input.match(allInputOrOnlyStreetNameCheck)){
+      }else if(input.match(allInput)){
         return {type: 'street', address: input};
       }else{
         return { type: 'invalid' };
