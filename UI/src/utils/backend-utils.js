@@ -774,7 +774,7 @@
         params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null;
         params =_.omitBy(params, _.isNil);
         if(_.isEmpty(params) ){
-         return $.Deferred().reject('Syöte meni väärin');
+         return $.Deferred().reject('Syöte meni väärin.');
         }
 
         return $.get("viitekehysmuunnin/muunna",params).then(function (x) {
