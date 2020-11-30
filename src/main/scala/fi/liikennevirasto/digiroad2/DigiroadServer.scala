@@ -29,8 +29,8 @@ trait DigiroadServer {
     context.setParentLoaderPriority(true)
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     context.addServlet(classOf[OAGProxyServlet], "/maasto/*")
-    context.addServlet(classOf[VKMProxyServlet], "/vkm-api/*")
-    context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
+    context.addServlet(classOf[VKMProxyServlet], "/viitekehysmuunnin/*")
+    context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*") // this might be redundant?
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
