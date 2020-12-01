@@ -288,24 +288,19 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
       property.get.values.map(_.asInstanceOf[PropertyValue]).head.propertyValue
     }
 
-    def filterRule(oldProperty: PersistedTrafficSign, newProperty: Option[SimplePointAssetProperty]
-                  ): Boolean = {
-      val oldSignText = oldProperty.propertyData.find(_.publicId == mainSignText)
-      if (newProperty.isDefined && oldSignText.isDefined) {
-        getPropertyValue(oldSignText) == getPropertyValue(newProperty) &&
-          getProperty(oldProperty, typePublicId).get.propertyValue.toInt == signToCreateType &&
-          oldProperty.linkId == signToCreateLinkId &&
-          oldProperty.validityDirection == signToCreateDirection
-      } else {
-        getProperty(oldProperty, typePublicId).get.propertyValue.toInt == signToCreateType &&
-          oldProperty.linkId == signToCreateLinkId &&
-          oldProperty.validityDirection == signToCreateDirection
-      }
-    }
-
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts => {
-        filterRule(ts, signToMainSignText)
+        val oldSignText = ts.propertyData.find(_.publicId == mainSignText)
+        if (signToMainSignText.isDefined && oldSignText.isDefined) {
+          getPropertyValue(oldSignText) == getPropertyValue(signToMainSignText) &&
+            getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType &&
+            ts.linkId == signToCreateLinkId &&
+            ts.validityDirection == signToCreateDirection
+        } else {
+          getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType &&
+            ts.linkId == signToCreateLinkId &&
+            ts.validityDirection == signToCreateDirection
+        }
       }
     )
     if (trafficSignsInRadius.nonEmpty) Some(getLatestModifiedAsset(trafficSignsInRadius)) else None
