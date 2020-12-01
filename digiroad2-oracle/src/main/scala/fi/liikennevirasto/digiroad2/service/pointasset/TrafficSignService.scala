@@ -280,18 +280,34 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
     val signToCreateType = getProperty(asset, typePublicId).get.propertyValue.toInt
-    val signToMainSignText = getProperty(asset, mainSignText).get.propertyValue
+    val signToMainSignText = asset.propertyData.find(_.publicId == mainSignText)
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(TrafficSignType.applyOTHValue(signToCreateType).group.value))
 
-    val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
-      ts =>
-        getProperty(ts, mainSignText).get.propertyValue == signToMainSignText &&
-          getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType &&
-          ts.linkId == signToCreateLinkId &&
-          ts.validityDirection == signToCreateDirection
-    )
+    def getPropertyValue(property: Option[AbstractProperty]): String = {
+      property.get.values.map(_.asInstanceOf[PropertyValue]).head.propertyValue
+    }
 
+    def filterRule(oldProperty: PersistedTrafficSign, newProperty: Option[SimplePointAssetProperty]
+                  ): Boolean = {
+      val oldSignText = oldProperty.propertyData.find(_.publicId == mainSignText)
+      if (newProperty.isDefined && oldSignText.isDefined) {
+        getPropertyValue(oldSignText) == getPropertyValue(newProperty) &&
+          getProperty(oldProperty, typePublicId).get.propertyValue.toInt == signToCreateType &&
+          oldProperty.linkId == signToCreateLinkId &&
+          oldProperty.validityDirection == signToCreateDirection
+      } else {
+        getProperty(oldProperty, typePublicId).get.propertyValue.toInt == signToCreateType &&
+          oldProperty.linkId == signToCreateLinkId &&
+          oldProperty.validityDirection == signToCreateDirection
+      }
+    }
+
+    val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
+      ts => {
+        filterRule(ts, signToMainSignText)
+      }
+    )
     if (trafficSignsInRadius.nonEmpty) Some(getLatestModifiedAsset(trafficSignsInRadius)) else None
   }
 
