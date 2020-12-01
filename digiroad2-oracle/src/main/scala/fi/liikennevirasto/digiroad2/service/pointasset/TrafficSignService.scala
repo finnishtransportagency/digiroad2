@@ -43,6 +43,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val typePublicId = "trafficSigns_type"
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
+  val mainSignText="main_sign_text"
   val additionalPublicId = "additional_panel"
   val additionalPanelSizePublicId = "size"
   val additionalPanelTextPublicId = "text"
@@ -279,13 +280,16 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
     val signToCreateType = getProperty(asset, typePublicId).get.propertyValue.toInt
+    val signToMainSignText = getProperty(asset, mainSignText).get.propertyValue
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(TrafficSignType.applyOTHValue(signToCreateType).group.value))
 
     val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
       ts =>
-        getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType
-          && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
+        getProperty(ts, mainSignText).get.propertyValue == signToMainSignText &&
+          getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType &&
+          ts.linkId == signToCreateLinkId &&
+          ts.validityDirection == signToCreateDirection
     )
 
     if (trafficSignsInRadius.nonEmpty) Some(getLatestModifiedAsset(trafficSignsInRadius)) else None
