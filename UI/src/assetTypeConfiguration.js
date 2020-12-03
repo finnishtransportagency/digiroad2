@@ -46,7 +46,8 @@
       roadWorksAsset: 420,
       parkingProhibition: 430,
       cyclingAndWalking: 440,
-      laneModellingTool: 450
+      laneModellingTool: 450,
+      careClass2: 460
     };
 
     var assetGroups = {
@@ -740,6 +741,7 @@
         minZoomForContent: oneKmZoomLvl
       },
       {
+        // Tas alkaa careClass thing lohi
         typeId: assetType.careClass,
         singleElementEventCategory: 'careClass',
         multiElementEventCategory: 'careClasses',
@@ -799,6 +801,88 @@
         style: new CareClassStyle(),
         collection: CareClassCollection
       },
+      {
+        typeId: assetType.europeanRoads,
+        singleElementEventCategory: 'europeanRoad',
+        multiElementEventCategory: 'europeanRoads',
+        layerName: 'europeanRoads',
+        title: 'Eurooppatienumero',
+        newTitle: 'Uusi eurooppatienumero',
+        className: 'european-road',
+        unit: '',
+        isSeparable: false,
+        allowComplementaryLinks: false,
+        editControlLabels: {
+          title: '',
+          enabled: 'Eurooppatienumero(t)',
+          disabled: 'Ei eurooppatienumeroa'
+        },
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        label: new LinearAssetLabelMultiValues(),
+        isVerifiable: false,
+        isMultipleLinkSelectionAllowed: true
+      },
+      {
+        typeId: assetType.careClass2,
+        singleElementEventCategory: 'careClass',
+        multiElementEventCategory: 'careClasses',
+        layerName: 'careClass2',
+        title: 'Hoitoluokat2',
+        newTitle: 'Uusi hoitoluokka2',
+        className: 'careClass',
+        isSeparable: false,
+        unit: '',
+        allowComplementaryLinks: true,
+        editControlLabels: {
+          title: 'Hoitoluokka2',
+          enabled: 'Hoitoluokka2',
+          disabled: 'Ei hoitoluokkaa2'
+        },
+        form: new DynamicAssetForm({
+          fields : [
+            {
+              label: 'Talvihoitoluokka2', type: 'single_choice', publicId: "hoitoluokat_talvihoitoluokka", defaultValue: "20",
+              values: [
+                {hidden: function() {return true;} , id: 1, label: '(IsE) Liukkaudentorjunta ilman toimenpideaikaa2'},
+                {hidden: function() {return true;}, id: 2, label: '(Is) Normaalisti aina paljaana2'},
+                {hidden: function() {return true;}, id: 3, label: '(I) Normaalisti paljaana'},
+                {hidden: function() {return true;}, id: 4, label: '(Ib) Pääosin suolattava, ajoittain hieman liukas'},
+                {hidden: function() {return true;}, id: 5, label: '(Ic) Pääosin hiekoitettava, ohut lumipolanne sallittu'},
+                {hidden: function() {return true;}, id: 6, label: '(II) Pääosin lumipintainen'},
+                {hidden: function() {return true;}, id: 7, label: '(III) Pääosin lumipintainen, pisin toimenpideaika'},
+                {hidden: function() {return true;}, id: 8, label: '(L) Kevyen liikenteen laatukäytävät'},
+                {hidden: function() {return true;}, id: 9, label: '(K1) Melko vilkkaat kevyen liikenteen väylät'},
+                {hidden: function() {return true;}, id: 10, label: '(K2) Kevyen liikenteen väylien perus talvihoitotaso'},
+                {hidden: function() {return true;}, id: 11, label: '(ei talvih.) Kevyen liikenteen väylät, joilla ei talvihoitoa'},
+                {id: 20, label: 'Pääkadut ja vilkkaat väylät2'},
+                {id: 30, label: 'Kokoojakadut2'},
+                {id: 40, label: 'Tonttikadut2'},
+                {id: 50, label: 'A-luokan väylät'},
+                {id: 60, label: 'B-luokan väylät'},
+                {id: 70, label: 'C-luokan väylät'}
+              ]
+            },
+            {
+              label: 'Viherhoitoluokka2', type: 'hidden_read_only_number', publicId: "hoitoluokat_viherhoitoluokka",
+              values: [
+                {id: 1, label: '(N1) 2-ajorataiset tiet'},
+                {id: 2, label: '(N2) Valta- ja kantatiet sekä vilkkaat seututiet'},
+                {id: 3, label: '(N3) Muut tiet'},
+                {id: 4, label: '(T1) Puistomainen taajamassa'},
+                {id: 5, label: '(T2) Luonnonmukainen taajamassa'},
+                {id: 6, label: '(E1) Puistomainen erityisalue'},
+                {id: 7, label: '(E2) Luonnonmukainen erityisalue'},
+                {id: 8, label: '(Y) Ympäristötekijä'}]
+            }
+          ]
+        }),
+        isVerifiable: false,
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        layer: CareClassLayer,
+        style: new CareClassStyle(),
+        collection: CareClassCollection
+      }
+      ,
       {
         typeId: assetType.carryingCapacity,
         singleElementEventCategory: 'carryingCapacity',

@@ -28,6 +28,8 @@
         .flatten()
         .value();
 
+    // alert('fishes ' + pointAssetLinks.toString())
+
     var maintenanceAssetLink = buildAssetsOptions(maintenanceAssetGroup);
 
     function buildAssetsOptions(assets) {

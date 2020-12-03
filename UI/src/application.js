@@ -108,6 +108,8 @@
 
     var assetSelectionMenu = AssetSelectionMenu(linearAssetGroup, pointAssetGroup, serviceRoadAsset, {
       onSelect: function(layerName) {
+        // alert('jou jou layer' + layerName)
+        // alert('jou jou assetgroup' + linearAssetGroup)
         window.location.hash = layerName;
       }
     });
@@ -501,6 +503,7 @@
     var winterSpeedLimits = new WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
     var trSpeedLimitBox = isExperimental ? [new TRSpeedLimitBox(_.find(linearAssets, {typeId: assetType.trSpeedLimits}))] : [];
     var careClassBox = new CareClassBox(_.find(linearAssets, {typeId: assetType.careClass}));
+    var careClassBox2 = new CareClassBox2(_.find(linearAssets, {typeId: assetType.careClass2}));
     var carryingCapacityBox = new CarryingCapacityBox(_.find(linearAssets, {typeId: assetType.carryingCapacity}));
     var pavedRoadBox = new PavedRoadBox(_.find(linearAssets, {typeId: assetType.pavedRoad}));
     var parkingProhibitionBox = new ParkingProhibitionBox(_.find(linearAssets, {typeId: assetType.parkingProhibition}));
@@ -534,6 +537,7 @@
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers))
           .concat([careClassBox])
+          .concat([careClassBox2])
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat([winterSpeedLimits])
