@@ -613,7 +613,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
     runWithRollback {
       val properties = Set(
         SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(NoPedestrians.OTHvalue.toString))),
-        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Original Traffic Sign!"))))
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Original Traffic Sign!"))),
+        SimplePointAssetProperty("main_sign_text", List(PropertyValue("Riverside")))
+      )
 
       val closestLink: VVHRoadlink = vvHRoadlink2.minBy(r => GeometryUtils.minimumDistance(Point(5, 4), r.geometry))
       val bearing = Some(GeometryUtils.calculateBearing(closestLink.geometry))
@@ -631,7 +633,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers with BeforeAndAfter 
 
       val properties2 = Set(
         SimplePointAssetProperty("trafficSigns_type", List(PropertyValue(NoPedestrians.OTHvalue.toString))),
-        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Non Duplicated Traffic Sign!"))))
+        SimplePointAssetProperty("trafficSigns_info", List(PropertyValue("Non Duplicated Traffic Sign!"))),
+        SimplePointAssetProperty("main_sign_text", List(PropertyValue("Riverside"))))
 
       val sign2 = IncomingTrafficSign(6, 4, 1611400, properties2, validityDirection, bearing)
 

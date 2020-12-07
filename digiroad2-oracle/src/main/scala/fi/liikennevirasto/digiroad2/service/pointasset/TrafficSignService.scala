@@ -43,6 +43,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   val typePublicId = "trafficSigns_type"
   val valuePublicId = "trafficSigns_value"
   val infoPublicId = "trafficSigns_info"
+  val mainSignText="main_sign_text"
   val additionalPublicId = "additional_panel"
   val additionalPanelSizePublicId = "size"
   val additionalPanelTextPublicId = "text"
@@ -279,15 +280,29 @@ class TrafficSignService(val roadLinkService: RoadLinkService, eventBusImpl: Dig
   def checkDuplicates(asset: IncomingTrafficSign): Option[PersistedTrafficSign] = {
     val signToCreateLinkId = asset.linkId
     val signToCreateType = getProperty(asset, typePublicId).get.propertyValue.toInt
+    val signToMainSignText = asset.propertyData.find(_.publicId == mainSignText)
     val signToCreateDirection = asset.validityDirection
     val groupType = Some(TrafficSignTypeGroup.apply(TrafficSignType.applyOTHValue(signToCreateType).group.value))
 
-    val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
-      ts =>
-        getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType
-          && ts.linkId == signToCreateLinkId && ts.validityDirection == signToCreateDirection
-    )
+    def getPropertyValue(property: Option[AbstractProperty]): String = {
+      property.get.values.map(_.asInstanceOf[PropertyValue]).head.propertyValue
+    }
 
+    val trafficSignsInRadius = getTrafficSignByRadius(Point(asset.lon, asset.lat), 10, groupType).filter(
+      ts => {
+        val oldSignText = ts.propertyData.find(_.publicId == mainSignText)
+        if (signToMainSignText.isDefined && oldSignText.isDefined) {
+          getPropertyValue(oldSignText) == getPropertyValue(signToMainSignText) &&
+            getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType &&
+            ts.linkId == signToCreateLinkId &&
+            ts.validityDirection == signToCreateDirection
+        } else {
+          getProperty(ts, typePublicId).get.propertyValue.toInt == signToCreateType &&
+            ts.linkId == signToCreateLinkId &&
+            ts.validityDirection == signToCreateDirection
+        }
+      }
+    )
     if (trafficSignsInRadius.nonEmpty) Some(getLatestModifiedAsset(trafficSignsInRadius)) else None
   }
 
