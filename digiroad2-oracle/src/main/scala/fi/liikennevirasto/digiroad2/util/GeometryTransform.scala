@@ -140,7 +140,7 @@ class VKMGeometryTransform {
   private def VkmRoad = "tie"
   private def VkmRoadPart = "osa"
   private def VkmDistance = "etaisyys"
-  private def VkmTrackCodes = "ajoradat"
+  private def VkmTrackCodes = "ajorata"
   private def VkmTrackCode = "ajorata"
   private def VkmSearchRadius = "sade"
   private def VkmQueryIdentifier = "tunniste"
