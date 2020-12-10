@@ -73,7 +73,18 @@ define(['AssetsTestData',
       .withPassThroughAssetCreation()
       .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate())
       .withMunicipalityLocationData({verified: true})
-      .withMunicipalityCoordinateData({kuntakoodi: 230})
+      .withMunicipalityCoordinateData(
+                  {
+                      "type": "Feature",
+                      "geometry": {
+                          "type": "Point",
+                          "coordinates": []
+                      },
+                      "properties": {
+                          "kuntakoodi": 230,
+                      }
+                  }
+          )
       .withVerificationInfo();
   };
 

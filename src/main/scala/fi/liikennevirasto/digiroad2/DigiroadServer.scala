@@ -29,8 +29,7 @@ trait DigiroadServer {
     context.setParentLoaderPriority(true)
     context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false")
     context.addServlet(classOf[OAGProxyServlet], "/maasto/*")
-    context.addServlet(classOf[VKMProxyServlet], "/vkm-api/*")
-    context.addServlet(classOf[VKMUIProxyServlet], "/viitekehysmuunnin/*")
+    context.addServlet(classOf[VKMProxyServlet], "/viitekehysmuunnin/*")
     context.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     context.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     context.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
@@ -83,13 +82,5 @@ class VKMProxyServlet extends ProxyServlet {
       proxyRequest.param(key, value.mkString(""))
     }
     super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
-  }
-}
-
-class VKMUIProxyServlet extends ProxyServlet {
-  def regex = "/(digiroad|viite)/viitekehysmuunnin/".r
-
-  override def rewriteURI(req: HttpServletRequest): java.net.URI = {
-    java.net.URI.create("http://localhost:3000" + regex.replaceFirstIn(req.getRequestURI, ""))
   }
 }

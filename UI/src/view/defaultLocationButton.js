@@ -29,7 +29,7 @@
     var vkm = function () {
       if (zoom >= 5) {
         backend.getMunicipalityFromCoordinates(lon, lat, function (vkmResult) {
-          setLocationsInfo(vkmResult.kunta, vkmResult.ely_nimi);
+          setLocationsInfo(vkmResult.properties.kuntanimi, vkmResult.properties.elynimi);
         }, function () {
           setLocationsInfo("Tuntematon", "Tuntematon");
         });
