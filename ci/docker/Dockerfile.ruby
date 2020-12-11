@@ -21,5 +21,6 @@ COPY config/deploy.rb /home/jenkins/config/deploy.rb
 USER jenkins
 
 RUN cd /home/jenkins/ && \
+    gem install etc && \
     gem install bundler && \
     bundle install
