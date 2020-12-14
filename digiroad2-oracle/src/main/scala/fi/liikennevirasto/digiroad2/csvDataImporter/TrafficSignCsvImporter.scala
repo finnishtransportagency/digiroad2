@@ -493,7 +493,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
       val props = trafficSignAttribute.properties
       val additionalInfoValue = getPropertyValue(props, "additionalInfo")
       val modifiedProps = props.map(prop =>
-        if(prop.columnName == "mainSignText"  && additionalInfoValue.asInstanceOf[String].nonEmpty) {
+        if(prop.columnName == "mainSignText"  && additionalInfoValue.asInstanceOf[String].trim.nonEmpty) {
           (AssetProperty(columnName = "mainSignText", value = additionalInfoValue))
         } else
           (AssetProperty(columnName = prop.columnName, value = prop.value))
