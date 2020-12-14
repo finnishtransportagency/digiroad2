@@ -1596,8 +1596,6 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
-      // Raahe.
-      if (municipality.equals(678)) {
         println(s"Fetching traffic signs for municipality: $municipality")
         val trafficSigns = trafficSignService.getByMunicipality(municipality)
         println(s"Number of existing assets: ${trafficSigns.length}")
@@ -1625,7 +1623,6 @@ object DataFixture {
               println("Kyseessä on uusi merkki, päivitystä ei tehdä." + trafficSign.id)
             }
         }
-      }
     }
     println("Traffic Sign updates complete " + DateTime.now())
   }
