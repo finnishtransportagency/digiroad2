@@ -1596,23 +1596,21 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
-      // Luhanka.
-      if (municipality.equals(435)) {
+      // Raahe.
+      if (municipality.equals(678)) {
         println(s"Fetching traffic signs for municipality: $municipality")
         val trafficSigns = trafficSignService.getByMunicipality(municipality)
         println(s"Number of existing assets: ${trafficSigns.length}")
         trafficSigns.foreach { trafficSign =>
-          //val old_code_property = trafficSignService.getProperty(trafficSign, "old_traffic_code")
-          //println("Merkin ID: " + trafficSign.id + " Vanhan liikennelain mukainen koodi: " + old_code_property)
           val createdDate = trafficSign.createdAt.get
           val migration_dateTime = "2020-05-14T15:32:46"
           val formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
           val jodaTime = DateTime.parse(migration_dateTime, formatter)
           if (createdDate.isBefore(jodaTime)) {
             OracleDatabase.withDynTransaction {
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("2", Some("Alumiini"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("2", Some("Normaalikokoinen merkki"), false)))
-              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("1", Some("Pylväs"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "life_cycle", life_cycle_propertyId, "single_choice", propertyValues = Seq(PropertyValue("3", Some("Käytössä pysyvästi"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "urgency_of_repair", repair_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "type_of_damage", damage_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
@@ -1624,7 +1622,7 @@ object DataFixture {
             }
           } else
             {
-              println("Kyseessä on uusi merkki, päivitystä ei tehdä.")
+              println("Kyseessä on uusi merkki, päivitystä ei tehdä." + trafficSign.id)
             }
         }
       }
