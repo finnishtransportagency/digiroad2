@@ -491,27 +491,19 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
     val signs = trafficSignAttributes.map { trafficSignAttribute =>
       val props = trafficSignAttribute.properties
-      val additionalInfoValue = getPropertyValue(props, "additionalInfo")
-      val modifiedProps = props.map(prop =>
-        if(prop.columnName == "mainSignText") {
-          (AssetProperty(columnName = "mainSignText", value = additionalInfoValue))
-        } else
-          (AssetProperty(columnName = prop.columnName, value = prop.value))
-      )
-
       val nearbyLinks = trafficSignAttribute.roadLink
-      val optBearing = tryToInt(getPropertyValue(modifiedProps, "bearing").toString)
-      val twoSided = getPropertyValue(modifiedProps, "twoSided") match {
+      val optBearing = tryToInt(getPropertyValue(props, "bearing").toString)
+      val twoSided = getPropertyValue(props, "twoSided") match {
         case "1" => true
         case _ => false
       }
-      val point = getCoordinatesFromProperties(modifiedProps)
+      val point = getCoordinatesFromProperties(props)
       val (assetBearing, assetValidityDirection) = trafficSignService.recalculateBearing(optBearing)
 
       var possibleRoadLinks = roadLinkService.filterRoadLinkByBearing(assetBearing, assetValidityDirection, point, nearbyLinks)
 
       if (possibleRoadLinks.size > 1) {
-        getPropertyValue(modifiedProps, "roadName") match {
+        getPropertyValue(props, "roadName") match {
           case name: String =>
             val possibleRoadLinksByName = nearbyLinks.filter(_.roadNameIdentifier == Option(name))
             if (possibleRoadLinksByName.size == 1)
@@ -532,7 +524,7 @@ class TrafficSignCsvImporter(roadLinkServiceImpl: RoadLinkService, eventBusImpl:
 
       val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
 
-      (modifiedProps, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(modifiedProps), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
+      (props, CsvPointAsset(point.x, point.y, roadLink.linkId, generateBaseProperties(props), validityDirection, assetBearing, mValue, roadLink, (roadLinks.isEmpty || roadLinks.size > 1) && assetBearing.isEmpty))
     }
 
     var notImportedDataExceptions: List[NotImportedData] = List()
