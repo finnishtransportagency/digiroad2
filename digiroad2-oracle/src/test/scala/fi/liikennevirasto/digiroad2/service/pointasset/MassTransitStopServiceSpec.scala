@@ -644,6 +644,51 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
+  test("When expiring in TR send vallu message "){
+    runWithRollback {
+      val linkId = 123l
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      val properties = List(
+        SimplePointAssetProperty("nimi_suomeksi", List(PropertyValue("value is copied"))),
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))),
+        SimplePointAssetProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01")))
+      )
+
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
+        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+      )
+      val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      val position = Some(Position(60.0, 0.0, 123l, None))
+      val updatedAsset =service.updateExistingById(oldAssetId, position, Set.empty, "user", (_,_) => Unit)
+      // check if new asset has same properties as old one
+      updatedAsset.propertyData.find(p=>p.publicId =="nimi_suomeksi" ).get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("value is copied")
+
+      updatedAsset.propertyData.find(p=>p.publicId =="pysakin_tyyppi" ).get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("1")
+
+      updatedAsset.propertyData.find(p=>p.publicId =="tietojen_yllapitaja" ).get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("2")
+
+      updatedAsset.propertyData.find(p=>p.publicId =="vaikutussuunta" ).get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("2")
+
+      updatedAsset.propertyData.find(p=>p.publicId =="ensimmainen_voimassaolopaiva" ).get.values
+        .head.asInstanceOf[PropertyValue].propertyValue should be("2013-01-01")
+
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
+    }
+  }
+
   test("Assert user rights when updating a mass transit stop") {
     runWithRollback {
       val position = Some(Position(60.0, 0.0, 123l, None))

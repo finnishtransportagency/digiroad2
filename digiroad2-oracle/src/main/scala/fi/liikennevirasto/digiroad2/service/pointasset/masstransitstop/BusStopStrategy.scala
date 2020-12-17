@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.service.pointasset.masstransitstop
 
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{asset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dao.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -49,6 +49,15 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
               None
           case _ => eventbus.publish("asset:saved", asset)
         }
+      case _ => None
+    }
+  }
+  override def publishExpiringEvent(publishInfo: AbstractPublishInfo):Unit ={
+    publishInfo.asset match {
+      case Some(asset) =>
+        val expiredAsset=massTransitStopDao.
+        fetchPointAssets(massTransitStopDao.withId(asset.id))
+        eventbus.publish("asset:expired", expiredAsset)
       case _ => None
     }
   }
@@ -155,5 +164,6 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       case _ => (false, None)
     }
   }
+
 }
 
