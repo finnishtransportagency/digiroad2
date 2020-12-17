@@ -35,7 +35,6 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
 import scala.collection.mutable.ListBuffer
-import scala.util.parsing.json.JSON.lexical.string
 
 
 object DataFixture {
@@ -1618,10 +1617,10 @@ object DataFixture {
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
             }
-          } else
-            {
-              println("Kyseessä on uusi merkki, päivitystä ei tehdä." + trafficSign.id)
-            }
+          }
+          else {
+            println("New traffic sign, no need to update - " + trafficSign.id)
+          }
         }
     }
     println("Traffic Sign updates complete " + DateTime.now())
@@ -2679,5 +2678,4 @@ object DataFixture {
         " create_roadWorks_using_traffic_signs | extract_csv_private_road_association_info | restore_expired_assets_from_TR_import | move_old_expired_assets")
     }
   }
-
 }
