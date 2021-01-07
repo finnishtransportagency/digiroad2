@@ -5,16 +5,18 @@
     this.trafficSignsAsset = [];
 
     var trafficSignsShowing = {
-      generalWarningSigns: false,
-      priorityAndGiveWaySigns: false,
-      prohibitionsAndRestrictions: false,
-      mandatorySigns: false,
-      regulatorySigns: false,
-      informationSigns: false,
-      serviceSigns: false,
-      otherSigns: false,
+      generalWarningSigns: true,
+      priorityAndGiveWaySigns: true,
+      prohibitionsAndRestrictions: true,
+      mandatorySigns: true,
+      regulatorySigns: true,
+      informationSigns: true,
+      serviceSigns: true,
+      otherSigns: true,
       additionalPanels: false
       };
+
+    console.log("showing traffic signs " + trafficSignsShowing);
 
     var trafficSignValues = {
       generalWarningSigns: { values : [9, 36, 37, 38, 39, 40, 41, 42, 43, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 125, 126, 127, 128, 129, 130, 131, 132, 133, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213],
@@ -91,8 +93,10 @@
     var filterTrafficSigns = function (asset) {
       return _.filter(asset, function (asset) {
         var existingValue = _.head(_.find(asset.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values);
+        console.log("filter traffic signs " + existingValue);
         if(!existingValue)
           return false;
+        console.log("filter traffic signs " + existingValue);
         return _.includes(getTrafficSignsToShow(), parseInt(existingValue.propertyValue));
       });
     };
@@ -100,6 +104,7 @@
     this.setTrafficSigns = function(trafficSign, isShowing) {
       if(trafficSignsShowing[trafficSign] !== isShowing) {
         trafficSignsShowing[trafficSign] = isShowing;
+        console.log("setTrafficSigns " + isShowing);
         eventbus.trigger('trafficSigns:signsChanged', getTrafficSignsToShow());
       }
     };
@@ -110,6 +115,7 @@
         if(isShowing)
           signsToShow = signsToShow.concat(trafficSignValues[trafficSign].values);
       });
+      console.log(signsToShow);
       return signsToShow;
     };
 
