@@ -57,7 +57,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       case Some(asset) =>
         val expiredAsset=massTransitStopDao.
         fetchPointAssets(massTransitStopDao.withId(asset.id))
-        eventbus.publish("asset:expired", expiredAsset)
+        eventbus.publish("asset:expired", expiredAsset.head)
       case _ => None
     }
   }
