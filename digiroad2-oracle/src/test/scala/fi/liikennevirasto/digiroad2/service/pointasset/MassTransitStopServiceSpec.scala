@@ -682,9 +682,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       updatedAsset.propertyData.find(p=>p.publicId =="vaikutussuunta" ).get.values
         .head.asInstanceOf[PropertyValue].propertyValue should be("2")
 
-      updatedAsset.propertyData.find(p=>p.publicId =="ensimmainen_voimassaolopaiva" ).get.values
-        .head.asInstanceOf[PropertyValue].propertyValue should be("2013-01-01")
-
       verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
     }
   }
