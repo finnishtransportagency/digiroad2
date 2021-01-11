@@ -644,7 +644,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("When expiring in TR send vallu message "){
+  test("When moving over 50 meter and expiring in TR strategy send vallu message "){
     runWithRollback {
       val linkId = 123l
       val municipalityCode = 91
@@ -997,6 +997,33 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
       service.getMassTransitStopByNationalIdWithTRWarnings(85755)._1.isEmpty should be(true)
       service.getMassTransitStopByNationalIdWithTRWarnings(85755)._2 should be(false)
+    }
+  }
+
+  test("Send Vallus message when deleting stop"){
+    runWithRollback {
+      val linkId = 123l
+      val municipalityCode = 91
+      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
+      val eventbus = MockitoSugar.mock[DigiroadEventBus]
+      val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
+      val properties = List(
+        SimplePointAssetProperty("nimi_suomeksi", List(PropertyValue("value is copied"))),
+        SimplePointAssetProperty("pysakin_tyyppi", List(PropertyValue("1"))),
+        SimplePointAssetProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimplePointAssetProperty("vaikutussuunta", List(PropertyValue("2"))),
+        SimplePointAssetProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01")))
+      )
+
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
+        (RoadAddress(Some(municipalityCode.toString), 1, 1, Track.Combined, 0), RoadSide.Left)
+      )
+      val roadLink = RoadLink(linkId, geometry, 120, Municipality, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+      val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      service.deleteMassTransitStopData(assetId)
+      verify(eventbus).publish(org.mockito.ArgumentMatchers.eq("asset:expired"), any[EventBusMassTransitStop]())
     }
   }
 
