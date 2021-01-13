@@ -64,6 +64,7 @@
     startListening();
 
     function startListening() {
+      console.log("AssetSelectionMenu startListening");
       assetSelection.on('click', 'input', onClick);
     }
 
@@ -74,6 +75,7 @@
     }
 
     function onClick() {
+      console.log("AssetSelectionMenu onClick");
       hide();
       onSelection($(this).val());
     }
@@ -83,11 +85,13 @@
     }
 
     function hide() {
+      console.log("AssetSelectionMenu hide");
       assetSelection.hide();
     }
 
     function select(layer) {
       ignoringEvents(function() {
+        console.log("AssetSelectionMenu select");
         assetSelection.find('input[value="' + layer + '"]').click();
       });
     }

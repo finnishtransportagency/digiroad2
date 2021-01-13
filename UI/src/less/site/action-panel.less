@@ -167,7 +167,7 @@
       font-size: @font-size-xs;
       line-height: @line-height-base;
     }
-    
+
     .label-2lined {
       display: block;
       font-size: @font-size-xs;
@@ -220,7 +220,7 @@
 .functional-class-legend {
   .legend-entry {
     .linear {
-      border-radius: 6px;      
+      border-radius: 6px;
     }
 
     .class-1 {
@@ -228,7 +228,7 @@
     }
 
     .class-2 {
-      height: 7px;      
+      height: 7px;
     }
 
     .class-3 {
@@ -645,6 +645,35 @@
   }
 }
 
+
+.roadway-legend {
+
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+    .fat-label {
+      padding-top: 8px;
+      font-weight: bold;
+      font-size: @font-size-base;
+    }
+    .roadway-0 { .linear-asset-legend-entry(@roadway-0, @roadway-0); }
+    .roadway-1 { .linear-asset-legend-entry(@roadway-1, @linear-asset-node-4); }
+    .roadway-2 {  .linear-asset-legend-entry(@roadway-2, @linear-asset-node-10); }
+    .roadway-3 {  .linear-asset-legend-entry(@roadway-3, @roadway-3); }
+    .roadway-4 {  .linear-asset-legend-entry(@roadway-4, @linear-asset-node-3); }
+  }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
+}
+
 .vertical-level-legend {
   .legend-entry {
     @labelWidth: 25px;
@@ -719,7 +748,7 @@
     cursor: pointer;
     .box-sizing(border-box);
     .transition(all .2s @easing-swift-out);
-  
+
     .icon-add,
     .icon-cut,
     .icon-select {
@@ -747,7 +776,7 @@
       .shape {
         fill: @blue-darker;
       }
-    }    
+    }
   }
 }
 

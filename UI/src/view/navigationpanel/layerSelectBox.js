@@ -6,7 +6,9 @@
     var panelHeader = $('<div class="panel-header"></div>').append(selectLayerButton);
 
     var bindEvents = function() {
+
       function selectLayerOrShowConfirmDialog() {
+        console.log("LayerSelectBox "+ assetSelection);
         if (applicationModel.isDirty()) {
           new Confirm();
         }

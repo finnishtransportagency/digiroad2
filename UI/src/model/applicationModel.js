@@ -65,7 +65,11 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function(layer) {
+        var booleanEvaluation=layer !== selectedLayer;
+        console.log("ApplicationModel selectLayer trigger " + layer);
+        console.log("ApplicationModel selectLayer evaluete " + booleanEvaluation);
         if (layer !== selectedLayer) {
+          console.log("ApplicationModel selectLayer " + layer);
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           setSelectedTool('Select');

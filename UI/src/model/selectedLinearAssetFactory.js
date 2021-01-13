@@ -4,6 +4,7 @@
   };
 
   function constructValidator(layerName) {
+    console.log("SelectedLinearAssetFactory constructValidator "+layerName);
     var validators = {
       prohibition: function() { return true; },
       hazardousMaterialTransportProhibition: function() { return true; },
@@ -30,6 +31,7 @@
       numberOfLanes: function() { return true; },
       parkingProhibition: function() { return true; },
       cyclingAndWalking: function() { return true; },
+      roadway: function() {return true; },
       default: function(val) {
         if(_.isUndefined(val)) { return true; }
         else if(val > 0) { return true; }
