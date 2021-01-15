@@ -266,6 +266,13 @@
   background-repeat: repeat-x;
 }
 
+.dotted-linear-asset2(@color) {
+  background-image: linear-gradient(to right,@color  50%, transparent 0%);
+  background-position: -5px top;
+  background-size: 14px 14px;
+  background-repeat: repeat-x;
+}
+
 .linear-asset-legend-entry(@color, @endpoint-color) {
   border-color: @color;
   background-color: rgba(red(@color), green(@color), blue(@color), .7);
@@ -281,6 +288,16 @@
   &:before { left: -1px; }
   &:after { right: -1px; }
 }
+.linear-asset-legend-entry-no-background(@color, @endpoint-color) {
+  &:before, &:after {
+
+  }
+  &:before { left: -1px; }
+  &:after { right: -1px; }
+
+
+}
+
 
 .linear-asset-legend {
   .legend-entry {
@@ -660,11 +677,29 @@
       font-weight: bold;
       font-size: @font-size-base;
     }
+
     .roadway-0 { .linear-asset-legend-entry(@roadway-0, @roadway-0); }
-    .roadway-1 { .linear-asset-legend-entry(@roadway-1, @linear-asset-node-4); }
-    .roadway-2 {  .linear-asset-legend-entry(@roadway-2, @linear-asset-node-10); }
+    .roadway-1 { .linear-asset-legend-entry(@roadway-1, @roadway-1);
+      .dotted-linear-asset2(@blue);
+    }
+    .roadway-2 {
+      //.linear-asset-legend-entry(@roadway-2, @roadway-2);
+      background-color: white;
+      background-position: -5px top;
+      background-size: 14px 14px;
+      background-image: repeating-linear-gradient(  to right
+      ,@blue 0px
+      ,@blue 2px
+
+      ,#008000 0px
+      ,#008000 8px
+
+      ,#a800a8 0px
+      ,#a800a8 12px,transparent 0%);
+    }
     .roadway-3 {  .linear-asset-legend-entry(@roadway-3, @roadway-3); }
-    .roadway-4 {  .linear-asset-legend-entry(@roadway-4, @linear-asset-node-3); }
+    .roadway-3 {  .linear-asset-legend-entry(@roadway-3, @roadway-3); }
+    .roadway-4 {  .linear-asset-legend-entry(@roadway-4, @roadway-4); }
   }
   .check-box-container{
     input {
