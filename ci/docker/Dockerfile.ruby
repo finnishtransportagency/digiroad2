@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.12.3
 
 ARG JENKINS_UID=1000
 RUN adduser -D -S -u ${JENKINS_UID} jenkins
