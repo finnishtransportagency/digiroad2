@@ -2124,8 +2124,6 @@ object DataFixture {
     }
   }
 
-
-
   def mergeMunicipalities(): Unit = {
     val municipalityToDelete = 99
     val municipalityToMerge = 214
@@ -2136,6 +2134,22 @@ object DataFixture {
 
     OracleDatabase.withDynTransaction{
       Queries.mergeMunicipalities(municipalityToDelete, municipalityToMerge)
+    }
+
+    println("")
+    println("Complete at time: " + DateTime.now())
+  }
+
+  def updateEly(): Unit = {
+    val newEly = 6
+    val municipalityToUpdate = 291
+
+    println(s"\nStart process of updating ELY id $newEly for municipality $municipalityToUpdate")
+    println(DateTime.now())
+    println("")
+
+    OracleDatabase.withDynTransaction{
+      Queries.updateEly(newEly, municipalityToUpdate)
     }
 
     println("")

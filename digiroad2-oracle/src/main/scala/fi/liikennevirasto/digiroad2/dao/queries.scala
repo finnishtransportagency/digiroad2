@@ -452,6 +452,10 @@ object Queries {
     sqlu"""DELETE FROM MUNICIPALITY WHERE ID = $municipalityToDelete""".execute
   }
 
+  def updateEly(newEly: Int, municipalityToUpdate: Int): Unit = {
+    sqlu"""UPDATE MUNICIPALITY SET ELY_NRO = $newEly WHERE ID = $municipalityToUpdate""".execute
+  }
+
   def deleteAdditionalGroupedAsset(assetId: Long, groupedId: Long): Unit = {
     sqlu"""delete from number_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from text_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
