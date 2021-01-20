@@ -1608,15 +1608,46 @@
         }
     ];
 
+    var hybridAssetSpecs=[
+      {
+        typeId: assetType.roadway,
+        singleElementEventCategory: 'roadwayClass',
+        multiElementEventCategory: 'roadwayClasses',
+        layerName: 'roadway',
+        title: 'Tiemerkinnät',
+        newTitle: 'Uusi tiemerkintä',
+        className: 'roadway',
+        isSeparable: false,
+        unit: '',
+        allowComplementaryLinks: true,
+        editControlLabels: {
+          title: 'Tiemerkintä',
+          enabled: 'Tiemerkintä',
+          disabled: 'Ei tiemerkintää'
+        },
+        form: new DynamicAssetForm({
+
+        }),
+        isVerifiable: false,
+        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
+        layer: RoadwayLayer,
+        style: new RoadwayStyle(),
+        collection: RoadwayCollection
+      },
+    ];
+
     return {
       assetTypes : assetType,
-      assetTypeInfo: assetTypeInfo.concat( _.map(linearAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); }),
-                                           _.map(pointAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); })),
+      assetTypeInfo: assetTypeInfo.concat(
+          _.map(linearAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); }),
+          _.map(pointAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); }),
+          _.map(hybridAssetSpecs, function(asset) { return _.zipObject(['typeId', 'title'], [asset.typeId, asset.title]); })),
       linearAssetsConfig : linearAssetSpecs,
       experimentalAssetsConfig : experimentalLinearAssetSpecs,
       pointAssetsConfig : pointAssetSpecs,
       groupedPointAssetSpecs: groupedPointAssetSpecs,
-      assetGroups: assetGroups
+      assetGroups: assetGroups,
+      hybridAssetSpecs:hybridAssetSpecs
     };
   };
 })(this);

@@ -1,5 +1,5 @@
 (function (root) {
-  root.AssetSelectionMenu = function(linearAssetGroups, pointAssetGroups, maintenanceAssetGroup, options) {
+  root.AssetSelectionMenu = function(linearAssetGroups, pointAssetGroups, maintenanceAssetGroup,hybridAssetGroup, options) {
     var onSelection = options.onSelect;
     var assetSelection = $('<div class="asset-selection">' +
       '<div class="column-1"></div>' +
@@ -8,6 +8,7 @@
 
     var linearAssets = $('<div class="linear-assets-column"></div>');
     var pointAssets = $('<div class="point-assets-column"></div>');
+    var hybridAssets = $('<div class="hybrid-assets-column"></div>');
     var maintenanceAsset = $('<div class="maintenance-asset-column"></div>');
 
     var linearGroup = $('<span><h2>' + "Viivamaiset kohteet" + '</h2></span>');
@@ -27,6 +28,13 @@
         .values()
         .flatten()
         .value();
+
+    var hybridAssetLinks =
+        _.chain(hybridAssetGroup)
+            .map(buildAssetsOptions)
+            .values()
+            .flatten()
+            .value();
 
     var maintenanceAssetLink = buildAssetsOptions(maintenanceAssetGroup);
 
@@ -55,8 +63,11 @@
     maintenanceAsset.append(maintenanceGroup);
     maintenanceAsset.append(maintenanceAssetLink);
 
+    hybridAssets.append(hybridAssetLinks);
+
     assetSelection.find('.column-1').append(linearAssets);
     assetSelection.find('.column-2').append(pointAssets);
+    assetSelection.find('.column-2').append(hybridAssets);
     assetSelection.find('.column-2').append(maintenanceAsset);
 
     assetSelection.hide();
