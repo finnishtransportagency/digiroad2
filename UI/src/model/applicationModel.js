@@ -65,7 +65,6 @@
         minDirtyZoomLevel = level;
       },
       selectLayer: function(layer) {
-        var booleanEvaluation=layer !== selectedLayer;
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;

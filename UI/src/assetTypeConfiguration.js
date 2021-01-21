@@ -1084,32 +1084,7 @@
         layer: LaneModellingLayer,
         label: new LaneModellingLabel(),
         laneReadOnlyLayer: ViewOnlyLaneModellingLayer
-      },
-      {
-        typeId: assetType.roadway,
-        singleElementEventCategory: 'roadwayClass',
-        multiElementEventCategory: 'roadwayClasses',
-        layerName: 'roadway',
-        title: 'Tiemerkinnät',
-        newTitle: 'Uusi tiemerkintä',
-        className: 'roadway',
-        isSeparable: false,
-        unit: '',
-        allowComplementaryLinks: true,
-        editControlLabels: {
-          title: 'Tiemerkintä',
-          enabled: 'Tiemerkintä',
-          disabled: 'Ei tiemerkintää'
-        },
-        form: new DynamicAssetForm({
-
-        }),
-        isVerifiable: false,
-        authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-        layer: RoadwayLayer,
-        style: new RoadwayStyle(),
-        collection: RoadwayCollection
-      },
+      }
     ];
 
     var experimentalLinearAssetSpecs = [

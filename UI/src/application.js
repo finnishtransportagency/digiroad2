@@ -91,7 +91,7 @@
     var selectedLinearAssetModels = _.map(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.map(pointAssets, "selectedPointAsset");
     var selectedGroupedPointAssetModels = _.map(groupedPointAssets, "selectedPointAsset");
-    var selectedHybridAssetModels = _.map(hybridAssets, "selectedPointAsset");
+    var selectedHybridAssetModels = _.map(hybridAssets, "selectedHybridAsset");
     window.applicationModel = new ApplicationModel([
       selectedMassTransitStopModel,
       selectedSpeedLimit,
