@@ -55,22 +55,17 @@
         {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M19 Liikennemerkki'},
       ];
 
-      var roadwayLabel =
-          '<div class="legend-entry">' +
-          '<div class="fat-label"> test</div>' +
-          '</div>';
-
-      var linearLegend = legendDiv('roadwayLength', roadwayLinearLegend(linearMarkingEntries), roadwayLabel);
-      var widthOfRoadAxisLegend = legendDiv('roadwayWidth', roadwayPointLikeLegend(widthOfRoadAxisEntries), roadwayLabel);
-      var otherMarkingLegend = legendDiv('roadwayOther', roadwayPointLikeLegend(otherMarkingEntries), roadwayLabel);
+      var linearLegend = legendDiv('roadwayLength', roadwayLinearLegend(linearMarkingEntries));
+      var widthOfRoadAxisLegend = legendDiv('roadwayWidth', roadwayPointLikeLegend(widthOfRoadAxisEntries));
+      var otherMarkingLegend = legendDiv('roadwayOther', roadwayPointLikeLegend(otherMarkingEntries));
 
       return '<div class="panel-section panel-legend '+ me.legendName() + '-legend">' +
           linearLegend +
           widthOfRoadAxisLegend +
           otherMarkingLegend + '</div>';
     };
-      var legendDiv =function(className,entries,label){
-          return '<div class="' + className + '-legend'+'">'+label+ entries+'</div>';
+      var legendDiv =function(className,entries){
+          return '<div class="' + className + '-legend'+'">'+ entries+'</div>';
       };
 
     var roadwayPointLikeLegend = function(values){
@@ -115,13 +110,11 @@
               $('.roadwayWidth-legend').show();
               $('.roadwayOther-legend').hide();
             //event buss trigger layer where asset are
-            applicationModel.setReadOnly(true);
           } else if (this.value === 'other-roadway') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').hide();
               $('.roadwayOther-legend').show();
               //event buss trigger layer where asset are
-              applicationModel.setReadOnly(true);
           }
         }
       });
@@ -135,14 +128,14 @@
       return [
         '  <div class="panel-section">' +
         '    <div class="radio">' +
-        '     <label>' +
-        '       <input name="labelRadio" value="length-of-road-axis" type="radio" checked>Pituussuuntaiset tiemerkinnät ' + //length-of-road-axis
+        '     <label>' + //length-of-road-axis
+        '       <input name="labelRadio" value="length-of-road-axis" type="radio" checked>Pituussuuntaiset tiemerkinnät ' +
+        '     </label>' +
+        '     <label>' + //width-of-road-axis
+        '       <input name="labelRadio" value="width-of-road-axis" type="radio">Poikittaissuuntaiset tiemerkinnät' +
         '     </label>' +
         '     <label>' +
-        '       <input name="labelRadio" value="width-of-road-axis" type="radio">Poikittaissuuntaiset tiemerkinnät' + //
-        '     </label>' +
-        '     <label>' +
-        '       <input name="labelRadio" value="other-roadway" type="radio">Muut tiemerkinnät' + //width-of-road-axis
+        '       <input name="labelRadio" value="other-roadway" type="radio">Muut tiemerkinnät' +
         '     </label>' +
         '    </div>' +
         '  </div>'

@@ -8,12 +8,13 @@
 
     var linearAssets = $('<div class="linear-assets-column"></div>');
     var pointAssets = $('<div class="point-assets-column"></div>');
-    var hybridAssets = $('<div class="hybrid-assets-column"></div>');
+    var otherdAssets = $('<div class="other-assets-column"></div>');
     var maintenanceAsset = $('<div class="maintenance-asset-column"></div>');
 
     var linearGroup = $('<span><h2>' + "Viivamaiset kohteet" + '</h2></span>');
     var pointGroup = $('<span><h2>' + "Pistemäiset kohteet" + '</h2></span>');
     var maintenanceGroup = $('<span><h3>' + "Vain ELYn ylläpidossa" + '</h3></span>');
+    var otherAsset = $('<span><h3>' + "Muut kohteet" + '</h3></span>');
 
     var linearAssetLinks =
       _.chain(linearAssetGroups)
@@ -63,11 +64,12 @@
     maintenanceAsset.append(maintenanceGroup);
     maintenanceAsset.append(maintenanceAssetLink);
 
-    hybridAssets.append(hybridAssetLinks);
+    otherdAssets.append(otherAsset);
+    otherdAssets.append(hybridAssetLinks);
 
     assetSelection.find('.column-1').append(linearAssets);
     assetSelection.find('.column-2').append(pointAssets);
-    assetSelection.find('.column-2').append(hybridAssets);
+    assetSelection.find('.column-2').append(otherdAssets);
     assetSelection.find('.column-2').append(maintenanceAsset);
 
     assetSelection.hide();

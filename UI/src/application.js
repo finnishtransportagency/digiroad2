@@ -578,9 +578,7 @@
       hybridAssets){
     var assetType =  assetConfiguration.assetTypes;
     var roadwayBox = new RoadwayBox(_.find(hybridAssets, {typeId: assetType.roadway}));
-    return [
-        [].concat([roadwayBox])
-    ];
+    return [[].concat([roadwayBox])];
   }
 
   function groupPointAssets(assetConfiguration,
