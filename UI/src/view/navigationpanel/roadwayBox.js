@@ -1,7 +1,7 @@
 (function(root) {
   //roadway
   root.RoadwayBox = function (assetConfig) {
-    LinearAssetBox.call(this, assetConfig);
+    HybridAssetBox.call(this, assetConfig);
     var me = this;
 
     this.header = function () {
