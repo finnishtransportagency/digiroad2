@@ -59,7 +59,7 @@
 
     var hybridAssets = _.map(assetConfiguration.hybridAssetSpecs, function(spec) {
       var rCollection = spec.roadCollection ? new spec.roadCollection(backend) :  roadCollection;
-      // convert these to hybrid collection
+      // convert these to hybrid collection in backend task
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName,  rCollection);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
@@ -91,7 +91,7 @@
     var selectedLinearAssetModels = _.map(linearAssets, "selectedLinearAsset");
     var selectedPointAssetModels = _.map(pointAssets, "selectedPointAsset");
     var selectedGroupedPointAssetModels = _.map(groupedPointAssets, "selectedPointAsset");
-    var selectedHybridAssetModels = _.map(hybridAssets, "selectedHybridAsset");
+    var selectedHybridAssetModels = _.map(hybridAssets, "selectedPointAsset");
     window.applicationModel = new ApplicationModel([
       selectedMassTransitStopModel,
       selectedSpeedLimit,
