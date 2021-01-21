@@ -98,9 +98,8 @@
           $('.roadwayOther-legend').hide();
           new Confirm();
         } else {
-          console.log(this.value);
           if (this.value === 'length-of-road-axis') {
-            $('.roadwayLength-legend').show();
+              $('.roadwayLength-legend').show();
               $('.roadwayWidth-legend').hide();
               $('.roadwayOther-legend').hide();
               //event buss trigger layer where asset are

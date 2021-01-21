@@ -8,7 +8,6 @@
     var bindEvents = function() {
 
       function selectLayerOrShowConfirmDialog() {
-        console.log("LayerSelectBox "+ assetSelection);
         if (applicationModel.isDirty()) {
           new Confirm();
         }

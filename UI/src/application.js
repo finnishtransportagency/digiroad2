@@ -126,13 +126,11 @@
 
     var assetSelectionMenu = AssetSelectionMenu(linearAssetGroup, pointAssetGroup, serviceRoadAsset,hybridAssetGroup, {
       onSelect: function(layerName) {
-        console.log("application assetSelectionMenu " +layerName);
         window.location.hash = layerName;
       }
     });
 
     eventbus.on('layer:selected', function(layer) {
-      console.log("application eventbus.on('layer:selected', function(layer) " +layer);
       assetSelectionMenu.select(layer);
     });
 
