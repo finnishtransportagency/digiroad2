@@ -52,39 +52,41 @@ pipeline {
         }
 
         stage("Run Task") {
-                    stage("Server 2") {
-                             agent {
-                                        docker {
-                                            image "digiroad2-cap"
-                                        }
-                                    }
-                            steps {
-
-                                withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
-                                                 file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
-                                                 file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
-                                    sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
-                                    sh "cp ${ID_RSA} ~/.ssh/"
+            steps{
+                stage("Server 2") {
+                     agent {
+                                docker {
+                                    image "digiroad2-cap"
                                 }
-                                sh STAGE_RUN_TASK2
                             }
-                          }
-                  stage("Server 1") {
-                    agent {
-                              docker {
-                                  image "digiroad2-cap"
-                              }
-                          }
-                      steps {
-                          withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
-                                           file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
-                                           file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
-                              sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
-                              sh "cp ${ID_RSA} ~/.ssh/"
-                          }
-                          sh STAGE_RUN_TASK
-                      }
+                    steps {
+
+                        withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                         file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                         file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                            sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                            sh "cp ${ID_RSA} ~/.ssh/"
+                        }
+                        sh STAGE_RUN_TASK2
+                    }
                   }
+              stage("Server 1") {
+                agent {
+                          docker {
+                              image "digiroad2-cap"
+                          }
+                      }
+                  steps {
+                      withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                       file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                       file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                          sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                          sh "cp ${ID_RSA} ~/.ssh/"
+                      }
+                      sh STAGE_RUN_TASK
+                  }
+              }
+            }
         }
     }
 
