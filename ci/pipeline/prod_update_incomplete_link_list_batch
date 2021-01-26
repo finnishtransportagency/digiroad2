@@ -21,6 +21,14 @@ pipeline {
                              "\"project digiroad2\"",
                              "\"runMain fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList\"\'"
                         ].join(" ")
+
+                        STAGE_RUN_TASK2 = [
+                            "ssh web@production2 \'cd /home/web/digiroad2/current && echo YES |",
+                             "/home/web/digiroad2/current/./sbt",
+                             "-Ddigiroad2.env=production2",
+                             "\"project digiroad2\"",
+                             "\"runMain fi.liikennevirasto.digiroad2.util.UpdateIncompleteLinkList\"\'"
+                        ].join(" ")
                     }
             }
         }
@@ -46,11 +54,10 @@ pipeline {
             }
         }
 
-        stage("Run Task") {
+        stage("Server 1") {
             agent {
                 docker {
                     image "digiroad2-cap"
-                    reuseNode true
                 }
             }
             steps {
@@ -64,6 +71,23 @@ pipeline {
                 sh STAGE_RUN_TASK
             }
         }
+         stage("Server 2") {
+                    agent {
+                        docker {
+                            image "digiroad2-cap"
+                        }
+                    }
+                    steps {
+
+                        withCredentials([file(credentialsId: 'ssh_config', variable: 'SSH_CONFIG'),
+                                         file(credentialsId: 'SSH_KNOWN_HOSTS', variable: 'KNOWN_HOSTS'),
+                                         file(credentialsId: 'ID_RSA', variable: 'ID_RSA')]) {
+                            sh "mkdir ~/.ssh/ && cp ${SSH_CONFIG} ~/.ssh/ && cp ${KNOWN_HOSTS} ~/.ssh/"
+                            sh "cp ${ID_RSA} ~/.ssh/"
+                        }
+                        sh STAGE_RUN_TASK2
+                    }
+                }
     }
 
     post {
