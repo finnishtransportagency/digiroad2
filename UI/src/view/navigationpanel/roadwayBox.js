@@ -102,17 +102,26 @@
               $('.roadwayLength-legend').show();
               $('.roadwayWidth-legend').hide();
               $('.roadwayOther-legend').hide();
+              $('.roadway .cut').show();
+              $('.roadway .rectangle').show();
+              $('.roadway .polygon').show();
               //event buss trigger layer where asset are
             me.showEditModeButton();
           } else if (this.value === 'width-of-road-axis') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').show();
               $('.roadwayOther-legend').hide();
+              $('.roadway .cut').hide();
+              $('.roadway .rectangle').hide();
+              $('.roadway .polygon').hide();
             //event buss trigger layer where asset are
           } else if (this.value === 'other-roadway') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').hide();
               $('.roadwayOther-legend').show();
+              $('.roadway .cut').hide();
+              $('.roadway .rectangle').hide();
+              $('.roadway .polygon').hide();
               //event buss trigger layer where asset are
           }
         }
