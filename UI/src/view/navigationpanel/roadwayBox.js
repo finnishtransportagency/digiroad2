@@ -48,7 +48,7 @@
         {symbolUrl: 'images/roadway/roadwayOther/M16_nopeusrajoitus.jpg', label: 'M16 Nopeusrajoitus'},
         {symbolUrl: 'images/roadway/roadwayOther/M17_tienumero.jpg', label: 'M17 Tienumero'},
         {symbolUrl: '', label: 'M18 Risteysruudutus'},
-        {symbolUrl: '', label: 'M19 Liikennemerkki'},
+        {symbolUrl: 'images/roadway/roadwayOther/M19_liikennemerkki.jpg', label: 'M19 Liikennemerkki'},
       ];
 
       var linearLegend = legendDiv('roadwayLength', roadwayLinearLegend(linearMarkingEntries));
