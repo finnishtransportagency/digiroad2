@@ -14,6 +14,7 @@
 
     this.labeling = function () {
 
+      // change these to is marking or is not
       var linearMarkingEntries = [
         {index: 0, text: 'Keskiviiva'},
         {index: 1, text: 'Keskiviiva ja reunaviiva'},
@@ -23,36 +24,36 @@
       ];
 
       var widthOfRoadAxisEntries = [
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L1 pysäytysviiva'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L2 Väistämisviiva'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L3 Suojatie'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L4.1 Pyörätien jatke'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L4.2 Pyörätien jatke'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L4.3 Pyörätien jatke'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L5.1 Töyssy'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L5.2 Töyssy'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'L6 Heräteraidat'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L1_pysaytysviiva.jpg', label: 'L1 pysäytysviiva'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L2_vaistamisviiva.jpg', label: 'L2 Väistämisviiva'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L3_suojatie.jpg', label: 'L3 Suojatie'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L4_1_pyoratien_jatke.jpg', label: 'L4.1 Pyörätien jatke'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L4_2_pyaratien_jatke_ja_suojatie.jpg', label: 'L4.2 Pyörätien jatke ja suojatie'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L4_3_pyoratien_jatke_ja_suojatie_rinnakkain.jpg', label: 'L4.3 Pyörätien jatke ja suojatie rinnakkaine'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L5_1_toyssy.jpg', label: 'L5.1 Töyssy'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L5_2_toyssy.jpg', label: 'L5.2 Töyssy'},
+        {symbolUrl: 'images/roadway/roadwayWidth/L6_herateraidat.jpg', label: 'L6 Heräteraidat'},
       ];
       var otherMarkingEntries = [
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M1 ajokaistanuoli'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M2 ajokaistan vaihtamisnuoli'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M3 Pysäköintialue'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M4 Keltanen reunamerkintä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M5 Pysäyttämisrajoitus'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M6 ohjausviiva'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M7 Jalankulkija'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M8 Pyöräilijä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M9 Väistämisvelvollisuutta osoittava ennakkomerkintä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M10 Stop-ennakkomerkintä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M11 P-Merkintä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M12 Invalidin ajoneuvo'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M13 BUS-merkintä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M14 Taxi-merkintä'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M15 Lataus'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M16 Nopeusrajoitus'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M17 Tienumero'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M18 Risteysruudutus'},
-        {symbolUrl: 'images/mass-transit-stops/1.png', label: 'M19 Liikennemerkki'},
+        {symbolUrl: 'images/roadway/roadwayOther/M1_ajokaistanuoli.jpg', label: 'M1 ajokaistanuoli'},
+        {symbolUrl: 'images/roadway/roadwayOther/M2_ajokaistan_vaihtamisnuoli.jpg', label: 'M2 ajokaistan vaihtamisnuoli'},
+        {symbolUrl: 'images/roadway/roadwayOther/M3_pysakointialue.jpg', label: 'M3 Pysäköintialue'},
+        {symbolUrl: 'images/roadway/roadwayOther/M4_keltainen_reunamerkinta.jpg', label: 'M4 Keltanen reunamerkintä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M5_pysayttamisrajoitus.jpg', label: 'M5 Pysäyttämisrajoitus'},
+        {symbolUrl: '', label: 'M6 ohjausviiva'},
+        {symbolUrl: 'images/roadway/roadwayOther/M7_jalankulkija.jpg', label: 'M7 Jalankulkija'},
+        {symbolUrl: 'images/roadway/roadwayOther/M8_pyorailija.jpg', label: 'M8 Pyöräilijä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M9_vaistamisvelvollisuutta_osoittava_ennakkomerkinta.jpg', label: 'M9 Väistämisvelvollisuutta osoittava ennakkomerkintä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M10_stop-ennakkomerkinta.jpg', label: 'M10 Stop-ennakkomerkintä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M11_P-merkinta.jpg', label: 'M11 P-Merkintä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M12_invalidin_ajoneuvo.jpg', label: 'M12 Invalidin ajoneuvo'},
+        {symbolUrl: 'images/roadway/roadwayOther/M13_BUS-merkinta.jpg', label: 'M13 BUS-merkintä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M14_TAXI-merkinta.jpg', label: 'M14 Taxi-merkintä'},
+        {symbolUrl: 'images/roadway/roadwayOther/M15_lataus.jpg', label: 'M15 Lataus'},
+        {symbolUrl: 'images/roadway/roadwayOther/M16_nopeusrajoitus.jpg', label: 'M16 Nopeusrajoitus'},
+        {symbolUrl: 'images/roadway/roadwayOther/M17_tienumero.jpg', label: 'M17 Tienumero'},
+        {symbolUrl: '', label: 'M18 Risteysruudutus'},
+        {symbolUrl: '', label: 'M19 Liikennemerkki'},
       ];
 
       var linearLegend = legendDiv('roadwayLength', roadwayLinearLegend(linearMarkingEntries));

@@ -665,12 +665,29 @@
       font-size: @font-size-base;
     }
 
+   .panel-legend{
+      .label {
+        > span {
+          width: 77%;
+          display: inline-block;
+        }
+
+        > img {
+          position: unset;
+          right: 10px;
+          left: unset;
+          width: auto;
+          float: right;
+          height:10px;
+        }
+      }
+    }
+
     .roadway-0 { .linear-asset-legend-entry(@roadway-0, @roadway-0); }
     .roadway-1 { .linear-asset-legend-entry(@roadway-1, @roadway-1);
       .dotted-linear-asset2(@blue);
     }
     .roadway-2 {
-      //.linear-asset-legend-entry(@roadway-2, @roadway-2);
       background-color: white;
       background-position: -5px top;
       background-size: 14px 14px;
