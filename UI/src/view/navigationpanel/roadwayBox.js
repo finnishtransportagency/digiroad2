@@ -1,5 +1,4 @@
 (function(root) {
-  //roadway
   root.RoadwayBox = function (assetConfig) {
     HybridAssetBox.call(this, assetConfig);
     var me = this;
@@ -14,13 +13,9 @@
 
     this.labeling = function () {
 
-      // change these to is marking or is not
       var linearMarkingEntries = [
-        {index: 0, text: 'Keskiviiva'},
-        {index: 1, text: 'Keskiviiva ja reunaviiva'},
-        {index: 2, text: 'Reunaviiva,ajokaistaviiva ja varoitusviiva'},
-        {index: 3, text: 'Reunaviiva'},
-        {index: 4, text: 'Ajokaistaviiva'},
+        {index: 0, text: 'Ei tiemerkintöjä'},
+        {index: 1, text: 'Tiemerkintöjä'},
       ];
 
       var widthOfRoadAxisEntries = [
