@@ -102,7 +102,6 @@
               $('.roadway .rectangle').show();
               $('.roadway .polygon').show();
               //event buss trigger layer where asset are
-            me.showEditModeButton();
           } else if (this.value === 'width-of-road-axis') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').show();
