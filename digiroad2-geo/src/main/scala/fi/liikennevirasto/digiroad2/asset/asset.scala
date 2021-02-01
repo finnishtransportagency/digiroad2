@@ -211,7 +211,7 @@ object PointAssetStructure {
     values.find(_.value == intValue).getOrElse(getDefault)
   }
 
-  def getDefault: PointAssetStructure = Unknown
+  def getDefault: PointAssetStructure = Pole
 
   case object Pole extends PointAssetStructure { def value = 1; def description = "Pylväs"  }
   case object Wall extends PointAssetStructure { def value = 2; def description = "Seinä" }
@@ -793,18 +793,17 @@ sealed trait AdditionalPanelColor {
   def propertyDisplayValue : String
 }
 object AdditionalPanelColor {
-  val values = Set(BlueColorOption, YellowColorOption, GreenColorOption, UnknownColorOption)
+  val values = Set(ColorOption1, ColorOption2, ColorOption99)
 
   def apply(value: Int): Option[AdditionalPanelColor] = {
     values.find(_.value == value)
   }
 
-  def getDefault: AdditionalPanelColor = UnknownColorOption
+  def getDefault: AdditionalPanelColor = ColorOption99
 }
-case object BlueColorOption extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
-case object YellowColorOption extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
-case object GreenColorOption extends AdditionalPanelColor { def value = 3; def propertyDisplayValue = "Vihreä"}
-case object UnknownColorOption extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
+case object ColorOption1 extends AdditionalPanelColor { def value = 1; def propertyDisplayValue = "Sininen"}
+case object ColorOption2 extends AdditionalPanelColor { def value = 2; def propertyDisplayValue = "Keltainen"}
+case object ColorOption99 extends AdditionalPanelColor { def value = 99; def propertyDisplayValue = "Ei tietoa"}
 
 case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false) extends PointAssetValue {
   override def toJson: Any = this

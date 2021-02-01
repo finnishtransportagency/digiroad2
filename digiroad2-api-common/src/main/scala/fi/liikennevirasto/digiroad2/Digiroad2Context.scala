@@ -339,7 +339,7 @@ object Digiroad2Context {
 
   val vallu = system.actorOf(Props(classOf[ValluActor], massTransitStopService), name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
-
+  eventbus.subscribe(vallu, "asset:expired") // vallu message for expired/deleted bus stop
   val valluTerminal = system.actorOf(Props(classOf[ValluTerminalActor], massTransitStopService), name = "valluTerminal")
   eventbus.subscribe(valluTerminal, "terminal:saved")
 

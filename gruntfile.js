@@ -115,12 +115,15 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/vkm-api',
-            host: 'localhost',
-            port: '8997',
-            https: false,
-            changeOrigin: false,
-            xforward: false
+            context: '/viitekehysmuunnin',
+            host: 'julkinen.vayla.fi',
+            port: '443',
+            https: true,
+            changeOrigin: true,
+            xforward: false,
+            headers: {
+              host: 'https://julkinen.vayla.fi/viitekehysmuunnin/'
+            }
           }
         ]
       }

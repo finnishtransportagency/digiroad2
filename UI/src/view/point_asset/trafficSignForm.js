@@ -21,9 +21,9 @@
     var propertyOrdering = [
       'trafficSigns_type',
       'trafficSigns_value',
-      'trafficSigns_info',
-      'municipality_id',
       'main_sign_text',
+      'municipality_id',
+      'trafficSigns_info',
       'structure',
       'condition',
       'size',
@@ -336,8 +336,8 @@
         'formPosition',
         'panelType',
         'panelValue',
-        'panelInfo',
         'text',
+        'panelInfo',
         'size',
         'coating_type',
         'additional_panel_color'
@@ -438,7 +438,6 @@
     var additionalPanelColorSettings = [
       { propertyValue: "1", propertyDisplayValue: "Sininen", checked: false },
       { propertyValue: "2", propertyDisplayValue: "Keltainen", checked: false },
-      { propertyValue: "3", propertyDisplayValue: "Vihreä", checked: false },
       { propertyValue: "99", propertyDisplayValue: "Ei tietoa", checked: false }
     ];
 

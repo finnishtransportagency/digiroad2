@@ -15,15 +15,21 @@
      * @returns {*}
      */
     var geocode = function(street) {
-      return backend.getGeocode(street.address).then(function(result) {
-        var resultLength = _.get(result, 'length');
-        var vkmResultToCoordinates = function(r) {
-          return { title: r.tienimiFi +" "+ r.katunumero + ", "+ r.kuntaNimi, lon: r.x, lat: r.y ,resultType:"street" };
+      return backend.getGeocode(street.address).then(function(data) {
+        var result = data.features;
+        var withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
+        var vkmResultToCoordinates = function (r) {
+          var streetNumber =r.properties.katunumero !== undefined ?r.properties.katunumero:"";
+          return {
+            title: r.properties.katunimi +
+                " " + streetNumber +
+                ", " + r.properties.kuntanimi, lon: r.properties.x, lat: r.properties.y, resultType: "street"
+          };
         };
-        if (resultLength > 0) {
-          return _.map(result, vkmResultToCoordinates);
-        } else {
+        if (withErrors) {
           return $.Deferred().reject('Tuntematon katuosoite');
+        } else {
+          return _.map(result, vkmResultToCoordinates);
         }
       });
     };
@@ -132,10 +138,10 @@
         var titleParts = [_.get(road, 'tie'), _.get(road, 'osa'), _.get(road, 'etaisyys'), _.get(road, 'ajorata')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
-      var auxRoadData = _.head(roadData);
-      var lon = _.get(auxRoadData, 'x');
-      var lat = _.get(auxRoadData, 'y');
-      var title = constructTitle(auxRoadData);
+      var auxRoadData = _.head(roadData.features);
+      var lon = _.get(auxRoadData.properties, 'x');
+      var lat = _.get(auxRoadData.properties, 'y');
+      var title = constructTitle(auxRoadData.properties);
       if (lon && lat) {
         return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
       } else {

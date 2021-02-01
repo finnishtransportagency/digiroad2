@@ -796,13 +796,12 @@
 
             return $('' +
                 '<div class="form-group read-only">' +
-                '<label class="control-label">Kelirikkokausi</label>' +
+                '<label class="control-label">' + field.label + '</label>' +
                 '<ul class="form-control-static date-period-group">' +
                 datePeriodTable +
                 '</ul>' +
                 '</div>' );
         };
-
     };
 
     //hides field when in edit mode, show in view mode
