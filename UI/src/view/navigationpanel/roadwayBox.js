@@ -159,11 +159,6 @@
 
     var element = $('<div class="panel-group roadway-panel"/>');
 
-    this.showEditModeButton = function() {
-      me.editModeToggle.reset();
-      $(me.editModeToggle.element).show();
-    };
-
     this.getElement = function () {
       return element;
     };
