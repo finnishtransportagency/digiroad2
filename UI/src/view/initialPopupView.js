@@ -159,11 +159,11 @@ window.InitialPopupView = function(backend, location, userRole, places, assetTyp
 
                 '<div class="contentNoBackColor">' +
                     '<div>' +
-                        '<p>' + "Tielolaji" + '<span class="assetTypeText">' + defaultAsset + '</span>' + '</p>'+
+                        '<p>' + "Tietolaji" + '<span class="assetTypeText">' + defaultAsset + '</span>' + '</p>'+
                     '</div>' +
                     '<div>' +
                         '<select id="assetType" class="form-dark form-control assetType"  name="form-control places">' +
-                            '<option value="" disabled selected>Valitse omaisuuslaji</option>' +
+                            '<option value="" disabled selected>Valitse tietolaji</option>' +
                             '<option value="linearAssets" disabled>Viivamaiset kohteet</option>' +
                                 linearAssetsDropdown() +
                             '<option value="pointAssets" disabled>Pistemäiset kohteet</option>' +
