@@ -69,7 +69,7 @@
             return '<div class="legend-entry">' +
                 '  <div class="label">' +
                 '    <span>' + value.label + '</span> ' +
-                '    <img class="symbol-to-right" src="' + value.symbolUrl + '"/>' +
+                '    <img class="symbol-to-right"  onerror="this.style.display=\'none\'" src="' + value.symbolUrl + '"/>' +
                 '  </div>' +
                 '</div>';
         }).join('');
