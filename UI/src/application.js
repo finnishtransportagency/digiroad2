@@ -63,11 +63,15 @@
       var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec, verificationCollection) : new spec.collection(backend, spec, verificationCollection) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName,  rCollection);
       var authorizationPolicy = _.isUndefined(spec.authorizationPolicy) ? new AuthorizationPolicy() : spec.authorizationPolicy;
+      var collectionLinear = _.isUndefined(spec.collection ) ?  new LinearAssetsCollection(backend, verificationCollection, spec) : new spec.collection(backend, verificationCollection, spec);
+      var selectedLinearAsset = _.isUndefined(spec.selected) ? SelectedLinearAssetFactory.construct(backend, collection, spec) : new spec.selected(backend, collection, spec.typeId, spec.singleElementEventCategory, spec.multiElementEventCategory, spec.isSeparable);
+
       return _.merge({}, spec, {
         collection: collection,
         selectedPointAsset: selectedPointAsset,
         authorizationPolicy: authorizationPolicy,
-        roadCollection: rCollection
+        roadCollection: rCollection,
+        selectedLinearAsset:selectedLinearAsset
       });
     });
 
@@ -184,7 +188,7 @@
   var startApplication = function(backend, models, linearAssets, pointAssets, hybridAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
+      var map = setupMap(backend, models, linearAssets, pointAssets,hybridAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedServicePoint = getSelectedPointAsset(pointAssets, 'servicePoints');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
@@ -306,7 +310,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
+  var setupMap = function(backend, models, linearAssets, pointAssets,hybridAssets, withTileMaps, startupParameters, roadCollection, verificationInfoCollection, groupedPointAssets, assetConfiguration, isExperimental, clusterDistance) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -406,6 +410,44 @@
 
     }, {});
 
+    var hybridAssetLayers = _.reduce(hybridAssets, function(acc, asset) {
+      var parameters = {
+        map: map,
+        application: applicationModel,
+        collection: asset.collection,
+        selectedLinearAsset: asset.selectedLinearAsset,
+        roadCollection: models.roadCollection,
+        roadLayer: roadLayer,
+        layerName: asset.layerName,
+        multiElementEventCategory: asset.multiElementEventCategory,
+        singleElementEventCategory: asset.singleElementEventCategory,
+        style: asset.style || new PiecewiseLinearAssetStyle(),
+        formElements: asset.form ?  asset.form : AssetFormElementsFactory.construct(asset),
+        assetLabel: asset.label,
+        roadAddressInfoPopup: roadAddressInfoPopup,
+        authorizationPolicy: asset.authorizationPolicy,
+        readOnlyLayer: asset.readOnlyLayer ? new asset.readOnlyLayer({ layerName: asset.layerName, map: map, backend: backend }): false,
+        laneReadOnlyLayer: asset.laneReadOnlyLayer,
+        massLimitation: asset.editControlLabels.additionalInfo,
+        typeId: asset.typeId,
+        isMultipleLinkSelectionAllowed: asset.isMultipleLinkSelectionAllowed,
+        minZoomForContent: asset.minZoomForContent,
+        isExperimental: isExperimental
+      };
+
+      _.map(asset.layer,function (input){
+        console.log("input", input)
+        _.map(asset.layerName2,function (input2) {
+          console.log("input", input2)
+          acc[input2] = input.layer ? new input.layer(parameters) : new LinearAssetLayer(parameters);
+        })
+      })
+      console.log("hybridAssetLayers Reduce")
+      console.log(acc)
+      return acc;
+
+    }, {});
+
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
       var parameters = {
         roadLayer: roadLayer,
@@ -472,7 +514,7 @@
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }),  new LinearSuggestionLabel() )
 
-    }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers);
+    }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers,hybridAssetLayers);
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());

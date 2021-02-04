@@ -1589,6 +1589,7 @@
         singleElementEventCategory: 'roadwayClass',
         multiElementEventCategory: 'roadwayClasses',
         layerName: 'roadway',
+        layerName2: ['roadway','roadway1','roadway2'],
         title: 'Tiemerkinnät',
         newTitle: 'Uusi tiemerkintä',
         className: 'roadway',
@@ -1605,7 +1606,7 @@
         }),
         isVerifiable: false,
         authorizationPolicy: new LinearStateRoadAuthorizationPolicy(),
-        layer: RoadwayLayer,
+        layer:[LengthLayer,WidthLayer,OtherLayer],
         style: new RoadwayStyle(),
         collection: RoadwayCollection
       },

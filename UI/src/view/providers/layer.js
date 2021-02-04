@@ -22,6 +22,8 @@
       return me.eventListener.running;
     };
     this.activateSelection = function() {
+      console.log(me);
+      console.log(me.selectControl.activate());
       me.selectControl.activate();
     };
     this.deactivateSelection = function() {

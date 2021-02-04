@@ -368,7 +368,7 @@ root.LinearAssetLayer  = function(params) {
       changeTool(application.getSelectedTool());
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
-  
+
   this.linearAssetSelected = function(){
       me.decorateSelection();
   };
@@ -396,6 +396,7 @@ root.LinearAssetLayer  = function(params) {
   };
 
   this.refreshView = function() {
+    console.log(collection);
     me.vectorLayer.setVisible(true);
     me.adjustStylesByZoomLevel(zoomlevels.getViewZoom(map));
     if (isComplementaryChecked) {

@@ -261,6 +261,8 @@
         };
 
         var addNewFeature = function (features, highlightLayer) {
+            console.log("add")
+            console.log(features)
             _.each(features, function(feature){
               if(multiSelectInitialized)
                 multiSelectInteraction.getFeatures().push(feature);

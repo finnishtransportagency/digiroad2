@@ -8,6 +8,8 @@
     };
 
     var minZoomForContent = function() {
+      console.log(applicationModel.getSelectedLayer());
+      console.log(layers);
       if (applicationModel.getSelectedLayer()) {
         return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForAssets;
       }
@@ -102,6 +104,7 @@
     }, true);
 
     map.on('singleclick', function(event) {
+      console.log('singleclick');
       eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
 

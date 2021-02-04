@@ -101,7 +101,7 @@
               $('.roadway .cut').show();
               $('.roadway .rectangle').show();
               $('.roadway .polygon').show();
-              //event buss trigger layer where asset are
+            root.applicationModel.selectLayer('roadway')
           } else if (this.value === 'width-of-road-axis') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').show();
@@ -109,7 +109,7 @@
               $('.roadway .cut').hide();
               $('.roadway .rectangle').hide();
               $('.roadway .polygon').hide();
-            //event buss trigger layer where asset are
+            root.applicationModel.selectLayer('roadway1')
           } else if (this.value === 'other-roadway') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').hide();
@@ -117,7 +117,7 @@
               $('.roadway .cut').hide();
               $('.roadway .rectangle').hide();
               $('.roadway .polygon').hide();
-              //event buss trigger layer where asset are
+            root.applicationModel.selectLayer('roadway2')
           }
         }
       });
@@ -131,10 +131,10 @@
       return [
         '  <div class="panel-section">' +
         '    <div class="radio">' +
-        '     <label>' + //length-of-road-axis
+        '     <label>' +
         '       <input name="labelRadio" value="length-of-road-axis" type="radio" checked>Pituussuuntaiset tiemerkinnät ' +
         '     </label>' +
-        '     <label>' + //width-of-road-axis
+        '     <label>' +
         '       <input name="labelRadio" value="width-of-road-axis" type="radio">Poikittaissuuntaiset tiemerkinnät' +
         '     </label>' +
         '     <label>' +
