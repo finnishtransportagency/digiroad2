@@ -89,6 +89,15 @@
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
+    eventbus.on('layer:selected:roadway', function selectLayer(layer, previouslySelectedLayer) {
+      var layerToBeHidden = layers[previouslySelectedLayer];
+      var layerToBeShown = layers[layer];
+
+      if (layerToBeHidden) layerToBeHidden.hide(map);
+      layerToBeShown.show(map);
+      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
+    }, this);
+
     map.on('moveend', function(event) {
       var target = document.getElementById(map.getTarget());
       target.style.cursor = '';

@@ -101,7 +101,8 @@
               $('.roadway .cut').show();
               $('.roadway .rectangle').show();
               $('.roadway .polygon').show();
-            root.applicationModel.selectLayer('roadway')
+            //root.MapView.selectLayer('roadway')
+            eventbus.trigger('layer2:roadway')
           } else if (this.value === 'width-of-road-axis') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').show();
@@ -109,7 +110,8 @@
               $('.roadway .cut').hide();
               $('.roadway .rectangle').hide();
               $('.roadway .polygon').hide();
-            root.applicationModel.selectLayer('roadway1')
+            //root.MapView.selectLayer('roadway1')
+            eventbus.trigger('layer2:roadway1')
           } else if (this.value === 'other-roadway') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').hide();
@@ -117,7 +119,9 @@
               $('.roadway .cut').hide();
               $('.roadway .rectangle').hide();
               $('.roadway .polygon').hide();
-            root.applicationModel.selectLayer('roadway2')
+            //root.MapView.selectLayer('roadway2')
+            eventbus.trigger('layer2:roadway2')
+
           }
         }
       });

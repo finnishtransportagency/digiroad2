@@ -19,6 +19,7 @@
 
     var assetControlMap = _.chain(assetControls)
       .map(function(asset) {
+        console.log(asset);
         return [asset.layerName, asset];
       })
       .fromPairs()
@@ -34,7 +35,7 @@
     });
 
     container.append(navigationPanel);
-    
+
     function bindEvents() {
       layerSelectBox.button.on('click', function() {
         layerSelectBox.toggle();

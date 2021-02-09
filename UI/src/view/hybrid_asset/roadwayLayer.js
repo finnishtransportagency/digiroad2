@@ -6,6 +6,7 @@
       collection = params.collection,
       selectedLinearAsset = params.selectedLinearAsset;
 
+
     this.getLayerStyle = function(feature)  {
     };
 
@@ -32,6 +33,20 @@
   root.LengthLayer=function (params){
     LinearAssetLayer.call(this, params);
     var me = this;
+
+    eventbus.on("layer2:roadway",function (param) {
+      console.log("test event")
+    })
+
+    eventbus.on("layer2:roadway1",function (param) {
+      console.log("test event 1")
+    })
+
+    eventbus.on("layer2:roadway2",function (param) {
+      console.log("test event 2")
+    })
+
+
     return {
       vectorLayer: me.vectorLayer,
       show: me.showLayer,
