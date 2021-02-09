@@ -100,6 +100,7 @@ object Digiroad2Build extends Build {
         if (System.getProperty("digiroad2.nodatabase", "false") == "true") Seq(Tests.Argument("-l"), Tests.Argument("db")) else Seq()),
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %% "akka-actor" % "2.5.12",
+        "com.typesafe.akka" %% "akka-slf4j" % "2.5.12",
         "org.apache.httpcomponents" % "httpclient" % "4.5.5",
         "org.scalatest" % "scalatest_2.11" % "3.2.0-SNAP7" % "compile,test",
         "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
