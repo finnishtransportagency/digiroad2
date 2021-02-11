@@ -435,17 +435,12 @@
         isExperimental: isExperimental
       };
 
-      _.map(asset.layer,function (input){
-        console.log("input", input)
-        _.map(asset.layerName2,function (input2) {
-          console.log("input", input2)
-          acc[input2] = input.layer ? new input.layer(parameters) : new LinearAssetLayer(parameters);
+      _.map(asset.layer,function (layer){
+        _.map(asset.sublayerName,function (name) {
+          acc[name] = layer ? new layer(parameters) : new LinearAssetLayer(parameters);
         })
       })
-      console.log("hybridAssetLayers Reduce")
-      console.log(acc)
       return acc;
-
     }, {});
 
     var pointAssetLayers = _.reduce(pointAssets, function(acc, asset) {
@@ -525,6 +520,12 @@
     backend.getUserRoles();
     return map;
   };
+
+  function createLayers(){
+
+
+
+  }
 
   var setupProjections = function() {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
