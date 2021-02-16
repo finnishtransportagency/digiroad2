@@ -280,8 +280,6 @@ object Queries {
     """
   }
 
-
-
   def deleteAdditionalPanelProperty(assetId: Long) = {
     sqlu"""
     DELETE FROM additional_panel where asset_id = $assetId
