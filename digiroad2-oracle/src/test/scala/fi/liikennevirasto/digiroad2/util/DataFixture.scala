@@ -1595,6 +1595,7 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
+      if (municipality.equals(678)) {
         println(s"Fetching traffic signs for municipality: $municipality")
         val trafficSigns = trafficSignService.getByMunicipality(municipality)
         println(s"Number of existing assets: ${trafficSigns.length}")
@@ -1616,14 +1617,16 @@ object DataFixture {
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "condition", condition_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
+              Queries.updateAdditionalPanelProperties(trafficSign.id)
             }
           }
           else {
             println("New traffic sign, no need to update - " + trafficSign.id)
           }
         }
+        println("Traffic Sign updates complete " + DateTime.now())
+      }
     }
-    println("Traffic Sign updates complete " + DateTime.now())
   }
 
   def removeExistingTrafficSignsDuplicates(): Unit = {

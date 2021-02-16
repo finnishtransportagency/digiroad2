@@ -280,6 +280,8 @@ object Queries {
     """
   }
 
+
+
   def deleteAdditionalPanelProperty(assetId: Long) = {
     sqlu"""
     DELETE FROM additional_panel where asset_id = $assetId
@@ -456,5 +458,11 @@ object Queries {
     sqlu"""delete from text_property_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from single_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
     sqlu"""delete from multiple_choice_value where asset_id = $assetId and grouped_id = $groupedId""".execute
+  }
+
+  def updateAdditionalPanelProperties (assetId: Long): Unit = {
+    sqlu"""UPDATE ADDITIONAL_PANEL SET ADDITIONAL_SIGN_SIZE = 99, ADDITIONAL_SIGN_COATING_TYPE = 99, ADDITIONAL_SIGN_PANEL_COLOR = 99
+           WHERE ASSET_ID = $assetId AND ADDITIONAL_SIGN_SIZE IS NULL OR ADDITIONAL_SIGN_COATING_TYPE IS NULL OR ADDITIONAL_SIGN_PANEL_COLOR IS NULL""".execute
+
   }
 }
