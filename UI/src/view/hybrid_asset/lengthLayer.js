@@ -2,19 +2,23 @@
     root.LengthLayer=function (params){
         LinearAssetLayer.call(this, params);
         var me = this;
-        console.log("load")
-        eventbus.on("layer2:roadway",function (param) {
-            console.log("test event")
-        })
+        var style = params.style,
+            collection = params.collection,
+            selectedLinearAsset = params.selectedLinearAsset;
 
-        eventbus.on("layer2:roadway1",function (param) {
-            console.log("test event 1")
-        })
 
-        eventbus.on("layer2:roadway2",function (param) {
-            console.log("test event 2")
-        })
+        this.getLayerStyle = function(feature)  {
+        };
 
+        this.renderOverlays = function(linearAssets) {
+        };
+
+        this.renderFeatures = function(linearAssets) {
+        };
+
+        this.decorateSelection = function () {
+
+        };
 
         return {
             vectorLayer: me.vectorLayer,

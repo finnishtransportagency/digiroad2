@@ -510,7 +510,7 @@
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection,  new TrafficSignReadOnlyLayer({ layerName: 'manoeuvre', map: map, backend: backend }),  new LinearSuggestionLabel() )
 
     }, linearAssetLayers, pointAssetLayers, groupedPointAssetLayers,hybridAssetLayers);
-
+    applicationModel.setLayers(layers);
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
 
@@ -520,12 +520,6 @@
     backend.getUserRoles();
     return map;
   };
-
-  function createLayers(){
-
-
-
-  }
 
   var setupProjections = function() {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');

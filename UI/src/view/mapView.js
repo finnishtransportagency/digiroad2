@@ -81,6 +81,7 @@
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
+      console.log('MapView layer:selected')
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 
@@ -92,7 +93,7 @@
     eventbus.on('layer:selected:roadway', function selectLayer(layer, previouslySelectedLayer) {
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
-
+      applicationModel.setLayer(layer)
       if (layerToBeHidden) layerToBeHidden.hide(map);
       layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());

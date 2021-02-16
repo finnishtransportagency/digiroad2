@@ -19,7 +19,6 @@
 
     var assetControlMap = _.chain(assetControls)
       .map(function(asset) {
-        console.log(asset);
         return [asset.layerName, asset];
       })
       .fromPairs()
@@ -27,12 +26,28 @@
 
     bindEvents();
 
-    eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-      var previousControl = assetControlMap[previouslySelectedLayer];
-      if (previousControl) previousControl.hide();
-      assetControlMap[layer].show();
+/*    eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
+      console.log('NavigationPanel layer:selected')
+      console.log(assetControlMap);
+      console.log(applicationModel.getLayers());
+      var layers = applicationModel.getLayers()
+      var previousLayers = layers[previouslySelectedLayer];
+      if (previousLayers){
+        previousLayers.hide();
+      }
+     // layers[layer].show(map);
+      layers[layer].show();
+    });*/
+
+    eventbus.on('navigation:selected', function selectNavigation(selectedNavigation,previouslySelectedNavigation) {
+console.log('NavigationPanel navigation:selected')
+      var previousControl = assetControlMap[previouslySelectedNavigation];
+      if (previousControl){
+        previousControl.hide();
+      }
+      assetControlMap[selectedNavigation].show();
       assetElementDiv.show();
-    });
+    })
 
     container.append(navigationPanel);
 

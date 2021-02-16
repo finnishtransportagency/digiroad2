@@ -101,9 +101,9 @@
               $('.roadway .cut').show();
               $('.roadway .rectangle').show();
               $('.roadway .polygon').show();
-            //root.MapView.selectLayer('roadway')
-            eventbus.trigger('layer:selected','roadwayLengthLayer')
-            eventbus.trigger('layer2:roadway')
+            applicationModel.selectLayer('roadwayLengthLayer')
+            eventbus.trigger('layer:selected:roadway','roadwayLengthLayer')
+            //eventbus.trigger('layer2:roadway')
           } else if (this.value === 'width-of-road-axis') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').show();
@@ -111,9 +111,9 @@
               $('.roadway .cut').hide();
               $('.roadway .rectangle').hide();
               $('.roadway .polygon').hide();
-            //root.MapView.selectLayer('roadway1')
-            eventbus.trigger('layer:selected','roadwayWidthLayer')
-            eventbus.trigger('layer2:roadway1')
+            applicationModel.selectLayer('roadwayWidthLayer')
+             eventbus.trigger('layer:selected:roadway','roadwayWidthLayer')
+            //eventbus.trigger('layer2:roadway1')
           } else if (this.value === 'other-roadway') {
               $('.roadwayLength-legend').hide();
               $('.roadwayWidth-legend').hide();
@@ -121,9 +121,9 @@
               $('.roadway .cut').hide();
               $('.roadway .rectangle').hide();
               $('.roadway .polygon').hide();
-            //root.MapView.selectLayer('roadway2')
-            eventbus.trigger('layer:selected','roadwayOtherLayer')
-            eventbus.trigger('layer2:roadway2')
+            applicationModel.selectLayer('roadwayOtherLayer')
+            //eventbus.trigger('layer:selected:roadway','roadwayOtherLayer')
+            //eventbus.trigger('layer2:roadway2')
 
           }
         }

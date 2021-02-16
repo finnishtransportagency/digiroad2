@@ -4,11 +4,13 @@
       level: undefined
     };
     var selectedLayer;
+    var selectedNavigation;
     var selectedTool = 'Select';
     var centerLonLat;
     var minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     var readOnly = true;
     var appState = 'normal';
+    var layersGlobal;
 
     var setApplicationkState = function(newState){
       if (appState !== newState) {
@@ -68,12 +70,36 @@
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
+          console.log('ApplicationModel selectLayer');
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
           eventbus.trigger('readOnlyLayer:' + layer + ':shown', layer);
         } else {
           eventbus.trigger('layer:' + selectedLayer + ':shown');
         }
+      },
+      selectNavigation: function(navigation) {
+        if (navigation !== selectedNavigation) {
+          var previouslySelectedNavigation= selectedNavigation;
+          selectedNavigation = navigation;
+          console.log('ApplicationModel selectNavigation');
+          setSelectedTool('Select');
+          eventbus.trigger('navigation:selected', navigation, previouslySelectedNavigation);
+        } else {
+          eventbus.trigger('layer:' + selectedLayer + ':shown');
+        }
+      },
+      setLayer:function(layer){
+        selectedLayer = layer;
+      },
+      setLayers:function(layers){
+        layersGlobal = layers;
+      },
+      getLayers:function(){
+        return layersGlobal;
+      },
+      setNavigation:function(navigation){
+        selectedNavigation = navigation;
       },
       getSelectedLayer: function() {
         return selectedLayer;

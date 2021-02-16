@@ -30,6 +30,7 @@
 
     var linearCentering = function(layerName, id){
       applicationModel.selectLayer(layerName);
+      applicationModel.selectNavigation(layerName);
       var asset = _(models.linearAssets).find({ layerName: layerName });
       var linearAsset = asset.selectedLinearAsset.getLinearAsset(parseInt(id));
       if (linearAsset) {
@@ -54,6 +55,7 @@
 
     var pointCentering = function (layerName, id) {
       applicationModel.selectLayer(layerName);
+      applicationModel.selectNavigation(layerName);
       var asset = _(models.pointAssets).find({layerName: layerName});
       backend.getPointAssetById(id, layerName).then(function (result) {
         mapCenterAndZoom(result.lon, result.lat, 12);
@@ -64,6 +66,7 @@
 
     var speedLimitCentering = function (layerName, id) {
       applicationModel.selectLayer(layerName);
+      applicationModel.selectNavigation(layerName);
       var asset = models.selectedSpeedLimit;
       var speedLimit = asset.getSpeedLimitById(parseInt(id));
       if (speedLimit) {
@@ -88,6 +91,7 @@
 
     var pointAssetCentering = function (layerName, id,  model) {
         applicationModel.selectLayer(layerName);
+        applicationModel.selectNavigation(layerName);
         backend.getPointAssetById(id, layerName).then(function (result) {
             mapCenterAndZoom(result.lon, result.lat, 12);
             model.open(result);
@@ -97,6 +101,7 @@
     var linearAssetMapCenterAndZoom  = function (layerName, idType, id) {
       if(idType) {
         applicationModel.selectLayer(layerName);
+        applicationModel.selectNavigation(layerName);
         backend.getRoadLinkByLinkId(id, function (response) {
           if (response.success)
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
@@ -108,6 +113,7 @@
     var pointAssetMapCenterAndZoom  = function (layerName, idType, id) {
       if(idType) {
         applicationModel.selectLayer(layerName);
+        applicationModel.selectNavigation(layerName);
         backend.getRoadLinkByLinkId(id, function (response) {
           if (response.success)
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
@@ -118,7 +124,7 @@
 
     var manoeuvreMapCenterAndZoom = function(linkId){
       applicationModel.selectLayer('manoeuvre');
-
+        applicationModel.selectNavigation('manoeuvre');
       backend.getRoadLinkByLinkId(linkId, function (response) {
         eventbus.once('manoeuvres:fetched', function () {
           if (!_.isUndefined(models.selectedManoeuvreSource.getByLinkId(linkId)))
@@ -140,11 +146,16 @@
         });
 
         this.route(/^([A-Za-z]+)$/, function (layer) {
+            console.log(layer);
+            applicationModel.selectNavigation(layer);
           applicationModel.selectLayer(layer);
+
         });
 
         this.route(/^$/, function () {
+            applicationModel.selectNavigation('massTransitStop');
           applicationModel.selectLayer('massTransitStop');
+
         });
 
         this.stateHistory = null;
@@ -243,6 +254,7 @@
 
       massTransitStopNationalId: function (id) {
         applicationModel.selectLayer('massTransitStop');
+          applicationModel.selectNavigation('massTransitStop');
         var assetFound = function (massTransitStop) {
           eventbus.once('massTransitStops:available', function () {
             models.selectedMassTransitStopModel.changeByExternalId(id);
@@ -256,6 +268,7 @@
 
       massTransitStop: function (id) {
         applicationModel.selectLayer('massTransitStop');
+          applicationModel.selectNavigation('massTransitStop');
         var assetFound = function (massTransitStop) {
           eventbus.once('massTransitStops:available', function () {
             models.selectedMassTransitStopModel.changeById(id);
@@ -269,6 +282,7 @@
 
       linkProperty: function (linkId) {
         applicationModel.selectLayer('linkProperty');
+          applicationModel.selectNavigation('linkProperty');
         backend.getRoadLinkByLinkId(linkId, function (response) {
           if (response.success) {
             if (response.source === 1) {
@@ -294,6 +308,7 @@
 
       linkPropertyByMml: function (mmlId) {
         applicationModel.selectLayer('linkProperty');
+          applicationModel.selectNavigation('linkProperty');
         backend.getRoadLinkByMmlId(mmlId, function (response) {
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
@@ -307,6 +322,7 @@
           this.stateHistory = {municipality: Number(municipalityId), position: position};
 
         applicationModel.selectLayer('speedLimit');
+          applicationModel.selectNavigation('speedLimit');
         backend.getRoadLinkByLinkId(linkId, function (response) {
           eventbus.once('speedLimits:fetched', function () {
             var asset = models.selectedSpeedLimit.getSpeedLimit(response.id);
@@ -323,6 +339,7 @@
 
       manoeuvres: function(linkId){
         applicationModel.selectLayer('manoeuvre');
+          applicationModel.selectNavigation('manoeuvre');
             backend.getRoadLinkByLinkId(linkId, function (response) {
                 if (response.success) {
                     mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
@@ -371,7 +388,8 @@
 
       trWeightLimits: function (id) {
         applicationModel.selectLayer('trWeightLimits');
-        backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
+          applicationModel.selectNavigation('trWeightLimits');
+          backend.getPointAssetById(id, 'groupedPointAssets').then(function (result) {
             mapCenterAndZoom(result[0].lon, result[0].lat, 12);
             models.selectedGroupPointAsset.open(result[0]);
         });
@@ -497,6 +515,7 @@
 
       mapMoving: function (layerName, linkId) {
         applicationModel.selectLayer(layerName);
+          applicationModel.selectNavigation(layerName);
         backend.getRoadLinkByLinkId(linkId, function (response) {
           if (response.success)
             mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
@@ -678,8 +697,12 @@
     });
 
     eventbus.on('roles:fetched', function(userInfo) {
-      if(_.includes(userInfo.roles, "serviceRoadMaintainer") && !_.includes(userInfo.roles, "elyMaintainer"))
+      if(_.includes(userInfo.roles, "serviceRoadMaintainer") && !_.includes(userInfo.roles, "elyMaintainer")){
           applicationModel.selectLayer('maintenanceRoad');
+          applicationModel.selectNavigation('maintenanceRoad');
+      }
+
+
     });
 
   };

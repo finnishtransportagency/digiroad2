@@ -1,6 +1,6 @@
 (function(root) {
   root.RoadwayCollection = function(backend, verificationCollection, spec) {
-    LinearAssetsCollection.call(this, backend, verificationCollection, spec);
+    PointAssetsCollection.call(this, backend, verificationCollection, spec);
     this.linearAssets = [];
     var selection = null;
     this.setSelection = function(sel) {
