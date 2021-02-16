@@ -18,6 +18,8 @@ import org.scalatra.swagger.{Swagger, SwaggerSupport}
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
+import scala.util.Try
+
 class IntegrationApi(val massTransitStopService: MassTransitStopService, implicit val swagger: Swagger) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport with SwaggerSupport {
   val logger = LoggerFactory.getLogger(getClass)
   protected val applicationDescription = "Integration API "
@@ -823,7 +825,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService, implici
           "height" -> trafficSignService.getProperty(trafficSign, "height").map(_.propertyDisplayValue.getOrElse("")),
           "coatingType" -> trafficSignService.getProperty(trafficSign, "coating_type").map(_.propertyDisplayValue.getOrElse("")),
           "signMaterial" -> trafficSignService.getProperty(trafficSign, "sign_material").map(_.propertyDisplayValue.getOrElse("")),
-          "locationSpecifier" -> trafficSignService.getProperty(trafficSign, "location_specifier").map(_.propertyDisplayValue.getOrElse("")),
+          "locationSpecifier" -> trafficSignService.getProperty(trafficSign, "location_specifier").map(item=>
+            Try(item.propertyValue.toInt).getOrElse("")),
           "terrainCoordinatesX" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_x").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
           "terrainCoordinatesY" -> trafficSignService.getProperty(trafficSign, "terrain_coordinates_y").map(_.propertyDisplayValue.getOrElse("").replace(",", ".")),
           "laneType" -> trafficSignService.getProperty(trafficSign, "lane_type").map(_.propertyDisplayValue.getOrElse("")),

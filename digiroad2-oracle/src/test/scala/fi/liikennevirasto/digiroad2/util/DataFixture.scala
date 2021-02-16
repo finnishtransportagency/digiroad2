@@ -2235,8 +2235,8 @@ object DataFixture {
   }
 
   def mergeMunicipalities(): Unit = {
-    val municipalityToDelete = 911
-    val municipalityToMerge = 541
+    val municipalityToDelete = 99
+    val municipalityToMerge = 214
 
     println(s"\nStart process of merging municipality $municipalityToDelete into $municipalityToMerge")
     println(DateTime.now())

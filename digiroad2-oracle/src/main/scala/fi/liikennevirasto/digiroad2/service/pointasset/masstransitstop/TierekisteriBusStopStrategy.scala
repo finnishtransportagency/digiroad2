@@ -159,6 +159,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         //Expires the current asset and creates a new one in OTH and expire and creates a new one in Tierekisteri
         val position = optionalPosition.get
         massTransitStopDao.expireMassTransitStop(username, asset.id)
+        super.publishExpiringEvent(PublishInfo(Option(asset)))
         create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
           mergedProperties), username, Point(position.lon, position.lat), roadLink, replaceTirekisteriBusStop(liviId))
 

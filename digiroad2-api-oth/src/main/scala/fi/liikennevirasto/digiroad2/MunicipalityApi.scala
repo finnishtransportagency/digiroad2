@@ -15,10 +15,6 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport}
 
 case class Dataset(datasetId: String, featuresCollection: FeatureCollection, roadlinks: List[List[Long]])
-case class FeatureCollection(typee: String, features: List[Feature], crs: Option[Map[String, Any]] = None)
-case class Feature(typee: String, geometry: Geometry, properties: Map[String, String])
-case class Geometry(typee: String, coordinates: List[List[Double]])
-
 sealed trait DatasetStatus{
   def value: Int
   def description: String
@@ -253,7 +249,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
           case Some(id) =>
             val featureId = id
             val linkIdValidationStatus = linkIdValidation(featureRoadlinks.toSet, vvhRoadLinksIds)
-            val assetTypeGeometry = feature.geometry.typee
+            val assetTypeGeometry = feature.geometry.`type`
             val propertiesStatus: List[FeatureStatus] = assetTypeGeometry match {
               case "LineString" =>
                 properties("type") match {
@@ -299,7 +295,7 @@ class MunicipalityApi(val vvhClient: VVHClient,
             val status = awsDao.getFeatureStatus(featureId, dataset.datasetId)
             if (status == FeatureStatus.Inserted.value.toString) {
 
-              val assetTypeGeometry = feature.geometry.typee
+              val assetTypeGeometry = feature.geometry.`type`
               val assetType = properties("type")
 
               assetTypeGeometry match {

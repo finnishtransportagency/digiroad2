@@ -752,48 +752,79 @@
         });
     };
 
-    this.getGeocode = function(address) {
-      var addressNormalized = address.normalize("NFC");
-      var parsedAddress = addressNormalized.split(/^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/)
-        .filter( function(elem) {  return !_.isEmpty(elem.trim()); })
-        .map(function(elem) { return elem.trim(); });
+    this.getGeocode = function (address) {
+      var parsedAddress = parseAddress(address.normalize("NFC"));
+      var params = {
+        katunimi: null,
+        katunumero: null,
+        kuntakoodi: null
+      };
 
-      return this.getMunicipalityIdByName(parsedAddress[2]).then(
-        function(municipalityInfo) {
-          if (_.isEmpty(municipalityInfo))
-            return municipalityInfo;
-          var params = {
-            katunimi :   parsedAddress[0],
-            katunumero : parsedAddress[1],
-            kuntakoodi : municipalityInfo.id
-          };
-          return $.get("vkm-api/geocode", params).then(function(x) { return x; });
+      if (parsedAddress[2] !== undefined) {
+        return this.getMunicipalityIdByName(parsedAddress[2]).then(function (result) {
+          params.katunimi = parsedAddress[0];
+          params.katunumero = parsedAddress[1];
+          params.kuntakoodi = result.id;
+          return $.get("viitekehysmuunnin/muunna", params).then(function (x) {
+            return x;
+          });
         });
+      } else {
+        params.katunimi = parsedAddress[0] !== undefined && parsedAddress[0].match(/^\b[A-Za-zÀ-ÿ]+\b$/) ? parsedAddress[0] : null;
+        params.katunumero = parsedAddress[1] !== undefined ? parsedAddress[1] : null;
+        params =_.omitBy(params, _.isNil);
+        if(_.isEmpty(params) ){
+         return $.Deferred().reject('Syöte meni väärin.');
+        }
+
+        return $.get("viitekehysmuunnin/muunna",params).then(function (x) {
+          return x;
+        });
+      }
     };
 
-    this.getRoadLinkToPromise= function(linkid)
-    {
-     return $.get("api/roadlinks/" + linkid);
-    };
+    function parseAddress(addressNormalized) {
+      var streetNameAndNumberCheck = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)$/;
+      var allInputOrOnlyStreetNameRegex = /^(\s*[A-Za-zÀ-ÿ].*)(\s)(\s*\d+\s*),(\s*[A-Za-zÀ-ÿ].*)/;
+      var streetNameAndNumberRegex = /^(\s*[A-Za-zÀ-ÿ].*)\s(\s*\d+\s*)/;
+      if (addressNormalized.match(streetNameAndNumberCheck)) {
+        return addressNormalized.split(streetNameAndNumberRegex)
+            .filter(function (elem) {
+              return !_.isEmpty(elem.trim());
+            })
+            .map(function (elem) {
+              return elem.trim();
+            });
+      } else {
+        return addressNormalized.split(allInputOrOnlyStreetNameRegex)
+            .filter(function (elem) {
+              return !_.isEmpty(elem.trim());
+            })
+            .map(function (elem) {
+              return elem.trim();
+            });
+      }
+    }
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
-      return $.get("vkm-api/tieosoitehaku", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
-        .then(function(x) { return x; });
+      return $.get("viitekehysmuunnin/muunna", {tie: roadNumber, osa: section, etaisyys: distance, ajoradat: lane})
+          .then(function(response) { return response; });
     };
 
-    var returnedMunicipality = function(lon, lat, onSuccess, onFailure) {
-      return $.get("vkm-api/reversegeocode", {x: lon, y: lat})
+    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
+      return $.get("viitekehysmuunnin/muunna", {x: lon, y: lat})
           .then(
               function (result) {
-                return onSuccess(_.head(result));
+                return onSuccess(_.head(result.features));
               },
               function (fail) {
                 return onFailure(fail.code);
               });
     };
 
-    this.getMunicipalityFromCoordinates = function(lon, lat, onSuccess, onFailure) {
-      return returnedMunicipality(lon, lat, onSuccess, onFailure);
+    this.getRoadLinkToPromise= function(linkid)
+    {
+     return $.get("api/roadlinks/" + linkid);
     };
 
     this.getStartLocationNameByCoordinates = function (startCoordinates) {

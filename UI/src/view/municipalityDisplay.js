@@ -8,7 +8,7 @@
     container.append(element);
 
     var getMunicipalityInfo = _.debounce(function(lon, lat){backend.getMunicipalityFromCoordinates(lon, lat, function (vkmResult) {
-        var municipalityInfo = !_.isEmpty(vkmResult) && vkmResult.kuntaNimi ? vkmResult.kuntaNimi : "Tuntematon";
+      var municipalityInfo = !_.isEmpty(vkmResult) && vkmResult.properties.kuntanimi ? vkmResult.properties.kuntanimi : "Tuntematon";
         container.find('.municipality-wrapper').text(municipalityInfo);
       }, function () {
         container.find('.municipality-wrapper').text('');

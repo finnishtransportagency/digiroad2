@@ -65,6 +65,8 @@ trait AbstractBusStopStrategy {
   def create(newAsset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
 
   def publishSaveEvent(publishInfo: AbstractPublishInfo): Unit
+  def publishExpiringEvent(publishInfo: AbstractPublishInfo): Unit
+  def publishDeleteEvent(publishInfo: AbstractPublishInfo): Unit
 
   def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimplePointAssetProperty], username: String, municipalityValidation: (Int, AdministrativeClass) => Unit, roadLink: RoadLink): (PersistedMassTransitStop, AbstractPublishInfo)
   def delete(asset: PersistedMassTransitStop): Option[AbstractPublishInfo]
@@ -500,7 +502,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val persistedStop = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 
       val strategy = getStrategy(persistedStop)
-
+      strategy.publishDeleteEvent(PublishInfo(Option(persistedStop)))
       (strategy, strategy.delete(persistedStop))
     }
     (strategy, publishInfo) match {
