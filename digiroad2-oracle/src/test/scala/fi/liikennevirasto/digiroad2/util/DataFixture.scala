@@ -1595,14 +1595,13 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
-      println(s"Fetching traffic signs for municipality: $municipality")
+        println(s"Fetching traffic signs for municipality: $municipality")
         val trafficSigns = trafficSignService.getByMunicipality(municipality)
         println(s"Number of existing assets: ${trafficSigns.length}")
         trafficSigns.foreach { trafficSign =>
           val createdDate = trafficSign.createdAt.get
-          val migrationDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss")
-          val jodaTime = DateTime.parse("2020-05-14T15:32:46", migrationDateFormatter)
-          if (createdDate.isBefore(jodaTime)) {
+          val migrationDate = DateTime.parse("2020-05-14T15:32:46", DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss"))
+          if (createdDate.isBefore(migrationDate)) {
             OracleDatabase.withDynTransaction {
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
               OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
