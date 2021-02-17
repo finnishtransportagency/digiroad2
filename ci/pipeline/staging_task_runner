@@ -43,7 +43,8 @@ pipeline {
         								'import_cycling_walking_info',
         								'resolving_Frozen_Links',
         								'create_roadWorks_using_traffic_signs',
-        								'move_old_expired_assets'
+        								'move_old_expired_assets',
+        								'update_trafficSign_properties'
                                         ])
 
         choice(name: 'TRAFFICSIGNGROUP', choices: [
