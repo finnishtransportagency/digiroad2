@@ -11,9 +11,6 @@
     };
 
     function validateBoundingBox (boundingBox,urlObject){
-      console.log(boundingBox)
-      console.log(_.isNaN(boundingBox[0]))
-
       if(_.isNaN(boundingBox[0])){
         console.log("Invalid boundingBox")
       }{
@@ -40,25 +37,25 @@
     };
 
     this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/roadlinks?bbox=' + boundingBox
       });
     });
 
     this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/roadlinks/history?bbox=' + boundingBox
       });
     });
 
     this.getRoadLinksWithComplementary = createCallbackRequestor(function (boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/roadlinks/complementaries?bbox=' + boundingBox
       });
     });
 
     this.getManoeuvres = createCallbackRequestor(function(boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/manoeuvres?bbox=' + boundingBox
       });
     });
@@ -144,25 +141,25 @@
     });
 
     this.getAssetsWithCallbackServiceStops = createCallbackRequestor(function(boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/massServiceStops?bbox=' + boundingBox
       });
     });
 
     this.getLightAssetsWithCallback = latestResponseRequestor(function(boundingBox, type) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/pointassets/light?type=' + type + '&bbox=' + boundingBox
       });
     });
 
     this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       });
     });
 
     this.getSpeedLimitsHistory = latestResponseRequestor(function(boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/speedlimits/history?bbox=' + boundingBox
       });
     });
@@ -232,7 +229,7 @@
     };
 
     this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/' + endPointName + '?bbox=' + boundingBox
       });
     });
@@ -244,7 +241,7 @@
     });
 
     this.getGroupedPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeIds) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
         url: 'api/groupedPointAssets?bbox=' + boundingBox + '&typeIds=' + typeIds
       });
     });
