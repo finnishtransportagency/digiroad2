@@ -12,10 +12,10 @@
 
     function validateBoundingBox (boundingBox,urlObject){
       if(! _.isNaN(boundingBox[0])){
-        return urlObject
+        return urlObject;
       }{
-        console.log("Invalid boundingBox "+urlObject.url)
-        return {url:null}
+        console.log("Invalid boundingBox "+urlObject.url);
+        return {url:null};
       }
     }
 
@@ -883,7 +883,7 @@
         if (request)
           request.abort();
 
-        var parameter= getParameters.apply(undefined, arguments)
+        var parameter= getParameters.apply(undefined, arguments);
         if(parameter.url !==null){
           request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
             deferred.resolve(result);
@@ -893,7 +893,7 @@
           });
           return deferred;
         }else{
-          console.log('error doRequest');
+          console.log('error');
           return deferred;
         }
       }
