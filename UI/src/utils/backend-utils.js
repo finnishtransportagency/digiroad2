@@ -11,11 +11,11 @@
     };
 
     function validateBoundingBox (boundingBox,urlObject){
-      if(_.isNaN(boundingBox[0])){
+      if(! _.isNaN(boundingBox[0])){
+        return urlObject
+      }{
         console.log("Invalid boundingBox "+urlObject.url)
         return {url:null}
-      }{
-        return urlObject
       }
     }
 
