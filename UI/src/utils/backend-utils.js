@@ -136,7 +136,7 @@
     };
 
     this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
-      return   validateBoundingBox(boundingBox,{
+      return validateBoundingBox(boundingBox,{
       url: 'api/massTransitStops?bbox=' + boundingBox
       });
     });
