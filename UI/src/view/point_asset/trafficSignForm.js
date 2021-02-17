@@ -412,7 +412,6 @@
       }
 
       var orderedPanels = sortByPropertyDisplay(panels);
-
       var subTypesTrafficSigns = _.map(_.map(orderedPanels, function (group) {
         var toHide = hideOldCodes(propertyValue, group.propertyValue);
 

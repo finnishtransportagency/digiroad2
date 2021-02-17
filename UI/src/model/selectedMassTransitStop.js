@@ -399,11 +399,12 @@
     };
 
     var changeByNationalId = function(assetNationalId) {
+      console.log('changeByNationalId '+assetNationalId);
       var anotherAssetIsSelectedAndHasNotBeenModified = exists() && currentAsset.payload.nationalId !== assetNationalId && !assetHasBeenModified;
       if (!exists() || anotherAssetIsSelectedAndHasNotBeenModified) {
         if (exists()) { close(); }
         backend.getMassServiceStopByNationalId(assetNationalId, function (asset) {
-          if (_.isUndefined(asset.success)) { eventbus.trigger('asset:fetched', asset); }
+          if (_.isUndefined(asset.success)) {   console.log("first call "+asset.toString());eventbus.trigger('asset:fetched', asset); }
         });
         backend.getMassTransitStopByNationalId(assetNationalId, function (asset, statusMessage, errorObject) {
           if (errorObject !== undefined) {
@@ -411,6 +412,7 @@
               eventbus.trigger('asset:notFoundInTierekisteri', errorObject);
             }
           }
+          console.log('second call '+asset.toString());
           eventbus.trigger('asset:fetched', asset);
         });
       }
