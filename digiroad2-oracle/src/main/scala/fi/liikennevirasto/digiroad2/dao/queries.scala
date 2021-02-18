@@ -286,6 +286,12 @@ object Queries {
     """
   }
 
+  def updateAdditionalPanelProperties (assetId: Long): Unit = {
+    sqlu"""UPDATE ADDITIONAL_PANEL SET ADDITIONAL_SIGN_SIZE = 99, ADDITIONAL_SIGN_COATING_TYPE = 99, ADDITIONAL_SIGN_PANEL_COLOR = 99
+           WHERE ASSET_ID = $assetId AND ADDITIONAL_SIGN_SIZE IS NULL OR ADDITIONAL_SIGN_COATING_TYPE IS NULL OR ADDITIONAL_SIGN_PANEL_COLOR IS NULL""".execute
+
+  }
+
   def existsSingleChoiceProperty =
     "select asset_id from single_choice_value where asset_id = ? and property_id = ?"
 

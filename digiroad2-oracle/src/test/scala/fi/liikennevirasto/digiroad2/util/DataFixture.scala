@@ -17,6 +17,7 @@ import fi.liikennevirasto.digiroad2.dao.RoadLinkDAO.{AdministrativeClassDao, Fun
 import fi.liikennevirasto.digiroad2.dao.{OracleUserProvider, _}
 import fi.liikennevirasto.digiroad2.dao.linearasset.{OracleLinearAssetDao, OracleSpeedLimitDao}
 import fi.liikennevirasto.digiroad2.dao.pointasset.Obstacle
+import fi.liikennevirasto.digiroad2.dao.pointasset.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.middleware.TrafficSignManager
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -177,7 +178,6 @@ object DataFixture {
   lazy val dynamicLinearAssetService : DynamicLinearAssetService = {
     new DynamicLinearAssetService(roadLinkService, new DummyEventBus)
   }
-
 
   lazy val speedLimitDao: OracleSpeedLimitDao = {
     new OracleSpeedLimitDao(null, null)
@@ -1517,6 +1517,114 @@ object DataFixture {
     println("Complete at time: " + DateTime.now())
   }
 
+  def updateTrafficSignProperties(): Unit = {
+    println("\nStarting traffic sign updates ")
+    println(DateTime.now())
+
+    val municipalities: Seq[Int] = {
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+    }
+
+    // Fetch property ID's.
+    val sign_material_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("sign_material")
+      }
+    }
+
+    val size_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("size")
+      }
+    }
+
+    val structure_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("structure")
+      }
+    }
+
+    val life_cycle_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("life_cycle")
+      }
+    }
+
+    val repair_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("urgency_of_repair")
+      }
+    }
+
+    val damage_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("type_of_damage")
+      }
+    }
+
+    val lane_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("lane_type")
+      }
+    }
+
+    val coating_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("coating_type")
+      }
+    }
+
+    val locationSpecifier_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("location_specifier")
+      }
+    }
+
+    val condition_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("condition")
+      }
+    }
+
+    val old_trafficSign_code_propertyId: Long = {
+      OracleDatabase.withDynSession {
+        Queries.getPropertyIdByPublicId("old_traffic_code")
+      }
+    }
+
+    municipalities.foreach { municipality =>
+        println(s"Fetching traffic signs for municipality: $municipality")
+        val trafficSigns = trafficSignService.getByMunicipality(municipality)
+        println(s"Number of existing assets: ${trafficSigns.length}")
+        trafficSigns.foreach { trafficSign =>
+          val createdDate = trafficSign.createdAt.get
+          val migrationDate = DateTime.parse("2020-05-14T15:32:46", DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss"))
+          if (createdDate.isBefore(migrationDate)) {
+            OracleDatabase.withDynTransaction {
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "sign_material", sign_material_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "size", size_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "structure", structure_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "life_cycle", life_cycle_propertyId, "single_choice", propertyValues = Seq(PropertyValue("3", Some("Käytössä pysyvästi"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "urgency_of_repair", repair_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "type_of_damage", damage_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "lane_type", lane_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tiedossa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "coating_type", coating_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "condition", condition_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "location_specifier", locationSpecifier_propertyId, "single_choice", propertyValues = Seq(PropertyValue("99", Some("Ei tietoa"), false)))
+              OracleTrafficSignDao.createOrUpdateProperties(trafficSign.id, "old_traffic_code", old_trafficSign_code_propertyId, "checkbox", propertyValues = Seq(PropertyValue("1", Some("Väärä"), false)))
+              Queries.updateAdditionalPanelProperties(trafficSign.id)
+            }
+          }
+          else {
+            println("New traffic sign, no need to update - " + trafficSign.id)
+          }
+        }
+      println("Traffic Sign updates complete " + DateTime.now())
+    }
+  }
+
   def removeExistingTrafficSignsDuplicates(): Unit = {
     println("\nStarting removing of traffic signs duplicates")
     println(DateTime.now())
@@ -2124,8 +2232,6 @@ object DataFixture {
     }
   }
 
-
-
   def mergeMunicipalities(): Unit = {
     val municipalityToDelete = 99
     val municipalityToMerge = 214
@@ -2491,6 +2597,8 @@ object DataFixture {
         updateMunicipalities()
       case Some("create_manoeuvres_using_traffic_signs") =>
         createManoeuvresUsingTrafficSigns()
+      case Some("update_trafficSign_properties") =>
+        updateTrafficSignProperties()
       case Some("remove_existing_trafficSigns_duplicates") =>
         removeExistingTrafficSignsDuplicates()
       case Some("merge_additional_panels_to_trafficSigns") =>
