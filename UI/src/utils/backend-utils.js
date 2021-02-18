@@ -893,7 +893,7 @@
           });
           return deferred;
         }else{
-          console.log('error');
+          console.log('Http request failed.');
           return deferred;
         }
       }
