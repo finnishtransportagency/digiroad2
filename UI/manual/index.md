@@ -302,7 +302,7 @@ Yksitt&auml;isen pys&auml;kin ominaisuustietoja voi muokata valitsemalla muokkau
 
 Pys&auml;kin valinnan saa pois klikkaamalla karttaa, kun tallennus tai peruutus on tehty.
 
-Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai Elyn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat OTH-sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
+Muokkaustoiminnallisuudet poikkeavat hieman kunnan kadun ja maantien pys&auml;kkien v&auml;lill&auml;, riippuen siit&auml; onko pys&auml;kki kunnan vai Elyn yll&auml;pit&auml;m&auml;, eri ominaisuustietojen t&auml;ytt&auml;minen on sallittua. P&auml;&auml;s&auml;&auml;nt&ouml;n&auml; on, ett&auml; kuntak&auml;ytt&auml;j&auml;ll&auml; muokattavissa on kaikki ne kent&auml;t, joita h&auml;nen on enimmill&auml;&auml;n tarpeen muokata. Samoin ELYn pys&auml;kkivastaavalla on muokattavissa ne kent&auml;t, joita h&auml;nen on tarpeen yll&auml;pit&auml;&auml; (t&auml;ydent&auml;v&auml;t varustetiedot yll&auml;pidet&auml;&auml;n HARJA-j&auml;rjestelm&auml;ss&auml; ja ovat sovelluksessa ainoastaan read-only n&auml;kym&auml;n&auml;).
 
 ![Pys&auml;kin ominaisuustietojen muokkaus.](k12.jpg)
 
@@ -325,7 +325,7 @@ Ensimm&auml;inen voimassaolop&auml;iv&auml; (19) tarkoittaa p&auml;iv&auml;m&aum
 P&auml;iv&auml;m&auml;&auml;ri&auml; ei voi asettaa ristiin siten, ett&auml; "Ensimm&auml;inen voimassaolop&auml;iv&auml;" olisi my&ouml;hemmin kuin "Viimeinen voimassaolop&auml;iv&auml;". Kalenterissa ei-sallitut p&auml;iv&auml;m&auml;&auml;r&auml;t eiv&auml;t ole valittavissa. Jos p&auml;iv&auml;m&auml;&auml;r&auml;kentt&auml;&auml;n kirjoittaa p&auml;iv&auml;m&auml;&auml;r&auml;n, joka asettaa p&auml;iv&auml;m&auml;&auml;r&auml;t ristiin, ei p&auml;iv&auml;m&auml;&auml;r&auml; tallennu.
 
 Jos "Ensimm&auml;inen voimassaolop&auml;iv&auml;" tai "Viimeinen voimassaolop&auml;iv&auml;" ei ole tiedossa, voi kalenterista valita "ei tietoa".
-Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; tierekisterin tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi OTH siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
+Maantien pys&auml;keille tallennetaan lis&auml;ksi inventointip&auml;iv&auml; tierekisterin tarpeita varten. Mik&auml;li inventointip&auml;iv&auml;-kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, generoi sovellus siihen automaattisesti pys&auml;kin tallennushetken p&auml;iv&auml;m&auml;&auml;r&auml;n. Inventointip&auml;iv&auml; on muokattavissa sovelluksessa.
 
 ![Pys&auml;kin voimassaolop&auml;ivien muokkaus.](k14.jpg)
 
