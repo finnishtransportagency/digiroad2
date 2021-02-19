@@ -247,7 +247,11 @@
           eventbus.once('massTransitStops:available', function () {
             models.selectedMassTransitStopModel.changeByExternalId(id);
           });
-          mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
+            // center and zoom only if request succeed
+            // when calling MassServiceStopByNationalId
+          if(massTransitStop.success !== false){
+              mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
+          }
         };
 
         backend.getMassTransitStopByNationalId(id, assetFound);
