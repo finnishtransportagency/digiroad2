@@ -8,7 +8,7 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erot
 1. Miten p&auml;&auml;sen alkuun?
 -----------------------
 
-1. Digiroadiin k&auml;yv&auml;t olemassa olevat Liikenneviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
+1. Digiroadiin k&auml;yv&auml;t olemassa olevat Väyläviraston tunnukset. Mik&auml;li tunnuksia ei ole, voi ne tilata Digiroad-palvelusta: info@digiroad.fi tai 040-507 2301.
 
 1. Digiroad-selainsovellukseen kirjaudutaan osoitteessa: <a href=https://extranet.vayla.fi/digiroad/ target="_blank">https://extranet.vayla.fi/digiroad/. </a>
 
@@ -17,11 +17,11 @@ __Huom! K&auml;ytt&ouml;ohjeen kuvia voi klikata isommaksi, jolloin tekstit erot
 
 Oikeudet jakautuvat maantieteellisesti seuraavasti:
 
-- Ilman Digiroad-oikeuksia Liikenneviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
+- Ilman Digiroad-oikeuksia Väyläviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
 - Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen kuntien maantieteellisten kuntarajojen sis&auml;puolella oleviin kaikkiin aineistoihin.
 - Digiroad-operaattorilla on oikeudet koko Suomen kaikkiin aineistoihin.
 
-Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Liikenneviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
+Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Väyläviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Digiroad-palveluun: info@digiroad.fi tai 040-507 2301.
 
 1.1 Mist&auml; saan opastusta?
 --------------------------
@@ -142,7 +142,7 @@ _Tielinkit._
 
 Tielinkkej&auml; haetaan tielinkin ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Linkin ID:n saa k&auml;ytt&ouml;liittym&auml;ss&auml; n&auml;kyviin tuplaklikkaamalla tielinkki&auml;, jolloin oikeaan laitaan avautuu tielinkin ominaisuustieton&auml;kym&auml;. Ominaisuustieton&auml;kym&auml;ss&auml; linkin ID on ylimp&auml;n&auml;. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 target="_blank">https://extranet.liikennevirasto.fi/digiroad/#linkProperty/373320541 </a>
+ <a href=https://extranet.vayla.fi/digiroad/#linkProperty/373320541 target="_blank">https://extranet.vayla.fi/digiroad/#linkProperty/373320541 </a>
 
 jossa numerosarja 373320541 on tielinkin ID. Toiminto tarkentaa karttak&auml;tt&ouml;liittym&auml;n haetun tielinkin kohdalle. Tielinkin ominaisuustieton&auml;kym&auml; aukeaa sivun oikealle puolelle.
 
@@ -259,7 +259,7 @@ _Joukkoliikenteen pys&auml;kkien valinta._
 
 Joukkoliikenteen pys&auml;kkej&auml; haetaan pys&auml;kin valtakunnallisella ID:ll&auml; yksil&ouml;idyll&auml; URL-osoitteella. Sovelluksen t&auml;ytyy olla pys&auml;kkin&auml;kym&auml;ss&auml; pys&auml;kki&auml; haettaessa. Esimerkki URL-osoitteesta:
 
- <a href=https://extranet.liikennevirasto.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.liikennevirasto.fi/digiroad/#massTransitStop/95374   </a>(17)
+ <a href=https://extranet.vayla.fi/digiroad/#massTransitStop/95374  target="_blank">https://extranet.vayla.fi/digiroad/#massTransitStop/95374   </a>(17)
 
 jossa numerosarja 95374 on pys&auml;kin valtakunnallinen ID. Toiminto tarkentaa karttak&auml;ytt&ouml;liittym&auml;n katselutilan haetun pys&auml;kin kohdalle. Pys&auml;kin ominaisuustieton&auml;kym&auml; (6) aukeaa sivun oikealle puolelle. 
 
@@ -386,7 +386,7 @@ Ominaisuustiedot ovat j&auml;rjestelm&auml;n generoimia tai k&auml;ytt&auml;j&au
 |Saattomahdollisuus henkil&ouml;autolla|Ilmaisee, mik&auml;li (valtatien varrella olevaa) pys&auml;ki&auml; varten on rakennettu erillinen matkustajien nouto/saatto-alue. Mahdolliset arvot: kyll&auml;, ei tai ei tietoa. Oletuksena on "ei tietoa".||||
 |Liitynt&auml;pys&auml;k&ouml;intipaikkojen m&auml;&auml;r&auml;|Keskusta-alueen ulkopuolella olevan pys&auml;kki- tai terminaalialueen l&auml;heisyydess&auml; sijaitsevien, auton pys&auml;k&ouml;imist&auml; varten varattujen parkkipaikkojen m&auml;&auml;r&auml;. Kentt&auml; j&auml;tet&auml;&auml;n tyhj&auml;ksi, mik&auml;li liitynt&auml;pys&auml;k&ouml;intipaikkoja ei ole. Mik&auml;li liitynt&auml;pys&auml;k&ouml;intipaikat palvelevat useampaa pys&auml;kki&auml;, t&auml;ytet&auml;&auml;n tiedot liitynt&auml;pys&auml;k&ouml;innist&auml; erikseen kullekin pys&auml;kille.||||
 |Liitynt&auml;pys&auml;k&ouml;innin lis&auml;tiedot|Pys&auml;kin yhteydess&auml; olevien liitynt&auml;pys&auml;k&ouml;intipaikkojen lis&auml;tiedot.||||
-|Pys&auml;kin omistaja|Kunta, Helsingin seudun liikenne, ELY-keskus tai Liikennevirasto. Erikoistapauksia varten (esim. uudenmaan ELY).||||
+|Pys&auml;kin omistaja|Kunta, Helsingin seudun liikenne, ELY-keskus tai Väylävirasto. Erikoistapauksia varten (esim. uudenmaan ELY).||||
 |Palauteosoite|Osoite, johon pys&auml;kist&auml; voi laittaa palautetta. Esimerkiksi s&auml;hk&ouml;postiosoite.||||
 |Lis&auml;tiedot|Julkiset kommentit. Esimerkiksi: "Alueella tiet&ouml;it&auml;".||||
 
