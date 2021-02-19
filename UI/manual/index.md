@@ -53,7 +53,7 @@ Sovelluksen toimiessa virheellisesti (esim. kaikki aineistot eiv&auml;t lataudu 
 
 ####Kirjautuminen Digiroad-sovellukseen####
 
-Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.liikennevirasto.fi/digiroad/  target="_blank">https://extranet.liikennevirasto.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Liikenneviraston tunnukset. Tunnuksia saa Digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
+Digiroad-selainsovellukseen kirjaudutaan osoitteessa:  <a href=https://extranet.vayla.fi/digiroad/  target="_blank">https://extranet.vayla.fi/digiroad/. </a>Kirjautumiseen tarvitaan voimassa olevat Liikenneviraston tunnukset. Tunnuksia saa Digiroad-palvelusta (kts. [Miten p&auml;&auml;st&auml; alkuun](#1._Miten_p&auml;&auml;st&auml;_alkuun?)).
 
 ![Kirjautuminen Digiroadiin.](k2.PNG)
 
